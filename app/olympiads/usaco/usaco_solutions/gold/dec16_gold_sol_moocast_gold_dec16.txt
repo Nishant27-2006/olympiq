@@ -1,0 +1,209 @@
+Solution ID: sol_moocast_gold_dec16
+Contest: DEC16
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_moocast_gold_dec16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we have
+
+$N$
+
+cows scattered on the plane and want to compute the
+minimum distance
+
+$D$
+
+such that all cows are able to communicate with each other
+(perhaps through some intermediate cows), given that two cows can only
+communicate directly if the distance between them is less than or equal to
+
+$D$
+
+.
+
+We can model this problem as a graph problem where each cow is a vertex
+connected to every other cow with an edge with the weight being the distance
+between the two cows. We therefore want to compute the minimum edge weight such
+that the graph is connected.
+
+We can solve this problem using a union-find data structure. A simple 
+union-find data structure supports two operations:
+
+$Find(x)$
+
+- return a unique identifier for vertex
+
+$x$
+
+.
+
+$Find(x) = Find(y)$
+
+if
+and only if
+
+$x$
+
+and
+
+$y$
+
+are in the same connected component.
+
+$Merge(x, y)$
+
+- connect
+
+$x$
+
+and
+
+$y$
+
+with an edge.
+
+Let's assume that we have a sufficiently efficient implementation of a
+union-find data structure. Given the original
+
+$N$
+
+vertices are all pairwise
+disconnected, we can loop over the edges in nondecreasing order by weight and
+add an edge between two vertices if they are not already in the same component.
+After we add
+
+$N-1$
+
+edges, the graph is necessarily connected, and the last edge
+gives us our answer.
+
+It remains to implement the union-find data structure efficiently. We will
+describe an implementation that supports both operations in essentially
+
+$O(1)$
+
+.
+
+We start by describing an approach that supports both operations in linear time,
+which will not be fast enough for our purposes.
+
+We start by annotating each node with a "parent" field - each node starts out
+with itself being the parent. When we call
+
+$Find(x)$
+
+, either
+
+$x$
+
+is its own
+parent, in which case we return
+
+$x$
+
+, or we return
+
+$Find(parent(x))$
+
+. When we
+call
+
+$Merge(x, y)$
+
+, we set the parent of
+
+$Find(x)$
+
+to
+
+$Find(y)$
+
+.
+
+Intuitively, what we are doing here is building a rooted tree and when we want
+to merge two trees, we have the root of one tree point to the root of the other
+tree.
+
+The reason that this runs in linear time is that the depth of the tree may be
+linear. There are a couple ways to improve the performance here - if we always
+are careful to set the parent of the root of the smaller tree to the root of the
+larger tree, then the depth of the tree is bounded to
+
+$O(\log N)$
+
+. Another
+approach we can take is path compression - when we compute
+
+$Find(parent(x))$
+
+, we
+can memoize that value.
+
+My Java solution uses the latter approach.
+
+import java.io.*;
+import java.util.*;
+public class moocast {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("moocast.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("moocast.out")));
+		int n = Integer.parseInt(br.readLine());
+		int[] x = new int[n];
+		int[] y = new int[n];
+		for(int i = 0; i < n; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			x[i] = Integer.parseInt(st.nextToken());
+			y[i] = Integer.parseInt(st.nextToken());
+		}
+		parent = new int[n];
+		ArrayList<Edge> edges = new ArrayList<Edge>();
+		for(int i = 0; i < n; i++) {
+			parent[i] = i;
+			for(int j = 0; j < i; j++) {
+				int distance = (x[i] - x[j]) * (x[i] - x[j]) + (y[i] - y[j]) * (y[i] - y[j]);
+				edges.add(new Edge(i, j, distance));
+			}
+		}
+		Collections.sort(edges);
+		int lastWeight = 0;
+		int numComponents = n;
+		for(Edge curr: edges) {
+			if(find(curr.i) != find(curr.j)) {
+				merge(curr.i, curr.j);
+				lastWeight = curr.w;
+				if(--numComponents == 1) {
+					break;
+				}
+			}
+		}
+		pw.println(lastWeight);
+		pw.close();
+	}
+	
+	static int[] parent;
+	public static int find(int curr) {
+		return parent[curr] == curr ? curr : (parent[curr] = find(parent[curr]));
+	}
+	
+	public static void merge(int x, int y) {
+		parent[find(x)] = find(y);
+	}
+	
+	static class Edge implements Comparable<Edge> {
+		public int i, j, w;
+		public Edge(int a, int b, int c){
+			i=a;
+			j=b;
+			w=c;
+		}
+		public int compareTo(Edge e) {
+			return w - e.w;
+		}
+	}
+	
+}

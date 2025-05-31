@@ -1,0 +1,780 @@
+Solution ID: sol_prob1_silver_jan22
+Contest: JAN22
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_jan22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Richard Qi)
+
+Denote
+
+$A$
+
+as the number we start with and
+
+$B$
+
+as the number we want to turn
+
+$A$
+
+into.
+
+Observation 1:
+
+The answer is always
+
+$\mathcal O(\log{\max(A, B)})$
+
+.
+
+To see why this is the case, we first prove that we can turn
+
+$A$
+
+into
+
+$1$
+
+using
+
+$\mathcal O(\log{A})$
+
+operations.
+
+Observe the binary representation (base 2) of
+
+$A$
+
+.  If
+
+$A$
+
+is a power of two,
+then clearly we can just do dividing operations and reduce it to
+
+$1$
+
+quickly.
+Otherwise, if the last bit is
+
+$0$
+
+, do a dividing operation; if the last bit is a
+
+$1$
+
+, do a plus followed by a dividing operation. This reduces the number of bits
+in the binary representation of
+
+$A$
+
+by
+
+$1$
+
+. Thus, either
+
+$A$
+
+is a power of two
+and we do
+
+$\mathcal O(\log{A})$
+
+dividing operations, or we do a maximum of
+
+$2$
+
+operations to reduce the number of bits in the binary representation of
+
+$A$
+
+by
+
+$1$
+
+. Since there are only
+
+$\mathcal O(\log{A})$
+
+total bits in
+
+$A$
+
+, this takes
+
+$\mathcal O(\log{A})$
+
+operations in total.
+
+For the case of turning
+
+$1$
+
+into
+
+$B$
+
+, note that if we take the inverse of all
+operations, this is equivalent to turning
+
+$B$
+
+into
+
+$1$
+
+using "subtract 1" and
+dividing operations. By a similar argument as above, if the last bit of
+
+$B$
+
+is a
+
+$0$
+
+, we can divide by
+
+$2$
+
+, otherwise we can subtract one and then divide by
+
+$2$
+
+.
+This takes
+
+$\mathcal O(\log{B})$
+
+operations to turn
+
+$B$
+
+into
+
+$1$
+
+, so it takes
+
+$\mathcal O(\log{B})$
+
+operations to turn
+
+$1$
+
+into
+
+$B$
+
+using addition and
+multiplication operations.
+
+Thus, it takes
+
+$\mathcal O(\log{A}+\log{B})$
+
+operations to turn
+
+$A$
+
+into
+
+$1$
+
+,
+and then turn
+
+$1$
+
+into
+
+$B$
+
+, so the answer is always
+
+$\mathcal O(\log{\max(A, B)})$
+
+.
+
+Observation 2:
+
+There is never a division that takes place after a
+multiplication operation. Intuitively, any
+
+$1$
+
+s that we add in between a
+multiplication and division operation would be more efficiently moved after the
+division operation.
+
+We will prove this via proof by contradiction: suppose there is a division
+operation that takes place after a multiplication operation. Then, in the middle
+of the sequence of operations, we have
+
+$\cdots *, +^{k}, / \cdots$
+
+, where
+
+$*$
+
+denotes a multiplication operation,
+
+$+^{k}$
+
+denotes
+
+$k \geq 0$
+
+addition
+operations,
+
+$/$
+
+denotes a division operation, and the
+
+$\cdots$
+
+indicate
+operations occurring before and after this subsequence of operations.
+
+Now, because a division operation was used, and the number after the
+
+$*$
+
+operation was even, the number of
+
+$+$
+
+operations in between is even. Suppose we
+replaced this subsequence of operations with
+
+$\cdots +^{k/2} \cdots$
+
+. Let the
+number starting the subsequence be
+
+$x$
+
+; in the first version of the sequence of
+operations, we have
+
+$x \implies 2x \implies 2x+k \implies x+k/2$
+
+, while in the
+second version of the sequence of operations, we have
+
+$x \implies x+k/2$
+
+.
+
+Since
+
+$+^{k/2}$
+
+is always less operations than
+
+$*, +^{k}, /$
+
+and both
+subsequences correspond to the same function, the second subsequence never
+appears in an optimal solution.
+
+Thus, we have proven that there is never a division that takes place after a
+multiplication operation, so  the multiplication/division operations are of the
+form
+
+$/, /, /, \cdots *, *, *$
+
+, with some number of addition operations added in
+between every two division/multiplication operations. We can divide the
+operations into
+
+$3$
+
+phases: the subsequence consisting of the last division
+operation and everything before it, the subsequence consisting of the addition
+operations after the last division and before the first multiplication, and the
+subsequence consisting of the first multiplication operation and everything
+after it. We label these subsequences
+
+$S_1, S_2, S_3$
+
+.
+
+These observations are good enough for partial credit. Suppose that we have
+found all numbers
+
+$x$
+
+such that we need exactly
+
+$k$
+
+operations to turn
+
+$A$
+
+into
+
+$x$
+
+, and suppose we have already done this for all
+
+$k' \leq k$
+
+.  Then, we can
+find all numbers
+
+$y$
+
+such that we need exactly
+
+$k+1$
+
+operations to reach
+
+$y$
+
+from
+
+$A$
+
+, as each of these
+
+$y$
+
+must be a previous
+
+$x$
+
+value after a
+division/multiplication/addition operation is applied. Additionally, each of
+these
+
+$y$
+
+should be numbers that could not have been reached using
+
+$k$
+
+or less
+operations.
+
+It turns out that for the subtask, if we only consider small values of
+
+$x$
+
+and
+
+$y$
+
+in the above algorithm, we arrive at the correct answer. In other words,
+when turning
+
+$A$
+
+into
+
+$B$
+
+, the intermediate numbers do not get larger than
+
+$10^5+\mathcal O(\log{A}+\log{B})$
+
+. The first and second observations mentioned
+above imply this, because during
+
+$S_1$
+
+, the only way we can increase is through
+
+$+$
+
+operations (but there are only a small number of total operations), and
+during
+
+$S_2$
+
+and
+
+$S_3$
+
+, the number only increases, until it arrives at
+
+$B \leq 10^5$
+
+. Additionally, from the first observation, we only need to
+consider values of
+
+$k \leq \mathcal O(\log{\max(A, B)})$
+
+, which allows us to
+calculate the values of
+
+$y$
+
+from the values of
+
+$x$
+
+in linear time for each value
+of
+
+$k$
+
+.
+
+Depending on implementation, this approach can be either
+
+$O(\max(A, B)\log{\max(A, B)})$
+
+or
+
+$O(\max(A, B))$
+
+.
+
+Observation 3:
+
+Just before a division operation, and just after a
+multiplication operation, there is at most one addition operation. "Just before"
+a division operation means before the division operation but after the previous
+division operation (if such a division operation exists); "just after" is
+defined similarly for multiplication.
+
+We prove this for division (the proof for multiplication is similar). Suppose
+that we have a subsequence
+
+$\cdots +^{2}, /, \cdots$
+
+. Then, we can replace this
+with
+
+$\cdots /, +, \cdots$
+
+, as both subsequences represent the function
+
+$x \implies x/2+1$
+
+.
+
+(Although not needed for this problem, this observation actually implies that
+when turning
+
+$A$
+
+into
+
+$B$
+
+, the intermediate numbers do not get larger than
+
+$10^5$
+
+, which means in the brute force solution mentioned above, we could have
+only considered numbers
+
+$\le 10^5$
+
+. The reason for this is that during
+
+$S_1$
+
+, the
+sequence consists of
+
+$/$
+
+or
+
+$+/$
+
+subsequences concatenated together. In
+
+$/$
+
+and
+
+$+/$
+
+, the original number cannot increase. Thus, the only way that an
+intermediate number is larger than
+
+$A$
+
+is immediately after the first
+
+$+$
+
+operation, which only happens if
+
+$A$
+
+is odd. So, all intermediate numbers are
+
+$\leq 10^5$
+
+.)
+
+Observation 4:
+
+If we fix the total number of divisions as
+
+$D$
+
+, then the
+sequence
+
+$S_1$
+
+is fixed, and if we fix the total number of multiplications as
+
+$M$
+
+, then the sequence
+
+$S_3$
+
+is fixed.
+
+We prove the first part of the statement (the second part is very similar).
+Suppose we make
+
+$D$
+
+divisions in
+
+$S_1$
+
+. Consider the first division; if
+
+$A$
+
+is
+odd, then we must have added one before dividing (we could not have added more
+by the result of our third observation). If
+
+$A$
+
+is even, then we could not have
+added anything before dividing, as we cannot add more than
+
+$1$
+
+by the third
+observation, and if we add exactly one, we cannot divide by
+
+$2$
+
+. Now, let the
+value of the number after the first division be
+
+$A_2$
+
+.  We now know that we need
+to transform
+
+$A_2$
+
+into
+
+$B$
+
+using exactly
+
+$D-1$
+
+divisions, so we can repeat the
+argument we just made. Repeating this down to
+
+$D=0$
+
+, we arrive at a forced
+sequence of operations in
+
+$S_1$
+
+given the value of
+
+$D$
+
+.
+
+Similarly, given
+
+$M$
+
+, we can arrive at a forced sequence of operations in
+
+$S_3$
+
+.
+
+Since the total number of operations is
+
+$O(\log{\max(A, B)})$
+
+, we can iterate
+over all pairs of values for
+
+$D$
+
+and
+
+$M$
+
+and generate the forced sequences
+
+$S_1$
+
+and
+
+$S_3$
+
+, which then force the number of addition operations that need to be in
+
+$S_2$
+
+. Thus, given
+
+$D$
+
+and
+
+$M$
+
+, we can generate the entire sequence, count the
+number of operations used, and record the minimum such number of operations.
+
+Depending on implementation, this is
+
+$O(\log^3{\max(A, B)})$
+
+or
+
+$O(\log^2{\max(A, B)})$
+
+, both of which fit comfortably in the time limit.
+
+In the below implementation, the outer loop "removed" represents the number of
+multiplications
+
+$M$
+
+in
+
+$S_3$
+
+, which fixes the number
+
+$B'$
+
+that should be reached
+before applying the sequence of operations in
+
+$S_3$
+
+. The inner while loop
+represents increasing the value of
+
+$D$
+
+until the value of
+
+$A$
+
+after applying the
+operations in
+
+$S_1$
+
+becomes less than or equal to
+
+$B'$
+
+.
+
+Instead of directly simulating the process of generating the operations in
+
+$S_3$
+
+, the number of such operations can immediately be determined by looking at
+the binary representation of
+
+$B$
+
+and counting the number of bits in the last
+
+$M$
+
+bits of the binary representation
+
+$B$
+
+. In particular, the number of additions in
+
+$S_3$
+
+is equal to the number of
+
+$1$
+
+bits in the number
+
+$B\&(2^{M}-1)$
+
+, where
+
+$\&$
+
+denotes bitwise AND.
+
+Danny's Implementation:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class SearchingForSoulmates {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int t = Integer.parseInt(in.readLine()); t > 0; t--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            long cow1 = Long.parseLong(tokenizer.nextToken());
+            long cow2 = Long.parseLong(tokenizer.nextToken());
+            long answer = Long.MAX_VALUE;
+            for (int removed = 0; cow2 >> removed > 0; removed++) {
+                long here = 0;
+                long prefix = cow2 >> removed;
+                long cow = cow1;
+                while (cow > prefix) {
+                    if (cow % 2L == 1L) {
+                        cow++;
+                        here++;
+                    }
+                    cow /= 2L;
+                    here++;
+                }
+                here += prefix - cow;
+                here += removed;
+                here += Long.bitCount(cow2 & ((1L << removed) - 1L));
+                answer = Math.min(answer, here);
+            }
+            out.append(answer).append('\n');
+        }
+        System.out.print(out);
+    }
+}
+
+Bonus: Solve this problem in
+
+$\mathcal O(\log{\max(A, B)})$
+
+time.

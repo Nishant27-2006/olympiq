@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Mark Gordon)
+<p>This problem is actually a veiled
+<a href='https://en.wikipedia.org/wiki/Dynamic_time_warping'>Dynamic Time Warping</a> problem where the error function is
+the squared distance between FJ and Bessie.
+<p>Therefore the problem can be solved with dynamic programming.  For each possible position of Farmer John and Bessie
+we can compute the minimum energy required for them to both get to their end position by trying to step FJ forward, step Bessie forward, our move them both forward.
+<p>Here&apos;s my code implementing this solution.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cstring&gt;
+#include &lt;cstdio&gt;
+#include &lt;map&gt;
+
+using namespace std;
+
+#define INF 0x7FFFFFFFFFFFFFFFLL
+
+long long memo[1010][1010];
+
+vector&lt;pair&lt;long long, long long&gt; &gt; F;
+vector&lt;pair&lt;long long, long long&gt; &gt; B;
+
+long long solve(int fi, int bi) {
+  /* The energy cost of the radio for this timestep. */
+  long long base = (F[fi].first - B[bi].first) * (F[fi].first - B[bi].first) +
+             (F[fi].second - B[bi].second) * (F[fi].second - B[bi].second);
+  if (fi + 1 == F.size() &amp;&amp; bi + 1 == B.size()) {
+    return base;
+  }
+
+  long long&amp; ref = memo[fi][bi];
+  if (ref != -1) return ref;
+
+  /* Don&apos;t include the cost of the first timestep. */
+  if (fi == 0 &amp;&amp; bi == 0) base = 0;
+
+  ref = INF;
+  if (fi + 1 &lt; F.size()) {
+    /* Step FJ forward. */
+    ref = min(ref, base + solve(fi + 1, bi));
+  }
+  if (bi + 1 &lt; B.size()) {
+    /* Step Bessie forward. */
+    ref = min(ref, base + solve(fi, bi + 1));
+  }
+  if (fi + 1 &lt; F.size() &amp;&amp; bi + 1 &lt; B.size()) {
+    /* Step both forward. */
+    ref = min(ref, base + solve(fi + 1, bi + 1));
+  }
+  return ref;
+}
+
+int main() {
+  freopen(&quot;radio.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;radio.out&quot;, &quot;w&quot;, stdout);
+
+  map&lt;char, int&gt; dx, dy;
+  dx[&apos;E&apos;] = 1; dx[&apos;W&apos;] = -1;
+  dy[&apos;N&apos;] = 1; dy[&apos;S&apos;] = -1;
+
+  int N, M;
+  cin &gt;&gt; N &gt;&gt; M;
+  int fx, fy, bx, by;
+  cin &gt;&gt; fx &gt;&gt; fy &gt;&gt; bx &gt;&gt; by;
+  string SF, SB;
+  cin &gt;&gt; SF &gt;&gt; SB;
+
+  /* Compute FJ&apos;s path. */
+  F.push_back(make_pair(fx, fy));
+  for (int i = 0; i &lt; SF.size(); i++) {
+    fx += dx[SF[i]];
+    fy += dy[SF[i]];
+    F.push_back(make_pair(fx, fy));
+  }
+
+  /* Compute Bessie&apos;s path. */
+  B.push_back(make_pair(bx, by));
+  for (int i = 0; i &lt; SB.size(); i++) {
+    bx += dx[SB[i]];
+    by += dy[SB[i]];
+    B.push_back(make_pair(bx, by));
+  }
+
+  memset(memo, -1, sizeof(memo));
+  cout &lt;&lt; solve(0, 0) &lt;&lt; endl;
+  return 0;
+}
+</pre></body></html>

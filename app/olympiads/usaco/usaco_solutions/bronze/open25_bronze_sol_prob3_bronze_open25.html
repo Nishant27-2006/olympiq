@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Alex Liang)
+<p><strong>Subtask 1: <span class='math'>$N,Q \le 50$</span></strong>
+<p>For each query described by (<span class='math'>$l,r$</span>), we can enumerate <strong>all</strong> (<span class='math'>$i,j,k$</span>) such 
+that <span class='math'>$l \le i &lt; j &lt; k \le r$</span>. We need to check if each <span class='math'>$s_i s_j s_k$</span> is a moo
+and know that twice the area of <span class='math'>$\Delta ijk$</span> is <span class='math'>$(j-i)(k-j)$</span>.
+<p>Taking the maximum area across all (<span class='math'>$i,j,k$</span>) such that <span class='math'>$l \le i &lt; j &lt; k \le r$</span>
+and <span class='math'>$s_i s_j s_k$</span> is a moo gives us the answer for the query. Since we iterate
+over <span class='math'>$N^3$</span> triplets for each query, the time complexity of this solution is
+<span class='math'>$\mathcal{O}(N^3Q)$</span>.
+<p>My C++ Code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std; 
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n, q;
+    cin &gt;&gt; n &gt;&gt; q;
+ 
+    string S;
+    cin &gt;&gt; S;
+ 
+    while (q--){
+        int ql, qr;
+        cin &gt;&gt; ql &gt;&gt; qr;
+        ql--; qr--;
+ 
+        long long ans = -1;
+ 
+        for (int i = ql; i &lt;= qr; i++){
+            for (int j = i + 1; j &lt;= qr; j++){
+                for (int k = j + 1; k &lt;= qr; k++){
+                    if (S[i] != S[j] and S[j] == S[k]){
+                        ans = max(ans, 1LL * (k - j) * (j - i));
+                    }
+                }
+            }
+        }
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p><strong>Subtask 2: <span class='math'>$Q=1$</span> and the singular query satisfies <span class='math'>$l=1$</span> and <span class='math'>$r=N$</span></strong>
+<p>We can iterate over the middle letter, <span class='math'>$j$</span>, of the moo. Now, what should <span class='math'>$i$</span> and
+<span class='math'>$k$</span> of the moo be? It is clear that <span class='math'>$i$</span> should be the leftmost legal element
+<strong>not</strong> equal to <span class='math'>$s_j$</span> and <span class='math'>$k$</span> be the rightmost legal element equal to <span class='math'>$t_j$</span>
+as this combination maximizes the area. 
+<p>One way to implement this is to calculate the first and last occurrence of each
+character. Let <span class='math'>$C$</span> be the number of characters in the alphabet.  This leads to a
+<span class='math'>$\mathcal{O}(CNQ)$</span> or <span class='math'>$\mathcal{O}((N+C)Q)$</span> solution.
+<p>My C++ Code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std; 
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n, q;
+    cin &gt;&gt; n &gt;&gt; q;
+ 
+    string S;
+    cin &gt;&gt; S;
+ 
+    while (q--){
+        int ql, qr;
+        cin &gt;&gt; ql &gt;&gt; qr;
+        ql--; qr--;
+ 
+        vector&lt;int&gt; firstOcc(26, n);
+        vector&lt;int&gt; lastOcc(26, -1);
+    
+        for (int i = ql; i &lt;= qr; i++){
+            firstOcc[S[i] - &apos;a&apos;] = min(firstOcc[S[i] - &apos;a&apos;], i);
+            lastOcc[S[i] - &apos;a&apos;] = max(lastOcc[S[i] - &apos;a&apos;], i);
+        }
+    
+        int best = n, sbest = n;
+    
+        for (int c = 0; c &lt; 26; c++){
+            if (firstOcc[c] &lt; best){
+                sbest = best;
+                best = firstOcc[c];
+            }
+            else if (firstOcc[c] &lt; sbest)
+                sbest = firstOcc[c];
+        }
+ 
+        long long ans = -1;
+ 
+        for (int j = 1; j + 1 &lt; n; j++){
+            int i = firstOcc[S[j] - &apos;a&apos;] == best ? sbest : best;
+            int k = lastOcc[S[j] - &apos;a&apos;];
+ 
+            if (j &gt; i and j &lt; k)
+                ans = max(ans, 1LL * (k - j) * (j - i));
+        }
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p><strong>Full credit:</strong>
+<p>For some query (<span class='math'>$l,r$</span>), let&apos;s consider all <span class='math'>$t_1,t_2$</span> (<span class='math'>$t_1 \neq t_2$</span>). We want
+to find the best moo described by <span class='math'>$t_1 t_2 t_2$</span>. For each <span class='math'>$t_1,t_2$</span>, we know:
+<p><ol><li><span class='math'>$i$</span> is the leftmost index <span class='math'>$\ge l$</span> whose corresponding element is <span class='math'>$t_1$</span>.</li><li><span class='math'>$k$</span> is the rightmost legal <span class='math'>$\le r$</span> whose corresponding element is
+<span class='math'>$t_2$</span>.</li></ol>
+<p>All that&apos;s left is to determine the optimal <span class='math'>$j$</span> (the middle index) efficiently.
+The area of a triangle will be <span class='math'>$(j-i)(k-j)$</span>. Intuitively, we can see that the we
+want <span class='math'>$j$</span> to be <strong>as close to the middle of <span class='math'>$[i,k]$</span> as possible</strong> (i.e. we
+want <span class='math'>$j$</span> to be as close to <span class='math'>$\frac{i+k}{2}$</span> as possible). Below is one way to
+show that this is true.
+<p><ul><li>We want to maximize <span class='math'>$(j-i)(k-j)$</span>. Let <span class='math'>$a=j-i$</span> and <span class='math'>$b=k-j$</span> (you can think of
+<span class='math'>$a$</span> and <span class='math'>$b$</span> as the lengths of the legs). We want to maximize <span class='math'>$ab$</span> subject to
+<span class='math'>$a \ge 1$</span>, <span class='math'>$b \ge 1$</span>, and <span class='math'>$a+b=k-i=l$</span> (we let <span class='math'>$l$</span> be the total length from <span class='math'>$i$</span>
+to <span class='math'>$k$</span>).  Substituting in <span class='math'>$b=l-a$</span> gives us <span class='math'>$a(l-a)=-a^2+al$</span>. This is a parabola
+and the maximum lies at its vertex which is at <span class='math'>$a=\frac{l}{2}$</span>. Thus, the area
+is maximized when <span class='math'>$a=b=\frac{l}{2}$</span> and the closer <span class='math'>$a$</span> is to the middle, the
+larger the area due to the shape of such parabola.</li></ul>
+<p>To actually find (<span class='math'>$i,j,k$</span>), we need to be able to determine the first index
+equal to some character at the left or right of some given index. This can be
+done efficiently by precalculating these values (see implementation for more
+details about how this is done).  We can directly find <span class='math'>$i$</span> and <span class='math'>$k$</span> with these
+precalculated values. We can then test <span class='math'>$j$</span> equal to index of closest character
+on the left or at <span class='math'>$\lfloor \frac{i+k}{2} \rfloor$</span> and on the right or at it and
+take the one with the maximum area. If we let <span class='math'>$C$</span> be the number of characters in
+the alphabet then this solution runs in <span class='math'>$\mathcal{O}(CN + C^2Q)$</span>.
+<p>This solution can be optimized even further. Instead of considering every
+<span class='math'>$t_1,t_2$</span>, let&apos;s only iterate over each possible value of <span class='math'>$t_2$</span>. Given some
+<span class='math'>$t_2$</span>, we can directly find the optimal <span class='math'>$i$</span> across all <span class='math'>$t_1 \neq t_2$</span>. We just
+need to answer the question: what is the index of the first element on the right
+or at <span class='math'>$l$</span> whose corresponding character is <span class='math'>$\neq t_2$</span>. This can be done in
+constant time by building on our precalculation. Now that we have the optimal
+<span class='math'>$i$</span> and <span class='math'>$k$</span> for some <span class='math'>$t_2$</span>, we can test the two possible <span class='math'>$j$</span> and take the
+triangle with maximum area. This solution runs in <span class='math'>$\mathcal{O}(C(N+Q))$</span> time
+where <span class='math'>$C$</span> is the number of characters in the alphabet.
+<p>My C++ Code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std; 
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n, q;
+    cin &gt;&gt; n &gt;&gt; q;
+ 
+    string S;
+    cin &gt;&gt; S;
+ 
+    vector&lt;vector&lt;int&gt;&gt; left(n, vector&lt;int&gt;(26, -1));
+    vector&lt;vector&lt;int&gt;&gt; right(n, vector&lt;int&gt;(26, n));
+    vector&lt;vector&lt;int&gt;&gt; rightExclude(n, vector&lt;int&gt;(26, n));
+    
+    for (int i = 0; i &lt; n; i++){
+        if (i)
+            left[i] = left[i - 1];
+ 
+        left[i][S[i] - &apos;a&apos;] = i;
+    }
+    for (int i = n - 1; i &gt;= 0; i--){
+        if (i + 1 &lt; n)
+            right[i] = right[i + 1];
+ 
+        right[i][S[i] - &apos;a&apos;] = i;
+ 
+        // Calculate minimum right if we exclude each character
+        int best = n, sbest = n;
+ 
+        for (int c = 0; c &lt; 26; c++){ 
+            if (right[i][c] &lt; best){
+                sbest = best;
+                best = right[i][c];
+            }
+            else if (right[i][c] &lt; sbest)
+                sbest = right[i][c];
+        }
+        for (int c = 0; c &lt; 26; c++)
+            rightExclude[i][c] = (right[i][c] == best ? sbest : best);
+    }
+    while (q--){
+        int ql, qr;
+        cin &gt;&gt; ql &gt;&gt; qr;
+        ql--; qr--;
+        
+        long long best = -1;
+ 
+        for (int rc = 0; rc &lt; 26; rc++){
+            int k = left[qr][rc];
+            int i = rightExclude[ql][rc];
+ 
+            if (i &gt;= k)
+                continue;
+
+            for (int j : {left[(i + k) / 2][rc], right[(i + k) / 2][rc]})
+                if (j &gt; i and j &lt; k)
+                    best = max(best, 1LL * (k - j) * (j - i));
+        }
+        cout &lt;&lt; best &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p>My Python Code:
+<pre class='prettyprint'>
+n, q = map(int, input().split())
+S = input()
+
+left = [[-1] * 26 for _ in range(n)]
+right = [[n] * 26 for _ in range(n)]
+right_exclude = [[n] * 26 for _ in range(n)]
+
+for i, c in enumerate(S):
+    left[i] = left[i - 1][:] if i else [-1] * 26
+    left[i][ord(c) - ord(&apos;a&apos;)] = i
+
+for i, c in reversed(list(enumerate(S))):
+    right[i] = right[i + 1][:] if i + 1 &lt; len(S) else [n] * 26
+    right[i][ord(c) - ord(&apos;a&apos;)] = i
+    
+    best, sbest = n, n
+
+    for j in range(26):
+        if right[i][j] &lt; best:
+            sbest = best
+            best = right[i][j]
+        elif right[i][j] &lt; sbest:
+            sbest = right[i][j]
+
+    for j in range(26):
+        right_exclude[i][j] = sbest if right[i][j] == best else best
+
+for _ in range(q):
+    ql, qr = map(int, input().split())
+    ql -= 1
+    qr -= 1
+    
+    best = -1
+
+    for t2 in range(26):
+        k = left[qr][t2]
+        i = right_exclude[ql][t2]
+
+        if i &gt;= k:
+            continue
+
+        for j in (left[(i + k) // 2][t2], right[(i + k) // 2][t2]):
+            if j &gt; i and j &lt; k:
+                best = max(best, (k - j) * (j - i))
+        
+    print(best)
+</pre>
+<p></body></html>

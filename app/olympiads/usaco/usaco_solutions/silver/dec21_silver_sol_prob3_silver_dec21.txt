@@ -1,0 +1,292 @@
+Solution ID: sol_prob3_silver_dec21
+Contest: DEC21
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_dec21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+A direct implementation of the definition in the problem statement to compute
+the win counts for all
+
+$k$
+
+involves a nested loop over all pairs of intervals 
+and all
+
+$k$
+
+. This runs in
+
+$\mathcal{O}(N^2M)$
+
+time, and is only sufficient  for
+the first two test cases.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	int N, M;
+	cin >> N >> M;
+	vector<pair<int, int>> ivals(N);
+	for (auto &ival : ivals)
+		cin >> ival.first >> ival.second;
+	vector<int64_t> win_counts(2 * M + 1);
+	for (auto [a_i, b_i] : ivals)
+		for (auto [a_j, b_j] : ivals)
+			for (int k = a_i + a_j; k <= b_i + b_j; ++k)
+				++win_counts.at(k);
+	for (auto win : win_counts)
+		cout << win << "\n";
+}
+
+Using
+
+prefix sums
+
+, we can remove
+the loop over
+
+$k$
+
+, reducing the time complexity to
+
+$\mathcal{O}(N^2+M)$
+
+. Ths
+idea is to add one to
+
+$\texttt{win_count}$
+
+just before an interval of wins
+begins and subtract one from
+
+$\texttt{win_count}$
+
+just after an interval of wins
+ends. This is sufficient for the first five test cases, which all have
+relatively small
+
+$N$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	int N, M;
+	cin >> N >> M;
+	vector<pair<int, int>> ivals(N);
+	for (auto &ival : ivals)
+		cin >> ival.first >> ival.second;
+	vector<int64_t> win_start(2 * M + 1), win_end(2 * M + 1);
+	for (auto [a_i, b_i] : ivals)
+		for (auto [a_j, b_j] : ivals) {
+			++win_start.at(a_i + a_j);
+			++win_end.at(b_i + b_j);
+		}
+	int64_t win_count = 0;
+	for (int i = 0; i <= 2 * M; ++i) {
+		win_count += win_start.at(i);
+		cout << win_count << "\n";
+		win_count -= win_end.at(i);
+	}
+}
+
+For full credit, we take advantage of
+
+$M$
+
+being relatively small. Let's by
+noting that
+
+$\texttt{win_start}$
+
+and
+
+$\texttt{win_end}$
+
+may be computed
+separately.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	int N, M;
+	cin >> N >> M;
+	vector<pair<int, int>> ivals(N);
+	for (auto &ival : ivals)
+		cin >> ival.first >> ival.second;
+	vector<int64_t> win_start(2 * M + 1), win_end(2 * M + 1);
+	for (int i = 0; i < N; ++i)
+		for (int j = 0; j < N; ++j)
+			++win_start.at(ivals.at(i).first+ivals.at(j).first);
+	for (int i = 0; i < N; ++i)
+		for (int j = 0; j < N; ++j)
+			++win_end.at(ivals.at(i).second+ivals.at(j).second);
+	int64_t win_count = 0;
+	for (int i = 0; i <= 2 * M; ++i) {
+		win_count += win_start.at(i);
+		cout << win_count << "\n";
+		win_count -= win_end.at(i);
+	}
+}
+
+But the first nested loop is doing a lot of repeated work because many
+intervals will share the same left endpoints (similar reasoning holds for the right
+endpoints). If we instead iterate over all
+
+distinct
+
+left endpoints then
+we may reduce the runtime of each nested for loop to
+
+$\mathcal O(M^2)$
+
+. We can
+do this by maintaining a length-
+
+$M+1$
+
+array
+
+$\texttt{a_freq}[a]$
+
+that keeps track of the
+number of occurrences of
+
+$a$
+
+over all intervals, and similarly for
+
+$b$
+
+. The
+overall time complexity is
+
+$\mathcal O(N+M^2)$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	int N, M;
+	cin >> N >> M;
+	vector<pair<int, int>> ivals(N);
+	for (auto &ival : ivals)
+		cin >> ival.first >> ival.second;
+	vector<int64_t> win_start(2 * M + 1), win_end(2 * M + 1);
+	{
+		vector<int64_t> a_freq(M + 1);
+		for (int i = 0; i < N; ++i)
+			++a_freq.at(ivals.at(i).first);
+		for (int i = 0; i <= M; ++i)
+			for (int j = 0; j <= M; ++j)
+				win_start.at(i + j) += a_freq.at(i) * a_freq.at(j);
+	}
+	{
+		vector<int64_t> b_freq(M + 1);
+		for (int i = 0; i < N; ++i)
+			++b_freq.at(ivals.at(i).second);
+		for (int i = 0; i <= M; ++i)
+			for (int j = 0; j <= M; ++j)
+				win_end.at(i + j) += b_freq.at(i) * b_freq.at(j);
+	}
+	int64_t win_count = 0;
+	for (int i = 0; i <= 2 * M; ++i) {
+		win_count += win_start.at(i);
+		cout << win_count << "\n";
+		win_count -= win_end.at(i);
+	}
+}
+
+Danny Mittal's (similar) code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class IntervalConvolution {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        long totalPairs = ((long) n) * ((long) n);
+        long[] aFreq = new long[m + 1];
+        long[] bFreq = new long[m + 1];
+        for (int j = 1; j <= n; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            aFreq[a]++;
+            bFreq[b]++;
+        }
+        long[] aSumFreq = new long[(2 * m) + 1];
+        long[] bSumFreq = new long[(2 * m) + 1];
+        for (int x = 0; x <= m; x++) {
+            for (int y = 0; y <= m; y++) {
+                aSumFreq[x + y] += aFreq[x] * aFreq[y];
+                bSumFreq[x + y] += bFreq[x] * bFreq[y];
+            }
+        }
+        long aValid = aSumFreq[0];
+        long bValid = totalPairs;
+        StringBuilder out = new StringBuilder();
+        for (int x = 0; x <= 2 * m; x++) {
+            if (x > 0) {
+                aValid += aSumFreq[x];
+                bValid -= bSumFreq[x - 1];
+            }
+            long res = aValid + bValid - totalPairs;
+            out.append(res).append('\n');
+        }
+        System.out.print(out);
+    }
+}
+
+Interestingly, computing
+
+$\texttt{win_start}$
+
+from
+
+$\texttt{a_freq}$
+
+can be
+thought of as squaring the degree
+
+$M$
+
+-polynomial represented by
+
+$\texttt{a_freq}$
+
+(and polynomial multiplication is also known as
+
+convolution
+
+). Using
+
+fast
+polynomial multiplication
+
+would allow us to solve this problem in
+
+$\mathcal{O}(N+M\log M)$
+
+time.

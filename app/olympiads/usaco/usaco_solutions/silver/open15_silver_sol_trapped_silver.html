@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu).
+<p>If we pick a bale that we want to add hay to, then we can guarantee that Bessie
+cannot break through that bale. Therefore, once we have picked the bale,
+we can simulate in linear time whether Bessie can still escape by having
+her keep on breaking bales until she reaches one that she cannot break,
+and our chosen bale. If she can escape, then the bale we have selected doesn&apos;t work.
+<p>However, this gives us an <span class='math'>$O(N^2)$</span> algorithm which is too slow.
+<p>To speed things up, let haybale <span class='math'>$K$</span> be the rightmost haybale that is to the left
+of Bessie&apos;s starting place, and start simulating this process where haybale <span class='math'>$K$</span>
+is the one we want to add hay to, keeping track of the rightmost bale that Bessie breaks.
+If we then select haybale <span class='math'>$K-1$</span> as the bale to add hay to, we already know that
+Bessie can reach the rightmost haybale as mentioned above. If we sweep over
+the haybales from right-to-left, and keep track of the rightmost haybale, then we note
+that we do at most a linear amount of work. After sorting the haybales in <span class='math'>$O(N \log N)$</span>,
+we can do this in linear time. We do the same thing for the haybales to the right of
+Bessie, so the whole process is <span class='math'>$O(N)$</span> after sorting.
+<p>Here is Mark Gordon&apos;s code.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+#define INF 1000000010
+
+int main() {
+  freopen(&quot;trapped.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;trapped.out&quot;, &quot;w&quot;, stdout);
+
+  int N, B;
+  cin &gt;&gt; N &gt;&gt; B;
+  vector&lt;pair&lt;int, int&gt; &gt; A(N);
+  for (int i = 0; i &lt; N; i++) {
+    cin &gt;&gt; A[i].second &gt;&gt; A[i].first;
+  }
+  sort(A.begin(), A.end());
+
+  int result = INF;
+  int sp = lower_bound(A.begin(), A.end(), make_pair(B, 0)) - A.begin();
+
+  int j = sp;
+  for (int i = sp - 1; i &gt;= 0; i--) {
+    while (j &lt; N &amp;&amp; A[j].first &lt;= A[i].first + A[i].second) {
+      result = min(result, A[j].first - A[i].first - A[j].second);
+      j++;
+    }
+  }
+
+  j = sp - 1;
+  for (int i = sp; i &lt; N; i++) {
+    while (j &gt;= 0 &amp;&amp; A[i].first - A[i].second &lt;= A[j].first) {
+      result = min(result, A[i].first - A[j].first - A[j].second);
+      j--;
+    }
+  }
+
+  if (result == INF) {
+    cout &lt;&lt; -1 &lt;&lt; endl;
+  } else {
+    cout &lt;&lt; max(result, 0) &lt;&lt; endl;
+  }
+  return 0;
+}
+</pre></body></html>

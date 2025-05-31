@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>This problem can be solved by dynamic programming. Let <span class='math'>$dp(i,j,k)$</span> be the
+minimum number of changes that must be made to the first <span class='math'>$i$</span> entries so that
+there are <span class='math'>$k$</span> breakouts among the first <span class='math'>$i$</span> entries, and the last of these <span class='math'>$k$</span>
+breakouts occurs at index <span class='math'>$j$</span>.
+<p>Suppose we want to compute <span class='math'>$dp(i,j,k)$</span> for some fixed <span class='math'>$i$</span>,<span class='math'>$j$</span>, and <span class='math'>$k$</span>. Then
+entry <span class='math'>$i$</span> must be equal to <span class='math'>$i-j$</span>; if not, we have to change entry <span class='math'>$i$</span>. Now we
+simply need to count the minimum number of changes that need to be made to the
+first <span class='math'>$i-1$</span> entries. There are two cases: either <span class='math'>$j&lt;i$</span> or <span class='math'>$j=i$</span>. 
+<p>If <span class='math'>$j&lt;i$</span>, then the most recent breakout out of the first <span class='math'>$i-1$</span> days must have
+been on day <span class='math'>$j$</span>. So the quantity we want is <span class='math'>$dp(i-1,j,k)$</span>.
+<p>If <span class='math'>$j=i$</span>, then the most recent breakout out of the first <span class='math'>$i-1$</span> days could have
+been on any day. So the quantity we want is <span class='math'>$\min_{j&apos; &lt; i} dp(i-1, j&apos;, k-1)$</span>.
+<p>There are <span class='math'>$O(N^3)$</span> dynamic programming states. The first transition takes <span class='math'>$O(1)$</span>
+time. The second transition takes <span class='math'>$O(N)$</span> time, but only occurs in <span class='math'>$O(N^2)$</span>
+states. Therefore the overall time complexity is <span class='math'>$O(N^3)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define INF 1000
+
+int N;
+int A[100];
+int dp[100][100][101];	//[current index][last breakout][number of breakouts]
+
+int main()
+{
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;N;i++)
+		cin &gt;&gt; A[i];
+	for(int i=0;i&lt;N;i++)
+		for(int j=0;j&lt;=i;j++)
+			for(int k=0;k&lt;=N;k++)
+				dp[i][j][k] = INF;
+	if(A[0] == 0)
+		dp[0][0][1] = 0;
+	else
+		dp[0][0][1] = 1;
+	for(int i=1;i&lt;N;i++)
+	{
+		for(int j=0;j&lt;=i;j++)
+			for(int k=1;k&lt;=i+1;k++)
+			{
+				if(j &lt; i) 
+					dp[i][j][k] = dp[i-1][j][k];
+				else
+					for(int j1=0;j1&lt;i;j1++)
+						dp[i][j][k] = min(dp[i][j][k], dp[i-1][j1][k-1]);
+				if(A[i] != i-j) 
+					dp[i][j][k]++;
+			}
+	}
+	for(int k=1;k&lt;=N;k++)
+	{
+		int low = INF;
+		for(int j=0;j&lt;N;j++)
+			low = min(low, dp[N-1][j][k]);
+		cout &lt;&lt; low &lt;&lt; &apos;\n&apos;;
+	}
+}
+</pre>
+</body></html>

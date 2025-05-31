@@ -1,0 +1,378 @@
+Solution ID: sol_prob3_bronze_dec22
+Contest: DEC22
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_dec22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+To solve the subtask where
+
+$N=2$
+
+, we can brute force all possible programs that
+Elsie could have written and see if any of those programs could have given the
+observed output.
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+int prog(string s, int idx1, int v1, int v2, int r1, int r2, int r3) {
+	if (s[idx1] == '0' + v1) return r1;
+	else if (s[!idx1] == '0' + v2) return r2;
+	else return r3;
+}
+ 
+void solve() {
+	int n, m; cin >> n >> m;
+	assert(n == 2);
+ 
+	vector<string> inputs(m);
+	vector<char> outputs(m);
+ 
+	for (int i = 0; i < m; i++) {
+		cin >> inputs[i] >> outputs[i];
+	}
+ 
+	for (int idx1 = 0; idx1 < 2; idx1++) {
+		for (int v1 = 0; v1 < 2; v1++){
+			for (int v2 = 0; v2 < 2; v2++) {
+				for (int r1 = 0; r1 < 2; r1++){
+					for (int r2 = 0; r2 < 2; r2++) {
+						for (int r3 = 0; r3 < 2; r3++) {
+							bool ok = true;
+							for (int i = 0; i < m; i++) {
+								if ('0' + prog(inputs[i], idx1, v1, v2, r1, r2, r3) != outputs[i]) {
+									ok = false;
+								}
+							}
+							if (ok) {
+								cout << "OK" << endl;
+								return;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	cout << "LIE" << endl;
+}
+ 
+int main() {
+	int t; cin >> t;
+	while (t--) solve();
+ 
+	return 0;
+}
+
+To solve the subtask where
+
+$M=2$
+
+, we can prove that the only time when Elsie
+must be lying is when the two inputs are equal and the two outputs are not
+equal. Obviously, in this situation Elsie must be lying. If the two inputs and
+outputs are equal, then this is equivalent to the case where
+
+$M=1$
+
+and the
+answer when
+
+$M=1$
+
+is always OK. Otherwise, pick some variable where the two
+inputs vary and return the correct result based on the value of that variable.
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+void solve() {
+	int n, m; cin >> n >> m;
+	assert(m == 2);
+ 
+	vector<string> inputs(m);
+	vector<char> outputs(m);
+ 
+	// Read in input
+	for (int i = 0; i < m; i++) {
+		cin >> inputs[i] >> outputs[i];
+	}
+ 
+	if (outputs[0] != outputs[1] && inputs[0] == inputs[1]) {
+		cout << "LIE" << endl;
+	} else {
+		cout << "OK" << endl;
+	}
+}
+ 
+int main() {
+	int t; cin >> t;
+	while (t--) solve();
+ 
+	return 0;
+}
+
+To fully solve the problem, let us assume that Elsie is not lying, and consider
+the first if statement that Elsie has in her program. If we take that variable
+
+$v$
+
+and desired value
+
+$x$
+
+and look at all input/output pairs where
+
+$v$
+
+takes on
+value
+
+$x$
+
+, those outputs must all be equal to the return value from the first if
+statement.
+
+Therefore, let us construct Elsie's program from top to bottom as follows:
+identify some variable
+
+$v$
+
+and value
+
+$x$
+
+where all given inputs that match share
+the same output value. Delete all such input/output pairs. Repeat this process
+until we have at most one input/output pair, then the answer is OK. If we cannot
+find such a variable/value pair at any point, then the answer is LIE.
+
+If this procedure outputs OK, then we have constructed a valid program and we
+have correctly printed out OK. Therefore, it remains to prove that if Elsie was
+lying, this procedure will properly detect it. The concern here is that perhaps
+the order in which we write the if statements matters, and if we can order them
+differently, we might be able to get a valid program.
+
+The reason that this concern does not matter is that, the moment we can add an
+if statement of the form that variable
+
+$v$
+
+takes on value
+
+$x$
+
+, we can always
+write this if statement in the future and it will not exclude additional inputs.
+Therefore, there is no benefit to  rearranging if statements.
+
+Nathan Wang's C++ code:
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+void solve() {
+	int n, m; cin >> n >> m;
+ 
+	vector<string> inputs(m);
+	vector<char> outputs(m);
+ 
+	// if tcPassed[i] is true, then the program we have generated
+	// so far gives the right answer for the i'th test case.
+	// if tcPassed is true for every test case we're given,
+	// then we know that Elsie isn't lying.
+	vector<bool> tcPassed(m, false);
+ 
+	// Read in input
+	for (int i = 0; i < m; i++) {
+		cin >> inputs[i] >> outputs[i];
+	}
+ 
+	// Repeatedly add one more "if" statement to our program
+	// until every test case gives the right answer
+	while (true) {
+		bool foundIfStatement = false;
+ 
+		for (int bit = 0; bit < n; bit++) {
+			if (foundIfStatement) break;
+			for (int val = 0; val <= 1; val++) {
+				if (foundIfStatement) break;
+				for (int output = 0; output <= 1; output++) {
+					if (foundIfStatement) break;
+					// try the following if statement:
+					// if (input[bit] == val) return output;
+ 
+					bool consistent = true;
+					bool atLeastOneInput = false;
+					for (int tc = 0; tc < m; tc++) {
+						// ignore test cases that are covered by
+						// previous if statements
+						if (tcPassed[tc]) continue;
+ 
+						// check if inputs[tc] satisfies the if statement
+						if (inputs[tc][bit] == '0' + val) {
+							atLeastOneInput = true;
+							// if the expected output for inputs[tc]
+							// is not the same as `output`, then
+							// the if statement we generated won't work
+							if (outputs[tc] != '0' + output) {
+								consistent = false;
+							}
+						}
+					}
+ 
+					// if this if statement works, mark all the inputs
+					// that the if statement covers as passed
+					if (consistent && atLeastOneInput) {
+						foundIfStatement = true;
+						for (int tc = 0; tc < m; tc++) {
+							if (tcPassed[tc]) continue;
+							if (inputs[tc][bit] == '0' + val) {
+								tcPassed[tc] = true;
+							}
+						}
+					}
+				}
+			}
+		}
+ 
+		if (!foundIfStatement) break;
+	}
+ 
+	// Check if every test case is passed
+	bool ok = true;
+	for (int i = 0; i < m; i++) {
+		if (tcPassed[i] == false) {
+			ok = false;
+		}
+	}
+	if (ok) {
+		cout << "OK" << endl;
+	} else {
+		cout << "LIE" << endl;
+	}
+}
+ 
+int main() {
+	int t; cin >> t;
+	while (t--) solve();
+ 
+	return 0;
+}
+
+Danny Mittal's Java code:
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Scanner;
+ 
+public class ReverseEngineering2 {
+ 
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        for (int t = in.nextInt(); t > 0; t--) {
+            int n = in.nextInt();
+            int m = in.nextInt();
+            in.nextLine();
+            List<String> instances = new ArrayList<>();
+            for (; m > 0; m--) {
+                instances.add(in.nextLine());
+            }
+            while (true) {
+                int oldSize = instances.size();
+                for (int k = 0; k < n; k++) {
+                    for (char bit = '0'; bit <= '1'; bit++) {
+                        int pos = 0;
+                        for (String instance : instances) {
+                            if (instance.charAt(k) == bit) {
+                                pos |= 1 << (instance.charAt(n + 1) - '0');
+                            }
+                        }
+                        if (pos != 3) {
+                            int finalK = k;
+                            char finalBit = bit;
+                            instances.removeIf(instance -> instance.charAt(finalK) == finalBit);
+                        }
+                    }
+                }
+                int newSize = instances.size();
+                if (newSize == oldSize) {
+                    break;
+                }
+            }
+            if (new HashSet<>(instances).isEmpty()) {
+                System.out.println("OK");
+            } else {
+                System.out.println("LIE");
+            }
+        }
+    }
+}
+
+My Python code:
+
+def solve():
+    nvars, ninputs = (int(x) for x in input().split())
+    inputs = []
+    results = []
+    for _ in range(ninputs):
+        data = input().split()
+        inputs.append(data[0])
+        results.append(data[1])
+    programs = [i for i in range(ninputs)]
+    while True:
+        updated = False
+        for i in range(nvars):
+            if updated:
+                break
+            offvals = set()
+            offinputs = []
+            onvals = set()
+            oninputs = []
+            for j in programs:
+                if inputs[j][i] == '1':
+                    onvals.add(results[j])
+                    oninputs.append(j)
+                else:
+                    offvals.add(results[j])
+                    offinputs.append(j)
+            if len(offvals) <= 1 and len(onvals) <= 1:
+                print("OK")
+                return
+            if len(offvals) == 0 or len(onvals) == 0:
+                continue
+            if len(offvals) == 2 and len(onvals) == 2:
+                continue
+            if len(offvals) == 1:
+                updated = True
+                programs = oninputs
+            elif len(onvals) == 1:
+                updated = True
+                programs = offinputs
+            else:
+                assert False
+        if not updated:
+            print("LIE")
+            return
+ 
+t = int(input())
+for _ in range(t):
+    input()
+    solve()
+
+(
+
+Lecture
+notes
+
+on which this problem was based)

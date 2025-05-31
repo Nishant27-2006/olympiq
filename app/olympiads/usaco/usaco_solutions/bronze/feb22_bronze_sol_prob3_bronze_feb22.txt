@@ -1,0 +1,137 @@
+Solution ID: sol_prob3_bronze_feb22
+Contest: FEB22
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_feb22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+For a fixed ordering of four blocks, there are
+
+$6^4 = 1296$
+
+different words that
+can be formed. There are
+
+$4 \times 3 \times 2 \times 1 = 24$
+
+ways to order the four blocks,
+for a total of 31104 four-letter different arrangements that can be formed.
+
+Doing the same math for one-letter, two-letter, and three-letter combinations,
+we can show that there are 24 one-letter arrangements, 432 two-letter
+arrangements, and 5184 three-letter arrangements. This is small enough that we
+can precompute all possible words that can be formed.
+
+To precompute all possible words, we need to iterate over all possible orderings
+of blocks and letters. We can then throw all of these words into a set to make
+it easy to check if the word is present.
+
+Danny Mittal's Java code picks blocks one at a time and generates letters as the
+blocks are fixed in place.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
+ 
+public class Blocks {
+    static final char[][] blocks = new char[4][];
+    static final Set<String> makeable = new HashSet<>();
+ 
+    static void recur(int usedMask, String word) {
+        makeable.add(word);
+        for (int j = 0; j < 4; j++) {
+            if ((usedMask & (1 << j)) == 0) {
+                for (char letter : blocks[j]) {
+                    recur(usedMask + (1 << j), word + letter);
+                }
+            }
+        }
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        for (int j = 0; j < 4; j++) {
+            blocks[j] = in.readLine().toCharArray();
+        }
+        recur(0, "");
+        StringBuilder out = new StringBuilder();
+        for (int j = 0; j < n; j++) {
+            if (makeable.contains(in.readLine())) {
+                out.append("YES");
+            } else {
+                out.append("NO");
+            }
+            out.append('\n');
+        }
+        System.out.print(out);
+    }
+}
+
+My Python 3 code fixes the ordering of the blocks first and then loops over
+letters to generate all possible words.
+
+def solve():
+    n = int(input())
+    l = [input() for _ in range(4)]
+    words = set()
+    for a in range(4):
+        for b in range(4):
+            if a in [b]:
+                continue
+            for c in range(4):
+                if c in [a, b]:
+                    continue
+                for d in range(4):
+                    if d in [a, b, c]:
+                        continue
+                    for l1 in l[a]:
+                        words.add(l1)
+                        for l2 in l[b]:
+                            words.add(l1+l2)
+                            for l3 in l[c]:
+                                words.add(l1+l2+l3)
+                                for l4 in l[d]:
+                                    words.add(l1+l2+l3+l4)
+    for _ in range(n):
+        print("YES" if input() in words else "NO")
+ 
+solve()
+
+Note that you don't need to precompute all possible words. Benjamin Qi's C++
+code tries all possible orderings of blocks and sees if a given ordering can
+yield the letters in order.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+bool solve(array<string, 4> blocks) {
+	string word;
+	cin >> word;
+	do {
+		bool ok = true;
+		for(int i = 0; i < word.size(); i++) {
+			if(find(blocks[i].begin(), blocks[i].end(), word[i]) == blocks[i].end()) ok = false;
+		}
+		if (ok) return true;
+	} while (next_permutation(blocks.begin(), blocks.end()));
+	return false;
+}
+ 
+int main() {
+	int TC; cin >> TC;
+	array<string, 4> blocks;
+	for(int i = 0; i < 4; i++) cin >> blocks[i];
+	sort(blocks.begin(), blocks.end());
+	for(int i = 0; i < TC; i++) {
+		bool b = solve(blocks);
+		if (b) cout << "YES\n";
+		else cout << "NO\n";
+	}
+}

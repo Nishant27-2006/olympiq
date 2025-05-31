@@ -1,0 +1,105 @@
+Solution ID: sol_prob2_platinum_dec22
+Contest: DEC22
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_dec22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Daniel Zhang)
+
+Directly implementing the described process yields a
+
+$O(N^3)$
+
+solution.
+
+To speed this up, observe that all the pairwise linking is somewhat redundant.
+For example, suppose the first cow was initially friends with all other cows.
+Then, when she leaves, all the other cows become friends pairwise. When the next
+cow leaves, since she is now friends with all the remaining cows, they would
+become friends pairwise again.
+
+Instead of linking together the
+
+$i$
+
+-th cow's friends pairwise when she leaves,
+we only need to link the friend of the
+
+$i$
+
+-th cow with the smallest index
+
+$j$
+
+still on the farm with all of the
+
+$i$
+
+-th cow's other friends still on the farm.
+The other pairs of the
+
+$i$
+
+-th cow's friends would automatically become friends
+as the later cows leave. Implementing this process yields a
+
+$O(N^2)$
+
+solution.
+
+To obtain a
+
+$O(M\log^2 N)$
+
+solution, we merge the friend lists of the
+
+$i$
+
+-th and
+
+$j$
+
+-th cows by iterating over the smaller list and inserting elements one by one
+into the larger list.
+
+It is possible to improve the complexity to
+
+$O(M\log N)$
+
+by using other data
+structures but this was not necessary to get full points.
+
+#include <cstdio>
+#include <set>
+
+std::set<int> adj[200005];
+
+int main(){
+  int N,M;
+  scanf("%d %d",&N,&M);
+  for(int i=0;i<M;i++){
+    int U,V;
+    scanf("%d %d",&U,&V);
+    U--,V--;
+    if(U>V) std::swap(U,V);
+    adj[U].insert(V);
+  }
+  long long total=-M;
+  for(int i=0;i<N;i++){
+    total+=adj[i].size();
+    if(!adj[i].empty()){
+      int j=*adj[i].begin();
+      adj[i].erase(j);
+      if(adj[i].size()>adj[j].size()){
+	std::swap(adj[i],adj[j]);
+      }
+      for(int x:adj[i]){
+	adj[j].insert(x);
+      }
+    }
+  }
+  printf("%lld\n",total);   
+}

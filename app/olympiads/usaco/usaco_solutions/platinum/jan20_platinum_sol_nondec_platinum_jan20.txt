@@ -1,0 +1,768 @@
+Solution ID: sol_nondec_platinum_jan20
+Contest: JAN20
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_nondec_platinum_jan20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Let
+
+$MOD=10^9+7.$
+
+General optimization tips:
+
+Declare
+
+$MOD$
+
+as const.
+
+Avoid using % when adding or subtracting two integers modulo
+
+$MOD$
+
+.
+
+Regarding the matrices mentioned below, use 2D arrays of fixed size (rather
+than a vector of vectors in C++).
+
+Don't iterate over matrix entries that must equal
+zero (those below the main diagonal).
+
+It also helps to declare a separate class (or struct in C++) to take care of modular
+arithmetic operations.
+
+For the sake of convenience, we'll assume that all numbers are in
+
+$[0,K)$
+
+rather
+than
+
+$[1,K].$
+
+Also note that later sections use variables referenced in previous
+ones (so read in order).
+
+Subtask 1:
+
+We can compute the answer for every pair
+
+$(L,R)$
+
+satisfying
+
+$1\le L\le R\le N$
+
+in
+
+$O(N^2K)$
+
+time by trying each index of the sequence as
+
+$L$
+
+, setting
+
+$R=L$
+
+,
+and then repeatedly incrementing
+
+$R.$
+
+We should create an array
+
+$tot$
+
+of size
+
+$K$
+
+which stores the number of non-decreasing subsequences which have last
+element
+
+$i$
+
+for all
+
+$0\le i<K$
+
+and update it appropriately after adding each
+element of the sequence. (Consider the empty subsequence as having last element
+
+$0.$
+
+) After this, we answer each of the
+
+$Q$
+
+queries in
+
+$O(1)$
+
+time.
+
+SegTree (subtasks 2,3):
+
+Note that adding an element
+
+$x$
+
+to the end of the contiguous subsequence
+
+$[L,R]$
+
+that we are currently considering is equivalent to setting
+
+$tot$
+
+equal to
+
+$tot \cdot M_x$
+
+for a
+
+$K\times K$
+
+matrix
+
+$M_x$
+
+, where we treat
+
+$tot$
+
+as a
+
+$1\times K$
+
+matrix. For example, when
+
+$K=5$
+
+,
+
+$$M_3=\begin{bmatrix}
+1 & 0 & 0 & 1 & 0 \\
+0 & 1 & 0 & 1 & 0 \\
+0 & 0 & 1 & 1 & 0 \\
+0 & 0 & 0 & 2 & 0 \\
+0 & 0 & 0 & 0 & 1 \\
+\end{bmatrix},$$
+
+which satisfies
+
+$$\begin{bmatrix}
+c_0 & c_1 & c_2 & c_3 & c_4 
+\end{bmatrix}\cdot M_3=
+\begin{bmatrix}
+c_0 & c_1 & c_2 & c_0+c_1+c_2+2c_3 & c_4 
+\end{bmatrix}.$$
+
+In other words, if we add 3 to the end of the sequence, the number of
+subsequences ending with 3 increases by
+
+$c_0+c_1+c_2+c_3$
+
+while the number of
+subsequences ending with every other number remains the same.
+
+This inspires us to build a segment tree. If a vertex represents the interval
+
+$[L,R],$
+
+then we should store the matrix
+
+$M=M_{A_L}\cdot M_{A_{L+1}}\cdots M_{A_R}.$
+
+We can multiply two such matrices
+in
+
+$O(K^3).$
+
+Thus, we can build this segment tree in
+
+$O(NK^3).$
+
+We can query
+this segment tree in
+
+$O(K^3\log N)$
+
+by considering the matrices for the
+
+$O(\log N)$
+
+segments covering
+
+$[L,R]$
+
+in order and multiplying them.
+
+The time complexity of this approach is
+
+$O((N+Q\log N)K^3),$
+
+which may or may
+not pass subtask 2. Of course, it is possible to speed up both build and query.
+
+Regarding query, we only need to store the entries of the first row of the
+product. So we're essentially multiplying a
+
+$1\times K$
+
+matrix with a
+
+$K\times K$
+
+matrix rather than two
+
+$K\times K$
+
+matrices. Thus, each query runs
+in
+
+$O(K^2\log N)$
+
+time. This passes subtask 2.
+
+Regarding build, we can store the matrix only for intervals of length at
+least a certain length, say
+
+$K.$
+
+Then for each interval of lesser length, we can
+just add each of the numbers manually in
+
+$O(K)$
+
+time each, so the complexity of
+query is not affected. The number of
+
+$O(K^3)$
+
+multiplications is reduced by a
+factor of
+
+$K,$
+
+bringing the complexity of build to
+
+$O(NK^2).$
+
+Both of these optimizations combined may or may not pass subtask 3. I'm not sure
+whether it is possible to earn full points with this method.
+
+Divide and Conquer (full points):
+
+The segment tree solution would allow updates to the sequence as well. However,
+there is really no reason to use a segment tree on an array that remains
+constant.
+
+In fact, given an array
+
+$b_1,b_2,\ldots,b_N$
+
+and an associative operation
+
+$\oplus$
+
+that runs in
+
+$O(1)$
+
+time, we can process the array in
+
+$O(N\log N)$
+
+time
+such that any query in the form
+
+$b_l\oplus b_{l+1}\oplus \cdots \oplus b_r$
+
+can
+be answered in
+
+$O(1)$
+
+time.
+
+Let
+
+$M=\left\lfloor\frac{1+N}{2}\right\rfloor.$
+
+First we can deal with all query
+intervals that contain both
+
+$M$
+
+and
+
+$M+1.$
+
+Suppose that the subsequence contains
+indices
+
+$j_1<j_2<\ldots<j_a\le M<j_{a+1}<\ldots<j_x.$
+
+Then we can iterate over
+all
+
+$K$
+
+possible values of
+
+$A_{j_a}$
+
+and generate the number of possible
+subsequences for all intervals in the form
+
+$[i,M]$
+
+or
+
+$[M+1,i]$
+
+independently in
+
+$O(NK)$
+
+time for a total of
+
+$O(NK^2)$
+
+time. The answer for a query
+
+$[L,R]$
+
+can
+then be derived from the answers for
+
+$[L,M]$
+
+and
+
+$[M+1,R]$
+
+in
+
+$O(K)$
+
+time.
+
+Then we can recursively solve for all queries completely contained within the 
+intervals
+
+$[1,M]$
+
+and
+
+$[M+1,N]$
+
+in a similar fashion. If there are no queries
+left to process for our current interval, we can break immediately. This
+approach can be improved to run in
+
+$O(N\log N\cdot K\log K+QK)$
+
+time online
+(though
+
+$\log K$
+
+with a high constant is not better than
+
+$K$
+
+).
+
+Dhruv Rohatgi's code (
+
+$O(NK^2\log N+Q(K+\log N))$
+
+offline):
+
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define MAXN 200000
+#define MAXQ 200000
+#define MOD 1000000007
+ 
+int msum(int a)
+{
+	if(a >= MOD) return a-MOD;
+	return a;
+}
+ 
+ 
+int N,K,Q;
+int A[MAXN];
+int l[MAXQ], r[MAXQ];
+int qid[MAXQ];
+int qans[MAXQ];
+ 
+int lans[MAXN][21];
+int rans[MAXN][21];
+int cnt[21];
+ 
+void countLeft(int a,int b)
+{
+	for(int i=a;i<=b;i++)
+		for(int k=1;k<=K;k++)
+			lans[i][k] = 0;
+	for(int k=K;k>=1;k--)
+	{
+		for(int j=k;j<=K;j++)
+			cnt[j] = 0;
+		for(int i=b;i>=a;i--)
+		{
+			if(A[i] == k)
+			{
+				cnt[k] = msum(2*cnt[k] + 1);
+				for(int j=k+1;j<=K;j++)
+					cnt[j] = msum(msum(2*cnt[j]) + lans[i][j]);
+			}
+			for(int j=k;j<=K;j++)
+				lans[i][j] = msum(lans[i][j] + cnt[j]);
+		}
+	}
+}
+ 
+void countRight(int a,int b)
+{
+	for(int i=a;i<=b;i++)
+		for(int k=1;k<=K;k++)
+			rans[i][k] = 0;
+	for(int k=1;k<=K;k++)
+	{
+		for(int j=1;j<=k;j++)
+			cnt[j] = 0;
+		for(int i=a;i<=b;i++)
+		{
+			if(A[i] == k)
+			{
+				cnt[k] = msum(2*cnt[k] + 1);
+				for(int j=1;j<k;j++)
+					cnt[j] = msum(msum(2*cnt[j]) + rans[i][j]);
+			}
+			for(int j=1;j<=k;j++)
+				rans[i][j] = msum(rans[i][j] + cnt[j]);
+		}
+	}
+}
+ 
+int split(int qa,int qb, int m)
+{
+	int i = qa;
+	int j = qb;
+	while(i<j)
+	{
+		if(r[qid[i]] > m && r[qid[j]] <= m)
+		{
+			swap(qid[i],qid[j]);
+			i++, j--;
+		}
+		else if(r[qid[i]] > m)
+			j--;
+		else if(r[qid[j]] <= m)
+			i++;
+		else
+			i++, j--;
+	}
+	if(i > j) return j;
+	else if(r[qid[i]] <= m) return i;
+	else return i-1;
+}
+ 
+void solve(int a,int b,int qa,int qb)
+{
+	if(a>b || qa>qb) return;
+	if(a == b)
+	{
+		for(int i=qa;i<=qb;i++)
+			qans[qid[i]] = 1;
+		return;
+	}
+	int m = (a+b)/2;
+	countLeft(a,m);
+	countRight(m+1,b);
+	for(int i=m+1;i<=b;i++)
+		for(int k=K-1;k>=1;k--)
+			rans[i][k] = msum(rans[i][k] + rans[i][k+1]);
+	int qDone = 0;
+	for(int i=qa;i<=qb;i++)
+	{
+		int q = qid[i];
+		if(r[q] > m && l[q] <= m)
+		{
+			qans[q] = 0;
+			for(int k=1;k<=K;k++)
+				qans[q] = msum(qans[q] + (lans[l[q]][k]*((long long)rans[r[q]][k]))%MOD);
+			for(int k=1;k<=K;k++)
+				qans[q] = msum(qans[q] + lans[l[q]][k]);
+			qans[q] = msum(qans[q] + rans[r[q]][1]);
+			qDone++;
+		}
+		else if(qDone>0)
+			qid[i-qDone] = qid[i];
+	}
+	qb -= qDone;
+	int qm = split(qa,qb,m);
+	solve(a,m,qa,qm);
+	solve(m+1,b,qm+1,qb);
+}
+ 
+int main()
+{
+	freopen("nondec.in","r",stdin);
+	freopen("nondec.out","w",stdout);
+	cin >> N >> K;
+	for(int i=0;i<N;i++)
+		cin >> A[i];
+	cin >> Q;
+	for(int i=0;i<Q;i++)
+	{
+		cin >> l[i] >> r[i];
+		l[i]--,r[i]--;
+		qid[i] = i;
+	}
+	solve(0,N-1,0,Q-1);
+	for(int i=0;i<Q;i++)
+		cout << qans[i]+1 << '\n';
+}
+
+Matrix Inverse (full points):
+
+Let
+
+$ipref[x]=M_{A_{x-1}}^{-1}\cdot M_{A_{x-2}}^{-1}\cdots M_{A_1}^{-1}$
+
+and
+
+$pref[x]=M_{A_1}\cdot M_{A_2}\cdots M_{A_{x-1}}.$
+
+It's actually quite easy to
+compute
+
+$M_x^{-1}$
+
+given
+
+$M_x,$
+
+as both of them will be identity matrices with
+the exception of column
+
+$x.$
+
+For example, when
+
+$K=5,$
+
+$$M_3^{-1}=\begin{bmatrix}
+1 & 0 & 0 & -1/2 & 0 \\
+0 & 1 & 0 & -1/2 & 0 \\
+0 & 0 & 1 & -1/2 & 0 \\
+0 & 0 & 0 & 1/2 & 0 \\
+0 & 0 & 0 & 0 & 1 \\
+\end{bmatrix},$$
+
+which satisfies
+
+$$\begin{bmatrix}
+c_0 & c_1 & c_2 & c_0+c_1+c_2+2c_3 & c_4 
+\end{bmatrix}\cdot M_3^{-1}=
+\begin{bmatrix}
+c_0 & c_1 & c_2 & c_3 & c_4 
+\end{bmatrix}.$$
+
+We can represent the query
+
+$[L,R]$
+
+as the product of the matrices corresponding
+to
+
+$A_L,A_{L+1},\ldots, A_R.$
+
+Then we can rewrite the desired product as
+
+$ipref[L-1]\cdot pref[R].$
+
+Both
+
+$ipref$
+
+and
+
+$pref$
+
+can be computed naively for every
+
+$i$
+
+in
+
+$O(NK^3)$
+
+time
+because multiplying two
+
+$K\times K$
+
+matrices takes
+
+$O(K^3)$
+
+time. However,
+
+$O(NK^2)$
+
+can be accomplished due to the special structure of the matrices;
+after all, they each differ from the identity matrix by only one column.
+
+The answer for each query is equal to
+
+$\sum_{i=0}^{K-1}(ipref[L-1]\cdot pref[R])[0][i],$
+
+which can be computed in
+
+$O(K^2)$
+
+time. In fact, this can be sped up to
+
+$O(K)$
+
+time because we can
+rewrite this sum as
+
+$$\sum_{i=0}^{K-1}ipref[L-1][0][i]\cdot \left(\sum_{j=0}^{K-1}pref[R][i][j]\right).$$
+
+So we can store
+
+$ipref[L][0][i]$
+
+for each
+
+$L,i$
+
+in an 2D array which we'll call
+"isto" and
+
+$\sum_{j=0}^{K-1}pref[R][i][j]$
+
+for each
+
+$R,i$
+
+in another 2D array
+which we'll call "sto" in the code below. This is clearly superior to storing
+
+$N$
+
+matrices of size
+
+$K\times K$
+
+. Overall, this approach runs in
+
+$O(NK^2+QK)$
+
+time (and
+
+$NK^2$
+
+can be improved to
+
+$NK\log K$
+
+).
+
+My code follows.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+typedef long long ll;
+const int MOD = 1e9+7; // 998244353; // = (119<<23)+1
+const int MX = 5e4+5; 
+
+void setIO(string name) {
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	freopen((name+".in").c_str(),"r",stdin);
+	freopen((name+".out").c_str(),"w",stdout);
+}
+ 
+struct mi {
+	int v; explicit operator int() const { return v; }
+	mi(ll _v) : v(_v%MOD) { v += (v<0)*MOD; }
+	mi() : mi(0) {}
+};
+mi operator+(mi a, mi b) { return mi(a.v+b.v); }
+mi operator-(mi a, mi b) { return mi(a.v-b.v); }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+typedef array<array<mi,20>,20> T;
+ 
+int N,K,Q;
+vector<int> A;
+array<mi,20> sto[MX], isto[MX];
+mi i2 = (MOD+1)/2;
+ 
+void prin(T& t) { // print a matrix for debug purposes
+	for (int i = 0; i < K; ++i) {
+		for (int j = 0; j < K; ++j) 
+			cout << t[i][j].v << ' ';
+		cout << "\n";
+	}
+	cout << "-------\n";
+}
+ 
+int main() {
+	setIO("nondec");
+	cin >> N >> K; A.resize(N); 
+	for (int i = 0; i < N; ++i) cin >> A[i];
+	T STO, ISTO;
+	for (int i = 0; i < K; ++i) 
+		STO[i][i] = ISTO[i][i] = 1;
+	for (int i = 0; i <= N; ++i) {
+		for (int j = 0; j < K; ++j) 
+			for (int k = j; k < K; ++k) 
+				sto[i][j] = sto[i][j]+STO[j][k];
+		for (int k = 0; k < K; ++k) 
+			isto[i][k] = ISTO[0][k];
+		if (i == N) break;
+		int x = A[i]-1;
+		// STO goes from pre[i] to pre[i+1]
+		// set STO = STO*M_{A[i]}
+		for (int j = 0; j <= x; ++j) 
+			for (int k = x; k >= j; --k) 
+				STO[j][x] = STO[j][x]+STO[j][k];
+		// ISTO goes from ipre[i] to ipre[i+1]
+		// set ISTO=M_{A[i]}^{-1}*ISTO
+		for (int j = 0; j < x; ++j) 
+			for (int k = x; k < K; ++k)
+				ISTO[j][k] = ISTO[j][k]-i2*ISTO[x][k];
+		for (int k = x; k < K; ++k) 
+			ISTO[x][k] = ISTO[x][k]*i2;
+	}
+	cin >> Q;
+	for (int i = 0; i < Q; ++i) {
+		int L,R; cin >> L >> R;
+		mi ans = 0; 
+		for (int j = 0; j < K; ++j) 
+			ans = ans+isto[L-1][j]*sto[R][j];
+		cout << ans.v << "\n";
+	}
+}
+
+Here
+
+is a problem which uses a similar concept in two dimensions (albeit with smaller
+matrices).

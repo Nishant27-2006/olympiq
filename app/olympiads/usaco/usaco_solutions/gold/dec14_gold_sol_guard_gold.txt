@@ -1,0 +1,91 @@
+Solution ID: sol_guard_gold
+Contest: DEC14
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_guard_gold.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Bill Cooperman)
+
+An initial observation for many experienced contestants is that there can be no
+more than 20 cows. Immediately this suggests some solution that is exponential
+in
+
+$n$
+
+, possibly examining all subsets of cows. However, the order in which the
+cows are stacked is important as well. Specifically, it can quickly be shown
+that the optimal arrangement of cows might not be sorted in order of strength or
+weight (this is left as an exercise to the reader). Luckily, the problem of
+finding an optimal arrangement of some subset of the cows can be deconstructed
+into several smaller sub-problems of the same type, so it is possible to
+construct a dynamic programming solution.
+
+Let
+
+$f(C)$
+
+be the maximum possible strength factor for a stack of cows
+consisting of exactly the subset
+
+$C$
+
+of all the cows. Then the solution to our
+problem is just the maximum
+
+$f(C)$
+
+for all
+
+$C$
+
+where the sum of all the heights
+of cows in
+
+$C$
+
+is at least
+
+$H$
+
+. Now, we just need to calculate
+
+$f(C)$
+
+.  If we let
+
+$f(\emptyset) =
+\infty$
+
+(analagous to the ground being able to support all the cows' weights),
+then we have the recurrence
+
+$$
+    f(C) = \max_{c \in C} \,\, \min \left(f(C \setminus c), \,\, S_c - \sum_{d \in (C
+    \setminus c)} W_d \right)
+$$
+
+Intuitively, we are trying to place each cow
+
+$c \in C$
+
+on the bottom of the
+stack, and then placing the remaining set
+
+$C \setminus c$
+
+of cows
+above
+
+$c$
+
+. The
+straightforward implementation of this idea runs in
+
+$O(n2^n)$
+
+time (assuming the
+sum of weights of cows in a subset is pre-computed), which is fast enough to get
+full points.

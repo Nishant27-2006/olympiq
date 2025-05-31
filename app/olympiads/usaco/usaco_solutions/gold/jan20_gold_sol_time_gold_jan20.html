@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>If Bessie travels for exactly <span class='math'>$t$</span> days then the amount of moonies that she makes
+is bounded above by <span class='math'>$1000t-t^2,$</span> which is negative when <span class='math'>$t&gt;1000.$</span> Thus, it
+suffices to keep track of the DP  states <span class='math'>$dp[x][t]$</span> for each
+<span class='math'>$1\le x\le N, 0\le t\le 1000,$</span> denoting the maximum amount of moonies Bessie can
+make up to time <span class='math'>$t$</span> if she is located at city <span class='math'>$x$</span> at time <span class='math'>$t$</span>. The final answer
+will be <span class='math'>$\max_{0\le t\le 1000}(dp[1][t]-Ct^2).$</span> This solution runs in
+<span class='math'>$O(\max(m_i)\cdot (N+M)).$</span> time.
+<p>Mark Chen&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int MAXN = 1005;
+const int MAXT = 1005;
+ 
+long long n, m, c;
+long long value[MAXN];
+long long dp[2][MAXN];
+ 
+vector&lt;pair&lt;int, int&gt;&gt; edges;
+ 
+int main() {
+	freopen(&quot;time.in&quot;,&quot;r&quot;,stdin);
+	freopen(&quot;time.out&quot;,&quot;w&quot;,stdout);
+	cin &gt;&gt; n &gt;&gt; m &gt;&gt; c;
+	for (int i = 1; i &lt;= n; i++) {
+		cin &gt;&gt; value[i];
+	}
+	int a, b;
+	for (int i = 0; i &lt; m; i++) {
+		cin &gt;&gt; a &gt;&gt; b;
+		edges.push_back(make_pair(a, b));
+	}
+	long long max_profit = 0;
+	memset(dp, -1, sizeof dp);
+	dp[0][1] = 0;
+	for (int t = 1; t &lt; MAXT; t++) {
+		int p = t % 2;
+		memset(dp[p], -1, sizeof dp[p]);
+		for (auto&amp; e : edges) {
+			a = e.first;
+			b = e.second;
+			if (dp[1-p][a] &gt;= 0) {
+				dp[p][b] = max(dp[p][b], dp[1-p][a] + value[b]);
+			}
+		}
+		max_profit = max(max_profit, dp[p][1] - c * t * t);
+	}
+	cout &lt;&lt; max_profit &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

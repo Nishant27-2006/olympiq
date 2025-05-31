@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Let&apos;s start with <span class='math'>$K=1$</span>. Given an author list with names <span class='math'>$n_1,n_2,\ldots,n_N$</span>,  how
+do we tell which members are more senior than others? 
+<p>If
+<span class='math'>$n_i&lt;n_{i+1}&lt;\cdots&lt;n_j$</span>,  then we receive no information about the relative
+seniorities of members <span class='math'>$n_i,\ldots,n_j$</span>;  perhaps all of these members put in
+the same amount of effort. In particular, <span class='math'>$n_1&lt;n_2&lt;\cdots &lt;n_N$</span> is consistent
+with any seniority ordering.
+<p>However, if there exists <span class='math'>$i$</span> such that <span class='math'>$n_i&gt;n_{i+1}$</span>, then member <span class='math'>$n_i$</span>
+definitely put in more effort than member <span class='math'>$n_{i+1}$</span>, so all of members
+<span class='math'>$n_1,\ldots,n_i$</span> must be more junior than members <span class='math'>$n_{i+1}\ldots n_N$</span>. In other
+words, if <span class='math'>$i&lt;j$</span> and <span class='math'>$n_i,n_{i+1},\ldots,n_j$</span> are <em>not</em> in alphabetical
+order, then we know that <span class='math'>$n_i$</span> is definitely more junior than <span class='math'>$n_j$</span>. 
+<p>For <span class='math'>$K&gt;1$</span>, we simply accumulate the results over all publications.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
+ 
+public class AcowdemiaII {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        Map&lt;String, Integer&gt; members = new HashMap&lt;&gt;();
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int a = 0; a &lt; n; a++) {
+            members.put(tokenizer.nextToken(), a);
+        }
+        char[][] answer = new char[n][n];
+        for (int a = 0; a &lt; n; a++) {
+            Arrays.fill(answer[a], &apos;?&apos;);
+            answer[a][a] = &apos;B&apos;;
+        }
+        for (int j = 0; j &lt; k; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            String[] publication = new String[n];
+            for (int x = 0; x &lt; n; x++) {
+                publication[x] = tokenizer.nextToken();
+            }
+            for (int x = 0; x &lt; n; x++) {
+                boolean alphabetical = true;
+                for (int y = x + 1; y &lt; n; y++) {
+                    if (publication[y - 1].compareTo(publication[y]) &gt; 0) {
+                        alphabetical = false;
+                    }
+                    if (!alphabetical) {
+                        int a = members.get(publication[x]);
+                        int b = members.get(publication[y]);
+                        answer[a][b] = &apos;0&apos;;
+                        answer[b][a] = &apos;1&apos;;
+                    }
+                }
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int a = 0; a &lt; n; a++) {
+            out.append(answer[a]).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p></body></html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Arpan Banerjee, Benjamin Qi)
+<p>Define an <em>operation</em> on <span class='math'>$(i,i+1)$</span> as the act of decreasing both <span class='math'>$h_i$</span> and
+<span class='math'>$h_{i+1}$</span> by one. Also define <span class='math'>$f$</span> to be the final hunger value.
+<p><strong>Half Credit:</strong>
+<p>For inputs 1-8, it suffices to try all possible values of <span class='math'>$f$</span> from <span class='math'>$0$</span> to
+<span class='math'>$\min(h_i)$</span> and see if they result in valid solutions. This can be done by
+sweeping left to right across <span class='math'>$h$</span> and remedying instances where <span class='math'>$h_i$</span> is greater
+than <span class='math'>$f$</span> by doing operations on <span class='math'>$(i,i+1)$</span> until one of <span class='math'>$h_i$</span> or <span class='math'>$h_{i+1}$</span> equals
+<span class='math'>$f$</span>. If there is a solution, this method must lead to it, because doing
+operations on <span class='math'>$(i,i+1)$</span> is the only way to make <span class='math'>$h_i$</span> equal <span class='math'>$f$</span> assuming no more
+operations on <span class='math'>$(i-1,i)$</span> are allowed.
+<p>This solution runs in <span class='math'>$O(N\max(h_i))$</span> time.
+<p>Arpan&apos;s code:
+<p><pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+#define int long long
+#define nl &quot;\n&quot;
+using namespace std;
+
+int n;
+const int inf = 1e18;
+
+int cost(vector&lt;int&gt; h, int f){
+	int o = 0;
+	for (int i = 0; i &lt; n - 1; i++){
+		if (h[i] &gt; f){
+			int sub = min(h[i], h[i + 1]) - f;
+			h[i] -= sub, h[i + 1] -= sub;
+			o += sub * 2;
+		}
+	}
+	for (int i = 0; i &lt; n - 1; i++)
+		if (h[i] != h[i + 1])
+			return inf;
+	return o;
+}
+
+int exe(){
+	cin &gt;&gt; n; vector&lt;int&gt; h(n);
+	int mn = inf, ans = inf;
+	for (int&amp; i : h) cin &gt;&gt; i, mn = min(mn, i);
+	for (int f = 0; f &lt;= mn; f++)
+		ans = min(ans, cost(h, f));
+	return (ans == inf ? -1 : ans);
+}
+
+signed main(){
+	cin.tie(0)-&gt;sync_with_stdio(0); cin.exceptions(ios_base::failbit);
+	int t; cin &gt;&gt; t;
+	while (t--) cout &lt;&lt; exe() &lt;&lt; nl;
+}
+</pre>
+<p><strong>(Almost) Full Solution:</strong>
+<p>Consider any <span class='math'>$i$</span> such that <span class='math'>$h_{i-1} &lt; h_{i}$</span>. If <span class='math'>$i=N$</span>, then there is no
+solution because no operation can bring <span class='math'>$h_N$</span> closer to <span class='math'>$h_{N-1}$</span>. Otherwise,
+the only way to make <span class='math'>$h_i$</span> equal to <span class='math'>$h_{i-1}$</span> is to do at least <span class='math'>$h_i-h_{i-1}$</span>
+operations on <span class='math'>$(i,i+1)$</span>. Similar reasoning applies when <span class='math'>$h_{i-1} &gt; h_{i}$</span> (there
+is no solution if <span class='math'>$i=2$</span>, otherwise at least <span class='math'>$h_{i-1}-h_i$</span> operations must be
+performed on <span class='math'>$(i-2,i-1)$</span>).
+<p>One approach is to repeatedly find the leftmost pair <span class='math'>$(i-1,i)$</span> such that
+<span class='math'>$h_{i-1}\neq h_{i}$</span> and perform the appropriate number of operations to make
+<span class='math'>$h_{i-1}=h_{i}$</span>. It can be proven that this terminates in <span class='math'>$O(N^3)$</span> time, and is
+enough to solve all but the last input.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+using i64 = int64_t;
+ 
+i64 solve(vector&lt;i64&gt; h){
+	const int N = (int)h.size();
+	i64 ans = 0;
+	auto operations = [&amp;h,&amp;ans](int idx, i64 num_op) {
+		assert(num_op &gt;= 0);
+		h.at(idx) -= num_op; 
+		h.at(idx+1) -= num_op;
+		ans += 2*num_op;
+	};
+	bool flag = true;
+	while (flag) {
+		flag = false;
+		for (int i = 1; i &lt; N; ++i) if (h[i-1] != h[i]) {
+			flag = true;
+			if (h[i-1] &lt; h[i]) {
+				if (i == N-1) return -1;
+				operations(i,h[i]-h[i-1]);
+			} else {
+				if (i == 1) return -1;
+				operations(i-2,h[i-1]-h[i]);
+			}
+			break;
+		}
+	}
+	// now h is all equal
+	if (h[0] &lt; 0) return -1;
+	return ans;
+}
+
+int main() {
+	int t; cin &gt;&gt; t;
+	while (t--) {
+		int N; cin &gt;&gt; N;
+		vector&lt;i64&gt; H(N);
+		for (auto&amp; i: H) cin &gt;&gt; i;
+		cout &lt;&lt; solve(H) &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p><strong>Full Solution 1:</strong>
+<p>For a faster solution, let&apos;s start by moving left to right across <span class='math'>$h$</span> and
+applying the necessary number of operations to <span class='math'>$(i,i+1)$</span> to make <span class='math'>$h_i$</span> equal to
+<span class='math'>$h_{i-1}$</span> whenever we find <span class='math'>$i$</span> such that <span class='math'>$h_i &gt; h_{i-1}$</span>. After doing a pass
+through the array with this procedure, either <span class='math'>$h_N &gt; h_{N-1}$</span> (in which case
+there is no solution), or <span class='math'>$h$</span> will be non-increasing (<span class='math'>$h_i\le h_{i-1}$</span> for all
+<span class='math'>$2\le i\le N$</span>).
+<p>In the latter case, let&apos;s reverse <span class='math'>$h$</span>. Now <span class='math'>$h$</span> will be non-decreasing
+(<span class='math'>$h_i\ge h_{i-1}$</span> for all <span class='math'>$2\le i\le N$</span>). After one more pass with the above
+procedure, all elements of <span class='math'>$h$</span> will be equal except possibly <span class='math'>$h_N$</span>. If
+<span class='math'>$h_N &gt; h_{N-1}$</span>, then there is no solution. Otherwise, all elements of <span class='math'>$h$</span> are
+equal, and it remains to verify whether these elements are non-negative. 
+<p>This solution takes <span class='math'>$O(N)$</span> time. 
+<p>Arpan&apos;s code:
+<p><pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+#define int long long
+#define nl &quot;\n&quot;
+using namespace std;
+
+int exe(){
+	int ans = 0, n;
+	cin &gt;&gt; n; vector&lt;int&gt; h(n);
+	for (int&amp; i : h) cin &gt;&gt; i;
+	if (n == 1) return 0;
+	for (int j : {1, 2}){
+		for (int i = 1; i &lt; n - 1; i++){
+			if (h[i] &gt; h[i - 1]){
+				int dif = h[i] - h[i - 1];
+				ans += 2 * dif, h[i + 1] -= dif, h[i] = h[i - 1];
+			}
+		}
+		if (h[n - 1] &gt; h[n - 2]) return -1;
+		// now h is non-increasing
+		reverse(h.begin(), h.end());
+		// now h is non-decreasing
+	}
+	// now h is all equal
+	return h[0] &lt; 0 ? -1 : ans;
+}
+
+signed main(){
+	cin.tie(0)-&gt;sync_with_stdio(0); cin.exceptions(ios_base::failbit);
+	int t; cin &gt;&gt; t;
+	while (t--) cout &lt;&lt; exe() &lt;&lt; nl;
+}
+</pre>
+<p><strong>Full Solution 2:</strong>
+<p>Let <span class='math'>$o_i$</span> be the total number of operations FJ performs on <span class='math'>$(i,i+1)$</span> for each
+<span class='math'>$1\le i&lt;N$</span>. The goal is to find the maximum <span class='math'>$f$</span> such that there exists a
+solution to the following system of equations. Firstly, the final hunger value
+and the number of operations performed at every pair of indices must be
+non-negative:
+<p><div class='math'>$$f,o_1,\ldots,o_{N-1}\ge 0$$</div>
+<p>Also,
+<p><div class='math'>$$f+o_1=h_1$$</div>
+<div class='math'>$$f+o_1+o_2=h_2$$</div>
+<div class='math'>$$f+o_2+o_3=h_3$$</div>
+<div class='math'>$$\vdots$$</div>
+<div class='math'>$$f+o_{N-2}+o_{N-1}=h_{N-1}$$</div>
+<div class='math'>$$f+o_{N-1}=h_{N}$$</div>
+<p>The first solution in the analysis can be interpreted as trying all possible
+values of <span class='math'>$f$</span> from <span class='math'>$0$</span> to <span class='math'>$\min(h_i)$</span>, determining <span class='math'>$o_1, o_2,\ldots, o_{N-1}$</span> in
+that order, and checking whether all of them are non-negative. For a faster
+solution, letâs rewrite the system of equations in the following form.
+<p><div class='math'>$$o_1=h_1-f\ge 0$$</div>
+<div class='math'>$$o_2=h_2-h_1\ge 0$$</div>
+<div class='math'>$$o_3=h_3-h_2+h_1-f\ge 0$$</div>
+<div class='math'>$$\vdots$$</div>
+<div class='math'>$$o_{N-1}=h_{N-1}-h_{N-2}+h_{N-3}-\cdots \ge 0$$</div>
+<div class='math'>$$h_N-h_{N-1}+h_{N-2}-h_{N-3}+...+h_2-h_1=0\text{ if }N\text{ even}$$</div>
+<div class='math'>$$h_N-h_{N-1}+h_{N-2}-h_{N-3}+...-h_2+h_1-f=0\text{ if }N\text{ odd}$$</div>
+<p>Observe that if <span class='math'>$N$</span> is odd, the last equation uniquely determines <span class='math'>$f$</span>, so we can
+simply plug this value of <span class='math'>$f$</span> into the brute force solution.
+<p>If <span class='math'>$N$</span> is even, then if there exists some <span class='math'>$f$</span> such that this system of
+equations, then <span class='math'>$fâ=0$</span> will as well. Let <span class='math'>$o_1â, o_2â, \ldots, o_{N-1}â$</span>
+be the resulting numbers of operations. To find the maximum <span class='math'>$f$</span>, observe from
+the above equations that increasing <span class='math'>$fâ$</span> will decrease
+<span class='math'>$o_1â, o_3â, \ldots, o_{N-1}â$</span>, while <span class='math'>$o_2â, o_4â, \ldots, o_{N-2}â$</span>
+remain constant. Thus, we may take <span class='math'>$f=\min(o_1â,o_3â,\ldots,o_{N-1}â)$</span>.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+using i64 = int64_t;
+ 
+i64 solve(const vector&lt;i64&gt;&amp; H) {
+	const int N = (int)H.size();
+	i64 f = 0;
+	for (int i = 0; i &lt; N; ++i)
+		f += (i%2 == 0 ? 1 : -1)*H[i];
+	if (N%2 == 0) {
+		if (f != 0) return -1;
+	} else {
+		if (f &lt; 0) return -1;
+	}
+	i64 last_o = 0;
+	vector&lt;i64&gt; o(N-1);
+	for (int i = 0; i+1 &lt; N; ++i) {
+		last_o = o[i] = H[i]-f-last_o;
+		if (o[i] &lt; 0) return -1;
+	}
+	if (N%2 == 0) {
+		i64 mn = o[0];
+		for (int i = 0; i &lt; N; i += 2)
+			mn = min(mn,o[i]);
+		for (int i = 0; i &lt; N; i += 2)
+			o[i] -= mn;
+	}
+	i64 sum_o = 0;
+	for (i64 i: o) sum_o += i;
+	return 2*sum_o;
+}
+ 
+int main() {
+	int t; cin &gt;&gt; t;
+	while (t--) {
+		int N; cin &gt;&gt; N;
+		vector&lt;i64&gt; H(N);
+		for (auto&amp; i: H) cin &gt;&gt; i;
+		cout &lt;&lt; solve(H) &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p></body></html>

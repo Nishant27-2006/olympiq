@@ -1,0 +1,131 @@
+Solution ID: sol_triangles_bronze_feb20
+Contest: FEB20
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_triangles_bronze_feb20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Jonathan Paulson)
+
+This problem can be solved by brute force. We can try every triple of fence
+posts to see if they form a valid pasture and take the biggest. There are only
+
+$100$
+
+posts, so there are only
+
+$100^3$
+
+- a million - triples to try. This is
+well within time limits (if there were over
+
+$100$
+
+million triples to try, that
+would be worrying).
+
+How do we try a triple? For a triple to be valid, one post must be the corner,
+another must be directly to the left or right of the corner (i.e. have the same
+y-coordinate as the corner), and the last must be directly up or down from the
+corner (i.e. have the same
+
+$x$
+
+-coordinate).
+
+Assuming the triple forms a valid triangle, how do we find the area? That's just
+one-half times base times height. The base is just the difference in
+
+$x$
+
+-coordinates between the corner and second post, and the height is the
+difference in
+
+$y$
+
+-coordinates between the corner and third post.
+
+So the final solution is to try all triples, and among the valid ones take the
+biggest area.
+
+Implementation tips:
+
+You are supposed to output twice the maximum area, not the area. The
+easiest way to do this is to ignore the one-half in the area formula (rather
+than doing it at the end).
+
+It's easier to iterate through the triples
+in all possible orders. That way you can use the order by assuming the first
+post is the corner, the second post forms the base, and the last post forms the
+height. If you were supposed to jumble them up, some other triple will catch
+that case.
+
+C++ code:
+
+#include <iostream>
+#include <vector>
+using namespace std;
+using ll = long long;
+
+int main() {
+  freopen("triangles.in", "r", stdin);
+  freopen("triangles.out", "w", stdout);
+  ll n;
+  cin >> n;
+  vector<ll> X(n, 0);
+  vector<ll> Y(n, 0);
+  for(ll i=0; i<n; i++) {
+    cin >> X[i] >> Y[i];
+  }
+  // i will be corner
+  // j will be flat (same x-coordinate as i)
+  // k will be same y-coordinate as i
+  ll best = -1;
+  for(ll i=0; i<n; i++) {
+    for(ll j=0; j<n; j++) {
+      for(ll k=0; k<n; k++) {
+        if(Y[i]==Y[j] && X[i]==X[k]) {
+          ll area = (X[j]-X[i]) * (Y[k]-Y[i]);
+          if(area < 0) { area *= -1; }
+          if(area > best) {
+            best = area;
+          }
+        }
+      }
+    }
+  }
+  cout << best << endl;
+}
+
+Java code (from Nick Wu):
+
+import java.io.*;
+import java.util.*;
+public class Solution {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader("triangles.in"));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("triangles.out")));
+    int n = Integer.parseInt(br.readLine());
+    int[] x = new int[n];
+    int[] y = new int[n];
+    for(int i = 0; i < n; i++) {
+      StringTokenizer st = new StringTokenizer(br.readLine());
+      x[i] = Integer.parseInt(st.nextToken());
+      y[i] = Integer.parseInt(st.nextToken());
+    }
+    int ret = 0;
+    for(int i = 0; i < n; i++) {
+      for(int j = 0; j < n; j++) { // same x-coordinate
+        if(i == j || x[i] != x[j]) continue;
+        for(int k = 0; k < n; k++) { // same y-coordinate
+          if(i == k || y[i] != y[k]) continue;
+          ret = Math.max(ret, Math.abs(x[k] - x[i]) * Math.abs(y[j] - y[i]));
+        }
+      }
+    }
+    pw.println(ret);
+    pw.close();
+  }
+}

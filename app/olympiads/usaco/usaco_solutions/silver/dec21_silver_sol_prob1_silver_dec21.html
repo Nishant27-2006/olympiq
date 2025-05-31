@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Farmer Nhoj&apos;s cows partition the number line into <span class='math'>$M+1$</span> intervals. The general
+idea is to find the answers for each of these intervals independently, and then
+combine them. 
+<p>Firstly, note that John can claim the total tastiness of the leftmost interval
+with a single cow. Similar reasoning holds for the rightmost interval. Every
+other of the <span class='math'>$M-1$</span> intervals has one of Nhoj&apos;s cows at both of its endpoints, so
+one of John&apos;s cows might not be enough to claim all of the tastinesses within
+it. But placing two cows will definitely be enough (one just to the right of the
+left endpoint of the interval, and another just to the left of the right
+endpoint of the interval).
+<p>Assume all the patches and cows are sorted in increasing order of position, and 
+consider the interval <span class='math'>$(f_{x-1},f_x)$</span>. Probably the trickiest part of the
+solution involves computing the maximum tastiness John can claim if he places
+only one cow in this interval. If John places a cow at <span class='math'>$q\in (f_{x-1},f_x)$</span>, he
+claims the tastinesses of all patches with positions in the range
+<span class='math'>$\left(\frac{f_{x-1}+q}{2},\frac{f_{x}+q}{2}\right)$</span>. Note that the length of
+this range (&quot;window&quot;) is equal to <span class='math'>$\frac{f_x-f_{x-1}}{2}$</span> regardless of <span class='math'>$q$</span>. We
+can slide this constant-length window from left to right and keep track of how
+the sum of tastinesses changes as patches enter and exit this window. The
+one-cow answer for this interval will equal the maximum sliding window sum that
+we ever encounter.
+<p>Now that we&apos;ve computed the one-cow and two-cow answers for every interval,  it
+remains to combine these to get the answer to the original problem. If John was
+restricted to placing at most one cow  in every interval, then we could create a
+list of all the one-cow answers, sort it in decreasing order, and sum its first
+<span class='math'>$N$</span> elements. It turns out that a slight modification of this strategy works
+when we allow John to place up to two cows in every interval: add the quantity
+<span class='math'>$(\text{two-cow answer} - \text{one-cow answer})$</span> for each interval to the list
+before sorting it (if there are ties, put quantities of the form
+<span class='math'>$\text{one-cow answer}$</span> before quantities of the form
+<span class='math'>$(\text{two-cow answer} - \text{one-cow answer})$</span>). 
+<p>The reason these works is because
+<span class='math'>$2\cdot (\text{one-cow answer})\ge (\text{two-cow answer})$</span> for any interval; in
+other words, adding a second cow to an interval can&apos;t increase the total
+tastiness more than adding the first cow did. This implies that if a prefix of
+the list contains the quantity <span class='math'>$(\text{two-cow answer} - \text{one-cow answer})$</span>
+for an interval, it will also contain the quantity <span class='math'>$\text{one-cow answer}$</span> for
+that same interval.
+<p>My code (with a single vector for both the patches and Nhoj&apos;s cows):
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+	cin.tie(nullptr)-&gt;sync_with_stdio(false);
+	int K, M, N;
+	cin &gt;&gt; K &gt;&gt; M &gt;&gt; N;
+	vector&lt;pair&lt;int, int&gt;&gt; patches(K + M); // patches and Nhoj&apos;s cows
+	for (int i = 0; i &lt; K; ++i)
+		cin &gt;&gt; patches[i].first &gt;&gt; patches[i].second;
+	for (int i = K; i &lt; K + M; ++i) {
+		cin &gt;&gt; patches[i].first;
+		patches[i].second = -1;
+	}
+	sort(begin(patches), end(patches));
+	vector&lt;uint64_t&gt; increases;
+	int last_i = -1;
+	uint64_t sum_range = 0;
+	for (int i = 0; i &lt; (int)patches.size(); ++i) {
+		if (patches[i].second == -1) {
+			if (last_i == -1) { // try placing to left of Nhoj&apos;s leftmost cow
+				increases.push_back(sum_range);
+			} else {
+				uint64_t cur_ans_1 = 0;	 // current sum of window
+				uint64_t best_ans_1 = 0; // best sum over all windows
+				for (int j = last_i + 1, r = last_i; j &lt; i; ++j) {
+					// assume j is the leftmost patch in the window
+					while (r + 1 &lt; i &amp;&amp;
+						   (patches[r + 1].first - patches[j].first) * 2 &lt;
+							   patches[i].first - patches[last_i].first) {
+						cur_ans_1 += patches[++r].second;
+					}
+					// window sum is now sum(tastinesses(j..r))
+					best_ans_1 = max(best_ans_1, cur_ans_1);
+					cur_ans_1 -= patches[j].second;
+				}
+				assert(2 * best_ans_1 &gt;= sum_range);
+				// answer for one cow
+				increases.push_back(best_ans_1);
+				// answer for two cows - answer for one cow
+				increases.push_back(sum_range - best_ans_1);
+			}
+			last_i = i;
+			sum_range = 0;
+		} else {
+			sum_range += patches[i].second;
+		}
+	}
+	// try placing to right of Nhoj&apos;s rightmost cow
+	increases.push_back(sum_range);
+	// sort in decreasing order
+	sort(rbegin(increases), rend(increases));
+	increases.resize(N);
+	uint64_t ans = 0;
+	for (auto val : increases)
+		ans += val;
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
+ 
+public class ClosestCowWins {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        Patch[] patches = new Patch[k];
+        for (int j = 0; j &lt; k; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int location = Integer.parseInt(tokenizer.nextToken());
+            long tastiness = Long.parseLong(tokenizer.nextToken());
+            patches[j] = new Patch(location, tastiness);
+        }
+        Arrays.sort(patches);
+        long[] tastinessSums = new long[k + 1];
+        for (int j = 0; j &lt; k; j++) {
+            tastinessSums[j + 1] = tastinessSums[j] + patches[j].tastiness;
+        }
+        Integer[] nhojCows = new Integer[m];
+        for (int j = 0; j &lt; m; j++) {
+            nhojCows[j] = Integer.parseInt(in.readLine());
+        }
+        Arrays.sort(nhojCows);
+        TreeMap&lt;Integer, Integer&gt; nhojCowsTreeMap = new TreeMap&lt;&gt;();
+        for (int j = 0; j &lt; m; j++) {
+            nhojCowsTreeMap.put(nhojCows[j], j);
+        }
+        TreeMap&lt;Integer, Integer&gt; patchTreeMap = new TreeMap&lt;&gt;();
+        for (int j = 0; j &lt; k; j++) {
+            patchTreeMap.put(patches[j].location, j);
+        }
+        long[][] valueAdded = new long[3][m + 1];
+        for (int j = 0; j &lt; k; j++) {
+            Map.Entry&lt;Integer, Integer&gt; nextNhojCowEntry = nhojCowsTreeMap.ceilingEntry(patches[j].location);
+            int nextNhojCow = nextNhojCowEntry == null ? m : nextNhojCowEntry.getValue();
+            valueAdded[2][nextNhojCow] += patches[j].tastiness;
+            if (nextNhojCow == 0 || nextNhojCow == m) {
+                valueAdded[1][nextNhojCow] += patches[j].tastiness;
+            } else {
+                int johnCowLocation = Math.min(nhojCows[nextNhojCow], (2 * patches[j].location) - nhojCows[nextNhojCow - 1]);
+                int extent = (johnCowLocation + nhojCows[nextNhojCow] + 1) / 2;
+                int farthestPatch = patchTreeMap.lowerEntry(extent).getValue();
+                valueAdded[1][nextNhojCow] = Math.max(valueAdded[1][nextNhojCow], tastinessSums[farthestPatch + 1] - tastinessSums[j]);
+            }
+        }
+        Long[] valueAddedOverall = new Long[2 * (m + 1)];
+        for (int j = 0; j &lt;= m; j++) {
+            valueAddedOverall[2 * j] = valueAdded[1][j];
+            valueAddedOverall[(2 * j) + 1] = valueAdded[2][j] - valueAdded[1][j];
+        }
+        Arrays.sort(valueAddedOverall);
+        long answer = 0;
+        for (int j = Math.max(0, valueAddedOverall.length - n); j &lt; valueAddedOverall.length; j++) {
+            answer += valueAddedOverall[j];
+        }
+        System.out.println(answer);
+    }
+ 
+    public static class Patch implements Comparable&lt;Patch&gt; {
+        final int location;
+        final long tastiness;
+ 
+        public Patch(int location, long tastiness) {
+            this.location = location;
+            this.tastiness = tastiness;
+        }
+ 
+        @Override
+        public int compareTo(Patch other) {
+            return location - other.location;
+        }
+    }
+}
+</pre>
+<p>Bonus: It would still be possible to solve this question even if the condition
+<span class='math'>$2\cdot (\text{one-cow answer})\ge (\text{two-cow answer})$</span> did not hold (see <a href='https://prognova20.kattis.com/problems/courseplanning'>this problem</a>).
+<p></body></html>

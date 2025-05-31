@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, there are some cows with walkie-talkies and you want to figure
+out the maximum number of cows that can receive a given message given that the
+message starts being broadcasted from only one cow.
+<p>If we model each cow as a vertex and draw an edge from cow X to cow Y if
+a message that cow X broadcasts can be received by cow Y, then we can
+convert the problem into one where we count the maximum number of vertices
+reachable from a given vertex. To compute this quantity, we can do either
+a depth-first search or a breadth-first search through the graph <span class='math'>$N$</span> times,
+once starting at each vertex, and maintain the maximum number of vertices
+that we can see.
+<p>Here is my Java code.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class moocast {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;moocast.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;moocast.out&quot;)));
+		int n = Integer.parseInt(br.readLine());
+		int[] x = new int[n];
+		int[] y = new int[n];
+		int[] p = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			x[i] = Integer.parseInt(st.nextToken());
+			y[i] = Integer.parseInt(st.nextToken());
+			p[i] = Integer.parseInt(st.nextToken());
+		}
+		boolean[][] canTransmit = new boolean[n][n];
+		// canTransmit[i][j] being true means cow i can transmit to cow j
+		for(int i = 0; i &lt; n; i++) {
+			for(int j = 0; j &lt; n; j++) {
+				int squareDist = (x[i] - x[j]) * (x[i] - x[j]) + (y[i] - y[j]) * (y[i] - y[j]);
+				if(squareDist &lt;= p[i] * p[i]) {
+					canTransmit[i][j] = true;
+				}
+			}
+		}
+		int ret = 1;
+		for(int i = 0; i &lt; n; i++) {
+			boolean[] canHear = new boolean[n];
+			ret = Math.max(ret, dfs(i, canHear, canTransmit));
+		}
+		pw.println(ret);
+		pw.close();
+	}
+	
+	public static int dfs(int curr, boolean[] canHear, boolean[][] canTransmit) {
+		if(canHear[curr]) {
+			return 0;
+		}
+		canHear[curr] = true;
+		int ret = 1;
+		for(int i = 0; i &lt; canTransmit[curr].length; i++) {
+			if(canTransmit[curr][i]) {
+				ret += dfs(i, canHear, canTransmit);
+			}
+		}
+		return ret;
+	}
+	
+}
+</pre></body></html>

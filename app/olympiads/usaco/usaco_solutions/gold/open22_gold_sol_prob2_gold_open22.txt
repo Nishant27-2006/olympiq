@@ -1,0 +1,168 @@
+Solution ID: sol_prob2_gold_open22
+Contest: OPEN22
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+First, discard all occurrences of
+
+$\times 1$
+
+since they don't affect the answer.
+Also, if a program contains an occurrence of
+
+$\times 0$
+
+, discard the portion of
+the program before the last such occurrence.
+
+Say that two instructions are of the same type if they are both
+
+$\times d$
+
+or
+both
+
+$+s$
+
+. When do two interleaved programs produce the same expression? It
+turns out that this happens if and only if one interleaved program can be
+transformed into the other by repeatedly swapping two adjacent instructions of
+the same type, where one of the instructions belongs to Bessie and the other
+belongs to Elsie.
+
+Therefore, the number of distinct expressions is precisely the number of
+interleaved programs that do not contain a pair of adjacent instructions of the
+same type where the first instruction belongs to Elsie and the second
+instruction belongs to Bessie, because every such program that contains such a
+pair  can be uniquely transformed via a series of swaps into a program that does
+not contain such a pair (while there exists such a pair, swap the two
+instructions in the pair).
+
+The full solution involves dynamic programming on a grid. In the code below,
+
+$\texttt{dp}[i][j][k]$
+
+is the number of ways to interleave  the first
+
+$i$
+
+instructions of Bessie's program with the first
+
+$j$
+
+instructions of Elsie's
+program such that the last instruction in the interleaving belongs to Bessie if
+
+$k=0$
+
+or Elsie if
+
+$k=1$
+
+.
+
+$\texttt{dp}[i][j][k]$
+
+is used to update both
+
+$\texttt{dp}[i][j+1][1]$
+
+(if Elsie adds her
+
+$j$
+
+-th instruction to the end of the
+interleaving)  and
+
+$\texttt{dp}[i+1][j][0]$
+
+(if Bessie adds her
+
+$i$
+
+-th
+instruction to the end of the interleaving) unless Elsie last added to the
+interleaving and the
+
+$j-1$
+
+-th instruction of Elsie's program has the same type
+as the
+
+$i$
+
+-th instruction of Bessie's program.
+
+The overall time complexity is proportional to the number of DP states, which is
+
+$O(N^2)$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+
+const int MOD = 1e9 + 7;
+void mod_add(int &a, int b) { a = (a + b) % MOD; }
+
+void read(string &s) {
+	string _s;
+	cin >> _s;
+	for (char c : _s) {
+		if (c == '1') continue;
+		if (c == '0') s.clear();
+		if (c != '+') c = '2';
+		s += c;
+	}
+}
+
+int solve() {
+	int N;
+	cin >> N;
+	string A, B;
+	read(A);
+	read(B);
+	V<V<array<int, 2>>> dp((int)size(A) + 1,
+	                       V<array<int, 2>>((int)size(B) + 1));
+	int ans = 0;
+	auto upd = [&](int x, int y, int k, int v) {
+		if (x <= (int)size(A) && y <= (int)size(B))
+			mod_add(dp.at(x).at(y).at(k), v);
+	};
+	dp.at(0).at(0).at(0) = 1;
+	for (int i = 0; i <= (int)size(A); ++i) {
+		for (int j = 0; j <= (int)size(B); ++j) {
+			for (int k : {0, 1}) {
+				int v = dp.at(i).at(j).at(k);
+				if (v == 0) continue;
+				if (i == (int)size(A) && j == (int)size(B)) mod_add(ans, v);
+				else {
+					upd(i, j + 1, 1, v);
+					if (k == 0) upd(i + 1, j, 0, v);
+					else {
+						assert(j > 0);
+						if (i < (int)size(A) && B.at(j - 1) != A.at(i))
+							upd(i + 1, j, 0, v);
+					}
+				}
+			}
+		}
+	}
+	return ans;
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int T;
+	cin >> T;
+	while (T--) cout << solve() << "\n";
+}

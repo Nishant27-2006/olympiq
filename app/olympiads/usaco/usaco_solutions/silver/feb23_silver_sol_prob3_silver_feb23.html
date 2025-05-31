@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brandon Wang)
+<p>First, we describe how to deal with the layovers.  They can be ignored for
+airport 1, since Bessie can access any flight leaving airport 1. For any other
+airport <span class='math'>$i$</span>, Bessie can access a flight leaving <span class='math'>$i$</span> at time <span class='math'>$r$</span>  if and only if
+she can get to airport <span class='math'>$j$</span> by time <span class='math'>$r - a_i$</span>. Thus, we can decrement all such
+<span class='math'>$r$</span>&apos;s by <span class='math'>$a_i$</span>.
+<p><strong>Subtask 1: <span class='math'>$r_j &lt; s_j$</span></strong>
+<p>For this subtask, note that Bessie can use flight <span class='math'>$j$</span>  if and only if she can
+get to airport <span class='math'>$c_j$</span> at or before <span class='math'>$r_j$</span>,  which must be done using earlier
+flights. So, we can just iterate through the flights in increasing order of
+<span class='math'>$r_j$</span>,  and maintain the earliest possible arrival time at each airport.
+<p>This takes <span class='math'>$O(M\log M + N)$</span>.
+<p><strong>Subtask 2: <span class='math'>$M, N \leq 5000$</span></strong>
+<p>For this subtask, we use a Bellman-Ford like algorithm. Specifically, to relax
+an edge corresponding to flight <span class='math'>$j$</span>, we just check if it is possible to arrive
+at airport <span class='math'>$c_j$</span> at or before <span class='math'>$r_j$</span>, and if so, we update the earliest possible
+arrival time at airport <span class='math'>$d_j$</span>.
+<p>Since the optimal path uses at most <span class='math'>$M$</span> edges (there is never any use for Bessie
+to take the same flight twice), this can be done in <span class='math'>$O(M^2 + N)$</span>.
+<p><strong>No further constraints</strong>
+<p>For a complete solution, we combine ideas from both subtasks. Note that since
+Bessie never takes the same edge twice, we never actually need to relax along an
+edge twice, since the second time we update the arrival time at <span class='math'>$d_j$</span> there will
+be no improvement.
+<p>Thus, if we update the arrival time at airport <span class='math'>$i$</span> from <span class='math'>$t_i$</span> to <span class='math'>$t_i&apos;$</span>, we only
+need to relax edges <span class='math'>$j$</span> such that <span class='math'>$c_j = i$</span> and <span class='math'>$t_i&apos; \leq r_j &lt; t_i$</span>. In
+particular, if we maintain a queue of edges that need to be relaxed,  and a
+sorted list of flights leaving each airport in increasing order of departure
+time, then each edge relaxation step only takes <span class='math'>$O(f)$</span> time, where <span class='math'>$f$</span> is the
+number of new flights that  are added to the queue. Since each edge is added to
+the queue at most once, the total runtime of all the edge relaxations would just
+be <span class='math'>$O(M)$</span>. So, the total runtime would be <span class='math'>$O(M\log M + N)$</span>, where <span class='math'>$O(M\log M)$</span>
+comes from sorting the flights departing each airport.
+<p>Python implementation:
+<p><pre class='prettyprint'>
+N, M = input().strip().split()
+N = int(N)
+M = int(M)
+INFTY = int(1e9+7)
+
+flights_base = [[] for _ in range(N+1)]
+
+for _ in range(M):
+    c, r, d, s = input().strip().split()
+    flights_base[int(c)].append((int(r), int(d), int(s)))
+
+layovers = [0] + [int(x) for x in input().strip().split()]
+
+# ignore layovers at airport 1
+layovers[1] = 0
+
+flights = [[] for _ in range(N+1)]
+
+for c in range(1, N+1):
+    for r, d, s in flights_base[c]:
+        flights[c].append((r - layovers[c], d, s))
+    flights[c].sort(reverse=True)
+
+time = [INFTY for _ in range(N+1)]
+time[1] = 0
+idx = [0 for _ in range(N+1)]
+
+# list implementation of a queue
+q = []
+qid = 0
+
+for flight in flights[1]:
+    q.append(flight)
+
+while qid &lt; len(q): 
+    r, d, s = q[qid]
+    # relax this edge
+    time[d] = min(time[d], s)
+    # check if any new edges need to be relaxed, and add them to the queue if so
+    while idx[d] &lt; len(flights[d]) and flights[d][idx[d]][0] &gt;= s:
+        q.append(flights[d][idx[d]])
+        idx[d] += 1
+    qid += 1
+
+for i in range(1, N+1):
+    if time[i] != INFTY:
+        print(time[i])
+    else:
+        print(-1)
+
+</pre>
+<p></body></html>

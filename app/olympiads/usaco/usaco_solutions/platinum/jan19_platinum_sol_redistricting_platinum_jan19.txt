@@ -1,0 +1,185 @@
+Solution ID: sol_redistricting_platinum_jan19
+Contest: JAN19
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_redistricting_platinum_jan19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Franklyn Wang)
+
+First, we note that there exists an
+
+$O(NK)$
+
+dynamic-programming solution.  Let
+
+$dp[v]$
+
+represent the answer to the problem on the prefix
+
+$s[0, 1, \ldots, v - 1]$
+
+.  Let
+
+$c_{ij} = 1$
+
+if the range
+
+$s[i, i + 1, \ldots j - 1]$
+
+is at least half Guernseys, and
+
+$0$
+
+otherwise. Then,
+observe that
+
+$$ dp[j] = \min_{\max(0, j - K) \le i \le j - 1}(dp[i] + c_{ij})  $$
+
+Observe that if we let
+
+$p[i]$
+
+equal the difference between the number of
+Holsteins and Guernseys in the  range
+
+$s[0, 1, \ldots i - 1]$
+
+, then
+
+$c_{ij} = \begin{cases} 1, \text{ if } p[i] \le p[j] \\ 0, \text{ if } p[i] > p[j]   \end{cases}$
+
+which allows us to compute
+
+$c_{ij}$
+
+in
+
+$O(1)$
+
+time by precomputing
+
+$p[0], p[1], \ldots p[n]$
+
+.
+
+Implemented naively, this solution is
+
+$O(NK)$
+
+. However, observe that
+
+$0 \le c_{ij} \le 1$
+
+for all
+
+$i, j$
+
+. Thus, notice that
+
+$$\min_{\max(0, j - K) \le i \le j - 1}(dp[i]) + 1\ge dp[j] \ge \min_{\max(0, j - K) \le i \le j - 1}(dp[i]) $$
+
+Define here
+
+$m = \min_{\max(0, j - K) \le i \le j - 1}(dp[i])$
+
+It therefore
+suffices to check whether there exists an
+
+$i$
+
+such that
+
+$$dp[i] + c_{ij} = m$$
+
+To do this, we maintain two auxillary data structures:
+
+1. A multiset storing all the values of
+
+$dp[i]$
+
+.
+
+2. A map from each value of
+
+$dp[i]$
+
+to the multiset of corresponding possible
+
+$pre[i]$
+
+'s.
+
+Then, to check whether there exists an
+
+$i$
+
+satisfying the requirement, it
+suffices to first compute
+
+$m$
+
+, and then find the lowest possible value of
+
+$p[i]$
+
+among all
+
+$i$
+
+with
+
+$dp[i] = m$
+
+, and check whether that is lower than
+
+$p[j]$
+
+,
+which suffices to solve  the problem. My code is below:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int DP[300001];
+int pref[300001];
+int main() {
+    int N, K; cin >> N >> K;
+    string s; cin >> s;
+    DP[0] = 0;
+    pref[0] = 0;
+    for (int i = 0; i < (int) s.size(); i++){
+      if (s[i] == 'H'){
+        pref[i + 1] = pref[i] + 1;
+      }
+      else{
+        pref[i + 1] = pref[i] - 1;
+      }
+    }
+    //contains all values of dp[i] that are active
+    multiset<int> dpvals;
+    dpvals.insert(0);
+    //contains the values of pre[i] given dp[i]
+    multiset<int> elements[300001]; 
+    elements[0].insert(0);
+    for (int i = 1; i <= N; i++){
+      //query
+      int mnval = *(dpvals.begin());
+      if (*elements[mnval].begin() < pref[i]){
+        DP[i] = mnval;
+      }
+      else{
+        DP[i] = mnval + 1;
+      }
+      dpvals.insert(DP[i]);
+      elements[DP[i]].insert(pref[i]);
+      //update
+      if (i >= K){
+        dpvals.erase(dpvals.find(DP[i - K]));
+        elements[DP[i - K]].erase(elements[DP[i - K]].find(pref[i - K]));
+      }
+    }
+    cout << DP[N] << endl;
+}

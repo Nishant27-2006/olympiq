@@ -1,0 +1,522 @@
+Solution ID: sol_prob2_silver_open22
+Contest: OPEN22
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal)
+
+A starting point for this problem is to notice that if
+
+$s$
+
+and
+
+$t$
+
+are equal
+when restricted to some subset
+
+$X$
+
+of letters, then they must also be equal when
+restricted to any subset
+
+$Y$
+
+of
+
+$X$
+
+. In particular, this means that if
+
+$s$
+
+and
+
+$t$
+
+are equal when restricted to some subset
+
+$X$
+
+of letters, they are also equal
+when restricted to any two letters in
+
+$X$
+
+.
+
+Now consider the case where
+
+$s$
+
+and
+
+$t$
+
+are not equal when restricted to
+
+$X$
+
+.
+Again let
+
+$s'$
+
+and
+
+$t'$
+
+be
+
+$s$
+
+and
+
+$t$
+
+restricted to
+
+$X$
+
+. One possibility is
+that
+
+$s'$
+
+and
+
+$t'$
+
+are of different lengths, which means that
+
+$s$
+
+and
+
+$t$
+
+have
+differing amounts of the letters in
+
+$X$
+
+.
+
+The other possibility is that
+
+$s'$
+
+and
+
+$t'$
+
+have different letters at some
+position. In this case, consider the first position at which
+
+$s'$
+
+and
+
+$t'$
+
+differ, and let
+
+$x$
+
+and
+
+$y$
+
+be the two letters that
+
+$s'$
+
+and
+
+$t'$
+
+have at this
+position. Since
+
+$s'$
+
+and
+
+$t'$
+
+are completely the same up to this position, if we
+remove all letters other than
+
+$x$
+
+and
+
+$y$
+
+from
+
+$s'$
+
+and
+
+$t'$
+
+to create new
+strings
+
+$s''$
+
+and
+
+$t''$
+
+, the portion before this position will become the same
+(smaller) portion at the beginning of
+
+$s''$
+
+and
+
+$t''$
+
+, and so the
+
+$x$
+
+and
+
+$y$
+
+at the same position in
+
+$s'$
+
+and
+
+$t'$
+
+will still be in the same position in
+
+$s''$
+
+and
+
+$t''$
+
+. This means
+that
+
+$s''$
+
+and
+
+$t''$
+
+are not the same, and so, since
+
+$s''$
+
+and
+
+$t''$
+
+are
+actually just
+
+$s$
+
+and
+
+$t$
+
+restricted to the two letters
+
+$x$
+
+and
+
+$y$
+
+, we can
+conclude that
+
+$s$
+
+and
+
+$t$
+
+are not the same when restricted to
+
+$x$
+
+and
+
+$y$
+
+.
+
+We have therefore shown that if
+
+$s$
+
+and
+
+$t$
+
+are not equal when restricted to
+
+$X$
+
+, then either they do not have the same amount of letters in
+
+$X$
+
+, or they are
+not the same when restricted to some pair of letters in
+
+$X$
+
+. However, we already
+know that if
+
+$s$
+
+and
+
+$t$
+
+are equal when restricted to
+
+$X$
+
+, then they must be the
+same when restricted to any pair of letters in
+
+$X$
+
+, and in this case they
+clearly must also have the same amount of letters in
+
+$X$
+
+.
+
+This means that
+
+$s$
+
+and
+
+$t$
+
+being equal when restricted to
+
+$X$
+
+is actually
+
+equivalent
+
+to having the same amount of letters in
+
+$X$
+
+and being equal
+when restricted to any pair of letters in
+
+$X$
+
+.
+
+We can use this fact to write our algorithm. We need to be able to quickly
+compute, for a given subset of letters
+
+$X$
+
+, whether
+
+$s$
+
+and
+
+$t$
+
+have the same
+amount of letters in
+
+$X$
+
+, and whether
+
+$s$
+
+and
+
+$t$
+
+are the same when restricted
+to any pair of letters in
+
+$X$
+
+.
+
+We can make checking the first condition easy by precomputing the frequencies of
+each letter in each of
+
+$s$
+
+and
+
+$t$
+
+. This takes linear time. Then, for a given
+
+$X$
+
+, we simply add up the frequencies of all letters in
+
+$X$
+
+for each of
+
+$s$
+
+and
+
+$t$
+
+and check if the sums are equal.
+
+We can make checking the second condition easy by just precomputing the answer
+for each pair of letters. For each pair, we can find the answer in linear time
+by simply reducing
+
+$s$
+
+and
+
+$t$
+
+to the strings
+
+$s'$
+
+and
+
+$t'$
+
+that only have the
+letters in the pair, then checking whether
+
+$s'$
+
+and
+
+$t'$
+
+are equal. Then, for a
+given
+
+$X$
+
+, we simply loop through all pairs of letters in
+
+$X$
+
+and check our
+precomputed answers.
+
+The overall runtime becomes
+
+$\mathcal O(\text{number of pairs} \cdot (|s| + |t| + Q))$
+
+due to the linear
+time precomputation for each pair and then checking each pair in constant time
+for each query. Since there are only
+
+$18$
+
+letters we need to consider, there are
+only
+
+$\frac {18 \cdot 17} 2 = 153$
+
+pairs, which is small enough for this
+algorithm to be reasonably efficient.
+
+Java code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class SubsetEquality {
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        char[] s = in.readLine().toCharArray();
+        char[] t = in.readLine().toCharArray();
+        int[] freqsS = new int[26];
+        int[] freqsT = new int[26];
+        for (char x = 'a'; x <= 'z'; x++) {
+            for (char letter : s) {
+                if (letter == x) {
+                    freqsS[x - 'a']++;
+                }
+            }
+            for (char letter : t) {
+                if (letter == x) {
+                    freqsT[x - 'a']++;
+                }
+            }
+        }
+        boolean[][] compatible = new boolean[26][26];
+        for (char y = 'a'; y <= 'z'; y++) {
+            for (char x = 'a'; x < y; x++) {
+                StringBuilder sRestricted = new StringBuilder();
+                StringBuilder tRestricted = new StringBuilder();
+                for (char letter : s) {
+                    if (letter == x || letter == y) {
+                        sRestricted.append(letter);
+                    }
+                }
+                for (char letter : t) {
+                    if (letter == x || letter == y) {
+                        tRestricted.append(letter);
+                    }
+                }
+                compatible[x - 'a'][y - 'a'] = sRestricted.toString().equals(tRestricted.toString());
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q > 0; q--) {
+            char[] subset = in.readLine().toCharArray();
+            char answer = 'Y';
+            int sSum = 0;
+            int tSum = 0;
+            for (char x : subset) {
+                sSum += freqsS[x - 'a'];
+                tSum += freqsT[x - 'a'];
+            }
+            if (sSum != tSum) {
+                answer = 'N';
+            }
+            for (int j = 0; j < subset.length; j++) {
+                for (int k = j + 1; k < subset.length; k++) {
+                    if (!compatible[subset[j] - 'a'][subset[k] - 'a']) {
+                        answer = 'N';
+                    }
+                }
+            }
+            out.append(answer);
+        }
+        System.out.println(out);
+    }
+}

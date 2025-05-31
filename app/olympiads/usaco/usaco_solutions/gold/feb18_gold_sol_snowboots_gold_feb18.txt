@@ -1,0 +1,96 @@
+Solution ID: sol_snowboots_gold_feb18
+Contest: FEB18
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_snowboots_gold_feb18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+We essentially solve this problem with the two-pointers method and a bit of
+additional data structures.
+
+Sort the boots and tiles by depth of snow, and maintain a doubly-linked list
+initially containing all the tiles. Iterate through the boots in order of
+decreasing snow resistance. For each boot, keep removing the tiles with the most
+snow from the doubly-linked list until the current pair of boots can withstand
+the depth of snow on all tiles in the linked list.
+
+Then these boots are feasible for Farmer John if and only if the maximum
+distance between any adjacent pair of tiles in the linked list is no greater
+than the maximum distance which these boots can step. And as we remove tiles
+from the linked list, we can maintain this maximum distance: if it changes upon
+removing a tile, it must now be equal to the distance between the predecessor
+and successor of the deleted tile in the list.
+
+This yields an
+
+$O(N\log N + B \log B)$
+
+algorithm dominated by the cost of
+sorting.
+
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define MAXN 100000
+#define MAXB 100000
+ 
+int N,B;
+int depth[MAXN];
+int did[MAXN];
+ 
+bool dcmp(int a,int b)
+{
+	return depth[a]<depth[b];
+}
+ 
+int snow[MAXB], dist[MAXB];
+int ans[MAXB];
+int bid[MAXB];
+ 
+bool s_bcmp(int a,int b)
+{
+	return snow[a] < snow[b];
+}
+ 
+int nxt[MAXN];
+int pre[MAXN];
+ 
+int main()
+{
+	cin >> N >> B;
+	for(int i=0;i<N;i++)
+	{
+		cin >> depth[i];
+		did[i] = i;
+	}
+	for(int i=0;i<B;i++)
+	{
+		cin >> snow[i] >> dist[i];
+		bid[i] = i;
+	}
+	sort(did,did+N,dcmp);
+	sort(bid,bid+B,s_bcmp);
+	for(int i=0;i<N;i++)
+		nxt[i] = i+1, pre[i] = i-1;
+	int j = N-1;
+	int maxStep = 1;
+	for(int i=B-1;i>=0;i--)
+	{
+		int boot = bid[i];
+		while(j >= 0 && depth[did[j]] > snow[boot])
+		{
+			int cur = did[j];
+			nxt[pre[cur]] = nxt[cur];
+			pre[nxt[cur]] = pre[cur];
+			maxStep = max(maxStep, nxt[cur] - pre[cur]);
+			j--;
+		}
+		ans[boot] = (maxStep <= dist[boot]);
+	}
+	for(int i=0;i<B;i++)
+		cout << ans[i] << '\n';
+}

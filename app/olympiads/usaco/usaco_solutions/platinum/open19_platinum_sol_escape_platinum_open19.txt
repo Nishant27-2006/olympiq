@@ -1,0 +1,191 @@
+Solution ID: sol_escape_platinum_open19
+Contest: OPEN19
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_escape_platinum_open19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Travis Hance)
+
+Since
+
+$K$
+
+is very small and
+
+$N$
+
+can be very large, this suggests trying to find
+a solution which is linear in
+
+$N$
+
+and possibly exponential in
+
+$K$
+
+. This suggests
+a dynamic programming approach where we proceed one row at a time, building a
+minimum spanning tree as we go. In general, this partially constructed MST will
+be a forest, and we must keep track of which nodes are in the same component of
+the forest. If two nodes are in the same component, we cannot add a
+
+new
+
+edge which connects them; conversely, if two nodes are not in the same
+component, then they must eventually be connected.
+
+For our first attempt, our DP state can be
+
+$(i,r)$
+
+where
+
+$1 \le i \le N$
+
+is the
+row that we have built our forest up to, and
+
+$r$
+
+is a state which represents
+which of the
+
+$K$
+
+nodes in this row are connected to each other by the partially
+constructed tree. For each state, the value we will track will be the total
+weight of the minimum forest in the first
+
+$i$
+
+rows such that:
+
+the forest connects every node in the first
+
+$i$
+
+rows to at least one node
+in row
+
+$i$
+
+the nodes in row
+
+$i$
+
+are divided into components according
+to
+
+$r$
+
+And of course, we also track the total number of such forests with that exact
+weight.
+
+One way to represent
+
+$r$
+
+is by a sequence of
+
+$k$
+
+integers, where each integer
+represents a component. For example,
+
+$[1,2,3,4,5,6]$
+
+represents a row where all
+nodes are in different components, and
+
+$[1,1,1,1,1,1]$
+
+represents a row where
+each node is connected. After accounting for many of these states being
+equivalent, and accounting for the fact that some, like
+
+$[1,2,1,2]$
+
+are
+impossible (because the graph must be planar), we count a total of
+
+$132$
+
+states
+for
+
+$K=6$
+
+. It is easiest to pre-compute all of these states before beginning the
+DP. In general, the number of states are gives by the
+
+Catalan sequence
+
+$C_K$
+
+.
+
+To transition from one row to the other, we have to consider every possible
+subset of edges between the two rows that we could include in the forest, then
+consider how the state is transformed by those edges. This gives
+
+$2^{2K-1}$
+
+possible ways to transition any state (there are
+
+$N$
+
+edges between two rows and
+
+$N-1$
+
+edges in the next row). This row-by-row approach gives a runtime
+
+$O(NKC_K 2^{2K-1})$
+
+.
+
+We can do better by not trying to transition the entire row at once. In fact,
+this approach is not just quicker, but it is likely simpler, simply because
+there are only a constant number of transitions fore each state. Our state is
+now
+
+$(i, j, r)$
+
+, which now corresponds to the first
+
+$i$
+
+rows plus the leftmost
+
+$j$
+
+nodes of row
+
+$i+1$
+
+. There are two ways to transition from
+
+$(i, K, r)$
+
+to
+
+$(i+1, 1, *)$
+
+(there is one edge, which can choose to take or not), and there
+are four ways to transition from
+
+$(i, j, r)$
+
+to
+
+$(i, j+1, *)$
+
+(there are two
+edges to choose from). This gives a runtime of
+
+$O(NKC_K)$
+
+.

@@ -1,0 +1,152 @@
+Solution ID: sol_circlecross_bronze_feb17
+Contest: FEB17
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_circlecross_bronze_feb17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we have a circle of 52 points, each one annotated with a
+letter. Each letter is associated with exactly two points. We want to count the
+number of pairs of letters such that if we connected the points with the same
+letter, the connecting line segments would intersect.
+
+If we take a circle and draw two intersecting line segments, and travel the
+circumference of the circle, we would alternate between the letters, either
+seeing
+
+$ABAB$
+
+or
+
+$BABA$
+
+. However, if we take the same circle and instead draw
+two line segments that don't intersect, when we travel the circumference of the
+circle, we will not see the letters alternating. We would either see
+
+$AABB$
+
+,
+
+$ABBA$
+
+,
+
+$BAAB$
+
+, or
+
+$BBAA$
+
+.
+
+Therefore, counting the number of intersections is equivalent to counting the
+number of pairs of letters where we see the sequence
+
+$ABAB$
+
+or
+
+$BABA$
+
+.
+
+In the provided solution, we take a slightly similar approach. Instead of explicitly
+looking for that sequence, we count the number of times a single letter appears between two other
+letters.
+
+import java.io.*;
+import java.util.*;
+public class circlecross {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("circlecross.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("circlecross.out")));
+		
+		// read in the crossings
+		String crosses = br.readLine();
+		// convert the string to an array of integers for simplicity
+		int[] crossArray = new int[crosses.length()];
+		for(int i = 0; i < crosses.length(); i++) {
+			crossArray[i] = crosses.charAt(i) - 'A';
+		}
+		
+		int numPairs = 0;
+		
+		// track the first and last occurrence of each numbers
+		for(int i = 0; i < 26; i++) {
+			int first = getFirstAppearance(crossArray, i);
+			int last = getLastAppearance(crossArray, i);
+			// count the number of single appearances within the range
+			numPairs += getNumberOfSingles(crossArray, i, first, last);
+		}
+		
+		pw.println(numPairs);
+		
+		pw.close();
+	}
+	
+	/**
+	 * Given an array of integers and some value, return the first index of the
+	 * value. Return -1 if the value does not appear in the array.
+	 * @param crossArray     The array to inspect.
+	 * @param desiredValue   The value to look for in the given array.
+	 * @return               The first index where desiredValue appears in crossArray, or -1 if it doesn't.
+	 */
+	public static int getFirstAppearance(int[] crossArray, int desiredValue) {
+		for(int i = 0; i < crossArray.length; i++) {
+			if(crossArray[i] == desiredValue) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	/**
+	 * Given an array of integers and some value, return the last index of the
+	 * value. Return -1 if the value does not appear in the array.
+	 * @param crossArray     The array to inspect.
+	 * @param desiredValue   The value to look for in the given array.
+	 * @return               The last index where desiredValue appears in crossArray, or -1 if it doesn't.
+	 */
+	public static int getLastAppearance(int[] crossArray, int desiredValue) {
+		for(int i = crossArray.length-1; i >= 0; i--) {
+			if(crossArray[i] == desiredValue) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	/**
+	 * Given an array of integers, a range of indices, and a lower bound, compute how many values
+	 * greater than the lower bound appear exactly once inside the range. The range of indices
+	 * is exclusive on the left and right indices.
+	 * @param crossArray    The array to inspect.
+	 * @param greaterThan   The lower bound of values we are interested in.
+	 * @param leftIndex     The left index (exclusive) of the range we are querying.
+	 * @param rightIndex    The right index (exclusive) of the range we are querying.
+	 * @return
+	 */
+	public static int getNumberOfSingles(int[] crossArray, int greaterThan, int leftIndex, int rightIndex) {
+		int numSingles = 0;
+		// keep track of the number of times a given number has appeared
+		int[] appearances = new int[26];
+		// loop over the range and update how many times a given number has appeared
+		for(int i = leftIndex+1; i < rightIndex; i++) {
+			appearances[crossArray[i]]++;
+		}
+		// loop over each of the numbers from the lower bound (exclusive) and
+		// count how many have appeared exactly once
+		for(int i = greaterThan + 1; i < appearances.length; i++) {
+			if(appearances[i] == 1) {
+				numSingles++;
+			}
+		}
+		return numSingles;
+	}
+	
+}

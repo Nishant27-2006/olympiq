@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Riya Arora, Benjamin Qi)
+<p>To solve the first subtask where <span class='math'>$N \leq 8$</span>, we can try all <span class='math'>$N!$</span> possible
+permutations to place a cow in a stall. Note that since
+<span class='math'>$20!\approx 2.4\cdot 10^{18}$</span>, the answer always fits into a
+<span class='math'>$\texttt{long long}$</span>. The runtime here will be <span class='math'>$O(N\cdot N!)$</span>. Alternatively,
+write a recursive function that tries placing the first cow in each of the
+stalls, the second cow in each of the stalls (aside from the one the first cow
+was placed in), and so on.
+<p>For a faster solution, let&apos;s consider the cows in descending order of height.
+<p><ol><li>The number of stalls we can  place the cow with the greatest height in is
+the number of stalls with height greater than or equal to the height of that
+cow.
+</li><li>The number of stalls the 2nd tallest cow can be placed in is the number of
+stalls at least as tall as this cow minus one (because the tallest cow is in one
+of these stalls). The key observation is that this quantity does not depend on
+which of the stalls we placed the tallest cow in (which would not be the case if
+the cows were not sorted in decreasing order).</li><li>Similarly, the number of stalls the 3rd tallest cow can be placed in is the
+number of stalls at least as tall as this cow minus two (because the tallest cow
+and the second tallest cow take up two of these stalls). </li></ol>
+<p>And so on.  If we multiply all these together, we get the final answer.
+Both of the solutions below compute the answer in <span class='math'>$\mathcal{O}(N^2)$</span> time.
+<p>Riya&apos;s code:
+<p><pre class='prettyprint'>
+#include &quot;bits/stdc++.h&quot;
+using namespace std;
+
+int N, A[20], B[20];
+long answer = 1;
+
+int count_bigger(int x) {
+  // Count the number of values of B_i which are greater than or equal to x
+  int cnt = 0;
+  for (int i=0; i&lt;N; i++) {
+    if (B[i] &gt;= x) {
+      cnt ++;
+    }
+  }
+  return cnt;
+}
+
+int main() {
+    cin &gt;&gt; N;
+    for (int i=0; i&lt;N; i++) {
+      cin &gt;&gt; A[i];
+    }
+    for (int i=0; i&lt;N; i++) {
+      cin &gt;&gt; B[i];
+    }
+    sort(A, A+N);
+
+    for (int i=N-1; i&gt;=0; i--) {
+      answer *= count_bigger(A[i]) - (N-1 - i);
+    }
+
+    cout &lt;&lt; answer &lt;&lt; endl;
+}
+
+</pre>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+ 
+public class PermootationCountingBronze {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        Integer[] cows = new Integer[n];
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 0; j &lt; n; j++) {
+            cows[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        Integer[] stalls = new Integer[n];
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 0; j &lt; n; j++) {
+            stalls[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        Arrays.sort(stalls);
+        long answer = 1;
+        for (int j = 0; j &lt; n; j++) {
+            long howManyFit = 0;
+            for (int cow : cows) {
+                if (cow &lt;= stalls[j]) {
+                    howManyFit++;
+                }
+            }
+            howManyFit -= j;
+            answer *= howManyFit;
+        }
+        System.out.println(answer);
+    }
+}
+</pre>
+<p>Bonus: Speed this up to <span class='math'>$O(N\log N)$</span> by sorting both the cows and stalls by
+height and using two pointers.
+<p></body></html>

@@ -1,0 +1,93 @@
+Solution ID: sol_cbarn2_gold_feb16
+Contest: FEB16
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_cbarn2_gold_feb16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nathan Pinsker)
+
+Although
+
+$k$
+
+is rather small, trying all possible positions for the doors is
+
+$O(\binom n k)$
+
+and is still way too slow.
+
+Sometimes it's helpful in solving a problem to think about simpler cases of the
+problem first. When you're given an optimization problem on a circular array,
+one easy simplification is to think about it in a linear setting instead. So, if
+Farmer John's barn was linear, then how could we solve it? For starters, we
+clearly need to put a barn at the left-most position. It's more apparent now
+that we can do dynamic programming, since if we iterate from left to right, the
+only state that we need to keep track of is the number of exterior doors used so
+far, and the position of the last exterior door. This algorithm would have a
+running time of
+
+$O(n^2k)$
+
+, which is quite fast -- looking at the bounds, we can
+actually introduce an extra factor of
+
+$n$
+
+when transferring this to the circular
+case without running over the time limit.
+
+Since we have a lot of running time to spare, we can simply iterate over all
+possible locations  of the first interior door. This turns the problem into
+effectively a linear one, although a bit of care is needed when processing the
+last door. We obtain an
+
+$O(n^3k)$
+
+algorithm, which is fast enough to receive
+full credit.
+
+Here's Mark Gordon's solution:
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+
+using namespace std;
+
+#define MAXN 1010
+#define MAXK 10
+#define INF 0x3FFFFFFFFFFFFFFFLL
+
+int N, K;
+long long A[MAXN];
+long long DP[MAXK][MAXN];
+
+int main() {
+  cin >> N >> K;
+  for (int i = 0; i < N; i++) {
+    cin >> A[i];
+  }
+
+  long long result = INF;
+  for (int i = 0; i < N; i++) {
+    memset(DP, 0x3F, sizeof(DP));
+    DP[0][N] = 0;
+
+    for (int k = 1; k <= K; k++) {
+      for (int j = 0; j < N; j++) {
+        long long val = 0;
+        for (int a = j + 1; a <= N; a++) {
+          val += A[a - 1] * (a - j - 1);
+          DP[k][j] = min(DP[k][j], val + DP[k - 1][a]);
+        }
+      }
+    }
+    result = min(result, DP[K][0]);
+    rotate(A, A + 1, A + N);
+  }
+  cout << result << endl;
+}

@@ -1,0 +1,325 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: DEC24 Contest - Bronze Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Farmer John is trying to describe his favorite USACO contest to Elsie, but she
+is having trouble understanding why he likes it so much. He says "My favorite
+part of the contest was when Bessie said 'It's Mooin' Time' and mooed all over
+the contest."
+
+Elsie still doesn't understand so Farmer John downloads the contest as a text
+file and  tries to explain what he means. The contest is defined as a string of
+lowercase letters of length $N$ ($3 \leq N \leq 20\,000$). A moo is generally
+defined as the substring $c_ic_jc_j$ where some character $c_i$ followed
+directly by $2$ occurrences of some  character $c_j$ where $c_i \neq c_j$.
+According to Farmer John, Bessie moos a lot, so if some moo appears at least $F$
+($1\le F\le N$) times in the contest, that might be from Bessie.  
+
+However, Farmer John's download might have been corrupted, and the text file
+might have up to one character that differs from the original file. Print all
+possible moos that  Bessie could have made taking the potential error into
+account, sorted in alphabetical order.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$ and $F$, representing the length of the string and
+the frequency threshold for a moo by Bessie. 
+
+The second line contains a string of lowercase letters of length $N$,
+representing the contest.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Print out the number of possible moos that Bessie makes, followed by a
+lexicographically sorted list of the moos. Each moo should appear on a separate
+line.
+
+SAMPLE INPUT:
+10 2
+zzmoozzmoo
+SAMPLE OUTPUT: 
+1
+moo
+
+In this case, no character change affects the answer. The only moo Bessie made
+was "moo".
+
+SAMPLE INPUT:
+17 2
+momoobaaaaaqqqcqq
+SAMPLE OUTPUT: 
+3
+aqq
+baa
+cqq
+
+In this case, the $a$ at position $8$ (zero-indexed) could have been corrupted from a $b$ which
+would have resulted in "baa" being a moo that Bessie made twice. Alternatively,
+the $q$ at position $11$ could have been corrupted from a $c$ which would have
+resulted in "cqq" being a possible moo that Bessie made. "aqq" can be made by
+swapping the $c$ with an $a$.
+
+SAMPLE INPUT:
+3 1
+ooo
+SAMPLE OUTPUT: 
+25
+aoo
+boo
+coo
+doo
+eoo
+foo
+goo
+hoo
+ioo
+joo
+koo
+loo
+moo
+noo
+poo
+qoo
+roo
+soo
+too
+uoo
+voo
+woo
+xoo
+yoo
+zoo
+
+SCORING:
+Inputs 4-8: $N \le 100$ Inputs 9-13: No additional constraints.
+
+
+
+Problem credits: Suhas Nagar
+
+
+
+\section*{Input Format}
+The second line contains a string of lowercase letters of length $N$,
+representing the contest.
+
+OUTPUT FORMAT (print output to the terminal / stdout):Print out the number of possible moos that Bessie makes, followed by a
+lexicographically sorted list of the moos. Each moo should appear on a separate
+line.SAMPLE INPUT:10 2
+zzmoozzmooSAMPLE OUTPUT:1
+mooIn this case, no character change affects the answer. The only moo Bessie made
+was "moo".SAMPLE INPUT:17 2
+momoobaaaaaqqqcqqSAMPLE OUTPUT:3
+aqq
+baa
+cqqIn this case, the $a$ at position $8$ (zero-indexed) could have been corrupted from a $b$ which
+would have resulted in "baa" being a moo that Bessie made twice. Alternatively,
+the $q$ at position $11$ could have been corrupted from a $c$ which would have
+resulted in "cqq" being a possible moo that Bessie made. "aqq" can be made by
+swapping the $c$ with an $a$.SAMPLE INPUT:3 1
+oooSAMPLE OUTPUT:25
+aoo
+boo
+coo
+doo
+eoo
+foo
+goo
+hoo
+ioo
+joo
+koo
+loo
+moo
+noo
+poo
+qoo
+roo
+soo
+too
+uoo
+voo
+woo
+xoo
+yoo
+zooSCORING:Inputs 4-8: $N \le 100$Inputs 9-13: No additional constraints.Problem credits: Suhas Nagar
+
+\section*{Output Format}
+SAMPLE INPUT:10 2
+zzmoozzmooSAMPLE OUTPUT:1
+mooIn this case, no character change affects the answer. The only moo Bessie made
+was "moo".SAMPLE INPUT:17 2
+momoobaaaaaqqqcqqSAMPLE OUTPUT:3
+aqq
+baa
+cqqIn this case, the $a$ at position $8$ (zero-indexed) could have been corrupted from a $b$ which
+would have resulted in "baa" being a moo that Bessie made twice. Alternatively,
+the $q$ at position $11$ could have been corrupted from a $c$ which would have
+resulted in "cqq" being a possible moo that Bessie made. "aqq" can be made by
+swapping the $c$ with an $a$.SAMPLE INPUT:3 1
+oooSAMPLE OUTPUT:25
+aoo
+boo
+coo
+doo
+eoo
+foo
+goo
+hoo
+ioo
+joo
+koo
+loo
+moo
+noo
+poo
+qoo
+roo
+soo
+too
+uoo
+voo
+woo
+xoo
+yoo
+zooSCORING:Inputs 4-8: $N \le 100$Inputs 9-13: No additional constraints.Problem credits: Suhas Nagar
+
+\section*{Sample Input}
+\begin{verbatim}
+10 2
+zzmoozzmoo
+
+17 2
+momoobaaaaaqqqcqq
+
+3 1
+ooo
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+1
+moo
+
+SAMPLE INPUT:17 2
+momoobaaaaaqqqcqqSAMPLE OUTPUT:3
+aqq
+baa
+cqqIn this case, the $a$ at position $8$ (zero-indexed) could have been corrupted from a $b$ which
+would have resulted in "baa" being a moo that Bessie made twice. Alternatively,
+the $q$ at position $11$ could have been corrupted from a $c$ which would have
+resulted in "cqq" being a possible moo that Bessie made. "aqq" can be made by
+swapping the $c$ with an $a$.SAMPLE INPUT:3 1
+oooSAMPLE OUTPUT:25
+aoo
+boo
+coo
+doo
+eoo
+foo
+goo
+hoo
+ioo
+joo
+koo
+loo
+moo
+noo
+poo
+qoo
+roo
+soo
+too
+uoo
+voo
+woo
+xoo
+yoo
+zooSCORING:Inputs 4-8: $N \le 100$Inputs 9-13: No additional constraints.Problem credits: Suhas Nagar
+
+3
+aqq
+baa
+cqq
+
+SAMPLE INPUT:3 1
+oooSAMPLE OUTPUT:25
+aoo
+boo
+coo
+doo
+eoo
+foo
+goo
+hoo
+ioo
+joo
+koo
+loo
+moo
+noo
+poo
+qoo
+roo
+soo
+too
+uoo
+voo
+woo
+xoo
+yoo
+zooSCORING:Inputs 4-8: $N \le 100$Inputs 9-13: No additional constraints.Problem credits: Suhas Nagar
+
+25
+aoo
+boo
+coo
+doo
+eoo
+foo
+goo
+hoo
+ioo
+joo
+koo
+loo
+moo
+noo
+poo
+qoo
+roo
+soo
+too
+uoo
+voo
+woo
+xoo
+yoo
+zoo
+
+SCORING:Inputs 4-8: $N \le 100$Inputs 9-13: No additional constraints.Problem credits: Suhas Nagar
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1445
+
+\section*{Source}
+USACO DEC24 Contest, Bronze Division, Problem ID: 1445
+
+\end{document}

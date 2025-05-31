@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi and Brian Dean )
+<p>Intuitively, a clockwise fence will &quot;tend&quot; to turn right, and a counterclockwise
+fence will tend to turn left. More concretely, for every two adjacent fence
+segments, one can compute the angle turned at that corner: either no turn (if
+the two segments are in the same direction), or a turn by <span class='math'>$90^{\circ}$</span>
+counterclockwise (e.g. if the first segment is E and the second is N), or a turn
+by <span class='math'>$-90^{\circ}$</span> counterclockwise (e.g. if the first segment is E and the second
+is S). Doing a few examples by hand will reveal that the sum of these
+angles, over all corners of the fence, is precisely <span class='math'>$360^{\circ}$</span> if the fence
+is counterclockwise, and <span class='math'>$-360^{\circ}$</span> if clockwise (other sums can be achieved
+if the fence is allowed to intersect itself, but we don&apos;t have to worry about
+this complication in this problem). 
+<p>This fact can be proven a variety of ways, such as by inducting on the area of
+the region enclosed by the fence. It gives a linear-time algorithm, shown below.
+<p>Dhruv&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;cassert&gt;
+using namespace std;
+
+int angle_from_direction(char a)
+{
+	if(a == &apos;E&apos;) return 0;
+	if(a == &apos;N&apos;) return 90;
+	if(a == &apos;W&apos;) return 180;
+	if(a == &apos;S&apos;) return 270;
+}
+
+int angle_change(char a,char b)
+{
+	int theta1 = angle_from_direction(a);
+	int theta2 = angle_from_direction(b);
+	if(theta2 == (theta1 + 90)%360) return 90;
+	else if(theta2 == theta1) return 0;
+	else if(theta2 == (theta1 + 270)%360) return -90;
+	else assert(false);	//fence should not backtrack on itself
+}
+
+void test(string s)
+{
+	int total_change = 0;
+	for(int i=0;i&lt;s.size();i++)
+		total_change += angle_change(s[i],s[(i+1)%s.size()]);
+	if(total_change == 360) cout &lt;&lt; &quot;CCW\n&quot;;
+	else cout &lt;&lt; &quot;CW\n&quot;;
+}
+
+int main()
+{
+	int N;
+	string s;
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;N;i++)
+	{
+		cin &gt;&gt; s;
+		test(s);
+	}
+}
+</pre>
+<p>There are several other ways to effectively approach this problem.  For example,
+one can look at the direction of any &quot;boundary&quot; segment.  That is, look any
+horizontally-oriented segment that is as far north as possible --- if it is 
+directed east, the entire path must be clockwise, and if directed west, the 
+entire path must be counterclockwise.  In fact, we can draw any horizontal or
+vertical line through the scene and deduce from the direction of the segments
+along this cross section the overall orientation of the fence.  For example, if
+we draw a horizontal line through the scene, it will be cut by some vertical
+segments pointing north and some pointing south (in fact, these will alternate 
+in direction along the cross section); if the westmost segment points north, the
+entire path has a clockwise orientation, and vice versa.
+<p>The <a href='https://en.wikipedia.org/wiki/Shoelace_formula'>shoelace formula</a> for
+computing areas of polygons also leads to a solution for this problem, since it
+delivers a &quot;signed&quot; area, being positive or negative depending on the
+orientation of the polygon in question.
+<p></body></html>

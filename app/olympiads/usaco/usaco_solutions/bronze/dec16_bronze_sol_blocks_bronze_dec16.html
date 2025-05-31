@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have several pairs of words. We want to count the maximum
+number of times a letter will appear when we write out a word from each pair,
+no matter which word we pick from each pair.
+<p>We can start to tackle this problem by handling the case where there is exactly
+one pair of words to consider. When there is exactly one pair of words to consider,
+the maximum number of times the letter &apos;a&apos; will appear is the maximum of the number
+of times the letter &apos;a&apos; appears in the first word and the number of times the letter
+&apos;a&apos; appears in the second word. We can replace &apos;a&apos; with any letter and that will get
+us the maximum number of times any given letter will appear.
+<p>Now that we&apos;ve handled the case where there is exactly one pair of words to consider,
+we need to figure out how to extend this to multiple pairs. Intuitively, the situation
+where we&apos;ll need to write &apos;a&apos; the maximum possible number of times in total is when we
+need to write &apos;a&apos; the maximum possible number of times for each individual pair.
+What we can do therefore is compute the maximum frequency count for a given letter in a pair
+and then add up the maximum frequency counts over all pairs.
+<p>Here is my Java code.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class blocks {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader(&quot;blocks.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;blocks.out&quot;)));
+
+		// allocate array to track total blocks needed
+		// letter a maps to index 0, letter b maps to index 1, ...
+		// letter z maps to index 25
+		int[] blocksNeeded = new int[26];
+
+		// read in the number of blocks
+		int n = Integer.parseInt(br.readLine());
+		
+		for(int i = 0; i &lt; n; i++) {
+			// read in each pair of words
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			String firstWord = st.nextToken();
+			String secondWord = st.nextToken();
+			
+			// get the frequency counts
+			int[] firstFrequency = getFrequency(firstWord);
+			int[] secondFrequency = getFrequency(secondWord);
+			
+			// update the number of blocks needed
+			for(int j = 0; j &lt; 26; j++) {
+				if(firstFrequency[j] &gt; secondFrequency[j]) {
+					blocksNeeded[j] += firstFrequency[j];
+				}
+				else {
+					blocksNeeded[j] += secondFrequency[j];
+				}
+			}
+		}
+
+		// print the answer
+		for(int i = 0; i &lt; 26; i++) {
+			pw.println(blocksNeeded[i]);
+		}
+		
+		pw.close();
+	}
+	
+	/**
+	 * This function takes in a string and returns an integer array
+	 * of the number of blocks needed to spell out the given word. 
+	 */
+	public static int[] getFrequency(String s) {
+		int[] blocksNeeded = new int[26];
+		for(int i = 0; i &lt; s.length(); i++) {
+			int index = s.charAt(i) - &apos;a&apos;;
+			blocksNeeded[index]++;
+		}
+		return blocksNeeded;
+	}
+	
+}
+</pre></body></html>

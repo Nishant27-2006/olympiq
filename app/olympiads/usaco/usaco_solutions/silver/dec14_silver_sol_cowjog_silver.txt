@@ -1,0 +1,64 @@
+Solution ID: sol_cowjog_silver
+Contest: DEC14
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_cowjog_silver.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Jonathan Paulson -
+
+[email protected]
+
+)
+
+If the cows didn't have to slow down, after
+
+$T$
+
+seconds cow
+
+$i$
+
+will be at position
+
+$x_i + T*s_i$
+
+. If a faster cow started behind a slower cow, but the faster cow ended up ahead, that means the faster cow will join the slower cow's group (or a group in the middle).
+
+So we want to count the number of cows don't "cross" any cows ahead of them; this is the number of cows who won't join another group (and hence will start their own group).
+
+The most obvious way to to go through each cow and check if any of the cows ahead of them are going to end up behind them. But this is too slow: there are O(N^2) pairs of cows, and N = 10^5. So O(N^2) ~ 10^10, and computers only do about 10^9 operations per second.
+
+Luckily, there is a faster way: start from the back, and keep track of the least far ending position as you go. This only takes about N operations, which is very fast.
+
+Here is my code for the fast approach:
+
+#include <cstdio>
+#include <vector>
+
+#define PB push_back
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+  ll n, t;
+  scanf("%lld %lld", &n, &t);
+  vector<ll> S;
+  for(ll i=0; i<n; i++) {
+    ll x, s;
+    scanf("%lld %lld\n", &x, &s);
+    S.PB(x + s*t);
+  }
+
+  ll ans = 1;
+  ll slow = S[n-1];
+  for(ll i=n-1; i>=0; i--) {
+    if(S[i] < slow) { ans++; }
+    slow = min(slow, S[i]);
+  }
+  printf("%lld\n", ans);
+}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>Suppose that Farmer John doesn&apos;t remove any cows from the line. Then we can
+simply simulate the actions of the cows in order, keeping track of which boxes
+of cereal are left. This yields an <span class='math'>$O(N^2)$</span> solution to the original problem:
+for each <span class='math'>$i$</span>, simulate the last <span class='math'>$N-i$</span> cows.
+<p>There are several ways to speed up this solution. One way is to start with
+<span class='math'>$i = N$</span> and add cows one by one. Suppose we have solved the problem for the last
+<span class='math'>$N-i$</span> cows: that is, if the last <span class='math'>$N-i$</span> cows line up in order, we know which box
+each cow takes. We want to efficiently update this outcome to the outcome if
+instead the last <span class='math'>$N+1-i$</span> cows were to line up. Thus, we need to handle the
+operation &quot;add cow to front of line&quot;. 
+<p>Suppose the new cow has preferences <span class='math'>$(f, s)$</span>. Then the new cow will certainly
+get cereal <span class='math'>$f$</span>. If the last <span class='math'>$N-i$</span> cows didn&apos;t take cereal <span class='math'>$f$</span>, then nothing will
+change: all of those cows have the same outcomes after adding the new cow. But
+if some cow <span class='math'>$j$</span> had taken cereal <span class='math'>$f$</span>, then after adding the new cow, <span class='math'>$j$</span> no
+longer gets <span class='math'>$f$</span>. If <span class='math'>$f$</span> is <span class='math'>$j$</span>&apos;s second choice, then now <span class='math'>$j$</span> gets nothing---and
+all other cows have the same outcomes. If <span class='math'>$f$</span> is <span class='math'>$j$</span>&apos;s first choice, and her
+second choice was taken by some cow earlier in line, then again <span class='math'>$j$</span> gets
+nothing, and all other cows have the same outcome. But if <span class='math'>$j$</span>&apos;s second choice
+was not taken by some cow earlier in line, then <span class='math'>$j$</span> will take it. Unfortunately,
+this case may cause a cascade: we need to recurse on <span class='math'>$j$</span> and figure out whether
+<span class='math'>$j$</span> stole her second-choice cereal from someone later in line, and so forth.
+<p>At each step of the recursion, a cow <span class='math'>$j$</span> can only &quot;steal&quot; from one later cow:
+the cow who originally took the cereal which <span class='math'>$j$</span> is now taking. So the above
+algorithm doesn&apos;t blow up exponentially or anything. But each addition of a new
+cow seems like it could cause a recursion of depth <span class='math'>$O(N)$</span>, which would imply an
+overall time complexity of <span class='math'>$O(N^2)$</span>!
+<p>Fortunately, this is not the case: we can show that the sum of the recursion
+depths is actually <span class='math'>$O(N)$</span>. The reason is that every time we recurse, a cow is
+either kicked from first-preference to second-preference or from
+second-preference to nothing. Moreover, as we add cows, the reverse can never
+happen: a cow who was getting nothing cannot suddenly get something when we add
+a cow to the front of the line. It follows that the total depth of all the
+recursion is at most <span class='math'>$2N$</span>.
+<p>To implement the algorithm efficiently (with a constant-time update at each
+recursion step) we just need to keep track of which cow currently gets each box
+of cereal (<span class='math'>$occ[pos]$</span> stores the index of the cow that gets cereal <span class='math'>$pos$</span>). The final algorithm runs in time <span class='math'>$O(N)$</span>. See my code below:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MAXN 100001
+
+int N,M;
+int f[MAXN], s[MAXN];
+int occ[MAXN];
+int ans[MAXN];
+
+int main()
+{
+	ifstream fin("cereal.in");
+	fin &gt;&gt; N &gt;&gt; M;
+	for(int i=1;i&lt;=N;i++)
+		fin &gt;&gt; f[i] &gt;&gt; s[i];
+	int cnt = 0;
+	for(int i=N;i&gt;=1;i--)
+	{
+		int j = i;
+		int pos = f[i];
+		while(1)
+		{
+			if(occ[pos] == 0)
+			{
+				occ[pos] = j;
+				cnt++;
+				break;
+			}
+			else if(occ[pos] &lt; j)
+				break;
+			else
+			{
+				int k = occ[pos];
+				occ[pos] = j;
+				if(pos == s[k])
+					break;
+				j = k;
+				pos = s[k];
+			}
+		}
+		ans[i] = cnt;
+	}
+	ofstream fout ("cereal.out");
+	for(int i=1;i&lt;=N;i++)
+		fout &lt;&lt; ans[i] &lt;&lt; '\n';
+}
+</pre>
+<p></body></html>

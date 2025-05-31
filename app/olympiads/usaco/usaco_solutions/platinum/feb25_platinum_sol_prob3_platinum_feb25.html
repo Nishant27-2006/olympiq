@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Andi Qu)
+<p>First, let&apos;s characterize Elsie&apos;s optimal choice. Bessie loses <span class='math'>$a_i + b_i$</span>
+points if she answers question <span class='math'>$i$</span> and Elsie changes it. As such, it is optimal
+for Elsie to change the top <span class='math'>$k$</span> questions Bessie answers, sorted by
+<span class='math'>$a_i + b_i$</span>.
+<p><strong>Observation 1:</strong> Sort the questions in ascending order of <span class='math'>$a_i + b_i$</span>, and
+suppose Bessie answers questions <span class='math'>$q_1, \dots, q_{p + k}$</span> where
+<span class='math'>$1 \leq q_1 &lt; \cdots &lt; q_{p + k} \leq N$</span> and <span class='math'>$0 \leq p \leq N - k$</span>. If Bessie
+acts optimally, then <span class='math'>$q_i = i$</span> for each <span class='math'>$i = 1, \dots, p$</span>. In other words,
+Bessie&apos;s optimal choice consists of some (possibly empty) prefix of the sorted
+questions and then <span class='math'>$k$</span> additional questions in the suffix.
+<p><em>(Technically, the prefix extends up to <span class='math'>$i = p + 1$</span> when <span class='math'>$k &gt; 0$</span>, but it&apos;s
+more convenient to split up Bessie&apos;s optimal choice at <span class='math'>$p$</span>.)</em>
+<p><strong>Proof:</strong> Elsie will never change any questions in the prefix, so Bessie
+will only gain points by answering all of them.
+<p>Using Observation 1, we can construct the following <span class='math'>$O(QN^2 \log N)$</span> algorithm
+to solve the first subtask:
+<ul><li>Sort the questions in ascending order of <span class='math'>$a_i + b_i$</span>.</li><li>For each <span class='math'>$k$</span>:
+<ul><li>Iterate through the range of valid prefix lengths <span class='math'>$p$</span>.</li><li>For each
+<span class='math'>$p$</span>, compute the sum of the <span class='math'>$k$</span> smallest <span class='math'>$b_i$</span> in the suffix and subtract it
+from the prefix sum of <span class='math'>$a_i$</span>. The result is the score for <span class='math'>$p$</span>. Formally:
+<p><div class='math'>$$\text{score}[p] = \sum_{i = 1}^p a_i - \min_{p &lt; q_{p + 1} &lt; \cdots &lt; q_{p + k} \leq N} \sum_{j = p + 1}^{p + k} b_{q_j}$$</div>
+</li><li>Output the best score.</li></ul>
+</li></ul>
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;utility&gt;
+typedef long long ll;
+using namespace std;
+ 
+const ll INF = 1e18;
+ 
+int n, q;
+pair&lt;ll, ll&gt; questions[200001];
+ll pref[200001], sorted_b[200001];
+ 
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin &gt;&gt; n &gt;&gt; q;
+    for (int i = 1; i &lt;= n; i++) {
+        cin &gt;&gt; questions[i].first &gt;&gt; questions[i].second;
+    }
+    sort(questions + 1, questions + n + 1, [](pair&lt;ll, ll&gt; a, pair&lt;ll, ll&gt; b) {
+        return a.first + a.second &lt; b.first + b.second;
+    });
+    for (int i = 1; i &lt;= n; i++) {
+        pref[i] = pref[i - 1] + questions[i].first;
+    }
+    while (q--) {
+        int k;
+        cin &gt;&gt; k;
+        ll best_score = -INF;
+        for (int i = 0; i &lt;= n - k; i++) {
+            ll score = pref[i];
+            for (int j = i + 1; j &lt;= n; j++) {
+                sorted_b[j] = questions[j].second;
+            }
+            sort(sorted_b + i + 1, sorted_b + n + 1);
+            for (int j = i + 1; j &lt;= i + k; j++) {
+                score -= sorted_b[j];
+            }
+            if (score &gt;= best_score) {
+                best_score = score;
+            }
+        }
+        cout &lt;&lt; best_score &lt;&lt; &apos;\n&apos;;
+    }
+    return 0;
+}
+</pre>
+<p>A major bottleneck in this algorithm is that it spends <span class='math'>$O(N \log N)$</span> time
+computing the sum of the <span class='math'>$k$</span> smallest <span class='math'>$b_i$</span> in the suffix. This part of the
+algorithm seems like a variation of the classical range minimum/sum query, so we
+might hope to optimize it to <span class='math'>$O(\log N)$</span> per query.
+<p>Indeed, there are several data structures we can use to optimize these queries.
+For example, a <a href='https://usaco.guide/adv/wavelet'>wavelet tree</a> or
+<a href='https://cp-algorithms.com/data_structures/segment_tree.html#finding-the-k-th-smallest-number-in-a-range'>persistent
+segment tree</a> can answer these queries directly in <span class='math'>$O(\log N)$</span> time.
+<p>However, we can use our algorithm&apos;s structure to simplify the data structures.
+Note that we are not making <em>arbitrary range</em> queries, but instead
+<em>suffix</em> queries that each differ in length by exactly 1. As such, we can
+iterate backward through the range of <span class='math'>$p$</span> and use a priority queue to keep track
+of the <span class='math'>$k$</span> smallest <span class='math'>$b_i$</span> in the current suffix. Each time we decrement <span class='math'>$p$</span>, we
+push one element to the queue and then pop one.
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;utility&gt;
+#include &lt;queue&gt;
+typedef long long ll;
+using namespace std;
+
+const ll INF = 1e18;
+
+int n, q;
+pair&lt;ll, ll&gt; questions[200001];
+ll pref[200001], sorted_b[200001];
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin &gt;&gt; n &gt;&gt; q;
+    for (int i = 1; i &lt;= n; i++) {
+        cin &gt;&gt; questions[i].first &gt;&gt; questions[i].second;
+    }
+    sort(questions + 1, questions + n + 1, [](pair&lt;ll, ll&gt; a, pair&lt;ll, ll&gt; b) {
+        return a.first + a.second &lt; b.first + b.second;
+    });
+    for (int i = 1; i &lt;= n; i++) {
+        pref[i] = pref[i - 1] + questions[i].first;
+    }
+    while (q--) {
+        int k;
+        cin &gt;&gt; k;
+        ll k_min_sum = 0;
+        priority_queue&lt;ll&gt; k_min;
+        for (int i = n; i &gt; n - k; i--) {
+            k_min.push(questions[i].second);
+            k_min_sum += questions[i].second;
+        }
+        ll best_score = pref[n - k] - k_min_sum;
+        for (int i = n - k; i &gt; 0; i--) {
+            k_min.push(questions[i].second);
+            k_min_sum += questions[i].second;
+            k_min_sum -= k_min.top();
+            k_min.pop();
+            best_score = max(best_score, pref[i - 1] - k_min_sum);
+        }
+        cout &lt;&lt; best_score &lt;&lt; &apos;\n&apos;;
+    }
+    return 0;
+}
+</pre>
+<p>Another bottleneck in this algorithm is that we seem to be repeating a lot of
+work between values of <span class='math'>$k$</span> by scanning through the entire range of <span class='math'>$p$</span> each
+time. Intuitively, knowing Bessie&apos;s optimal choice for <span class='math'>$k$</span> should give us some
+information about her optimal choice for <span class='math'>$k + 1$</span>.
+<p><strong>Observation 2:</strong> Let <span class='math'>$p^*[k]$</span> be the optimal prefix length <span class='math'>$p$</span> for <span class='math'>$k$</span>
+(breaking ties by choosing the larger <span class='math'>$p$</span>). Then <span class='math'>$p^*[k + 1] \leq p^*[k]$</span> for
+each <span class='math'>$k = 0, \dots, N - 1$</span>.
+<p><strong>Proof:</strong> Let <span class='math'>$\text{opt}[k]$</span> be the optimal score for <span class='math'>$k$</span>. Assume for a
+contradiction that <span class='math'>$p^*[k + 1] &gt; p^*[k]$</span> for some <span class='math'>$k$</span>. Suppose question
+<span class='math'>$q_{k + 1}$</span> has the <span class='math'>$(k + 1)$</span>-th smallest <span class='math'>$b_i$</span> in the suffix
+<span class='math'>$p^*[k + 1] + 1, \dots, N$</span>. By assumption, Bessie would choose to answer
+question <span class='math'>$q_{k + 1}$</span> for <span class='math'>$k + 1$</span> but not <span class='math'>$k$</span>. However:
+<ul><li>If <span class='math'>$\text{opt}[k + 1] &gt; \text{opt}[k] - b_{q_{k + 1}}$</span>, then Bessie can
+improve her score for <span class='math'>$k$</span> by answering the same questions she would for <span class='math'>$k + 1$</span>,
+minus question <span class='math'>$q_{k + 1}$</span>. This contradicts the optimality of <span class='math'>$p^*[k]$</span>.</li><li>If <span class='math'>$\text{opt}[k + 1] &lt; \text{opt}[k] - b_{q_{k + 1}}$</span>, then Bessie can
+improve her score for <span class='math'>$k + 1$</span> by answering the same questions she would for <span class='math'>$k$</span>,
+plus question <span class='math'>$q_{k + 1}$</span>. This contradicts the optimality of <span class='math'>$p^*[k + 1]$</span>.</li><li>If <span class='math'>$\text{opt}[k + 1] = \text{opt}[k] - b_{q_{k + 1}}$</span>, then Bessie can
+achieve the same score for <span class='math'>$k$</span> with a longer prefix. This contradicts the
+tie-breaking condition.</li></ul>
+Therefore, <span class='math'>$p^*[k + 1] \leq p^*[k]$</span> for each <span class='math'>$k = 0, \dots, N - 1$</span>.
+<p>Using Observation 2, we can construct the following <span class='math'>$O(N \log^2 N)$</span>
+divide-and-conquer algorithm to solve the full problem:
+<p><ul><li>We want to find <span class='math'>$p^*[k]$</span> for each <span class='math'>$k = k_l, \dots, k_r$</span>, given that each
+<span class='math'>$p^*[k] \in [p_l, p_r]$</span>.<ul><li>Initially,
+<span class='math'>$k_l = p_l = 0$</span> and <span class='math'>$k_r = p_r = N$</span></li></ul></li><li>Let
+<span class='math'>$k_\text{mid} = \left\lfloor\frac{k_l + k_r}{2}\right\rfloor$</span> and find
+<span class='math'>$p^*[k_\text{mid}]$</span> by iterating through the range <span class='math'>$[p_l, p_r]$</span>.</li><li>We now
+know that:
+<ul><li><span class='math'>$p^*[k] \in [p^*[k_\text{mid}], p_r]$</span> for each
+<span class='math'>$k = k_l, \dots, k_\text{mid} - 1$</span>.</li><li><span class='math'>$p^*[k] \in [p_l, p^*[k_\text{mid}]]$</span> for each
+<span class='math'>$k = k_\text{mid} + 1, \dots, k_r$</span>.</li></ul>
+</li><li>Split the ranges <span class='math'>$[k_l, k_r]$</span> and <span class='math'>$[p_l, p_r]$</span> accordingly and recursively
+solve those two subproblems.</li></ul>
+<p>Unfortunately, the priority queue approach described previously will not work
+with this algorithm. As such, the solution code below uses a persistent segment
+tree to handle range queries. However, it is possible to solve this problem
+using a regular segment tree or a doubly linked list by extending the idea of
+making point updates as <span class='math'>$p$</span> increments/decrements. (The doubly linked list
+approach would also remove a <span class='math'>$\log N$</span> factor from the time complexity.)
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;utility&gt;
+typedef long long ll;
+using namespace std;
+ 
+const ll INF = 1e18;
+ 
+int n, q;
+ 
+struct Question {
+    ll a, b;
+    int b_rank;
+} questions[200001];
+ 
+ll pref[200001], sorted_b[200001], ans[200001];
+ 
+struct Node {
+    Node *l, *r;
+    ll sum;
+    int cnt;
+ 
+    Node(ll s, int c) : l(nullptr), r(nullptr), sum(s), cnt(c) {}
+ 
+    Node(Node *_l, Node *_r) {
+        l = _l, r = _r;
+        sum = 0;
+        cnt = 0;
+        if (l) {
+            sum += l-&gt;sum;
+            cnt += l-&gt;cnt;
+        }
+        if (r) {
+            sum += r-&gt;sum;
+            cnt += r-&gt;cnt;
+        }
+    }
+} *roots[200001];
+ 
+Node *build(int l = 1, int r = n) {
+    if (l == r) return new Node(0, 0);
+    int mid = (l + r) / 2;
+    return new Node(build(l, mid), build(mid + 1, r));
+}
+ 
+Node *update(Node *node, Question val, int l = 1, int r = n) {
+    if (l == r) {
+        return new Node(node-&gt;sum + val.b, node-&gt;cnt + 1);
+    }
+    int mid = (l + r) / 2;
+    if (val.b_rank &gt; mid) {
+        return new Node(node-&gt;l, update(node-&gt;r, val, mid + 1, r));
+    } else {
+        return new Node(update(node-&gt;l, val, l, mid), node-&gt;r);
+    }
+}
+ 
+ll k_min_sum(Node *l_node, Node *r_node, int k, int l = 1, int r = n) {
+    if (k == 0) return 0;
+    if (l == r) return sorted_b[l];
+    int mid = (l + r) / 2;
+    int l_cnt = r_node-&gt;l-&gt;cnt - l_node-&gt;l-&gt;cnt;
+    if (l_cnt &gt;= k) {
+        return k_min_sum(l_node-&gt;l, r_node-&gt;l, k, l, mid);
+    } else {
+        return r_node-&gt;l-&gt;sum - l_node-&gt;l-&gt;sum +
+               k_min_sum(l_node-&gt;r, r_node-&gt;r, k - l_cnt, mid + 1, r);
+    }
+}
+ 
+void solve(int k_lo, int k_hi, int cut_lo, int cut_hi) {
+    if (k_lo &gt; k_hi) return;
+    int k = (k_lo + k_hi) / 2;
+    int best_cut = cut_lo;
+    ans[k] = -INF;
+    for (int i = cut_lo; i &lt;= min(cut_hi, n - k); i++) {
+        ll score = pref[i] - k_min_sum(roots[i], roots[n], k);
+        if (score &gt;= ans[k]) {
+            ans[k] = score;
+            best_cut = i;
+        }
+    }
+    solve(k_lo, k - 1, best_cut, cut_hi);
+    solve(k + 1, k_hi, cut_lo, best_cut);
+}
+ 
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin &gt;&gt; n &gt;&gt; q;
+    for (int i = 1; i &lt;= n; i++) {
+        cin &gt;&gt; questions[i].a &gt;&gt; questions[i].b;
+    }
+    sort(questions + 1, questions + n + 1,
+         [](Question x, Question y) { return x.b &lt; y.b; });
+    for (int i = 1; i &lt;= n; i++) {
+        questions[i].b_rank = i;
+        sorted_b[i] = questions[i].b;
+    }
+    sort(questions + 1, questions + n + 1,
+         [](Question x, Question y) { return x.a + x.b &lt; y.a + y.b; });
+    roots[0] = build();
+    for (int i = 1; i &lt;= n; i++) {
+        roots[i] = update(roots[i - 1], questions[i]);
+    }
+    for (int i = 1; i &lt;= n; i++) {
+        pref[i] = pref[i - 1] + questions[i].a;
+    }
+    solve(0, n, 0, n);
+    while (q--) {
+        int k;
+        cin &gt;&gt; k;
+        cout &lt;&lt; ans[k] &lt;&lt; &apos;\n&apos;;
+    }
+    return 0;
+}
+</pre>
+<p></body></html>

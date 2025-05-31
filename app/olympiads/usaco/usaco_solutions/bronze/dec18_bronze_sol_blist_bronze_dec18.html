@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Nathan Pinsker )
+<p>The key to this problem is realizing that the IDs of the buckets aren&apos;t relevant
+to solving it. Every bucket is interchangeable with every bucket, because the
+only thing we want to know is the maximum number of buckets that will be in use
+at some time.
+<p>One straightforward way to figure this out is to simply iterate over all
+possible times, from <span class='math'>$1$</span> to <span class='math'>$1,000$</span>, and check for each interval whether it
+contains that time. This will be around <span class='math'>$1,000 * 100$</span> operations, which is fast
+enough to get full credit. 
+<p>Here&apos;s a solution implementing this method:
+<p><pre class='prettyprint'>
+
+#include &lt;algorithm&gt;
+#include &lt;fstream&gt;
+#include &lt;iostream&gt;
+
+using namespace std;
+ 
+int N;
+int S[101], T[101], B[101];
+ 
+int main(void) {
+  ifstream fin (&quot;blist.in&quot;);
+  fin &gt;&gt; N;
+  for (int i=1; i&lt;=N; i++) {
+    fin &gt;&gt; S[i] &gt;&gt; T[i] &gt;&gt; B[i];
+  }
+
+  int max_buckets = 0;
+  for (int time=1; time&lt;=1000; time++) {
+    int buckets_at_this_time = 0;
+    for (int i=1; i&lt;=N; i++) {
+      if (S[i] &lt;= time &amp;&amp; time &lt;= T[i]) {
+        buckets_at_this_time += B[i];
+      }
+    }
+    max_buckets = max(max_buckets, buckets_at_this_time);
+  }
+  
+  ofstream fout (&quot;blist.out&quot;);
+  fout &lt;&lt; max_buckets &lt;&lt; &quot;\n&quot;;
+  
+  return 0;
+}
+</pre>
+<p>Note that this will end up being a lot of unnecessary
+work -- two times right next to each other will almost always have the same
+number of buckets needed, so it would be nice to not repeat all that work.  If the 
+limits for this problem were higher (e.g., for a &quot;silver&quot; level version of the
+problem), we would need to use a more sophisticated approach.  Luckily, we can do better: we can simulate each &quot;event&quot; (either the start of
+stop of a milking) in the order that they occurred. We start by adding the
+points <span class='math'>$s_i$</span> and <span class='math'>$t_i$</span> to a big array for each interval <span class='math'>$i$</span>. Then, we sort the
+array, and consider the points in increasing order. We keep track of the number
+of buckets currently being used, starting with zero. For each point, we check
+whether it&apos;s a start or end point: if it&apos;s a start point <span class='math'>$s_i$</span>, we add <span class='math'>$b_i$</span> to
+the number of buckets in use, and if it&apos;s an end point <span class='math'>$t_i$</span>, we subtract <span class='math'>$b_i$</span>.
+(This technique is called a &quot;sweep&quot;, because if you think of all the points on a
+horizontal number line, we are &quot;sweeping&quot; across the line, processing each point
+that we come across.)
+<p>We process each start point and each end point exactly once, so we will end up
+having around <span class='math'>$2 * N = 200$</span> operations in total, a substantial improvement over
+the more straightforward method. More generally, the runtime of this algorithm
+is <span class='math'>$O(N \log N)$</span> (the log comes from our needing to sort the array), while the
+runtime of the previous algorithm is <span class='math'>$O(N * T)$</span> (where <span class='math'>$T$</span> is the maximum
+possible time).
+<p>Here is Brian&apos;s code, implementing this second method. Note that he does not sort
+the array, and instead puts the start and end points directly into an array of
+size <span class='math'>$1,000$</span>. This gives him a runtime of <span class='math'>$O(N + T)$</span> rather than
+<span class='math'>$O(N \log N)$</span>, but the basic idea is the same.
+<p><pre class='prettyprint'>
+
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+ 
+int N;
+int S[101], T[101], B[101];
+int start[1001], finish[1001];
+ 
+int solve(void)
+{
+  int buckets_needed = 0, b = 0;
+  for (int t=1; t&lt;=1000; t++) {
+    if (start[t]) b += B[start[t]];
+    buckets_needed = max(buckets_needed, b);
+    if (finish[t]) b -= B[finish[t]];
+  }
+  return buckets_needed;
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;blist.in&quot;);
+  fin &gt;&gt; N;
+  for (int i=1; i&lt;=N; i++) {
+    fin &gt;&gt; S[i] &gt;&gt; T[i] &gt;&gt; B[i];
+    start[S[i]] = i;
+    finish[T[i]] = i;
+  }
+  
+  ofstream fout (&quot;blist.out&quot;);
+  fout &lt;&lt; solve() &lt;&lt; &quot;\n&quot;;
+  
+  return 0;
+}
+
+</pre>
+<p></body></html>

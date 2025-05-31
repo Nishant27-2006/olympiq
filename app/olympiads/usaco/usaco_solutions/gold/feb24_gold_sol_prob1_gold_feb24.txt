@@ -1,0 +1,290 @@
+Solution ID: sol_prob1_gold_feb24
+Contest: FEB24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob1_gold_feb24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+We can represent the given network of chargers and destinations as a weighted,
+undirected graph
+
+$G$
+
+, whose vertices correspond to chargers (vertex IDs
+
+$1$
+
+through
+
+$C$
+
+) and destinations (vertex IDs
+
+$C+1$
+
+through
+
+$N$
+
+) and whose edges
+correspond to roads.
+
+Subtask 1
+
+For the first subtask, we can run Dijkstra's algorithm once using each
+destination as a source to check whether that destination can reach
+
+$K$
+
+distinct
+charging stations. This runs in
+
+$O(NM\log N)$
+
+time.
+
+Subtask 2
+
+For the second subtask, we solve the problem in
+
+$O(M\log^2 N)$
+
+for the case
+
+$K = 2$
+
+.
+
+Given a partition of the chargers into two groups, we first describe how to find
+all destinations reachable from at least one charger in each group in
+
+$O(M\log N)$
+
+. For any group of chargers, we can find all destinations reachable
+by some charger in the group with a "multi-source" version of Dijkstra's
+algorithm by initializing all chargers in the group to distance
+
+$0$
+
+. Running
+this once for each group lets us identify all well-connected destinations
+"verified" by a given partition of the chargers into two groups.
+
+To turn this into a full solution for
+
+$K=2$
+
+, we construct a set of partitions
+such that each pair of chargers ends up in distinct groups at least once.
+Specifically, partition the chargers by the
+
+$i$
+
+th binary digit of their vertex
+IDs, for each
+
+$i$
+
+between
+
+$0$
+
+and
+
+$\log N$
+
+. Each pair of vertex IDs differs in
+at least one bit, so this set of partitions will separate each pair of chargers
+at least once. Then, running the above subroutine for each partition will
+"verify" every well-connected vertex at least once. Since we have
+
+$O(\log N)$
+
+partitions, this algorithm runs in
+
+$O(M\log^2 N)$
+
+.
+
+Subtask 3
+
+To solve the last subtask, one can directly modify Dijkstra's algorithm. Rather
+than running "multi-source" Dijkstra's as in Subtask 2, we simulate running
+
+$C$
+
+parallel copies of Dijkstra's algorithm, one from each charger. In our
+simulation, we process all vertices at distance
+
+$d$
+
+from each source before
+processing vertices at distance
+
+$d+1$
+
+. We also break after processing after
+processing all vertices at distance
+
+$>R$
+
+. Exactly those vertices that are
+visited from at least
+
+$K$
+
+distinct chargers are well-connected.
+
+However, this approach as described is inefficient, because each vertex can be
+visited up to
+
+$C$
+
+times. The key observation to make this approach run in time
+is to note that we only need to visit each vertex
+
+$v$
+
+from
+
+$K$
+
+distinct
+chargers. We can skip further visits because the first
+
+$K$
+
+visits to
+
+$v$
+
+will
+cover any well-connected vertex
+
+$u$
+
+that is reachable through
+
+$v$
+
+.
+
+To implement these runs of Dijkstra from
+
+$C$
+
+sources in parallel, we can have a
+heap consisting of tuples (distance, vertex, root), with root denoting the
+Dijkstra source of that heap element. And rather than having a boolean "visited"
+array (which would use
+
+$O(N^2)$
+
+memory), we track visited pairs (vertex, root)
+in a hash map for
+
+$O(1)$
+
+lookups and
+
+$O(1)$
+
+memory per entry. When visiting
+vertices, we skip any vertex that has been visited
+
+$K$
+
+times and any vertex with
+distance
+
+$>R$
+
+.
+
+All together, this leads to an algorithm that runs in
+
+$O(KM\log N)$
+
+. Since each
+vertex is visited at most
+
+$K$
+
+times, each edge is processed at most
+
+$2K$
+
+times.
+Hence, at most
+
+$O(KM)$
+
+elements are ever inserted into the heap.
+
+#include <iostream>
+#include <queue>
+#include <tuple>
+#include <unordered_set>
+#include <vector>
+using namespace std;
+ 
+const int MAXN = 50000;
+ 
+int N, M, C, R, K;
+vector<pair<int, int>> adj[MAXN];
+ 
+int visits[MAXN];
+unordered_set<int> visitors[MAXN];
+ 
+int main() {
+  ios_base::sync_with_stdio(false);
+ 
+  cin >> N >> M >> C >> R >> K;
+ 
+  for (int i = 0; i < M; i++) {
+    int u, v, l;
+    cin >> u >> v >> l;
+    u -= 1;
+    v -= 1;
+    adj[u].push_back({v, l});
+    adj[v].push_back({u, l});
+  }
+ 
+  priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+  // Initialize with all charging stations in the queue
+  for (int i = 0; i < C; i++) {
+    pq.push({0, i, i});
+  }
+ 
+  // Dijkstra's algorithm, except we (i) visit each node up to K times and (ii) only visit nodes
+  // along paths of length at most R
+  int well_connected = 0;
+  while (!pq.empty()) {
+    const auto [d, u, r] = pq.top();
+    pq.pop();
+    if (visits[u] == K || visitors[u].find(r) != visitors[u].end()) {
+      continue;
+    }
+    // Update the number of visits and our count of well-connected destinations
+    visits[u] += 1;
+    visitors[u].insert(r);
+    if (u >= C && visits[u] == K) {
+      well_connected += 1;
+    }
+    // Add all neighbors within the range that have not been visited K times to the queue
+    for (const auto& [v, l] : adj[u]) {
+      if (d + l <= R && visits[v] < K) {
+        pq.push({d + l, v, r});
+      }
+    }
+  }
+ 
+  cout << well_connected << "\n";
+  for (int i = C; i < N; i++) {
+    if (visits[i] == K) {
+      cout << i + 1 << "\n";
+    }
+  }
+}

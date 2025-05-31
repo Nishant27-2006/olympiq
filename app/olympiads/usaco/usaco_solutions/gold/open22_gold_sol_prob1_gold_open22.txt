@@ -1,0 +1,320 @@
+Solution ID: sol_prob1_gold_open22
+Contest: OPEN22
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob1_gold_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal)
+
+Visualize the cows and apples as being on a plane where position is the
+
+$x$
+
+-axis
+and time is the
+
+$y$
+
+-axis. For a given cow that arrives at time
+
+$t$
+
+to position
+
+$x$
+
+, the possible apples that that cow could catch are the ones landing at time
+
+$t'$
+
+at position
+
+$x'$
+
+that satisfy
+
+$t' \geq t$
+
+and
+
+$|x' - x| \leq |t' - t|$
+
+.
+This region in the plane is a sort of infinite V shape with
+
+$45$
+
+degree angles
+extending upwards from the point
+
+$(x, t)$
+
+.
+
+If we rotate the entire plane
+
+$45$
+
+degrees clockwise (transform each point
+
+$(x, t)$
+
+to
+
+$(u, v) = \left(\frac {t + x} {\sqrt 2}, \frac {t - x} {\sqrt 2}\right)$
+
+), then
+those infinite V shapes become infinite squares, which means that the condition
+for a cow
+
+$(u, v)$
+
+to be able to catch an apple
+
+$(u', v')$
+
+is simply
+
+$u \leq u'$
+
+and
+
+$v \leq v'$
+
+.
+
+Let's use that transformation. We can simply ignore the
+
+$\sqrt 2$
+
+factor as it
+doesn't change the condition. For now, we will assume that
+
+$n$
+
+is
+
+$1$
+
+, so each
+line of the input represents a single cow or apple.
+
+We can take a greedy approach to this problem. Consider the apple
+
+$a$
+
+with
+smallest
+
+$v$
+
+, assuming that it can be caught by at least one cow, and out of all
+cows that could catch it, consider the cow
+
+$c$
+
+with largest
+
+$u$
+
+. There is no
+apple that
+
+$c$
+
+can catch that any other cow that can catch
+
+$a$
+
+cannot catch,
+because all of them have
+
+$u$
+
+at most the
+
+$u$
+
+of
+
+$c$
+
+, and since they can all
+catch
+
+$a$
+
+, all of them have a
+
+$v$
+
+not larger than the
+
+$v$
+
+of any apple that can
+be caught at all. Therefore, it is optimal to assign
+
+$c$
+
+to catch
+
+$a$
+
+.
+
+Based on this greedy principle, we can devise an algorithm to solve this
+problem. First, sort all the cows and all the apples by
+
+$v$
+
+. Now, for each apple
+in increasing order of
+
+$v$
+
+, we will find the optimal cow to catch it. We will do
+this by maintaining a BST (binary search tree) of the cows that have
+
+$v$
+
+at most
+the
+
+$v$
+
+of the current apple, with the BST being sorted by
+
+$u$
+
+. For each apple
+
+$a$
+
+, we will first add in all the cows with
+
+$v$
+
+at most the
+
+$v$
+
+of
+
+$a$
+
+that
+haven't been added yet. Then, we will query our BSTs to find the cow in the BST
+with the largest
+
+$u$
+
+such that the
+
+$u$
+
+is still small enough to catch
+
+$a$
+
+. If
+there is such a cow, then we use it to catch
+
+$a$
+
+, meaning that we remove it from
+the BST and increment our answer.
+
+This algorithm runs in
+
+$\mathcal O(N\lg N)$
+
+as we add and remove each cow
+to/from the BST at most once, and we query the BST once for each apple.
+
+It remains to handle the fact that each line of the input can represent multiple
+cows or apples. To handle this, we modify the part where we find the optimal cow
+to catch each apple. We will instead repeatedly find the optimal group of cows
+for the current group of apples, and assign as many cows as possible to apples.
+At each step of this algorithm, either the group of cows will be exhausted, or
+the group of apples will be exhausted. Therefore, the amount of steps is
+
+$N$
+
+,
+and so this algorithm still runs in
+
+$\mathcal O(N\lg N)$
+
+.
+
+Java code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+
+public class AppleCatching {
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        List<Stuff> cows = new ArrayList<>();
+        List<Stuff> apples = new ArrayList<>();
+        for (int j = 1; j <= n; j++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int q = Integer.parseInt(tokenizer.nextToken());
+            int time = Integer.parseInt(tokenizer.nextToken());
+            int location = Integer.parseInt(tokenizer.nextToken());
+            int amount = Integer.parseInt(tokenizer.nextToken());
+            int y = time - location;
+            int x = time + location;
+            (q == 1 ? cows : apples).add(new Stuff(amount, y , x));
+        }
+        Collections.sort(cows, Comparator.comparingInt(cow -> cow.y));
+        Collections.sort(apples, Comparator.comparingInt(apple -> apple.y));
+        TreeSet<Stuff> treeSet = new TreeSet<>((cow1, cow2) -> {
+            if (cow1.x != cow2.x) {
+                return cow1.x - cow2.x;
+            } else {
+                return cow1.y - cow2.y;
+            }
+        });
+        int j = 0;
+        int answer = 0;
+        for (Stuff apple : apples) {
+            while (j < cows.size() && cows.get(j).y <= apple.y) {
+                treeSet.add(cows.get(j));
+                j++;
+            }
+            int amount = apple.amount;
+            while (amount > 0 && !treeSet.isEmpty() && treeSet.first().x <= apple.x) {
+                Stuff cow = treeSet.floor(new Stuff(0, 1000000000, apple.x));
+                treeSet.remove(cow);
+                int caught = Math.min(amount, cow.amount);
+                answer += caught;
+                amount -= caught;
+                if (caught < cow.amount) {
+                    treeSet.add(new Stuff(cow.amount - caught, cow.y, cow.x));
+                }
+            }
+        }
+        System.out.println(answer);
+    }
+
+    static class Stuff {
+        final int amount;
+        final int y;
+        final int x;
+
+        Stuff(int amount, int y, int x) {
+            this.amount = amount;
+            this.y = y;
+            this.x = x;
+        }
+    }
+}

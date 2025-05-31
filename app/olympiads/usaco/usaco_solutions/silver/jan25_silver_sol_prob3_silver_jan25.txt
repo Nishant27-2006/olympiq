@@ -1,0 +1,641 @@
+Solution ID: sol_prob3_silver_jan25
+Contest: JAN25
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_jan25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Daniel Zhang and Benjamin Qi)
+
+Observe that after performing operations of type 1 and type 2, the grid is in
+the following form: there are permutations
+
+$p_1,\ldots,p_N$
+
+and
+
+$q_1,\ldots,q_N$
+
+such that the integer at row
+
+$i$
+
+and column
+
+$j$
+
+equals
+
+$p_i+q_j$
+
+.
+
+Operations of type 3 will relabel the integers in the cells. Our task is now to
+find
+
+$p_1,\ldots,p_N$
+
+and
+
+$q_1,\ldots,q_N$
+
+so that
+
+$p_i+q_j$
+
+is the same as the
+given table up to relabeling.
+
+Now, if
+
+$p_1,\ldots,p_N$
+
+and
+
+$q_1,\ldots,q_N$
+
+yield a valid answer, then
+
+$N+1-p_1,\ldots,N+1-p_N$
+
+and
+
+$N+1-q_1,\ldots,N+1-q_N$
+
+also yield a valid answer.
+This corresponds to replacing each cell with value
+
+$x$
+
+with value
+
+$2N+2-x$
+
+.
+Thus, for
+
+$N>1$
+
+, there are always at least two possible answers. The full
+solution below will show that there can be no other answers.
+
+Subtask 1
+
+$N\le 6$
+
+We can brute force all permutations
+
+$p_1,\ldots,p_N$
+
+and all permutations
+
+$q_1,\ldots,q_N$
+
+, and check if the result is valid. We then take the
+lexicographically minimum valid answer.
+
+This solution takes
+
+$\mathcal{O}(N!^2\cdot N^2)$
+
+.
+
+Daniel Zhang's Python code:
+
+import itertools
+
+N = int(input())
+
+arr = [[int(x) for x in input().split()] for i in range(N)]
+
+# arr consists of numbers 2,3,...,2N each at least once.
+# candidate consists of numbers 2,3,...,2N each at least once.
+# This function checks that every instance of integer x in candidate maps to the same value in arr.
+# Since arr and candidate have the same number of distinct integers,
+# this is enough to ensure that they are relabelings of each other.
+def is_valid(candidate):
+    label = [None]*(2*N+1)
+    for i in range(N):
+        for j in range(N):
+            if label[candidate[i][j]] is None:
+                label[candidate[i][j]] = arr[i][j]
+            if label[candidate[i][j]] is not arr[i][j]:
+                return False
+    return True
+
+best = None
+for ps in itertools.permutations(range(1,N+1)):
+    for qs in itertools.permutations(range(1,N+1)):
+        candidate = [[ps[i]+qs[j] for j in range(N)] for i in range(N)]
+        if is_valid(candidate):
+            if best is None or candidate < best:
+                best = candidate
+
+for line in best:
+    print(" ".join(map(str,line)))
+
+Subtask 2
+
+$N\le 8$
+
+We brute force all possible permutations of rows
+
+$p_1,\ldots,p_N$
+
+(type 1
+operations).
+
+Suppose we guessed correctly and undid the permutation. The first two rows of
+the table would look like
+
+2 3 4 ... N
+3 4 5 ... N+1
+
+with columns permuted (type 2 operations), and integers relabeled (type 3
+operations)
+
+Now, before type 3 operations, 2 is the only number appearing in the first row
+but not the second row, 3 is the number in the second row belonging to the 2 in
+the first row, 4 is the number in the second row belonging to the 3 in the first
+row, and so on. From this, we can determine
+
+$q_1,\ldots,q_N$
+
+.
+
+Among all our guesses for
+
+$p_1,\ldots,p_N$
+
+and
+
+$q_1,\ldots,q_N$
+
+, we check if it
+is valid, and take the lexicographically minimal solution.
+
+This solution takes
+
+$\mathcal{O}(N!\cdot N^2)$
+
+. A more careful analysis of the
+below implementation shows it is actually
+
+$O(N!\cdot N)$
+
+.
+
+Daniel Zhang's Python code:
+
+import itertools
+
+N = int(input())
+
+arr = [[int(x) for x in input().split()] for i in range(N)]
+
+if N == 1:
+    print(2)
+    exit()
+
+# arr consists of numbers 2,3,...,2N each at least once
+# candidate consists of numbers 2,3,...,2N each at least once
+# This function checks that every instance of integer x in candidate maps to the same value in arr
+def is_valid(candidate):
+    label = [None]*(2*N+1)
+    for i in range(N):
+        for j in range(N):
+            if label[candidate[i][j]] is None:
+                label[candidate[i][j]] = arr[i][j]
+            if label[candidate[i][j]] is not arr[i][j]:
+                return False
+    return True
+
+best = None
+for pinv in itertools.permutations(range(0,N)):
+    where0 = [None]*(2*N+1)
+    where1 = [None]*(2*N+1)
+
+    for j in range(N):
+        where0[arr[pinv[0]][j]] = j
+        where1[arr[pinv[1]][j]] = j
+
+    qinv = []
+
+    for v in range(N*2+1):
+        if where0[v] is not None and where1[v] is None:
+            qinv.append(where0[v])
+
+    # At this point, qinv contains all integers in row pinv[0] that are not in row pinv[1]
+    if len(qinv) != 1:
+        continue
+
+    # There is exactly one integer in row pinv[0] that is not in row pinv[1]
+    # These two rows look like
+    # 2 3 4 ... N
+    # 3 4 5 ... N+1
+    # under some permutation of columns, and relabeling of integers
+
+    for j in range(N):
+        qinv.append(where0[arr[pinv[1]][qinv[j]]])
+
+    ps = [0]*N
+    qs = [0]*N
+    for j in range(N):
+        ps[pinv[j]] = j+1
+        qs[qinv[j]] = j+1
+
+    candidate = [[ps[i]+qs[j] for j in range(N)] for i in range(N)]
+    if is_valid(candidate):
+        if best is None or candidate < best:
+            best = candidate
+
+for line in best:
+    print(" ".join(map(str,line)))
+
+Subtask 3
+
+$N\le 100$
+
+Observe that row
+
+$i$
+
+and row
+
+$j$
+
+will have
+
+$N-1$
+
+integers in common if and only
+if
+
+$|p_i-p_j|=1$
+
+.
+
+The graph on vertices
+
+$1,\ldots,N$
+
+with an edge between
+
+$i$
+
+and
+
+$j$
+
+if row
+
+$i$
+
+and row
+
+$j$
+
+have
+
+$N-1$
+
+integers in common is a path, and the ordering of
+vertices on this path determines two possibilities for
+
+$p_1,\ldots,p_N$
+
+(corresponding to traversing the path in two directions).
+
+We can do the same to determine two possibilities for
+
+$q_1,\ldots,q_N$
+
+.
+
+We can check all four candidate answers and take the lexicographical minimum of
+the valid ones.
+
+This solution takes
+
+$\mathcal{O}(N^3)$
+
+.
+
+Daniel Zhang's Python code:
+
+import itertools
+
+N = int(input())
+
+arr = [[int(x) for x in input().split()] for i in range(N)]
+
+# arr consists of numbers 2,3,...,2N each at least once
+# candidate consists of numbers 2,3,...,2N each at least once
+# This function checks that every instance of integer x in candidate maps to the same value in arr
+def is_valid(candidate):
+    label = [None]*(2*N+1)
+    for i in range(N):
+        for j in range(N):
+            if label[candidate[i][j]] is None:
+                label[candidate[i][j]] = arr[i][j]
+            if label[candidate[i][j]] is not arr[i][j]:
+                return False
+    return True
+
+def get_ps(arr):
+    adj = [[] for i in range(N)]
+    for i1 in range(N):
+        for i2 in range(i1+1,N):
+            if len(set(arr[i1]) & set(arr[i2])) == N-1:
+                adj[i1].append(i2)
+                adj[i2].append(i1)
+                
+    res = []
+    for i in range(N):
+        if len(adj[i]) <= 1:
+            pinv = [i]
+            for j in range(N):
+                for k in adj[pinv[j]]:
+                    if k not in pinv:
+                        pinv.append(k)
+            ps = [None]*N
+            for j in range(N):
+                ps[pinv[j]] = j+1
+            res.append(ps)
+    return res
+    
+
+pss = get_ps(arr)
+
+qss = get_ps([[arr[j][i] for j in range(N)] for i in range(N)])
+
+best = None
+
+for ps in pss:
+    for qs in qss:
+        candidate = [[ps[i]+qs[j] for j in range(N)] for i in range(N)]
+        if is_valid(candidate):
+            if best is None or candidate < best:
+                best = candidate
+
+for line in best:
+    print(" ".join(map(str,line)))
+
+Full solution
+
+For each integer, count the number of times it occurs in the table. Note that
+the frequency of the integer in a cell is preserved under relabelings (type 3
+operations). We will use this to determine its value before relabelings.
+
+Consider what the table looks like before type 3 operations.
+
+There will be two integers that appear exactly once:
+
+$2$
+
+and
+
+$2N$
+
+. If
+
+$2$
+
+is in
+row
+
+$i$
+
+column
+
+$j$
+
+, then
+
+$p_i=1$
+
+and
+
+$q_j=1$
+
+. Then, the numbers in row
+
+$i$
+
+must
+be
+
+$1+1,1+2,1+3,\ldots,1+N$
+
+in some order. These have frequencies
+
+$1,2,\ldots,N$
+
+respectively, and the ordering of these in the row uniquely determines
+
+$q_1,\ldots,q_N$
+
+. The numbers in column
+
+$j$
+
+must be
+
+$1+1,2+1,3+1,\ldots,N+1$
+
+in
+some order. These have frequencies
+
+$1,2,\ldots,N$
+
+respectively, and the ordering
+of these in the column uniquely determines
+
+$p_1,\ldots,p_N$
+
+.
+
+Since frequencies are preserved under type 3 operations, we can still perform
+this procedure on the array after type 3 operations to deduce
+
+$p_1,\ldots,p_N$
+
+and
+
+$q_1,\ldots,q_N$
+
+. The only caveat is that we don't know exactly where
+
+$2$
+
+was before type 3 operations, but it must be one of the two cells with a unique
+number. These two possibilities yield two potential answers. Furthermore, all
+real answers must be included among them. If
+
+$N>1$
+
+, we know there are at least
+two answers (the one guaranteed by the problem, and the same after applying
+
+$x\mapsto 2N+2-x$
+
+), meaning that both potential answers are real, and
+differ by the map
+
+$x\mapsto 2N+2-x$
+
+.
+
+This solution takes
+
+$\mathcal{O}(N^2)$
+
+. This also proves there are at most two
+answers, which means that the answer is unique up to the transformation
+
+$x\mapsto 2N+2-x$
+
+.
+
+Daniel Zhang's C++ code:
+
+#include <cstdio>
+#include <vector>
+
+int table[1000][1000];
+
+int ans[2][1000][1000];
+
+int freq[2001];
+
+int rs[1000];
+int cs[1000];
+int N;
+
+int pick_lexmin(){
+  for(int i=0;i<N;i++){
+    for(int j=0;j<N;j++){
+      if(ans[0][i][j]<ans[1][i][j]){
+	return 0;
+      }
+      if(ans[0][i][j]>ans[1][i][j]){
+	return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+int main(){
+  scanf("%d",&N);
+  for(int i=0;i<N;i++){
+    for(int j=0;j<N;j++){
+      scanf("%d",&table[i][j]);
+      freq[table[i][j]]++;
+    }
+  }
+  for(int u=2;u<=N*2;u++){
+    if(freq[u]==1){
+      for(int i=0;i<N;i++){
+	for(int j=0;j<N;j++){
+	  if(table[i][j]==u){
+	    for(int k=0;k<N;k++){
+	      rs[k]=freq[table[k][j]];
+	      cs[k]=freq[table[i][k]];
+	    }
+	    break;
+	  }
+	}
+      }
+      break;
+    }
+  }
+  for(int i=0;i<N;i++){
+    for(int j=0;j<N;j++){
+      ans[0][i][j]=rs[i]+cs[j];
+      ans[1][i][j]=2*(N+1)-rs[i]-cs[j];
+    }
+  }
+  int k=pick_lexmin();
+  for(int i=0;i<N;i++){
+    for(int j=0;j<N;j++){
+      if(j) printf(" ");
+      printf("%d",ans[k][i][j]);
+    }
+    printf("\n");
+  }
+}
+
+Brandon Wang's Python code:
+
+from collections import defaultdict
+ 
+N = int(input())
+ 
+if N == 1:
+    print(2)
+    exit()
+ 
+arr = []
+ 
+for _ in range(N):
+    arr.append(list(map(int, input().split())))
+ 
+freqs = defaultdict(lambda: 0)
+ 
+for i in range(N):
+    for j in range(N):
+        freqs[arr[i][j]] += 1
+ 
+def find(u):
+    for i in range(N):
+        for j in range(N):
+            if arr[i][j] == u:
+                return i, j
+ 
+def get_perm(u, v):
+    ui, uj = find(u)
+    vi, vj = find(v)
+    perm = {u: 2, v: 2*N}
+    for j in range(N):
+        x = arr[ui][j]
+        perm[x] = 1 + freqs[x]
+    for i in range(N):
+        x = arr[i][vj]
+        perm[x] = 2*N - freqs[x] + 1
+    return perm
+ 
+def apply(perm):
+    result = []
+    for i in range(N):
+        result.append([perm[x] for x in arr[i]])
+    return result
+ 
+u, v = None, None
+for i in range(2, 2*N+1):
+    if freqs[i] == 1:
+        if u is None:
+            u = i
+        else:
+            v = i
+            break
+ 
+arr1 = apply(get_perm(u, v))
+arr2 = apply(get_perm(v, u))
+ 
+def display(arr):
+    for row in arr:
+        print(*row)
+ 
+for i in range(N):
+    for j in range(N):
+        if arr1[i][j] < arr2[i][j]:
+            display(arr1)
+            exit()
+        if arr1[i][j] > arr2[i][j]:
+            display(arr2)
+            exit()
+ 
+display(arr1)

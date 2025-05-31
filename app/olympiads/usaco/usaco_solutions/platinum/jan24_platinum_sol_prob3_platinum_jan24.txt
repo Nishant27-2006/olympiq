@@ -1,0 +1,778 @@
+Solution ID: sol_prob3_platinum_jan24
+Contest: JAN24
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_jan24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+The goal of this problem is to count the number of disjoint, non-empty subsets
+of cows
+
+$S, T \subset [n]$
+
+so that there exists a horizontal or vertical line
+separating the cows in
+
+$S$
+
+from the cows in
+
+$T$
+
+. By a brute force search, it's
+clear that we can enumerate such
+
+$S,T$
+
+in time
+
+$O(n \cdot 3^n)$
+
+, which solves
+the first subtask. Of course, we would like to do better.
+
+To get
+
+$O(n^3)$
+
+:
+
+Let's start by counting the number of ways to pick
+sets that admit a horizontal separation, where
+
+$S$
+
+is to the left of
+
+$T$
+
+(the
+mirror-image case is the same). We can sort the cows in lexicographical order
+(first by
+
+$x$
+
+-coordinate, then tie-break by
+
+$y$
+
+-coordinate). For each cow
+
+$i$
+
+,
+let's count the number of ways to pick the sets so that
+
+$i$
+
+is the
+(lexicographically) last cow in
+
+$S$
+
+. This is exactly
+
+$2^a (2^b-1)$
+
+, where
+
+$a$
+
+is
+the number of cows that come earlier in the lexicographical order, and
+
+$b$
+
+is
+the number of cows with strictly larger
+
+$x$
+
+-coordinate than
+
+$i$
+
+. After sorting,
+we can easily compute these quantities for each cow in total time
+
+$O(n)$
+
+.
+
+This gives us the number of ways to pick teams separated by a horizontal line,
+and we can of course do the same for teams separated by a vertical line. The
+issue (and the main difficulty of this problem) is in correcting for the
+double-counting: there are some pairs of teams
+
+$S, T$
+
+that are separated by both
+a horizontal and a vertical line.
+
+As before, let's specialize the problem a little. We'll start by considering the
+number of pairs
+
+$S,T$
+
+so that
+
+$S$
+
+is above and to the left of
+
+$T$
+
+(i.e. all cows
+in
+
+$S$
+
+have smaller
+
+$x$
+
+-coordinate and larger
+
+$y$
+
+-coordinate than all cows in
+
+$T$
+
+). The other cases are similar, and there is crucially no over-counting
+between these cases, since
+
+$S,T$
+
+are required to be both non-empty. Fix a cow
+
+$i$
+
+at position
+
+$(x_i,y_i)$
+
+; we would like to count the number of sets
+
+$S,T$
+
+so
+that
+
+$i$
+
+is the final cow in
+
+$S$
+
+(by the lexicographical ordering), and all cows
+in
+
+$T$
+
+have
+
+$x$
+
+-coordinate larger than
+
+$\max_{j \in S} x_j$
+
+(which equals
+
+$x_i$
+
+)
+and
+
+$y$
+
+-coordinate smaller than
+
+$\min_{j \in S} y_j$
+
+(which may be equal to
+
+$y_i$
+
+or may be smaller).
+
+Let's define a function
+
+$F_i$
+
+where
+
+$F_i(y)$
+
+is the number of sets
+
+$S,T$
+
+so that
+
+$i$
+
+is the final cow in
+
+$S$
+
+, and
+
+$\min_{j \in T} x_j > x_i$
+
+, and
+
+$y = \min_{j \in S} y_j > \max_{j \in T} y_j$
+
+. Ultimately we would like to
+compute
+
+$\sum_i \sum_y F_i(y)$
+
+.
+
+What is
+
+$F_i(y)$
+
+? If
+
+$y > y_i$
+
+, then of course
+
+$F_i(y) = 0$
+
+. If
+
+$y = y_i$
+
+, then
+
+$F_i(y) = 2^{a_i(y)} (2^{b_i(y)}-1)$
+
+, where
+
+$a_i(y)$
+
+is the number of cows
+
+$j$
+
+that precede
+
+$i$
+
+in lexicographical order and also satisfy
+
+$y_j \geq y$
+
+, and
+
+$b_i(y)$
+
+is the number of cows
+
+$j$
+
+with
+
+$x_j > x_i$
+
+and
+
+$y_j < y$
+
+. And if
+
+$y < y_i$
+
+, then
+
+$F_i(y) = (2^{a_i(y)} - 2^{a_i(y+1)})(2^{b_i(y)}-1)$
+
+.
+
+For any fixed
+
+$i$
+
+and
+
+$y$
+
+, we can easily compute
+
+$a_i(y)$
+
+and
+
+$b_i(y)$
+
+in time
+
+$O(n)$
+
+time. This lets us compute
+
+$\sum_i \sum_y F_i(y)$
+
+in
+
+$O(n^3)$
+
+time.
+
+To get
+
+$O(n^2)$
+
+:
+
+We can improve the above algorithm to quadratic time
+by observing that for each
+
+$y$
+
+, we can compute
+
+$a_i(y)$
+
+for all
+
+$i$
+
+in a single
+sweep through the cows in lexicographical order (and similarly for
+
+$b_i(y)$
+
+).
+
+To get
+
+$O(n \log n)$
+
+:
+
+This is somewhat harder, since we no longer have
+enough time to explicitly compute
+
+$F_i(y)$
+
+for each
+
+$(i,y)$
+
+. Instead, we'll
+compute
+
+$\sum_i \sum_y F_i(y)$
+
+by maintaining the function
+
+$F_i$
+
+in a data
+structure as we iterate
+
+$i$
+
+through the cows in lexicographical order, and we'll
+make sure that the data structure has a way of efficiently summing
+
+$F_i$
+
+over
+all
+
+$y$
+
+.
+
+Let's define
+
+$G_i(y) = 2^{a_i(y) + b_i(y)}$
+
+,
+
+$H_i(y) = 2^{a_i(y)}$
+
+and
+
+$I_i(y) = 2^{a_i(y+1) + b_i(y)}$
+
+, so that
+
+$F_i(y) = G_i(y) - H_i(y) + H_i(y+1) - I_i(y)$
+
+; we'll separately maintain
+
+$G_i$
+
+,
+
+$H_i$
+
+, and
+
+$I_i$
+
+. The goal is to maintain each function in a (lazy update)
+segment tree that supports range sum queries and range ``multiply by
+
+$c$
+
+''
+updates.
+
+Indeed, this is possible. As we increase
+
+$i$
+
+, how do
+
+$G_i$
+
+,
+
+$H_i$
+
+, and
+
+$I_i$
+
+change? Going from
+
+$i$
+
+to
+
+$i+1$
+
+,
+
+$a_i(y)$
+
+increases by one for each
+
+$y \leq y_i$
+
+. We can implement this with a range ``multiply by
+
+$2$
+
+'' update. If
+
+$x_i = x_{i+1}$
+
+, then
+
+$b_i$
+
+remains unchanged. Otherwise, for each
+
+$j$
+
+with
+
+$x_j = x_{i+1}$
+
+,
+
+$b_i(y)$
+
+decreases by one for all
+
+$y > y_j$
+
+. We can implement
+this with one range ``divide by
+
+$2$
+
+'' update for each such
+
+$j$
+
+(note that during
+the sweep, each
+
+$j$
+
+causes such an update only once).
+
+The total number of range updates is
+
+$O(n)$
+
+, and for each
+
+$i$
+
+, we can easily
+compute
+
+$\sum_y F_i(y)$
+
+after performing a constant number of range sum queries
+for
+
+$G_i$
+
+,
+
+$H_i$
+
+, and
+
+$I_i$
+
+on appropriate ranges. With a standard lazy segment
+tree, the overall time complexity is
+
+$O(n \log n)$
+
+.
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstdio>
+using namespace std;
+#define MAXN 200005
+#define MOD 1000000007
+#define HALF (1000000008/2)
+#define SEG (1<<18)
+
+int x[MAXN];
+int y[MAXN];
+int cid[MAXN];
+int numx[MAXN];
+int numy[MAXN];
+long long pow_array[MAXN];
+long long zpow_array[2*MAXN+1];
+
+int cmp(int a,int b)
+{
+	if(x[a]!=x[b]) return x[a]<x[b];
+	return y[a]>y[b];
+}
+
+long long G[2*SEG], H[2*SEG], scaleG[2*SEG], scaleH[2*SEG]; //G = 2^{a(y) + b(y)}; H = 2^{a(y)}
+long long I[2*SEG], scaleI[2*SEG]; //I = 2^{a(y+1) + b(y)}
+int l[2*SEG], r[2*SEG];
+
+void init()
+{
+	for(int i=SEG;i<2*SEG;i++)
+	{
+		G[i] = H[i] = I[i] = 1;
+		scaleG[i] = scaleH[i] = scaleI[i] = 0;
+		l[i] = r[i] = i-SEG;
+	}
+	for(int i=SEG-1;i>0;i--)
+	{
+		G[i] = (G[2*i] + G[2*i+1])%MOD;
+		H[i] = (H[2*i] + H[2*i+1])%MOD;
+		I[i] = (I[2*i] + I[2*i+1])%MOD;
+		scaleG[i] = scaleH[i] = scaleI[i] = 0;
+		l[i] = l[2*i], r[i] = r[2*i+1];
+	}
+}
+
+void push(long long *seg, long long *scale, int i)
+{
+	if(scale[i] != 0)
+	{
+		seg[i] = (seg[i] * zpow_array[MAXN+scale[i]])%MOD;
+		if(i<SEG)
+		{
+			scale[2*i] += scale[i];
+			scale[2*i+1] += scale[i];
+		}
+		scale[i] = 0;
+	}
+}
+
+int low,high,mult;
+
+void updateLeftFast(long long *seg, long long *scale)
+{
+	int i = 1;
+	if(r[i] <= high)
+	{
+		scale[i] += mult;
+		return;
+	}
+	while(i < SEG)
+	{
+		push(seg,scale,i);
+		if(r[2*i] <= high)
+		{
+			scale[2*i] += mult;
+			push(seg,scale,2*i);
+			i = 2*i+1;
+		}
+		else
+		{
+			push(seg,scale,2*i+1);
+			i = 2*i;
+		}
+	}
+	push(seg,scale,i);
+	while(i>1)
+	{
+		i /= 2;
+		seg[i] = (seg[2*i] + seg[2*i+1])%MOD;
+	}
+}
+
+void updateRightFast(long long *seg, long long *scale)
+{
+	int i = 1;
+	if(l[i] >= low)
+	{
+		scale[i] += mult;
+		return;
+	}
+	while(i < SEG)
+	{
+		push(seg,scale,i);
+		if(l[2*i+1] >= low)
+		{
+			scale[2*i+1] += mult;
+			push(seg,scale,2*i+1);
+			i = 2*i;
+		}
+		else
+		{
+			push(seg,scale,2*i);
+			i = 2*i+1;
+		}
+	}
+	push(seg,scale,i);
+	while(i>1)
+	{
+		i /= 2;
+		seg[i] = (seg[2*i] + seg[2*i+1])%MOD;
+	}
+}
+
+long long getSumFast(long long *seg, long long *scale)
+{
+	int i = 1;
+	long long sm = 0;
+	if(r[i] <= high)
+	{
+		push(seg,scale,1);
+		return seg[i];
+	}
+	while(i < SEG)
+	{
+		if(r[2*i] <= high)
+		{
+			push(seg,scale,2*i);
+			push(seg,scale,2*i+1);
+			sm = (sm + seg[2*i])%MOD;
+			i = 2*i+1;
+		}
+		else
+		{
+			push(seg,scale,2*i);
+			i = 2*i;
+		}
+	}
+	return sm;
+}
+
+long long ans;
+int N;
+
+void fix_double_counting()
+{
+	init();
+	for(int i=0;i<N;i++)
+	{
+		G[y[i]+1+SEG] = (G[y[i]+1+SEG] * 2)%MOD;
+		I[y[i]+1+SEG] = (I[y[i]+1+SEG] * 2)%MOD;
+	}
+	for(int i=SEG+1;i<2*SEG;i++)
+	{
+		G[i] = (G[i] * G[i-1])%MOD;
+		I[i] = (I[i] * I[i-1])%MOD;
+	}
+	for(int i=SEG-1;i>0;i--)
+	{
+		G[i] = (G[2*i] + G[2*i+1])%MOD;
+		I[i] = (I[2*i] + I[2*i+1])%MOD;
+	}
+	for(int i=0;i<N;i++)
+	{
+		if(i == 0 || x[cid[i]] > x[cid[i-1]])
+		{
+			for(int j=i;j<N;j++)
+			{
+				if(x[cid[j]]>x[cid[i]]) break;
+				low = y[cid[j]]+1, high = N;
+				mult = -1;
+				updateRightFast(G, scaleG);
+				updateRightFast(I, scaleI);
+			}
+		}
+		low = 0, high = y[cid[i]];
+		long long sumF = getSumFast(G, scaleG);
+		if(y[cid[i]] > 0)
+		{
+			low = 0, high = y[cid[i]] - 1;
+			sumF = (sumF + MOD - getSumFast(I, scaleI))%MOD;
+		}
+		low = high = 0;
+		sumF = (sumF + MOD - getSumFast(H, scaleH))%MOD;
+		ans = (ans + MOD - sumF)%MOD;
+		low = 0, high = y[cid[i]];
+		mult = 1;
+		updateLeftFast(G, scaleG);
+		updateLeftFast(H, scaleH);
+		if(y[cid[i]]>0)
+		{
+			low = 0, high = y[cid[i]]-1;
+			updateLeftFast(I, scaleI);
+		}
+	}
+}
+
+int main()
+{
+	scanf("%d",&N);
+	for(int i=0;i<N;i++)
+	{
+		scanf("%d %d",&x[i],&y[i]);
+		x[i]--, y[i]--;
+		numx[x[i]]++, numy[y[i]]++;
+		cid[i] = i;
+	}
+	pow_array[0] = 1;
+	for(int i=1;i<MAXN;i++)
+		pow_array[i] = (2LL * pow_array[i-1])%MOD;
+	zpow_array[MAXN] = 1;
+	for(int i=MAXN+1;i<=2*MAXN;i++) zpow_array[i] = (zpow_array[i-1] * 2)%MOD;
+	for(int i=MAXN-1;i>=0;i--) zpow_array[i] = (zpow_array[i+1] * HALF)%MOD;
+	sort(cid,cid+N,cmp);
+	for(int i=0;i<N;i++) // Count horizontally separable teams
+		ans = (ans + pow_array[i] * (pow_array[N-i-numx[x[i]]] + MOD - 1))%MOD;
+	for(int i=0;i<N;i++) // Count vertically separable teams
+		ans = (ans + pow_array[i] * (pow_array[N-i-numy[y[i]]] + MOD - 1))%MOD;
+	fix_double_counting(); // Fix double-counting where first team is left & above second team
+	for(int i=0;i<N;i++)
+		x[i] = N-1-x[i];
+	sort(cid,cid+N,cmp);
+	fix_double_counting(); // Fix double-counting where first team is right & above second team
+	ans = (ans * 2)%MOD; // Account for red/blue symmetry
+	printf("%d\n",ans);
+}

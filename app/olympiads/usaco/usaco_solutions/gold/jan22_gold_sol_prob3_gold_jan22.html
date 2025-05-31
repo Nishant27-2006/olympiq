@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>Consider creating a tree on the indexes of the array as follows. For an index
+<span class='math'>$i$</span>, let its parent be <span class='math'>$j_i + 1$</span>. Note that this means that we&apos;ll also need a
+node <span class='math'>$N + 1$</span>, since <span class='math'>$j_N + 1 = N + 1$</span>; this node will be the root of the tree.
+<p>Let&apos;s define the height of a node as the depth of the deepest node minus its own
+depth. This tree construction is illustrated below for the sample with heights
+on the left.
+<p><pre class='prettyprint'>
+3      7
+      /|
+2    5 6
+     | |
+1    3 4
+    /|
+0  1 2
+</pre>
+<p>Notice that as we go down the array from index <span class='math'>$N$</span> to index <span class='math'>$1$</span>, the heights of
+the corresponding nodes decrease. This means that the array consists of first
+the nodes at height <span class='math'>$0$</span>, then the nodes at height <span class='math'>$1$</span>, etc. Additionally, since
+each node <span class='math'>$i$</span>&apos;s parent is <span class='math'>$j_i + 1$</span>, which is the first index whose element
+<span class='math'>$a_{j_i + 1}$</span> is greater than <span class='math'>$a_i + K$</span>, and a node&apos;s parent necessarily has
+height <span class='math'>$1$</span> higher than the height of that node, the nodes at a certain height
+need to have values that are approximately <span class='math'>$K$</span> higher than the values of the
+nodes at the immediately lower height.
+<p>This suggests that we assign the values of the nodes as <span class='math'>$a_i = h_i K + x_i$</span>,
+where <span class='math'>$h_i$</span> is the height of node <span class='math'>$i$</span> and <span class='math'>$x_i$</span> is some yet to be determined
+value between <span class='math'>$0$</span> and <span class='math'>$K - 1$</span>. Using these values means that
+<span class='math'>$a_i + K = (h_i + 1)K + x_i$</span>, which means that the point at which values go from
+being less than <span class='math'>$a_i + K$</span> to more than <span class='math'>$a_i + K$</span> occurs at height <span class='math'>$h_i + 1$</span>,
+which is exactly what we want since <span class='math'>$i$</span>&apos;s parent, <span class='math'>$j_i + 1$</span>, is at height
+<span class='math'>$h_i + 1$</span>.
+<p>All that remains is to choose values of <span class='math'>$x_i$</span> appropriately so that that point
+occurs at exactly the right place inside height <span class='math'>$h_i + 1$</span>. This means choosing
+the <span class='math'>$x$</span> values so that <span class='math'>$x_{j_i + 1} &gt; x_i$</span>, but any smaller indexes at height
+<span class='math'>$h_i + 1$</span> have an <span class='math'>$x$</span> value less than or equal to <span class='math'>$x_i$</span>.
+<p>We can do this using DFS. We start by assigning the root node <span class='math'>$N + 1$</span> to have
+<span class='math'>$x_{N + 1} = K - 1$</span>, the largest <span class='math'>$x$</span> value possible. Then, it DFSs through its
+children starting from the largest index and going down. Whenever we reach a
+node, we assign it the next lower <span class='math'>$x$</span> value, then DFS through its children in
+decreasing order. This guarantees that every node <span class='math'>$i$</span> has an <span class='math'>$x$</span> value larger
+than <span class='math'>$i$</span>&apos;s children, but all smaller indexes at the same height as <span class='math'>$i$</span> get an
+<span class='math'>$x$</span> value smaller than <span class='math'>$i$</span>&apos;s children, since the DFS reaches them only after
+searching through all of <span class='math'>$i$</span>&apos;s descendants. 
+<p>Since each node will get a unique <span class='math'>$x$</span> value, we need to set <span class='math'>$K = N + 1$</span> in order
+to ensure that all <span class='math'>$x$</span> values are between <span class='math'>$0$</span> and <span class='math'>$K - 1$</span>. The <span class='math'>$x$</span> values for
+the sample are illustrated below.
+<p><pre class='prettyprint'>
+                7
+           /---/
+          5   6
+         /   /
+        3   4
+     /-/
+    1 2
+
+x = 0 1 2 3 4 5 6
+</pre>
+<p>As an example of how this construction works, consider index <span class='math'>$4$</span>, which has
+<span class='math'>$j_4 = 5$</span>. Its height is <span class='math'>$1$</span> and its <span class='math'>$x$</span> value is <span class='math'>$x_4 = 4$</span>, which means that
+its array value will be <span class='math'>$a_4 = (1)K + 4 = (1)(7) + 4$</span>, and <span class='math'>$a_4 + K$</span> will be
+<span class='math'>$(2)(7) + 4$</span>.
+<p>Index <span class='math'>$5$</span> is at height <span class='math'>$2$</span> but has the smaller <span class='math'>$x$</span> value <span class='math'>$x_5 = 3$</span>, so its array
+value will be <span class='math'>$a_5 = (2)(7) + 3$</span>, which is smaller than <span class='math'>$a_4 + K = (2)(7) + 4$</span>.
+Similarly, index <span class='math'>$6$</span> is at height <span class='math'>$2$</span> and has the larger <span class='math'>$x$</span> value <span class='math'>$x_6 = 5$</span>, so
+its array value will be <span class='math'>$a_6 = (2)(7) + 5$</span>, which is larger than
+<span class='math'>$a_4 + K = (2)(7) + 4$</span>. Therefore index <span class='math'>$5$</span> is the largest index <span class='math'>$j$</span> satisfying
+<span class='math'>$a_j \leq a_4 + K$</span>, and so the requirement <span class='math'>$j_4 = 5$</span> is satisfied.
+<p>Using these <span class='math'>$x$</span> values, we can calculate our array <span class='math'>$a$</span> along with the choice of
+<span class='math'>$K = N + 1$</span> to produce a valid construction. Our algorithm simply consists of
+constructing the tree then performing a DFS to compute the <span class='math'>$x$</span> values as well as
+the heights. This runs in <span class='math'>$O(N)$</span> time.
+<p>The array values for all indexes in the sample are illustrated below.
+<p><pre class='prettyprint'>
+                                                                     (3)(7) + 6
+                                             /----------------------/
+                                   (2)(7) + 3             (2)(7) + 5
+                                  /                      /
+                        (1)(7) + 2             (1)(7) + 4
+          /------------/
+(0)(7) + 0   (0)(7) + 1
+</pre>
+<p>Code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+
+public class TestsForHaybales {
+    static List&lt;Integer&gt;[] children;
+    static long[] depths;
+    static long[] xs;
+    static long x;
+
+    static void dfs(int a) {
+        xs[a] = x;
+        x--;
+        Collections.reverse(children[a]);
+        for (int b : children[a]) {
+            depths[b] = depths[a] + 1L;
+            dfs(b);
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        children = new List[n + 2];
+        for (int a = 1; a &lt;= n + 1; a++) {
+            children[a] = new ArrayList&lt;&gt;();
+        }
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        for (int a = 1; a &lt;= n; a++) {
+            children[Integer.parseInt(tokenizer.nextToken()) + 1].add(a);
+        }
+        depths = new long[n + 2];
+        xs = new long[n + 2];
+        x = n;
+        dfs(n + 1);
+        long k = n + 1;
+        StringJoiner joiner = new StringJoiner(&quot;\n&quot;);
+        for (int a = 1; a &lt;= n; a++) {
+            long height = depths[1] - depths[a];
+            long value = (height * k) + xs[a];
+            joiner.add(&quot;&quot; + value);
+        }
+        System.out.println(k);
+        System.out.println(joiner);
+    }
+}
+</pre>
+<p></body></html>

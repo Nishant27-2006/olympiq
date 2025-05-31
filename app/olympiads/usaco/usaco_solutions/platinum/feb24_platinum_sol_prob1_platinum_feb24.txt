@@ -1,0 +1,843 @@
+Solution ID: sol_prob1_platinum_feb24
+Contest: FEB24
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob1_platinum_feb24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi, Brandon Wang, Claire Zhang)
+
+Let us first suppose we compute each
+
+$e_n$
+
+separately, and then we will do this
+
+$D$
+
+times. (Later we will describe how to support updates.) Suppose
+
+$(m_1, b_1), \ldots, (m_n, b_n)$
+
+are in increasing order of
+
+$m_i$
+
+. We can make
+the following observations:
+
+If
+
+$b_i \geq b_j$
+
+for
+
+$i < j$
+
+, then we can ignore demand
+
+$j$
+
+.
+
+Let us suppose we create
+
+$a_i$
+
+tasks on day
+
+$i$
+
+. Then, we can assume
+
+$a_1 \geq a_2 \geq a_3 \cdots$
+
+(since if
+
+$a_i < a_j$
+
+with
+
+$i > j$
+
+, we can swap
+
+$a_i$
+
+and
+
+$a_j$
+
+).
+
+Subtask 1 (
+
+$D\le100$
+
+,
+
+$m_i \le 100$
+
+):
+
+Let the cost of a sequence of increments
+
+$(a_i)$
+
+be the energy required
+
+$\left(\sum_i 3^{a_i}\right)$
+
+. Additionally, say
+
+$(a_i)$
+
+is valid if it
+satisfies all demands.
+
+Claim
+
+: The lexicographically minimal sequence
+
+$(a_i)$
+
+which is
+non-increasing and valid attains minimum cost.
+
+Proof: Let
+
+$(a_i)$
+
+be the lexicographically minimal sequence which is
+non-increasing and valid. Suppose for sake of contradiction that the lowest-cost
+non-increasing, valid sequence
+
+$(b_i)$
+
+has lower cost than
+
+$(a_i)$
+
+.  Without
+loss of generality, say the first index
+
+$i$
+
+where
+
+$a_i\ne b_i$
+
+is
+
+$i=1$
+
+. For
+example, consider
+
+$(a_i) = [4, 4, 4, 4, 2]$
+
+$(b_i) = [5, 5, 4, 3, 1]$
+
+Then we claim
+
+$(b_i)$
+
+is not the lowest-cost sequence which is non-increasing
+and valid: consider decrementing
+
+$b_j$
+
+, where
+
+$j$
+
+is maximum index such that
+
+$b_j=b_1$
+
+, and incrementing
+
+$b_k$
+
+, where
+
+$k$
+
+is the minimum index such that
+
+$b_k \le b_1-2$
+
+(if such exists). In the example,
+
+$(b_i) = [5, 5, 4, 3, 1] \rightarrow (b'_i) = [5, 5-1, 4, 3+1, 2]$
+
+$(b'_i)$
+
+meets all demands because the first
+
+$k-1$
+
+prefixes have sum at least that of
+
+$a$
+
+, and all other prefix sums are the same as in
+
+$b$
+
+(which are valid),
+
+is non-increasing because the only consecutive difference that we decrease
+is between
+
+$b_j$
+
+and
+
+$b_{j+1}$
+
+(
+
+$b_j > b_{j+1}$
+
+) and we only decrease it by
+1,
+
+and has smaller cost as
+
+$3^x + 3^y > 3^{x-1} + 3^{y+1}$
+
+when
+
+$x>y+1$
+
+.
+
+$(b'_i)$
+
+is a valid, non-increasing, sequence with lower cost than
+
+$(b_i)$
+
+-- a
+contradiction. (end of proof)
+
+Using this claim, we can greedily select the smallest
+
+$a_i$
+
+for
+
+$i=1, \ldots, D$
+
+. If there are 0 test cases on day 0 and at least
+
+$b_i$
+
+on day
+
+$m_i$
+
+, there must be a day
+
+$1 \le j \le  m_i$
+
+where
+
+$\lceil \frac{b_i}{m_i} \rceil$
+
+test cases are prepared (max 1-day increase is
+at least average increase).
+
+$a_1$
+
+is the maximum
+
+$a_i$
+
+, so
+
+$a_1$
+
+must be at
+least
+
+$\max_{i=1}^D \lceil \frac{b_i}{m_i} \rceil$
+
+. Let
+
+$a_1 = \max_{i=1}^D \lceil \frac{b_i}{m_i} \rceil$
+
+and decrement all
+
+$m_i$
+
+. If
+we set all
+
+$a_i$
+
+in this manner,
+
+$(a_i)$
+
+is
+
+valid, because on day
+
+$m_i$
+
+we make at least
+
+$\lceil \frac{b_i-\sum_{j=1}^{m_i-1}a_j}{1}\rceil \ge b_i-\sum_{j=1}^{m_i-1}a_j$
+
+test cases,
+
+lexicographically minimal by construction,
+
+and
+non-increasing because
+
+$\lceil\frac{b_i-\lceil \frac{b_i}{m_i}\rceil}{m_i-1} \rceil \le \lceil\frac{b_i}{m_i}\rceil$
+
+Therefore, this greedy algorithm (code below) attains the lex. min valid
+sequence, which we have shown is cost-optimal. Its time complexity is
+
+$O(D^3 + D^2 \log(B))$
+
+.
+
+def ceildiv(a, b):
+    return -(a // -b)
+
+
+def solve(demands):
+    MOD = 10**9 + 7
+    ans = 0
+    while len(demands) > 0:
+        a1 = max(ceildiv(b, m) for m, b in demands)
+        demands = [(m - 1, b - a1) for m, b in demands if b > a1]
+        ans = (ans + pow(3, a1 - 1, MOD)) % MOD
+    return ans
+
+
+D = int(input())
+
+demands = []
+for _ in range(D):
+    m, b = map(int, input().split())
+    demands.append((m, b))
+    print(solve(demands))
+
+Subtask 2 (
+
+$D \leq 3000$
+
+):
+
+Observation 2 implies that we only need to satisfy
+
+$(m_i, b_i)$
+
+that are on the
+"upper left" hull of the demand set (where we assume
+
+$(0, 0)$
+
+is also a demand).
+Let's take some
+
+$(a_1, a_2, \ldots)$
+
+that satisfies everything on the upper left
+hull. We claim that we can "massage" the
+
+$a_i$
+
+so that each
+
+$(m_i, b_i)$
+
+on the
+upper left hull is
+
+exactly
+
+satisfied. We will also do this in a way so
+that if
+
+$(m_i, b_i)$
+
+,
+
+$(m_j, b_j)$
+
+are consecutive on the hull, then
+
+$a_{m_i+1} \geq a_{i+2} \geq \cdots a_{m_j}$
+
+still holds (so everything not on
+the hull is still automatically satisfied). To see how to do this, suppose
+
+$a_1 + a_2 + \cdots + a_{m_i} > b_i$
+
+with
+
+$i$
+
+minimal, and let
+
+$j > i$
+
+be
+minimal such that
+
+$a_1 + a_2 + \cdots + a_{m_j} = b_j$
+
+(also,
+
+$i, j$
+
+are both on
+the hull). Then, we have
+
+$a_{m_{i-1}+1} + \cdots + a_{m_i} > b_i - b_{i-1}$
+
+, but
+
+$a_{m_{j-1}} + \cdots + a_{m_j} < b_j - b_{j-1}$
+
+. By convexity, we must have
+
+$\frac{b_i - b_{i-1}}{m_i - m_{i-1}} \geq \frac{b_j - b_{j-1}}{m_j - m_{j-1}}$
+
+,
+so we have
+
+$a_{m_{i-1}+1} > a_{m_j}$
+
+. We can then move
+
+$1$
+
+test-case from the
+last
+
+$a_k = a_{m_{i-1}+1}$
+
+(with
+
+$m_{i-1}+1\leq k \leq m_i$
+
+) to the first
+
+$a_\ell = a_{m_j}$
+
+(with
+
+$m_{j-1}+1\leq \ell \leq m_j$
+
+). In this way, we have
+moved a subtask from a day with
+
+$a_k$
+
+subtasks to a day with
+
+$a_\ell < a_k$
+
+subtasks, which does not increase the total cost.
+
+The point of this argument is as follows: Suppose
+
+$(0, 0), (m_{i_1}, b_{i_1}), \ldots, (m_{i_k}, b_{i_k})$
+
+is the upper left
+hull. Then, we can assume Bessie has prepared exactly
+
+$b_{i_t}$
+
+test-cases by
+day
+
+$m_{i_t}$
+
+. In particular, between days
+
+$m_{i_{t-1}+1}$
+
+and
+
+$m_{i_t}$
+
+(inclusive), Bessie prepares
+
+$b_{i_t} - b_{i_{t-1}}$
+
+test cases. By convexity of
+
+$3^{a-1}$
+
+, we want the number of test cases per day to be as close together as
+possible, so we should have them all be either
+
+$\lceil x \rceil$
+
+or
+
+$\lfloor x \rfloor$
+
+,
+
+$x$
+
+being the average number of test cases prepared in
+this interval.
+
+This gives us an
+
+$O(D^2(\log D + \log B))$
+
+solution (code below).
+
+#include <algorithm>
+#include <iostream>
+#include <stack>
+ 
+typedef long long ll;
+typedef std::pair<ll,ll> pi;
+ 
+const int MAXN = 2e5+5;
+const ll P = 1000000007;
+ 
+int N;
+pi p[MAXN];
+ 
+ll modexp (ll a, ll n) {
+	if (n == 0) return 1;
+	ll b = modexp((a*a)%P, n/2);
+	return (n%2?(a*b)%P:b);
+}
+ 
+void input () {
+	std::cin >> N;
+	for (int i = 0; i < N; i++) {
+		std::cin >> p[i].first >> p[i].second;
+	}
+}
+ 
+bool pre (pi p, pi q) {
+	// returns true if line to p is on or below line to q
+	return p.second*q.first <= q.second*p.first;
+}
+ 
+ll diff (pi p, pi q) {
+	ll dy = q.second - p.second;
+	ll dx = q.first - p.first;
+	ll nh = dy%dx%P;
+	ll lo = dy/dx;
+	if (lo == 0) {
+		return ((nh%P) * modexp(3, lo))%P;
+	}
+	return (modexp(3, lo-1)*((dx-nh)%P) + modexp(3, lo)*(nh%P))%P;
+}
+ 
+ll query (int M) {
+	std::sort(p, p+M);
+	std::stack<pi> stk;
+	stk.push({0, 0});
+	for (int i = 0; i < M; i++) {
+		while (int(stk.size()) > 1) {
+			pi q = stk.top();
+			stk.pop();
+			pi r = stk.top();
+			if (pre({q.first-r.first, q.second-r.second}, {p[i].first-r.first, p[i].second-r.second})) {
+				continue;
+			}
+			else {
+				stk.push(q);
+				break;
+			}
+		}
+		if (stk.top().second < p[i].second) {
+			stk.push(p[i]);
+		}
+	}	
+	ll ans = 0;
+	pi cur = stk.top();
+	stk.pop();
+	while (!stk.empty()) {
+		ans = (ans + diff(stk.top(), cur))%P;
+		cur = stk.top();
+		stk.pop();
+	}
+	return ans;
+}
+ 
+int main () {
+	input();
+	for (int i = 1; i <= N; i++) {
+		std::cout << query(i) << "\n";
+	}
+}
+
+Subtask 3 (
+
+$D \leq 2\cdot 10^5$
+
+):
+
+To optimize, we need to efficiently maintain consecutive pairs of points on the
+hull as points are added. For two sets of points
+
+$A$
+
+,
+
+$B$
+
+,
+
+$h(A \cup B)=h(h(A), h(B))$
+
+, where
+
+$h(S)$
+
+denotes the convex hull of
+
+$S$
+
+, a set
+of 2d points. This means that a point that's not on the convex hull will never
+be after new points are added. Thus, inserting a new point inserts at most 1 new
+point to the hull and deletes possibly many.
+
+We can maintain a set of
+
+$(x,y)$
+
+points on the hull, sorted by
+
+$x$
+
+(and
+
+$y$
+
+).
+Updating the convex hull after inserting a point
+
+$p$
+
+could require removing a
+ball of points around
+
+$p$
+
+. Say
+
+$p$
+
+has index
+
+$i$
+
+in the sorted set. We can
+repeatedly check if
+
+$i \rightarrow (i+1) \rightarrow (i+2)$
+
+forms a left turn;
+if so,
+
+$i+1$
+
+does not belong on the hull. Similarly, check for right turns of
+the form
+
+$(i-2)\leftarrow(i-1)\leftarrow i$
+
+.
+
+Note that
+
+$a_i$
+
+s should never be negative, so we should remove
+
+$i+1$
+
+whenever
+
+$i\rightarrow(i+1)$
+
+is downward sloping. Each point is removed at most once in
+
+$O(\log D)$
+
+time, and exponentiating to calculate the costs involving it is
+
+$O(\log B)$
+
+per hull edge. The total work is
+
+$O(D(\log D+\log B))$
+
+.
+
+Code:
+
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+template <ll Mod>
+struct ModInt {
+  ll n;
+
+  ModInt(const ll x = 0) : n(x) {
+    while (n < 0) n += Mod;
+    n %= Mod;
+  }
+  explicit operator int() const { return n; }
+  inline ModInt operator+(const ModInt r) const noexcept { return ModInt(*this) += r; }
+  inline ModInt operator-(const ModInt r) const noexcept { return ModInt(*this) -= r; }
+  inline ModInt operator*(const ModInt r) const noexcept { return ModInt(*this) *= r; }
+  inline ModInt operator/(const ModInt r) const noexcept { return ModInt(*this) /= r; }
+  inline ModInt &operator+=(const ModInt r) noexcept {
+    n += r.n;
+    if (n >= Mod) n -= Mod;
+    return *this;
+  }
+  inline ModInt &operator-=(const ModInt r) noexcept {
+    if (n < r.n) n += Mod;
+    n -= r.n;
+    return *this;
+  }
+  inline ModInt &operator*=(const ModInt r) noexcept {
+    n = n * r.n % Mod;
+    return *this;
+  }
+  inline ModInt &operator/=(const ModInt r) noexcept { return *this *= r.inv(); }
+
+  inline ModInt pow(ll x) const noexcept {
+    ModInt<Mod> ret(1), tmp(*this);
+    while (x) {
+      if (x&1) ret *= tmp;
+      tmp *= tmp;
+      x >>= 1;
+    }
+    return ret;
+  }
+  inline ModInt inv() const noexcept { return pow(Mod-2); }
+
+  friend ostream& operator<<(ostream& os, const ModInt& obj) { return os << obj.n; }
+  friend istream& operator>>(istream& is, ModInt& obj) {
+    ll t;
+    is >> t;
+    obj = ModInt(t);
+    return is;
+  }
+};
+
+const ll mod = 1000000007;
+using mi = ModInt<mod>;
+
+
+int main(){
+    cin.tie(0)->sync_with_stdio(0);
+
+    int D; cin >> D;
+
+    mi ans=0;
+
+    map<int, ll> ys;
+    set<int> xs({0});
+
+    auto left_turn=[&](int x1, int x2, int x3)->bool{
+        return (ys[x2]-ys[x1])*(x3-x2) <= (ys[x3]-ys[x2])*(x2-x1);
+    };
+
+    auto right_turn=[&](int x1, int x2, int x3)->bool{
+        return !left_turn(x1, x2, x3);
+    };
+
+    auto f=[&](int x1, int x2)->mi{
+        int dx = x2 - x1;
+        ll dy = ys[x2] - ys[x1];
+        if(dy<=0) return 0;
+        // dx*k <= dy <= dx*(k+1)
+        ll step = dy/dx;
+        if(dy%dx) return mi(3).pow(dy/dx)*(dy%dx) + (dy/dx? mi(3).pow(dy/dx-1) : 0) *(dx-(dy%dx));
+        return dy/dx? mi(3).pow(dy/dx-1)*dx : 0;
+    };
+
+    auto upd=[&](int x, bool del = 0){
+        auto it = xs.lower_bound(x);
+        assert(*it == x);
+        assert(it != xs.begin());
+        int x_bef = *prev(it);
+        if(del){
+            ans -= f(x_bef, x);
+            it++;
+            if(it != xs.end()){
+                int x_af = *it;
+                ans += f(x_bef, x_af) - f(x, x_af);
+            }
+            xs.erase(x);
+            ys[x] = 0;
+        } else{
+            ans += f(x_bef, x);
+            it++;
+            if(it != xs.end()){
+                int x_af = *it;
+                ans += f(x, x_af) - f(x_bef, x_af);
+            }
+        }
+    };
+
+    auto ins=[&](int x, ll y){
+        // check if x -- y -- z y is below segment (x-z) in CH -- if so return
+        if(ys[x] and ys[x] >= y) return;
+        if(ys[x]) upd(x, 1);
+        ys[x] = y;
+        xs.insert(x);
+        upd(x);
+        while(true){
+            auto it = xs.lower_bound(x);
+            bool ch = 0;
+            for(int i=0; i<3; i++){
+                if(it!=xs.end() and next(it)!=xs.end() and next(next(it))!=xs.end()){
+                    int a=*it, b=*next(it), c=*next(next(it));
+                    if(left_turn(a, b, c)){
+                        ch = 1;
+                        upd(b, 1);
+                        break;
+                    }
+                }
+                if(it==xs.begin()) break;
+                it--;
+            }
+            if(!ch) break;
+        }
+    };
+
+    while(D--){
+        int t;
+        ll b;
+        cin >> t >> b;
+        ins(t, b);
+        cout << ans << "\n";
+    }
+}
+
+Note that the solution is correct even if you divide when computing left_turn
+instead of multiply:
+
+auto left_turn = [&](int x1, int x2, int x3) -> bool {
+	return ys[x2] <= ys[x3] && (ys[x2] - ys[x1]) / (x2 - x1) <= (ys[x3] - ys[x2]) / (x3 - x2);
+};

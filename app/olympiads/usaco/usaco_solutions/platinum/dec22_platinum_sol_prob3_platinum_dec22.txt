@@ -1,0 +1,667 @@
+Solution ID: sol_prob3_platinum_dec22
+Contest: DEC22
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_dec22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal)
+
+Consider minimizing the number of transpositions to make a single array
+
+$a$
+
+into
+a palindrome. We will assume for convenience that the number of 'G's in
+
+$a$
+
+is
+an even number
+
+$2k$
+
+. The case where the number of 'G's is odd is essentially the
+same, except that you have to account for moving the middle 'G' to the center
+(and using
+
+$-1$
+
+instead if the length of
+
+$a$
+
+isn't odd).
+
+Notice that we should never swap two adjacent 'G's as it doesn't change the
+array. It follows that the 'G's in
+
+$a$
+
+, relative to each other, stay in the same
+order as they were originally, meaning that to make
+
+$a$
+
+into a palindrome, we
+want to match the first 'G' in
+
+$a$
+
+with the last 'G', the second 'G' with the
+second to last 'G' and so on.
+
+Therefore, for
+
+$1 \leq j \leq k$
+
+, let
+
+$a_j$
+
+be the position of the
+
+$j$
+
+th 'G' in
+
+$a$
+
+and let
+
+$b_j$
+
+be the position
+
+counted from the end
+
+of the
+
+$j$
+
+th to
+last 'G' in
+
+$a$
+
+. The number of 'H's from the beginning to the
+
+$j$
+
+th 'G' is
+
+$a_j - j$
+
+, and the number of 'H's from the
+
+$j$
+
+th to last 'G' to the end is
+
+$b_j - j$
+
+. To make them match, we have to make the amount of 'H's between each
+and their respective ends the same, which requires
+
+$|(a_j - j) - (b_j - j)| = |a_j - b_j|$
+
+transpositions.
+
+Given this, to solve the problem in
+
+$\mathcal O(N^3)$
+
+we can simply iterate over
+the
+
+$O(N^2)$
+
+subarrays, and for each one calculate the values of
+
+$a_j, b_j$
+
+,
+then simply sum
+
+$|a_j - b_j|$
+
+over all
+
+$j$
+
+in
+
+$\mathcal O(N)$
+
+.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class Palindromes {
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        char[] lineup = in.readLine().toCharArray();
+        long answer = 0;
+        for (int l = 0; l < lineup.length; l++) {
+            for (int r = l; r < lineup.length; r++) {
+                long here = 0;
+                int a = l;
+                int b = r;
+                while (true) {
+                    while (a < lineup.length && lineup[a] == 'H') {
+                        a++;
+                    }
+                    while (b >= 0 && lineup[b] == 'H') {
+                        b--;
+                    }
+                    if (a > b) {
+                        break;
+                    }
+                    if (a == b) {
+                        if ((l - r) % 2 == 0) {
+                            here += Math.abs(a - ((l + r) / 2));
+                        } else {
+                            here = -1;
+                        }
+                        break;
+                    }
+                    here += Math.abs((a - l) - (r - b));
+                    a++;
+                    b--;
+                }
+                answer += here;
+            }
+        }
+
+        System.out.println(answer);
+    }
+}
+
+To optimize the runtime to
+
+$O(N^2)$
+
+, we can consider fixing the middle two 'G's,
+then calculating the answer for all corresponding subarrays more quickly. Say
+that the middle two 'G's we fixed are at positions
+
+$x < y$
+
+in the entire array.
+The idea is that when we fix the middle two 'G's, every single 'G' is matched to
+the same other 'G': the
+
+$j$
+
+th 'G' to the left of
+
+$a_x$
+
+is always matched to the
+
+$j$
+
+th 'G' to the right of
+
+$a_y$
+
+.
+
+Following this idea, let's define
+
+$u_j$
+
+to be the position of the
+
+$j$
+
+th 'G' to
+the left of position
+
+$x$
+
+, and
+
+$v_j$
+
+to be the position of the
+
+$j$
+
+th 'G' to the
+right of
+
+$y$
+
+. Given that the subarray we are currently considering has endpoints
+
+$l \leq r$
+
+, the positions of these 'G's in the subarray are
+
+$u_j - l + 1$
+
+counted from the beginning and
+
+$r - v_j + 1$
+
+counted from the end respectively.
+Therefore, the number of transpositions needed to match them is
+
+$$|(u_j - l + 1) - (r - v_j + 1)| = |(u_j + v_j) - (l + r)|.$$
+
+Consider this quantity as a function of
+
+$l + r$
+
+. Specifically, let's write
+
+$$f_j(s) = |(u_j + v_j) - s|.$$
+
+When you increase
+
+$s$
+
+by
+
+$1$
+
+,
+
+$f_j(s)$
+
+decreases by
+
+$1$
+
+for
+
+$s < u_j + v_j$
+
+and
+increases by
+
+$1$
+
+for
+
+$s \ge u_j + v_j$
+
+. This means that if we know
+
+$f_j(s)$
+
+, we
+can calculate
+
+$f_j(s + 1)$
+
+by simply adding
+
+$1$
+
+or
+
+$-1$
+
+, which takes constant
+time.
+
+We can extend this idea to
+
+$F(s) = \sum_{j = 1}^k f_j(s)$
+
+, which is actually the
+number of transpositions needed for a subarray
+
+$a[l..r]$
+
+with
+
+$l + r = s$
+
+with
+
+$2k$
+
+'G's such that
+
+$a_x$
+
+and
+
+$a_y$
+
+are the middle 'G's. When we increase
+
+$s$
+
+by
+
+$1$
+
+,
+
+$F(s)$
+
+increases by
+
+$1$
+
+for all
+
+$j$
+
+such that
+
+$s \geq u_j + v_j$
+
+, and
+decreases by
+
+$1$
+
+for other
+
+$j$
+
+. Let's quantify this difference as
+
+$d(s) = F(s + 1) - F(s)$
+
+. If we maintain
+
+$d(s)$
+
+, then we can update
+
+$F(s)$
+
+to
+
+$F(s + 1)$
+
+by simply adding
+
+$d(s)$
+
+. To then be able to calculate
+
+$F(s)$
+
+for
+higher
+
+$s$
+
+, we need to be able to update
+
+$d(s)$
+
+to
+
+$d(s + 1)$
+
+as well, but to do
+that we simply need to add
+
+$2$
+
+for each
+
+$j$
+
+such that
+
+$u_j + v_j = s + 1$
+
+; we
+can do this easily by simply storing an array
+
+$e(s)$
+
+that counts the amount of
+
+$j$
+
+such that
+
+$u_j + v_j = s$
+
+, and calculating
+
+$d(s + 1)$
+
+as
+
+$d(s) + 2e(s + 1)$
+
+.
+
+Therefore, our algorithm will be as follows. For each adjacent pair of 'G's
+
+$a_x$
+
+and
+
+$a_y$
+
+(there can be 'H's between them but no 'G's), initialize an
+array
+
+$e$
+
+to be all
+
+$0$
+
+s. We will then compute the answers for subarrays
+centered at
+
+$a_x, a_y$
+
+in phases. For each
+
+$k$
+
+starting from
+
+$1$
+
+, we update
+
+$e$
+
+by adding
+
+$1$
+
+to
+
+$e(u_k + v_k)$
+
+. Then, we compute the answers for all subarrays
+
+$a[l..r]$
+
+such that
+
+$u_{k + 1} < l \leq u_k$
+
+and
+
+$v_k \leq r < v_{k + 1}$
+
+.
+Starting with
+
+$l = u_k$
+
+and
+
+$r = v_k$
+
+, we maintain the values of
+
+$F(l + r)$
+
+and
+
+$d(l + r)$
+
+. We repeatedly increase
+
+$r$
+
+by
+
+$1$
+
+, updating
+
+$F(l + r)$
+
+and
+
+$d(l + r)$
+
+in constant time as we explained above, and importantly adding
+
+$F(l + r)$
+
+to our overall answer, until we reach
+
+$r = v_{k + 1}$
+
+, at which we
+decrease
+
+$r$
+
+back down to
+
+$v_k$
+
+in a similar manner. We then decrease
+
+$l$
+
+by
+
+$1$
+
+, and repeat, until we reach
+
+$l = u_{k + 1}$
+
+. At that point, we've calculated
+the contributions of all the subarrays that we wanted to.
+
+In terms of runtime, we aren't guaranteed that a single step of fixing the
+middle two 'G's takes
+
+$\mathcal O(N)$
+
+-- even a single phase could take
+
+$O(N^2)$
+
+-- but overall, we only take constant time to compute the answer for each
+subarray, meaning that the overall runtime is
+
+$O(N^2)$
+
+. We also need to
+initialize the array
+
+$e$
+
+which needs
+
+$O(N)$
+
+space, but since we fix the middle
+two 'G's less than
+
+$N$
+
+times, this is also
+
+$O(N^2)$
+
+.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class Palindromes {
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        char[] lineup = in.readLine().toCharArray();
+        int[] gs = new int[lineup.length];
+        int amountG = 0;
+        for (int j = 0; j < lineup.length; j++) {
+            if (lineup[j] == 'G') {
+                gs[amountG] = j;
+                amountG++;
+            }
+        }
+        long answer = 0;
+        for (int leftCenter = 0; leftCenter < amountG; leftCenter++) {
+            for (int rightCenter = leftCenter; rightCenter <= leftCenter + 1 && rightCenter < amountG; rightCenter++) {
+                long[] e = new long[2 * lineup.length];
+                long d = 0;
+                long F = 0;
+
+                for (int k = 0; leftCenter - k >= 0 && rightCenter + k < amountG; k++) {
+                    int uk = gs[leftCenter - k];
+                    int uk1 = leftCenter - k == 0 ? -1 : gs[leftCenter - (k + 1)];
+                    int vk = gs[rightCenter + k];
+                    int vk1 = rightCenter + (k + 1) == amountG ? lineup.length : gs[rightCenter + (k + 1)];
+
+                    if (uk < vk) {
+                        e[uk + vk] += 2;
+                        d++;
+                    }
+
+                    for (int l = uk; l > uk1; l--) {
+                        for (int r = vk; r < vk1; r++) {
+                            if (leftCenter == rightCenter) {
+                                if ((r - l) % 2 == 0) {
+                                    answer += F + ((long) Math.abs(((r + l) / 2) - gs[leftCenter]));
+                                } else {
+                                    answer--;
+                                }
+                            } else {
+                                answer += F;
+                            }
+                            F += d;
+                            d += e[l + r + 1];
+                        }
+
+                        for (int r = vk1; r > vk; r--) {
+                            d -= e[l + r];
+                            F -= d;
+                        }
+
+                        d -= e[l + vk];
+                        F -= d;
+                    }
+
+                    for (int r = vk; r < vk1; r++) {
+                        F += d;
+                        d += e[uk1 + r + 1];
+                    }
+                }
+            }
+        }
+        System.out.println(answer);
+    }
+}

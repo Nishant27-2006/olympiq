@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Mark Gordon)
+<p>One way to approach this is to try to quickly compute for each vertical line the
+number of horizontal lines it passes through that were not within T units of
+being mowed.  That is, we&apos;d like to compute the number of horizontal lines that
+cross line <span class='math'>$i$</span> as
+<p><div class='math'>$$c_i = \big|\{j : x^l_j &lt; x_i &lt; x^r_j \land y^b_i &lt; y &lt; y^t_i \land abs(t_i - t_j) \ge T\}\big|$$</div>
+<p>If we break up the absolute value component into its two respective cases this
+is a classic range query problem.  Since there are three dimensions of interest
+we can answer queries using a range tree in <span class='math'>$O(log^3 n)$</span> time.  However, since
+we are allowed to answer queries offline we can remove a log factor by scanning
+the field from left to right.
+<p>We insert a horizontal line when our scan hits the leftmost vertex and delete it
+when it reaches the rightmost vertex.  We perform queries when we reach the x
+coordinate of a vertical line.  Now it&apos;s enough to just have a data structure
+that can do two dimensional range queries and updates.
+<p>In my solution I use a binary indexed tree as the first level tree and an
+allocated-on-demand range tree as the second dimension.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;unordered_map&gt;
+#include &lt;algorithm&gt;
+
+using namespace std;
+
+#define MAXN (1 &lt;&lt; 17)
+#define MAXV (1 &lt;&lt; 30)
+
+struct node {
+  int val;
+  struct node* C[2];
+
+  node() {
+    val = 0;
+    C[0] = C[1] = NULL;
+  }
+
+  node* getc(int c) {
+    if (!C[c]) {
+      C[c] = new node;
+    }
+    return C[c];
+  }
+
+  void add(int x, int v, int lo, int hi) {
+    val += v;
+    if (hi - lo == 1) {
+      return;
+    }
+    int md = (lo + hi) / 2;
+    if (x &lt; md) {
+      getc(0)-&gt;add(x, v, lo, md);
+    } else {
+      getc(1)-&gt;add(x, v, md, hi);
+    }
+  }
+
+  int query(int a, int b, int lo, int hi) {
+    if (a &lt;= lo &amp;&amp; hi &lt;= b) {
+      return val;
+    } else if (hi &lt;= a || b &lt;= lo) {
+      return 0;
+    }
+    int md = (lo + hi) / 2;
+    return (C[0] ? C[0]-&gt;query(a, b, lo, md) : 0) +
+           (C[1] ? C[1]-&gt;query(a, b, md, hi) : 0);
+  }
+};
+
+node BT[MAXN];
+
+/* Logically executes array[y].add(x, v) += v. */
+void bit_add(int x, int y, int v) {
+  for(unsigned j = y | MAXN; j &lt; (MAXN &lt;&lt; 1); j += j &amp; -j) {
+    BT[j ^ MAXN].add(x, v, 0, MAXV);
+  }
+}
+
+/* Returns the sum of array[i].query(x0, x1) for 0 &lt;= i &lt; y */
+int bit_get(int x0, int x1, int y) {
+  int ret = 0;
+  for(int j = y - 1; y != 0; j &amp;= j - 1) {
+    ret += BT[j].query(x0, x1, 0, MAXV);
+    if (!j) break;
+  }
+  return ret;
+}
+
+int main() {
+  freopen(&quot;mowing.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;mowing.out&quot;, &quot;w&quot;, stdout);
+  ios_base::sync_with_stdio(false);
+
+  int N; cin &gt;&gt; N;
+  int T; cin &gt;&gt; T;
+  vector&lt;pair&lt;int, int&gt; &gt; A(N);
+  for (int i = 0; i &lt; N; i++) {
+    cin &gt;&gt; A[i].first &gt;&gt; A[i].second;
+  }
+
+  vector&lt;pair&lt;pair&lt;int, int&gt;, pair&lt;int, int&gt; &gt; &gt; ev; /* The horizontal &quot;event&quot; set. */
+  vector&lt;pair&lt;pair&lt;int, int&gt;, pair&lt;int, int&gt; &gt; &gt; vseg; /* The vertical query lines. */
+  for (int i = 0; i + 1 &lt; N; i++) {
+    pair&lt;int, int&gt; p0 = A[i];
+    pair&lt;int, int&gt; p1 = A[i + 1];
+    if (p1 &lt; p0) swap(p0, p1);
+    if (p0.second == p1.second) {
+      /* Create insertion and deletion events. */
+      ev.push_back(make_pair(make_pair(p0.first + 1, p0.second),
+                             make_pair(1, i)));
+      ev.push_back(make_pair(p1, make_pair(-1, i)));
+    } else {
+      /* Create a vertical line query. */
+      vseg.push_back(make_pair(p0, make_pair(p1.second, i)));
+    }
+  }
+
+  /* Sort events and queries by x value. */
+  sort(ev.begin(), ev.end());
+  sort(vseg.begin(), vseg.end());
+
+  int evi = 0;
+  int vsegi = 0;
+  int result = 0;
+  while (vsegi &lt; vseg.size()) {
+    int x = vseg[vsegi].first.first; /* The x-coordinate of our scan. */
+
+    /* Process all horizontal line insertions/deletions. */
+    for (; evi &lt; ev.size() &amp;&amp; ev[evi].first.first &lt;= x; evi++) {
+      bit_add(ev[evi].first.second, ev[evi].second.second,
+              ev[evi].second.first);
+    }
+
+    /* Perform all vertical line queries. */
+    for (; vsegi &lt; vseg.size() &amp;&amp; vseg[vsegi].first.first == x; vsegi++) {
+      int lo = vseg[vsegi].first.second;
+      int hi = vseg[vsegi].second.first;
+      int tm1 = vseg[vsegi].second.second - T + 1;
+      int tm2 = vseg[vsegi].second.second + T;
+
+      /* Count horizontal lines T or more after this. */
+      if (tm2 &lt; MAXN) {
+        result += bit_get(lo + 1, hi, MAXN);
+        result -= bit_get(lo + 1, hi, tm2);
+      }
+
+      /* Count horizontal lines T or more before this. */
+      if (tm1 &gt; 0) {
+        result += bit_get(lo + 1, hi, tm1);
+      }
+    }
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+<p></body></html>

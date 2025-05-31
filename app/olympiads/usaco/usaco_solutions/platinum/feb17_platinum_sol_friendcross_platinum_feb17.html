@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Lewin Gan)
+<p>First, it suffices to count the number of friendly crossings, then subtract this
+number from the total number of crossings.
+<p>Let <span class='math'>$r_a[i]$</span> denote the position of the <span class='math'>$i$</span>th cow in the first line and <span class='math'>$r_b[i]$</span>
+denote the position of the <span class='math'>$i$</span>th cow in the second line.
+<p>Let <span class='math'>$s$</span> be a sequence satisfying <span class='math'>$s[r_a[i]]$</span> = <span class='math'>$r_b[i]$</span>. Then, the number of
+inversions in <span class='math'>$s$</span> is the total number of crossings, which can be computed in
+<span class='math'>$O(n
+\log n)$</span> time.
+<p>A pair of cows <span class='math'>$i,j$</span> are intersecting if <span class='math'>$(r_a[i] &lt; r_a[j])$</span> is different from
+<span class='math'>$(r_b[i] &lt; r_b[j])$</span>
+<p>So, we want to count the number of unordered pairs such that <span class='math'>$|i-j| &lt;= k$</span> and
+<span class='math'>$(r_a[i] &lt; r_a[j]) \neq (r_b[i] &lt; r_b[j])$</span>.
+<p>We can change this to count the number of ordered pairs <span class='math'>$i,j$</span> such that
+<span class='math'>$|i-j| &lt;= k$</span> and <span class='math'>$(r_a[i] &lt; r_a[j])$</span> and <span class='math'>$(r_b[i] &gt; r_b[j])$</span>.
+<p>Let&apos;s consider <span class='math'>$n$</span> points where the <span class='math'>$i$</span>th point has coordinates
+<span class='math'>$(r_a[i],
+r_b[i])$</span>.
+<p>Let&apos;s fix a cow <span class='math'>$i$</span>. We want to count the number of other cows <span class='math'>$j$</span> such that
+<span class='math'>$i-k
+&lt;= j &lt;= i+k$</span> and <span class='math'>$j \neq i$</span> such that the <span class='math'>$j$</span>th point lies in the top-left
+corner of the <span class='math'>$i$</span>th point. Rather than doing arbitrary ranges, we can change
+this so it&apos;s a prefix by counting the number of points <span class='math'>$j$</span> in the top-left
+corner where <span class='math'>$j &lt;= i+k$</span> and subtract the number of points <span class='math'>$j$</span> in the top-left
+corner where <span class='math'>$j &lt;= i-k-1$</span>.
+<p>So, to restate our problem, we have <span class='math'>$n$</span> points, and we want to support two
+operations:
+<p>- Insert a point. (<span class='math'>$n$</span> times)
+<p>- Given a point, count the number of points in the top-left of the given point.
+(<span class='math'>$2n$</span> times)
+<p>This suggests a 2D segment tree. Note that we can&apos;t create the full tree, as
+that would require <span class='math'>$n^2$</span> memory, but instead we can create an implicit tree and
+only expand nodes when we need to. This requires space proportional to the time
+required, which is <span class='math'>$O(n \log^2 n)$</span>.
+<p>For a slightly faster solution, we can notice that the points are fixed, and
+there is at most one point per x-coordinate. Let&apos;s create a merge sort tree on
+the array <span class='math'>$s$</span>. More specifically, each node in this segment tree will store the
+sorted values in its own range.
+<p>We can change &quot;insert a point&quot; to &quot;turn a point on&quot;. A count can be done by
+using a binary indexed tree within a node to see how many have been turned on.
+<p>This implementation only requires <span class='math'>$O(n \log n)$</span> space and <span class='math'>$O(n \log^2 n)$</span> time with a
+better constant factor.
+<p>You can see my java code for some more details on the implementation of this
+approach:
+<p><pre class='prettyprint'>
+import java.io.OutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+import java.io.Writer;
+import java.io.OutputStreamWriter;
+import java.io.BufferedReader;
+import java.io.InputStream;
+
+/**
+ * Built using CHelper plug-in
+ * Actual solution is at the top
+ */
+public class Main {
+    public static void main(String[] args) {
+        InputStream inputStream = System.in;
+        OutputStream outputStream = System.out;
+        InputReader in = new InputReader(inputStream);
+        OutputWriter out = new OutputWriter(outputStream);
+        friendcross solver = new friendcross();
+        solver.solve(1, in, out);
+        out.close();
+    }
+
+    static class friendcross {
+        public int[] arr;
+        public int[] brr;
+        public static int[] seq;
+
+        public void solve(int testNumber, InputReader in, OutputWriter out) {
+            int n = in.nextInt(), k = in.nextInt();
+            arr = in.readIntArray(n);
+            brr = in.readIntArray(n);
+            int[] ra = new int[n + 1];
+            int[] rb = new int[n + 1];
+            for (int i = 0; i &lt; n; i++) {
+                ra[arr[i]] = i + 1;
+                rb[brr[i]] = i + 1;
+            }
+
+            seq = new int[n + 1];
+            for (int i = 1; i &lt;= n; i++) {
+                seq[ra[i]] = rb[i];
+            }
+            friendcross.SegmentTree root = new friendcross.SegmentTree(1, n);
+            ArrayList&lt;friendcross.Event&gt;[] events = new ArrayList[n + 1];
+            for (int i = 0; i &lt;= n; i++) events[i] = new ArrayList&lt;&gt;();
+            for (int i = 1; i &lt;= n; i++) {
+                int up = Math.min(n, i + k);
+                int down = Math.max(0, i - k - 1);
+                events[up].add(new friendcross.Event(i, +1));
+                events[down].add(new friendcross.Event(i, -1));
+            }
+            long tinv = 0;
+            BIT x = new BIT(n);
+            for (int i = 1; i &lt;= n; i++) {
+                x.update(seq[i], +1);
+                tinv += i - x.query(seq[i]);
+            }
+            long res = 0;
+            for (int cow = 1; cow &lt;= n; cow++) {
+                root.update(ra[cow], +1);
+                for (friendcross.Event e : events[cow])
+                    res += e.sign * root.query(1, ra[e.cow], rb[e.cow]);
+            }
+            out.println(tinv - res);
+        }
+
+        static class Event {
+            public int cow;
+            public int sign;
+
+            public Event(int cow, int sign) {
+                this.cow = cow;
+                this.sign = sign;
+            }
+
+        }
+
+        static class SegmentTree {
+            public int[] arr;
+            public int[] pl;
+            public int[] pr;
+            public BIT bit;
+            public int start;
+            public int end;
+            public friendcross.SegmentTree lchild;
+            public friendcross.SegmentTree rchild;
+
+            public SegmentTree(int start, int end) {
+                this.start = start;
+                this.end = end;
+                arr = new int[end - start + 2];
+                if (start == end) {
+                    arr[1] = seq[start];
+                } else {
+                    int mid = (start + end) &gt;&gt; 1;
+                    lchild = new friendcross.SegmentTree(start, mid);
+                    rchild = new friendcross.SegmentTree(mid + 1, end);
+                    pl = new int[lchild.arr.length];
+                    pr = new int[rchild.arr.length];
+                    int lidx = 1, ridx = 1;
+
+                    int idx = 1;
+                    int[] larr = lchild.arr, rarr = rchild.arr;
+                    while (lidx &lt; larr.length &amp;&amp; ridx &lt; rarr.length) {
+                        if (larr[lidx] &lt; rarr[ridx]) {
+                            pl[lidx] = idx;
+                            arr[idx++] = larr[lidx++];
+                        } else {
+                            pr[ridx] = idx;
+                            arr[idx++] = rarr[ridx++];
+                        }
+                    }
+                    while (lidx &lt; larr.length) {
+                        pl[lidx] = idx;
+                        arr[idx++] = larr[lidx++];
+                    }
+                    while (ridx &lt; rarr.length) {
+                        pr[ridx] = idx;
+                        arr[idx++] = rarr[ridx++];
+                    }
+                }
+                bit = new BIT(end - start + 2);
+            }
+
+            public int query(int s, int e, int k) {
+                if (start == s &amp;&amp; end == e) {
+                    if (k &lt; arr[1]) return bit.count;
+                    int lo = 1, hi = arr.length - 1;
+                    while (lo &lt; hi) {
+                        int mid = (lo + hi + 1) / 2;
+                        if (arr[mid] &gt; k) hi = mid - 1;
+                        else lo = mid;
+                    }
+                    return bit.count - bit.query(lo);
+                }
+                int mid = (start + end) &gt;&gt; 1;
+                if (mid &gt;= e) return lchild.query(s, e, k);
+                else if (mid &lt; s) return rchild.query(s, e, k);
+                else return lchild.query(s, mid, k) + rchild.query(mid + 1, e, k);
+            }
+
+            public int update(int p, int val) {
+                if (start == p &amp;&amp; end == p) {
+                    bit.update(1, +1);
+                    return 1;
+                }
+                int mid = (start + end) &gt;&gt; 1;
+                int apos = -1;
+                if (mid &gt;= p) apos = pl[lchild.update(p, val)];
+                else apos = pr[rchild.update(p, val)];
+                bit.update(apos, +1);
+                return apos;
+            }
+
+        }
+
+    }
+
+    static class InputReader {
+        public BufferedReader reader;
+        public StringTokenizer tokenizer;
+
+        public InputReader(InputStream stream) {
+            reader = new BufferedReader(new InputStreamReader(stream), 32768);
+            tokenizer = null;
+        }
+
+        public String next() {
+            while (tokenizer == null || !tokenizer.hasMoreTokens()) {
+                try {
+                    tokenizer = new StringTokenizer(reader.readLine());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return tokenizer.nextToken();
+        }
+
+        public int[] readIntArray(int tokens) {
+            int[] ret = new int[tokens];
+            for (int i = 0; i &lt; tokens; i++) {
+                ret[i] = nextInt();
+            }
+            return ret;
+        }
+
+        public int nextInt() {
+            return Integer.parseInt(next());
+        }
+
+    }
+
+    static class BIT {
+        private int[] tree;
+        private int N;
+        public int count;
+
+        public BIT(int N) {
+            this.N = N;
+            this.tree = new int[N + 1];
+            this.count = 0;
+        }
+
+        public int query(int K) {
+            int sum = 0;
+            for (int i = K; i &gt; 0; i -= (i &amp; -i))
+                sum += tree[i];
+            return sum;
+        }
+
+        public void update(int K, int val) {
+            this.count += val;
+            for (int i = K; i &lt;= N; i += (i &amp; -i))
+                tree[i] += val;
+        }
+
+    }
+
+    static class OutputWriter {
+        private final PrintWriter writer;
+
+        public OutputWriter(OutputStream outputStream) {
+            writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(outputStream)));
+        }
+
+        public OutputWriter(Writer writer) {
+            this.writer = new PrintWriter(writer);
+        }
+
+        public void close() {
+            writer.close();
+        }
+
+        public void println(long i) {
+            writer.println(i);
+        }
+
+    }
+}
+</pre>
+<p></body></html>

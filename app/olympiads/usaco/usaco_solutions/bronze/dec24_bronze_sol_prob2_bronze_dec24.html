@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Chongtian Ma)
+<p>There are only three orientations to place a brick - its longest side is
+parallel to the x-axis, y-axis, or z-axis.
+<p>If we are placing a brick where its longest side is parallel to the x-axis and
+it&apos;s lowermost vertex is <span class='math'>$(0, y, z)$</span> and its uppermost vertex is
+<span class='math'>$(N, y+1, z+1)$</span>, then the <span class='math'>$1$</span> by <span class='math'>$1$</span> by <span class='math'>$1$</span> blocks with lowermost coordinates
+<span class='math'>$(0, y, z), (1, y, z), \ldots, (N-1, y, z)$</span> must not contain any cheese.
+Otherwise, our brick will overlap with a cheese block.
+<p>Let&apos;s generalize the above to the y-axis and the z-axis. For the y-axis, the
+lowermost vertex of the brick will occupy vertices 
+<span class='math'>$(x, 0, z), (x,1,z), \ldots, (x, N-1, z)$</span>, so none of those coordinates can
+contain any cheese. Similarly, the generalization for z-axis is
+<span class='math'>$(x, y, 0), (x, y, 1), \ldots, (x, y, N-1)$</span>.
+<p>There are many ways to earn partial credit. Here is one method that passes
+subtasks <span class='math'>$1$</span> and <span class='math'>$2$</span>. After each update, we go through each of the axes and all
+of the previous updates to check whether a new configuration was formed. This
+results in a <span class='math'>$\mathcal{O}(Q^2)$</span> solution.
+<p>Benjamin Qi&apos;s Python code:
+<p><pre class='prettyprint'>
+N, Q = map(int, input().split())
+points = [tuple(map(int, input().split())) for _ in range(Q)]
+ 
+ans = 0
+ 
+for i in range(Q):
+    for a in range(3):
+        for b in range(a+1, 3):
+            cnt = 1
+            for j in range(i):
+                cnt += points[i][a] == points[j][a] and points[i][b] == points[j][b]
+            ans += cnt == N  # new configuration formed
+    print(ans)
+</pre>
+<p>For full credit, we can keep track of the number of empty blocks in the
+remaining axis after fixing two of the three axis. For example, for the x-axis,
+we can create an 2D array <span class='math'>$cnt$</span> of size <span class='math'>$N$</span> in both dimensions where <span class='math'>$cnt[y][z]$</span>
+stores the number of <span class='math'>$x$</span> such that <span class='math'>$(x, y, z)$</span> has been removed. Once
+<span class='math'>$cnt[y][z]$</span> first hits <span class='math'>$N$</span>, we know that we can stick another brick parallel to
+the  <span class='math'>$x$</span>-axis, so we increment the answer by one. We can create the same kind of
+array for bricks parallel to the <span class='math'>$y$</span> and <span class='math'>$z$</span> axis. This will only take <span class='math'>$3N^2$</span>
+memory, which is totally fine.
+<p>This works because each update can only contribute at most <span class='math'>$3$</span> to the answer,
+depending on the orientation of the brick. After each update, we only need to
+check the <span class='math'>$cnt$</span> arrays for the three axis, which becomes constant time,
+resulting in a <span class='math'>$\mathcal{O}(N^2+Q)$</span> algorithm.
+<p>Alex Liang&apos;s python code is shown below (note that he initializes the <span class='math'>$cnt$</span>
+arrays with <span class='math'>$N$</span> and decreases them with each update until they reach <span class='math'>$0$</span>, which
+is equivalent):
+<p><pre class='prettyprint'>
+class cheese_block:
+    def __init__(self, n):
+        self.n = n 
+        self.ans = 0
+        self.xy = [[n] * n for i in range(n)]
+        self.xz = [[n] * n for i in range(n)]
+        self.yz = [[n] * n for i in range(n)]
+ 
+    def carve(self, x, y, z):
+        self.xy[x][y] -= 1
+        self.xz[x][z] -= 1
+        self.yz[y][z] -= 1
+        self.ans += (self.xy[x][y] == 0) + (self.xz[x][z] == 0) + (self.yz[y][z] == 0)
+ 
+    def answer(self):
+        return self.ans
+ 
+n, q = map(int, input().split())
+cb = cheese_block(n)
+ 
+for _ in range(q):
+    x, y, z = map(int, input().split())
+    cb.carve(x, y, z)
+    print(cb.answer())
+</pre>
+<p>Alex Liang&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main(){
+    int n, q;
+    cin &gt;&gt; n &gt;&gt; q;
+ 
+    vector&lt;vector&lt;vector&lt;int&gt;&gt;&gt; cnt(3, vector&lt;vector&lt;int&gt;&gt;(n, vector&lt;int&gt;(n, n)));
+    int ans = 0;
+ 
+    while (q--){
+        int x, y, z;
+        cin &gt;&gt; x &gt;&gt; y &gt;&gt; z;
+ 
+        for (auto [dim, a, b] : {array&lt;int, 3&gt;{0, y, z}, array&lt;int, 3&gt;{1, x, z}, array&lt;int, 3&gt;{2, x, y}})
+            if (!(--cnt[dim][a][b]))
+                ans++;
+        
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p></body></html>

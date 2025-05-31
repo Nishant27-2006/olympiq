@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Avnith Vijayram, Benjamin Qi)
+<p><strong>Solution 1:</strong>
+<p>Use a priority queue to simulate the process. Let us refer to an instance of
+multiple farmers finishing at the same time as an **event**. For each event,
+store the set of farmers that finished. For now, assign the next few cows to
+those farmers in an arbitrary order. From this, we can determine the time of
+Bessie&apos;s interview.
+<p>Once we simulate the process with <span class='math'>$N$</span> cows, the next farmer that finishes will
+be Bessie&apos;s interviewer: call him farmer <span class='math'>$x$</span>. Now, consider what happens if we
+iterate through the **events** in reverse chronological order. 
+<p>If farmer <span class='math'>$x$</span> is in one of these events, then any farmer who finished at the
+same time as him could be Bessie&apos;s interviewer. In fact, as we move backward
+through time, whenever the set of Bessie&apos;s possible interviewers and the set of
+farmers in an **event** intersect, any of the farmers in that **event** could
+end up being Bessie&apos;s interviewer.
+<p>Thus, the algorithm is as follows: 
+<ol><li>Simulate the process forward through time, storing **events** as they
+occur. Define <span class='math'>$E_i$</span> to be the set of farmers in the <span class='math'>$i$</span>-th event.</li><li>After
+all <span class='math'>$N$</span> cows have been processed, create a set <span class='math'>$S$</span> of Bessie&apos;s possible
+interviewers. Initially, <span class='math'>$S = \{x\}$</span>.</li><li>Process the events backward
+through time, and if <span class='math'>$S \cap E_i \neq \varnothing$</span>, then update
+<span class='math'>$S = S \cup E_i$</span>.</li></ol>
+<p>This solution works in <span class='math'>$O(N \log K)$</span>.
+<p>Avnith&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+using ll = long long;
+using pl = pair&lt;ll, int&gt;;
+
+#define f first
+#define s second
+
+int main() {
+    int n, k; 
+    cin &gt;&gt; n &gt;&gt; k;
+ 
+    vector&lt;ll&gt; t(n);
+    for (int i = 0; i &lt; n; i++) cin &gt;&gt; t[i];
+	
+    priority_queue&lt;pl, vector&lt;pl&gt;, greater&lt;pl&gt;&gt; pq;
+    for (int i = 0; i &lt; k; i++) pq.push({t[i], i});
+
+    int cur_cow = k;
+    pl last;
+    vector&lt;vector&lt;int&gt;&gt; events;
+    
+    while (true) {
+        vector&lt;pl&gt; ev;
+        do {
+            ev.push_back(pq.top());
+            pq.pop();
+        } while (!pq.empty() &amp;&amp; pq.top().f == ev[0].f);
+        
+        if (ev.size() &gt; 1) {
+            vector&lt;int&gt; farmers;
+            for (pl e : ev) farmers.push_back(e.s);
+            events.push_back(farmers);
+        }
+        
+        if (cur_cow + ev.size() &gt; n) {
+            last = ev[0];
+            break;
+        }
+
+        for (pl e : ev) {
+            pq.push({e.f + t[cur_cow], e.s});
+            cur_cow++;
+        }
+    }
+
+    cout &lt;&lt; last.f &lt;&lt; &quot;\n&quot;;
+    
+    vector&lt;bool&gt; can_interview(k, false);
+    can_interview[last.s] = true;
+    
+    for (int i = (int)events.size()-1; i &gt;= 0; i--) {
+        bool intersect = false;
+        for (int j : events[i]) {
+            if (can_interview[j]) {
+                intersect = true;
+                break;
+            }
+        }
+        if (intersect) {
+            for (int j : events[i]) {
+                can_interview[j] = true;
+            }
+        }
+    }
+    vector&lt;int&gt; ans;
+    for (int i = 0; i &lt; k; i++) {
+        cout &lt;&lt; can_interview[i] &lt;&lt; &quot; &quot;;
+    }
+    cout &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Solution 2:</strong>
+<p>This is similar to solution 1, but we do not explicitly keep track of events. 
+Instead, we construct a directed graph with a vertex for each time and a 
+directed edge from each cow&apos;s interview start time to that cow&apos;s interview end 
+time. Then the <span class='math'>$i$</span>th farmer can interview Bessie if and only if there is a  path
+from <span class='math'>$t_i$</span> to Bessie&apos;s start time in this graph. We can check for which times
+such a path exists by running a
+<a href='https://usaco.guide/silver/graph-traversal?lang=cpp#bfs'>breadth-first
+search</a> (or depth-first search) from Bessie&apos;s start time.
+<p>Ben&apos;s Python code:
+<p><pre class='prettyprint'>
+import heapq
+
+N, K = map(int, input().split())
+
+T = list(map(int, input().split()))
+times = [0] * K
+
+edges_into = dict()
+
+for t in T:
+    start = heapq.heappop(times)
+    end = start + t
+    edges_into.setdefault(end, []).append(start)
+    heapq.heappush(times, end)
+
+q = [heapq.heappop(times)]
+vis = set()
+for x in q:
+    if x in vis:
+        continue
+    vis.add(x)
+    if x not in edges_into:
+        continue
+    for prv in edges_into[x]:
+        q.append(prv)
+
+print(q[0])
+print(&quot;&quot;.join([&quot;1&quot; if t in vis else &quot;0&quot; for t in T[:K]]))
+</pre>
+<p><strong>Extension:</strong> Suppose every cow chooses one of the available farmers
+uniformly at random. Then compute for each farmer the probability that Bessie
+will be interviewed by him, modulo <span class='math'>$10^9+7$</span>.
+</body></html>

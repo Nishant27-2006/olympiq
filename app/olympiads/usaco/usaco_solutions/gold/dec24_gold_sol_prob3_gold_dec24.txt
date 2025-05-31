@@ -1,0 +1,460 @@
+Solution ID: sol_prob3_gold_dec24
+Contest: DEC24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_dec24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+All T Equal
+
+We can sort the tasks by start time and then attempt to complete them in that
+order.
+
+#include <bits/stdc++.h>
+#include <climits>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	int T;
+	cin >> T;
+	for (int t = 0; t < T; ++t) {
+		int N;
+		cin >> N;
+		vector<pair<ll, ll>> tasks;
+		for (int n = 0; n < N; ++n) {
+			ll s, t;
+			cin >> s >> t;
+			tasks.push_back({s, t});
+		}
+		sort(begin(tasks), end(tasks));
+		ll time_so_far = 0;
+		int ans = 0;
+		for (auto [s, t] : tasks) {
+			if (time_so_far <= s) {
+				++ans;
+				time_so_far += t;
+			}
+		}
+		cout << ans << "\n";
+	}
+}
+
+Checking Problem:
+
+Here we no longer assume all
+
+$t_i$
+
+are equal. Let's first consider the problem of checking whether the answer is
+
+$N$
+
+or not;
+that is, whether all the jobs can be completed.
+
+We need to decide what order to complete the jobs in. One possibility is to
+complete the jobs in increasing order of
+
+$s_i$
+
+, but this turns out to be
+incorrect when the
+
+$t_i$
+
+are not all equal. Instead, it turns out that if all
+the jobs can be completed, they can be completed in increasing order of
+
+$s_i+t_i$
+
+.
+
+Claim:
+
+Suppose we complete job
+
+$a$
+
+and then job
+
+$b$
+
+immediately afterward
+where
+
+$s_a+t_a\ge s_b+t_b$
+
+. Then we can swap the order of jobs
+
+$a$
+
+and
+
+$b$
+
+while
+still satisfying both of their start times.
+
+Proof:
+
+Suppose job
+
+$a$
+
+is started at time
+
+$T$
+
+. Then
+
+$T\le s_b-t_a$
+
+. If we
+swap the order of jobs
+
+$a$
+
+and
+
+$b$
+
+then we need
+
+$T\le s_b$
+
+and
+
+$T\le s_a-t_b$
+
+.
+We have both
+
+$T\le s_b-t_a\le s_b$
+
+and
+
+$T\le s_b-t_a\le s_a-t_b$
+
+by the
+assumption, done.
+
+Define
+
+$d_a=s_a+t_a$
+
+and suppose we relabel the jobs such that
+
+$d_1\le d_2\le \dots \le d_N$
+
+. Suppose there exists some order allowing all jobs
+to be completed. Then we can repeatedly apply the claim to transform this order
+into
+
+$1\dots N$
+
+. Thus, all jobs can be completed if and only if
+
+$\sum_{j=1}^{i}t_j\le d_i$
+
+for all
+
+$i$
+
+.
+
+Original Problem, Partial Credit:
+
+As in the checking problem, let's relabel such that
+
+$d_1\le d_2\le \dots \le d_N$
+
+and assume we always complete jobs in increasing
+order of label. To solve it in
+
+$O(N^2)$
+
+time, we can use dynamic programming;
+let
+
+$dp[i][j]$
+
+be the minimum total time to complete
+
+$j$
+
+of the first
+
+$i$
+
+jobs,
+or
+
+$\infty$
+
+if impossible. To transition from
+
+$i$
+
+to
+
+$i+1$
+
+we can choose either
+to add the
+
+$i+1$
+
+'st job or not; if so, we need to check that the total time does
+not exceed
+
+$d_{i+1}$
+
+. The answer is the maximum
+
+$j$
+
+such that
+
+$dp[N][j]\neq \infty$
+
+.
+
+#include <bits/stdc++.h>
+#include <climits>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	int T;
+	cin >> T;
+	for (int t = 0; t < T; ++t) {
+		int N;
+		cin >> N;
+		vector<pair<ll, ll>> tasks;
+		for (int n = 0; n < N; ++n) {
+			ll s, t;
+			cin >> s >> t;
+			ll d = s + t;
+			tasks.push_back({d, t});
+		}
+		sort(begin(tasks), end(tasks));
+		vector<ll> dp{0};
+		for (auto [d, t] : tasks) {
+			dp.push_back(LLONG_MAX);
+			for (int i = size(dp) - 2; i >= 0; --i)
+				dp.at(i + 1) = min(dp.at(i + 1), dp.at(i) + t);
+			while (dp.back() > d) dp.pop_back();
+		}
+		cout << size(dp) - 1 << "\n";
+	}
+}
+
+Full Credit:
+
+To solve the original problem in
+
+$O(N\log N)$
+
+, we can use a greedy strategy.
+Maintain a set
+
+$S_i\subseteq [1,i]$
+
+such that all of
+
+$S_i$
+
+can be completed and
+the final jobs we select will be a subset of
+
+$S_i\cup \{i+1\dots i+N\}$
+
+. The
+base case is
+
+$S_0=\emptyset$
+
+. Then for each
+
+$i\in [1,N]$
+
+, initialize
+
+$S_i$
+
+as
+
+$S_{i-1}\cup \{i\}$
+
+. However, if
+
+$\sum_{j\in S_i}t_j>d_i$
+
+, then not all of
+
+$S_i$
+
+can be completed, and we need to remove at least one job from
+
+$S_i$
+
+. We should
+greedily remove the job
+
+$j$
+
+with the maximum
+
+$t_j$
+
+from
+
+$S_i$
+
+. Since the
+
+$d_i$
+
+are in increasing order and removing the last job is always an option, we will
+have
+
+$\sum_{j\in S_i}t_j\le d_i$
+
+after the removal, so no additional removals
+are required.
+
+$S_i$
+
+can be maintained with a priority queue, and the final
+answer will be
+
+$|S_N|$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	int T;
+	cin >> T;
+	for (int t = 0; t < T; ++t) {
+		int N;
+		cin >> N;
+		vector<pair<ll, ll>> tasks;
+		for (int n = 0; n < N; ++n) {
+			ll s, t;
+			cin >> s >> t;
+			ll d = s + t;
+			tasks.push_back({d, t});
+		}
+		sort(begin(tasks), end(tasks));
+		ll sum = 0;
+		priority_queue<ll> pq;
+		for (auto [d, t] : tasks) {
+			pq.push(t);
+			sum += t;
+			if (sum > d) {
+				sum -= pq.top();
+				pq.pop();
+			}
+		}
+		cout << size(pq) << "\n";
+	}
+}
+
+Why is it okay to remove job
+
+$j$
+
+? If it turns out that there is an optimal
+solution
+
+$s\subset S_{i-1}\cup \{i, i+1,\dots, N\}$
+
+that uses
+
+$j$
+
+, then there is
+some job in
+
+$S_i$
+
+that is not part of
+
+$s$
+
+. In this case, we can remove
+
+$j$
+
+from
+
+$s$
+
+and add some job from
+
+$S_i$
+
+to
+
+$s$
+
+, while preserving the size of
+
+$s$
+
+. All
+jobs in
+
+$s$
+
+with index at most
+
+$i$
+
+can be completed since they will be a subset
+of
+
+$S_i$
+
+, and the start times of jobs in
+
+$s$
+
+with index greater than
+
+$i$
+
+will
+stay the same or go down, so they also can be completed. So the size of the
+optimal solution remains the same after removing job
+
+$j$
+
+.
+
+Note: The greedy strategy can alternatively be interpreted as an acceleration of
+the DP solution, since the times in
+
+$S_i$
+
+sorted in increasing order will match
+with the consecutive differences
+
+$dp[i][1]-dp[i][0], dp[i][2]-dp[i][1],\dots,dp[i][|S_i|]-dp[i][|S_i|-1]$
+
+.

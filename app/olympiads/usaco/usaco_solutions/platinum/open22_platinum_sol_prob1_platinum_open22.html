@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>I will refer to contiguous sequences as <em>intervals</em>. Define the
+<em>value</em> of an interval to be the minimum possible final number it can be
+converted into.
+<p><strong>Subtask 1:</strong> Similar to
+<a href='https://www.usaco.org/index.php?page=viewproblem2&amp;cpid=647'>248,</a> we can
+apply dynamic programming on ranges. Specifically, if <span class='math'>$dp[i][j]$</span> denotes the
+value of  interval <span class='math'>$i\ldots j$</span>, then
+<p><div class='math'>$$dp[i][j]=\begin{cases}A
+a_i &amp; i=j \\
+\min_{i\le k&lt;j}\max(dp[i][k],dp[k+1][j])+1 &amp; i &lt; j
+\end{cases}.$$</div>
+<p>The time complexity is <span class='math'>$O(N^3)$</span>. 
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+template &lt;class T&gt; void ckmin(T &amp;a, const T &amp;b) { a = min(a, b); }
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	V&lt;int&gt; A(N);
+	for (int &amp;x : A) cin &gt;&gt; x;
+	V&lt;V&lt;int&gt;&gt; dp(N, V&lt;int&gt;(N));
+	for (int i = N - 1; i &gt;= 0; --i) {
+		dp.at(i).at(i) = A.at(i);
+		for (int j = i + 1; j &lt; N; ++j) {
+			dp[i][j] = INT_MAX;
+			for (int k = i; k &lt; j; ++k) {
+				ckmin(dp.at(i).at(j),
+					  max(dp.at(i).at(k), dp.at(k + 1).at(j)) + 1);
+			}
+		}
+	}
+	int64_t ans = 0;
+	for (int i = 0; i &lt; N; ++i) {
+		for (int j = i; j &lt; N; ++j) {
+			ans += dp.at(i).at(j);
+		}
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Subtask 2:</strong> We can optimize the solution above by more quickly finding the
+maximum <span class='math'>$k&apos;$</span> such that <span class='math'>$dp[i][k&apos;] \le dp[k&apos;+1][j]$</span>. Then we only need to
+consider <span class='math'>$k\in \{k&apos;,k&apos;+1\}$</span> when computing <span class='math'>$dp[i][j]$</span>. Using the observation
+that <span class='math'>$k&apos;$</span> does not decrease as <span class='math'>$j$</span> increases and <span class='math'>$i$</span> is held fixed leads to a
+solution in <span class='math'>$O(N^2)$</span>:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+template &lt;class T&gt; void ckmin(T &amp;a, const T &amp;b) { a = min(a, b); }
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	V&lt;int&gt; A(N);
+	for (int &amp;x : A) cin &gt;&gt; x;
+	V&lt;V&lt;int&gt;&gt; dp(N, V&lt;int&gt;(N));
+	for (int i = N - 1; i &gt;= 0; --i) {
+		dp.at(i).at(i) = A.at(i);
+		int k = i - 1;
+		for (int j = i + 1; j &lt; N; ++j) {
+			while (k + 1 &lt; j &amp;&amp; dp.at(i).at(k + 1) &lt;= dp.at(k + 2).at(j)) ++k;
+			dp[i][j] = INT_MAX;
+			ckmin(dp[i][j], dp.at(k + 1).at(j));
+			ckmin(dp[i][j], dp.at(i).at(k + 1));
+			++dp[i][j];
+		}
+	}
+	int64_t ans = 0;
+	for (int i = 0; i &lt; N; ++i) {
+		for (int j = i; j &lt; N; ++j) {
+			ans += dp.at(i).at(j);
+		}
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Alternatively, finding <span class='math'>$k&apos;$</span> with binary search leads to a solution in
+<span class='math'>$O(N^2\log N)$</span>.
+<p><strong>Subtask 3:</strong> Similar to 
+<a href='https://www.usaco.org/index.php?page=viewproblem2&amp;cpid=648'>262144</a>, we can
+use binary lifting.
+<p>For each of <span class='math'>$v=1,2,3,\ldots$</span>, I count the number of intervals with value at
+least <span class='math'>$v$</span>. The answer is the sum of this quantity over all <span class='math'>$v$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	V&lt;int&gt; A(N);
+	for (int &amp;x : A) cin &gt;&gt; x;
+	V&lt;V&lt;int&gt;&gt; with_val;
+	for (int i = 0; i &lt; N; ++i) {
+		while (size(with_val) &lt;= A[i]) with_val.emplace_back();
+		with_val.at(A[i]).push_back(i);
+	}
+	V&lt;int&gt; nex(N + 1);
+	iota(all(nex), 0);
+	int64_t ans = 0;
+	for (int v = 1;; ++v) {
+		if (nex[0] == N) {
+			cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+			exit(0);
+		}
+		// add all intervals with value &gt;= v
+		for (int i = 0; i &lt;= N; ++i) ans += N - nex[i];
+		for (int i = 0; i &lt;= N; ++i) nex[i] = nex[nex[i]];
+		if (v &lt; size(with_val)) {
+			for (int i : with_val.at(v)) {
+				nex[i] = i + 1;
+			}
+		}
+	}
+}
+</pre>
+<p><strong>Subtask 4:</strong> For each <span class='math'>$i$</span> from <span class='math'>$1$</span> to <span class='math'>$N$</span> in increasing order, consider the
+values of all intervals with right endpoint <span class='math'>$i$</span>. Note that the value <span class='math'>$v$</span> of each
+such interval must satisfy  <span class='math'>$v\in [A_i, A_i+\lceil \log_2 i\rceil]$</span> due to <span class='math'>$A$</span>
+being sorted. Thus, it suffices to be able to compute for each <span class='math'>$v$</span> the minimum
+<span class='math'>$l$</span> such that <span class='math'>$dp[l][i]\le v$</span>. To do this, we maintain a partition of
+<span class='math'>$1\ldots i$</span> into contiguous subsequences such that every contiguous subsequence
+has value at most <span class='math'>$A_i$</span> and is leftwards-maximal (extending any subsequence one
+element to the left would cause its value to exceed <span class='math'>$A_i$</span>). When transitioning
+from <span class='math'>$i-1$</span> to <span class='math'>$i$</span>, we merge every two consecutive contiguous  subsequences
+<span class='math'>$A_i-A_{i-1}$</span> times and then add contiguous subsequence <span class='math'>$[i,i]$</span> to the end of
+the partition.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	vector&lt;int&gt; A(N);
+	for (int &amp;x : A) cin &gt;&gt; x;
+	assert(is_sorted(all(A)));
+	// left endpoints of each partition interval in decreasing order
+	deque&lt;int&gt; left_ends;
+	int64_t ans = 0;
+	for (int i = 0; i &lt; N; ++i) {
+		if (i) {
+			for (int v = A[i - 1]; v &lt; A[i]; ++v) {
+				if (size(left_ends) == 1) break;
+				// merge every two consecutive intervals in partition
+				deque&lt;int&gt; n_left_ends;
+				for (int j = 0; j &lt; (int)size(left_ends); ++j) {
+					if ((j &amp; 1) || j + 1 == (int)size(left_ends)) {
+						n_left_ends.push_back(left_ends[j]);
+					}
+				}
+				swap(left_ends, n_left_ends);
+			}
+		}
+		left_ends.push_front(i); // add [i,i] to partition
+		int L = i + 1;
+		for (int v = A[i]; L; ++v) {
+			int next_L = left_ends.at(
+			    min((int)size(left_ends) - 1, (1 &lt;&lt; (v - A[i])) - 1));
+			ans += (int64_t)(L - next_L) * v;
+			L = next_L;
+		}
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Full Credit:</strong> Call an interval <em>relevant</em> if it is not possible to 
+extend it to the left or to the right without increasing its value. 
+<p><em>Claim:</em> The number of relevant intervals is <span class='math'>$O(N\log N)$</span>.
+<p><em>Proof:</em> See the end of the analysis. 
+<p>We&apos;ll compute the same quantities as in subtask 3, but this time, we&apos;ll
+transition from <span class='math'>$v-1$</span> to <span class='math'>$v$</span> in time proportional to the number of relevant
+intervals with value <span class='math'>$v-1$</span> plus the number of relevant intervals with value <span class='math'>$v$</span>,
+this will give us a solution in <span class='math'>$O(N\log N)$</span>.
+<p>For a fixed value of <span class='math'>$v$</span>, say that an interval <span class='math'>$[l,r)$</span> is a <em>segment</em>  if
+it contains no value greater than <span class='math'>$v$</span>, and <span class='math'>$\min(A_{l-1},A_r)&gt;v$</span>. Say that an
+interval is <em>maximal</em> with respect to <span class='math'>$v$</span> if it has value at most <span class='math'>$v$</span> and
+extending it to the left or right would cause its value to exceed <span class='math'>$v$</span>. Note that
+a maximal interval <span class='math'>$[l,r)$</span> must be relevant, and it must either have value equal
+to <span class='math'>$v$</span> or be a segment.
+<p>My code follows. <span class='math'>$\texttt{ivals}[i]$</span> stores all maximal intervals contained
+within the segment with left endpoint <span class='math'>$i$</span>. The following steps are used to 
+transition from <span class='math'>$v-1$</span> to <span class='math'>$v$</span>:
+<p><ol><li>Apply <span class='math'>$\texttt{halve}$</span> on all segments containing more than one maximal
+interval (the left endpoints of every such segment are stored by
+<span class='math'>$\texttt{active}$</span>). Before, all intervals within the segment were maximal with
+respect to <span class='math'>$v-1$</span>. After, all intervals within the segment are maximal with
+respect to <span class='math'>$v$</span>.</li><li>Add a segment and a maximal interval of the form <span class='math'>$[i,i+1)$</span> for each <span class='math'>$i$</span>
+satisfying <span class='math'>$A_i=v$</span>, and then merge adjacent segments.</li></ol>
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	V&lt;int&gt; A(N);
+	V&lt;V&lt;int&gt;&gt; with_A;
+	for (int i = 0; i &lt; N; ++i) {
+		cin &gt;&gt; A[i];
+		while ((int)size(with_A) &lt;= A[i]) with_A.emplace_back();
+		with_A[A[i]].push_back(i);
+	}
+	// sum(l ... r)
+	auto sum_arith = [&amp;](int64_t l, int64_t r) {
+		return (r + l) * (r - l + 1) / 2;
+	};
+	// total number of intervals covered by list of maximal intervals
+	auto contrib = [&amp;](const list&lt;pair&lt;int, int&gt;&gt; &amp;L) {
+		int64_t ret = 0;
+		for (auto it = begin(L);; ++it) {
+			auto [x, y] = *it;
+			if (next(it) == end(L)) {
+				ret += sum_arith(0, y - x);
+				break;
+			} else {
+				int next_x = next(it)-&gt;first;
+				ret += int64_t(next_x - x) * y - sum_arith(x, next_x - 1);
+			}
+		}
+		return ret;
+	};
+	int64_t num_at_least = (int64_t)N * (N + 1) / 2;
+	auto halve = [&amp;](list&lt;pair&lt;int, int&gt;&gt; &amp;L) {
+		if (size(L) &lt;= 1) return;
+		num_at_least += contrib(L);
+		int max_so_far = -1;
+		list&lt;pair&lt;int, int&gt;&gt; n_L;
+		auto it = begin(L);
+		for (auto [x, y] : L) {
+			while (next(it) != end(L) &amp;&amp; next(it)-&gt;first &lt;= y) ++it;
+			if (it-&gt;second &gt; max_so_far) {
+				n_L.push_back({x, max_so_far = it-&gt;second});
+			}
+		}
+		swap(L, n_L);
+		num_at_least -= contrib(L);
+	};
+
+	// doubly linked list to maintain segments
+	V&lt;int&gt; pre(N + 1);
+	iota(all(pre), 0);
+	V&lt;int&gt; nex = pre;
+
+	int64_t ans = 0;
+	V&lt;int&gt; active; // active segments
+	// maximal intervals within each segment
+	V&lt;list&lt;pair&lt;int, int&gt;&gt;&gt; ivals(N + 1);
+
+	for (int v = 1; num_at_least; ++v) {
+		ans += num_at_least; // # intervals with value &gt;= v
+		V&lt;int&gt; n_active;
+		for (int l : active) {
+			halve(ivals[l]);
+			if (size(ivals[l]) &gt; 1) n_active.push_back(l);
+		}
+		if (v &lt; (int)size(with_A)) {
+			for (int i : with_A[v]) {
+				int l = pre[i], r = nex[i + 1];
+				bool should_add = size(ivals[l]) &lt;= 1;
+				pre[i] = nex[i + 1] = -1;
+				nex[l] = r, pre[r] = l;
+				ivals[l].push_back({i, i + 1});
+				--num_at_least;
+				ivals[l].splice(end(ivals[l]), ivals[i + 1]);
+				should_add &amp;= size(ivals[l]) &gt; 1;
+				if (should_add) n_active.push_back(l);
+			}
+		}
+		swap(active, n_active);
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Proof of Claim:</strong> Let <span class='math'>$f(N)$</span> denote the maximum possible number of relevant
+subarrays for a sequence of size <span class='math'>$N$</span>. We can show that
+<span class='math'>$f(N)\le O(\log N!)\le O(N\log N)$</span>. This upper bound can be attained when all
+elements of the input sequence are equal.
+<p>The idea is to consider a
+<a href='https://en.wikipedia.org/wiki/Cartesian_tree'>Cartesian tree</a>  of <span class='math'>$a$</span>. 
+Specifically, suppose that one of the maximum elements of <span class='math'>$a$</span> is located at
+position <span class='math'>$p$</span> (<span class='math'>$1\le p\le N$</span>). Then
+<p><div class='math'>$$f(N)\le f(p-1)+f(N-p)+\#(\text{relevant intervals containing }p).$$</div>
+<p>WLOG we may assume <span class='math'>$2p\le N$</span>.
+<p><em>Lemma:</em>
+<p><div class='math'>$$\#(\text{relevant intervals containing }p)\le O\left(p\log \left(\frac{N}{p}\right)\right)$$</div>
+<p><em>Proof of Lemma:</em> We can in fact show that 
+<p><div class='math'>$$\#(\text{relevant intervals containing }p\text{ with value }a_p+k) \le \min(p,2^k): 0\le k\le \left\lceil\log_2N\right\rceil.$$</div>
+<p>The <span class='math'>$p$</span> comes from all relevant intervals with a fixed value having distinct
+left endpoints and the <span class='math'>$2^k$</span> comes from the fact that to generate a relevant
+interval of value <span class='math'>$a_p+k+1$</span> containing <span class='math'>$p$</span>, you must start with a relevant
+interval of value <span class='math'>$a_p+k$</span> and choose to extend it either to the right or to the
+left.
+<p>To finish, observe that the summation 
+<span class='math'>$\sum_{k=0}^{\left\lceil\log_2N\right\rceil}\#(\text{relevant intervals containing }p\text{ with value }a_p+k)$</span>
+is dominated by the terms satisfying
+<span class='math'>$\log_2p\le k\le \left\lceil\log_2N\right\rceil$</span>. <span class='math'>$\blacksquare$</span>
+<p>Since
+<span class='math'>$O(p\log \frac{N}{p}) \le O\left(\log \binom{N}{p}\right)\le O(\log \frac{N!}{(p-1)!(N-p)!})$</span>,
+the claim follows from the lemma by induction:
+<p><div class='math'>$$\begin{align*}
+f(N)&amp;\le f(p-1)+f(N-p)+\#(\text{relevant intervals containing }p)\\
+&amp;\le O(\log (p-1)!)+O(\log (N-p)!)+O(\log N!-\log (p-1)!-\log (N-p)!)\\
+&amp;\le O(\log N!).
+\end{align*}$$</div>
+<p>Here is an alternative approach by Danny Mittal that uses both the idea from the
+subtask 4 solution and the Cartesian tree. He repeatedly finds the index of the
+rightmost maximum <span class='math'>$a_{mid}$</span> of the input sequence, solves the problem
+recursively on <span class='math'>$a_{1\ldots mid-1}$</span> and <span class='math'>$a_{mid+1 \ldots N}$</span>, and then adds the
+contribution of all intervals containing <span class='math'>$a_{mid}$</span>. This also runs in
+<span class='math'>$O(N\log N)$</span>.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class Revisited262144Array {
+    static int n;
+    static int[] xs;
+ 
+    static int[] left;
+    static int[] right;
+ 
+    static int[] forward;
+    static int[] reverse;
+ 
+    static long answer = 0;
+ 
+    public static int reduceForward(int start, int length, int lgFactor) {
+        if (lgFactor == 0) {
+            return length;
+        }
+        int factor = 1 &lt;&lt; Math.min(lgFactor, 20);
+        int j = start;
+        for (int k = start + factor - 1; k &lt; start + length - 1; k += factor) {
+            forward[j++] = forward[k];
+        }
+        forward[j++] = forward[start + length - 1];
+        return j - start;
+    }
+ 
+    public static void reduceReverse(int start, int length, int lgFactor) {
+        if (lgFactor == 0) {
+            return;
+        }
+        int factor = 1 &lt;&lt; Math.min(lgFactor, 20);
+        if (length &gt; factor) {
+            int j = start + 1;
+            for (int k = start + 1 + ((length - factor - 1) % factor); k &lt; start + length; k += factor) {
+                reverse[j++] = reverse[k];
+            }
+        }
+    }
+ 
+    public static int funStuff(int from, int mid, int to, int riseTo) {
+        if (from &gt; to) {
+            return 0;
+        }
+        int leftLength = funStuff(from, left[mid], mid - 1, xs[mid]);
+        int rightLength = funStuff(mid + 1, right[mid], to, xs[mid]);
+        int leftStart = from;
+        int rightStart = mid + 1;
+        int last = mid - 1;
+        for (int j = 1; j &lt;= rightLength + 1; j++) {
+            int frontier = j &gt; 1 ? forward[rightStart + (j - 2)] : mid;
+            long weight = frontier - last;
+            last = frontier;
+            int lastInside = mid + 1;
+            int leftLast = leftLength == 0 ? mid : reverse[leftStart];
+            for (int d = 0; d &lt;= 18 &amp;&amp; lastInside &gt; leftLast; d++) {
+                if (1 &lt;&lt; d &gt;= j) {
+                    int frontierInside;
+                    if (1 &lt;&lt; d == j) {
+                        frontierInside = mid;
+                    } else if (1 &lt;&lt; d &lt;= j + leftLength) {
+                        frontierInside = reverse[leftStart + leftLength + j - (1 &lt;&lt; d)];
+                    } else {
+                        frontierInside = leftLast;
+                    }
+                    long weightInside = lastInside - frontierInside;
+                    lastInside = frontierInside;
+                    answer += weight * weightInside * ((long) (xs[mid] + d));
+                }
+            }
+        }
+        forward[leftStart + leftLength] = mid;
+        System.arraycopy(forward, rightStart, forward, leftStart + leftLength + 1, rightLength);
+        reverse[leftStart + leftLength] = mid;
+        System.arraycopy(reverse, rightStart, reverse, leftStart + leftLength + 1, rightLength);
+        int length = reduceForward(leftStart, leftLength + 1 + rightLength, riseTo - xs[mid]);
+        reduceReverse(leftStart, leftLength + 1 + rightLength, riseTo - xs[mid]);
+        return length;
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        n = Integer.parseInt(in.readLine());
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        xs = new int[n];
+        for (int j = 0; j &lt; n; j++) {
+            xs[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        left = new int[n];
+        right = new int[n];
+        ArrayDeque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+        for (int j = 0; j &lt; n; j++) {
+            while (!stack.isEmpty() &amp;&amp; xs[stack.peek()] &lt;= xs[j]) {
+                left[j] = stack.pop();
+            }
+            if (!stack.isEmpty()) {
+                right[stack.peek()] = j;
+            }
+            stack.push(j);
+        }
+        while (stack.size() &gt; 1) {
+            stack.pop();
+        }
+        forward = new int[n];
+        reverse = new int[n];
+        funStuff(0, stack.pop(), n - 1, Integer.MAX_VALUE);
+        System.out.println(answer);
+    }
+}
+</pre>
+<p></body></html>

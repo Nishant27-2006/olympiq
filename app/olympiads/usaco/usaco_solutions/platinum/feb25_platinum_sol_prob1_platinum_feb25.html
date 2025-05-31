@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Larry Xing, Benjamin Qi)
+<p><div class='prob-section'><h4>Subtask 1:</h4>
+<p>Consider solving the subproblem for the whole array. 
+<p>First suppose <span class='math'>$N$</span> is odd. Then if we try a few examples, it seems that the
+answer is almost always the maximum over the array. Specifically, it holds for
+<span class='math'>$N\ge 5$</span>. Proof sketch:
+<p><ol><li>By the
+<a href='https://en.wikipedia.org/wiki/Sorting_network#Zero-one_principle'>0-1
+principle</a>, it suffices to prove the conclusion for arrays consisting only of
+zeros and ones.</li><li>First, we can use brute force to show the conclusion for 0-1 arrays of
+length <span class='math'>$N=5$</span> (that is,  for all arrays with at least two ones the answer is
+one).</li><li>Then use induction to show the conclusion for 0-1 arrays of length <span class='math'>$N&gt;5$</span>
+where <span class='math'>$N$</span> is odd.  Specifically, when <span class='math'>$N$</span> is odd and <span class='math'>$N&gt;5$</span>, we  can always
+select two consecutive zeros in the first min operation, and then any two
+elements in the max operation, to reduce to the case <span class='math'>$N-2$</span>.</li></ol>
+<p>Now, suppose <span class='math'>$N$</span> is even. Then, it seems that the answer is almost always the
+second maximum over the array. It is clear you can not do better; the last
+operation is always a min operation, so you can not achieve the maximum. We can
+prove this for <span class='math'>$N\ge 8$</span> similarly as above.
+<p>Back to our original problem, we can simply iterate over all <span class='math'>$\frac{N(N+1)}{2}$</span>
+subarrays.
+<p><ol><li>If <span class='math'>$N$</span> is odd and <span class='math'>$N \ge 5$</span>, then we can directly compute the max, and
+similarly for <span class='math'>$N$</span> is even and <span class='math'>$N \ge 8$</span>.</li><li>Otherwise, we can try every possible combination of operations to find the
+best one.</li></ol>
+<p>Depending on the implementation, this can be <span class='math'>$O(N^3)$</span> or <span class='math'>$O(N^3\log N)$</span>. 
+</div>
+<p><div class='prob-section'><h4>Subtask 2:</h4>
+From the previous subtask, we have reduced the problem to finding the sum of the
+maximums of  all odd length subarrays and the sum of the second maximums of all
+even length subarrays. 
+<p>To do this, let&apos;s fix the left endpoint of our subarray, and iterate over the
+right endpoint. We can keep track of the running maximum and second maximum, so
+when we compute the answer for a specific interval, we can simply check whether
+the length is even or odd and add the corresponding value to our answer. 
+<p>This gives us an <span class='math'>$O(N^2)$</span> solution. 
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+typedef pair&lt;int, int&gt; pii;
+typedef pair&lt;ll, ll&gt; pll;
+#define ff first
+#define ss second
+const int MAX_N = 1e6+5;
+const ll INF = 1e18;
+
+int n;
+ll a[MAX_N];
+bitset&lt;64&gt; dp;
+
+ll solve(int k, int i){
+    vector&lt;int&gt; v(k);
+    int mx = 0, smx = 0;
+    for(int j = 0; j &lt; k; j++){
+        v[j] = a[i-j];
+        if(v[j] &gt; mx) smx = mx, mx = v[j];
+        else if(v[j] &gt; smx) smx = v[j];
+    }
+    dp.reset();
+    dp[(1 &lt;&lt; k)-1] = 1;
+    int ans = 0;
+    for(int i = (1 &lt;&lt; k)-1; i &gt; 0; i--){
+        if(!dp[i]) continue;
+        if(__builtin_popcount(i) == 1){
+            for(int j = 0; j &lt; k; j++)
+                if(i&amp;(1 &lt;&lt; j))
+                    ans = max(ans, v[j]);
+            continue;
+        }
+        int x = k-__builtin_popcount(i), lst = -1;
+        for(int j = 0; j &lt; k; j++){
+            if(!(i&amp;(1 &lt;&lt; j))) continue;
+            if(~lst)
+                dp[(x&amp;1)^(v[lst] &gt; v[j]) ? i^(1 &lt;&lt; lst) : i^(1 &lt;&lt; j)] = 1;
+            lst = j;
+        }
+    }
+    return ans-(k&amp;1?mx:smx);
+}
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin &gt;&gt; n;
+    for(int i = 0; i &lt; n; i++) cin &gt;&gt; a[i];
+    ll ans = 0;
+    for(int i = 0; i &lt; n; i++){
+        ll mx = 0, smx = 0;
+        for(int j = i; j &gt;= 0; j--){
+            if(a[j] &gt; mx) smx = mx, mx = a[j];
+            else if(a[j] &gt; smx) smx = a[j];
+            ans += ((j-i)&amp;1 ? smx : mx);
+        }
+        if(i &gt;= 2) ans += solve(3, i);
+        if(i &gt;= 3) ans += solve(4, i);
+        if(i &gt;= 5) ans += solve(6, i);
+    }
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+    return 0;
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Full Solution:</h4>
+For convenience let&apos;s assume all <span class='math'>$a_i$</span> are distinct (if they are not, break ties
+arbitrarily).
+<p>One approach to optimizing the <span class='math'>$O(N^2)$</span> portion is to consider the number of
+segments  for which <span class='math'>$a_i$</span> is an answer, for each <span class='math'>$i$</span>. Let&apos;s initialize each
+index <span class='math'>$i$</span> as &quot;active&quot; and then iterate over each <span class='math'>$a_i$</span> in increasing order of
+value, deactivating them as we go while maintaining the neighboring active
+indices to both the left and the right using a doubly linked list. The subarrays
+with answer <span class='math'>$a_i$</span> are those
+<p><ol><li>Of odd length, containing <span class='math'>$i$</span>, and no other active indices.</li><li>Of even length, containing <span class='math'>$i$</span>, and exactly one other active index.</li></ol>
+<p>This gives us an <span class='math'>$O(N)$</span>-time solution.
+<p>Benjamin Qi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+using ll = long long;
+using vi = V&lt;int&gt;;
+
+map&lt;pair&lt;vi, int&gt;, int&gt; mem;
+
+template &lt;class T&gt; void ckmax(T &amp;a, T b) { a = max(a, b); }
+template &lt;class T&gt; void ckmin(T &amp;a, T b) { a = min(a, b); }
+
+int solve(vi v, int parity) {
+    assert(!v.empty());
+    if (v.size() == 1) return v.at(0);
+    if (mem.count({v, parity})) return mem.at({v, parity});
+    int res = 0;
+    if (parity == 0) {
+        for (int i = 0; i + 1 &lt; size(v); ++i) {
+            auto nv = v;
+            ckmin(nv.at(i), nv.at(i + 1));
+            nv.erase(begin(nv) + i + 1);
+            ckmax(res, solve(nv, parity ^ 1));
+        }
+    } else {
+        for (int i = 0; i + 1 &lt; size(v); ++i) {
+            auto nv = v;
+            ckmax(nv.at(i), nv.at(i + 1));
+            nv.erase(begin(nv) + i + 1);
+            ckmax(res, solve(nv, parity ^ 1));
+        }
+    }
+    return mem[{v, parity}] = res;
+}
+
+int solve_fast(vi v) {
+    sort(all(v));
+    if (v.size() &amp; 1) return end(v)[-1];
+    return end(v)[-2];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N;
+    cin &gt;&gt; N;
+    vi A(N + 1);
+    for (int i = 1; i &lt;= N; ++i) cin &gt;&gt; A.at(i);
+    V&lt;vi&gt; with_val(N + 1);
+    for (int i = 1; i &lt;= N; ++i) with_val.at(A.at(i)).push_back(i);
+
+    vi l(N + 2), r(N + 2);
+    for (int i = 0; i &lt;= N + 1; ++i) {
+        // closest active neighbors to left and right
+        l.at(i) = i - 1;
+        r.at(i) = i + 1;
+    }
+    auto count_range_upto = [&amp;](int x, int p) -&gt; ll {
+        assert(x &gt;= 0);
+        if (p == 0) return x / 2;
+        return (x + 1) / 2;
+    };
+    auto count_range = [&amp;](int lo, int hi,
+                           int p) -&gt; ll {  // num ints in [lo, hi] with parity p
+        return count_range_upto(hi, p) - count_range_upto(lo - 1, p);
+    };
+    auto count_odd_first = [&amp;](int m) {  // odd ranges with answer A[m]
+        ll res = 0;
+        for (int p : {0, 1})
+            res +=
+                count_range(l.at(m) + 1, m, p) * count_range(m, r.at(m) - 1, p);
+        return res;
+    };
+    auto count_even_pair = [&amp;](int a, int b) -&gt; ll {
+        if (a &lt;= 0 || b &gt;= N + 1) return 0;
+        ll res = 0;
+        for (int p : {0, 1})
+            res += count_range(l.at(a) + 1, a, p) *
+                   count_range(b, r.at(b) - 1, p ^ 1);
+        return res;
+    };
+    auto count_even_second = [&amp;](int i) {  // even ranges with answer A[i]
+        return count_even_pair(l.at(i), i) + count_even_pair(i, r.at(i));
+    };
+    ll ans = 0;
+    for (int v = 1; v &lt;= N; ++v) {
+        for (int i : with_val.at(v)) {
+            // count subarrays with (tentative) ans A[i]
+            ans += (ll)v * (count_odd_first(i) + count_even_second(i));
+            // deactivate i
+            int lo = l.at(i), hi = r.at(i);
+            r.at(lo) = hi;
+            l.at(hi) = lo;
+        }
+    }
+    assert(r.at(0) == N + 1);
+    // corrections for small lengths
+    for (int len : {3, 4, 6}) {
+        vector&lt;bool&gt; precalced(1 &lt;&lt; len);
+        for (int i = 0; i &lt; (1 &lt;&lt; len); ++i) {
+            vi v;
+            for (int j = 0; j &lt; len; ++j) {
+                if (i &amp; (1 &lt;&lt; j)) v.push_back(1);
+                else v.push_back(0);
+            }
+            precalced.at(i) = solve(v, 0);
+        }
+        auto solve_precalced =
+            [&amp;](const vi &amp;v) {  // solve for v using precalculated answers for
+                                // 0-1 arrays
+                assert(v.size() == len);
+                vi by_val(len);
+                iota(all(by_val), 0);
+                sort(all(by_val), [&amp;](int x, int y) {
+                    return v.at(x) &gt; v.at(y);
+                });  // sort descending
+                int mask = 0;
+                for (int i : by_val) {
+                    mask ^= 1 &lt;&lt; i;
+                    if (precalced.at(mask)) return v.at(i);
+                }
+                assert(false);
+            };
+        for (int i = 0; i &lt;= N - len; ++i) {
+            vi v(begin(A) + i + 1, begin(A) + i + 1 + len);
+            ans -= solve_fast(v);
+            ans += solve_precalced(v);
+        }
+    }
+    cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Alternative Solution:</h4>
+<p>An alternative approach is to directly optimize our approach in subtask 2. For
+two consecutive left endpoints, the set of running maximums and second maximums
+does not change much between each other.
+<p>This inspires us to keep track of a vector of ``segments&quot; where the maximum and
+second maximum are the same.  To move from one left endpoint to the next, we
+replace the suffix in which the new element would change either the max or
+second max, and recalculate the new segments to insert into the vector. 
+<p>To analyse the time complexity, consider the potential function
+<div class='math'>$$\Phi = 2\cdot (\text{# distinct maxes})+(\text{# distinct second maxes that are not maxes})$$</div>
+<p>The amount of work that we do in each step is equivalent to the number of
+segments we insert at that step. 
+<p>Consider the segments we insert where <span class='math'>$a_l$</span> is the max. Here, we are essentially
+modifying each of the segments such that the max becomes a second max. Analyzing the change
+to the potential function, we see that the addition of <span class='math'>$a_l$</span> increases the potential function
+by <span class='math'>$2$</span>, while the modifications decrease the potential function by at least <span class='math'>$\text{# max segments inserted}$</span>. 
+<p>In addition, there is at most one segment we insert where <span class='math'>$a_l$</span> is the second
+max. This is because if there were two separate such segments, one of those
+intervals would contain two elements bigger than  <span class='math'>$a_l$</span>, which makes <span class='math'>$a_l$</span> not
+the second max. Thus, we insert at most one such segment, while
+increasing the potential function by at most <span class='math'>$1$</span>. 
+<p>In total, the number of segments that we can insert is at most <span class='math'>$1+\text{# max segments, inserted}$</span>, so 
+<p><div class='math'>$$\text{work}+\Delta\Phi \le \text{# segments inserted}-\text{# max segments inserted}+3 \le 4$$</div>
+<p>so  <div class='math'>$$\text{total work} \le 4N-\Phi_f+\Phi_i \le 4N$$</div>  and our time complexity
+is
+<span class='math'>$O(N)$</span>.
+<p>Larry Xing&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+typedef pair&lt;int, int&gt; pii;
+typedef pair&lt;ll, ll&gt; pll;
+#define ff first
+#define ss second
+const int MAX_N = 1e6+5;
+const ll INF = 1e18;
+
+int n;
+ll a[MAX_N], nums[7][64];
+ll mx[2], smx[2];
+bitset&lt;64&gt; dp;
+vector&lt;pair&lt;pll, ll&gt;&gt; v[2];
+
+void mod(ll x, int t){
+    vector&lt;pair&lt;pll, ll&gt;&gt; v2;
+    while(v[t].size() &amp;&amp; x &gt;= v[t].back().ff.ss){
+        if(!v2.size() || v2.back().ff != pll(max(x, v[t].back().ff.ff), min(x, v[t].back().ff.ff)))
+            v2.push_back({{max(x, v[t].back().ff.ff), min(x, v[t].back().ff.ff)}, v[t].back().ss});
+        else v2.back().ss += v[t].back().ss;
+        mx[t] -= v[t].back().ff.ff*v[t].back().ss;
+        smx[t] -= v[t].back().ff.ss*v[t].back().ss;
+        v[t].pop_back();
+    }
+    while(v2.size()){
+        mx[t] += v2.back().ff.ff*v2.back().ss;
+        smx[t] += v2.back().ff.ss*v2.back().ss;
+        v[t].push_back(v2.back()), v2.pop_back();
+    }
+}
+
+ll solve(int k, int num){
+    vector&lt;int&gt; v(k);
+    for(int i = 0; i &lt; k; i++) v[i] = (num&amp;(1 &lt;&lt; i)) &gt;&gt; i;
+    dp.reset();
+    dp[(1 &lt;&lt; k)-1] = 1;
+    int ans = 0;
+    for(int i = (1 &lt;&lt; k)-1; i &gt; 0; i--){
+        if(!dp[i]) continue;
+        if(__builtin_popcount(i) == 1){
+            for(int j = 0; j &lt; k; j++)
+                if(i&amp;(1 &lt;&lt; j))
+                    ans = max(ans, v[j]);
+            continue;
+        }
+        int x = k-__builtin_popcount(i), lst = -1;
+        for(int j = 0; j &lt; k; j++){
+            if(!(i&amp;(1 &lt;&lt; j))) continue;
+            if(~lst)
+                dp[(x&amp;1)^(v[lst] &gt; v[j]) ? i^(1 &lt;&lt; lst) : i^(1 &lt;&lt; j)] = 1;
+            lst = j;
+        }
+    }
+    return ans;
+}
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin &gt;&gt; n;
+    for(int i = 0; i &lt; n; i++) cin &gt;&gt; a[i];
+    ll ans = 0;
+    for(int i = 0; i &lt; n; i++){
+        mod(a[i], i&amp;1);
+        mod(a[i], 1^i&amp;1);
+        v[i&amp;1].push_back({{a[i], -1}, 1});
+        mx[i&amp;1] += a[i], smx[i&amp;1] -= 1;
+        ans += mx[i&amp;1] + smx[1^i&amp;1];
+    }
+    for(int k : {3, 4, 6})
+        for(int i = 0; i &lt; (1 &lt;&lt; k); i++)
+            nums[k][i] = solve(k, i);
+    for(int k : {3, 4, 6}){
+        for(int i = k-1; i &lt; n; i++){
+            int mx = 0, smx = 0, tmx = 0, num = 0;
+            for(int j = 0; j &lt; k; j++){
+                if(a[i-j] &gt; mx) tmx = smx, smx = mx, mx = a[i-j];
+                else if(a[i-j] &gt; smx) tmx = smx, smx = a[i-j];
+                else if(a[i-j] &gt; tmx) tmx = a[i-j];
+            }
+            for(int j = 0; j &lt; k; j++) num |= (a[i-j] &gt;= (k&amp;1 ? mx : smx)) &lt;&lt; j;
+            ans += nums[k][num] ? 0 : (k&amp;1 ? smx-mx : tmx-smx);
+        }
+    }
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+    return 0;
+}
+</pre>
+<p></div>
+<p></body></html>

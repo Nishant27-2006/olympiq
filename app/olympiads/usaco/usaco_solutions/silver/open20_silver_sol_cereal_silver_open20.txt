@@ -1,0 +1,234 @@
+Solution ID: sol_cereal_silver_open20
+Contest: OPEN20
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_cereal_silver_open20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+Suppose that Farmer John doesn't remove any cows from the line. Then we can
+simply simulate the actions of the cows in order, keeping track of which boxes
+of cereal are left. This yields an
+
+$O(N^2)$
+
+solution to the original problem:
+for each
+
+$i$
+
+, simulate the last
+
+$N-i$
+
+cows.
+
+There are several ways to speed up this solution. One way is to start with
+
+$i = N$
+
+and add cows one by one. Suppose we have solved the problem for the last
+
+$N-i$
+
+cows: that is, if the last
+
+$N-i$
+
+cows line up in order, we know which box
+each cow takes. We want to efficiently update this outcome to the outcome if
+instead the last
+
+$N+1-i$
+
+cows were to line up. Thus, we need to handle the
+operation "add cow to front of line".
+
+Suppose the new cow has preferences
+
+$(f, s)$
+
+. Then the new cow will certainly
+get cereal
+
+$f$
+
+. If the last
+
+$N-i$
+
+cows didn't take cereal
+
+$f$
+
+, then nothing will
+change: all of those cows have the same outcomes after adding the new cow. But
+if some cow
+
+$j$
+
+had taken cereal
+
+$f$
+
+, then after adding the new cow,
+
+$j$
+
+no
+longer gets
+
+$f$
+
+. If
+
+$f$
+
+is
+
+$j$
+
+'s second choice, then now
+
+$j$
+
+gets nothing---and
+all other cows have the same outcomes. If
+
+$f$
+
+is
+
+$j$
+
+'s first choice, and her
+second choice was taken by some cow earlier in line, then again
+
+$j$
+
+gets
+nothing, and all other cows have the same outcome. But if
+
+$j$
+
+'s second choice
+was not taken by some cow earlier in line, then
+
+$j$
+
+will take it. Unfortunately,
+this case may cause a cascade: we need to recurse on
+
+$j$
+
+and figure out whether
+
+$j$
+
+stole her second-choice cereal from someone later in line, and so forth.
+
+At each step of the recursion, a cow
+
+$j$
+
+can only "steal" from one later cow:
+the cow who originally took the cereal which
+
+$j$
+
+is now taking. So the above
+algorithm doesn't blow up exponentially or anything. But each addition of a new
+cow seems like it could cause a recursion of depth
+
+$O(N)$
+
+, which would imply an
+overall time complexity of
+
+$O(N^2)$
+
+!
+
+Fortunately, this is not the case: we can show that the sum of the recursion
+depths is actually
+
+$O(N)$
+
+. The reason is that every time we recurse, a cow is
+either kicked from first-preference to second-preference or from
+second-preference to nothing. Moreover, as we add cows, the reverse can never
+happen: a cow who was getting nothing cannot suddenly get something when we add
+a cow to the front of the line. It follows that the total depth of all the
+recursion is at most
+
+$2N$
+
+.
+
+To implement the algorithm efficiently (with a constant-time update at each
+recursion step) we just need to keep track of which cow currently gets each box
+of cereal (
+
+$occ[pos]$
+
+stores the index of the cow that gets cereal
+
+$pos$
+
+). The final algorithm runs in time
+
+$O(N)$
+
+. See my code below:
+
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+using namespace std;
+#define MAXN 100001
+
+int N,M;
+int f[MAXN], s[MAXN];
+int occ[MAXN];
+int ans[MAXN];
+
+int main()
+{
+	ifstream fin("cereal.in");
+	fin >> N >> M;
+	for(int i=1;i<=N;i++)
+		fin >> f[i] >> s[i];
+	int cnt = 0;
+	for(int i=N;i>=1;i--)
+	{
+		int j = i;
+		int pos = f[i];
+		while(1)
+		{
+			if(occ[pos] == 0)
+			{
+				occ[pos] = j;
+				cnt++;
+				break;
+			}
+			else if(occ[pos] < j)
+				break;
+			else
+			{
+				int k = occ[pos];
+				occ[pos] = j;
+				if(pos == s[k])
+					break;
+				j = k;
+				pos = s[k];
+			}
+		}
+		ans[i] = cnt;
+	}
+	ofstream fout ("cereal.out");
+	for(int i=1;i<=N;i++)
+		fout << ans[i] << '\n';
+}

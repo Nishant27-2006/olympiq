@@ -1,0 +1,835 @@
+Solution ID: sol_prob2_gold_feb24
+Contest: FEB24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_feb24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Chongtian Ma, Alex Liang, and Patrick Deng)
+
+Subtask 1:
+
+$N \le 2000$
+
+.
+
+We can directly simulate the process according to the problem statement. We can
+keep track of the amount of milk that each cow has and update in
+
+$\mathcal{O}(N)$
+
+each minute leading to an
+
+$\mathcal{O}(N^2)$
+
+solution.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin >> n;
+
+    vector<int> cap(n), cur(n); 
+    
+    for (int i = 0; i < n; i++){
+        cin >> cap[i];
+        cur[i] = cap[i];
+    }
+    
+    for (int minute = 1; minute <= n; minute++){
+        rotate(cur.begin(), cur.begin() + n - 1, cur.end());
+
+        for (int i = 0; i < n; i++)
+            cur[i] = min(cur[i], cap[i]);
+
+        cout<<accumulate(cur.begin(), cur.end(), 0LL)<<"\n";
+    }
+}
+
+Subtask 2:
+
+$a_i \le 2$
+
+.
+
+Each bucket has capacity of either
+
+$1$
+
+or
+
+$2$
+
+in this subtask. Consider a cow
+that starts off with
+
+$2$
+
+unit of milk. That specific
+
+$2$
+
+units of milk will keep
+getting passed until  it reaches a bucket with capacity
+
+$1$
+
+where it will be
+reduced to
+
+$1$
+
+unit of milk.
+
+For each
+
+$a_i=2$
+
+we want to find the time
+
+$t$
+
+in which it will reach a bucket
+with capacity
+
+$1$
+
+. Then we know that
+
+$1$
+
+milk is lost at time
+
+$t$
+
+. We can find
+
+$t$
+
+by finding the first
+
+$a_j=1$
+
+on the right of
+
+$i$
+
+.
+
+We can rotate the array such that the minimum element appears at the end.
+Iterating over the array backwards and keeping track of the most recent
+
+$1$
+
+leads to an
+
+$\mathcal{O}(N)$
+
+solution.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin >> n;
+
+    vector<int> A(n); 
+    vector<int> reduce(n + 5, 0);
+
+    int sum = 0;
+
+    for (int &i : A){
+        cin >> i;
+        sum += i;
+    }
+    rotate(A.begin(), next(min_element(A.begin(), A.end())), A.end());
+    
+    for (int i = n - 1, lst = -1; i >= 0; i--){
+        if (A[i] == 1)
+            lst = i;
+        if (A[i] == 2 and lst != -1){
+            // At time lst - i the 2 will get reduced to a 1
+            reduce[lst - i]++;
+        }
+    }
+    
+    for (int i = 1; i <= n; i++){
+        sum -= reduce[i];
+        cout<<sum<<"\n";
+    }
+}
+
+Subtask 3:
+
+All
+
+$a_i$
+
+are generated uniformly at random in the range
+
+$[1,10^9]$
+
+.
+
+Let's rotate the array such that the minimum element appears at the end.
+
+In the previous subtask, for each
+
+$a_i=2$
+
+, we wanted to find when that specific
+
+$2$
+
+units of milk will reach a bucket with capacity
+
+$1$
+
+. We can extend this
+reasoning. For some
+
+$a_i$
+
+, we want to find all times in which that milk will get
+reduced.
+
+The first time the milk is reduced is when it reaches the first
+
+$a_{j_1}<a_i$
+
+on the right of
+
+$i$
+
+. It will be reduced by
+
+$a_i-a_{j_1}$
+
+at time
+
+$j_1-i$
+
+.
+
+The second time the milk is reduced is when it reaches the
+first
+
+$a_{j_2}<a_{j_1}$
+
+on the right of
+
+$j_1$
+
+. It will be reduced by
+
+$a_{j_1}-a_{j_2}$
+
+at time
+
+$j_2-i$
+
+.
+
+The third time the milk is reduced is when it reaches the first
+
+$a_{j_3}<a_{j_2}$
+
+on the right of
+
+$j_2$
+
+. It will be reduced by
+
+$a_{j_2}-a_{j_3}$
+
+at time
+
+$j_3-i$
+
+.
+
+...
+
+The
+
+$k$
+
+-th time the milk is reduced is when it reaches the first
+
+$a_{j_k}<a_{j_{k-1}}$
+
+on the right of
+
+$j_{k-1}$
+
+. It will be reduced by
+
+$a_{j_{k-1}}-a_{j_k}$
+
+at time
+
+$j_k-i$
+
+.
+
+To find these values, we can iterate over the array backwards and keep a
+monotonic stack. At each element, we can iterate over the entire stack and
+update our answer.
+
+Because all
+
+$a_i$
+
+are generated uniformly at random, the expected size of the
+monotonic stack at each
+
+$i$
+
+is
+
+$\mathcal{O}(\log N)$
+
+. This is since the
+probability of
+
+$j$
+
+(
+
+$i \le j < i+N$
+
+) being in the stack is at most
+
+$\frac{1}{j-i+1}$
+
+since
+
+$a_j$
+
+must be smaller than
+
+$[a_i,a_{i+1},...,a_{j-1}]$
+
+.
+By the linearity of expectation, the expected size of the stack is
+
+$\frac{1}{1}+\frac{1}{2}+ \dots +\frac{1}{N}=\mathcal{O}(\log N)$
+
+by the
+harmonic series. Thus, the solution runs in
+
+$\mathcal{O}(N\log N)$
+
+time.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin >> n;
+
+    vector<int> A(n); 
+    ll sum = 0;
+
+    for (int &i : A){
+        cin >> i;
+        sum += i;
+    }
+    rotate(A.begin(), next(min_element(A.begin(), A.end())), A.end());
+
+    vector<int> stk;
+    vector<ll> reduce(n + 5, 0);
+
+    auto procStack = [&](int pos){
+        for (int i = 1; i < stk.size(); i++){
+            int delta = A[stk[i]] - A[stk[i - 1]];
+            reduce[stk[i - 1] - pos] += delta; 
+        }
+    };
+
+    for (int i = n - 1; i >= 0; i--){
+        while (stk.size() and A[stk.back()] >= A[i]){
+            stk.pop_back();
+        }
+        stk.push_back(i);
+        procStack(i);
+    }
+
+    for (int i = 1; i <= n; i++){
+        sum -= reduce[i];
+        cout<<sum<<"\n";
+    }
+}
+
+Full Solution 1:
+
+Let's look at what is redundant in our subtask
+
+$3$
+
+solution. Suppose the bottom
+
+$2$
+
+elements of the stack remain there for a long time. Then we will be
+iterating over them each time we process the stack.
+
+Let's speed up our subtask
+
+$3$
+
+solution. Consider some adjacent pair of elements
+(
+
+$j_{p-1},j_p$
+
+) in the stack. We know that
+
+$d=a_{j_{p-1}}-a_{j_p}$
+
+milk is lost
+by going from
+
+$j_{p-1}$
+
+to
+
+$j_p$
+
+. Let's look at all
+
+$i$
+
+(
+
+$1 \le i \le N$
+
+) where 
+(
+
+$j_{p-1},j_p$
+
+) is in the stack at
+
+$i$
+
+(meaning the milk originating from
+
+$i$
+
+will be reduced by
+
+$d$
+
+at time
+
+$j_p-i$
+
+). Clearly, all such
+
+$i$
+
+will form an
+interval.
+
+When
+
+$i=j_{p-1}$
+
+,
+
+$d$
+
+milk is lost at time
+
+$j_p-j_{p-1}$
+
+.
+
+When
+
+$i=j_{p-1}-1$
+
+,
+
+$d$
+
+milk is lost at time
+
+$j_p-j_{p-1}+1$
+
+.
+
+When
+
+$i=j_{p-1}-2$
+
+,
+
+$d$
+
+milk is lost at time
+
+$j_p-j_{p-1}+2$
+
+.
+
+And so on
+until we remove
+
+$j_{p-1}$
+
+from the stack.
+
+When we remove an element from the top of the stack, we can get the interval it
+was active for and perform a range add to keep track of how much milk is lost at
+what time. This leads to an
+
+$\mathcal{O}(N)$
+
+solution.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin >> n;
+
+    vector<int> A(n); 
+    ll sum = 0;
+
+    for (int &i : A){
+        cin >> i;
+        sum += i;
+    }
+    rotate(A.begin(), next(min_element(A.begin(), A.end())), A.end());
+
+    vector<int> stk;
+    vector<ll> reduce(n + 5, 0);
+
+    for (int i = n - 1; i >= 0; i--){
+        while (stk.size() and A[stk.back()] >= A[i]){
+            if (stk.size() > 1){
+                // i < t1 < t2
+                int t1 = stk.back();
+                int t2 = stk[stk.size() - 2];
+
+                // Milk lost from going from t1 to t2
+                int delta = A[t1] - A[t2];
+                
+                // When does the pair begin applying delta
+                int st = t2 - t1;
+
+                // For how long does the pair apply delta
+                int sz = t1 - i;
+
+                reduce[st] += delta;
+                reduce[st + sz] -= delta;
+            }
+            stk.pop_back();
+        }
+        stk.push_back(i);
+    }
+
+    // Finish proccessing rest of stack
+    while (stk.size() > 1){
+        int t1 = stk.back();
+        int t2 = stk[stk.size() - 2];
+
+        int delta = A[t1] - A[t2];
+        int st = t2 - t1;
+        int sz = t1 + 1;
+
+        reduce[st] += delta;
+        reduce[st + sz] -= delta;
+
+        stk.pop_back();
+    }
+
+    // Get answer
+    for (int i = 1; i <= n; i++){
+        reduce[i] += reduce[i - 1];
+        sum -= reduce[i];
+
+        cout<<sum<<"\n";
+    }
+}
+
+Full Solution 2:
+
+For each
+
+$i$
+
+, we want to find the number of buckets with milk
+
+$a_i$
+
+at each
+minute. To deal with the case where there are multiple same
+
+$a_i$
+
+, we only
+consider the number of buckets equal to
+
+$a_i$
+
+whose milk was specifically 
+reduced (by a non-zero amount) to
+
+$a_i$
+
+by the bucket at
+
+$i$
+
+(we also count the
+milk starting at
+
+$i$
+
+).
+
+Let
+
+$l_i$
+
+be the index of the first element less than or equal to
+
+$a_i$
+
+on the
+left of
+
+$i$
+
+. Consider all elements strictly between
+
+$l_i$
+
+and
+
+$i$
+
+.
+All these elements will be greater than
+
+$a_i$
+
+and thus will be reduced to
+
+$a_i$
+
+when they reach
+
+$i$
+
+. Suppose there are
+
+$s$
+
+such elements including
+
+$a_i$
+
+. Then we will gain one additional element equal to
+
+$a_i$
+
+at times
+
+$0,1,...,s-1$
+
+(if we suppose we start off with
+
+$0$
+
+elements equal to
+
+$a_i$
+
+).
+
+Let
+
+$w_i$
+
+store the total amount of milk at time
+
+$i$
+
+. We should perform the
+following update:
+
+$w_0 = w_0 + a_i$
+
+$w_1 = w_1 + 2a_i$
+
+...
+
+$w_{s-1} = w_{s-1} + sa_i$
+
+$w_{s} = w_{s} + sa_i$
+
+$w_{s+1} = w_{s+1} + sa_i$
+
+...
+
+$w_{N} = w_{N} + sa_i$
+
+We also know that buckets with
+
+$a_i$
+
+milk can be reduced to a smaller value.  
+Let
+
+$r_i$
+
+be the index of the first element strictly less than
+
+$a_i$
+
+on the
+right of
+
+$i$
+
+. Let time
+
+$t$
+
+be the time for the milk originating at
+
+$i$
+
+to reach
+
+$r_i$
+
+. Then we will lose one element equal to
+
+$a_i$
+
+at times
+
+$t,t+1,...,t+s-1$
+
+.
+A similar update to the one above should be performed.
+
+We can use a monotonic stack to find
+
+$l_i$
+
+and
+
+$r_i$
+
+. Implementation can be made
+easier by prepending and appending the array to itself. We can use prefix sums
+of prefix sums to perform the updates on
+
+$w$
+
+efficiently. See the following
+example:
+
+Original:
+
+$[0,1,0,0,0,0,-1,0]$
+
+Prefix sum:
+
+$[0,1,1,1,1,1,0,0]$
+
+Prefix sum of prefix sum:
+
+$[0,1,2,3,4,5,5,5]$
+
+Thus, this solution runs in
+
+$\mathcal{O}(N)$
+
+time.
+
+#include <bits/stdc++.h>
+using namespace std; 
+ 
+#define ll long long
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n;
+    cin >> n;
+
+    vector<int> A(n);
+
+    for (int &i : A)
+        cin >> i;
+    
+    for (int i = 0; i < 2 * n; i++)
+        A.push_back(A[i]);
+    
+    // L is first <= on left and R is first < on right
+    vector<int> L(A.size()), R(A.size());
+    {
+        stack<int> stk;
+        for (int i = 0; i < A.size(); i++){
+            while (stk.size() and A[i] < A[stk.top()])
+                stk.pop();
+
+            L[i] = stk.empty() ? -1 : stk.top();
+            stk.push(i);
+        }
+    }
+    {
+        stack<int> stk;
+        for (int i = (int)A.size() - 1; i >= 0; i--){
+            while (stk.size() and A[i] <= A[stk.top()])
+                stk.pop();
+            
+            R[i] = stk.empty() ? -1 : stk.top();
+            stk.push(i);
+        }
+    }
+
+    vector<ll> psm(n + 5, 0);
+
+    for (int i = n; i < 2 * n; i++){
+        // Gain A[i] during minutes [0, sz - 1]
+        int sz = i - L[i];
+        psm[0] += A[i];
+        psm[sz] -= A[i];
+
+        // Lose A[i] during minutes [R[i] - i, R[i] - i + sz - 1]
+        if (R[i] != -1){
+            psm[R[i] - i] -= A[i];
+            psm[R[i] - i + sz] += A[i];
+        }
+    }
+
+    for (int i = 1; i <= n; i++)
+        psm[i] += psm[i - 1];
+
+    for (int i = 1; i <= n; i++){
+        psm[i] += psm[i - 1];
+        cout<<psm[i]<<"\n";
+    }
+}

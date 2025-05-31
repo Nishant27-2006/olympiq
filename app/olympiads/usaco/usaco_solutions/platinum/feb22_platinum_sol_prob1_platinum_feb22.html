@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Andi Qu, Daniel Zhang, Benjamin Qi)
+<p><strong>Subtask 1: <span class='math'>$N$</span> is small.</strong>
+<p>We can view each grid cell as a node in a graph, where two neighboring cells are
+joined by an edge if there is no rectangle boundary between them.
+<p>Each connected component in this graph corresponds to a colored region in the
+painting. We can find these connected components in <span class='math'>$\mathcal O(N^2)$</span> time using
+DSU. To find the colors of each region, we can create a new graph where each
+node is a connected component, and two nodes are joined by an edge if they touch
+each other in the painting.
+<p>The resulting graph will be bipartite, and we can run a DFS on it to get the
+colors.
+<p>Andi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;numeric&gt;
+#include &lt;utility&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;tuple&gt;
+using namespace std;
+ 
+int n, t, cmp[2001 * 2001];
+pair&lt;int, int&gt; vert[2001], horiz[2001];
+vector&lt;int&gt; graph[2001 * 2001];
+bool visited[2001 * 2001];
+ 
+int find(int A) { return cmp[A] = A == cmp[A] ? A : find(cmp[A]); }
+void onion(int A, int B) { cmp[find(A)] = find(B); }
+int flat(int x, int y) { return x * (2 * n + 1) + y; }
+bool inside(int x, int y) { return x &gt;= 0 &amp;&amp; x &lt;= 2 * n &amp;&amp; y &gt;= 0 &amp;&amp; y &lt;= 2 * n; }
+ 
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin &gt;&gt; n &gt;&gt; t;
+    iota(cmp, cmp + (2 * n + 1) * (2 * n + 1), 0);
+    for (int i = 0; i &lt; n; i++) {
+        int x1, y1, x2, y2;
+        cin &gt;&gt; x1 &gt;&gt; y1 &gt;&gt; x2 &gt;&gt; y2;
+        vert[x1] = vert[x2] = {y1, y2 - 1};
+        horiz[y1] = horiz[y2] = {x1, x2 - 1};
+    }
+    for (int x = 0; x &lt;= 2 * n; x++) {
+        for (int y = 0; y &lt;= 2 * n; y++) {
+            if (inside(x + 1, y) &amp;&amp; (y &lt; vert[x + 1].first || y &gt; vert[x + 1].second))
+                onion(flat(x, y), flat(x + 1, y));
+            if (inside(x - 1, y) &amp;&amp; (y &lt; vert[x].first || y &gt; vert[x].second))
+                onion(flat(x, y), flat(x - 1, y));
+            if (inside(x, y + 1) &amp;&amp; (x &lt; horiz[y + 1].first || x &gt; horiz[y + 1].second))
+                onion(flat(x, y), flat(x, y + 1));
+            if (inside(x, y - 1) &amp;&amp; (x &lt; horiz[y].first || x &gt; horiz[y].second))
+                onion(flat(x, y), flat(x, y - 1));
+        }
+    }
+    for (int x = 0; x &lt;= 2 * n; x++) {
+        for (int y = 0; y &lt;= 2 * n; y++) {
+            if (inside(x + 1, y) &amp;&amp; find(flat(x, y)) != find(flat(x + 1, y))) {
+                graph[find(flat(x, y))].push_back(find(flat(x + 1, y)));
+                graph[find(flat(x + 1, y))].push_back(find(flat(x, y)));
+            }
+            if (inside(x - 1, y) &amp;&amp; find(flat(x, y)) != find(flat(x - 1, y))) {
+                graph[find(flat(x, y))].push_back(find(flat(x - 1, y)));
+                graph[find(flat(x - 1, y))].push_back(find(flat(x, y)));
+            }
+            if (inside(x, y + 1) &amp;&amp; find(flat(x, y)) != find(flat(x, y + 1))) {
+                graph[find(flat(x, y))].push_back(find(flat(x, y + 1)));
+                graph[find(flat(x, y + 1))].push_back(find(flat(x, y)));
+            }
+            if (inside(x, y - 1) &amp;&amp; find(flat(x, y)) != find(flat(x, y - 1))) {
+                graph[find(flat(x, y))].push_back(find(flat(x, y - 1)));
+                graph[find(flat(x, y - 1))].push_back(find(flat(x, y)));
+            }
+        }
+    }
+    queue&lt;pair&lt;int, bool&gt;&gt; q;
+    int black = 0, white = 0;
+    q.push({find(0), false});
+    visited[find(0)] = true;
+    while (q.size()) {
+        int curr, colour;
+        tie(curr, colour) = q.front();
+        if (colour) black++; else white++;
+        q.pop();
+        for (int i : graph[curr]) if (!visited[i]) {
+            visited[i] = true;
+            q.push({i, !colour});
+        }
+    }
+    if (t == 2) cout &lt;&lt; white &lt;&lt; &apos; &apos; &lt;&lt; black &lt;&lt; &apos;\n&apos;;
+    else cout &lt;&lt; white + black &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p><strong>Subtask 2: No rectangle boundaries intersect.</strong>
+<p>Firstly, note that there will be exactly <span class='math'>$N + 1$</span> colored regions, so we just
+have to find the color of each region.
+<p>The key observation for this subtask is that the color that a rectangle is
+immersed in is determined by the number of rectangles containing it. More
+specifically, if there is an even number of rectangles containing it, then it
+will be immersed in white; otherwise, it will be immersed in black. From this,
+we can find the color of each region.
+<p>The number of rectangles that contain rectangle <span class='math'>$R$</span> is equal to how many more
+top edges than bottom edges there are that:
+<ul><li>Have <span class='math'>$y$</span>-coordinate greater than the <span class='math'>$y$</span>-coordinate of rectangle <span class='math'>$R$</span>&apos;s top
+edge.</li><li>Contain a point with <span class='math'>$x$</span>-coordinate equal to the <span class='math'>$x$</span>-coordinate
+of rectangle <span class='math'>$R$</span>&apos;s left edge.</li></ul>
+<p>Intuitively, this is because rectangle <span class='math'>$S$</span>&apos;s top and bottom edges &quot;sandwich&quot;
+rectangle <span class='math'>$R$</span> (and by extension, <span class='math'>$R$</span>&apos;s left edge) if and only if <span class='math'>$S$</span> contains
+<span class='math'>$R$</span>.
+<p>We can then use a line sweep to find which color each rectangle is immersed in.
+First, we sort the rectangles&apos; left and right edges by <span class='math'>$x$</span>-coordinate and
+process them in that order. Each time we encounter a left edge, we insert its
+rectangle&apos;s top and bottom edges into an &quot;active&quot; set, and we remove those edges
+when we encounter a right edge. We can then use a Fenwick tree (or whichever
+data structure you prefer for range sum queries) to count the edges we want in
+<span class='math'>$\mathcal O(N \log N)$</span> time.
+<p>Ben&apos;s code (using an
+<a href='https://usaco.guide/gold/PURS?lang=cpp#order-statistic-tree'>indexed set</a>):
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#include &lt;ext/pb_ds/assoc_container.hpp&gt;
+using namespace __gnu_pbds;
+
+template&lt;class T&gt; using Tree = tree&lt;T, null_type, less&lt;T&gt;, 
+	rb_tree_tag, tree_order_statistics_node_update&gt;; 
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, T; cin &gt;&gt; N &gt;&gt; T;
+	vector&lt;pair&lt;int,int&gt;&gt; ival(2*N+1);
+	for (int i = 0; i &lt; N; ++i) {
+		int x1, y1, x2, y2; cin &gt;&gt; x1 &gt;&gt; y1 &gt;&gt; x2 &gt;&gt; y2;
+		ival[x1] = ival[x2] = {y1,y2};
+	}
+	Tree&lt;int&gt; active;
+	array&lt;int,2&gt; ans{1,0}; // white, black
+	for (int x = 1; x &lt;= 2*N; ++x) {
+		auto [y1, y2] = ival[x];
+		if (active.find(y1) != active.end()) {
+			active.erase(y1), active.erase(y2);
+		} else {
+			active.insert(y1), active.insert(y2);
+			int color = active.order_of_key(y1);
+			color &amp;= 1;
+			color ^= 1;
+			++ans[color];
+		}
+	}
+	if (T == 1) cout &lt;&lt; ans[0]+ans[1];
+	else cout &lt;&lt; ans[0] &lt;&lt; &quot; &quot; &lt;&lt; ans[1];
+	cout &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Subtasks 3: The rectangle boundaries are connected and <span class='math'>$T = 1$</span>.</strong>
+<p>We can treat the painting as a planar graph and use Euler&apos;s formula to solve
+this subtask. Euler&apos;s formula states that:
+<p><div class='math'>$$F = E - V + C + 1$$</div>
+<p>Where <span class='math'>$F$</span> is the number of faces (i.e., the answer), <span class='math'>$E$</span> is the number of edges,
+<span class='math'>$V$</span> is the number of vertices, and <span class='math'>$C$</span> is the number of connected components.
+<p>In this subtask, <span class='math'>$C = 1$</span>, so we only need to worry about finding <span class='math'>$E$</span> and <span class='math'>$V$</span>.
+<p>If we treat each line segment in the painting as an edge and each
+corner/intersection as a node, then <span class='math'>$V = 4N + (\text{# of intersections})$</span>
+because there are initially <span class='math'>$4N$</span> rectangle corners. Similarly,
+<span class='math'>$E = 4N + 2 \cdot (\text{# of intersections})$</span> because each intersection of
+rectangle edges results in <span class='math'>$2$</span> additional line segments and there are initially
+<span class='math'>$4N$</span> rectangle edges.
+<p>The answer is then <span class='math'>$F = 2 + (\text{# of intersections})$</span>. We can use a line
+sweep (for example, the algorithm described
+<a href='https://www.topcoder.com/thrive/articles/Line%20Sweep%20Algorithms'>in this
+Topcoder article</a>) to find the number of intersections in
+<span class='math'>$\mathcal O(N \log N)$</span> time.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#include &lt;ext/pb_ds/assoc_container.hpp&gt;
+using namespace __gnu_pbds;
+
+template&lt;class T&gt; using Tree = tree&lt;T, null_type, less&lt;T&gt;, 
+	rb_tree_tag, tree_order_statistics_node_update&gt;; 
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, T; cin &gt;&gt; N &gt;&gt; T;
+	assert(T == 1);
+	vector&lt;pair&lt;int,int&gt;&gt; ival(2*N+1);
+	for (int i = 0; i &lt; N; ++i) {
+		int x1, y1, x2, y2; cin &gt;&gt; x1 &gt;&gt; y1 &gt;&gt; x2 &gt;&gt; y2;
+		ival[x1] = ival[x2] = {y1,y2};
+	}
+	Tree&lt;int&gt; active;
+	uint64_t ans = 2;
+	for (int x = 1; x &lt;= 2*N; ++x) {
+		auto [y1, y2] = ival[x];
+		if (active.find(y1) != active.end()) {
+			active.erase(y1), active.erase(y2);
+			ans += active.order_of_key(y2)-active.order_of_key(y1);
+		} else {
+			ans += active.order_of_key(y2)-active.order_of_key(y1);
+			active.insert(y1), active.insert(y2);
+		}
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Subtasks 4: The rectangle boundaries are connected and <span class='math'>$T = 2$</span>.</strong>
+<p>Let&apos;s focus on finding the number of black regions.
+<p>If we add rectangles to the plane sequentially, we can view each as inverting
+the colors on its inside. Using this analogy, we may imagine a white line
+sweeping through the plane from left to right, where each vertical edge that it
+encounters inverts the colors on an interval.
+<p>If we draw this out for a few small cases, we may notice there are three
+possible events:
+<ul><li>A black segment on the line splits, extends, or shortens (possibly
+disappearing altogether).</li><li>A new black segment appears on the line.</li><li>Two black segments on the line merge into one.</li></ul>
+<p>We don&apos;t care about the first case because it doesn&apos;t change the number of black
+regions. The second case increments the number of black regions because it marks
+the start (i.e., leftmost edge) of a black region. The third case decrements the
+number of black regions because it means that we over-counted the number of
+black regions.
+<p>Below is an example of what this algorithm looks like:
+<p><figure><img src='https://www.usaco.org/current/data/fig3_paint_platinum_feb22.jpg'/></figure>
+<p>We can then use a Fenwick tree (or whichever data structure you prefer for range
+sum queries) to count the number of each type of event in <span class='math'>$\mathcal O(N \log N)$</span>
+time, and get our answer from that.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#include &lt;ext/pb_ds/assoc_container.hpp&gt;
+using namespace __gnu_pbds;
+
+template&lt;class T&gt; using Tree = tree&lt;T, null_type, less&lt;T&gt;, 
+	rb_tree_tag, tree_order_statistics_node_update&gt;; 
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, T; cin &gt;&gt; N &gt;&gt; T;
+	vector&lt;pair&lt;int,int&gt;&gt; ival(2*N+1);
+	for (int i = 0; i &lt; N; ++i) {
+		int x1, y1, x2, y2; cin &gt;&gt; x1 &gt;&gt; y1 &gt;&gt; x2 &gt;&gt; y2;
+		ival[x1] = ival[x2] = {y1,y2};
+	}
+	Tree&lt;int&gt; active;
+	uint64_t ans = 2, black = 0;
+	for (int x = 1; x &lt;= 2*N; ++x) {
+		auto [y1, y2] = ival[x];
+		if (active.find(y1) != active.end()) {
+			int l = active.order_of_key(y1), r = active.order_of_key(y2);
+			ans += r-l-1;
+			black += (r+1)/2-(l+1)/2-1;
+			active.erase(y1), active.erase(y2);
+		} else {
+			active.insert(y1), active.insert(y2);
+			int l = active.order_of_key(y1), r = active.order_of_key(y2);
+			ans += r-l-1;
+			black += (r+1)/2-(l+1)/2;
+		}
+	}
+	if (T == 1) cout &lt;&lt; ans;
+	else cout &lt;&lt; ans-black &lt;&lt; &quot; &quot; &lt;&lt; black;
+	cout &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>However, note that this algorithm only works when there is 1 connected
+component. The simplest case where this algorithm fails is the case where we
+have a single square contained in another square (i.e., a black donut). Our
+algorithm would return <span class='math'>$0$</span> black regions, even though the answer is <span class='math'>$1$</span>.
+<p><strong>Subtasks 5: <span class='math'>$T = 1$</span>.</strong>
+<p>The solution to this subtask is similar to that of subtask 3, but we need to
+find <span class='math'>$C$</span> (the number of connected components).
+<p>We essentially need a structure that supports (in <span class='math'>$\mathcal O(\log N)$</span> time):
+<p><ul><li>Inserting or deleting a point at a position.</li><li>Merging the components of all points with positions in a range <span class='math'>$[l, r]$</span> with
+the component of some point <span class='math'>$v$</span>.</li><li>At the end, identifying the component that each point belongs to.</li></ul>
+<p>To do this, we can use a segment tree.
+<p>One approach we might think of is to sweep a line from left to right while
+maintaining lists of points in each node&apos;s range. When we process a new
+rectangle, we can use DSU to merge its component with the component of each
+point in each relevant node, and then insert the top and bottom corners of the
+rectangle into the segment tree.
+<p>The problem with this approach is that we might do <span class='math'>$\mathcal O(N^2)$</span> merges.
+However, many of those merges are redundant â if rectangles <span class='math'>$A$</span>, <span class='math'>$B$</span> and <span class='math'>$C$</span>
+all intersect, then we only need to do <span class='math'>$2$</span> merges instead of the <span class='math'>$3$</span> that we
+would&apos;ve done.
+<p>To avoid this redundancy, we can store just <span class='math'>$2$</span> values in each segment tree
+node:
+<ul><li>Whether the range that the node spans is non-empty (<span class='math'>$\texttt{st_cnt}$</span> in the
+code below).</li><li>The component that we want to merge with all points in the
+node&apos;s range. (<span class='math'>$\texttt{st_lazy}$</span> in the code below).</li></ul>
+<span class='math'>$\texttt{st_cnt}$</span> is used to avoid lazy propagating to empty ranges. If <span class='math'>$x$</span> and
+<span class='math'>$y$</span> get merged with the same empty range, we don&apos;t want to merge them with each
+other.
+<p>While we are inserting a point with component <span class='math'>$v$</span> into the segment tree and we
+encounter node <span class='math'>$w$</span>, then:
+<ul><li>If <span class='math'>$\texttt{st_cnt}[w] = 0$</span>, then <span class='math'>$w$</span>&apos;s range is empty and we do
+nothing.</li><li>Otherwise, if <span class='math'>$\texttt{st_lazy}[w] = 0$</span>, then we set
+<span class='math'>$\texttt{st_lazy}[w] = v$</span> to mark that we want to merge <span class='math'>$v$</span> with other points in
+the future.</li><li>Otherwise, merge <span class='math'>$v$</span> with <span class='math'>$\texttt{st_lazy}[w]$</span>.</li></ul>
+At the end of the line sweep, we go through each node of the segment tree and
+use lazy propagation to finish merging. This method is more efficient because
+there are only <span class='math'>$\mathcal O(N \log N)$</span> merges in total.
+<p><strong>Subtasks 6: <span class='math'>$T = 2$</span>.</strong>
+<p>In addition to counting the connected components formed by the rectangles, we
+also need to count how many connected components are immersed in which color.
+<p>Why would these numbers help us? Recall the case where our subtask 4 solution
+fails. Since we have <span class='math'>$1$</span> connected component immersed in black, we end up
+under-counting the number of black regions by <span class='math'>$1$</span>. In fact, one could prove that
+having <span class='math'>$x$</span> connected components immersed in some color results in under-counting
+regions with that color by exactly <span class='math'>$x$</span>.
+<p>To solve this problem fully, we can implement the following algorithm:
+<ul><li>Assume that there&apos;s only <span class='math'>$1$</span> connected component and find the answer to that
+case using subtask 4&apos;s solution.</li><li>Find the connected components using
+the approach described in subtask 5.</li><li>Use the approach described in
+subtask 2 to find the color that each connected component is immersed in.
+(Instead of the left edge of a rectangle, we can use the leftmost left edge of
+the connected component in this case).</li><li>Update our answer
+accordingly.</li></ul>
+<p>Below is Daniel&apos;s C++ code for this problem:
+<p><pre class='prettyprint'>
+#include &lt;cassert&gt;
+#include &lt;cstdio&gt;
+#include &lt;map&gt;
+
+int N;
+int ft[200005];
+
+void update(int i, int v) {
+    for (; i &lt;= N * 2; i += (i &amp; -i)) {
+        ft[i] += v;
+    }
+}
+
+int query(int i) {
+    int ac = 0;
+    for (; i &gt; 0; i -= (i &amp; -i)) {
+        ac += ft[i];
+    }
+    return ac;
+}
+
+int uf[100005];
+
+int find(int a) { return (a == uf[a]) ? a : (uf[a] = find(uf[a])); }
+
+void merge(int a, int b) { uf[find(a)] = find(b); }
+
+int st_lazy[800005];  // lazy merge with range, only nonzero if st_cnt is
+                      // nonzero
+int st_cnt[800005];
+
+int who[200005];  // who[l]=who[r]=id
+
+void apply(int w, int v) {
+    if (!st_cnt[w]) return;
+    if (st_lazy[w]) {
+        merge(v, st_lazy[w]);
+    } else {
+        st_lazy[w] = v;
+    }
+}
+
+void push(int w, int L, int R) {
+    if (st_lazy[w]) {
+        if (R - L &gt; 1) {
+            apply(w * 2 + 1, st_lazy[w]);
+            apply(w * 2 + 2, st_lazy[w]);
+        } else {
+            merge(st_lazy[w], who[R]);
+        }
+        st_lazy[w] = 0;
+    }
+}
+
+void pull(int w, int L, int R) {
+    assert(R - L &gt; 1);
+    st_cnt[w] = st_cnt[w * 2 + 1] + st_cnt[w * 2 + 2];
+}
+
+void update_range_merge(int w, int L, int R, int a, int b, int v) {
+    push(w, L, R);
+    if (a &gt;= R || b &lt;= L) return;
+    if (a &lt;= L &amp;&amp; b &gt;= R) {
+        apply(w, v);
+        push(w, L, R);
+    } else {
+        int M = (L + R) / 2;
+        update_range_merge(w * 2 + 1, L, M, a, b, v);
+        update_range_merge(w * 2 + 2, M, R, a, b, v);
+        pull(w, L, R);
+    }
+}
+
+void update_inc(int w, int L, int R, int i, int v) {
+    push(w, L, R);
+    if (i &lt;= L || i &gt; R) return;
+    if (R - L == 1) {
+        st_cnt[w] += v;
+    } else {
+        int M = (L + R) / 2;
+        update_inc(w * 2 + 1, L, M, i, v);
+        update_inc(w * 2 + 2, M, R, i, v);
+        pull(w, L, R);
+    }
+}
+
+void force_lazy(int w, int L, int R) {
+    push(w, L, R);
+    if (R - L &gt; 1) {
+        int M = (L + R) / 2;
+        force_lazy(w * 2 + 1, L, M);
+        force_lazy(w * 2 + 2, M, R);
+    }
+}
+
+struct Event {
+    int l, r;
+    bool start;
+    int id;
+} events[200005];
+
+int exterior[100005];
+
+bool vis[100005];
+
+int main() {
+    int T;
+    scanf(&quot;%d %d&quot;, &amp;N, &amp;T);
+    for (int i = 1; i &lt;= N; i++) {
+        int X1, Y1, X2, Y2;
+        scanf(&quot;%d %d %d %d&quot;, &amp;X1, &amp;Y1, &amp;X2, &amp;Y2);
+        events[X1] = Event{Y1, Y2, true, i};
+        events[X2] = Event{Y1, Y2, false, i};
+        who[Y1] = i;
+        who[Y2] = i;
+    }
+    for (int i = 1; i &lt;= N; i++) {
+        uf[i] = i;
+    }
+    int corners[2] = {0, 0};  // 0:exterior white, 1:exterior black
+    long long intersections = 0;
+    std::map&lt;int, int&gt; active;
+    for (int x = 1; x &lt;= N * 2; x++) {
+        int l = events[x].l, r = events[x].r, id = events[x].id;
+        if (events[x].start) {
+            exterior[id] = query(l) % 2;
+            corners[query(l) % 2]++;
+            corners[query(r) % 2]++;
+            intersections += query(r) - query(l);
+            update_range_merge(0, 0, N * 2, l, r, id);
+            update(l, 1);
+            update(r, 1);
+            update_inc(0, 0, N * 2, l, 1);
+            update_inc(0, 0, N * 2, r, 1);
+        } else {
+            update(l, -1);
+            update(r, -1);
+            update_inc(0, 0, N * 2, l, -1);
+            update_inc(0, 0, N * 2, r, -1);
+            intersections += query(r) - query(l);
+            update_range_merge(0, 0, N * 2, l, r, id);
+            corners[query(l) % 2]++;
+            corners[query(r) % 2]++;
+        }
+    }
+    force_lazy(0, 0, N * 2);
+    int black_immersed = 0, white_immersed = 0;  // cc surrounded by black/white
+    for (int x = 1; x &lt;= N * 2; x++) {
+        int id = events[x].id;
+        if (events[x].start) {
+            if (!vis[find(id)]) {
+                if (exterior[id]) {
+                    black_immersed++;
+                } else {
+                    white_immersed++;
+                }
+                vis[find(id)] = true;
+            }
+        }
+    }
+    long long black_corners = corners[0] - corners[1] + intersections * 2;
+    long long white_corners = corners[1] - corners[0] + intersections * 2;
+    assert(black_corners % 4 == 0);
+    assert(white_corners % 4 == 0);
+    long long black_regions = black_corners / 4 + black_immersed;
+    long long white_regions = white_corners / 4 + white_immersed + 1;
+    if (T == 1) {
+        printf(&quot;%lld\n&quot;, white_regions + black_regions);
+    } else {
+        printf(&quot;%lld %lld\n&quot;, white_regions, black_regions);
+    }
+}
+</pre>
+<p></body></html>

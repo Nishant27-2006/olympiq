@@ -1,0 +1,301 @@
+Solution ID: sol_standingout_platinum_dec17
+Contest: DEC17
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_standingout_platinum_dec17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nathan Pinsker)
+
+This problem steers us towards doing a large number of string comparisons of
+substrings within a larger string. As a result, it's a good candidate for using
+a data structure called a
+
+suffix
+array
+
+, which is simply an alphabetically-sorted array of all suffixes in the
+string. Although we have multiple strings, we can concatenate them together into
+one large string consisting of all
+
+$N$
+
+strings concatenated together with a
+special separator character (such as "?") between each one, so that we can
+compare suffixes across the
+
+$N$
+
+strings that we're given.
+
+Now that we have our sorted suffixes, we can efficiently compare them to one
+another. To solve this problem, we need to accomplish two things. First, for
+each suffix
+
+$S$
+
+, we must compute the longest prefix of
+
+$S$
+
+that is shared by
+another suffix from a different original name, because that prefix doesn't
+contribute to the uniqueness factor. Second, we must count the number of strings
+in
+
+$S$
+
+that *do* contribute to the uniqueness factor, but without
+double-counting any strings that occur twice in the same name.
+
+Since our suffixes are alphabetically sorted, consider the suffixes to the
+direct left and the direct right of
+
+$S$
+
+. One of these suffixes must be the
+suffix (or one such suffix, at least) in
+
+$S$
+
+that has the longest possible
+common prefix with
+
+$S$
+
+, because of the way we've constructed the suffix array.
+Similarly, consider the closest suffixes to
+
+$S$
+
+'s left and right which don't
+originate from the same name as
+
+$S$
+
+. Again, over the set of suffixes that aren't
+from
+
+$S$
+
+'s original name, one of these two strings must have the longest
+possible common prefix with
+
+$S$
+
+.
+
+This insight allows us to solve the problem. We iterate over each suffix
+
+$S$
+
+in
+the array, from left to right. Meanwhile, we keep track of suffixes
+
+$L$
+
+and
+
+$R$
+
+,
+the closest suffixes to
+
+$S$
+
+'s left and right that don't originate from the same
+name as
+
+$S$
+
+. We compute the largest of the longest common prefix between
+
+$S$
+
+and
+
+$L$
+
+,
+
+$S$
+
+and
+
+$R$
+
+, and, if
+
+$S$
+
+'s immediate left neighbor is from the same string,
+
+$S$
+
+and that neighbor (to handle the double-counting problem mentioned above).
+Finally, we compute the difference between the length of
+
+$S$
+
+and this number.
+Collating all these results and bucketing them by the original names will give
+us the uniqueness factor for every cow.
+
+This iterative procedure can be done in
+
+$O(1)$
+
+per suffix, for a total of
+
+$O(|N|)$
+
+, although a bit of care is required to keep track of
+
+$L$
+
+and
+
+$R$
+
+. The
+runtime is instead dominated by the construction of the suffix array, which is
+
+$O(|N| \lg |N|)$
+
+at best. Since
+
+$|N| \leq 10^5$
+
+, this is easily fast enough for
+full credit.
+
+Here is Mark's code:
+
+#include <iostream>
+#include <cstring>
+#include <vector>
+#include <algorithm>
+ 
+using namespace std;
+ 
+struct suffix_array {
+suffix_array(const char* S) : N(strlen(S)) {
+  vector<int> V;
+  for(int i = 0; i < N; i++) V.push_back(S[i]);
+  init(V);
+}
+ 
+suffix_array(const vector<int>& VV) : N(VV.size()) {
+  vector<int> V(VV);
+  init(V);
+}
+ 
+int N;
+vector<int> SA;
+vector<int> RA;
+ 
+void compress(vector<int>& V, vector<int>& C) {
+  copy(V.begin(), V.end(), C.begin());
+  sort(C.begin(), C.end());
+  auto cend = unique(C.begin(), C.end());
+  for(int i = 0; i < N; i++) {
+    V[i] = lower_bound(C.begin(), cend, V[i]) - C.begin() + 1;
+  }
+  V.push_back(0); C.push_back(0);
+}
+ 
+void compute_sa(vector<int>& V, vector<int>& C) {
+  vector<int> T(N + 1);
+  for(int i = 0; i <= N; i++) SA.push_back(i);
+  for(int ski = 0; V[SA[N]] < N; ski = ski ? ski << 1 : 1) {
+    fill(C.begin(), C.end(), 0);
+    for(int i = 0; i < ski; i++) T[i] = N - i;
+    for(int i = 0, p = ski; i <= N; i++) if(SA[i] >= ski) T[p++] = SA[i] - ski;
+    for(int i = 0; i <= N; i++) C[V[i]]++;
+    for(int i = 1; i <= N; i++) C[i] += C[i - 1];
+    for(int i = N; i >= 0; i--) SA[--C[V[T[i]]]] = T[i];
+    
+    T[SA[0]] = 0;
+    for(int j = 1; j <= N; j++) {
+      int a = SA[j];
+      int b = SA[j - 1];
+      T[a] = T[b] + (a + ski >= N || b + ski >= N ||
+                     V[a] != V[b] || V[a + ski] != V[b + ski]);
+    }
+    V.swap(T);
+  }
+}
+ 
+void compute_lcp(const vector<int>& OV) {
+  LCP = vector<int>(N);
+  int len = 0;
+  for(int i = 0; i < N; i++, len = max(0, len - 1)) {
+    int si = RA[i];
+    int j = SA[si - 1];
+    for(; i + len < N && j + len < N && OV[i + len] == OV[j + len]; len++);
+    LCP[si - 1] = len;
+  }
+}
+ 
+void init(vector<int>& V) {
+  vector<int> OV(V);
+  vector<int> C(N);
+  compress(V, C);
+  compute_sa(V, C);
+  RA.resize(N + 1);
+  for(int i = 0; i <= N; i++) RA[SA[i]] = i;
+  compute_lcp(OV);
+}
+  
+vector<int> LCP;
+};
+ 
+int main() {
+  ios_base::sync_with_stdio(false);
+ 
+  string S;
+  vector<pair<int, int> > A;
+ 
+  int N; cin >> N;
+  for (int i = 0; i < N; i++) {
+    string T; cin >> T;
+ 
+    S += T;
+    S += "?";
+    for (int j = 0; j < T.size(); j++) {
+      A.push_back(make_pair(i, T.size() - j));
+    }
+    A.push_back(make_pair(-1, -1));
+  }
+  A.push_back(make_pair(-1, -1));
+ 
+  vector<int> result(N);
+  suffix_array sa(S.c_str());
+  sa.LCP.push_back(0);
+  for (int i = 1; i <= sa.N; ) {
+    int j = sa.SA[i];
+    int ind = A[j].first;
+    if (ind == -1) {
+      ++i;
+      continue;
+    }
+    int sz = 1;
+    while (i + sz <= sa.N && A[sa.SA[i + sz]].first == ind) {
+      ++sz;
+    }
+ 
+    int ln = sa.LCP[i - 1];
+    for (int j = i; j < i + sz; j++) {
+      result[ind] += max(A[sa.SA[j]].second - max(ln, sa.LCP[j]), 0);
+      ln = min(ln, sa.LCP[j]);
+    }
+    i += sz;
+  }
+  for (int x : result) {
+    cout << x << '\n';
+  }
+ 
+  return 0;
+}

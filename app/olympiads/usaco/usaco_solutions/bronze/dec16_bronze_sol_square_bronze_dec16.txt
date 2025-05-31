@@ -1,0 +1,173 @@
+Solution ID: sol_square_bronze_dec16
+Contest: DEC16
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_square_bronze_dec16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we have two rectangles drawn on a grid and want to draw a
+square that covers both of the original rectangles and is as small as possible.
+
+Instead of trying to compute the number directly, let's reword the question
+slightly. Let's instead ask the similar question: is it possible to draw a
+square with side length
+
+$s$
+
+that covers both rectangles?
+
+For some values of
+
+$s$
+
+, the answer is obviously no. Take the example given in
+the problem: we know that the square must stretch from
+
+$x=1$
+
+all the way over to
+
+$x=8$
+
+. This means that the side length of the square must be at least
+
+$8-1$
+
+, or
+
+$7$
+
+. Similarly, the square must stretch from
+
+$y=6$
+
+to
+
+$y=9$
+
+, so the side length
+of the square must also be at least
+
+$9-6$
+
+, or
+
+$3$
+
+.
+
+In the example given, the answer happened to be
+
+$7^2$
+
+. Is the answer always the
+square of the distance that the square is required to stretch?
+
+It turns out the answer to that question is yes. If we look back at that
+example, we already know exactly how far the square has to stretch: it must
+stretch
+
+$7$
+
+units in the
+
+$x$
+
+-direction and
+
+$3$
+
+units in the
+
+$y$
+
+-direction. That
+means that if we make the square
+
+$7$
+
+units long and place it directly inside the
+column from
+
+$x=1$
+
+to
+
+$x=8$
+
+, we can slide  it until it covers the desired
+horizontal region from
+
+$y=6$
+
+and
+
+$y=9$
+
+.
+
+Therefore, what we need to do is compute the distance the square must stretch in
+both the
+
+$x$
+
+-direction and the
+
+$y$
+
+-direction, take the maximum of those, and
+print out the square of that result.
+
+Here is my Java code:
+
+import java.io.*;
+import java.util.*;
+public class square {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader("square.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("square.out")));
+
+		// track the bottom, top, left, and rightmost points that need to be covered 
+		int smallestX = 10;
+		int largestX = 0;
+		int smallestY = 10;
+		int largestY = 0;
+
+		// read in two lines, store corners of the pastures
+		for(int i = 0; i < 2; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			int xLow = Integer.parseInt(st.nextToken());
+			int yLow = Integer.parseInt(st.nextToken());
+			int xHigh = Integer.parseInt(st.nextToken());
+			int yHigh = Integer.parseInt(st.nextToken());
+			
+			if(xLow < smallestX) {
+				smallestX = xLow;
+			}
+			if(xHigh > largestX) {
+				largestX = xHigh;
+			}
+			if(yLow < smallestY) {
+				smallestY = yLow;
+			}
+			if(yHigh > largestY) {
+				largestY = yHigh;
+			}
+		}
+		
+		// compute the desired side length of the square
+		int desiredSideLength = largestX - smallestX;
+		if(largestY - smallestY > largestX - smallestX) {
+			desiredSideLength = largestY - smallestY; 
+		}
+		
+		// print the answer
+		pw.println(desiredSideLength * desiredSideLength);
+		pw.close();
+	}
+}

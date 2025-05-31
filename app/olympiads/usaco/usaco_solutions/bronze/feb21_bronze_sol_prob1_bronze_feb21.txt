@@ -1,0 +1,74 @@
+Solution ID: sol_prob1_bronze_feb21
+Contest: FEB21
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_feb21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Spencer Compton)
+
+To solve this problem, we will implement a process that can figure out when a
+cow was born, given a phrase about when it was born in relation to another cow
+whose time of birth we already know.
+
+As specified in the problem statement, each phrase will tell us when a new cow
+was born in relation to a previously mentioned cow. We will use this information
+to figure out exactly when the new cow was born in relation to Bessie. Since we
+do this, whenever we receive a phrase we can assume we have already figured out
+when the previously mentioned cow was born in relation to Bessie.
+
+Now, we figure out how to determine when a cow was born given a phrase. Suppose
+we are told "Mildred born in next Dragon year from Bessie", how can we figure
+out exactly when Mildred was born? We can start by setting Mildred's birth year
+to one later than Bessie's birth year. Then, we can continue to increase
+Mildred's birth year until it is a Dragon year! We could use a similar approach
+if we were told Mildred was born in some previous year (we would decrease
+repeatedly instead of increase repeatedly).
+
+The main remaining challenge is to implement some function that lets us check
+what type of year  a particular year is. There are a few ways we can do this. One way
+is to look at the difference between the year and Bessie's birth year modulo 12
+and check if it matches what it should be for the type of year mentioned in the
+phrase. Another way is to start at Bessie's birth year and change it one year at
+a time (keeping track of what type of year it is) until it is the given year, and
+then checking what type of year it is (as is done in the code below).
+
+Brian Dean's code:
+
+#include <iostream>
+#include <map>
+#include <string>
+using namespace std;
+ 
+string animals[12] = {"Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Goat", "Monkey", "Rooster", "Dog", "Pig", "Rat"};
+ 
+map<string,int> when_born;
+ 
+string get_animal(int year)
+{
+  int a = 0, y = 2021;
+  while (y < year) { y++; a++; if (a == 12) a = 0; }
+  while (y > year) { y--; a--; if (a == -1) a = 11; }
+  return animals[a];
+}
+ 
+int main(void)
+{
+  int N;
+  when_born["Bessie"] = 2021;
+  cin >> N;
+  string cowa, born, in, relation, animal, year, from, cowb;
+  for (int i=0; i<N; i++) {
+    cin >> cowa >> born >> in >> relation >> animal >> year >> from >> cowb;
+    when_born[cowa] = when_born[cowb];
+    do {
+      if (relation == "previous") when_born[cowa]--;
+      else when_born[cowa]++;
+    } while (get_animal(when_born[cowa]) != animal);
+  }
+  int diff = when_born["Bessie"] - when_born["Elsie"];
+  if (diff < 0) diff = -diff;
+  cout << diff << "\n";
+}

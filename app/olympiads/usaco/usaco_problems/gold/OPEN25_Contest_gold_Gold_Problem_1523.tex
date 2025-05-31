@@ -1,0 +1,206 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: OPEN25 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Farmer John is trying to make his world's famous OohMoo Milk to sell for a
+profit. He has $N$ $(1 \leq N \leq 10^5)$ bottles that he is trying to fill.
+Each bottle initially contains some amount of milk $m_i$
+$(0 \leq m_i \leq 10^9)$. Every day, he takes $A$ $(1 \le A \le N)$ bottles and
+fills each bottle with one unit of milk. 
+
+Unfortunately, Farmer Nhoj, Farmer John's competitor in the business of OohMoo
+Milk,  knows about Farmer John's production processes and has a plan to curtail
+his business.  Every day, after Farmer John fills his $A$ bottles, Farmer Nhoj
+will sneakily steal one unit of milk from each of $B$ $(0 \le B < A)$ different
+nonempty bottles. To remain sneaky, Farmer Nhoj chooses $B$ so that it is
+strictly less than $A$, so that it is less likely for Farmer John to discover
+him.
+
+After $D$ ($1 \leq D \leq 10^9$) days, Farmer John will sell his OohMoo Milk. If
+a bottle has $M$ units of milk, it will sell for $M^2$ moonies. 
+
+Let $P$ be the unique profit such that FJ can guarantee that he makes at least
+$P$ profit  regardless of how FN behaves, and FN can guarantee that FJ makes at
+most $P$ profit regardless of how  FJ behaves. Output the value of $P$ modulo
+$10^9+7$.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line of the input contains $N$ and $D$, where $N$ is the number of
+bottles and $D$ is the number of days that take place.
+
+The second line of the input contains $A$ and $B$ representing the number of
+units of milk that Farmer John fills and Farmer Nhoj steals respectively.
+
+The third line of the input contains $N$ space-separated integers $m_i$
+representing the initial amount of milk in each bottle.
+
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Output the value of $P$ modulo $10^9+7$.
+
+SAMPLE INPUT:
+5 4
+4 2
+4 10 8 10 10
+SAMPLE OUTPUT: 
+546
+
+On the first day, Farmer John could add milk to the second, third,
+fourth, and fifth bottles. Then, Farmer Nhoj could remove milk from the
+second and fourth bottles. 
+
+Thus, the new amount of milk in each bottle is
+$$[4, 10, 8, 10, 10] \to [4, 11, 9, 11, 11] \to [4, 10, 9, 10, 11].$$
+After four days, the amount of milk in each bottle could be
+$$[4, 10, 8, 10, 10] \to [4, 10, 9, 10, 11] \to [4, 10, 10, 11, 11] \to [4, 11, 11, 11, 11] \to [4, 11, 11, 12, 12].$$
+The total amount of moonies Farmer John would make in this situation is $4^2+11^2+11^2+12^2+12^2 = 546$. It can be shown that this is the value
+of $P$.
+
+SAMPLE INPUT:
+10 5
+5 1
+1 2 3 4 5 6 7 8 9 10
+SAMPLE OUTPUT: 
+777
+
+SAMPLE INPUT:
+5 1000000000
+3 1
+0 1 2 3 4
+SAMPLE OUTPUT: 
+10
+
+Make sure you output $P$ modulo $10^9+7$.
+
+SCORING:
+Inputs 4-6: $N,D\le 1000$. Inputs 7-10: $D\le 10^6$. Inputs 11-20: No additional constraints. 
+
+
+Problem credits: Suhas Nagar
+
+
+
+\section*{Input Format}
+The second line of the input contains $A$ and $B$ representing the number of
+units of milk that Farmer John fills and Farmer Nhoj steals respectively.The third line of the input contains $N$ space-separated integers $m_i$
+representing the initial amount of milk in each bottle.
+
+The third line of the input contains $N$ space-separated integers $m_i$
+representing the initial amount of milk in each bottle.
+
+OUTPUT FORMAT (print output to the terminal / stdout):Output the value of $P$ modulo $10^9+7$.SAMPLE INPUT:5 4
+4 2
+4 10 8 10 10SAMPLE OUTPUT:546On the first day, Farmer John could add milk to the second, third,
+fourth, and fifth bottles. Then, Farmer Nhoj could remove milk from the
+second and fourth bottles.Thus, the new amount of milk in each bottle is$$[4, 10, 8, 10, 10] \to [4, 11, 9, 11, 11] \to [4, 10, 9, 10, 11].$$After four days, the amount of milk in each bottle could be$$[4, 10, 8, 10, 10] \to [4, 10, 9, 10, 11] \to [4, 10, 10, 11, 11] \to [4, 11, 11, 11, 11] \to [4, 11, 11, 12, 12].$$The total amount of moonies Farmer John would make in this situation is $4^2+11^2+11^2+12^2+12^2 = 546$. It can be shown that this is the value
+of $P$.SAMPLE INPUT:10 5
+5 1
+1 2 3 4 5 6 7 8 9 10SAMPLE OUTPUT:777SAMPLE INPUT:5 1000000000
+3 1
+0 1 2 3 4SAMPLE OUTPUT:10Make sure you output $P$ modulo $10^9+7$.SCORING:Inputs 4-6: $N,D\le 1000$.Inputs 7-10: $D\le 10^6$.Inputs 11-20: No additional constraints.Problem credits: Suhas Nagar
+
+\section*{Output Format}
+SAMPLE INPUT:5 4
+4 2
+4 10 8 10 10SAMPLE OUTPUT:546On the first day, Farmer John could add milk to the second, third,
+fourth, and fifth bottles. Then, Farmer Nhoj could remove milk from the
+second and fourth bottles.Thus, the new amount of milk in each bottle is$$[4, 10, 8, 10, 10] \to [4, 11, 9, 11, 11] \to [4, 10, 9, 10, 11].$$After four days, the amount of milk in each bottle could be$$[4, 10, 8, 10, 10] \to [4, 10, 9, 10, 11] \to [4, 10, 10, 11, 11] \to [4, 11, 11, 11, 11] \to [4, 11, 11, 12, 12].$$The total amount of moonies Farmer John would make in this situation is $4^2+11^2+11^2+12^2+12^2 = 546$. It can be shown that this is the value
+of $P$.SAMPLE INPUT:10 5
+5 1
+1 2 3 4 5 6 7 8 9 10SAMPLE OUTPUT:777SAMPLE INPUT:5 1000000000
+3 1
+0 1 2 3 4SAMPLE OUTPUT:10Make sure you output $P$ modulo $10^9+7$.SCORING:Inputs 4-6: $N,D\le 1000$.Inputs 7-10: $D\le 10^6$.Inputs 11-20: No additional constraints.Problem credits: Suhas Nagar
+
+\section*{Sample Input}
+\begin{verbatim}
+5 4
+4 2
+4 10 8 10 10
+
+10 5
+5 1
+1 2 3 4 5 6 7 8 9 10
+
+5 1000000000
+3 1
+0 1 2 3 4
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+546
+
+On the first day, Farmer John could add milk to the second, third,
+fourth, and fifth bottles. Then, Farmer Nhoj could remove milk from the
+second and fourth bottles.Thus, the new amount of milk in each bottle is$$[4, 10, 8, 10, 10] \to [4, 11, 9, 11, 11] \to [4, 10, 9, 10, 11].$$After four days, the amount of milk in each bottle could be$$[4, 10, 8, 10, 10] \to [4, 10, 9, 10, 11] \to [4, 10, 10, 11, 11] \to [4, 11, 11, 11, 11] \to [4, 11, 11, 12, 12].$$The total amount of moonies Farmer John would make in this situation is $4^2+11^2+11^2+12^2+12^2 = 546$. It can be shown that this is the value
+of $P$.SAMPLE INPUT:10 5
+5 1
+1 2 3 4 5 6 7 8 9 10SAMPLE OUTPUT:777SAMPLE INPUT:5 1000000000
+3 1
+0 1 2 3 4SAMPLE OUTPUT:10Make sure you output $P$ modulo $10^9+7$.SCORING:Inputs 4-6: $N,D\le 1000$.Inputs 7-10: $D\le 10^6$.Inputs 11-20: No additional constraints.Problem credits: Suhas Nagar
+
+Thus, the new amount of milk in each bottle is$$[4, 10, 8, 10, 10] \to [4, 11, 9, 11, 11] \to [4, 10, 9, 10, 11].$$After four days, the amount of milk in each bottle could be$$[4, 10, 8, 10, 10] \to [4, 10, 9, 10, 11] \to [4, 10, 10, 11, 11] \to [4, 11, 11, 11, 11] \to [4, 11, 11, 12, 12].$$The total amount of moonies Farmer John would make in this situation is $4^2+11^2+11^2+12^2+12^2 = 546$. It can be shown that this is the value
+of $P$.SAMPLE INPUT:10 5
+5 1
+1 2 3 4 5 6 7 8 9 10SAMPLE OUTPUT:777SAMPLE INPUT:5 1000000000
+3 1
+0 1 2 3 4SAMPLE OUTPUT:10Make sure you output $P$ modulo $10^9+7$.SCORING:Inputs 4-6: $N,D\le 1000$.Inputs 7-10: $D\le 10^6$.Inputs 11-20: No additional constraints.Problem credits: Suhas Nagar
+
+After four days, the amount of milk in each bottle could be$$[4, 10, 8, 10, 10] \to [4, 10, 9, 10, 11] \to [4, 10, 10, 11, 11] \to [4, 11, 11, 11, 11] \to [4, 11, 11, 12, 12].$$The total amount of moonies Farmer John would make in this situation is $4^2+11^2+11^2+12^2+12^2 = 546$. It can be shown that this is the value
+of $P$.SAMPLE INPUT:10 5
+5 1
+1 2 3 4 5 6 7 8 9 10SAMPLE OUTPUT:777SAMPLE INPUT:5 1000000000
+3 1
+0 1 2 3 4SAMPLE OUTPUT:10Make sure you output $P$ modulo $10^9+7$.SCORING:Inputs 4-6: $N,D\le 1000$.Inputs 7-10: $D\le 10^6$.Inputs 11-20: No additional constraints.Problem credits: Suhas Nagar
+
+The total amount of moonies Farmer John would make in this situation is $4^2+11^2+11^2+12^2+12^2 = 546$. It can be shown that this is the value
+of $P$.SAMPLE INPUT:10 5
+5 1
+1 2 3 4 5 6 7 8 9 10SAMPLE OUTPUT:777SAMPLE INPUT:5 1000000000
+3 1
+0 1 2 3 4SAMPLE OUTPUT:10Make sure you output $P$ modulo $10^9+7$.SCORING:Inputs 4-6: $N,D\le 1000$.Inputs 7-10: $D\le 10^6$.Inputs 11-20: No additional constraints.Problem credits: Suhas Nagar
+
+SAMPLE INPUT:10 5
+5 1
+1 2 3 4 5 6 7 8 9 10SAMPLE OUTPUT:777SAMPLE INPUT:5 1000000000
+3 1
+0 1 2 3 4SAMPLE OUTPUT:10Make sure you output $P$ modulo $10^9+7$.SCORING:Inputs 4-6: $N,D\le 1000$.Inputs 7-10: $D\le 10^6$.Inputs 11-20: No additional constraints.Problem credits: Suhas Nagar
+
+777
+
+SAMPLE INPUT:5 1000000000
+3 1
+0 1 2 3 4SAMPLE OUTPUT:10Make sure you output $P$ modulo $10^9+7$.SCORING:Inputs 4-6: $N,D\le 1000$.Inputs 7-10: $D\le 10^6$.Inputs 11-20: No additional constraints.Problem credits: Suhas Nagar
+
+10
+
+Make sure you output $P$ modulo $10^9+7$.SCORING:Inputs 4-6: $N,D\le 1000$.Inputs 7-10: $D\le 10^6$.Inputs 11-20: No additional constraints.Problem credits: Suhas Nagar
+
+SCORING:Inputs 4-6: $N,D\le 1000$.Inputs 7-10: $D\le 10^6$.Inputs 11-20: No additional constraints.Problem credits: Suhas Nagar
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1523
+
+\section*{Source}
+USACO OPEN25 Contest, Gold Division, Problem ID: 1523
+
+\end{document}

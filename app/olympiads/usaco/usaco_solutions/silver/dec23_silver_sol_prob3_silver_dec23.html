@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Suhas Nagar)
+<p><strong>Subtask 1: <span class='math'>$T,C \leq 1000$</span></strong>
+<p>We can first attempt a brute force solution. Given a sequence, we can determine
+the number of  targets that are hit by simulating Bessie&apos;s position and keeping
+track of hit targets in an array. We can attempt to exhaustively change every
+character of the sequence to another,  simulate the number of targets hit, and
+then take the maximum across all sequences. This gives us a solution of <span class='math'>$O(TC)$</span>
+for the first subtask. 
+<p>Benjamin Qi&apos;s Python solution:
+<pre class='prettyprint'>
+T, C = map(int, input().split())
+targets = list(map(int, input().split()))
+ 
+def test(cand):
+     avail = [0] * (2*C+1)
+     for t in targets:
+          avail[t+C] = 1
+     ans = 0
+     cur = C
+     for c in cand:
+          if c == &apos;L&apos;:
+               cur -= 1
+	  elif c == &apos;R&apos;:
+	       cur += 1
+	  else:
+	       ans += avail[cur]
+	       avail[cur] = 0
+     return ans
+
+commands = input()
+max_ans = 0
+for i in range(len(commands)):
+     for c in &quot;LFR&quot;:
+          max_ans = max(max_ans, test(commands[:i] + c + commands[i+1:]))
+ 
+print(max_ans)
+</pre>
+<strong>Full Credit:</strong>
+<p>To improve our runtime, we make a few observations. Firstly, since we can only
+change a  single character, Bessie&apos;s position cannot change by more than 2 from
+where she originally  was (ie changing an L to an R). From here, we can consider
+an alternate solution where we  calculate which targets are hit for all suffixes
+for displacements of <span class='math'>$-2, -1, 0, 1$</span>, and <span class='math'>$2$</span>  from Bessie&apos;s original position.
+If we know this information, we can iterate from left to  right, try changing
+every character of the sequence, determine the displacement this causes for the
+suffix, and use our precomputation to determine the total amount of hit targets.
+If we naively  calculate the number of targets hit for every suffix, we are
+duplicating work  since suffixes share many common elements. However, this leads
+us to the optimal solution.
+<p>Let <span class='math'>$pref[i]$</span> be the targets hit with the first <span class='math'>$i$</span> characters of the string.
+Let <span class='math'>$suff[i][k]$</span>  be the targets hit with the last <span class='math'>$i$</span> characters of the string
+at a displacement of <span class='math'>$k$</span>. We can precompute all <span class='math'>$pref[i]$</span> using our simulation
+solution from before on the unchanged sequence. Now, we can iterate through our
+sequence in reverse order. Assuming no overlap between the  prefix and suffix
+arrays, we can compute the number of targets we hit by changing the <span class='math'>$i$</span>-th 
+character as <span class='math'>$pref[i-1]+suff[i+1][k]+hit[i]$</span> where <span class='math'>$k$</span> is the displacement of
+changing the  current character and <span class='math'>$hit[i]$</span> is <span class='math'>$1$</span> if we change the current
+character to <span class='math'>$F$</span> and there is an unhit target at our current position. Once we
+process the current character, we can update our  suffix target count to include
+the current position under each displacement. This gives us a  solution in
+<span class='math'>$O(T+C)$</span> to compute the number of targets when we change each character of the 
+sequence.
+<p>There is one caveat however. We want our suffix targets to not double count
+targets that have  already been hit in the prefix. If we want to add a target to
+our  suffix count but it has been hit in the prefix already, we can add it to a
+buffer and only move it into our suffix array when we remove that target from
+the prefix array.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+ 
+public class TargetPractice {
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        int nloc = sc.nextInt();
+        int ncommands = sc.nextInt();
+        boolean[] locations = new boolean[2*ncommands+5];
+        for (int i = 0; i &lt; nloc; i++){
+            locations[sc.nextInt()+ncommands] = true;
+        }
+        String command = sc.next();
+        HashMap&lt;Integer, Integer&gt; currentHit = new HashMap&lt;&gt;();
+        HashMap&lt;Integer,Integer&gt; whenHit = new HashMap&lt;&gt;();
+        int cur_pos = ncommands;
+        for (int i = 0; i &lt; ncommands; i++){
+            if (command.charAt(i) == &apos;F&apos;){
+                if (locations[cur_pos] &amp;&amp; !currentHit.containsKey(cur_pos)){
+                    currentHit.put(cur_pos, i);
+                    whenHit.put(i,cur_pos);
+                }
+            }
+            cur_pos += (command.charAt(i) == &apos;L&apos;) ? -1 : 0;
+            cur_pos += (command.charAt(i) == &apos;R&apos;) ? 1 : 0;
+        }
+        int max = currentHit.size();
+        HashSet[] rightSide = new HashSet[5];
+        for (int i = 0; i &lt; 5; i++) rightSide[i] = new HashSet&lt;Integer&gt;();
+        HashSet[] toBeAdded = new HashSet[5];
+        for (int i = 0; i &lt; 5; i++) toBeAdded[i] = new HashSet&lt;Integer&gt;();
+        for (int i = ncommands-1; i &gt;= 0; i--){
+            if (whenHit.containsKey(i)){
+                currentHit.remove(whenHit.get(i));
+                whenHit.remove(i);
+                for (int j = 0; j &lt; 5; j++){
+                    if (toBeAdded[j].contains(cur_pos)){
+                        rightSide[j].add(cur_pos);
+                        toBeAdded[j].remove(cur_pos);
+                    }
+                }
+            }
+            cur_pos += (command.charAt(i) == &apos;L&apos;) ? 1 : 0;
+            cur_pos += (command.charAt(i) == &apos;R&apos;) ? -1 : 0;
+            switch (command.charAt(i)){
+                case &apos;L&apos;:
+                    // try F and add all displacement 1
+                    int addL = locations[cur_pos] &amp;&amp; !currentHit.containsKey(cur_pos) &amp;&amp; !rightSide[3].contains(cur_pos)? 1 : 0;
+                    max = Math.max(max, whenHit.size()+addL+rightSide[3].size());
+                    // try changing to R
+                    max = Math.max(max, whenHit.size()+rightSide[4].size());
+                    break;
+                case &apos;R&apos;:
+                    // try F and add all displacement 1
+                    int addR = locations[cur_pos] &amp;&amp; !currentHit.containsKey(cur_pos) &amp;&amp; !rightSide[1].contains(cur_pos) ? 1 : 0;
+                    max = Math.max(max, whenHit.size()+addR+rightSide[1].size());
+                    // try changing to L
+                    max = Math.max(max, whenHit.size()+rightSide[0].size());
+                     break;
+                case &apos;F&apos;:
+                    // Try changing to L
+                    max = Math.max(max, whenHit.size()+rightSide[1].size());
+                    // Try changing to R
+                    max = Math.max(max, whenHit.size()+rightSide[3].size());
+                    break;
+            }
+            if (command.charAt(i) == &apos;F&apos;) {
+                for (int j = cur_pos - 2; j &lt;= cur_pos + 2; j++) {
+                    if (j &lt; 0 || j &gt;= locations.length) continue;
+                    if (locations[j]){
+                        if (currentHit.containsKey(j)) {
+                            toBeAdded[j - cur_pos + 2].add(j);
+                        }else{
+                            rightSide[j-cur_pos+2].add(j);
+                        }
+                    }
+                }
+            }
+ 
+        }
+        System.out.println(max);
+ 
+    }
+ 
+}
+</pre>
+<p></body></html>

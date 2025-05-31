@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>If we sort the diamonds by size and pick the sizes of the two smallest diamonds that will appear
+in each case, we can use binary search to figure out, in <span class='math'>$O(\log N)$</span> time,
+the size of each case. However, there are too many diamonds for us to brute force try all possible pairs.
+<p>There exists an optimal arrangement of diamonds such that all the diamonds in one case are strictly
+smaller than all the diamonds in the other case. This can be seen by taking an optimal arrangement
+which may not satisfy this constraint, taking the smallest diamond and putting all diamonds that can
+be presented with it on one case, and putting all the other diamonds in the other case.
+<p>Imagine that we know beforehand what the maximum number of diamonds we can stick in a case given that
+all the diamonds have size at least K, as well as the maximum number of diamonds we can stick in a case
+given that all the diamonds have size at most K. We can then loop over all possible values of K.
+<p>To actually compute the desired values, we can precompute for each diamond size how many diamonds we can
+have in a case with a given minimally/maximally-sized diamond. We can then loop over all of these
+precomputed values and save the maximum number of diamonds given that all diamonds are at least or at
+most a given size. 
+<p>Here is my Java solution.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class diamondS {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;diamond.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;diamond.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int k = Integer.parseInt(st.nextToken());
+		int[] list = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			list[i] = Integer.parseInt(br.readLine());
+		}
+		Arrays.sort(list);
+		// leftmostIndex[i] stores the index of the smallest diamond that can be included given that
+		// the largest diamond in the case has size list[i].
+		int[] leftmostIndex = getLeftmost(list, k);
+		// leftSize[i] stores the maximum number of diamonds given that all diamonds have size at most list[i].
+		int[] leftSize = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			leftSize[i] = i - leftmostIndex[i] + 1;
+			if(i &gt; 0) {
+				leftSize[i] = Math.max(leftSize[i], leftSize[i-1]);
+			}
+		}
+		// rightmostIndex[i] stores the index of the smallest diamond that can be included given that
+		// the smallest diamond in the case has size list[i].
+		int[] rightmostIndex = getRightmost(list, k);
+		// leftSize[i] stores the maximum number of diamonds given that all diamonds have size at least list[i].
+		int[] rightSize = new int[n];
+		for(int i = n-1; i &gt;= 0; i--) {
+			rightSize[i] = rightmostIndex[i] - i + 1;
+			if(i &lt; n-1) {
+				rightSize[i] = Math.max(rightSize[i], rightSize[i+1]);
+			}
+		}
+		int ret = 0;
+		for(int i = 0; i &lt; n-1; i++) {
+			ret = Math.max(ret, leftSize[i] + rightSize[i+1]);
+		}
+		pw.println(ret);
+		pw.close();
+	}
+	
+	public static int[] getRightmost(int[] list, int k) {
+		int[] ret = new int[list.length];
+		int j = list.length-1;
+		for(int i = list.length-1; i &gt;= 0; i--) {
+			while(j &gt;= 0 &amp;&amp; list[j] - list[i] &gt; k) {
+				j--;
+			}
+			ret[i] = j;
+		}
+		return ret;
+	}
+	
+	public static int[] getLeftmost(int[] list, int k) {
+		int[] ret = new int[list.length];
+		int j = 0;
+		for(int i = 0; i &lt; list.length; i++) {
+			while(j &lt; list.length &amp;&amp; list[i] - list[j] &gt; k) {
+				j++;
+			}
+			ret[i] = j;
+		}
+		return ret;
+	}
+	
+}
+</pre></body></html>

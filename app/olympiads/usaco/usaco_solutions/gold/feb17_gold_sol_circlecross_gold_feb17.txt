@@ -1,0 +1,121 @@
+Solution ID: sol_circlecross_gold_feb17
+Contest: FEB17
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_circlecross_gold_feb17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+For two cows
+
+$A$
+
+and
+
+$B$
+
+, they will form a crossing point if and only if, when
+looping over the elements in the circle, the entry and exit points are seen in
+the order
+
+$ABAB$
+
+or
+
+$BABA$
+
+.
+
+This lets us outline the following
+
+$O(N^2)$
+
+algorithm. Loop over the entry and exit
+points. For a cow of a given breed, we see if we have already seen it or not. If we have not seen it,
+insert it into a set. Otherwise, remove it from the set, and loop over the remaining
+elements in the set. Count how many of them were inserted after the element that was just removed.
+
+To optimize this from
+
+$O(N^2)$
+
+to
+
+$O(N \log N)$
+
+, note that we are trying to compute how many
+numbers were inserted in a specific range of the subarray. We can use a binary indexed tree (BIT)
+to perform this query in
+
+$O(\log N)$
+
+time.
+
+To fully describe the changes to the algorithm, we maintain a BIT that maps indices to
+
+$1$
+
+if there was
+an unmatched insertion at that index and
+
+$0$
+
+otherwise. We loop over the points in order. If we haven't
+seen one before, insert it into the BIT. Otherwise, remove it from the BIT and do a range sum between the
+current index and the index when the number was originally inserted.
+
+Here is Mark Gordon's code.
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#define MAXN (1 << 17)
+
+int BT[MAXN];
+
+/* Logically executes array[x] += v. */
+void bit_add(int x, int v) {
+  for(int i = x | MAXN; i < (MAXN << 1); i += i & -i) {
+    BT[i ^ MAXN] += v;
+  }
+}
+ 
+/* Returns the sum of array[i] for 0 <= i < x */
+int bit_get(int x) {
+  int ret = 0;
+  for(int i = x - 1; x != 0; i &= i - 1) {
+    ret += BT[i];
+    if(!i) break;
+  }
+  return ret;
+}
+
+int main() {
+  int N; cin >> N;
+
+  vector<pair<int, int> > A(N, make_pair(-1, -1));
+  for (int i = 0; i < 2 * N; i++) {
+    int x; cin >> x; x--;
+    if (A[x].first == -1) {
+      A[x].first = i;
+    } else {
+      A[x].second = i;
+    }
+  }
+  sort(A.begin(), A.end());
+
+  int result = 0;
+  for (int i = 0; i < A.size(); i++) {
+    result += bit_get(A[i].second) - bit_get(A[i].first);
+    bit_add(A[i].second, 1);
+  }
+  cout << result << endl;
+
+  return 0;
+}

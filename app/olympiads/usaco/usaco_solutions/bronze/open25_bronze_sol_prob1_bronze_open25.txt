@@ -1,0 +1,702 @@
+Solution ID: sol_prob1_bronze_open25
+Contest: OPEN25
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_open25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+Given the four symbols Bessie and Elsie put out, we need to determine whether
+Bessie can be guaranteed to beat Elsie. This happens when, amongst the two
+symbols Bessie reveals, she can pick one of them to play that will beat
+
+both
+
+of Elsie's chosen symbols.
+
+We can do this in
+
+$\mathcal{O}(1)$
+
+time. Define
+
+$\texttt{beat}[i][j]$
+
+to be
+
+$\texttt{true}$
+
+if symbol
+
+$i$
+
+wins against symbol
+
+$j$
+
+, and false otherwise. If
+Bessie reveals symbols
+
+$a$
+
+and
+
+$b$
+
+, and Elsie reveals symbols
+
+$x$
+
+and
+
+$y$
+
+, then
+Bessie is guaranteed to win if
+
+$a$
+
+beats both
+
+$x$
+
+and
+
+$y$
+
+(i.e.
+
+$\texttt{beat[a][x] and beat[a][y]}$
+
+) or if
+
+$b$
+
+beats both
+
+$x$
+
+and
+
+$y$
+
+(i.e.
+
+$\texttt{beat[b][x] and beat[b][y]}$
+
+).
+
+For subtask 1, we can use brute-force. For every game, loop through every
+combination of symbols Bessie can play, and for each one, check to see if Bessie
+can guarantee a win. This runs in
+
+$\mathcal{O}(N^2M)$
+
+.
+
+N, M = map(int, input().split())
+data = [input() for _ in range(N)]
+beat = [[0] * N for _ in range(N)]
+ 
+for i in range(N):
+    for j in range(i):
+        if data[i][j] != "D":
+            if data[i][j] == "W":
+                beat[i][j] = 1
+            else:
+                beat[j][i] = 1
+ 
+for _ in range(M):
+    x, y = map(lambda x: int(x) - 1, input().split())
+    ans = 0
+    for a in range(N):
+        for b in range(N):
+            ans += (beat[a][x] and beat[a][y]) or (beat[b][x] and beat[b][y])
+    print(ans)
+
+In C++:
+
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N, M;
+    cin >> N >> M;
+
+    vector<string> data(N);
+    for (int i = 0; i < N; i++) {
+        cin >> data[i];
+    }
+
+    vector<vector<int>> beat(N, vector<int>(N, 0));
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < i; j++) {
+            if (data[i][j] != 'D') {
+                if (data[i][j] == 'W') {
+                    beat[i][j] = 1;
+                } else {
+                    beat[j][i] = 1;
+                }
+            }
+        }
+    }
+
+    for (int q = 0; q < M; q++) {
+        int x, y;
+        cin >> x >> y;
+        x--; 
+        y--;
+
+        long long ans = 0;
+        for (int a = 0; a < N; a++) {
+            for (int b = 0; b < N; b++) {
+                if ((beat[a][x] && beat[a][y]) || (beat[b][x] && beat[b][y])) {
+                    ans++;
+                }
+            }
+        }
+        cout << ans << "\n";
+    }
+
+    return 0;
+}
+
+For subtask 2, this is too slow. Since
+
+$N$
+
+and
+
+$M$
+
+are
+
+$3000$
+
+, we can guess that
+the solution's time complexity might be something like
+
+$\mathcal{O}(NM)$
+
+. Let's
+see if we can get rid of one of the for loops.
+
+To achieve our desired complexity of
+
+$\mathcal{O}(NM)$
+
+, we can loop through all
+
+$N$
+
+symbols for every game. Consider a single game between Bessie and Elsie.
+Let's loop through the symbol Bessie reveals in her left hoof,
+
+$a$
+
+. We want to
+answer the following question in
+
+$\mathcal{O}(1)$
+
+: Which symbols
+
+$b$
+
+can Bessie
+reveal in her right foot that will guarantee a win against Elsie?
+
+Let's say Elsie plays symbols
+
+$x$
+
+and
+
+$y$
+
+. There are two cases to consider.
+
+Case 1
+
+: If
+
+$a$
+
+beats both
+
+$x$
+
+and
+
+$y$
+
+, i.e.
+
+$\texttt{beat[a][x] and beat[a][y]}$
+
+, then Bessie can reveal
+
+any
+
+symbol
+
+$b$
+
+in her right hoof and she will guarantee a win against Elsie by playing
+symbol
+
+$a$
+
+. In this case, the answer to our question is
+
+$N$
+
+.
+
+Case 2
+
+: If
+
+$a$
+
+is unable to beat both
+
+$x$
+
+and
+
+$y$
+
+, then Bessie must
+reveal a symbol
+
+$b$
+
+in her right hoof that can beat both
+
+$x$
+
+and
+
+$y$
+
+in order to
+guarantee a win against Elsie. In this case, the answer to our question is the
+number of symbols that beat both
+
+$x$
+
+and
+
+$y$
+
+.
+
+Case 1 can be determined in
+
+$\mathcal{O}(1)$
+
+time, but Case 2 requires
+
+$\mathcal{O}(N)$
+
+time to compute since we have to loop through all
+
+$N$
+
+symbols
+to count the number of symbols that beat both
+
+$x$
+
+and
+
+$y$
+
+. If we have to do this
+for every symbol
+
+$a$
+
+that is unable to beat both
+
+$x$
+
+and
+
+$y$
+
+, doesn't this mean
+our final time complexity is
+
+$\mathcal{O}(N^2M)$
+
+?
+
+As it turns out, we don't have to do this for every symbol
+
+$a$
+
+. Instead, we only
+have to do this once per game, and then we can reuse our computed result for all
+symbols
+
+$a$
+
+. So, for every game, we need to do an
+
+$\mathcal{O}(N)$
+
+precomputation to count the number of symbols that beat both
+
+$x$
+
+and
+
+$y$
+
+, then
+we have to loop through all symbols
+
+$a$
+
+that Bessie can reveal in her left hoof,
+which is
+
+$\mathcal{O}(N)$
+
+. Our final time complexity is therefore
+
+$\mathcal{O}(M \cdot (N + N)) = \mathcal{O}(NM)$
+
+.
+
+N, M = map(int, input().split())
+data = [input() for _ in range(N)]
+beat = [[0] * N for _ in range(N)]
+ 
+for i in range(N):
+    for j in range(i):
+        if data[i][j] != "D":
+            if data[i][j] == "W":
+                beat[i][j] = 1
+            else:
+                beat[j][i] = 1
+ 
+for _ in range(M):
+    x, y = map(lambda x: int(x) - 1, input().split())
+
+    # Number of symbols b that can beat both x and y
+    winning = 0
+    for b in range(N):
+        winning += beat[b][x] and beat[b][y]
+    
+    ans = 0
+    for a in range(N):
+        if beat[a][x] and beat[a][y]:
+            # Case 1: The symbol in Bessie's left hoof beats both symbols x and y
+            # Bessie can play any symbol in her right hoof
+            ans += N
+        else:
+            # Case 2: The symbol in Bessie's left hoof cannot beat both symbols x and y
+            # Bessie must play a symbol that can beat both x and y in her right hoof
+            ans += winning
+
+    print(ans)
+
+In C++:
+
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int N, M;
+    cin >> N >> M;
+    
+    vector<string> data(N);
+    for (int i = 0; i < N; i++) {
+        cin >> data[i];
+    }
+    
+    vector<vector<int>> beat(N, vector<int>(N, 0));
+    
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < i; j++) {
+            if (data[i][j] != 'D') {
+                if (data[i][j] == 'W')
+                    beat[i][j] = 1;
+                else
+                    beat[j][i] = 1;
+            }
+        }
+    }
+    
+    while (M--) {
+        int x, y;
+        cin >> x >> y;
+        x--; 
+        y--;
+        
+        // Number of symbols b that can beat both x and y
+        int winning = 0;
+        for (int b = 0; b < N; b++) {
+            if (beat[b][x] && beat[b][y])
+                winning++;
+        }
+        
+        int ans = 0;
+        for (int a = 0; a < N; a++) {
+            if (beat[a][x] && beat[a][y]) {
+                // Case 1: The symbol in Bessie's left hoof beats both symbols x and y
+                // Bessie can play any symbol in her right hoof
+                ans += N;
+            } else {
+                // Case 2: The symbol in Bessie's left hoof cannot beat both symbols x and y
+                // Bessie must play a symbol that can beat both x and y in her right hoof
+                ans += winning;
+            }
+        }
+        
+        cout << ans << "\n";
+    }
+    
+    return 0;
+}
+
+You can also solve this problem with a bit of math. For every game, let
+
+$w$
+
+be
+the number of "winning" symbols -- i.e. the number of symbols that can beat both
+symbols Elsie reveals,
+
+$x$
+
+and
+
+$y$
+
+. In the code above,
+
+$w = \texttt{winning}$
+
+.
+
+It turns out that the number of pairs of symbols
+
+$(a, b)$
+
+that Bessie can reveal
+to guarantee a win is equal to
+
+$N^2 - (N-w)^2$
+
+. We arrive at this solution via
+complementary counting: We'll count the number of pairs that make it
+
+impossible
+
+to guarantee Bessie a win and subtract that from the total
+number of pairs Bessie can play. The result is the number of pairs Bessie can
+play that
+
+does
+
+guarantee a win.
+
+How many pairs make it impossible to guarantee a win for Bessie? Well, neither
+symbol
+
+$a$
+
+nor
+
+$b$
+
+can be a "winning" symbol, otherwise Bessie could just play
+that to guarantee a win. If there are
+
+$w$
+
+winning symbols and
+
+$N$
+
+symbols total,
+the number of non-winning symbols is
+
+$N - w$
+
+.
+
+$a$
+
+and
+
+$b$
+
+must both be a
+non-winning symbol, so the number of pairs of symbols
+
+$(a, b)$
+
+that make it
+impossible to guarantee a win for Bessie is
+
+$(N-w)^2$
+
+. Finally, the total number
+of pairs Bessie can play is
+
+$N^2$
+
+(since there are
+
+$N$
+
+options for each of the
+left / right hooves), so our final answer is
+
+$N^2 - (N-w)^2$
+
+.
+
+Another way you could have arrived at this formula is to count the number of
+symbols that satisfy Case 1 and Case 2. Case 1, which is when
+
+$a$
+
+beats both
+
+$x$
+
+and
+
+$y$
+
+, is precisely the number of winning symbols. Every symbol is either Case
+1 or Case 2, so if there are
+
+$w$
+
+winning symbols, then there are
+
+$w$
+
+symbols in
+Case 1 and
+
+$N - w$
+
+symbols in Case 2.
+
+For every symbol in Case 1, we add
+
+$N$
+
+to our answer, so we get
+
+$N \cdot w$
+
+in
+total. For every symbol in Case 2, we add
+
+$w$
+
+to our answer, so we get
+
+$(N - w) \cdot w$
+
+in total.
+
+Summing the two, we get
+
+$Nw + (N - w) \cdot w = 2Nw - w^2 = N^2 - N^2 + 2Nw - w^2 = N^2 - (N^2 - 2Nw + w^2) = N^2 - (N - w)^2$
+
+.
+
+N, M = map(int, input().split())
+data = [input() for _ in range(N)]
+beat = [[0] * N for _ in range(N)]
+ 
+for i in range(N):
+    for j in range(i):
+        if data[i][j] != "D":
+            if data[i][j] == "W":
+                beat[i][j] = 1
+            else:
+                beat[j][i] = 1
+ 
+for _ in range(M):
+    x, y = map(lambda x: int(x) - 1, input().split())
+
+    # Number of symbols b that can beat both x and y
+    winning = 0
+    for b in range(N):
+        winning += beat[b][x] and beat[b][y]
+    
+    total_playable_pairs = N ** 2
+    losing_pairs = (N-winning) ** 2
+    
+    print(total_playable_pairs - losing_pairs)
+
+In C++:
+
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+int main() {
+    int N, M;
+    cin >> N >> M;
+    vector<string> data(N);
+    for (int i = 0; i < N; i++) {
+        cin >> data[i];
+    }
+    vector<vector<int>> beat(N, vector<int>(N, 0));
+    
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < i; j++) {
+            if (data[i][j] != 'D') {
+                if (data[i][j] == 'W')
+                    beat[i][j] = 1;
+                else
+                    beat[j][i] = 1;
+            }
+        }
+    }
+    
+    while (M--) {
+        int x, y;
+        cin >> x >> y;
+        x--; 
+        y--;
+        
+        // Number of symbols b that can beat both x and y
+        int winning = 0;
+        for (int b = 0; b < N; b++) {
+            if (beat[b][x] && beat[b][y])
+                winning++;
+        }
+        
+        int total_playable_pairs = N * N;
+        int losing_pairs = (N - winning) * (N - winning);
+        
+        cout << total_playable_pairs - losing_pairs << "\n";
+    }
+    return 0;
+}

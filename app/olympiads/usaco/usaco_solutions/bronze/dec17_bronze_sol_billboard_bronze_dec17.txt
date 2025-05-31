@@ -1,0 +1,196 @@
+Solution ID: sol_billboard_bronze_dec17
+Contest: DEC17
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_billboard_bronze_dec17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we have two rectangles which could potentially be covered by a
+third rectangle, and we wish to figure out the total area within either of those
+rectangles that is outside the area of the third rectangle.
+
+Because the original rectangles are guaranteed not to overlap, we can consider
+the simpler problem of needing to compute the answer inside one rectangle but
+outside another rectangle. If we know how to do this, then we can compute this
+quantity for both rectangles independently and return the sum.
+
+We can compute the area inside one rectangle but outside another by computing the area of the
+first rectangle, and then subtracting away the area of the intersection between
+the two rectangles.
+
+We now need to figure out how to compute the area of the intersection between
+two rectangles. Let the corners of the rectangles be
+
+$(x_1, y_1)$
+
+and
+
+$(x_2, y_2)$
+
+, and
+
+$(x_3, y_3)$
+
+and
+
+$(x_4, y_4)$
+
+. If a point
+
+$(x, y)$
+
+is inside
+both rectangles, then
+
+$x_1 \le x \le x_2$
+
+,
+
+$x_3 \le x \le x_4$
+
+,
+
+$y_1 \le y \le y_2$
+
+, and
+
+$y_3 \le y \le y_4$
+
+. The intersection of those
+rectangles is therefore all points
+
+$x$
+
+where
+
+$\max (x_1, x_3) \le x \le \min (x_2, x_4)$
+
+and
+
+$\max (y_1, y_3) \le y \le \min (y_2, y_4)$
+
+, which is guaranteed to be a
+rectangle if any such points exist.
+
+import java.io.*;
+import java.util.*;
+public class billboard {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader("billboard.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("billboard.out")));
+		
+		// read in the locations of the first billboard
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int x1 = Integer.parseInt(st.nextToken());
+		int y1 = Integer.parseInt(st.nextToken());
+		int x2 = Integer.parseInt(st.nextToken());
+		int y2 = Integer.parseInt(st.nextToken());
+		
+		// read in the locations of the second billboard
+		st = new StringTokenizer(br.readLine());
+		int x3 = Integer.parseInt(st.nextToken());
+		int y3 = Integer.parseInt(st.nextToken());
+		int x4 = Integer.parseInt(st.nextToken());
+		int y4 = Integer.parseInt(st.nextToken());
+		
+		// read in the locations of the truck
+		st = new StringTokenizer(br.readLine());
+		int x5 = Integer.parseInt(st.nextToken());
+		int y5 = Integer.parseInt(st.nextToken());
+		int x6 = Integer.parseInt(st.nextToken());
+		int y6 = Integer.parseInt(st.nextToken());
+		
+		// the visible area is the sum of the visible area of the first billboard and the second billboard
+		int combinedArea = visibleArea(x1, y1, x2, y2, x5, y5, x6, y6) + visibleArea(x3, y3, x4, y4, x5, y5, x6, y6);
+		
+		// print the answer
+		pw.println(combinedArea);
+		pw.close();
+	}
+	
+	/**
+	 * Given the lower-left and upper-right corners of a rectangle, return the area of the rectangle
+	 * @param x1 x-coordinate of lower-left corner
+	 * @param y1 y-coordinate of lower-left corner
+	 * @param x2 x-coordinate of upper-right corner
+	 * @param y2 y-coordinate of upper-right corner
+	 * @return area of the rectangle
+	 */
+	public static int areaOfRectangle(int x1, int y1, int x2, int y2) {
+		return (x2-x1)*(y2-y1);
+	}
+	
+	/**
+	 * Given the corners of two rectangles, return the area inside the first rectangle
+	 * but outside the second
+	 * @param x1 x-coordinate of lower-left corner of first rectangle
+	 * @param y1 y-coordinate of lower-left corner of first rectangle
+	 * @param x2 x-coordinate of upper-right corner of first rectangle
+	 * @param y2 y-coordinate of upper-right corner of first rectangle
+	 * @param x3 x-coordinate of lower-left corner of second rectangle
+	 * @param y3 y-coordinate of upper-right corner of second rectangle
+	 * @param x4 x-coordinate of lower-left corner of second rectangle
+	 * @param y4 y-coordinate of upper-right corner of second rectangle
+	 * @return
+	 */
+	public static int visibleArea(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
+		// start by computing the area that would be visible if there were no second rectangle
+		int visibleArea = areaOfRectangle(x1, y1, x2, y2);
+		
+		// compute the boundaries of the intersection
+		int leftmostBlockedX = Math.max(x1, x3);
+		int rightmostBlockedX = Math.min(x2, x4);
+		int bottommostBlockedY = Math.max(y1, y3);
+		int topmostBlockedY = Math.min(y2, y4);
+		// if the second rectangle does exist, subtract out the area that it blocks
+		if(leftmostBlockedX < rightmostBlockedX && bottommostBlockedY < topmostBlockedY) {
+			visibleArea -= areaOfRectangle(leftmostBlockedX, bottommostBlockedY, rightmostBlockedX, topmostBlockedY);
+		}
+		
+		return visibleArea;
+	}
+	
+}
+
+For those who prefer C++, here is Brian Dean's solution:
+
+#include <iostream>
+#include <fstream>
+using namespace std;
+ 
+struct Rect {
+  int x1, y1, x2, y2;
+};
+ 
+int area(Rect r)
+{
+  return (r.x2 - r.x1) * (r.y2 - r.y1);
+}
+ 
+int intersect_area(Rect p, Rect q)
+{
+  int x_overlap = max(0, min(p.x2, q.x2) - max(p.x1, q.x1));
+  int y_overlap = max(0, min(p.y2, q.y2) - max(p.y1, q.y1));
+  return x_overlap * y_overlap;
+}
+ 
+int main(void)
+{
+  ifstream fin ("billboard.in");
+  ofstream fout ("billboard.out");
+  
+  Rect a, b, t;  // billboards A & B, and the truck
+ 
+  fin >> a.x1 >> a.y1 >> a.x2 >> a.y2;
+  fin >> b.x1 >> b.y1 >> b.x2 >> b.y2;
+  fin >> t.x1 >> t.y1 >> t.x2 >> t.y2;
+ 
+  fout << area(a) + area(b) - intersect_area(a,t) - intersect_area(b,t) << "\n";
+ 
+  return 0;
+}

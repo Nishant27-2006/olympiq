@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Avichal Goel)
+<p>Let&apos;s say the plates have labels <span class='math'>$L_1, L_2, \ldots, L_n$</span>.
+<p>Bessie&apos;s first move is to take the top plate from the dirty stack and make a new soapy stack. If <span class='math'>$L_2 &lt; L_1$</span>, then it makes sense for Bessie to place it on top of the first plate. On the other hand, if <span class='math'>$L_2 &gt; L_1$</span>, then Bessie should instead make a new stack to the right of the first one. (Take a moment to draw it out on paper to convince yourself that this would result in Elsie receiving the plates in the correct order.)
+<p>From here, we can make some generalizations. Specifically, we should place a given <span class='math'>$L_i$</span> on the stack with the smallest <span class='math'>$L_j$</span> such that <span class='math'>$L_j &gt; L_i$</span>, which ensures that all plates on stacks to the left have a smaller label.
+<p><pre>
+|1|
+|2|  |*|  |7|
+|4|  |6|  |9|  |10|  |15|
+</pre>
+<p>For example, if <span class='math'>$L_i = 5$</span>, it should be placed at the location marked by the asterisk in the example above, allowing Elsie to process the plates in the order <span class='math'>$1 \rightarrow 2 \rightarrow 4 \rightarrow 5 \rightarrow 6 \rightarrow 7 \rightarrow 9 \rightarrow 10 \rightarrow 15$</span> as desired.
+<p>So far so good, but there might be a plate with a smaller label that is already on our stack. Consider the following modification of the above example, where we are still trying to place <span class='math'>$L_i = 5$</span>.
+<p><pre>
+     |?|
+|1|  |4|  |7|
+|2|  |6|  |9|  |10|  |15|
+</pre>
+<p>In this case, we cannot simply add <span class='math'>$5$</span> to the stack with <span class='math'>$6$</span>, because it would get picked up by Elsie before <span class='math'>$4$</span>, which we don&apos;t want. In fact, there&apos;s no way to place <span class='math'>$5$</span> in the current configuration while still maintaining the correct order. So, from here, the only way to continue is by letting Elsie clear out <span class='math'>$1, 2, \text{ and } 4$</span>, and then placing <span class='math'>$5$</span> on top of <span class='math'>$6$</span>.
+<p>These observations give us our final algorithm: place each plate on the leftmost stack that would preserve the correct order, but only after removing smaller labels already on that stack. We should keep track of the maximum label that we&apos;ve removed so far because any future plates with smaller labels cannot be processed.
+<p>Check out my code below, which runs in <span class='math'>$\mathcal{O}(n)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int N = 1e5 + 5;
+int n, base[N];
+vector&lt;int&gt; items[N];
+
+int main() {
+
+    cin &gt;&gt; n;
+
+    int placed = 0, ans = n;
+    for (int i = 0; i &lt; n; i++) {
+        int x; cin &gt;&gt; x;
+        // impossible to add this plate
+        if (x &lt; placed) {
+            ans = i;
+            break;
+        }
+        // plates that go on this stack
+        for (int j = x; j &gt; 0 &amp;&amp; !base[j]; j--) {
+            base[j] = x;
+        }
+        // remove plates with smaller labels
+        while (!items[base[x]].empty() &amp;&amp; items[base[x]].back() &lt; x) {
+            placed = items[base[x]].back();
+            items[base[x]].pop_back();
+        }
+        // add this plate to the stack
+        items[base[x]].push_back(x);
+    }
+
+    cout &lt;&lt; ans &lt;&lt; endl;
+
+}
+</pre></body></html>

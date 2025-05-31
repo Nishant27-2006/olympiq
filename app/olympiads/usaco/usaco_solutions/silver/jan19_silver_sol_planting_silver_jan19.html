@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>This problem asks us to color the vertices of a tree with the minimum number of
+colors, such that no two nodes of the same color are adjacent or separated by
+only two edges. So if some node has <span class='math'>$d$</span> neighbors, then all <span class='math'>$d$</span> neighbors of the
+node, as well as the node itself, must receive pairwise distinct colors. Hence,
+if the maximum degree in the tree is <span class='math'>$D$</span>, then we need at least <span class='math'>$D+1$</span> colors.
+<p>It turns out that <span class='math'>$D+1$</span> colors are always sufficient; in fact, we&apos;ll show how to
+construct a valid <span class='math'>$(D+1)$</span>-coloring. Root the tree at an arbitrary vertex, and
+assign it color <span class='math'>$1$</span>. The root has at most <span class='math'>$D$</span> children, so they can be assigned
+distinct colors in <span class='math'>$\{2,\dots,D+1\}$</span>. Now we have at most <span class='math'>$D$</span> child subtrees,
+with the root of each subtree colored. Every node which has not been colored has
+distance <span class='math'>$3$</span> or more from any node in a different subtree, so we can color the
+subtrees independently.
+<p>Pick a child <span class='math'>$c$</span> of the root, and suppose that it has color <span class='math'>$i \neq 1$</span>. There
+are at most <span class='math'>$D-1$</span> children of <span class='math'>$c$</span>, so they can be assigned distinct colors in
+<span class='math'>$\{2,\dots,i-1, i+1, \dots, D+1\}$</span>. Once again, the at most <span class='math'>$D-1$</span> subtrees can
+now be colored independently.
+<p>This process continues until the tree is completely colored. In general, any
+non-root node <span class='math'>$u$</span> has at most <span class='math'>$D-1$</span> children, which can be assigned distinct
+colors in <span class='math'>$\{1,\dots,D+1\}$</span> which avoid the color of <span class='math'>$u$</span>, and the color of <span class='math'>$u$</span>&apos;s
+parent. This ensures that the coloring condition is satisfied: among any two adjacent nodes, one is a child of the other, and the child is assigned a different color from the parent. For any two nodes separated by at most two edges, there are two cases. If the nodes are siblings, then they are assigned distinct colors simultaneously. Otherwise, one node is the grand-child of the other, and so avoids the color of its grandparent.
+<p>Thus, the final algorithm is quite simple: compute the degree of every node,
+find the maximum, and add one. See my code below.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+using namespace std;
+ 
+int N,a,b;
+int d[100000];
+ 
+int main()
+{
+	cin &gt;&gt; N;
+	for(int i=1;i&lt;N;i++)
+	{
+		cin &gt;&gt; a &gt;&gt; b;
+		d[a-1]++, d[b-1]++;
+	}
+	int D = 0;
+	for(int i=0;i&lt;N;i++)
+		if(d[i] &gt; D)
+			D = d[i];
+	cout &lt;&lt; D+1 &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

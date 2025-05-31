@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Jonathan Paulson and Brian Dean)
+<p>We should assume that <span class='math'>$R$</span> is as large as possible so as to minimize the number
+of initial infections required. The largest <span class='math'>$R$</span> could be is one less than the
+smallest gap between a healthy cow and an infected cow (if <span class='math'>$R$</span> were any larger,
+the healthy cow would&apos;ve been infected). Assume this is the true value of <span class='math'>$R$</span>.
+(If there are no healthy cows, assume <span class='math'>$R=\infty$</span>). By considering all pairs of
+cows, we can find <span class='math'>$R$</span> in <span class='math'>$O(N^2)$</span> time.  Alternatively, as in the code below,
+we can mark the locations of all cows and look at all the gaps between adjacent
+cows, with one being health and the other sick (another similar approach would
+involve sorting the cows by position first, then looking at the same gaps).
+<p>Having determined <span class='math'>$R$</span>, we next need to figure out the number of initially sick
+cows.  Any block of sick cows within which neighboring cows are at most <span class='math'>$R$</span> apart
+could have arisen from just a single sick cow.  Hence, we count the number of
+&quot;blocks&quot; of sick cows (contiguous groups of sick cows delineated by a healthy cow)
+and then break up these blocks whenever we find a pair of adjacent sick cows within
+a block at distance <span class='math'>$R$</span> or larger.  This leaves groups of cows that could have each
+been infected from a single initial cow.
+<p>Here is Brian Dean&apos;s solution:
+<pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+ 
+int N, A[1000001]; // 1=healthy, -1=sick, 0=no cow
+ 
+// Returns size of largest gap between a health and a sick cow
+int find_smallest_01_gap(void)
+{
+  int smallest_gap = 2000000, current_start = -1;
+  for (int i=0; i&lt;=1000000; i++) 
+    if (A[i] != 0) {
+      if (current_start!=-1 &amp;&amp; A[current_start]!=A[i] &amp;&amp; i-current_start&lt;smallest_gap) 
+	smallest_gap = i-current_start;
+      current_start = i;
+    }
+  return smallest_gap;
+}
+ 
+// Number of blocks of sick cows, delineated by healthy cows
+int num_sick_clusters(void)
+{
+  int last_state = 0, answer = 0;
+  for (int i=0; i&lt;=1000000; i++) 
+    if (A[i] != 0) {
+      if (A[i] != last_state &amp;&amp; A[i] == 1) answer++;
+      last_state = A[i];
+    }
+  return answer;
+}
+ 
+// Number of gaps of size r or larger within blocks of sick cows
+int num_sick_gaps(int r)
+{
+  int answer = 0, current_start = 0;
+  for (int i=0; i&lt;=1000000; i++) 
+    if (A[i] != 0) {
+      if (current_start!=0 &amp;&amp; A[current_start]==1 &amp;&amp; A[i]==1 &amp;&amp; i-current_start&gt;=r) 
+	answer++;
+      current_start = i;
+    }
+  return answer;
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;socdist2.in&quot;);
+  int x, s;
+  fin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++) {
+    fin &gt;&gt; x &gt;&gt; s;
+    if (s==1) { A[x] = 1; }
+    if (s==0) { A[x] = -1; }
+  }
+  ofstream fout (&quot;socdist2.out&quot;);
+  int r = find_smallest_01_gap();
+  fout &lt;&lt; num_sick_clusters() + num_sick_gaps(r) &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+<p></body></html>

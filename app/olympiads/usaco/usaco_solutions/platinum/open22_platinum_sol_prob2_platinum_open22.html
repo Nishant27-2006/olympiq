@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p><strong>Subtask 1: <span class='math'>$N \leq 100$</span>, <span class='math'>$M \leq 200$</span></strong>
+<p>We can solve this subtask by creating a new graph of pairs of nodes from the old
+graph, where each pair <span class='math'>$(a, b)$</span> represents a game state where one token is on
+<span class='math'>$a$</span> and one token is on <span class='math'>$b$</span>. We can perform a search where we repeatedly remove
+nodes that are winning for the brain.
+<p>In order to do this, we maintain for each pair <span class='math'>$(a, b)$</span> the amount of remaining
+pairs <span class='math'>$(c, b)$</span> such that <span class='math'>$a \to c$</span> is an edge in the original graph, and a
+similar amount of remaining pairs <span class='math'>$(a, c)$</span>. In the process of removing pairs, if
+one of these amounts becomes <span class='math'>$0$</span> for a certain pair <span class='math'>$(a, b)$</span>, then the brain can
+choose that token in order to win, so we remove <span class='math'>$(a, b)$</span> as well, then decrement
+the amounts for the appropriate other pairs by looking at incoming edges to <span class='math'>$a$</span>
+and <span class='math'>$b$</span>.
+<p>At the end of this process, any remaining pairs represent game states from which
+the brain cannot win. We can then answer queries by simply checking whether they
+are a pair that was removed or not.
+<p>The bottleneck in this algorithm is the part after removing a pair when we
+decrement the other appropriate pairs&apos; amounts. Each edge <span class='math'>$a \to c$</span> is
+potentially considered as part of pairs <span class='math'>$(c, b)$</span> and <span class='math'>$(b, c)$</span> for all <span class='math'>$b$</span>,
+making the worst case runtime <span class='math'>$O(N)$</span> per edge and so <span class='math'>$O(NM)$</span> overall. This is
+far under the time limit, so less efficient variants of this solution could also
+have passed.
+<p><strong>Subtask 2: <span class='math'>$N \le 5000$</span></strong>
+<p>First note that if a node with a token on it has no outgoing edges, then the
+brain can win by simply choosing the token on that node to leave the hoof
+without any moves. This means that we can mark the nodes as such and then simply
+remove them from the graph. Furthermore, any nodes that now have no outgoing
+edges also represent a win for the brain, because the brain can repeatedly
+choose the token on those nodes, and eventually the token will reach a node with
+no outgoing edges. Therefore, we can repeatedly remove all nodes with no
+outgoing edges from the graph until all nodes remaining have at least one
+outgoing edge.
+<p>Now, consider a node <span class='math'>$a$</span> with only a single outgoing edge to a different node
+<span class='math'>$b$</span>. Any token on <span class='math'>$a$</span> can clearly be moved to <span class='math'>$b$</span>. This means that we don&apos;t need
+to really consider <span class='math'>$a$</span> as being separate from <span class='math'>$b$</span>; if the brain can force the
+hoof to lose by making it so that both tokens would end up at <span class='math'>$a$</span>, the brain can
+also just force the hoof to lose by making it so that both tokens would end up
+at <span class='math'>$b$</span>, by making each token move once more. Therefore, we can &quot;merge&quot; <span class='math'>$a$</span> into
+<span class='math'>$b$</span>, meaning that <span class='math'>$b$</span> inherits all of <span class='math'>$a$</span>&apos;s incoming edges. Then, just like
+before, some new nodes may now have only one outgoing edge because they
+previously had edges only to <span class='math'>$a$</span> and <span class='math'>$b$</span>, so we can merge those as well. At the
+end of this process, all nodes remaining in the graph will either have at least
+two outgoing edges, or a single edge to themself.
+<p>We now make the critical observation that in a graph where every node has at
+least two outgoing edges, if the tokens start at different nodes, then no matter
+which token the brain picks each time, the hoof always has a valid node to move
+it into that isn&apos;t the location of the other node, and so the hoof always wins.
+This extends to graphs that also have nodes with only a single edge to
+themselves, because the hoof can just move the token across that single edge
+back to the same node, since the other token is at a different node. 
+<p>Therefore, after applying the above two reductions, we can answer a query for
+starting nodes <span class='math'>$a$</span> and <span class='math'>$b$</span> as follows:
+<p>If either <span class='math'>$a$</span> or <span class='math'>$b$</span> was removed from the graph in the first reduction, then the
+brain wins. Otherwise, if <span class='math'>$a$</span> and <span class='math'>$b$</span> became the same node after the merging
+process in the second reduction, the brain still wins. Otherwise, the hoof wins.
+<p>The two above reductions can be done fairly straightforwardly in
+<span class='math'>$\mathcal O(N^2)$</span> by maintaining a set of incoming edges and a set of outgoing
+edges for each node, then using DFS or BFS. Each query is answered in constant
+time, for an overall runtime of <span class='math'>$\mathcal O(N^2 + Q)$</span>.
+<p><strong>Subtask 3: No additional constraints</strong>
+<p>The first reduction should actually already run in linear time if you use sets
+as suggested above. To improve the runtime of the second reduction, we can use
+small to large merging and union find. When we merge <span class='math'>$a$</span> into <span class='math'>$b$</span>, instead of
+simply adding all of <span class='math'>$a$</span>&apos;s incoming edges to <span class='math'>$b$</span>&apos;s, we add whichever set is
+smaller to whichever set is larger. This means that each edge is added to a set
+at most <span class='math'>$\lg N$</span> times. We then use union find to keep track of which node each
+node has been merged into. Whenever we find a node <span class='math'>$a$</span> to merge into a node <span class='math'>$b$</span>,
+we need to make sure to instead merge the union find root of <span class='math'>$a$</span> into the union
+find root of <span class='math'>$b$</span>.
+<p>As each edge is merged at most <span class='math'>$\lg N$</span> times, the overall runtime becomes
+<span class='math'>$\mathcal O(M\lg N + Q)$</span>.
+<p>Java code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Stack;
+import java.util.StringTokenizer;
+ 
+public class HoofAndBrain {
+    static int[] union;
+ 
+    static int find(int u) {
+        if (union[u] != union[union[u]]) {
+            union[u] = find(union[u]);
+        }
+        return union[u];
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        Set&lt;Integer&gt;[] adj = new Set[n + 1];
+        Set&lt;Integer&gt;[] rev = new Set[n + 1];
+        union = new int[n + 1];
+        for (int a = 1; a &lt;= n; a++) {
+            adj[a] = new HashSet&lt;&gt;();
+            rev[a] = new HashSet&lt;&gt;();
+            union[a] = a;
+        }
+        for (; m &gt; 0; m--) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            adj[a].add(b);
+            rev[b].add(a);
+        }
+        Stack&lt;Integer&gt; stack = new Stack&lt;&gt;();
+        for (int a = 1; a &lt;= n; a++) {
+            if (adj[a].isEmpty()) {
+                stack.push(a);
+            }
+        }
+        while (!stack.isEmpty()) {
+            int a = stack.pop();
+            union[a] = 0;
+            for (int b : rev[a]) {
+                adj[b].remove(a);
+                if (adj[b].isEmpty()) {
+                    stack.push(b);
+                }
+            }
+        }
+        for (int a = 1; a &lt;= n; a++) {
+            if (adj[a].size() == 1) {
+                stack.push(a);
+            }
+        }
+        while (!stack.isEmpty()) {
+            int a = stack.pop();
+            int c = 0;
+            for (int b : adj[a]) {
+                c = b;
+            }
+            a = find(a);
+            c = find(c);
+            if (a != c) {
+                if (rev[a].size() &gt; rev[c].size()) {
+                    int temp = a;
+                    a = c;
+                    c = temp;
+                }
+                for (int b : rev[a]) {
+                    adj[b].remove(a);
+                    adj[b].add(c);
+                    if (adj[b].size() == 1) {
+                        rev[c].remove(b);
+                        stack.push(b);
+                    } else {
+                        rev[c].add(b);
+                    }
+                }
+                union[a] = c;
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q &gt; 0; q--) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            int u = find(a);
+            int v = find(b);
+            if (u == 0 || v == 0 || u == v) {
+                out.append(&apos;B&apos;);
+            } else {
+                out.append(&apos;H&apos;);
+            }
+        }
+        System.out.println(out);
+ 
+    }
+}
+</pre>
+<p>Exercise: Solve the problem where the hoof wins by not having a valid move, and
+the brain wins by the game continuing indefinitely.
+<p></body></html>

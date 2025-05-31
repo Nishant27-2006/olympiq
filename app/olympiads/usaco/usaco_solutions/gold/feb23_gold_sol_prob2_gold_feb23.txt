@@ -1,0 +1,450 @@
+Solution ID: sol_prob2_gold_feb23
+Contest: FEB23
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_feb23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Rohin Garg)
+
+Subtask 1:
+
+$T = 0$
+
+First, root the tree at node
+
+$1$
+
+. It is first important to observe that the
+order of visited pastures is similar to one of a DFS starting at node
+
+$1$
+
+. This
+is because a DFS order minimizes the total amount of time to visit all pastures.
+The length a path traversed by a DFS is exactly
+
+$2(n-1)$
+
+, as it crosses each
+edge exactly twice. Because each edge must be crossed at least twice to visit
+the nodes in its subtree, this is a lower bound on the amount of time necessary,
+proving its optimality.
+
+With this observation, what remains is to determine the order that Farmer John
+visits the children of each node. Note that once this order is determined for
+every node, the DFS order (and therefore the order that the pastures are
+visited) is uniquely determined.
+
+Define
+
+$dp_u$
+
+as the minimum amount of fertilizer necessary to fertilize all
+pastures in the subtree of
+
+$u$
+
+, such that the path starts at node
+
+$u$
+
+at time
+
+$t = 0$
+
+, and also ends at node
+
+$u$
+
+. Let
+
+$\text{size}_u$
+
+be the size of the
+subtree of node
+
+$u$
+
+, and
+
+$\text{sum}_u$
+
+be the sum of
+
+$a_x$
+
+over all nodes
+
+$x$
+
+in the subtree of
+
+$u$
+
+.
+
+If Farmer John visits the subtree of child
+
+$v$
+
+at time
+
+$t$
+
+, it takes
+
+$dp_v + \text{sum}_v \cdot t$
+
+fertilizer. This is because, during the first
+
+$t$
+
+seconds, the value of each pasture
+
+$x$
+
+in the subtree of
+
+$v$
+
+increased by
+
+$a_v$
+
+.
+With this in mind, consider a fixed order of the children of node
+
+$u$
+
+, call it
+
+$v_1, v_2, \ldots v_k$
+
+. The contribution of node
+
+$v_i$
+
+to
+
+$dp_u$
+
+in a particular
+order is
+
+$dp_{v_i} + \text{sum}_{v_i} \cdot \left(1 + \sum\limits_{j = 0}^{i-1} 2 \cdot \text{size}_{v_j}\right)$
+
+.
+This directly follows from the previous observations, as the amount of time it
+takes to visit the subtree of child
+
+$v$
+
+is
+
+$2 \cdot (\text{size}_v - 1) + 2 = 2 \cdot \text{size}_v $
+
+(the extra
+
+$2$
+
+comes
+from the time it takes to cross the edge
+
+$(u, v)$
+
+), with the
+
+$1$
+
+coming from
+crossing the edge
+
+$(u, v_i)$
+
+. Therefore, we need to minimize the sum of this
+quantity over all permutations of
+
+$v_1, v_2, \ldots v_k$
+
+.
+
+Note that the sum of
+
+$dp_{v_i}$
+
+is constant, regardless of the order of the
+children, as is the sum of
+
+$\text{sum}_{v_i} \cdot 1$
+
+. After moving the
+
+$2$
+
+out
+of the summation, what remains is to minimize
+
+$\text{sum}_{v_i} \cdot \sum\limits_{j = 0}^{i-1} \text{size}_{v_j}$
+
+. Consider
+the case where there are two children:
+
+$v_1$
+
+and
+
+$v_2$
+
+. If
+
+$v_1$
+
+is placed
+before
+
+$v_2$
+
+, the value of the expression is
+
+$\text{sum}_{v_1} \cdot 0 + \text{sum}_{v_2} \cdot \text{size}_{v_1} = \text{sum}_{v_2} \cdot \text{size}_{v_1}$
+
+.
+Similarly, if
+
+$v_2$
+
+is placed before
+
+$v_1$
+
+, the value of the expression is
+
+$\text{sum}_{v_1} \cdot \text{size}_{v_2}$
+
+. Placing
+
+$v_1$
+
+before
+
+$v_2$
+
+is
+therefore optimal if
+
+$\text{sum}_{v_2} \cdot \text{size}_{v_1} \leq \text{sum}_{v_1} \cdot \text{size}_{v_2}$
+
+,
+or equivalently
+
+$\frac{\text{size}_{v_1}}{\text{sum}_{v_1}} \leq \frac{\text{size}_{v_2}}{\text{sum}_{v_2}}$
+
+.
+To complete the solution, we must make use of an
+
+exchange
+argument.
+
+Consider an optimal ordering of the children. Consider some
+adjacent pair of children
+
+$v_1$
+
+and
+
+$v_2$
+
+. Using a similar argument as above, we
+can show that if
+
+$\frac{\text{size}_{v_1}}{\text{sum}_{v_1}} \geq \frac{\text{size}_{v_2}}{\text{sum}_{v_2}}$
+
+,
+we can swap the order of children and the cost would improve or stay the same. Therefore,
+an optimal solution must be sorted in non-decreasing order of
+
+$\frac{\text{size}_{v_i}}{\text{sum}_{v_i}}$
+
+, completing the solution.
+
+Subtask 2:
+
+$T = 1$
+
+The first key difference in this problem is that the minimum amount of time to
+visit the pastures is no longer always
+
+$2(n-1)$
+
+. Recall that earlier, Farmer
+John had to pass through each edge at least
+
+$2$
+
+times. However, let the last
+node that Farmer John visits be
+
+$v$
+
+. Farmer John only has to pass through the
+edges on the path from
+
+$1$
+
+to
+
+$v$
+
+exactly once. The number of these edges is
+exactly the depth of
+
+$v$
+
+in the tree. Therefore, the amount of time it will take
+him is
+
+$2(n-1) - \text{depth}_v$
+
+, so he must maximize the depth of the final
+node in his path.
+
+For each subtree, calculate a second dp value
+
+$pd_u$
+
+, defined similarly to the
+initial dp with the extra restriction that it must end on a node with maximum
+depth in the subtree. The answer to the problem is
+
+$pd_1$
+
+.
+
+To calculate
+
+$pd_u$
+
+, iterate over the child
+
+$v$
+
+that is put last in the order
+(making sure to only check nodes with maximum depth in their subtree). Note
+that, from the same argument as earlier, the ordering for the rest of the nodes
+can be determined. Let's compute the difference between
+
+$dp_u$
+
+and the cost of
+moving node
+
+$v$
+
+to the end of the order. The contribution of
+
+$v$
+
+to the sum
+becomes
+
+$pd_v + \text{sum}_v \cdot \sum\limits_{i = 0}^{\text{number of children}-1} 2 \cdot \text{size}_{v_i}$
+
+,
+which can be computed in constant time. The values of the children who initially
+appeared before node
+
+$v$
+
+in the order remain the same, and the values of the
+children who appeared after node
+
+$v$
+
+decrease by
+
+$2 \cdot \text{sum}_i \cdot \text{size}_v$
+
+. This value can be computed with a
+simple suffix sum, allowing us to calculate the value in constant time, allowing
+us to calculate
+
+$pd$
+
+in linear time, solving the problem.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+
+public class FertilizingPastures {
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int t = Integer.parseInt(tokenizer.nextToken());
+        int[] parents = new int[n + 1];
+        List<Integer>[] children = new List[n + 1];
+        children[1] = new ArrayList<>();
+        long[] subtrees = new long[n + 1];
+        long[] rateSums = new long[n + 1];
+        for (int a = 2; a <= n; a++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            parents[a] = Integer.parseInt(tokenizer.nextToken());
+            children[parents[a]].add(a);
+            rateSums[a] = Long.parseLong(tokenizer.nextToken());
+            children[a] = new ArrayList<>();
+        }
+
+        long[][] dp = new long[2][n + 1];
+        int[] mostEdgesSaved = new int[n + 1];
+
+        for (int a = n; a > 0; a--) {
+            subtrees[a] = 1;
+
+            for (int b : children[a]) {
+                subtrees[a] += subtrees[b];
+                rateSums[a] += rateSums[b];
+                dp[0][a] += dp[0][b];
+                mostEdgesSaved[a] = Math.max(mostEdgesSaved[a], mostEdgesSaved[b] + 1);
+            }
+
+            children[a].sort((b, c) -> Long.compare(rateSums[b] * subtrees[c], rateSums[c] * subtrees[b]));
+
+            long currRateSum = 0;
+            for (int b : children[a]) {
+                dp[0][a] += (2L * subtrees[b]) * currRateSum;
+                currRateSum += rateSums[b];
+            }
+            dp[0][a] += currRateSum;
+
+            if (!children[a].isEmpty()) {
+                dp[1][a] = Long.MAX_VALUE;
+
+                currRateSum = 0;
+                long currEdgesTravelled = 0;
+                for (int b : children[a]) {
+                    if (mostEdgesSaved[b] + 1 == mostEdgesSaved[a]) {
+                        dp[1][a] = Math.min(dp[1][a], dp[0][a] - ((2L * subtrees[b]) * currRateSum) + (currEdgesTravelled * rateSums[b]) - dp[0][b] + dp[1][b]);
+                    }
+                    currRateSum += rateSums[b];
+                    currEdgesTravelled += 2L * subtrees[b];
+                }
+            }
+        }
+
+        if (t == 0) {
+            System.out.println((2 * (n - 1)) + " " + dp[0][1]);
+        } else {
+            System.out.println(((2 * (n - 1)) - mostEdgesSaved[1]) + " " + dp[1][1]);
+        }
+    }
+}

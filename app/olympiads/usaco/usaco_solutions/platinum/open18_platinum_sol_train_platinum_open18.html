@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>In this problem, we are asked to find all sliding-window minima in an array, for
+some fixed-length window. We are given two passes through the array. The catch
+is that we are given only <span class='math'>$O(\sqrt{N})$</span> memory.
+<p>Let <span class='math'>$f(i)$</span> be the location of the smallest element in the range <span class='math'>$[i, i+K)$</span>,
+breaking ties by smallest index. Observe that <span class='math'>$f(i) \leq f(i+1)$</span> for each <span class='math'>$i$</span>.
+So if we compute <span class='math'>$f(0), f(B), f(2B), \dots, f(N)$</span> for some block size <span class='math'>$B$</span> in the
+first pass, this gives us some information which we may be able to use in the
+second pass to compute the remaining <span class='math'>$f(i)$</span>s.
+<p>Let&apos;s ignore the constraint on calls to set/get for now. If we let
+<span class='math'>$B = \sqrt{N}$</span>, then we can compute <span class='math'>$f(0), f(\sqrt{N}), \dots, f(N)$</span> in our
+first pass using only <span class='math'>$O(\sqrt{N})$</span> memory and <span class='math'>$O(N\sqrt{N})$</span> time. Now, in the
+second pass, observe that for any fixed array element <span class='math'>$i$</span>, there are only
+<span class='math'>$O(\sqrt{N})$</span> windows for which the minimum could possibly be at position <span class='math'>$i$</span>.
+<p>This suggests the following algorithm for the second pass: read and ignore all
+elements with index less than <span class='math'>$f(0)$</span>. Now maintain running minima for
+<span class='math'>$f(0), f(1), f(2), \dots, f(\sqrt{N})$</span>. Once we&apos;ve read in the element with
+index <span class='math'>$f(\sqrt{N})$</span>, we know that we have computed the correct minima for the
+first <span class='math'>$\sqrt{N}$</span> windows. Output these, start maintaining minima for the next
+<span class='math'>$\sqrt{N}$</span> windows, and continue in the same fashion.
+<p>The memory usage of the second pass is also <span class='math'>$\sqrt{N}$</span>, as desired.
+Unfortunately, the time complexity of each pass is <span class='math'>$O(N \sqrt{N})$</span>. In
+particular, the above algorithm would use <span class='math'>$O(N \sqrt{N})$</span> calls to set and get,
+which would exceed the given bound. To improve the time complexity, we can use a
+monotonic queue in each pass. In the first pass, for instance, the boundaries of
+the <span class='math'>$\sqrt{N}$</span> windows define <span class='math'>$2\sqrt{N}$</span> subarrays, and for each subarray we
+can simply compute the minimum of the subarray and put that into the monotonic
+queue. The length of the monotonic queue therefore never exceeds <span class='math'>$O(\sqrt{N})$</span>,
+and we can compute the <span class='math'>$\sqrt{N}$</span> minima-locations in <span class='math'>$O(N)$</span> time. For the
+second pass, it suffices to observe that in each segment of the array (say,
+between <span class='math'>$f(i\sqrt{N})$</span> and <span class='math'>$f((i+1)\sqrt{N})$</span>) all but <span class='math'>$O(\sqrt{N})$</span> of the
+array elements are in all <span class='math'>$\sqrt{N}$</span> windows of interest. This once again allows
+us to improve the pass to <span class='math'>$O(N)$</span> time will not exceeding <span class='math'>$O(\sqrt{N})$</span> memory. 
+<p>Below is an implementation of the above algorithm.
+<p><pre class='prettyprint'>
+#include &quot;grader.h&quot;
+#define BLOCK 1000
+#define DIF 4050
+
+// VARIABLE - LOCATION IN BESSIE&apos;S NOTEBOOK
+// back index - 0
+// top index - 1
+// queue (2,3) (4,5) ...
+//       (index, value)
+// current block&apos;s endpoint index (divided by BLOCK) - DIF-1
+// current block&apos;s global low - DIF-2
+// number of minima output - DIF-3
+
+void helpBessie(int v)
+{
+	int N = getTrainLength();
+	int K = getWindowLength();
+	int i = getCurrentCarIndex();
+	int p = getCurrentPassIndex();
+	if(p==0)
+	{
+		if(i==0)
+		{
+			set(0,0);
+			set(1,-1);
+		}
+		int top = get(1);
+		int back = get(0);
+		if(i%BLOCK == 0 || (i&gt;=K &amp;&amp; (i-K)%BLOCK == 0))  // reached boundary of some window
+		{						// need to make new entry in monotonic queue
+			while(top &gt;= back &amp;&amp; get(2*top+3) &gt;= v)
+				top--;
+			top++;
+			set(2*top+2,i);
+			set(2*top+3,v);
+		}
+		else	//still part of same subarray; just update the top entry of monotonic queue
+		{
+			int curTopValue = get(2*top+3);
+			if(v &lt;= curTopValue)
+			{
+				top--;
+				while(top &gt;= back &amp;&amp; get(2*top+3) &gt;= v)
+					top--;
+				top++;
+				set(2*top+2,i);
+				set(2*top+3,v);
+			}
+		}
+		if(i &gt;= K-1 &amp;&amp; (i+1-K)%BLOCK == 0)	// at endpoint of some window; need to store location of minimum
+		{
+			while(top &gt;= back &amp;&amp; get(2*back+2) &lt;= i-K)	// pop from back end up queue until queue contains only
+				back++;					// elements in desired window
+			set(DIF + (i+1-K)/BLOCK, get(2*back+2));	// store location of minimum
+		}
+		set(0,back);
+		set(1,top);
+	}
+	else
+	{
+		if(i &lt; get(DIF))
+			return;
+		if(i == get(DIF))
+		{
+			set(0,0);
+			set(1,-1);
+			set(DIF-1, 1);
+			set(DIF-2,1000000000);
+			set(DIF-3, 0);
+		}
+		int bc = get(DIF-1);
+		int top = get(1);
+		int back = get(0);
+		int outputs = get(DIF-3);
+		if(i - get(DIF+bc-1) &lt;= BLOCK)  // element may not be contained in all relevant windows
+		{				// so add to monotonic queue
+			while(top &gt;= back &amp;&amp; get(2*top+3) &gt;= v)
+				top--;
+			top++;
+			set(2*top+2,i);
+			set(2*top+3,v);
+		}
+		else 	// element is contained in all relevant windows
+		{	// so we can update a global minimum
+			int globalLow = get(DIF-2);
+			if(v &lt; globalLow)
+				set(DIF-2,v);
+		}
+		if(outputs + K - 1 == i)	//need to output a minimum
+		{
+			while(top &gt;= back &amp;&amp; get(2*back+2) &lt; outputs)
+				back++;
+			shoutMinimum(min(get(DIF-2),get(2*back+3)));
+			outputs++;
+		}
+		while(BLOCK*bc + K-1 &lt; N &amp;&amp; get(DIF+bc) == i) // reached boundary of current subarray
+		{
+			while(outputs &lt;= BLOCK*bc) // output minimums for all remaining windows in current block
+			{
+				while(top &gt;= back &amp;&amp; get(2*back+2) &lt; outputs)
+					back++;
+				shoutMinimum(min(get(DIF-2),get(2*back+3)));
+				outputs++;
+			}
+			bc++;
+			set(DIF-2,1000000000);
+			top = back = 0;
+			set(2*top+2,i);
+			set(2*top+3,v);
+		}
+		set(DIF-3,outputs);
+		set(DIF-1,bc);
+		set(1,top);
+		set(0,back);
+	}
+}
+</pre>
+<p></body></html>

@@ -1,0 +1,221 @@
+Solution ID: sol_prob2_gold_open21
+Contest: OPEN21
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_open21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Consider a new undirected multigraph
+
+$G$
+
+with
+
+$2N$
+
+vertices such that
+
+Every portal in the original graph corresponds to a vertex in
+
+$G$
+
+.
+
+Every vertex
+
+$v$
+
+in the original graph corresponds to edges
+
+$p_{v,0}\leftrightarrow p_{v,1}$
+
+and
+
+$p_{v,2}\leftrightarrow p_{v,3}$
+
+in
+
+$G$
+
+.
+
+Every vertex in
+
+$G$
+
+has degree exactly two, so
+
+$G$
+
+is a  union of disjoint
+cycles. The goal is to join all vertices in
+
+$G$
+
+into a single cycle.
+
+Suppose that portals
+
+$p_{v,0}$
+
+and
+
+$p_{v,1}$
+
+are not contained within the same
+cycle as
+
+$p_{v,2}$
+
+and
+
+$p_{v,3}$
+
+in
+
+$G$
+
+. Then if we permute the portals adjacent
+to vertex
+
+$v$
+
+so that the adjacency list is now
+
+$p_{v,0},p_{v,2},p_{v,1},p_{v,3}$
+
+,  this will combine all of
+
+$p_{v,0},p_{v,1},p_{v,2},$
+
+and
+
+$p_{v,3}$
+
+into a single cycle. In other words,
+every vertex has the potential to unite two cycles.
+
+If we replace all occurrences of "cycle" above with "connected component," then
+it's clear that we're looking for a
+
+minimum
+spanning tree
+
+.
+
+Specifically, the answer is the cost of the minimum spanning tree of
+
+$G'$
+
+, where
+
+$G'$
+
+has the same vertex set as
+
+$G$
+
+and the following edges and costs:
+
+For each
+
+$v$
+
+, edges
+
+$p_{v,0}\leftrightarrow p_{v,1}$
+
+and
+
+$p_{v,2}\leftrightarrow p_{v,3}$
+
+have cost
+
+$0$
+
+.
+
+For each
+
+$v$
+
+, edge
+
+$p_{v,0}\leftrightarrow p_{v,2}$
+
+has cost
+
+$c_v$
+
+.
+
+The minimum spanning tree can be found using Kruskal's algorithm.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.StringTokenizer;
+ 
+public class Portals {
+    static int[] union;
+ 
+    static int find(int u) {
+        if (union[union[u]] != union[u]) {
+            union[u] = find(union[u]);
+        }
+        return union[u];
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        union = new int[(2 * n) + 1];
+        for (int p = 1; p <= 2 * n; p++) {
+            union[p] = p;
+        }
+        List<Edge> edges = new ArrayList<>();
+        for (int a = 1; a <= n; a++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int cost = Integer.parseInt(tokenizer.nextToken());
+            int[] portals = new int[4];
+            for (int j = 0; j < 4; j++) {
+                portals[j] = Integer.parseInt(tokenizer.nextToken());
+            }
+            edges.add(new Edge(portals[0], portals[1], 0));
+            edges.add(new Edge(portals[2], portals[3], 0));
+            edges.add(new Edge(portals[3], portals[0], cost));
+        }
+        edges.sort(Comparator.comparingInt(edge -> edge.cost));
+        int answer = 0;
+        for (Edge edge : edges) {
+            int u = find(edge.a);
+            int v = find(edge.b);
+            if (u != v) {
+                answer += edge.cost;
+                union[u] = v;
+            }
+        }
+        System.out.println(answer);
+    }
+ 
+    static class Edge {
+        final int a;
+        final int b;
+        final int cost;
+ 
+        Edge(int a, int b, int cost) {
+            this.a = a;
+            this.b = b;
+            this.cost = cost;
+        }
+    }
+}

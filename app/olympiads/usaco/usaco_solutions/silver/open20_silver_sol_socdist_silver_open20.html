@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Sort the intervals from left to right and binary search on the separating
+distance <span class='math'>$D$</span>.  For a fixed <span class='math'>$D$</span> we want to check whether we can place at least
+<span class='math'>$N$</span> cows. This can be done with a greedy strategy; just place each cow at the
+leftmost position possible. Once the number of cows placed reaches <span class='math'>$N$</span> we can
+break, so a single <span class='math'>$D$</span> can be  checked in <span class='math'>$O(N+M)$</span> time. Thus, the entire
+solution runs in  <span class='math'>$O((N+M)\log (\text{max dist}))$</span> time.
+<p>Mark Chen&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+ 
+using namespace std;
+ 
+typedef long long LL;
+ 
+#define INF 2000000000
+#define FF first
+#define SS second
+
+int n, m;
+ 
+vector&lt;pair&lt;LL,LL&gt;&gt; intervals;
+ 
+bool ok(LL d) {
+    LL prev = -1LL * INF * INF;
+    
+    int cnt = 0;
+    for (auto&amp; i : intervals) {
+        while (max(prev + d, i.FF) &lt;= i.SS) {
+            prev = max(prev + d, i.FF);
+            cnt++;
+            if (cnt &gt;= n) break;
+        }
+        if (cnt &gt;= n) break;
+    }
+ 
+    return (cnt &gt;= n);
+}
+ 
+int main() {
+    freopen(&quot;socdist.in&quot;,&quot;r&quot;,stdin);
+    freopen(&quot;socdist.out&quot;,&quot;w&quot;,stdout);
+    cin &gt;&gt; n &gt;&gt; m;
+
+    intervals.resize(m);
+    for (int i = 0; i &lt; m; ++i) 
+        cin &gt;&gt; intervals[i].FF &gt;&gt; intervals[i].SS;
+ 
+    sort(intervals.begin(), intervals.end());
+ 
+    LL lo = 1;
+    LL hi = 1LL * INF * INF;
+    LL res = -1;
+ 
+    while (lo &lt;= hi) {
+        LL mid = (lo + hi) / 2;
+ 
+        if (ok(mid)) {
+            res = mid;
+            lo = mid + 1;
+        }
+        else {
+            hi = mid - 1;
+        }
+    }
+ 
+    cout &lt;&lt; res &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+</body></html>

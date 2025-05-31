@@ -1,0 +1,104 @@
+Solution ID: sol_sleepy_bronze_jan19
+Contest: JAN19
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_sleepy_bronze_jan19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+Suppose that
+
+$k$
+
+instructions suffice. Then only the first
+
+$k$
+
+cows actively
+change positions. This means that the last
+
+$n-k$
+
+cows are already sorted in
+increasing order, with respect to each other.
+
+Conversely, suppose that the last
+
+$n-k$
+
+cows are sorted in increasing order. Is
+there a sequence of
+
+$k$
+
+instructions after which all
+
+$n$
+
+cows are sorted? The
+answer is yes: if
+
+$k = 0$
+
+, then the cows are completely sorted already. If
+
+$k > 0$
+
+, then the first cow can be inserted among the last
+
+$n-k$
+
+cows, such that
+now the last
+
+$n+1-k$
+
+cows are in increasing order. After repeating this
+
+$k-1$
+
+more times, the last
+
+$n$
+
+cows are in increasing order, by the same argument. Of
+course, there are only
+
+$n$
+
+cows, so after only
+
+$k$
+
+instructions, the cows are
+sorted!
+
+We've reduced the problem to computing the longest sorted suffix. This can be
+done in linear time by sweeping from the end of the array towards the front, so
+long as each element is smaller than its successor.
+
+#include <iostream>
+using namespace std;
+ 
+int N;
+int A[100000];
+ 
+int main()
+{
+	cin >> N;
+	for(int i=0;i<N;i++)
+		cin >> A[i];
+	int ans = N-1;
+	for(int i=N-2;i>=0;i--)
+	{
+		if(A[i] < A[i+1])
+			ans = i;
+		else
+			break;
+	}
+	cout << ans << '\n';
+	return 0;
+}

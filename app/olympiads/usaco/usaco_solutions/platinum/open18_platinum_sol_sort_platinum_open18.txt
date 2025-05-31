@@ -1,0 +1,156 @@
+Solution ID: sol_sort_platinum_open18
+Contest: OPEN18
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_sort_platinum_open18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+In this problem, we are asked to analyze the "complexity" of the following
+sorting algorithm: run bubblesort passes on an array until there are partition
+points, and then recurse on the subarrays defined by these partition points.
+
+The complexity of a single bubblesort pass is defined as the length of the
+subarray on which the bubblesort pass is run. So each element of the subarray on
+which the pass is run contributes one unit of complexity. This suggests that we
+find the number of units of complexity contributed by each element, and add
+everything up.
+
+When a bubblesort pass is run on several consecutive subarrays which have
+already been separated by a partition point, this is equivalent (in outcome and
+in complexity) to running a single bubblesort pass on all of the subarrays. The
+only issue is that if a subarray has size
+
+$1$
+
+, it subsequently does not
+contribute any complexity. So we can replace the recursive quicksort algorithm
+with the following algorithm: bubblesort the entire array until sorted. An
+element contributes one unit of complexity in each pass until it is partitioned
+from its neighbors on both sides.
+
+Now, for each element we need to find the number of passes until it is
+partitioned from its neighbors on both sides. If we can calculate for each of
+the
+
+$N-1$
+
+partition points, the number of bubblesort passes after which the
+array is partitioned at that partition point, then the count for a specific
+element is the maximum of the counts of its neighboring partition points.
+
+Fix some partition point, say between elements
+
+$i-1$
+
+and
+
+$i$
+
+. For this to
+partition the array, the smallest
+
+$i$
+
+elements must be located in the first
+
+$i$
+
+slots of the array. Let
+
+$j$
+
+be the initially maximum index of any of the
+smallest
+
+$i$
+
+elements. Then it's not hard to see that the number of bubblesort
+passes required before the array is partitioned between
+
+$i-1$
+
+and
+
+$i$
+
+is exactly
+
+$j+1-i$
+
+: in each pass, the maximum index will decrease by exactly
+
+$1$
+
+.
+
+After sorting the array (and breaking ties by index), we can compute the maximum
+index of any of the smallest
+
+$i$
+
+elements for each
+
+$i$
+
+, in a single pass.
+
+When computing the complexity contributed by each element as the maximum of the
+counts of its neighboring partition points, slight care must be taken to address
+the case where an element is already partitioned from its neighbors, before any
+bubblesort passes have taken place. Since the algorithm uses a do-while loop,
+the element will nonetheless contribute one unit of complexity in the first
+pass (unless the array consists of a single element).
+
+Therefore the overall runtime is
+
+$O(N \log N)$
+
+due to sorting.
+
+#include <iostream>
+#include <algorithm>
+using namespace std;
+ 
+int N;
+int A[100000];
+int cid[100000];
+int preq[100000];
+ 
+bool cmp(int a,int b)
+{
+	if(A[a]==A[b]) return a<b;
+	return A[a]<A[b];
+}
+ 
+int main()
+{
+	cin >> N;
+	for(int i=0;i<N;i++)
+	{
+		cin >> A[i];
+		cid[i] = i;
+	}
+	sort(cid,cid+N,cmp);
+	int mx = 0;
+	int high = 0;
+	for(int i=1;i<N;i++)
+	{
+		mx = max(mx, cid[i-1]);
+		preq[i] = mx + 1 - i;
+		high = max(high, preq[i]);
+	}
+	long long ans = 0;
+	for(int i=0;i<N;i++)
+	{
+		int tDone = 0;
+		if(i > 0) tDone = max(tDone, preq[i]);
+		if(i < N-1) tDone = max(tDone, preq[i+1]);
+		if(tDone == 0 && N > 1) tDone++;
+		ans += tDone;
+	}
+	cout << ans << '\n';
+}

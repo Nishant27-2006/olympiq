@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>To understand how many swaps are needed to balance the number of inversions in
+each subarray, we first need to understand how a swap changes the number of
+inversions in each subarray. In particular, we&apos;re interested in the quantity
+<span class='math'>$\Delta = \text{# inversions in first half} - \text{# inversions in second half}$</span>.
+<p>Call a swap between the <span class='math'>$n$</span>-th and <span class='math'>$(n+1)$</span>-st elements of the array a &quot;central&quot;
+swap. Any non-central swap either increases or decreases <span class='math'>$\Delta$</span> by <span class='math'>$1$</span>.
+Furthermore, a central swap of the form <span class='math'>$1,0 \to 0,1$</span> increases <span class='math'>$\Delta$</span> by a
+fixed amount: <span class='math'>$\text{# ones in array} - n$</span>. And a central swap of the form
+<span class='math'>$0,1 \to 1,0$</span> decreases <span class='math'>$\Delta$</span> by the same amount.
+<p>Suppose that we use no central swaps. Then we need to perform at least
+<span class='math'>$|\Delta|$</span> swaps. It turns out that this is sufficient: in the subarray with
+more inversions, we can always perform swaps to decrease the number of
+inversions.
+<p>Notice that any sequence of swaps can be interpreted as moving around the <span class='math'>$1$</span>s
+in the array. Any optimal sequence never swaps two <span class='math'>$1$</span>s, and the path traced out
+by each <span class='math'>$1$</span> is monotonic. So if the sequence increases the number of <span class='math'>$1$</span>s in the
+first half by <span class='math'>$t$</span> (some integer, possibly negative), then it&apos;s optimal to
+perform <span class='math'>$|t|$</span> central swaps (all of them moving <span class='math'>$1$</span>s in the same direction).
+<p>So let&apos;s try <span class='math'>$t = 0, 1, 2, \dots$</span> in order (the cases <span class='math'>$t&lt;0$</span> are similar). As <span class='math'>$t$</span>
+increases, we push more and more <span class='math'>$1$</span>s from the first half of the subarray to the
+second half. Each push has three components: 
+<p>1) non-central swaps in the first half, to move the <span class='math'>$1$</span> to position <span class='math'>$n$</span> 
+<p>2) non-central swaps in the second half, to make sure that there&apos;s a <span class='math'>$0$</span> at
+position <span class='math'>$n+1$</span>
+<p>3) a single central swap moving the <span class='math'>$1$</span> from position <span class='math'>$n$</span> to the now-empty
+position <span class='math'>$n+1$</span>
+<p>Note that for a fixed <span class='math'>$t$</span>, these swaps are all necessary: we moved each <span class='math'>$1$</span> as
+little as possible while still having <span class='math'>$t$</span> central swaps.
+<p>We need to track <span class='math'>$\Delta$</span> through each push. We use a two-pointers approach: one
+pointer in the first half of the array, pointing to the rightmost <span class='math'>$1$</span>. And one
+pointer in the second half of the array, pointing to the leftmost <span class='math'>$0$</span>. These
+pointers allow us to easily compute the number of non-central swaps forced by
+the push, and thus the change in <span class='math'>$\Delta$</span>. As we&apos;ve shown above, the effect of
+the central swap is also straightforward.
+<p>Finally, suppose we know the value of <span class='math'>$\Delta$</span> after <span class='math'>$t$</span> central swaps (and the
+associated pushes). Then as in the <span class='math'>$t = 0$</span> case, we need <span class='math'>$|\Delta|$</span> more
+non-central swaps to balance the number of inversions (this is in addition to
+the &quot;forced&quot; swaps). As <span class='math'>$t$</span> increases, we simply track the best number of swaps
+found so far.
+<p>Since each pointer is monotonic, the overall time complexity is <span class='math'>$O(n)$</span>.
+<p>This solution implements the above idea. It handles the <span class='math'>$t &lt; 0$</span> cases by
+viewing the sequence of swaps as moving the <span class='math'>$0$</span>s rather than moving the <span class='math'>$1$</span>s. This allows the above <span class='math'>$t \geq 0$</span> logic to be reused.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MAXN 100000
+ 
+int N;
+int A[2*MAXN];
+long long best;
+int ones;
+ 
+long long llabs(long long x)
+{
+	if(x&lt;0) return -x;
+	return x;
+}
+ 
+long long countInversions(int a,int b)
+{
+	long long t = 0;
+	int n1 = 0;
+	for(int i=a;i&lt;=b;i++)
+	{
+		if(A[i]==1) n1++;
+		else t += n1;
+	}
+	return t;
+}
+ 
+int tp, sgn;
+ 
+void solve()
+{
+	long long inv0 = countInversions(0,N-1);
+	long long inv1 = countInversions(N,2*N-1);
+	long long dif = inv0 - inv1;
+	best = min(best, llabs(dif));
+	int n1 = 0;
+	int j = N;
+	int displaced = 0;
+	long long cost = 0;
+	for(int i=N-1;i&gt;=0;i--) if(A[i]==tp)
+	{
+		dif -= sgn*(N-1-i), cost += N-1-i;
+		dif += sgn*(ones - N), cost++;
+		dif += sgn*n1, cost += n1;
+		dif += sgn*displaced, cost += displaced;
+		n1++;
+		if(n1 + displaced &gt; N) return;
+		while(n1 + displaced &gt; j-N)
+		{
+			if(A[j]==1-tp) j++;
+			else if(j==2*N-1) return;
+			else
+			{
+				dif += sgn*(N + n1 + displaced - j), cost += N + n1 + displaced - j;
+				displaced++;
+				j++;
+			}
+		}
+		best = min(best, cost+llabs(dif));
+	}
+}
+ 
+int main()
+{
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;2*N;i++)
+	{
+		cin &gt;&gt; A[i];
+		ones += A[i];
+	}
+	best = MAXN*((long long)MAXN);
+	tp = 1, sgn = 1;
+	solve();
+	tp = 0, sgn = -1;
+	solve();
+	cout &lt;&lt; best &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

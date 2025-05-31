@@ -1,0 +1,96 @@
+Solution ID: sol_geteven_bronze
+Contest: OPEN15
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_geteven_bronze.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In a pure brute-force solution, we would try every possible combination of
+assignments of variables to values. There are 7 variables, with at most 20
+values per variable, for a total of
+
+$20^7$
+
+combinations. This is over one
+billion combinations to check, which is too many to check.
+
+One approach you can try is to count the number of ways you can force the
+expression to be odd. When checking if a combination is odd, you can immediately
+note a couple things - for example, M must be odd. Also, if you recursively
+assign values to variables and you see that one of the three terms in the
+product is even, you can stop all combinations for variables that you haven't
+yet inspected.
+
+There is a much faster approach though that removes the dependency on checking
+different combinations. Since you want to check if the product is even or odd,
+the important thing to know for each variable is how many even values that
+variable can take on, and how many odd values that variable can take on. Once
+you've done that, you can assign to each variable a parity and see if with those
+parities, the product is even. If so, you can count how many combinations there
+are with those parities, and then sum the parities.
+
+With this approach, there are only
+
+$2^7=128$
+
+combinations of parities to check,
+which is guaranteed to work quickly enough.
+
+Here is Mark Gordon's code:
+
+#include <iostream>
+#include <cstdio>
+
+using namespace std;
+
+int num[256][2];
+
+bool is_even(int x) {
+  return x % 2 == 0;
+}
+
+int main() {
+  freopen("geteven.in", "r", stdin);
+  freopen("geteven.out", "w", stdout);
+
+  int N;
+  cin >> N;
+
+  for (int i = 0; i < N; i++) {
+    char letter;
+    int val;
+    cin >> letter >> val;
+
+    if (is_even(val)) {
+      num[letter][0]++;
+    } else {
+      num[letter][1]++;
+    }
+  }
+
+  int result = 0;
+
+  /* Try every possible way that the variables could be even or odd. */
+  for(int B = 0; B < 2; B++)
+  for(int E = 0; E < 2; E++)
+  for(int S = 0; S < 2; S++)
+  for(int I = 0; I < 2; I++)
+  for(int G = 0; G < 2; G++)
+  for(int O = 0; O < 2; O++)
+  for(int M = 0; M < 2; M++) {
+    if (is_even((B + E + S + S + I + E) * (G + O + E + S) * (M + O + O))) {
+      /* If the expression is even then add the number of variable assignments
+       * that have the variables odd/even.
+       */
+      result += num['B'][B] * num['E'][E] * num['S'][S] * num['I'][I] *
+                num['G'][G] * num['O'][O] * num['M'][M];
+    }
+  }
+  cout << result << endl;
+
+  return 0;
+}

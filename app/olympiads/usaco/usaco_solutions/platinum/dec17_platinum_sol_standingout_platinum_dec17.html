@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nathan Pinsker)
+<p>This problem steers us towards doing a large number of string comparisons of
+substrings within a larger string. As a result, it&apos;s a good candidate for using
+a data structure called a <a href="https://www.geeksforgeeks.org/suffix-array-set-1-introduction/">suffix
+array</a>, which is simply an alphabetically-sorted array of all suffixes in the
+string. Although we have multiple strings, we can concatenate them together into
+one large string consisting of all <span class='math'>$N$</span> strings concatenated together with a
+special separator character (such as &quot;?&quot;) between each one, so that we can
+compare suffixes across the <span class='math'>$N$</span> strings that we&apos;re given.
+<p>Now that we have our sorted suffixes, we can efficiently compare them to one
+another. To solve this problem, we need to accomplish two things. First, for
+each suffix <span class='math'>$S$</span>, we must compute the longest prefix of <span class='math'>$S$</span> that is shared by
+another suffix from a different original name, because that prefix doesn&apos;t
+contribute to the uniqueness factor. Second, we must count the number of strings
+in <span class='math'>$S$</span> that *do* contribute to the uniqueness factor, but without
+double-counting any strings that occur twice in the same name.
+<p>Since our suffixes are alphabetically sorted, consider the suffixes to the
+direct left and the direct right of <span class='math'>$S$</span>. One of these suffixes must be the
+suffix (or one such suffix, at least) in <span class='math'>$S$</span> that has the longest possible
+common prefix with <span class='math'>$S$</span>, because of the way we&apos;ve constructed the suffix array.
+Similarly, consider the closest suffixes to <span class='math'>$S$</span>&apos;s left and right which don&apos;t
+originate from the same name as <span class='math'>$S$</span>. Again, over the set of suffixes that aren&apos;t
+from <span class='math'>$S$</span>&apos;s original name, one of these two strings must have the longest
+possible common prefix with <span class='math'>$S$</span>.
+<p>This insight allows us to solve the problem. We iterate over each suffix <span class='math'>$S$</span> in
+the array, from left to right. Meanwhile, we keep track of suffixes <span class='math'>$L$</span> and <span class='math'>$R$</span>,
+the closest suffixes to <span class='math'>$S$</span>&apos;s left and right that don&apos;t originate from the same
+name as <span class='math'>$S$</span>. We compute the largest of the longest common prefix between <span class='math'>$S$</span> and
+<span class='math'>$L$</span>, <span class='math'>$S$</span> and <span class='math'>$R$</span>, and, if <span class='math'>$S$</span>&apos;s immediate left neighbor is from the same string,
+<span class='math'>$S$</span> and that neighbor (to handle the double-counting problem mentioned above).
+Finally, we compute the difference between the length of <span class='math'>$S$</span> and this number.
+Collating all these results and bucketing them by the original names will give
+us the uniqueness factor for every cow.
+<p>This iterative procedure can be done in <span class='math'>$O(1)$</span> per suffix, for a total of
+<span class='math'>$O(|N|)$</span>, although a bit of care is required to keep track of <span class='math'>$L$</span> and <span class='math'>$R$</span>. The
+runtime is instead dominated by the construction of the suffix array, which is
+<span class='math'>$O(|N| \lg |N|)$</span> at best. Since <span class='math'>$|N| \leq 10^5$</span>, this is easily fast enough for
+full credit.
+<p>Here is Mark&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;cstring&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+ 
+using namespace std;
+ 
+struct suffix_array {
+suffix_array(const char* S) : N(strlen(S)) {
+  vector&lt;int&gt; V;
+  for(int i = 0; i &lt; N; i++) V.push_back(S[i]);
+  init(V);
+}
+ 
+suffix_array(const vector&lt;int&gt;&amp; VV) : N(VV.size()) {
+  vector&lt;int&gt; V(VV);
+  init(V);
+}
+ 
+int N;
+vector&lt;int&gt; SA;
+vector&lt;int&gt; RA;
+ 
+void compress(vector&lt;int&gt;&amp; V, vector&lt;int&gt;&amp; C) {
+  copy(V.begin(), V.end(), C.begin());
+  sort(C.begin(), C.end());
+  auto cend = unique(C.begin(), C.end());
+  for(int i = 0; i &lt; N; i++) {
+    V[i] = lower_bound(C.begin(), cend, V[i]) - C.begin() + 1;
+  }
+  V.push_back(0); C.push_back(0);
+}
+ 
+void compute_sa(vector&lt;int&gt;&amp; V, vector&lt;int&gt;&amp; C) {
+  vector&lt;int&gt; T(N + 1);
+  for(int i = 0; i &lt;= N; i++) SA.push_back(i);
+  for(int ski = 0; V[SA[N]] &lt; N; ski = ski ? ski &lt;&lt; 1 : 1) {
+    fill(C.begin(), C.end(), 0);
+    for(int i = 0; i &lt; ski; i++) T[i] = N - i;
+    for(int i = 0, p = ski; i &lt;= N; i++) if(SA[i] &gt;= ski) T[p++] = SA[i] - ski;
+    for(int i = 0; i &lt;= N; i++) C[V[i]]++;
+    for(int i = 1; i &lt;= N; i++) C[i] += C[i - 1];
+    for(int i = N; i &gt;= 0; i--) SA[--C[V[T[i]]]] = T[i];
+    
+    T[SA[0]] = 0;
+    for(int j = 1; j &lt;= N; j++) {
+      int a = SA[j];
+      int b = SA[j - 1];
+      T[a] = T[b] + (a + ski &gt;= N || b + ski &gt;= N ||
+                     V[a] != V[b] || V[a + ski] != V[b + ski]);
+    }
+    V.swap(T);
+  }
+}
+ 
+void compute_lcp(const vector&lt;int&gt;&amp; OV) {
+  LCP = vector&lt;int&gt;(N);
+  int len = 0;
+  for(int i = 0; i &lt; N; i++, len = max(0, len - 1)) {
+    int si = RA[i];
+    int j = SA[si - 1];
+    for(; i + len &lt; N &amp;&amp; j + len &lt; N &amp;&amp; OV[i + len] == OV[j + len]; len++);
+    LCP[si - 1] = len;
+  }
+}
+ 
+void init(vector&lt;int&gt;&amp; V) {
+  vector&lt;int&gt; OV(V);
+  vector&lt;int&gt; C(N);
+  compress(V, C);
+  compute_sa(V, C);
+  RA.resize(N + 1);
+  for(int i = 0; i &lt;= N; i++) RA[SA[i]] = i;
+  compute_lcp(OV);
+}
+  
+vector&lt;int&gt; LCP;
+};
+ 
+int main() {
+  ios_base::sync_with_stdio(false);
+ 
+  string S;
+  vector&lt;pair&lt;int, int&gt; &gt; A;
+ 
+  int N; cin &gt;&gt; N;
+  for (int i = 0; i &lt; N; i++) {
+    string T; cin &gt;&gt; T;
+ 
+    S += T;
+    S += &quot;?&quot;;
+    for (int j = 0; j &lt; T.size(); j++) {
+      A.push_back(make_pair(i, T.size() - j));
+    }
+    A.push_back(make_pair(-1, -1));
+  }
+  A.push_back(make_pair(-1, -1));
+ 
+  vector&lt;int&gt; result(N);
+  suffix_array sa(S.c_str());
+  sa.LCP.push_back(0);
+  for (int i = 1; i &lt;= sa.N; ) {
+    int j = sa.SA[i];
+    int ind = A[j].first;
+    if (ind == -1) {
+      ++i;
+      continue;
+    }
+    int sz = 1;
+    while (i + sz &lt;= sa.N &amp;&amp; A[sa.SA[i + sz]].first == ind) {
+      ++sz;
+    }
+ 
+    int ln = sa.LCP[i - 1];
+    for (int j = i; j &lt; i + sz; j++) {
+      result[ind] += max(A[sa.SA[j]].second - max(ln, sa.LCP[j]), 0);
+      ln = min(ln, sa.LCP[j]);
+    }
+    i += sz;
+  }
+  for (int x : result) {
+    cout &lt;&lt; x &lt;&lt; &apos;\n&apos;;
+  }
+ 
+  return 0;
+}
+</pre>
+<p></body></html>

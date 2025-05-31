@@ -1,0 +1,629 @@
+Solution ID: sol_prob1_platinum_dec22
+Contest: DEC22
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob1_platinum_dec22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Richard Qi)
+
+Treat the problem as incremental shortest path (reverse all of the updates).
+
+We keep track of the following quantities after each update:
+
+$dp_1[k][i]$
+
+, the shortest path between node
+
+$1$
+
+and
+
+$i$
+
+that uses exactly
+
+$k \le 4$
+
+edges
+
+$dp_N[k][i]$
+
+, the shortest path between node
+
+$i$
+
+and
+
+$N$
+
+that uses exactly
+
+$k \le 4$
+
+edges
+
+$bet[k][i][j]$
+
+, the shortest path
+
+bet
+
+-ween node
+
+$i$
+
+and
+
+$j$
+
+that uses exactly
+
+$k \le 2$
+
+edges.
+
+If we can keep track of all of these values, we can read off the shortest path
+of length
+
+$K$
+
+as the minimum of
+
+$dp_1[\lfloor \frac{K}{2} \rfloor][i] + dp_N[\lceil \frac{K}{2}\rceil][i]$
+
+over
+all
+
+$i$
+
+(iterating over all possibilities for the midpoint of the path) in
+
+$O(N)$
+
+time per query.
+
+Because edges are only being added and not deleted, all of the stored values can
+be initialized to
+
+$+\infty$
+
+, and values can only decrease as edges are added (a
+path which is present before some update will always be present after, or a
+better path with smaller weight will be found). We now show how to keep track of
+these values.
+
+Consider
+
+$bet[1]$
+
+. After an edge between
+
+$(a, b)$
+
+with weight
+
+$w$
+
+is added, then
+
+$bet[1][a][b]$
+
+is updated to
+
+$w$
+
+.
+
+Now, consider
+
+$bet[2]$
+
+. Suppose that after the update,
+
+$bet[2][i][j]$
+
+changed
+for some path between
+
+$(i, j)$
+
+. If this is the case, then the new optimal
+shortest path between
+
+$(i, j)$
+
+must include the edge
+
+$a \to b$
+
+. The only
+possibilities are if
+
+$a = i$
+
+or if
+
+$b = j$
+
+, and we can iterate over all such
+possible length-2 paths in
+
+$O(N)$
+
+time.
+
+Notice that
+
+$dp_1[k][i] = bet[k][1][i]$
+
+. The case of
+
+$dp_N[k][i]$
+
+is symmetric,
+so we have shown how to update
+
+$dp_1[k], dp_N[k]$
+
+for
+
+$k \le 2$
+
+in
+
+$O(N)$
+
+time
+per update. This gives us the partial credit for
+
+$K/2 \le 2 \iff K \le 4$
+
+.
+
+Now, we show how to update
+
+$dp_1[3]$
+
+in
+
+$O(N)$
+
+time. Suppose the shortest path
+of length
+
+$3$
+
+between
+
+$1$
+
+and
+
+$i$
+
+changed after an edge update. There are three
+possibilities: either the updated edge was the first edge in the path, the
+second edge in the path, or the third edge in the path.
+
+If the updated edge was the first edge in the path, then we must have
+
+$a = 1$
+
+and the path can be decomposed into a single edge from
+
+$1$
+
+to
+
+$b$
+
+and a two edge
+path from
+
+$b$
+
+to
+
+$i$
+
+for some
+
+$i$
+
+. We can iterate over all possibilities for
+
+$i$
+
+, and the length of the path is
+
+$w+bet[2][b][i]$
+
+.
+
+If the updated edge was the second edge in the path, then the path can be
+decomposed into a single edge from
+
+$1$
+
+to
+
+$a$
+
+, a single edge from
+
+$a$
+
+to
+
+$b$
+
+,
+and a single edge from
+
+$b$
+
+to
+
+$i$
+
+. We can iterate over all possibilities for
+
+$i$
+
+, and the length of the path is
+
+$dp_1[1][a]+w+bet[1][b][i]$
+
+.
+
+If the updated edge was the third edge in the path, then the path can be
+decomposed into a two edge path between
+
+$1$
+
+and
+
+$a$
+
+, and a single edge from
+
+$a$
+
+to
+
+$b$
+
+. The length of this path is
+
+$dp_1[2][a]+w$
+
+.
+
+This gives us the partial credit for
+
+$K/2 \le 3 \iff K \le 6$
+
+.
+
+Finally, we need to be able to update
+
+$dp_1[4]$
+
+. There are again
+
+$4$
+
+cases for
+whether the updated edge in a
+
+$4$
+
+-edge path between
+
+$1$
+
+and
+
+$i$
+
+was the first,
+second, third, or fourth edge in the path. The cases where
+
+$(a, b)$
+
+was the
+second or third edge is similar to cases listed above.
+
+If the updated edge was the fourth edge, then the path can be decomposed into an
+edge between
+
+$1$
+
+to
+
+$i$
+
+for some
+
+$i$
+
+, a length two path from
+
+$i$
+
+to
+
+$a$
+
+, and an
+edge between
+
+$a$
+
+and
+
+$b$
+
+. We can iterate over all possibilities of
+
+$i$
+
+, and the
+length of the path is
+
+$dp_1[1][i]+bet[2][i][a]+w$
+
+.
+
+Now, the hardest case is when the updated edge was the first edge. In this case,
+the first node on the
+
+$4$
+
+-edge path was
+
+$1 = a$
+
+, the second node on the
+
+$4$
+
+-edge
+path was
+
+$b$
+
+, but the other
+
+$3$
+
+nodes can be anything, so it seems impossible to
+update
+
+$dp_1[4][i]$
+
+for all
+
+$i$
+
+in
+
+$O(N)$
+
+time.
+
+The key insight here is that there are only
+
+$O(N)$
+
+edges that satisfy
+
+$1 = a$
+
+,
+so we can actually afford to do this update in
+
+$O(N^2)$
+
+time. So, we can
+decompose the path into a single edge between
+
+$1$
+
+and
+
+$b$
+
+, a two edge path
+between
+
+$b$
+
+and
+
+$j$
+
+, and a single edge between
+
+$j$
+
+and
+
+$i$
+
+. We can iterate over
+all pairs
+
+$(j, i)$
+
+and the length of the path is
+
+$w+bet[2][b][j]+bet[1][j][i]$
+
+.
+
+This gives us full credit for
+
+$K/2 \le 4 \iff K \le 8$
+
+, with an overall time
+complexity of
+
+$N^2 \cdot O(N) + N \cdot O(N^2) = O(N^3)$
+
+.
+
+As an implementation detail, notice that it is convenient to update the values
+of
+
+$bet[k], dp_1[k], dp_2[k]$
+
+in increasing order of
+
+$k$
+
+, as these values rely
+on previously updated values for smaller
+
+$k$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+using pi = pair<int, int>;
+using vpi = vector<pi>;
+using vl = vector<ll>;
+
+#define f first
+#define s second
+#define mp make_pair
+#define pb push_back
+#define all(x) begin(x), end(x)
+
+template <class T> bool ckmin(T &a, const T &b) {
+    return b < a ? a = b, 1 : 0;
+} // set a = min(a,b)
+
+const ll BIG = 1e18;
+
+const int mx = 305;
+int N, K;
+
+ll dp_1[5][mx];       // use i edges to go from 1 to j
+ll dp_n[5][mx];       // use i edges to go from j to n
+ll dp_bet[3][mx][mx]; // use i edges to go from j to k
+
+void INITIALIZE() {
+    for (int j = 0; j <= 4; j++) {
+        for (int i = 1; i <= N; i++) { dp_1[j][i] = dp_n[j][i] = BIG; }
+    }
+    for (int k = 0; k <= 2; k++) {
+        for (int i = 1; i <= N; i++) {
+            for (int j = 1; j <= N; j++) { dp_bet[k][i][j] = BIG; }
+        }
+    }
+
+    ckmin(dp_1[0][1], 0LL);
+    ckmin(dp_n[0][N], 0LL);
+    for (int i = 1; i <= N; i++) { ckmin(dp_bet[0][i][i], 0LL); }
+}
+
+void updEdge(int a, int b, ll w) {
+    // update dp_bet
+    ckmin(dp_bet[1][a][b], w);
+    for (int i = 1; i <= N; i++) {
+        ckmin(dp_bet[2][a][i], w + dp_bet[1][b][i]);
+        ckmin(dp_bet[2][i][b], dp_bet[1][i][a] + w);
+    }
+
+    // update dp_1[k]
+    for (int k = 1; k <= 4; k++) {
+        ckmin(dp_1[k][b], dp_1[k - 1][a] + w); // use as last edge
+        // use as second to last edge or third to last edge
+        for (int last_vert = 1; last_vert <= N; last_vert++) {
+            if (k >= 2)
+                ckmin(dp_1[k][last_vert],
+                      dp_1[k - 2][a] + w + dp_bet[1][b][last_vert]);
+            if (k >= 3)
+                ckmin(dp_1[k][last_vert],
+                      dp_1[k - 3][a] + w + dp_bet[2][b][last_vert]);
+        }
+
+        // use as fourth to last edge
+        if (k == 4 && a == 1) {
+            for (int i = 1; i <= N; i++) {
+                for (int j = 1; j <= N; j++) {
+                    ckmin(dp_1[k][j], w + dp_bet[1][b][i] + dp_bet[2][i][j]);
+                }
+            }
+        }
+    }
+
+    // update dp_n[k]
+    for (int k = 1; k <= 4; k++) {
+        ckmin(dp_n[k][a], dp_n[k - 1][b] + w);
+        for (int first_vert = 1; first_vert <= N; first_vert++) {
+            if (k >= 2)
+                ckmin(dp_n[k][first_vert],
+                      dp_n[k - 2][b] + w + dp_bet[1][first_vert][a]);
+            if (k >= 3)
+                ckmin(dp_n[k][first_vert],
+                      dp_n[k - 3][b] + w + dp_bet[2][first_vert][a]);
+        }
+
+        // use as fourth to beginning edge
+        if (k == 4 && b == N) {
+            for (int i = 1; i <= N; i++) {
+                for (int j = 1; j <= N; j++) {
+                    ckmin(dp_n[k][i], w + dp_bet[1][j][a] + dp_bet[2][i][j]);
+                }
+            }
+        }
+    }
+}
+
+ll queryPath() {
+    int first_len = K / 2;
+    int second_len = K - first_len;
+    ll ans = BIG;
+    for (int i = 1; i <= N; i++) {
+        ckmin(ans, dp_1[first_len][i] + dp_n[second_len][i]);
+    }
+    return ans;
+}
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    cin >> N >> K;
+    ll w[mx][mx];
+    for (int i = 1; i <= N; i++) {
+        for (int j = 1; j <= N; j++) { cin >> w[i][j]; }
+    }
+
+    vpi ed_order;
+    for (int t = 0; t < N * N; t++) {
+        int i, j;
+        cin >> i >> j;
+        ed_order.pb(mp(i, j));
+    }
+    reverse(all(ed_order));
+
+    INITIALIZE();
+    vl anses;
+    for (auto u : ed_order) {
+        ll res = queryPath();
+        if (res >= BIG) anses.pb(-1);
+        else anses.pb(res);
+
+        updEdge(u.f, u.s, w[u.f][u.s]);
+    }
+
+    reverse(all(anses));
+    for (auto u : anses) { cout << u << "\n"; }
+}

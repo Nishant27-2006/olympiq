@@ -1,0 +1,111 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN23 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Farmer Nhoj dropped Bessie in the middle of nowhere! At time $t=0$, Bessie is
+located at $x=0$ on an infinite number line. She frantically searches for an
+exit by moving left or right by $1$ unit each second. However, there actually is
+no exit and after $T$ seconds, Bessie is back at $x=0$, tired and resigned. 
+
+Farmer Nhoj tries to track Bessie but only knows how many times Bessie crosses
+$x=.5, 1.5, 2.5, \ldots, (N-1).5$, given by an array $A_0,A_1,\dots,A_{N-1}$
+($1\leq N \leq 10^5$, $1 \leq A_i \leq 10^6$). Bessie never reaches $x>N$ nor
+$x<0$.
+
+In particular, Bessie's route can be represented by a string of
+$T = \sum_{i=0}^{N-1} A_i$ $L$s and $R$s where the $i$th character represents
+the direction Bessie moves in during the $i$th second. The number of direction
+changes is defined as the number of occurrences of  $LR$s plus the number of
+occurrences of $RL$s. 
+
+Please help Farmer Nhoj count the number of routes Bessie could have taken that
+are consistent with $A$ and minimize the number of direction changes. It is
+guaranteed that there is at least one valid route.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$. The second line contains $A_0,A_1,\dots,A_{N-1}$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+The number of routes Bessie could have taken, modulo $10^9+7$.
+
+SAMPLE INPUT:
+2
+4 6
+SAMPLE OUTPUT: 
+2
+
+Bessie must change direction at least 5 times. There are two routes 
+corresponding to Bessie changing direction exactly 5 times:
+
+
+RRLRLLRRLL
+RRLLRRLRLL
+
+SCORING:
+Inputs 2-4: $N\le 2$ and $\max(A_i)\le 10^3$Inputs 5-7: $N\le 2$Inputs 8-11: $\max(A_i)\le 10^3$Inputs 12-21: No additional constraints.
+
+
+Problem credits: Brandon Wang, Claire Zhang, and Benjamin Qi
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (print output to the terminal / stdout):The number of routes Bessie could have taken, modulo $10^9+7$.SAMPLE INPUT:2
+4 6SAMPLE OUTPUT:2Bessie must change direction at least 5 times. There are two routes 
+corresponding to Bessie changing direction exactly 5 times:RRLRLLRRLL
+RRLLRRLRLLSCORING:Inputs 2-4: $N\le 2$ and $\max(A_i)\le 10^3$Inputs 5-7: $N\le 2$Inputs 8-11: $\max(A_i)\le 10^3$Inputs 12-21: No additional constraints.Problem credits: Brandon Wang, Claire Zhang, and Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:2
+4 6SAMPLE OUTPUT:2Bessie must change direction at least 5 times. There are two routes 
+corresponding to Bessie changing direction exactly 5 times:RRLRLLRRLL
+RRLLRRLRLLSCORING:Inputs 2-4: $N\le 2$ and $\max(A_i)\le 10^3$Inputs 5-7: $N\le 2$Inputs 8-11: $\max(A_i)\le 10^3$Inputs 12-21: No additional constraints.Problem credits: Brandon Wang, Claire Zhang, and Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+2
+4 6
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+2
+
+Bessie must change direction at least 5 times. There are two routes 
+corresponding to Bessie changing direction exactly 5 times:RRLRLLRRLL
+RRLLRRLRLLSCORING:Inputs 2-4: $N\le 2$ and $\max(A_i)\le 10^3$Inputs 5-7: $N\le 2$Inputs 8-11: $\max(A_i)\le 10^3$Inputs 12-21: No additional constraints.Problem credits: Brandon Wang, Claire Zhang, and Benjamin Qi
+
+RRLRLLRRLL
+RRLLRRLRLLSCORING:Inputs 2-4: $N\le 2$ and $\max(A_i)\le 10^3$Inputs 5-7: $N\le 2$Inputs 8-11: $\max(A_i)\le 10^3$Inputs 12-21: No additional constraints.Problem credits: Brandon Wang, Claire Zhang, and Benjamin Qi
+
+RRLRLLRRLL
+RRLLRRLRLL
+
+SCORING:Inputs 2-4: $N\le 2$ and $\max(A_i)\le 10^3$Inputs 5-7: $N\le 2$Inputs 8-11: $\max(A_i)\le 10^3$Inputs 12-21: No additional constraints.Problem credits: Brandon Wang, Claire Zhang, and Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1283
+
+\section*{Source}
+USACO JAN23 Contest, Gold Division, Problem ID: 1283
+
+\end{document}

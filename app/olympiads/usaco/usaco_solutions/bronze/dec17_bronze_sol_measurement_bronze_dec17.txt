@@ -1,0 +1,140 @@
+Solution ID: sol_measurement_bronze_dec17
+Contest: DEC17
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_measurement_bronze_dec17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we have some notes about how Bessie's, Elsie's, and Mildred's
+milk outputs change over time. We wish to keep track of the number of days that
+the cows with the highest milk outputs change.
+
+To compute this information, we need to maintain the milk outputs for each cow
+for each day when there is a change. At the beginning, we know that each cow
+outputs exactly 7 gallons of milk. We can go over the notes and figure out if
+any cow has a differing milk output. After doing so, we can directly determine
+which cows produced the most milk, and change if there were any changes.
+
+Due to the small number of notes and days, it is not necessary to order the
+notes by day beforehand.
+
+import java.io.*;
+import java.util.*;
+public class measurement {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader("measurement.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("measurement.out")));
+		
+		// read in all of the notes
+		int n = Integer.parseInt(br.readLine());
+		int[] day = new int[n];
+		String[] cow = new String[n];
+		int[] change = new int[n];
+		for(int i = 0; i < n; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			day[i] = Integer.parseInt(st.nextToken());
+			cow[i] = st.nextToken();
+			change[i] = Integer.parseInt(st.nextToken());
+		}
+		
+		// the milk variables track the amount of milk that each cows was last known to produce
+		int bessieMilk = 7, elsieMilk = 7, mildredMilk = 7;
+		// the on variables are true if that cow produced the highest amount of milk on the previous day
+		boolean bessieOn = true, elsieOn = true, mildredOn = true;
+		int dayAdjust = 0;
+		
+		for(int currDay = 1; currDay <= 100; currDay++) {
+			// look through the notes to see if there were any changes on this day
+			for(int i = 0; i < n; i++) {
+				if(day[i] == currDay) {
+					if(cow[i].equals("Bessie")) {
+						bessieMilk += change[i];
+					}
+					if(cow[i].equals("Elsie")) {
+						elsieMilk += change[i];
+					}
+					if(cow[i].equals("Mildred")) {
+						mildredMilk += change[i];
+					}
+				}
+			}
+			// compute the highest milk total and see which cows produced the most milk 
+			int highestMilk = Math.max(bessieMilk, Math.max(elsieMilk, mildredMilk));
+			boolean bessieOnNext = bessieMilk == highestMilk;
+			boolean elsieOnNext = elsieMilk == highestMilk;
+			boolean mildredOnNext = mildredMilk == highestMilk;
+			if(bessieOn != bessieOnNext || elsieOn != elsieOnNext || mildredOn != mildredOnNext) {
+				dayAdjust++;
+			}
+			bessieOn = bessieOnNext;
+			elsieOn = elsieOnNext;
+			mildredOn = mildredOnNext;
+		}
+
+		// print the answer
+		pw.println(dayAdjust);
+		pw.close();
+	}
+
+}
+
+For those who prefer C++, here is Brian Dean's solution:
+
+#include <iostream>
+#include <fstream>
+const int MAX_N = 100;
+using namespace std;
+ 
+// changes[c][d] is the change in milk rate for cow c on day d
+// rates[c][d] is the milk rate for cow c on day d
+int changes[3][MAX_N+1];
+int rates[3][MAX_N+1];
+ 
+// Is cow c the highest on day d?
+bool is_highest(int c, int d)
+{
+  int highest = max(max(rates[0][d], rates[1][d]), rates[2][d]);
+  return rates[c][d] == highest;
+}
+ 
+int main(void)
+{
+  ifstream fin ("measurement.in");
+  ofstream fout ("measurement.out");
+ 
+  int N, d, c, x;
+  string name;
+  
+  fin >> N;
+  for (int i=0; i<N; i++) {
+    fin >> d >> name >> x;
+    if (name == "Bessie") c = 0;
+    if (name == "Elsie") c = 1;
+    if (name == "Mildred") c = 2;
+    changes[c][d] = x;
+  }
+  
+  for (int c=0; c<3; c++)  
+    rates[c][0] = 7;
+ 
+  for (int c=0; c<3; c++)
+    for (int d=1; d<=100; d++) 
+      rates[c][d] = rates[c][d-1] + changes[c][d];
+  
+  int num_changes = 0;
+ 
+  for (int d=1; d<=100; d++) {
+    if (is_highest(0,d-1) != is_highest(0,d) ||
+		      is_highest(1,d-1) != is_highest(1,d) ||
+		      is_highest(2,d-1) != is_highest(2,d))
+      num_changes++;
+  }
+  
+  fout << num_changes << "\n";
+  return 0;
+}

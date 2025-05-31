@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nathan Pinsker)
+<p>This problem can be thought of as finding the minimum spanning tree on an
+<span class='math'>$(n+1) \times (m+1)$</span> grid of vertices representing the interiors of each region.
+Unfortunately, this number can be rather large, and so this naive approach won&apos;t
+quite work. However, we can take the ideas of minimum spanning tree algorithms
+and apply it to this problem. The most naturally applicable algorithm would be
+Kruskal&apos;s algorithm, since it doesn&apos;t require us to keep track of a large amount
+of state at once.
+<p>Kruskal&apos;s algorithm has us start by adding the edge of least weight -- but, due
+to the way this problem is structured, there are probably going to be many such
+edges all in the same row or column of the grid. In other words, once we find
+this edge, we might as well move all those edges in that row or column. We can process
+the tree in <span class='math'>$O(n+m)$</span> blocks, &quot;opening up&quot; a column or row all at once. Note that at each step,
+every row and column we&apos;ve dealt with so far should be connected to every other row and column.
+Also, if we&apos;re connecting a row and have already connected <span class='math'>$k$</span> columns (for k &gt; 1), then we only need to
+remove <span class='math'>$m-k$</span> fences in that row, since the columns we&apos;ve already processed are guaranteed to be connected.
+This gives a fairly straightforward algorithm: we process the fences in order of their thickness,
+removing as many segments as we need to to connect the fence to every other fence we&apos;ve processed so far. This gives an <span class='math'>$O(n + m)$</span> algorithm
+after sorting the input.
+<p>Another way to think about this problem is to note that, if we have an optimal
+solution, then the solution isn&apos;t affected by switching two adjacent rows or two
+adjacent columns. (This is because the connectivity within those two rows or two
+columns can be flipped without changing the cost to connect to the surrounding
+area.) Thus, we can sort the rows and columns in increasing order of how thick
+they are, which makes reasoning about connectivity significantly easier.
+<p>Mark Gordon uses this idea in his solution below:
+<p><pre>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+
+using namespace std;
+
+int main() {
+  int A, B, N, M;
+  cin &gt;&gt; A &gt;&gt; B &gt;&gt; N &gt;&gt; M;
+
+  vector&lt;int&gt; VA(N + 1), HA(M + 1);
+  for (int i = 0; i &lt; N; i++) {
+    cin &gt;&gt; VA[i];
+  }
+  for (int j = 0; j &lt; M; j++) {
+    cin &gt;&gt; HA[j];
+  }
+
+  sort(VA.begin(), VA.end());
+  for (int i = 0; i &lt; N; i++) {
+    VA[i] = VA[i + 1] - VA[i];
+  }
+  VA[N] = A - VA[N];
+
+  sort(HA.begin(), HA.end());
+  for (int i = 0; i &lt; M; i++) {
+    HA[i] = HA[i + 1] - HA[i];
+  }
+  HA[M] = B - HA[M];
+
+  sort(VA.begin(), VA.end());
+  sort(HA.begin(), HA.end());
+  N++; M++;
+
+  long long result = 1ll * VA[0] * (M - 1) +
+                     1ll * HA[0] * (N - 1);
+  for (int vi = 1, hi = 1; vi &lt; N &amp;&amp; hi &lt; M; ) {
+    if (VA[vi] &lt; HA[hi]) {
+      result += VA[vi++] * (M - hi);
+    } else {
+      result += HA[hi++] * (N - vi);
+    }
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+</body></html>

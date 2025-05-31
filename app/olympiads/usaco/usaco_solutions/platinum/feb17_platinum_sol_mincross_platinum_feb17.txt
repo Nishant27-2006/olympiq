@@ -1,0 +1,220 @@
+Solution ID: sol_mincross_platinum_feb17
+Contest: FEB17
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_mincross_platinum_feb17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Lewin Gan)
+
+Let's consider the problem without any cyclic shifts.
+
+Let
+
+$a_i$
+
+be the position of the
+
+$i$
+
+th cow in the first line, and
+
+$b_i$
+
+be the
+position of the
+
+$i$
+
+th cow in the second sequence.
+
+Two cows
+
+$i,j$
+
+will cross if
+
+$(a_i < a_j) \neq (b_i < b_j)$
+
+.
+
+Define a sequence
+
+$s$
+
+such that
+
+$s_{a_i} = b_i$
+
+. Intuitively, this encodes the
+position of the
+
+$k$
+
+th cow in the first line from the left in the second line.
+
+So, we can rewrite our condition of two cows intersecting as
+
+$p < q$
+
+and
+
+$s_p >
+s_q$
+
+. Note this looks like the formula for number of inversions.
+
+So, initially we can get the number of crossings without any cyclic shifts by
+counting the number of inversions. This is a classic problem that can be done
+with divide and conquer or with a binary indexed tree.
+
+Now, let's consider what happens when we move one cow from the end of the line
+to the beginning. Suppose this cow ends up in position
+
+$P$
+
+in the second line.
+Since this cow is the last cow in the first line, we can see it contributes
+
+$N-P$
+
+intersections. Moving it to the beginning would then contribute
+
+$P-1$
+
+intersections. So moving it from the first position to last position would
+change the number of pairs by
+
+$(P-1) - (N-P)$
+
+.
+
+Below is Mark Chen's implementation. Note that he uses divide and conquer to
+count the number of intersections at the beginning.
+
+#include <iostream>
+#include <iomanip>
+#include <stdio.h>
+#include <set>
+#include <vector>
+#include <map>
+#include <cmath>
+#include <algorithm>
+#include <memory.h>
+#include <string>
+#include <sstream>
+#include <cstdlib>
+#include <ctime>
+#include <cassert>
+
+using namespace std;
+
+typedef long long LL;
+typedef pair<int,int> PII;
+
+#define MP make_pair
+#define PB push_back
+#define FF first
+#define SS second
+
+#define FORN(i, n) for (int i = 0; i <  (int)(n); i++)
+#define FOR1(i, n) for (int i = 1; i <= (int)(n); i++)
+#define FORD(i, n) for (int i = (int)(n) - 1; i >= 0; i--)
+
+#define DEBUG(X) { cout << #X << " = " << (X) << endl; }
+#define PR0(A,n) { cout << #A << " = "; FORN(_,n) cout << A[_] << ' '; cout << endl; }
+
+#define MOD 1000000007
+#define INF 2000000000
+
+int GLL(LL& x) {
+    return scanf("%lld", &x);
+}
+
+int GI(int& x) {
+    return scanf("%d", &x);
+}
+
+const int MAXN = 100005;
+int q[2][MAXN], qInv[2][MAXN], qCopy[2][MAXN];
+
+int n, x;
+
+vector<int> merged;
+
+LL inversions(int p[], int l, int r) {
+    if (l != r) {
+        int m = (l+r) / 2;  // [l,m], [m+1,r]
+
+        LL res = inversions(p, l, m) + inversions(p, m + 1, r);
+
+        merged.clear();
+
+        int i = l; int j = m + 1;
+
+        while (i <= m && j <= r) {
+            if (p[i] < p[j]) {
+                res += j - (m + 1);
+                merged.PB(p[i]);
+                i++;
+            }
+            else {
+                merged.PB(p[j]);
+                j++;
+            }
+        }
+        while (i <= m) {
+            res += j - (m + 1);
+            merged.PB(p[i]);
+            i++;
+        }
+        while (j <= r) {
+            merged.PB(p[j]);
+            j++;
+        }
+
+        i = 0;
+        for (j = l; j <= r; j++) {
+            p[j] = merged[i];
+            i++;
+        }
+
+        return res;
+    }
+    else {
+        return 0;
+    }
+}
+
+int main() {
+    GI(n);
+
+    FORN(seq, 2) FOR1(i, n) {
+        GI(q[seq][i]);
+        qInv[seq][q[seq][i]] = i;
+    }
+
+    FORN(seq, 2) FOR1(i, n) {
+        qCopy[seq][i] = qInv[1-seq][q[seq][i]];
+    }
+
+    FORN(seq, 2) FOR1(i, n) {
+        q[seq][i] = qCopy[seq][i];
+    }
+
+    LL res = 1LL*INF*INF;
+
+    FORN(seq, 2) {
+        LL cur = inversions(q[seq], 1, n);
+
+        for (int i = n; i >= 1; i--) {
+            cur += 2 * qCopy[seq][i] - n - 1;
+            res = min(res, cur);
+        }
+    }
+
+    printf("%lld\n", res);
+    return 0;
+}

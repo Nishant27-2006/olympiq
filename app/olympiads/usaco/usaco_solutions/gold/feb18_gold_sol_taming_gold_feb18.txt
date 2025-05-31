@@ -1,0 +1,184 @@
+Solution ID: sol_taming_gold_feb18
+Contest: FEB18
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_taming_gold_feb18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+This problem can be solved by dynamic programming. Let
+
+$dp(i,j,k)$
+
+be the
+minimum number of changes that must be made to the first
+
+$i$
+
+entries so that
+there are
+
+$k$
+
+breakouts among the first
+
+$i$
+
+entries, and the last of these
+
+$k$
+
+breakouts occurs at index
+
+$j$
+
+.
+
+Suppose we want to compute
+
+$dp(i,j,k)$
+
+for some fixed
+
+$i$
+
+,
+
+$j$
+
+, and
+
+$k$
+
+. Then
+entry
+
+$i$
+
+must be equal to
+
+$i-j$
+
+; if not, we have to change entry
+
+$i$
+
+. Now we
+simply need to count the minimum number of changes that need to be made to the
+first
+
+$i-1$
+
+entries. There are two cases: either
+
+$j<i$
+
+or
+
+$j=i$
+
+.
+
+If
+
+$j<i$
+
+, then the most recent breakout out of the first
+
+$i-1$
+
+days must have
+been on day
+
+$j$
+
+. So the quantity we want is
+
+$dp(i-1,j,k)$
+
+.
+
+If
+
+$j=i$
+
+, then the most recent breakout out of the first
+
+$i-1$
+
+days could have
+been on any day. So the quantity we want is
+
+$\min_{j' < i} dp(i-1, j', k-1)$
+
+.
+
+There are
+
+$O(N^3)$
+
+dynamic programming states. The first transition takes
+
+$O(1)$
+
+time. The second transition takes
+
+$O(N)$
+
+time, but only occurs in
+
+$O(N^2)$
+
+states. Therefore the overall time complexity is
+
+$O(N^3)$
+
+.
+
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define INF 1000
+
+int N;
+int A[100];
+int dp[100][100][101];	//[current index][last breakout][number of breakouts]
+
+int main()
+{
+	cin >> N;
+	for(int i=0;i<N;i++)
+		cin >> A[i];
+	for(int i=0;i<N;i++)
+		for(int j=0;j<=i;j++)
+			for(int k=0;k<=N;k++)
+				dp[i][j][k] = INF;
+	if(A[0] == 0)
+		dp[0][0][1] = 0;
+	else
+		dp[0][0][1] = 1;
+	for(int i=1;i<N;i++)
+	{
+		for(int j=0;j<=i;j++)
+			for(int k=1;k<=i+1;k++)
+			{
+				if(j < i) 
+					dp[i][j][k] = dp[i-1][j][k];
+				else
+					for(int j1=0;j1<i;j1++)
+						dp[i][j][k] = min(dp[i][j][k], dp[i-1][j1][k-1]);
+				if(A[i] != i-j) 
+					dp[i][j][k]++;
+			}
+	}
+	for(int k=1;k<=N;k++)
+	{
+		int low = INF;
+		for(int j=0;j<N;j++)
+			low = min(low, dp[N-1][j][k]);
+		cout << low << '\n';
+	}
+}

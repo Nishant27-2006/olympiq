@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>For each constraint <span class='math'>$(a,b,x)$</span> draw a directed edge from <span class='math'>$a$</span> to <span class='math'>$b$</span> with weight
+<span class='math'>$x$</span>. Note that there cannot be a cycle in this graph or else no solution would
+exist. Thus, we&apos;ll process the sessions in order of the topological sort.
+<p>Without loss of generality suppose that the topological sort is <span class='math'>$1,2,\ldots,N,$</span>
+meaning that all edges satisfy <span class='math'>$a&lt;b$</span>. Then for each directed edge in increasing
+order of <span class='math'>$a$</span>, it suffices to set <span class='math'>$S_b=\max(S_b,S_a+x)$</span>. After all of these edges
+are processed, the resulting <span class='math'>$S_1,S_2,\ldots,S_N$</span> are the lowest possible values
+that satisfy all the edge conditions (assuming all of them are less than or
+equal to <span class='math'>$M$</span>).  This can be implemented in <span class='math'>$O(N+M)$</span> time.
+<p><pre class='prettyprint'>
+#include &quot;bits/stdc++.h&quot;
+
+using namespace std;
+
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+#define f first
+#define s second
+
+const int MX = 1e5+5;
+
+int N,M,C,S[MX],in[MX];
+bool vis[MX];
+vector&lt;pair&lt;int,int&gt;&gt; adj[MX];
+queue&lt;int&gt; q;
+ 
+int main() {
+	setIO(&quot;timeline&quot;);
+	cin &gt;&gt; N &gt;&gt; M &gt;&gt; C; 
+	for (int i = 1; i &lt;= N; ++i) cin &gt;&gt; S[i];
+	for (int i = 0; i &lt; C; ++i) {
+		int a,b,x; cin &gt;&gt; a &gt;&gt; b &gt;&gt; x;
+		adj[a].push_back({b,x}); in[b] ++;
+	}
+	for (int i = 1; i &lt;= N; ++i) if (!in[i]) q.push(i);
+	while (q.size()) {
+		int x = q.front(); q.pop(); // process x in order of topological sort
+		vis[x] = 1; assert(S[x] &lt;= M);
+		for (auto&amp; t: adj[x]) {
+			S[t.f] = max(S[t.f],S[x]+t.s);
+			if (!(--in[t.f])) q.push(t.f);
+		}
+	}
+	for (int i = 1; i &lt;= N; ++i) {
+		assert(vis[i]);
+		cout &lt;&lt; S[i] &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p></body></html>

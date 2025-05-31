@@ -1,0 +1,164 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB25 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Farmer John's $N$ cows are labeled $1$ to $N$ ($2\le N\le 16$). The friendship
+relationships between the cows can be modeled as an undirected graph with $M$
+($0\le M\le N(N-1)/2$) edges. Two cows are friends if and only if there is an
+edge between them in the graph.
+
+In one operation, you can add or remove a single edge from the graph. Count the
+minimum number of operations required to ensure that the following property
+holds: If cows $a$ and $b$ are friends, then for every other cow $c$, at least
+one of $a$ and $b$ is friends with $c$.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$ and $M$.
+
+The next $M$ lines each contain a pair of friends $a$ and $b$ ($1\le a<b\le N$).
+No pair of friends appears more than once.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+The number of edges you need to add or remove.
+
+SAMPLE INPUT:
+3 1
+1 2
+SAMPLE OUTPUT: 
+1
+
+The network violates the property. We can add one of edges $(2,3)$ or $(1,3)$, 
+or remove edge $(1,2)$ to fix this.
+
+SAMPLE INPUT:
+3 2
+1 2
+2 3
+SAMPLE OUTPUT: 
+0
+
+No changes are necessary.
+
+SAMPLE INPUT:
+4 4
+1 2
+1 3
+1 4
+2 3
+SAMPLE OUTPUT: 
+1
+
+SCORING:
+Inputs 4-13: One input for each $N\in [6, 15]$ in increasing order.Inputs 14-18: $N=16$
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+The next $M$ lines each contain a pair of friends $a$ and $b$ ($1\le a<b\le N$).
+No pair of friends appears more than once.
+
+OUTPUT FORMAT (print output to the terminal / stdout):The number of edges you need to add or remove.SAMPLE INPUT:3 1
+1 2SAMPLE OUTPUT:1The network violates the property. We can add one of edges $(2,3)$ or $(1,3)$, 
+or remove edge $(1,2)$ to fix this.SAMPLE INPUT:3 2
+1 2
+2 3SAMPLE OUTPUT:0No changes are necessary.SAMPLE INPUT:4 4
+1 2
+1 3
+1 4
+2 3SAMPLE OUTPUT:1SCORING:Inputs 4-13: One input for each $N\in [6, 15]$ in increasing order.Inputs 14-18: $N=16$Problem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:3 1
+1 2SAMPLE OUTPUT:1The network violates the property. We can add one of edges $(2,3)$ or $(1,3)$, 
+or remove edge $(1,2)$ to fix this.SAMPLE INPUT:3 2
+1 2
+2 3SAMPLE OUTPUT:0No changes are necessary.SAMPLE INPUT:4 4
+1 2
+1 3
+1 4
+2 3SAMPLE OUTPUT:1SCORING:Inputs 4-13: One input for each $N\in [6, 15]$ in increasing order.Inputs 14-18: $N=16$Problem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+3 1
+1 2
+
+3 2
+1 2
+2 3
+
+4 4
+1 2
+1 3
+1 4
+2 3
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+1
+
+The network violates the property. We can add one of edges $(2,3)$ or $(1,3)$, 
+or remove edge $(1,2)$ to fix this.SAMPLE INPUT:3 2
+1 2
+2 3SAMPLE OUTPUT:0No changes are necessary.SAMPLE INPUT:4 4
+1 2
+1 3
+1 4
+2 3SAMPLE OUTPUT:1SCORING:Inputs 4-13: One input for each $N\in [6, 15]$ in increasing order.Inputs 14-18: $N=16$Problem credits: Benjamin Qi
+
+SAMPLE INPUT:3 2
+1 2
+2 3SAMPLE OUTPUT:0No changes are necessary.SAMPLE INPUT:4 4
+1 2
+1 3
+1 4
+2 3SAMPLE OUTPUT:1SCORING:Inputs 4-13: One input for each $N\in [6, 15]$ in increasing order.Inputs 14-18: $N=16$Problem credits: Benjamin Qi
+
+0
+
+No changes are necessary.SAMPLE INPUT:4 4
+1 2
+1 3
+1 4
+2 3SAMPLE OUTPUT:1SCORING:Inputs 4-13: One input for each $N\in [6, 15]$ in increasing order.Inputs 14-18: $N=16$Problem credits: Benjamin Qi
+
+SAMPLE INPUT:4 4
+1 2
+1 3
+1 4
+2 3SAMPLE OUTPUT:1SCORING:Inputs 4-13: One input for each $N\in [6, 15]$ in increasing order.Inputs 14-18: $N=16$Problem credits: Benjamin Qi
+
+1
+
+SCORING:Inputs 4-13: One input for each $N\in [6, 15]$ in increasing order.Inputs 14-18: $N=16$Problem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1499
+
+\section*{Source}
+USACO FEB25 Contest, Gold Division, Problem ID: 1499
+
+\end{document}

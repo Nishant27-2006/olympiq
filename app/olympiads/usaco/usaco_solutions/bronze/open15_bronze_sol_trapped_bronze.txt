@@ -1,0 +1,133 @@
+Solution ID: sol_trapped_bronze
+Contest: OPEN15
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_trapped_bronze.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+The
+
+$N$
+
+hay bales define
+
+$N-1$
+
+intervals that Bessie can be inside. Let's
+consider answering for a given interval, whether Bessie can escape if she starts
+inside that interval.
+
+We can, in fact, ask a more general question - if Bessie is trapped between
+haybale
+
+$i$
+
+and haybale
+
+$j$
+
+, can she escape? Clearly, if Bessie can break
+through haybale
+
+$i$
+
+, it is to her advantage to do so immediately - she then
+gains more distance and can possibly break through haybale
+
+$j$
+
+. However, if
+Bessie can break through neither haybale
+
+$i$
+
+nor haybale
+
+$j$
+
+, then she is
+trapped.
+
+We can then simulate this process as follows. Start by having Bessie be trapped
+between haybale
+
+$i$
+
+and haybale
+
+$i+1$
+
+. While she still has a haybale to her left
+and a haybale to her right, see if she can break either one. Keep on breaking
+haybales until either she doesn't have one to her left or one to her right, or
+she can't break through either one. If she can't break through the haybales to
+her left and to her right, then take the distance of the original interval and
+add to that a running total. Repeat this simulation for all adjacent pairs of
+haybales.
+
+Here is my Java code simulating this process.
+
+import java.io.*;
+import java.util.*;
+public class trappedB {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader("trapped.in"));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("trapped.out")));
+    int n = Integer.parseInt(br.readLine());
+    Haybale[] bales = new Haybale[n];
+    for(int i = 0; i < n; i++) {
+      StringTokenizer st = new StringTokenizer(br.readLine());
+      int size = Integer.parseInt(st.nextToken());
+      int position = Integer.parseInt(st.nextToken());
+      bales[i] = new Haybale(size, position);
+    }
+    // sort haybales by location
+    Arrays.sort(bales);
+    int ans = 0;
+    for(int i = 0; i < n-1; i++) {
+      int areaOfInterval = bales[i+1].position - bales[i].position;
+      int leftmostBale = i;
+      int rightmostBale = i+1;
+      // while Bessie could still be trapped
+      while(leftmostBale >= 0 && rightmostBale <= n-1) {
+        boolean broke = false;
+        int currDist = bales[rightmostBale].position - bales[leftmostBale].position;
+        if(currDist > bales[leftmostBale].size) {
+          leftmostBale--;
+          broke = true;
+        }
+        if(currDist > bales[rightmostBale].size) {
+          rightmostBale++;
+          broke = true;
+        }
+        // Bessie couldn't break through either the left or the right bale, so stop
+        if(!broke) {
+          break;
+        }
+      }
+      // Bessie couldn't break out
+      if(leftmostBale >= 0 && rightmostBale <= n-1) {
+        ans += areaOfInterval;
+      }
+    }
+    pw.println(ans);
+    pw.close();
+  }
+    
+  static class Haybale implements Comparable<Haybale> {
+    public int position, size;
+    public Haybale(int sizeIn, int positionIn) {
+      size = sizeIn;
+      position = positionIn;
+    }
+    public int compareTo(Haybale h) {
+      // this will sort haybales from left to right
+      return position - h.position;
+    }
+  }
+  
+}

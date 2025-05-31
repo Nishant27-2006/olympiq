@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>To solve the first subtask, we can brute force all possible pairs of edges to
+add. This solution has complexity <span class='math'>$\mathcal{O}(N^4(N+M))$</span>.
+<p>To solve the second subtask, we need to be more disciplined in what edges we
+consider adding. We can start by computing the connected components of the barns
+- that is, maximal collections of barns where one can reach any barn from any
+other barn in the collection.
+<p>There are therefore two cases to consider here. We can either add an edge from
+the connected component containing barn 1 to the connected component containing
+barn <span class='math'>$N$</span>, or we pick an intermediate connected component, add one edge from it
+to the connected component containing barn <span class='math'>$1$</span>, and add another edge from it to
+the connected component containing barn <span class='math'>$N$</span>.
+<p>This observation on its own only reduces the number of pairs of edges to
+consider in the worst case by a constant factor. However, we now have two
+independent instances of the same subproblem to solve - given two connected
+components, what is the minimum cost needed to connect them with a single edge?
+<p>We can naively brute force this for all pairs of components we care about, for
+an <span class='math'>$\mathcal{O}(N^2)$</span> algorithm.
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;numeric&gt;
+#include &lt;vector&gt;
+
+using namespace std;
+
+void dfs(const vector&lt;vector&lt;int&gt;&gt;&amp; edges, vector&lt;int&gt;&amp; component, const int currv, const int id) {
+  for(int child: edges[currv]) {
+    if(component[child] != id) {
+      component[child] = id;
+      dfs(edges, component, child, id);
+    }
+  }
+}
+
+void solve() {
+  int n, m;
+  cin &gt;&gt; n &gt;&gt; m;
+  vector&lt;vector&lt;int&gt;&gt; edges(n);
+  for(int i = 0; i &lt; m; i++) {
+    int a, b;
+    cin &gt;&gt; a &gt;&gt; b;
+    a--; b--;
+    edges[a].push_back(b);
+    edges[b].push_back(a);
+  }
+  vector&lt;int&gt; component(n);
+  iota(component.begin(), component.end(), 0);
+  for(int i = 0; i &lt; n; i++) {
+    if(component[i] == i) {
+      dfs(edges, component, i, i);
+    }
+  }
+  if(component[0] == component[n-1]) {
+    cout &lt;&lt; &quot;0\n&quot;;
+    return;
+  }
+  vector&lt;vector&lt;int&gt;&gt; componentToVertices(n);
+  for(int i = 0; i &lt; n; i++) {
+    componentToVertices[component[i]].push_back(i);
+  }
+  long long ans = 1e18;
+  vector&lt;long long&gt; srccost(n, 1e9);
+  vector&lt;long long&gt; dstcost(n, 1e9);
+  for(int i: componentToVertices[component[0]]) {
+    for(int j = 0; j &lt; n; j++) {
+      srccost[component[j]] = min(srccost[component[j]], (long long)abs(i - j));
+    }
+  }
+  for(int i: componentToVertices[component[n-1]]) {
+    for(int j = 0; j &lt; n; j++) {
+      dstcost[component[j]] = min(dstcost[component[j]], (long long)abs(i - j));
+    }
+  }
+  for(int i = 0; i &lt; n; i++) ans = min(ans, srccost[i]*srccost[i] + dstcost[i]*dstcost[i]);
+  cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(NULL);
+  int t;
+  cin &gt;&gt; t;
+  for(int i = 0; i &lt; t; i++) {
+    solve();
+  }
+  return 0;
+}
+
+</pre>
+<p>To optimize this to <span class='math'>$\mathcal{O}(M+N)$</span> time, we have to take advantage of the
+cost function.
+<p>For a given barn and a given connected component we want to connect it to, we
+only care about the smallest integer in the connected component greater than it,
+as well as the largest integer in the component less than it.
+<p>There are a couple ways to find these integers. One way would be to use binary
+search. It is also possible to do this in linear time by maintaining the pair of
+indices we consider and considering adding edges from vertex <span class='math'>$i$</span> in increasing
+order of <span class='math'>$i$</span>. The pair of indices we consider will be nondecreasing, so we only
+consider a linear number of edges.
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;numeric&gt;
+#include &lt;vector&gt;
+ 
+using namespace std;
+ 
+void dfs(const vector&lt;vector&lt;int&gt;&gt;&amp; edges, vector&lt;int&gt;&amp; component, const int currv, const int id) {
+  for(int child: edges[currv]) {
+    if(component[child] != id) {
+      component[child] = id;
+      dfs(edges, component, child, id);
+    }
+  }
+}
+ 
+void solve() {
+  int n, m;
+  cin &gt;&gt; n &gt;&gt; m;
+  vector&lt;vector&lt;int&gt;&gt; edges(n);
+  for(int i = 0; i &lt; m; i++) {
+    int a, b;
+    cin &gt;&gt; a &gt;&gt; b;
+    a--; b--;
+    edges[a].push_back(b);
+    edges[b].push_back(a);
+  }
+  vector&lt;int&gt; component(n);
+  iota(component.begin(), component.end(), 0);
+  for(int i = 0; i &lt; n; i++) {
+    if(component[i] == i) {
+      dfs(edges, component, i, i);
+    }
+  }
+  if(component[0] == component[n-1]) {
+    cout &lt;&lt; &quot;0\n&quot;;
+    return;
+  }
+  vector&lt;vector&lt;int&gt;&gt; componentToVertices(n);
+  for(int i = 0; i &lt; n; i++) {
+    componentToVertices[component[i]].push_back(i);
+  }
+  long long ans = 1e18;
+  vector&lt;long long&gt; srccost(n, 1e9);
+  vector&lt;long long&gt; dstcost(n, 1e9);
+  int srcidx = 0;
+  int dstidx = 0;
+  for(int i = 0; i &lt; n; i++) {
+    while(srcidx &lt; componentToVertices[component[0]].size()) {
+      srccost[component[i]] = min(srccost[component[i]], (long long)abs(i - componentToVertices[component[0]][srcidx]));
+      if(componentToVertices[component[0]][srcidx] &lt; i) srcidx++;
+      else break;
+    }
+    if(srcidx) srcidx--;
+    while(dstidx &lt; componentToVertices[component[n-1]].size()) {
+      dstcost[component[i]] = min(dstcost[component[i]], (long long)abs(i - componentToVertices[component[n-1]][dstidx]));
+      if(componentToVertices[component[n-1]][dstidx] &lt; i) dstidx++;
+      else break;
+    }
+    if(dstidx) dstidx--;
+  }
+  for(int i = 0; i &lt; n; i++) ans = min(ans, srccost[i]*srccost[i] + dstcost[i]*dstcost[i]);
+  cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+ 
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(NULL);
+  int t;
+  cin &gt;&gt; t;
+  for(int i = 0; i &lt; t; i++) {
+    solve();
+  }
+  return 0;
+}
+</pre>
+<p></body></html>

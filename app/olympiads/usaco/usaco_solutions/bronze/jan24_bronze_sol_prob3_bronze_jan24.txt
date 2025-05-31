@@ -1,0 +1,391 @@
+Solution ID: sol_prob3_bronze_jan24
+Contest: JAN24
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_jan24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Rohin Garg)
+
+There are multiple solutions to this problem, each with different thought
+processes but the same end result. Two are presented below. An operation of type
+
+$1$
+
+refers to a single walk with pesticide of type
+
+$1$
+
+, while an operation of
+type
+
+$2$
+
+refers to a single walk with pesticide of type
+
+$2$
+
+.
+
+Solution 1:
+
+Difference Arrays
+
+Let
+
+$\text{diff}(a)$
+
+be the difference array of
+
+$a$
+
+. In particular,
+
+$\text{diff}(a) = [a_1, a_2 - a_1, \ldots, a_n - a_{n-1}]$
+
+. Let's examine how
+each type of operation affects
+
+$\text{diff}(a)$
+
+.
+
+Assume we do an operation of type 1. The value at indices less than
+
+$h$
+
+remain
+unchanged, so the corresponding values of
+
+$\text{diff}(a)$
+
+stay the same as
+well. Because
+
+$a_h$
+
+increases by
+
+$1$
+
+and
+
+$a_{h-1}$
+
+remains unchanged,
+
+$\text{diff}(a)_h$
+
+is the first value that changes, and it increases by
+
+$1$
+
+.
+Similarly, because
+
+$a_{h+1}$
+
+increases by
+
+$2$
+
+and
+
+$a_h$
+
+increases by
+
+$1$
+
+,
+
+$\text{diff}(a)_{h+1}$
+
+increases by
+
+$1$
+
+. Extending this argument, an operation
+of type
+
+$1$
+
+simply increments a suffix of
+
+$\text{diff}(a)$
+
+, while and operation
+of type
+
+$2$
+
+decrements a suffix.
+
+This transformation can be done one more time. Let's examine how
+
+$\text{diff}(\text{diff}(a))$
+
+changes after each operation. By doing a similar
+analysis as before, we can see that the only index that changes is
+
+$\text{diff}(\text{diff}(a))_h$
+
+, and it either increases or decreases by
+
+$1$
+
+depending on the operation type. Finding the minimum operations to make
+
+$\text{diff}(\text{diff}(a))$
+
+all
+
+$0$
+
+'s is now straightforward, as it is equal
+to
+
+$\sum_{i=1}^n
+|\text{diff}(\text{diff}(a))_i|$
+
+, because all of the indices
+are independent.
+
+Rohin Garg's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using ll = long long;
+ 
+vector<ll> diff(vector<ll> a) {
+    vector<ll> b(a.size());
+    for (int i = 0; i < (int) b.size(); i++) {
+        b[i] = a[i];
+        if (i > 0)
+            b[i] -= a[i-1];
+    }
+    return b;
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0);
+   
+    int n; cin >> n;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    a = diff(diff(a));
+    ll ans = 0;
+    for (int i = 0; i < n; i++)
+        ans += abs(a[i]);
+        
+    cout << ans << '\n';
+}
+
+Solution 2:
+
+Optimized Simulation
+
+The only way to alter the number of bacteria on patch
+
+$1$
+
+would be for Farmer
+John to use
+
+$h = 1$
+
+. This motivates the idea of first calculating the operations
+that must be done to make
+
+$a_1 = 0$
+
+, then
+
+$a_2 = 0$
+
+, and so on.
+
+Note that you'll never do both types of operations with the same
+
+$h$
+
+value, as
+they would just undo each other, and doing neither instead of both would get you
+the same final configuration in a smaller number of operations.
+
+This means that we know exactly what set of operations we'll do with
+
+$h = 1$
+
+: If
+
+$a_i$
+
+is positive, we'll do
+
+$a_i$
+
+operations of type
+
+$2$
+
+, otherwise we'll do
+
+$-a_i$
+
+operations of type
+
+$1$
+
+. Then, we can ignore
+
+$a_1$
+
+, as it can no longer be
+changed by any future operation, and continue this process (making sure to
+update all array elements when doing an operation). This immediately lends an
+
+$\mathcal{O}(n^2)$
+
+solution, as at each index you have to update
+
+$\mathcal{O}(n)$
+
+other indices.
+
+What remains is to optimize the simulation of each operation. Let's start by
+considering a simpler version of the problem, where an operation adds
+
+$1$
+
+to the
+indices after it, instead of
+
+$1, 2, \ldots$
+
+In this version, notice that the
+value of an index is only changed by the operations that occurred at another
+index before it, and all that matters is the difference between the number of
+operations of type
+
+$1$
+
+and operations of type
+
+$2$
+
+. Because of this, instead of
+directly updating the values, you can just keep track of the number of
+operations that have occurred, and update the value when it is iterated over.
+
+In this version, you can do something similar, except you have to keep track of
+two things: the difference between the number of operations of type
+
+$1$
+
+and the
+number of operations of type
+
+$2$
+
+, as well as the total amount the operations
+add. As an example, let's say that there were
+
+$3$
+
+more operations of type
+
+$1$
+
+than
+
+$2$
+
+at indices
+
+$\leq 5$
+
+, and those operations increased the value of
+
+$a_5$
+
+by
+
+$4$
+
+. Then, because the contribution of each operation of type
+
+$1$
+
+increases
+by
+
+$1$
+
+, and the contribution of each element of type
+
+$2$
+
+decreases by
+
+$1$
+
+, the
+contribution of all of the operations increases by exactly
+
+$3$
+
+. Therefore, the
+value of
+
+$a_6$
+
+will increase by exactly
+
+$4 + 3 = 7$
+
+due to the operations. In
+this way, we can calculate the contribution of the operations without having to
+directly simulate them, lending us an
+
+$\mathcal{O}(n)$
+
+solution.
+
+Rohin Garg's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using ll = long long;
+ 
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0);
+   
+    int n; cin >> n;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+   
+    ll ans = 0;
+    ll contribution = 0;
+    ll cnt_ops = 0;
+    for (int i = 0; i < n; i++) {
+        contribution += cnt_ops;
+        a[i] += contribution;
+        
+        ll cur_ops = -a[i];
+        ans += abs(cur_ops);
+        cnt_ops += cur_ops;
+        contribution += cur_ops;
+    }
+    
+    cout << ans << '\n';
+}

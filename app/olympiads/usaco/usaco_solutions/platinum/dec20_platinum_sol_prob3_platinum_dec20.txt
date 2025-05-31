@@ -1,0 +1,315 @@
+Solution ID: sol_prob3_platinum_dec20
+Contest: DEC20
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_dec20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Note:
+
+I used the first sample case as a problem in a math competition a
+while ago.
+
+First, add one to
+
+$K$
+
+and change
+
+$\le$
+
+to
+
+$<$
+
+. Then define
+
+$P$
+
+to be the
+smallest power of two greater than
+
+$K$
+
+. Every triangle must satisfy
+
+$$\left\lfloor \frac{x}{P}\right\rfloor=\left\lfloor \frac{y}{P}\right\rfloor=\left\lfloor \frac{z}{P}\right\rfloor.$$
+
+Case 1:
+
+$\left\lfloor \frac{x}{P/2}\right\rfloor=\left\lfloor \frac{y}{P/2}\right\rfloor=\left\lfloor \frac{z}{P/2}\right\rfloor$
+
+Then
+
+$x$
+
+,
+
+$y$
+
+, and
+
+$z$
+
+definitely form a triangle. Accounting for this case
+alone is sufficient for test cases 5 and 6.
+
+Case 2:
+
+$x,y,z$
+
+form a triangle but the condition
+
+$\left\lfloor \frac{x}{P/2}\right\rfloor=\left\lfloor \frac{y}{P/2}\right\rfloor=\left\lfloor \frac{z}{P/2}\right\rfloor$
+
+is not satisfied. WLOG assume that
+
+$\left\lfloor \frac{x}{P/2}\right\rfloor<\left\lfloor \frac{y}{P/2}\right\rfloor=\left\lfloor \frac{z}{P/2}\right\rfloor$
+
+.
+Clearly
+
+$y\oplus z<K$
+
+holds, so we only need to check that both
+
+$x\oplus y<K$
+
+and
+
+$x\oplus z<K$
+
+hold.
+
+So for all
+
+$t\ge 0$
+
+and each
+
+$x\in [Pt,Pt+P/2)$
+
+, we must add
+
+$\binom{\{y:y\in [Pt+P/2,Pt+P)\text{ and }x\oplus y<K\}}{2}$
+
+to the answer. This
+is what the recursive function
+
+$\texttt{add_to_answer}$
+
+in my code below
+accounts for (read it for more details).
+
+The number of times
+
+$\texttt{add_to_answer}$
+
+is called and the overall running
+time are
+
+$\mathcal{O}(N\log_2K)$
+
+.
+
+$\mathcal{O}(N\cdot (\log_2 K)^2)$
+
+or
+
+$\mathcal{O}(N\cdot (\log_2 K)^3)$
+
+solutions with reasonable constant factors
+should also receive full credit.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7; // 998244353;
+
+template<class T> bool ckmin(T& a, const T& b) {
+	return b < a ? a = b, 1 : 0; } // set a = min(a,b)
+template<class T> bool ckmax(T& a, const T& b) {
+	return a < b ? a = b, 1 : 0; }
+
+/**
+ * Description: modular arithmetic operations
+ * Source:
+	* KACTL
+	* https://codeforces.com/blog/entry/63903
+	* https://codeforces.com/contest/1261/submission/65632855 (tourist)
+	* https://codeforces.com/contest/1264/submission/66344993 (ksun)
+	* also see https://github.com/ecnerwala/cp-book/blob/master/src/modnum.hpp (ecnerwal)
+ * Verification:
+	* https://open.kattis.com/problems/modulararithmetic
+ */
+
+template<int MOD, int RT> struct mint {
+	static const int mod = MOD;
+	int v; explicit operator int() const { return v; } // explicit -> don't silently convert to int
+	mint() { v = 0; }
+	mint(long long _v) { v = int((-MOD < _v && _v < MOD) ? _v : _v % MOD);
+		if (v < 0) v += MOD; }
+	friend bool operator==(const mint& a, const mint& b) {
+		return a.v == b.v; }
+	friend bool operator!=(const mint& a, const mint& b) {
+		return !(a == b); }
+	friend bool operator<(const mint& a, const mint& b) {
+		return a.v < b.v; }
+	friend string to_string(mint a) { return to_string(a.v); }
+
+	mint& operator+=(const mint& m) {
+		if ((v += m.v) >= MOD) v -= MOD;
+		return *this; }
+	mint& operator-=(const mint& m) {
+		if ((v -= m.v) < 0) v += MOD;
+		return *this; }
+	mint& operator*=(const mint& m) {
+		v = int((long long)v*m.v%MOD); return *this; }
+	mint& operator/=(const mint& m) { return (*this) *= inv(m); }
+	friend mint pow(mint a, long long p) {
+		mint ans = 1; assert(p >= 0);
+		for (; p; p /= 2, a *= a) if (p&1) ans *= a;
+		return ans; }
+	friend mint inv(const mint& a) { assert(a.v != 0);
+		return pow(a,MOD-2); }
+
+	mint operator-() const { return mint(-v); }
+	mint& operator++() { return *this += 1; }
+	mint& operator--() { return *this -= 1; }
+	friend mint operator+(mint a, const mint& b) { return a += b; }
+	friend mint operator-(mint a, const mint& b) { return a -= b; }
+	friend mint operator*(mint a, const mint& b) { return a *= b; }
+	friend mint operator/(mint a, const mint& b) { return a /= b; }
+};
+
+vector<vector<mint<MOD,5> > > scmb; // small combinations, 5 is primitive root for both common mods
+void genComb(int SZ) {
+	scmb.assign(SZ,vector<mint<MOD,5> > (SZ)); scmb[0][0] = 1;
+	for(int i=1; i<SZ; ++i) for(int j = 0; j<i+1; ++j)
+		scmb[i][j] = scmb[i-1][j]+(j?scmb[i-1][j-1]:0);
+}
+
+int N,K,P = 1;
+
+mint<MOD,5> i2 = mint<MOD,5> (1)/2, i6 = mint<MOD,5> (1)/6;
+mint<MOD,5> c2(mint<MOD,5> x) { return mint<MOD,5> ((long long)x.v*(x.v-1)/2); }
+mint<MOD,5> c3(mint<MOD,5> x) { return x*(x-1)*(x-2)*i6; }
+
+mint<MOD,5> ans = 0;
+
+int total_length(const vector<pair<int,int> >& v) { // total length of intervals
+	int len = 0; for (auto& t: v) len += t.second-t.first+1;
+	return len;
+}
+
+// a and b are sets of intervals in [0,block)
+// for each x in a, we want to add the following quantity to the answer:
+	// \binom{cur+size({y | y in b and x^y < (block-1)&K})}{2}
+
+void add_to_answer(const vector<pair<int,int> >& a, const vector<pair<int,int> >& b, int block, mint<MOD,5> cur) {
+	// base cases
+	if (!int((a).size())) return;
+	if (!int((b).size())) {
+		ans += total_length(a)*c2(cur);
+		return;
+	}
+	vector<pair<int,int> > des{{0,block-1}};
+	if (b == des) { // b = [0,block)
+		cur += (block-1)&K;
+		ans += total_length(a)*c2(cur);
+		return;
+	}
+	// otherwise recurse
+	vector<pair<int,int> > A[2], B[2];
+	auto ad = [&](vector<pair<int,int> >& v, pair<int, int> p) {
+		ckmax(p.first,0), ckmin(p.second,block/2-1);
+		if (p.first > p.second) return;
+		v.push_back(p);
+	};
+	for (auto& t: a) ad(A[0],t), ad(A[1],{t.first-block/2,t.second-block/2});
+	for (auto& t: b) ad(B[0],t), ad(B[1],{t.first-block/2,t.second-block/2});
+	if (K&(block/2)) {
+		for(int i=0; i<2; ++i) add_to_answer(A[i],B[i^1],block/2,cur+total_length(B[i]));
+	} else {
+		for(int i=0; i<2; ++i) add_to_answer(A[i],B[i],block/2,cur);
+	}
+}
+
+void deal(vector<pair<int,int> > v) { // [0,P)
+	int P2 = P/2;
+	vector<pair<int,int> > tot[2];
+	for (auto& t: v) {
+		if (t.first/P2 < t.second/P2) {
+			tot[0].push_back({t.first,P2-1});
+			tot[1].push_back({0,t.second-P2});
+		} else {
+			tot[t.first/P2].push_back({t.first%P2,t.second%P2});
+		}
+	}
+	for(int i=0; i<2; ++i) {
+		ans += c3(total_length(tot[i])); // case 1
+		add_to_answer(tot[i],tot[i^1],P2,0); // case 2
+	}
+}
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	cin >> N >> K;
+	++ K; while (P <= K) P *= 2; // P > K
+	K = K-P/2; assert(0 <= K && K < P/2);
+	mint<MOD,5> sing = P*c2(K)+2*c3(P/2); // answer for interval covering [0,P)
+	map<int,vector<pair<int,int> > > todo;
+	for(int i=0; i<N; ++i) {
+		int L,R; cin >> L >> R;
+		int LL = L/P, RR = R/P;
+		if (LL != RR) {
+			ans += (RR-LL-1)*sing;
+			todo[LL].push_back({L%P,P-1});
+			todo[RR].push_back({0,R%P});
+		} else {
+			todo[LL].push_back({L%P,R%P});
+		}
+	}
+	for (auto& t: todo) deal(t.second);
+	cout << to_string(ans) << endl;
+}
+
+A similar approach (with the same time complexity) involves writing a modified
+bitwise trie that supports  the following operations on an array
+
+$a[\cdot]$
+
+(where all additions come before all queries, although it is possible to support
+interleaved additions and queries).
+
+$\texttt{add}(x,y)$
+
+: For each
+
+$i\in [0,x]$
+
+and
+
+$j\in [0,K)$
+
+, add
+
+$y$
+
+to
+
+$a[i\oplus j]$
+
+.
+
+$\texttt{query}(x)$
+
+: Output
+
+$\sum_{i=0}^{x}\binom{a_i}{2}$
+
+.

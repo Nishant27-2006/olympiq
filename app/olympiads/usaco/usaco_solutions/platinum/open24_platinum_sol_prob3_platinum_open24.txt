@@ -1,0 +1,424 @@
+Solution ID: sol_prob3_platinum_open24
+Contest: OPEN24
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_open24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Andrew Gu)
+
+Subtask 1:
+
+We only need to activate a single robot. Let's iterate over all possible
+activation points. If the activation point is
+
+$x$
+
+, then we spend
+
+$\min(x, L-x)$
+
+time to reach that point. Then we need to wait for the original robot to reach
+point
+
+$y = x+L/2$
+
+on the circle. Assuming that
+
+$0\leq y < L$
+
+(take a modulo if
+necessary), then original robot reaches
+
+$y$
+
+for the first time at
+
+$Ky$
+
+. If this
+happens before we reach
+
+$x$
+
+, then we need to wait another cycle for time
+
+$K(y+L)$
+
+. The minimum over all activation points is the answer.
+
+Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int64_t INF = numeric_limits<int64_t>::max();
+
+void chmin(int64_t& x, int64_t y) {
+  x = min(x, y);
+}
+
+int main () {
+  ios_base::sync_with_stdio(0); cin.tie(0);
+  int l, r, n, k;
+  cin >> l >> r >> n >> k;
+  vector<int> a(n);
+  for (int& x: a) cin >> x;
+  int64_t ans = INF;
+  for (int x: a) {
+    int t = min(x, l-x);
+    int opposite_position = (x + l/2) % l;
+    int64_t time_to_reach = 1LL * opposite_position * k;
+    if (time_to_reach < t) time_to_reach += 1LL * l * k; // definitely >= t now
+    chmin(ans, time_to_reach);
+  }
+  cout << ans << '\n';
+}
+
+Subtask 2:
+
+We need to activate
+
+$R-1$
+
+robots. Label these additional robots
+
+$0, 1, \dots,
+R-2$
+
+such that robot
+
+$i$
+
+is a distance of
+
+$\frac{L}{R}(i+1)$
+
+counterclockwise
+from the original robot. For a subset
+
+$S\subseteq \{0, 1, \dots, R-2\}$
+
+and
+
+$1\leq i\leq n$
+
+, let
+
+$\mathtt{dp}[S][i]$
+
+be the minimum time to be at activation
+point
+
+$a_i$
+
+and have all robots in
+
+$S$
+
+activated. The transitions are as
+follows: from the state
+
+$(S, i)$
+
+, we can pick an activation point
+
+$a_j$
+
+and
+robot
+
+$k$
+
+for the next step. We walk from
+
+$a_i$
+
+to
+
+$a_j$
+
+as quickly as possible
+and then find the next time that the position where robot
+
+$k$
+
+is supposed to be
+lines up with
+
+$a_j$
+
+. Then we can transition to state
+
+$(S\cup \{k\}, j)$
+
+. The
+base cases are implemented slightly differently because the original position
+
+$0$
+
+is not necessarily an activation point.
+
+The time complexity is
+
+$O(2^RRN^2)$
+
+. Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int64_t INF = numeric_limits<int64_t>::max();
+
+void chmin(int64_t& x, int64_t y) {
+  x = min(x, y);
+}
+
+int main () {
+  ios_base::sync_with_stdio(0); cin.tie(0);
+  int l, r, n, k;
+  cin >> l >> r >> n >> k;
+  vector<int> a(n);
+  for (int& x: a) cin >> x;
+  const int64_t ROBOT_PERIOD = 1LL*l*k;
+
+  auto dist = [&] (int x, int y) {
+    return min(abs(x - y), l - abs(x - y));
+  };
+  auto get_next_time = [&] (int i, int j, int64_t t) {
+    // given the ith robot after the initial robot, find the next time >= t
+    // when it lines up with activiation point j
+
+    // the time must be congruent to k*(a[j] - (l/r) * (i+1)) modulo l*k
+    int64_t residue = 1LL * k * (a[j] - (l/r) * (i+1)) % ROBOT_PERIOD;
+    if (residue < 0) residue += ROBOT_PERIOD;
+    int64_t z = ROBOT_PERIOD * (t/ROBOT_PERIOD) + residue;
+    if (z >= t) return z;
+    else return z + ROBOT_PERIOD;
+  };
+
+  vector<vector<int64_t>> dp(1<<(r-1), vector<int64_t>(n, INF));
+  // dp[mask][i] = shortest amount of time to be at a[i] and
+  // have all the robots in the set represented by mask placed
+  for (int i = 0; i < r-1; i++) {
+    for (int j = 0; j < n; j++) {
+      dp[1<<i][j] = get_next_time(i, j, dist(0, a[j]));
+    }
+  }
+  for (int mask = 1; mask < (1<<(r-1)); mask++) {
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        for (int k = 0; k < r-1; k++) {
+          if (mask & (1<<k)) continue;
+          chmin(
+            dp[mask|1<<k][j],
+            get_next_time(k, j, dp[mask][i] + dist(a[i], a[j]))
+          );
+        }
+      }
+    }
+  }
+  int64_t ans = INF;
+  for (int i = 0; i < n; i++) {
+    chmin(ans, dp[(1<<(r-1))-1][i]);
+  }
+  cout << ans << '\n';
+}
+
+Subtask 3:
+
+One way to approach this part is to apply a speed of
+
+$\frac{1}{K}$
+
+clockwise to
+everything in the problem, so that the robots do not move. Then the activation
+points move at a rate of
+
+$\frac{1}{K}$
+
+clockwise, and we can move at a speed of
+
+$\frac{K-1}{K}$
+
+counterclockwise or
+
+$\frac{K+1}{K}$
+
+clockwise. The key
+observation now is that whereas previously we were going to an activation point
+and waiting to activate the next robot, what we should be doing instead is going
+to the position of a robot and waiting for the next activation point to pass by.
+(Note that it is important that
+
+$K\geq 1$
+
+, as otherwise we would always be
+moving clockwise and not have the option of waiting at a robot's position.)
+
+Let
+
+$\mathtt{dp}[S][i]$
+
+denote the minimum time to have all the robots in
+
+$S$
+
+be
+activated and be at the position of robot
+
+$i$
+
+. From state
+
+$(S, i)$
+
+, we pick the
+next robot
+
+$j$
+
+to activate and walk from the position of robot
+
+$i$
+
+to the
+position of robot
+
+$j$
+
+as fast as possible (remember that we walk at different
+speeds counterclockwise and clockwise). Then we find the next time after that
+where an activation point passes by. This can be done by a binary search on the
+activation points.
+
+The time complexity is
+
+$O(N\log N + 2^RR^2\log N)$
+
+for sorting the initial
+activation points, and then multiplying the number of transitions by a
+
+$\log N$
+
+factor for the binary search step.
+
+Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int64_t INF = numeric_limits<int64_t>::max();
+
+void chmin(int64_t& x, int64_t y) {
+  x = min(x, y);
+}
+
+int64_t ceil(int64_t x, int64_t y) {
+  return (x + y - 1) / y;
+}
+
+int main () {
+  ios_base::sync_with_stdio(0); cin.tie(0);
+  int l, r, n, k;
+  cin >> l >> r >> n >> k;
+  vector<int> a(n);
+  for (int& x: a) cin >> x;
+  sort(a.begin(), a.end());
+
+  auto dist = [&] (int x, int y) {
+    int cw_dist = (x - y + l) % l;
+    int64_t ans = ceil(1LL*k*cw_dist, k+1);
+    if (k > 1) chmin(ans, ceil(1LL*k*(l-cw_dist), k-1));
+    return ans;
+  };
+  vector<int> diff_to_dist(r);
+  for (int i = 0; i < r; i++) diff_to_dist[i] = dist(0, (l/r)*i);
+  auto get_next_time = [&] (int i, int64_t t) {
+    // given the ith robot after the initial robot, find the next time >= t
+    // when it lines up with some activation point
+
+    // robot is at position (l/r) * (i+1) + t/k on the circle, we are looking for the next activation point after that
+    int residue = ((l/r) * (i+1) + ceil(t, k)) % l;
+    auto it = lower_bound(a.begin(), a.end(), residue);
+    int dist_to_next = (it == a.end() ? l + a[0] : *it) - residue;
+    return 1LL * k * (dist_to_next + ceil(t, k));
+  };
+
+  vector<vector<int64_t>> dp(1<<(r-1), vector<int64_t>(r-1, INF));
+  // dp[mask][i] = shortest amount of time to have robots in the set represented by mask placed
+  // and be aligned with the ith robot after the original
+  for (int i = 0; i < r-1; i++) {
+    dp[1<<i][i] = get_next_time(i, dist(0, (l/r)*(i+1)));
+  }
+
+  for (int mask = 0; mask < (1<<(r-1)); mask++) {
+    for (int i = 0; i < r-1; i++) {
+      if (!(mask & (1<<i))) continue;
+      for (int j = 0; j < r-1; j++) {
+        if (mask & (1<<j)) continue;
+        chmin(
+          dp[mask|1<<j][j],
+          get_next_time(j, dp[mask][i] + diff_to_dist[(j-i+r)%r])
+        );
+      }
+    }
+  }
+  cout << *min_element(dp.back().begin(), dp.back().end()) << '\n';
+}
+
+Note that this implementation precalculates the times to go between robot
+positions in the array
+
+$\mathtt{diff\_to\_dist}$
+
+, which is a fairly significant
+constant factor improvement over performing the calculation for each transition.
+
+Full solution:
+
+We only need a small improvement over the solution for subtask 3. For a given
+state
+
+$(S, i)$
+
+, the time to reach that state is the minimum from transitions
+leading into it. For each transition, we had to compute a time and then do a
+binary search to increase it to the next time that an activation point arrives.
+We can instead reorder these steps: find the minimum time without the step of
+waiting for the next activation point, and then perform the binary search step
+only once to wait for the next activation point. The time complexity is
+
+$O(N\log
+N + 2^RR(R+\log N))$
+
+.
+
+For illustrative purposes, we'll only show the difference compared to the
+subtask 3 solution, which is the main loop:
+
+...
+  for (int mask = 0; mask < (1<<(r-1)); mask++) {
+    for (int i = 0; i < r-1; i++) {
+      if (!(mask & (1<<i))) continue;
+      dp[mask][i] = get_next_time(i, dp[mask][i]);
+      for (int j = 0; j < r-1; j++) {
+        if (mask & (1<<j)) continue;
+        chmin(
+          dp[mask|1<<j][j],
+          dp[mask][i] + diff_to_dist[(j-i+r)%r]
+        );
+      }
+    }
+  }
+...
+
+Bonus:
+
+Try to solve this problem in
+
+$O(N\log N + (N + 2^R)R)$
+
+time.

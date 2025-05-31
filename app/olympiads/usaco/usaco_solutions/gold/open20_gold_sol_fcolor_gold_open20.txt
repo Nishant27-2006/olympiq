@@ -1,0 +1,119 @@
+Solution ID: sol_fcolor_gold_open20
+Contest: OPEN20
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_fcolor_gold_open20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+If both cows
+
+$b$
+
+and
+
+$c$
+
+admire cow
+
+$a$
+
+then both
+
+$b$
+
+and
+
+$c$
+
+must have the same
+color. From now on, we can treat both
+
+$b$
+
+and
+
+$c$
+
+as the same cow; change all
+occurrences of
+
+$c$
+
+to
+
+$b$
+
+and merge the adjacency list of
+
+$c$
+
+into that of
+
+$b$
+
+.
+Repeat this process while at least two distinct cows admire the same cow.
+
+Once we reach a configuration in which a cow is admired by at most one cow this
+process terminates; we can just assign every cow a distinct color. If we always merge the smaller adjacency list of the two
+cows into the larger one then our solution runs in
+
+$O((N+M)\log N)$
+
+time. We
+ensured that a few slow solutions did not pass but it is likely that many (not
+necessarily provable) heuristics passed anyways.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+".in").c_str(),"r",stdin);
+	freopen((s+".out").c_str(),"w",stdout);
+}
+ 
+const int MX = 2e5+5;
+ 
+int N,M;
+ 
+int par[MX],cnt[MX];
+vector<int> adj[MX], rpar[MX];
+queue<int> q; 
+ 
+void merge(int a, int b) {
+	a = par[a], b = par[b]; 
+	if (rpar[a].size() < rpar[b].size()) swap(a,b);
+	for (int t: rpar[b]) { par[t] = a; rpar[a].push_back(t); }
+	adj[a].insert(end(adj[a]),begin(adj[b]),end(adj[b])); 
+	adj[b].clear();
+	if (adj[a].size() > 1) q.push(a);
+}
+ 
+int main() { 
+	setIO("fcolor");
+	cin >> N >> M;
+	for (int i = 0; i < M; ++i) {
+		int a,b; cin >> a >> b;
+		adj[a].push_back(b);
+	}
+	for (int i = 1; i <= N; ++i) {
+		par[i] = i; rpar[i].push_back(i);
+		if (adj[i].size() > 1) q.push(i);
+	}
+	while (q.size()) {
+		int x = q.front(); if (adj[x].size() <= 1) { q.pop(); continue; }
+		int a = adj[x].back(); adj[x].pop_back();
+		if (par[a] == par[adj[x].back()]) continue;
+		merge(a,adj[x].back());
+	}
+	int co = 0;
+	for (int i = 1; i <= N; ++i) {
+		if (!cnt[par[i]]) cnt[par[i]] = ++co;
+		cout << cnt[par[i]] << "\n";
+	}
+}

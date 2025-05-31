@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>If <span class='math'>$p_j=i$</span>, say that <span class='math'>$j$</span> is a child of <span class='math'>$i$</span> and <span class='math'>$i$</span> is a parent of <span class='math'>$j$</span>. Let&apos;s
+first compute the length and number of children for each word <span class='math'>$i$</span>.
+<p>When Bessie chooses a word <span class='math'>$w_i$</span> to read from the word bank, what she actually
+reads will be some word <span class='math'>$x_i$</span> that is a prefix of <span class='math'>$w_i$</span>. We will initialize
+<span class='math'>$x_i=w_i$</span> and then repeatedly replace <span class='math'>$x_i$</span> with its parent while <span class='math'>$w_i$</span> can
+still be uniquely identified from <span class='math'>$x_i$</span>. Specifically, 
+<p><ol><li>If <span class='math'>$x_i=0$</span> or <span class='math'>$p_{x_i}$</span> has more than one child, we should stop (<span class='math'>$w_i$</span> can&apos;t
+be uniquely identified from <span class='math'>$p_{x_i}$</span>).
+ </li><li>Otherwise, <span class='math'>$x_i$</span> is the only child of <span class='math'>$p_{x_i}$</span>, so reading <span class='math'>$p_{x_i}$</span> is
+enough to uniquely identify <span class='math'>$x_i$</span> and therefore <span class='math'>$w_i$</span>. Thus, we can repeatedly
+set <span class='math'>$x_i=p_{x_i}$</span> until the first case holds.</li></ol>
+<p>When <span class='math'>$x_i$</span> has been determined, print its length. Then <span class='math'>$w_i$</span> is removed from the
+word bank, so all words from <span class='math'>$x_i$</span> to <span class='math'>$w_i$</span> inclusive can be ignored going
+forward.  We also decrease the number of children of <span class='math'>$p_{x_i}$</span> by one to account
+for ignoring <span class='math'>$x_i$</span>.
+<p>The number of operations performed for <span class='math'>$w_i$</span> is proportional to a constant plus
+the number of ignored words. As the total number of ignored words cannot exceed
+the total number of words, the overall time complexity is <span class='math'>$O(N)$</span>.
+<p>Python code:
+<p><pre class='prettyprint'>
+N = int(input())
+P = [0] + list(map(int, input().split()))
+num_child = [0] * (N+1)
+length = [0]*(N+1)
+for i in range(1,N+1):
+    length[i] = length[P[i]]+1
+    num_child[P[i]] += 1
+ 
+M = sum(x == 0 for x in num_child)
+for _ in range(M):
+    x = int(input())
+    while True:
+        assert num_child[x] == 0
+        if x == 0:
+            print(0)
+            break
+        if num_child[P[x]] == 1:
+            x = P[x]
+            num_child[x] = 0
+            continue
+        print(length[x])
+        num_child[P[x]] -= 1
+        break
+</pre>
+<p>Bonus: The above solution may take proportional to <span class='math'>$N$</span> time to process a single
+<span class='math'>$w_i$</span>.  Write a solution that preprocesses the <span class='math'>$p_i$</span> in <span class='math'>$O(N)$</span> time, and then 
+processes each <span class='math'>$w_i$</span> in <span class='math'>$O(1)$</span> time.
+<p></body></html>

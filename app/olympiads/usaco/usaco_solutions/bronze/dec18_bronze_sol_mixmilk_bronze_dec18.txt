@@ -1,0 +1,128 @@
+Solution ID: sol_mixmilk_bronze_dec18
+Contest: DEC18
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_mixmilk_bronze_dec18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+We can simulate the pours one by one, keeping track of the amount of milk in
+each bucket. For example, if we pour from bucket
+
+$1$
+
+into bucket
+
+$2$
+
+, and bucket
+
+$1$
+
+has size
+
+$c_1$
+
+and bucket
+
+$2$
+
+has size
+
+$c_2$
+
+, and before the pour, bucket
+
+$1$
+
+has
+
+$m_1$
+
+units of milk and bucket
+
+$2$
+
+has
+
+$m_2$
+
+units, then the amount of
+milk poured is
+
+$\min(m_1, c_2 - m_2)$
+
+. Therefore after the pour, the amount of
+milk in bucket
+
+$1$
+
+is
+
+$m_1 - \min(m_1, c_2 - m_2)$
+
+. And the amount of milk in
+bucket
+
+$2$
+
+is
+
+$m_2 + \min(m_1, c_2 - m_2)$
+
+. The formulas for pouring bucket
+
+$2$
+
+into bucket
+
+$3$
+
+, or bucket
+
+$3$
+
+into bucket
+
+$1$
+
+, are analogous.
+
+Since there are only
+
+$100$
+
+pours, and each pour takes only a constant number of
+arithmetic operations to simulate, this algorithm will run very fast.
+
+Here is Travis Hance's code:
+
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+ 
+void pour(int& c1, int& m1, int& c2, int& m2) {
+  int amt = min(m1, c2 - m2);
+  m1 -= amt;
+  m2 += amt;
+}
+ 
+int main() {
+  int c1, c2, c3;
+  int m1, m2, m3;
+  scanf("%d %d", &c1, &m1);
+  scanf("%d %d", &c2, &m2);
+  scanf("%d %d", &c3, &m3);
+ 
+  for (int i = 0; i < 33; i++) {
+    pour(c1, m1, c2, m2);
+    pour(c2, m2, c3, m3);
+    pour(c3, m3, c1, m1);
+  }
+  pour(c1, m1, c2, m2);
+ 
+  printf("%d\n%d\n%d\n", m1, m2, m3);
+}

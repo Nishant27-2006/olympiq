@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+
+</head>
+<p>(Analysis by Jonathan Paulson - <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="553f3a3b34213d343b25342039263a3b153238343c397b363a38">[email&#160;protected]</a>)</p><p>
+
+If the cows didn&apos;t have to slow down, after <span class='math'>$T$</span> seconds cow <span class='math'>$i$</span> will be at position <span class='math'>$x_i + T*s_i$</span>. If a faster cow started behind a slower cow, but the faster cow ended up ahead, that means the faster cow will join the slower cow&apos;s group (or a group in the middle).</p><p>
+
+So we want to count the number of cows don&apos;t &quot;cross&quot; any cows ahead of them; this is the number of cows who won&apos;t join another group (and hence will start their own group).</p><p>
+
+The most obvious way to to go through each cow and check if any of the cows ahead of them are going to end up behind them. But this is too slow: there are O(N^2) pairs of cows, and N = 10^5. So O(N^2) ~ 10^10, and computers only do about 10^9 operations per second.</p><p>
+
+Luckily, there is a faster way: start from the back, and keep track of the least far ending position as you go. This only takes about N operations, which is very fast.</p><p>
+
+Here is my code for the fast approach:
+</p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;vector&gt;
+
+#define PB push_back
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+  ll n, t;
+  scanf(&quot;%lld %lld&quot;, &amp;n, &amp;t);
+  vector&lt;ll&gt; S;
+  for(ll i=0; i&lt;n; i++) {
+    ll x, s;
+    scanf(&quot;%lld %lld\n&quot;, &amp;x, &amp;s);
+    S.PB(x + s*t);
+  }
+
+  ll ans = 1;
+  ll slow = S[n-1];
+  for(ll i=n-1; i&gt;=0; i--) {
+    if(S[i] &lt; slow) { ans++; }
+    slow = min(slow, S[i]);
+  }
+  printf(&quot;%lld\n&quot;, ans);
+}
+</pre><p>
+</p>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></html>

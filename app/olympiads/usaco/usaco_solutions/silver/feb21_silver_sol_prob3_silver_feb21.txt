@@ -1,0 +1,373 @@
+Solution ID: sol_prob3_silver_feb21
+Contest: FEB21
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_feb21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+The first step is to use complementary counting. The number of rectangular
+sub-grids with minimum equal to
+
+$100$
+
+is equal to the number of rectangular
+sub-grids  with minimum at least
+
+$100$
+
+minus the number of rectangular sub-grids
+with minimum at least
+
+$101$
+
+.
+
+To count the number of rectangular sub-grids with minimum at least
+
+$m$
+
+, create
+an
+
+$N\times N$
+
+boolean array
+
+$ok$
+
+such that
+
+$ok[i][j]=1$
+
+if
+
+$G[i][j]\ge m$
+
+. We
+want to count the number of rectangular sub-grids in
+
+$ok$
+
+that consist solely of
+ones.
+
+If
+
+$ok$
+
+was an
+
+$N\times 1$
+
+rectangle rather than an
+
+$N\times N$
+
+rectangle, the
+following loop would suffice to compute the answer:
+
+int run = 0;
+for (int i = 0; i < N; ++i) {
+	if (ok[i][0]) ans += ++run;
+	else run = 0;
+}
+
+Each run of
+
+$l$
+
+consecutive ones contributes
+
+$\frac{l(l+1)}{2}$
+
+to the answer.
+
+Define
+
+$\texttt{all_ones}_{i,j}[k]$
+
+to be true if all of the cells from
+
+$(i,k)$
+
+to
+
+$(j,k)$
+
+contain ones, and false otherwise. It suffices to iterate over
+
+$(i,j)$
+
+, compute
+
+$\texttt{all_ones}_{i,j}[k]$
+
+for all
+
+$0\le k<N$
+
+, and then apply
+the 1D solution to
+
+$\texttt{all_ones}$
+
+. This takes
+
+$\mathcal{O}(N^4)$
+
+time since
+there are
+
+$\mathcal{O}(N^3)$
+
+triples
+
+$(i,j,k)$
+
+and for each one, we do
+
+$\mathcal{O}(N)$
+
+work to compute
+
+$\texttt{all_ones}_{i,j}[k]$
+
+.
+
+To speed this up to
+
+$\mathcal{O}(N^3)$
+
+time, we can use 1D prefix sums to
+compute
+
+$\texttt{all_ones}_{i,j}[k]$
+
+in
+
+$\mathcal{O}(1)$
+
+time.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class JustGreenEnough2 {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        int[][] pasture = new int[n][n];
+        for (int y = 0; y < n; y++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            for (int x = 0; x < n; x++) {
+                pasture[y][x] = Integer.parseInt(tokenizer.nextToken());
+            }
+        }
+        int[][] sumsBelow = new int[n][n + 1];
+        int[][] sumsAtMost = new int[n][n + 1];
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                sumsBelow[y][x + 1] = sumsBelow[y][x] + (pasture[y][x] < 100 ? 1 : 0);
+                sumsAtMost[y][x + 1] = sumsAtMost[y][x] + (pasture[y][x] <= 100 ? 1 : 0);
+            }
+        }
+        long answer = 0;
+        for (int x1 = 0; x1 < n; x1++) {
+            for (int x2 = x1 + 1; x2 <= n; x2++) {
+                int y1 = -1;
+                int y2 = -1;
+                for (int y0 = 0; y0 < n; y0++) {
+                    while (y1 < n && (y1 < y0 || sumsAtMost[y1][x2] - sumsAtMost[y1][x1] == 0)) {
+                        y1++;
+                    }
+                    while (y2 < n && (y2 < y0 || sumsBelow[y2][x2] - sumsBelow[y2][x1] == 0)) {
+                        y2++;
+                    }
+                    answer += y2 - y1;
+                }
+            }
+        }
+        System.out.println(answer);
+    }
+}
+
+Alternatively, note that
+
+$\texttt{all_ones}_{i,j}[k]=\texttt{all_ones}_{i,j-1}[k]\& ok[j][k]$
+
+. So let's
+fix
+
+$i$
+
+and compute
+
+$$\texttt{all_ones}_{i,i},\texttt{all_ones}_{i,i+1},\ldots,\texttt{all_ones}_{i,N-1}$$
+
+in order.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using ll = long long;
+ 
+int N;
+bool ok[1000][1000];
+ 
+ll solve() {
+	ll ans = 0;
+	for (int i = 0; i < N; ++i) {
+		vector<bool> all_ones(N,true);
+		for (int j = i; j < N; ++j) { 
+			// add rectangles with upper row i and lower row j
+			int run = 0;
+			for (int k = 0; k < N; ++k) {
+				// all_ones_{i,j-1}[k] -> all_ones_{i,j}[k]
+				all_ones[k] = all_ones[k]&ok[j][k]; 
+				if (all_ones[k]) ans += ++run; // update answer
+				else run = 0;
+			}
+		}
+	}
+	return ans;
+}
+ 
+int main() {
+	cin >> N;
+	vector<vector<int>> pasture(N,vector<int>(N)); 
+	for (vector<int>& a: pasture) 
+		for (int& b: a) cin >> b;
+ 
+	for (int i = 0; i < N; ++i) 
+		for (int j = 0; j < N; ++j)
+			ok[i][j] = pasture[i][j] >= 100;
+	ll ans = solve();
+ 
+	for (int i = 0; i < N; ++i) 
+		for (int j = 0; j < N; ++j)
+			ok[i][j] = pasture[i][j] > 100;
+	ans -= solve();
+ 
+	cout << ans << "\n";
+}
+
+It was possible (but not necessary) to solve this problem in
+
+$\mathcal{O}(N^2)$
+
+time. In the code below, for a fixed
+
+$i$
+
+, I iterate over all
+
+$j$
+
+in decreasing
+(rather than increasing order as the solution above does) and maintain the sum
+of the  contributions of  all runs in
+
+$\texttt{all_ones}_{i,j}$
+
+in
+
+$\texttt{sum_comb}$
+
+. When
+
+$j$
+
+decreases by one, I update
+
+$\texttt{sum_comb}$
+
+accordingly for each
+
+$k$
+
+such that
+
+$\texttt{all_ones}_{i,j+1}[k]=0$
+
+and
+
+$\texttt{all_ones}_{i,j}[k]=1$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using ll = long long;
+ 
+int N;
+bool ok[1000][1000];
+ 
+ll solve() {
+	ll ans = 0;
+	vector<int> lst(N,N-1);
+	vector<int> to_add[1000];
+	for (int i = N-1; i >= 0; --i) {
+		for (int j = i; j < N; ++j) to_add[j].clear();
+		for (int k = 0; k < N; ++k) {
+			if (ok[i][k] == 0) lst[k] = i-1;
+			else to_add[lst[k]].push_back(k);
+		}
+		int sum_comb = 0;
+		vector<int> lef(N,-1), rig(N,-1);
+		for (int j = N-1; j >= i; --j) {
+			for (int k: to_add[j]) {
+				// all_ones_{i,j+1}[k] = 0, all_ones_{i,j}[k] = 1
+				int l = k, r = k;
+				auto c2 = [](int x) { return (x+1)*(x+2)/2; };
+				if (k && lef[k-1] != -1) {
+					l = lef[k-1];
+					sum_comb -= c2(k-1-l);
+				}
+				if (k+1 < N && rig[k+1] != -1) {
+					r = rig[k+1];
+					sum_comb -= c2(r-k-1);
+				}
+				lef[r] = l, rig[l] = r;
+				sum_comb += c2(r-l);
+			}
+			ans += sum_comb;
+		}
+	}
+	return ans;
+}
+ 
+int main() {
+	cin >> N;
+	vector<vector<int>> pasture(N,vector<int>(N)); 
+	for (vector<int>& a: pasture) 
+		for (int& b: a) cin >> b;
+ 
+	for (int i = 0; i < N; ++i) 
+		for (int j = 0; j < N; ++j)
+			ok[i][j] = pasture[i][j] >= 100;
+	ll ans = solve();
+ 
+	for (int i = 0; i < N; ++i) 
+		for (int j = 0; j < N; ++j)
+			ok[i][j] = pasture[i][j] > 100;
+	ans -= solve();
+ 
+	cout << ans << "\n";
+}
+
+For an additional challenge, try
+
+Maximum
+Building II
+
+.

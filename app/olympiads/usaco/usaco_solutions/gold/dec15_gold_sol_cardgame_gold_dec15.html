@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nathan Pinsker)
+<p>This problem seems daunting at first, but a few insights can give way to a
+greedy strategy for solving it:
+<p>- You&apos;re free to mentally rearrange Elsie&apos;s cards however you like within each
+half, since you know what she&apos;s going to play, and you can simply &quot;match&quot; your
+cards to hers.
+<p>- It&apos;s always best to use your N/2 highest cards in the first half, and your N/2
+lowest  cards in the second half. This means we can consider both halves
+completely independently, since we know which cards are going to be played in
+each.
+<p>(For the remainder of the analysis, we&apos;ll only consider the first half -- the
+second half  can be analyzed with very similar arguments.)
+<p>- If you&apos;re aiming for X points, then you should always aim to beat Elsie&apos;s X
+lowest cards. This is because, if Bessie can beat some set made of X of Elsie&apos;s cards, then
+you can always swap Elsie&apos;s cards for lower cards without losing any points.
+<p>- If you want to beat one of Elsie&apos;s cards, you should always do it with the
+lowest possible card you can do it with. After all, having a higher card in
+your hand is strictly better than having a lower card in your hand.
+<p>This hints at a greedy solution: for each of Elsie&apos;s cards in ascending order,
+find the lowest possible card you have that beats it, play that card against
+hers, and try to beat the next one. Some thinking can convince you that this is
+the best possible solution, since it&apos;s the &quot;lexicographically lowest&quot; --
+intuitively, each card played so far is the minimum possible card you could have
+played, so you&apos;ll have the maximum possible number of high cards available for
+you to use.
+<p>Here is Mark Gordon&apos;s solution, which uses a pair of sweeps through each of the
+arrays to  implement this idea:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cstdio&gt;
+#include &lt;algorithm&gt;
+
+using namespace std;
+
+int main() {
+  freopen(&quot;cardgame.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;cardgame.out&quot;, &quot;w&quot;, stdout);
+
+  ios_base::sync_with_stdio(false);
+  int N; cin &gt;&gt; N;
+
+  vector&lt;bool&gt; used(2 * N);
+  vector&lt;int&gt; A(N);
+  for (int i = 0; i &lt; N; i++) {
+    cin &gt;&gt; A[i];
+    A[i]--;
+    used[A[i]] = true;
+  }
+  sort(A.begin(), A.begin() + N / 2);
+  sort(A.begin() + N / 2, A.end());
+  rotate(A.begin(), A.begin() + N / 2, A.end());
+
+  vector&lt;int&gt; B;
+  for (int i = 0; i &lt; 2 * N; i++) {
+    if (!used[i]) {
+      B.push_back(i);
+    }
+  }
+
+  int res = 0;
+  for (int i = N / 2, j = N / 2; i &lt; N; i++, j++, res++) {
+    while (j &lt; N &amp;&amp; B[j] &lt; A[i]) {
+      j++;
+    }
+    if (j == N) {
+      break;
+    }
+  }
+  for (int i = N / 2 - 1, j = N / 2 - 1; i &gt;= 0; i--, j--, res++) {
+    while (j &gt;= 0 &amp;&amp; B[j] &gt; A[i]) {
+      j--;
+    }
+    if (j == -1) {
+      break;
+    }
+  }
+  cout &lt;&lt; res &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+<p></body></html>

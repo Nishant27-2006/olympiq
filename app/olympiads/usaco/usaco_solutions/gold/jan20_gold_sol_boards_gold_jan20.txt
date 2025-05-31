@@ -1,0 +1,266 @@
+Solution ID: sol_boards_gold_jan20
+Contest: JAN20
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_boards_gold_jan20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+For each springboard
+
+$i,$
+
+let
+
+$ans[i]$
+
+denote the minimum distance needed to
+walk to the start point of springboard
+
+$i$
+
+. If Bessie walks directly to this
+springboard, then the distance is
+
+$x_1[i]+y_1[i].$
+
+Otherwise, Bessie last took
+some springboard
+
+$j$
+
+before walking to springboard
+
+$i,$
+
+giving a distance of
+
+$ans[j]+x_1[i]+y_1[i]-x_2[j]-y_2[j],$
+
+where both
+
+$x_2[j]\le x_1[i]$
+
+and
+
+$y_2[j]\le y_1[i]$
+
+must be satisfied.
+
+Sort all springboard start and endpoints by
+
+$x$
+
+. Then for each
+
+$x_1[i]$
+
+in
+increasing order we need to compute the minimum possible value of
+
+$ans[j]-x_2[j]-y_2[j]$
+
+over all
+
+$j$
+
+such that
+
+$x_2[j]\le x_1[i]$
+
+and
+
+$y_2[j]\le y_1[i].$
+
+Our approach requires some data structure
+
+$D$
+
+that stores
+pairs and supports the following operations.
+
+For each pair in increasing lexicographical order:
+
+If we're currently considering the end point of a springboard
+
+$i$
+
+,  insert
+
+$(y_2[i],ans[i]-x_2[i]-y_2[i])$
+
+into
+
+$D$
+
+.
+
+If we're currently considering the start point of a springboard
+
+$i$
+
+,  query
+the pair
+
+$(y_2[j],ans[j]-x_2[j]-y_2[j])\in D$
+
+with maximum second element that
+satisfies
+
+$y_2[j]\le y_1[i]$
+
+. Then update
+
+$ans[i]$
+
+accordingly.
+
+One candidate for
+
+$D$
+
+is a segment tree that supports point updates and range
+minimum queries. A simpler approach is to use a map.
+
+When the point
+
+$(x_2[j],y_2[j])$
+
+is reached, consider the pair
+
+$p_j=(y_2[j],ans[j]-x_2[j]-y_2[j]).$
+
+If there already exists a pair
+
+$p_k\in D$
+
+such that
+
+$y_2[k]\le y_2[j]$
+
+and
+
+$ans[k]-x_2[k]-y_2[k]\le ans[j]-x_2[j]-y_2[j],$
+
+then there is never any reason
+to use springboard
+
+$j$
+
+over springboard
+
+$k,$
+
+so
+
+$D$
+
+remains unchanged.
+
+Otherwise, while there exists
+
+$k$
+
+such that
+
+$p_k\in D$
+
+$y_2[k]\ge y_2[j]$
+
+and
+
+$ans[k]-x_2[k]-y_2[k]\ge ans[j]-x_2[j]-y_2[j],$
+
+remove
+
+$p_k$
+
+from
+
+$D$
+
+. Then
+insert
+
+$p_j$
+
+into
+
+$D$
+
+.
+
+When querying for
+
+$y_1[i],$
+
+it suffices to consider only the pair in
+
+$D$
+
+with  maximum first element such that its first element is at most
+
+$y_1[i].$
+
+This works because pairs with  higher first element in
+
+$D$
+
+have lower second
+element.
+
+These operations run in
+
+$O(\log n)$
+
+time amortized.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define f first
+#define s second
+
+void setIO(string name) {
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	freopen((name+".in").c_str(),"r",stdin);
+	freopen((name+".out").c_str(),"w",stdout);
+}
+
+const int MX = 1e5+5;
+
+int N,P;
+map<int,int> m;
+int ans[MX];
+ 
+void ins(int y, int v) {
+	auto it = prev(m.upper_bound(y));
+	if (it->s <= v) return;
+	it ++;
+	while (it != end(m) && it->s > v) m.erase(it++);
+	m[y] = v;
+}
+ 
+int main() {
+	setIO("boards");
+	cin >> N >> P; m[0] = 0;
+	vector<pair<pair<int,int>,pair<int,int>>> ev;
+	for (int i = 0; i < P; ++i) {
+		pair<int,int> a,b; 
+		cin >> a.f >> a.s >> b.f >> b.s;
+		ev.push_back({a,{i,-1}}); // start point
+		ev.push_back({b,{i,1}}); // end point
+	}
+	sort(begin(ev),end(ev));
+	for (auto& t: ev) {
+		if (t.s.s == -1) {
+			ans[t.s.f] = t.f.f+t.f.s+prev(m.upper_bound(t.f.s))->s;
+		} else {
+			ins(t.f.s,ans[t.s.f]-t.f.f-t.f.s);
+		}
+	}
+	cout << m.rbegin()->s+2*N;
+}

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>The first step is to use complementary counting. The number of rectangular
+sub-grids with minimum equal to <span class='math'>$100$</span> is equal to the number of rectangular
+sub-grids  with minimum at least <span class='math'>$100$</span> minus the number of rectangular sub-grids
+with minimum at least <span class='math'>$101$</span>.
+<p>To count the number of rectangular sub-grids with minimum at least <span class='math'>$m$</span>, create
+an <span class='math'>$N\times N$</span> boolean array <span class='math'>$ok$</span> such that <span class='math'>$ok[i][j]=1$</span> if <span class='math'>$G[i][j]\ge m$</span>. We
+want to count the number of rectangular sub-grids in <span class='math'>$ok$</span> that consist solely of
+ones.
+<p>If <span class='math'>$ok$</span> was an <span class='math'>$N\times 1$</span> rectangle rather than an <span class='math'>$N\times N$</span> rectangle, the
+following loop would suffice to compute the answer:
+<p><pre class='prettyprint'>
+int run = 0;
+for (int i = 0; i &lt; N; ++i) {
+	if (ok[i][0]) ans += ++run;
+	else run = 0;
+}
+</pre>
+<p>Each run of <span class='math'>$l$</span> consecutive ones contributes <span class='math'>$\frac{l(l+1)}{2}$</span> to the answer.
+<p>Define <span class='math'>$\texttt{all_ones}_{i,j}[k]$</span> to be true if all of the cells from <span class='math'>$(i,k)$</span>
+to <span class='math'>$(j,k)$</span> contain ones, and false otherwise. It suffices to iterate over
+<span class='math'>$(i,j)$</span>, compute <span class='math'>$\texttt{all_ones}_{i,j}[k]$</span> for all <span class='math'>$0\le k&lt;N$</span>, and then apply
+the 1D solution to <span class='math'>$\texttt{all_ones}$</span>. This takes <span class='math'>$\mathcal{O}(N^4)$</span> time since
+there are <span class='math'>$\mathcal{O}(N^3)$</span> triples <span class='math'>$(i,j,k)$</span> and for each one, we do
+<span class='math'>$\mathcal{O}(N)$</span> work to compute <span class='math'>$\texttt{all_ones}_{i,j}[k]$</span>.
+<p>To speed this up to <span class='math'>$\mathcal{O}(N^3)$</span> time, we can use 1D prefix sums to
+compute <span class='math'>$\texttt{all_ones}_{i,j}[k]$</span> in <span class='math'>$\mathcal{O}(1)$</span> time. 
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class JustGreenEnough2 {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        int[][] pasture = new int[n][n];
+        for (int y = 0; y &lt; n; y++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            for (int x = 0; x &lt; n; x++) {
+                pasture[y][x] = Integer.parseInt(tokenizer.nextToken());
+            }
+        }
+        int[][] sumsBelow = new int[n][n + 1];
+        int[][] sumsAtMost = new int[n][n + 1];
+        for (int y = 0; y &lt; n; y++) {
+            for (int x = 0; x &lt; n; x++) {
+                sumsBelow[y][x + 1] = sumsBelow[y][x] + (pasture[y][x] &lt; 100 ? 1 : 0);
+                sumsAtMost[y][x + 1] = sumsAtMost[y][x] + (pasture[y][x] &lt;= 100 ? 1 : 0);
+            }
+        }
+        long answer = 0;
+        for (int x1 = 0; x1 &lt; n; x1++) {
+            for (int x2 = x1 + 1; x2 &lt;= n; x2++) {
+                int y1 = -1;
+                int y2 = -1;
+                for (int y0 = 0; y0 &lt; n; y0++) {
+                    while (y1 &lt; n &amp;&amp; (y1 &lt; y0 || sumsAtMost[y1][x2] - sumsAtMost[y1][x1] == 0)) {
+                        y1++;
+                    }
+                    while (y2 &lt; n &amp;&amp; (y2 &lt; y0 || sumsBelow[y2][x2] - sumsBelow[y2][x1] == 0)) {
+                        y2++;
+                    }
+                    answer += y2 - y1;
+                }
+            }
+        }
+        System.out.println(answer);
+    }
+}
+</pre>
+<p>Alternatively, note that
+<span class='math'>$\texttt{all_ones}_{i,j}[k]=\texttt{all_ones}_{i,j-1}[k]\&amp; ok[j][k]$</span>. So let&apos;s
+fix <span class='math'>$i$</span> and compute
+<div class='math'>$$\texttt{all_ones}_{i,i},\texttt{all_ones}_{i,i+1},\ldots,\texttt{all_ones}_{i,N-1}$$</div>
+in order.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+using ll = long long;
+ 
+int N;
+bool ok[1000][1000];
+ 
+ll solve() {
+	ll ans = 0;
+	for (int i = 0; i &lt; N; ++i) {
+		vector&lt;bool&gt; all_ones(N,true);
+		for (int j = i; j &lt; N; ++j) { 
+			// add rectangles with upper row i and lower row j
+			int run = 0;
+			for (int k = 0; k &lt; N; ++k) {
+				// all_ones_{i,j-1}[k] -&gt; all_ones_{i,j}[k]
+				all_ones[k] = all_ones[k]&amp;ok[j][k]; 
+				if (all_ones[k]) ans += ++run; // update answer
+				else run = 0;
+			}
+		}
+	}
+	return ans;
+}
+ 
+int main() {
+	cin &gt;&gt; N;
+	vector&lt;vector&lt;int&gt;&gt; pasture(N,vector&lt;int&gt;(N)); 
+	for (vector&lt;int&gt;&amp; a: pasture) 
+		for (int&amp; b: a) cin &gt;&gt; b;
+ 
+	for (int i = 0; i &lt; N; ++i) 
+		for (int j = 0; j &lt; N; ++j)
+			ok[i][j] = pasture[i][j] &gt;= 100;
+	ll ans = solve();
+ 
+	for (int i = 0; i &lt; N; ++i) 
+		for (int j = 0; j &lt; N; ++j)
+			ok[i][j] = pasture[i][j] &gt; 100;
+	ans -= solve();
+ 
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>It was possible (but not necessary) to solve this problem in <span class='math'>$\mathcal{O}(N^2)$</span>
+time. In the code below, for a fixed <span class='math'>$i$</span>, I iterate over all <span class='math'>$j$</span> in decreasing
+(rather than increasing order as the solution above does) and maintain the sum
+of the  contributions of  all runs in <span class='math'>$\texttt{all_ones}_{i,j}$</span> in
+<span class='math'>$\texttt{sum_comb}$</span>. When <span class='math'>$j$</span> decreases by one, I update <span class='math'>$\texttt{sum_comb}$</span>
+accordingly for each <span class='math'>$k$</span> such that <span class='math'>$\texttt{all_ones}_{i,j+1}[k]=0$</span> and
+<span class='math'>$\texttt{all_ones}_{i,j}[k]=1$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+using ll = long long;
+ 
+int N;
+bool ok[1000][1000];
+ 
+ll solve() {
+	ll ans = 0;
+	vector&lt;int&gt; lst(N,N-1);
+	vector&lt;int&gt; to_add[1000];
+	for (int i = N-1; i &gt;= 0; --i) {
+		for (int j = i; j &lt; N; ++j) to_add[j].clear();
+		for (int k = 0; k &lt; N; ++k) {
+			if (ok[i][k] == 0) lst[k] = i-1;
+			else to_add[lst[k]].push_back(k);
+		}
+		int sum_comb = 0;
+		vector&lt;int&gt; lef(N,-1), rig(N,-1);
+		for (int j = N-1; j &gt;= i; --j) {
+			for (int k: to_add[j]) {
+				// all_ones_{i,j+1}[k] = 0, all_ones_{i,j}[k] = 1
+				int l = k, r = k;
+				auto c2 = [](int x) { return (x+1)*(x+2)/2; };
+				if (k &amp;&amp; lef[k-1] != -1) {
+					l = lef[k-1];
+					sum_comb -= c2(k-1-l);
+				}
+				if (k+1 &lt; N &amp;&amp; rig[k+1] != -1) {
+					r = rig[k+1];
+					sum_comb -= c2(r-k-1);
+				}
+				lef[r] = l, rig[l] = r;
+				sum_comb += c2(r-l);
+			}
+			ans += sum_comb;
+		}
+	}
+	return ans;
+}
+ 
+int main() {
+	cin &gt;&gt; N;
+	vector&lt;vector&lt;int&gt;&gt; pasture(N,vector&lt;int&gt;(N)); 
+	for (vector&lt;int&gt;&amp; a: pasture) 
+		for (int&amp; b: a) cin &gt;&gt; b;
+ 
+	for (int i = 0; i &lt; N; ++i) 
+		for (int j = 0; j &lt; N; ++j)
+			ok[i][j] = pasture[i][j] &gt;= 100;
+	ll ans = solve();
+ 
+	for (int i = 0; i &lt; N; ++i) 
+		for (int j = 0; j &lt; N; ++j)
+			ok[i][j] = pasture[i][j] &gt; 100;
+	ans -= solve();
+ 
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>For an additional challenge, try <a href='https://cses.fi/problemset/task/1148'>Maximum
+Building II</a>.
+<p></body></html>

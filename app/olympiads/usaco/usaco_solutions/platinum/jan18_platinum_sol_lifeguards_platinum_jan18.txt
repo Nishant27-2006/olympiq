@@ -1,0 +1,196 @@
+Solution ID: sol_lifeguards_platinum_jan18
+Contest: JAN18
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_lifeguards_platinum_jan18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+In this problem, we are given
+
+$N$
+
+intervals, and asked to find the maximum area
+which they can cover if we remove exactly
+
+$K$
+
+of them.
+
+One immediate observation is that it's not a problem if we remove too many
+intervals, since we can add them back without decreasing the total area. A
+consequence of this is that if one interval is contained in another interval, we
+may as well remove the first interval.
+
+So first we filter out intervals that are "superseded". To do so, simply sort
+the intervals by starting point and keep track of the maximum ending point seen
+so far.
+
+Now we have some number of intervals which are monotonic; that is, if one
+interval starts before another interval, it also ends before the other interval.
+This suggests a left-to-right scan and dynamic programming.
+
+Index the intervals from
+
+$1$
+
+to
+
+$N$
+
+in left-to-right order. Let
+
+$f(n,r)$
+
+be the
+maximum area which can be covered by the first
+
+$n$
+
+intervals after removing at
+least
+
+$r$
+
+of these intervals, assuming that interval
+
+$n$
+
+is not removed. There
+are three cases:
+
+1) Interval
+
+$n$
+
+is the only interval which we keep, out of the first
+
+$n$
+
+intervals
+
+2) We keep the leftmost interval in
+
+$1 \dots n-1$
+
+that intersects with interval
+
+$n$
+
+3) We do not keep any of the intervals in
+
+$1 \dots n-1$
+
+that intersect with
+interval
+
+$n$
+
+.
+
+These three cases are the only possibilities: if interval
+
+$j$
+
+is the first
+interval that intersects with interval
+
+$n$
+
+, there is no point in keeping any of
+the subsequent intervals
+
+$j+1, j+2, \dots, n-1$
+
+(for essentially the same reason
+we could discard "superseded" intervals).
+
+The first case is simple; it is possible if and only if
+
+$r \leq n-1$
+
+. The area
+covered is the area of interval
+
+$n$
+
+.
+
+The second case is also relatively straightforward; if the leftmost interval
+that intersects interval
+
+$n$
+
+is interval
+
+$j$
+
+, then the area covered is
+
+$f(j, r - (n-j-1))$
+
+plus the area of interval
+
+$n$
+
+, minus the overlap between
+intervals
+
+$n$
+
+and
+
+$j$
+
+.
+
+We keep track of the index
+
+$j$
+
+with the two pointers method. As we increase
+
+$j$
+
+,
+we can maintain for each
+
+$r$
+
+the maximum area covered by the first
+
+$j-1$
+
+intervals after removing exactly
+
+$r$
+
+of them. Since the intervals that do not
+intersect interval
+
+$n$
+
+are exactly the first
+
+$j-1$
+
+intervals, this running
+maximum allows us to deal with the third case efficiently as well.
+
+The number of states used is
+
+$NK$
+
+, and each transition is
+
+$O(1)$
+
+, so the time
+complexity of our algorithm is
+
+$O(NK)$
+
+.

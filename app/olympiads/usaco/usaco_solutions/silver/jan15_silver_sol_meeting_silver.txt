@@ -1,0 +1,81 @@
+Solution ID: sol_meeting_silver
+Contest: JAN15
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_meeting_silver.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+There could be $O(2^N)$ different paths to get from field 1 to field
+$N$, so we can't simply try all possible paths. However, we note
+that the path lengths are fairly small. In particular, no path will
+have length exceeding 100. This gives us the following idea - for a
+given vertex $V$ and desired path length $L$, determine if it's
+possible to get to that vertex with exactly that path length.
+
+More formally, if we can get to vertex $V$ with desired path length $L$,
+then for all its neighbors $W$ that have outgoing edges with length $K$,
+we can get to vertex $W$ with path length $L + K$.
+
+This will take $O(N^2D^2)$ time, which runs in time.
+
+import java.io.*;
+import java.util.*;
+public class meetingS {
+  static int[][] bessieGrid;
+  static int[][] elsieGrid;
+
+  static int n;
+  
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    StringTokenizer st = new StringTokenizer(br.readLine());
+    n = Integer.parseInt(st.nextToken());
+    int m = Integer.parseInt(st.nextToken());
+    bessieGrid = new int[n][n];
+    elsieGrid = new int[n][n];
+    for(int i = 0; i < m; i++) {
+      st = new StringTokenizer(br.readLine());
+      int x = Integer.parseInt(st.nextToken())-1;
+      int y = Integer.parseInt(st.nextToken())-1;
+      bessieGrid[x][y] = Integer.parseInt(st.nextToken());
+      elsieGrid[x][y] = Integer.parseInt(st.nextToken());
+    }
+    boolean[] bessieCan = solve(bessieGrid);
+    boolean[] elsieCan = solve(elsieGrid);
+    int best = Integer.MAX_VALUE;
+    for(int i = 0; i < bessieCan.length; i++) {
+      if(bessieCan[i] && elsieCan[i]) {
+        best = i;
+        break;
+      }
+    }
+    if(best == Integer.MAX_VALUE) {
+      pw.println("IMPOSSIBLE");
+    }
+    else {
+      pw.println(best);
+    }
+    pw.close();
+  }
+
+  public static boolean[] solve(int[][] dist) {
+    boolean[][] dp = new boolean[n][100*n+1];
+    dp[0][0] = true;
+    for(int i = 0; i < n; i++) {
+      for(int j = 0; j < dp[i].length; j++) {
+        if(!dp[i][j]) continue;
+        for(int k = i+1; k < n; k++) {
+          if(dist[i][k] > 0) {
+            dp[k][j + dist[i][k]] = true;
+          }
+        }
+      }
+    }
+    return dp[n-1];
+  }
+}

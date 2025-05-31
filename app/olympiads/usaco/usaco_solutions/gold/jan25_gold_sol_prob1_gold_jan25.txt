@@ -1,0 +1,645 @@
+Solution ID: sol_prob1_gold_jan25
+Contest: JAN25
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob1_gold_jan25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Weiming Zhou)
+
+Let
+
+$\text{med}(a, b, c)$
+
+denote the median of
+
+$a$
+
+,
+
+$b$
+
+, and
+
+$c$
+
+.
+
+Even though we only care about the median approximation of the root, we can also
+define a median approximation for each node
+
+$x$
+
+. This is the value on node
+
+$x$
+
+after it swaps to the median of its two (or possibly zero) children.
+
+Let
+
+$\text{cost}_i(x)$
+
+be the cost to turn node
+
+$i$
+
+into having value
+
+$x$
+
+.
+
+$$
+\text{cost}_i(x) = 
+\begin{cases} 
+0 & \text{if } x = a_i \\ 
+c_i & \text{if } x \neq a_i 
+\end{cases}
+$$
+
+Subtask 1:
+
+Lets first coordinate compress the initial values and query values to
+
+$O(n + q)$
+
+unique values. Let
+
+$\text{dp}[i][j] $
+
+be the minimum cost to make the median
+approximation of
+
+$i$
+
+equal to
+
+$j$
+
+. Our answer for a given query is
+
+$\text{dp}[1][m]$
+
+.
+
+Our base cases are when there are zero children:
+
+$$\text{dp}[i][j] = \text{cost}_i(j)$$
+
+Our transitions are when there are two children:
+
+$$\text{dp}[i][j] = \min_{\text{med}(a,b,c) = j} ( \text{dp}[i\cdot2][a] + \text{dp}[i\cdot2+1][b] + \text{cost}_i(c))$$
+
+There are
+
+$O((n+q)^2)$
+
+states and transitions are
+
+$O((n+q)^3)$
+
+, for a total
+complexity of
+
+$O((n+q)^4)$
+
+(we only spend
+
+$O((n+q)^3)$
+
+time transitioning for
+each node). This should pass
+
+$n,q \leq 50$
+
+.
+
+Alex Fan's C++ code:
+
+using namespace std;
+ 
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+ 
+#define MAXN 101
+ 
+int N, Q, a[MAXN], b[MAXN];
+long long c[MAXN], dp[MAXN][MAXN];
+ 
+map<int, int> m;
+ 
+vector<int> pos;
+ 
+long long med(int x, int y, int z) {
+	return x ^ y ^ z ^ min({x, y, z}) ^ max({x, y, z});
+}
+ 
+int main() {
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+ 
+	cin >> N;
+	for(int i = 0;i < N;++i) {
+		cin >> a[i] >> c[i];
+		pos.push_back(a[i]);
+	}
+ 
+	cin >> Q;
+	for(int i = 0;i < Q;++i) {
+		cin >> b[i];
+		pos.push_back(b[i]);
+	}
+ 
+	sort(pos.begin(), pos.end());
+	pos.resize(unique(pos.begin(), pos.end()) - pos.begin());
+ 
+	for(int i = 0;i < pos.size();++i) {
+		m[pos[i]] = i;
+	}
+ 
+	for(int i = N - 1;i >= 0;--i) {
+		// Calculate for node i
+		if(2 * i + 1 >= N) {
+			for(int j = 0;j < pos.size();++j) dp[i][j] = pos[j] == a[i] ? 0 : c[i]; 
+			continue;
+		}
+ 
+		for(int j = 0;j < pos.size();++j) dp[i][j] = 1e15;
+		
+		int l = 2 * i + 1;
+		int r = 2 * i + 2;
+ 
+		// Assuming node i's value is j, and its two children are a and b
+		for(int j = 0;j < pos.size();++j) {
+			long long cost = pos[j] == a[i] ? 0 : c[i];
+			for(int a = 0;a < pos.size();++a) {
+				for(int b = 0;b < pos.size();++b) {
+					int median = med(a, b, j);
+					dp[i][median] = min(dp[i][median], cost + dp[l][a] + dp[r][b]);
+				}
+			}
+		}
+	}
+ 
+	for(int i = 0;i < Q;++i) {
+		cout << dp[0][m[b[i]]] << endl;
+	}
+ 
+	return 0;
+}
+
+Subtask 2:
+
+Suppose
+
+$m$
+
+is the current queried target value, and let
+
+$p_m(x)$
+
+be a function
+that "partitions"
+
+$x$
+
+relative to
+
+$m$
+
+.
+
+$$
+
+p_m(x) = 
+\begin{cases} 
+0 & \text{if } x < m \\ 
+1 & \text{if } x = m \\
+2 & \text{if } x > m 
+\end{cases}
+
+$$
+
+Then,
+
+$$p_m(\text{med}(a, b, c)) = \text{med}(p_m(a), p_m(b), p_m(c))$$
+
+.
+
+Essentially, the state of being less than, equal to, or greater than is
+preserved when taking the median. This means we don't care as much about the
+exact median approximation of each node, only how that approximation compares
+with
+
+$m$
+
+. We define
+
+$\text{dp}[i][j]$
+
+to be the minimum cost to turn the median
+approximation of node
+
+$i$
+
+into some
+
+$x$
+
+such that
+
+$p_m(x) = j$
+
+(the
+
+$\text{dp}$
+
+array has size
+
+$n \times 3$
+
+). Our final answer is now
+
+$\text{dp}[1][p_m(m)] = \text{dp}[1][1]$
+
+.
+
+Our
+
+$\text{dp}$
+
+remains mostly unchanged:
+
+We redefine
+
+$cost_i$
+
+as follows:
+
+$$
+\text{cost}_i(x) = 
+\begin{cases} 
+0 & \text{if } x = p_m(a_i) \\ 
+c_i & \text{if } x \neq p_m(a_i) 
+\end{cases}
+$$
+
+Base case:
+
+$$\text{dp}[i][j] = \text{cost}_i(j)$$
+
+Transition:
+
+$$\text{dp}[i][j] = \min_{\text{med}(a,b,c) = j} ( \text{dp}[i\cdot2][a] + \text{dp}[i\cdot2+1][b] + \text{cost}_i(c))$$
+
+Now we have
+
+$O(n)$
+
+states and
+
+$O(3^3)$
+
+transitions per query, resulting in a
+final complexity of
+
+$O(3^3nq)$
+
+. This should pass with
+
+$n, q \leq 1000$
+
+.
+
+Alex Fan's C++ code:
+
+using namespace std;
+ 
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+ 
+#define MAXN 2005
+ 
+int N, Q, a[MAXN], f[MAXN];
+long long c[MAXN], dp[MAXN][3], ans[MAXN];
+ 
+long long med(int x, int y, int z) {
+	return x ^ y ^ z ^ min({x, y, z}) ^ max({x, y, z});
+}
+ 
+void merge(int p) {
+	long long cost[3] = {c[p], c[p], c[p]};
+	cost[f[p]] = 0;
+	if(2 * p + 1 >= N) {
+		for(int i = 0;i < 3;++i) dp[p][i] = cost[i];
+		return;
+	}
+ 
+	int l = 2 * p + 1;
+	int r = 2 * p + 2;
+ 
+	dp[p][0] = dp[p][1] = dp[p][2] = 1e15;
+ 
+	for(int i = 0;i < 3;++i) {
+		for(int j = 0;j < 3;++j) {
+			for(int k = 0;k < 3;++k) {
+				dp[p][med(i, j, k)] = min(dp[p][med(i, j, k)], cost[i] + dp[l][j] + dp[r][k]);
+			}
+		}
+	}
+	return;
+}
+ 
+int main() {
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+ 
+	cin >> N;
+	for(int i = 0;i < N;++i) {
+		cin >> a[i] >> c[i];
+	}
+ 
+	cin >> Q;
+	for(int i = 0;i < Q;++i) {
+		int uwu;
+		cin >> uwu;
+		for(int j = N - 1;j >= 0;--j) {
+			f[j] = uwu == a[j] ? 1 : (uwu < a[j] ? 0 : 2);
+			merge(j);
+		}
+		cout << dp[0][1] << endl;
+	}
+ 
+	return 0;
+}
+
+Full Solution:
+
+We can notice that our
+
+$\text{dp}$
+
+is define by the
+
+$\text{cost}_i$
+
+s, which is
+in turn defined in terms of the
+
+$p_m(a_i)$
+
+of that node. Additionally, if we
+change a
+
+$\text{cost}_i$
+
+, at most
+
+$O(\log n)$
+
+$\text{dp}$
+
+values change. This is
+because only the
+
+$\text{dp}$
+
+values of the ancestors of a node are affected, and
+the tree has depth
+
+$O(\log n)$
+
+.
+
+We can process the queries offline. Let
+
+$m_j$
+
+be the
+
+$j$
+
+'th query after sorting
+unique query values in ascending order. Between trying to answer
+
+$m_j$
+
+and
+
+$m_{j+1}$
+
+, some of the
+
+$\text{cost}_i$
+
+s would have changed. This change is due
+to
+
+$p_{m_j}(a_i)$
+
+being different from
+
+$p_{m_{j+1}}(a_i)$
+
+.
+
+If
+
+$a_i = m_j$
+
+,
+
+$p_{m_j}(a_i) = 1$
+
+but
+
+$p_{m_{j+1}}(a_i) = 0$
+
+.
+
+If
+
+$m_j < a_i < m_{j+1}$
+
+,
+
+$p_{m_j}(a_i) = 2$
+
+but
+
+$p_{m_{j+1}}(a_i) = 0$
+
+.
+
+If
+
+$a_i = m_{j+1}$
+
+,
+
+$p_{m_j}(a_i) = 2$
+
+but
+
+$p_{m_{j+1}}(a_i) = 1$
+
+.
+
+We use these cases to update the
+
+$\text{cost}_i$
+
+values. Every node's
+
+$p_m(a_i)$
+
+starts at
+
+$2$
+
+and monotonically decreases until it reaches
+
+$0$
+
+. This means each
+node "causes" at most
+
+$2$
+
+updates throughout answering the offline queries. As
+each update affects
+
+$O(\log n)$
+
+other
+
+$\text{dp}$
+
+values, this makes the total
+complexity of updates
+
+$O(n \log n)$
+
+.
+
+Putting it all together, our final complexity is
+
+$O(q \log q + n \log n)$
+
+. This
+should pass for
+
+$n, q \leq 2 \cdot 10^5$
+
+.
+
+Alex Fan's C++ code:
+
+using namespace std;
+ 
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+ 
+#define MAXN 200005
+ 
+int N, Q, a[MAXN], f[MAXN];
+long long c[MAXN], dp[MAXN][3], ans[MAXN];
+ 
+vector<int> pos;
+map<int, vector<int>> nodes, qs;
+ 
+long long med(int x, int y, int z) {
+	return x ^ y ^ z ^ min({x, y, z}) ^ max({x, y, z});
+}
+ 
+void merge(int p) {
+	long long cost[3] = {c[p], c[p], c[p]};
+	cost[f[p]] = 0; //f[p] is p_m(a_i)
+	if(2 * p + 1 >= N) {
+		for(int i = 0;i < 3;++i) dp[p][i] = cost[i];
+		return;
+	}
+ 
+	int l = 2 * p + 1;
+	int r = 2 * p + 2;
+ 
+	dp[p][0] = dp[p][1] = dp[p][2] = 1e15;
+ 
+	for(int i = 0; i < 3; ++i) {
+		for(int j = 0; j < 3; ++j) {
+			for(int k = 0; k < 3; ++k) {
+				dp[p][med(i, j, k)] = min(dp[p][med(i, j, k)], cost[i] + dp[l][j] + dp[r][k]);
+			}
+		}
+	}
+	return;
+}
+ 
+void update(int p, int state) {
+	f[p] = state;
+	while(true) {
+		merge(p);
+		if(!p) break;
+		p = (p - 1) / 2;
+	}
+	return;
+}
+ 
+int main() {
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+ 
+	cin >> N;
+	for(int i = 0;i < N;++i) {
+		cin >> a[i] >> c[i];
+		nodes[a[i]].push_back(i);
+		pos.push_back(a[i]);
+	}
+ 
+	cin >> Q;
+	for(int i = 0;i < Q;++i) {
+		int uwu;
+		cin >> uwu;
+		qs[uwu].push_back(i);
+		pos.push_back(uwu);
+	}
+ 
+	sort(pos.begin(), pos.end());
+	pos.resize(unique(pos.begin(), pos.end()) - pos.begin());
+ 
+	for(int i = N - 1;i >= 0;--i) 
+        merge(i);
+ 
+	for(int uwu : pos) {
+    	// Update all the states to equality first
+		reverse(nodes[uwu].begin(), nodes[uwu].end());
+		for(auto owo : nodes[uwu]) {
+			update(owo, 1);
+		}
+ 
+		// Answer the queries
+		for(auto xwx : qs[uwu]) {
+			ans[xwx] = dp[0][1];
+		}
+ 
+		// Update all the states to greater than
+		for(auto owo : nodes[uwu]) {
+			update(owo, 2);
+		}
+	}
+ 
+	for(int i = 0;i < Q;++i) {
+		cout << ans[i] << endl;
+	}
+ 
+	return 0;
+}

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nathan Pinsker)
+<p>This is a shortest-path problem where some of the tiles follow special rules. In
+shortest-path problems (and dynamic programming problems in general), solving
+them requires you to capture the &quot;state&quot; of the system: some small amount of
+information that describes a subproblem, so that  you don&apos;t have to repeat work.
+In a standard shortest-path algorithm, this &quot;state&quot; might be simply the current
+location. In this problem, we&apos;ll take the state to be the current location, and
+also a boolean that represents whether Bessie currently smells like oranges. In
+this way, we can run a Dijkstra algorithm with a priority queue as normal.
+<p>You could argue that the &quot;state&quot; could use some additional information, like
+whether Bessie is currenly sliding and, if so, in what direction. This is fine,
+and this approach can solve the problem as well! It actually ends up running
+faster -- you can use a BFS instead of  a heap-based queue -- but at the cost of
+making the transitions between states a bit more complicated and harder to code.
+<p>Here is Mark Gordon&apos;s code, which takes the second approach. He uses integers
+between 0 and 10,000,000 to  represent Bessie&apos;s current state: (1000 x 1000) for
+her position, times 5 for whether she is sliding, times 2 for whether she smells
+like oranges.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+
+using namespace std;
+
+int dr[] = {-1, 0, 1, 0};
+int dc[] = {0, -1, 0, 1};
+
+struct state {
+  int r;
+  int c;
+  int ld;
+  bool smell;
+
+  state(int r, int c, int ld, bool smell) :
+      r(r), c(c), ld(ld), smell(smell) {
+  }
+
+  int pack() {
+    return (smell ? 1 : 0) + 2 * (ld + 1) + 10 * c + 10000 * r;
+  }
+
+  static state unpack(int x) {
+    return state(x / 10000, (x / 10) % 1000,
+                 (x / 2) % 5 - 1, x &amp; 1);
+  }
+};
+
+int getcell(const vector&lt;vector&lt;int&gt;&gt;&amp; A, int r, int c) {
+  if (r &lt; 0 || r &gt;= A.size() || c &lt; 0 || c &gt;= A[r].size()) {
+    return 0;
+  }
+  return A[r][c];
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+
+  int N, M;
+  cin &gt;&gt; N &gt;&gt; M;
+  vector&lt;vector&lt;int&gt;&gt; A(N, vector&lt;int&gt;(M));
+  for (int i = 0; i &lt; N; i++) {
+    for (int j = 0; j &lt; M; j++) {
+      cin &gt;&gt; A[i][j];
+    }
+  }
+  queue&lt;int&gt; q;
+  vector&lt;int&gt; D(10000000, -1);
+
+  int s = state(0, 0, -1, false).pack();
+  q.push(s);
+  D[s] = 0;
+
+  while (!q.empty()) {
+    state st = state::unpack(q.front());
+    q.pop();
+
+    if (st.r == N - 1 &amp;&amp; st.c == M - 1) {
+      cout &lt;&lt; D[st.pack()] &lt;&lt; &apos;\n&apos;;
+      return 0;
+    }
+    if (A[st.r][st.c] == 4 &amp;&amp; st.ld != -1) {
+      int col = getcell(A, st.r + dr[st.ld], st.c + dc[st.ld]);
+      if (col != 0 &amp;&amp; col != 3) {
+        state nst = state(st.r + dr[st.ld], st.c + dc[st.ld], st.ld, col == 2);
+        if (D[nst.pack()] != -1) {
+          continue;
+        }
+        D[nst.pack()] = D[st.pack()] + 1;
+        q.push(nst.pack());
+        continue;
+      }
+    }
+    for (int i = 0; i &lt; 4; i++) {
+      int col = getcell(A, st.r + dr[i], st.c + dc[i]);
+      if (col == 0 || (col == 3 &amp;&amp; !st.smell)) {
+        continue;
+      }
+      state nst = state(st.r + dr[i], st.c + dc[i], i,
+                        col == 2 ? true : col == 4 ? false : st.smell);
+      if (D[nst.pack()] != -1) {
+        continue;
+      }
+      D[nst.pack()] = D[st.pack()] + 1;
+      q.push(nst.pack());
+    }
+  }
+  cout &lt;&lt; &quot;-1\n&quot;;
+  return 0;
+}
+</pre>
+<p>Here is my code, which takes the first approach, using the Java PriorityQueue so
+that Bessie&apos;s slides can be  processed all at once. I&apos;m sorry for the awful
+butchery of implementing 4-tuples:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.PriorityQueue;
+import java.util.StringTokenizer;
+
+public class DEC15GoldA {
+	static final int N = 1005;
+	
+	static int[][] tile;
+	static int[][][] visited;
+	static int[][] dirs = { {-1, 0}, {1, 0}, {0, -1}, {0, 1} };
+	static int n, m;
+	
+	static PriorityQueue&lt;Pair&lt;Integer, Pair&lt;Integer, Pair&lt;Integer, Integer&gt;&gt;&gt;&gt; q;
+	
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		
+		n = Integer.parseInt(st.nextToken());
+		m = Integer.parseInt(st.nextToken());
+		q = new PriorityQueue&lt;&gt;();
+		
+		tile = new int[N][N];
+		visited = new int[N][N][2];
+		
+		for (int i=0; i&lt;n; ++i) {
+			st = new StringTokenizer(br.readLine());
+			for (int j=0; j&lt;m; ++j) {
+				int color = Integer.parseInt(st.nextToken());
+				tile[i][j] = color;
+				visited[i][j][0] = visited[i][j][1] = 100000000;
+			}
+		}
+		q.add(fromInts(0, 0, 0, 0));
+		
+		while (q.size() &gt; 0) {
+			Pair&lt;Integer, Pair&lt;Integer, Pair&lt;Integer, Integer&gt;&gt;&gt; front = q.remove();
+			int dist = front.left;
+			int x = front.right.left;
+			int y = front.right.right.left;
+			int isSmelly = front.right.right.right;
+			
+			if (x == m-1 &amp;&amp; y == n-1) {
+				System.out.println(dist);
+				return;
+			}
+			if (visited[y][x][isSmelly] != 100000000) {
+				continue;
+			}
+			visited[y][x][isSmelly] = dist;
+			
+			for (int i=0; i&lt;dirs.length; ++i) {
+				int nx = x + dirs[i][0];
+				int ny = y + dirs[i][1];
+				int nd = dist + 1;
+				int nSmelly = isSmelly;
+
+				if (!isPathable(nx, ny, isSmelly)) continue;
+				
+				if (tile[ny][nx] == 4) {
+					while (isPathable(nx + dirs[i][0], ny + dirs[i][1], isSmelly) &amp;&amp;
+							tile[ny][nx] == 4) {
+						nx += dirs[i][0];
+						ny += dirs[i][1];
+						nd ++;
+						nSmelly = 0;
+					}
+				}
+				if (tile[ny][nx] == 2) {
+					nSmelly = 1;
+				}
+				if (visited[ny][nx][nSmelly] &lt;= nd) continue;
+				q.add(fromInts(nd, nx, ny, nSmelly));
+			}
+		}
+		System.out.println(&quot;-1&quot;);
+	}
+	public static boolean isPathable(int x, int y, int smellsNice) {
+		if (x &lt; 0 || x &gt;= m || y &lt; 0 || y &gt;= n) return false;
+		if (tile[y][x] == 0) return false;
+		if (tile[y][x] == 3) return (smellsNice &gt; 0);
+		
+		return true;
+	}
+	public static Pair&lt;Integer, Pair&lt;Integer, Pair&lt;Integer, Integer&gt;&gt;&gt; fromInts(int a, int b, int c, int d) {
+		Pair&lt;Integer, Integer&gt; p1 = new Pair&lt;&gt;(c, d);
+		Pair&lt;Integer, Pair&lt;Integer, Integer&gt;&gt; p2 = new Pair&lt;&gt;(b, p1);
+		return new Pair&lt;&gt;(a, p2);
+	}
+}
+class Pair&lt;L extends Comparable&lt;L&gt;, R&gt; implements Comparable&lt;Pair&lt;L, R&gt;&gt; {
+	public L left;
+	public R right;
+	
+	public Pair(L left, R right) {
+		this.left = left;
+		this.right = right;
+	}
+	public int compareTo(Pair&lt;L, R&gt; other) {
+		return this.left.compareTo(other.left);
+	}
+}
+</pre>
+<p></body></html>

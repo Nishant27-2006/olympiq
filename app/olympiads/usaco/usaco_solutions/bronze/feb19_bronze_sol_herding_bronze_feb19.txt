@@ -1,0 +1,141 @@
+Solution ID: sol_herding_bronze_feb19
+Contest: FEB19
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_herding_bronze_feb19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brian Dean)
+
+To solve this problem, the coding isn't hard -- it's more about understanding
+the  underlying structure of the cow herding process in the first place.
+
+Suppose our three cows are at locations
+
+$a < b < c$
+
+.  For the minimum number of
+moves, there are a few different cases to differentiate.  The answer is  clearly
+zero if the three cows are already consecutive, and one if there is a unit-sized gap 
+between two cows (e.g., "3, 4, 6" or "1, 14, 16"). In all other
+cases, the answer is two.  For example, if there is a gap  between
+
+$a$
+
+and
+
+$b$
+
+and also between
+
+$b$
+
+and
+
+$c$
+
+, then we can move
+
+$a$
+
+to
+
+$b+1$
+
+and then
+
+$c$
+
+to
+
+$b-1$
+
+.  Otherwise, we have two adjacent cows (say,
+
+$a$
+
+and
+
+$b$
+
+)  and a gap of
+size at least two with the third cow --- in which case we can move
+
+$a$
+
+to
+
+$b+2$
+
+and
+
+$c$
+
+to
+
+$b+1$
+
+.
+
+For the maximum number of moves, our main observation is the following: consider
+the gap between
+
+$a$
+
+and
+
+$b$
+
+, and the gap between
+
+$b$
+
+and
+
+$c$
+
+. After the first
+move, one of these gaps essentially "goes away", meaning there cannot be any
+cows landing inside the gap.  On the other hand, we can strategically move cows
+so the other gap has every empty space used by a cow at some point in time ---
+the main idea here is to ensure we always have two adjacent cows at one
+endpoint, flipping back and forth between which side has the two adjacent cows. 
+So the answer for the maximum is related to which of the
+
+$a \ldots b$
+
+and
+
+$b \ldots c$
+
+gaps is largest, since we can land cows in all the empty spaces in
+this gap, and none in the other gap.
+
+Here is my code that expresses this idea:
+
+#include <iostream>
+#include <fstream>
+using namespace std;
+ 
+int main(void)
+{
+  int a, b, c;
+  ifstream fin ("herding.in");
+  fin >> a >> b >> c;
+ 
+  // Arrange in sorted order
+  if (a > b) swap(a,b);
+  if (b > c) swap(b,c);
+  if (a > b) swap(a,b);
+ 
+  ofstream fout ("herding.out");
+  if (c==a+2)
+    fout << "0\n";
+  else if (b==a+2 || c==b+2)
+    fout << "1\n";
+  else fout << "2\n";
+  fout << max(b-a, c-b) - 1 << "\n";
+  return 0;
+}

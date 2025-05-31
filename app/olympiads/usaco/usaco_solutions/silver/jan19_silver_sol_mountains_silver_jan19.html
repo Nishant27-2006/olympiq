@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>The key observation is that mountain <span class='math'>$i$</span> is occluded by mountain <span class='math'>$j$</span> (i.e. its
+peak is lies on the shape of mountain <span class='math'>$j$</span>) if and only if
+<span class='math'>$x_i - y_i \geq x_j - y_j$</span> and <span class='math'>$x_i + y_i \leq x_j + y_j$</span>: that is, the base of
+mountain <span class='math'>$i$</span> (the interval <span class='math'>$[x_i-y_i, x_i + y_i]$</span>) is contained in the base of
+mountain <span class='math'>$j$</span>.
+<p>First suppose for simplicity that every <span class='math'>$x_i - y_i$</span> is distinct. Then if we sort
+the mountains in increasing order by <span class='math'>$x_i - y_i$</span>, a mountain is occluded if and
+only if for every previous mountain <span class='math'>$j$</span>, the inequality <span class='math'>$x_j + y_j &gt; x_i + y_i$</span>
+holds. This is because the previous mountains are exactly the mountains <span class='math'>$j$</span> for
+which <span class='math'>$x_j - y_j &lt; x_i - y_i$</span>. So as we sweep through the sorted list of
+mountains, we can keep track of the largest value of <span class='math'>$x_j + y_j$</span> seen so far,
+and use this to determine whether each new mountain in the list is occluded or
+visible.
+<p>The same idea works even if not all <span class='math'>$x_i - y_i$</span> are distinct, but we need to be
+careful about how we break ties when sorting. For two mountains <span class='math'>$i$</span> and <span class='math'>$j$</span> with
+<span class='math'>$x_i - y_i = x_j - y_j$</span> and, say, <span class='math'>$x_i + y_i &lt; x_j + y_j$</span>, we want mountain <span class='math'>$j$</span>
+to appear before mountain <span class='math'>$i$</span> in the sorted list, since <span class='math'>$i$</span> is occluded by <span class='math'>$j$</span>
+but not vice versa.
+<p>The following code implements the above algorithm:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MAXN 100000
+ 
+int N;
+int x[MAXN], y[MAXN];
+int pos[MAXN], neg[MAXN];
+int cid[MAXN];
+ 
+bool cmp(int a,int b)
+{
+	if(neg[a] == neg[b])
+		return pos[a] &gt; pos[b];
+	return neg[a] &lt; neg[b];
+}
+ 
+int main()
+{
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;N;i++)
+	{
+		cin &gt;&gt; x[i] &gt;&gt; y[i];
+		pos[i] = x[i]+y[i], neg[i] = x[i]-y[i];
+		cid[i] = i;
+	}
+	sort(cid,cid+N,cmp);
+	int mxpos = -1;
+	int ans = 0;
+	for(int i=0;i&lt;N;i++)
+	{
+		if(pos[cid[i]] &gt; mxpos)
+		{
+			ans++;
+			mxpos = pos[cid[i]];
+		}
+	}
+	cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

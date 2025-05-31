@@ -1,0 +1,140 @@
+Solution ID: sol_snakes_gold_open19
+Contest: OPEN19
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_snakes_gold_open19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+We solve this problem by dynamic programming. Let
+
+$dp(m,k)$
+
+be the minimum sum
+of net sizes needed to catch the first
+
+$m$
+
+groups of snakes with
+
+$k$
+
+net size
+changes. Then
+
+$dp(m,0) = m \cdot \max\{a_1, \dots, a_m\}$
+
+and for all
+
+$k > 0$
+
+,
+
+$$dp(m,k) = \min_{i < m}(dp(i,k-1) + (m-i)\max\{a_{i+1},\dots,a_m\})$$
+
+with the
+convention that
+
+$dp(0,k) = 0$
+
+. Then the answer is
+
+$dp(N,K) - \sum_{i=1}^N a_i$
+
+.
+
+Naively, there are
+
+$O(N^2)$
+
+states each with
+
+$O(N)$
+
+transitions each computable
+in
+
+$O(N)$
+
+time, but the resulting complexity of
+
+$O(N^4)$
+
+is too slow. However,
+it can be improved. For each
+
+$m$
+
+and
+
+$k$
+
+, start with
+
+$i = m-1$
+
+and decrement
+down to
+
+$0$
+
+. Then
+
+$\max\{a_{i+1},\dots,a_m\}$
+
+can be maintained with constant
+time work for each
+
+$i$
+
+, so the cost of computing all transitions for
+
+$dp(m,k)$
+
+is only
+
+$O(N)$
+
+. This yields an
+
+$O(N^3)$
+
+runtime, which is sufficient for the
+given bounds.
+
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define INF 1000000000
+ 
+int N,K;
+int A[401];
+int dp[401][401];
+ 
+int main()
+{
+	cin >> N >> K;
+	int tot = 0;
+	int high = 0;
+	for(int i=1;i<=N;i++)
+	{
+		cin >> A[i];
+		high = max(high, A[i]);
+		dp[i][0] = high*i;
+		for(int j=1;j<=K;j++)
+		{
+			dp[i][j] = INF;
+			int mx = A[i];
+			for(int b=i-1;b>=0;b--)
+			{
+				dp[i][j] = min(dp[i][j], dp[b][j-1] + mx*(i-b));
+				mx = max(mx, A[b]);
+			}
+		}
+		tot += A[i];
+	}
+	cout << dp[N][K] - tot << '\n';
+}

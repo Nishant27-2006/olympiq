@@ -1,0 +1,577 @@
+Solution ID: sol_roboherd_platinum_dec16
+Contest: DEC16
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_roboherd_platinum_dec16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nathan Pinsker)
+
+Before anything else, we should, for each location, sort the microcontrollers
+that can be installed at that location by their cost. This is motivated by the
+fact that the correct answer can be obtained by a greedy method of construction:
+we should build the cheapest possible robot that we have not yet built, and do
+this
+
+$K$
+
+times. It follows, then, that we should always use the cheapest
+possible microcontroller that we can at each position without making a robot we
+have already built.
+
+One initial approach to this problem might be to start by installing the robot
+with the cheapest possible microcontroller at every position. Then, after  each
+robot we create, we imagine
+
+$N$
+
+new candidate robots. Each of these robots is
+identical to the one we have just installed, except exactly one of their
+microcontrollers is minimally more expensive. We put each of these robots into a
+priority queue with key equal to its cost; then we repeatedly extract the
+lowest-cost robot from the priority queue and put
+
+$N$
+
+new robots in until we
+have built
+
+$K$
+
+robots. Unfortunately, this approach is untenable, since the
+robots themselves can be represented by
+
+$N$
+
+integers. Thus, the act of actually
+inserting each robot into the priority queue is
+
+$O(N \log K)$
+
+, and the priority
+queue itself would take as much as
+
+$O(NK)$
+
+space. The entire algorithm would
+take
+
+$O(NK \log K)$
+
+time as well, which is far too slow.
+
+Since many people may initially take this approach, it is natural to ask whether
+these
+
+$K$
+
+cheapest robots can actually be constructed in a reasonable amount of
+time at all. After all, since there are
+
+$K$
+
+different robots to build, each with
+
+$N$
+
+microcontrollers, so it may be tempting to assume that there is a lower
+bound of
+
+$O(NK)$
+
+on even representing these robots. However, this is not so,
+because of the construction that we have given above. Each additional robot that
+we construct is guaranteed to differ from an existing robot in exactly one
+location, so it is possible to represent the
+
+$K$
+
+robots in
+
+$O(N + K)$
+
+space.
+
+That said, we still need to actually construct these
+
+$K$
+
+robots somehow. The
+next step (and a useful technique for programming in general) is to simplify
+things for ourselves by first solving a simpler problem, and using that solution
+to then solve the original problem. A natural simpler problem to consider is: if
+we knew that the most expensive robot we needed to build would cost
+
+$K$
+
+, could
+we quickly construct all robots that cost less than that number
+
+$K$
+
+? It turns
+out that the answer to this question is yes, and we can do so with a pruned
+brute-force search.
+
+Some care is needed when enumerating over the possible robots that can be built,
+or the enumeration may be exponential in runtime (when there are a large number
+of robots that cost too much to build). To prune the search, we can sort the
+
+locations
+
+: the order we use is the difference in cost between from the
+cheapest model of microcontroller and the second-cheapest model that we can
+install at that location. When we are iterating over locations and we want to
+spend
+
+$K$
+
+money on the remaining locations, we can locate with a binary search
+exactly which locations where we have the budget to install more expensive
+microcontrollers, and which locations where we don't. This causes the
+enumeration to be
+
+$O((n + k) \log n)$
+
+, since this optimization allows us to
+completely avoid making recursive calls that do not lead to additional valid
+robots.
+
+Now that we have a way to enumerate over all robots that cost less than
+
+$K$
+
+, we
+need to find the cost of the most expensive robot we need to build. Luckily, we
+can do this with the exact same procedure: instead of enumerating over the
+robots that cost less than
+
+$K$
+
+, we instead simply ask for the number of robots
+that cost less than
+
+$K$
+
+instead. This function is non-decreasing with respect to
+
+$K$
+
+, so we can binary search on this number in order to find the minimal cost
+that allows us to produce at least
+
+$N$
+
+robots. We then enumerate all
+
+$N$
+
+robots
+given this cost, giving a total runtime of
+
+$O((n+k) \log n \log |P|)$
+
+.
+
+Mark Gordon's code is below:
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int N, M;
+vector<int> A[100010];
+int F[100010];
+int totalcount;
+long long savings;
+
+void search(int x, long long budget) {
+  if (totalcount >= M) {
+    return;
+  }
+  if (x != -1 && budget < A[x][0]) {
+    x = upper_bound(F, F + x, (int)budget) - F - 1;
+  }
+  if (x == -1) {
+    totalcount++;
+    return;
+  }
+  search(x - 1, budget);
+  for (int i = 0; i < A[x].size() && A[x][i] <= budget; i++) {
+    search(x - 1, budget - A[x][i]);
+  }
+}
+
+void enumerate(int x, long long budget) {
+  if (x != -1 && budget < A[x][0]) {
+    x = upper_bound(F, F + x, (int)budget) - F - 1;
+  }
+  if (x == -1) {
+    savings += budget + 1;
+    return;
+  }
+  enumerate(x - 1, budget);
+  for (int i = 0; i < A[x].size() && A[x][i] <= budget; i++) {
+    enumerate(x - 1, budget - A[x][i]);
+  }
+}
+
+int main() {
+  cin >> N >> M;
+  
+  long long base = 0;
+  long long mx = 0;
+  for (int i = 0; i < N; i++) {
+    int sz; cin >> sz;
+    
+    vector<int> V(sz);
+    for (int j = 0; j < sz; j++) {
+      cin >> V[j];
+    }
+    sort(V.begin(), V.end());
+    
+    base += V[0];
+    if (sz == 1) {
+      i--;
+      N--;
+      continue;
+    }
+    for (int j = 1; j < sz; j++) {
+      A[i].push_back(V[j] - V[0]);
+    }
+    mx += A[i].back();
+  }
+  
+  sort(A, A + N);
+  for (int i = 0; i < N; i++) {
+    F[i] = A[i][0];
+  }
+  
+  long long lo = 0;
+  long long hi = mx;
+  while (lo < hi) {
+    long long md = (lo + hi) / 2;
+    totalcount = 0;
+    search(N - 1, md);
+    if (totalcount < M) {
+      lo = md + 1;
+    } else {
+      hi = md;
+    }
+  }
+  
+  savings = 0;
+  if (lo > 0) {
+    enumerate(N - 1, lo - 1);
+  }
+  cout << (base + lo) * M - savings << endl;
+  
+  return 0;
+}
+
+Yilin You had an alternate solution that built on these ideas by actually
+constructing each robot sequentially. His key insight was that you can use a
+partially
+
+persistent
+
+binary tree or segment tree to keep track of the cost of "upgrading" a
+microcontroller over time. After constructing the first robot, he adds the costs
+of upgrading each unique microcontroller (which will initially be
+
+$P_{i, 2} - P_{i, 1}$
+
+) to a persistent binary tree. To choose how to upgrade the
+first robot, he finds the minimum cost robot (across all states of the binary
+tree), modifies this value to
+
+$P_{i, 3} - P_{i, 2}$
+
+in the binary tree, but also
+sets the value that we chose in the old tree to infinity. The persistent
+structure also stores the cost of constructing its current robot as well as the
+last index
+
+$i$
+
+that was upgraded. We enforce the constraint that we can only
+upgrade robots in non-decreasing
+
+$i$
+
+order to avoid double-counting.
+
+Yilin included an example to illustrate how the code works. For the input data:
+
+2 5
+3 1 3 10000
+2 1 4
+
+We represent the first robot by
+
+$[1,1]$
+
+. We can either "upgrade" the robot by
+paying 2 more to upgrade the first slot, or 3 more to upgrade the second slot.
+Thus we build a binary tree containing the elements 2 and 3.
+
+To get the second robot, we find the minimal element in
+
+$\{2,3\}$
+
+and change it
+(persistently) to get
+
+$\{9997,3\}$
+
+. Also we need to (non-persistently) change
+the
+
+$\{2,3\}$
+
+representing
+
+$[1,1]$
+
+to
+
+$\{\infty,3\}$
+
+.
+
+Now we have two "snapshots of our persistent binary tree. The first contains
+
+${\infty,3}$
+
+and represents the robot
+
+$[1,1]$
+
+. The second contains
+
+${9997,3}$
+
+and represents the robot
+
+$[3,1]$
+
+. We choose the second position of
+
+${\infty,3}$
+
+,
+as the robot
+
+$[1,4]$
+
+is cheaper than the robot
+
+$[3,4]$
+
+and the robot
+
+$[10000,1]$
+
+. Then we get the third robot
+
+$[1,4]$
+
+. According to the steps above,
+we change
+
+$\{\infty,3\}$
+
+to
+
+$\{\infty, \infty\}$
+
+and add the new status
+
+$\{2,\infty\}$
+
+. We must also set a flag on this binary tree that disallows us
+from upgrading the first microcontroller (to avoid double-counting), though in
+this particular case it doesn't have an effect. The total complexity is
+
+$O(N+K*(\log N+\log K))$
+
+.
+
+Here is Yilin's code:
+
+#include<cstdio>
+#include<queue>
+#include<vector>
+#include<algorithm>
+#include<utility>
+using namespace std;
+struct node
+{
+	int ls,rs;
+	pair<int,int>val;
+}a[8200000];
+int rot[120000],stp,siz,nxt[120000],ori[120000];//rot[] store the roots of the persistent segment tree
+//each root and its conressponding segment tree represent one cow herd and its possible expansions 
+//nxt[] stores the last changed position of each cow herd in order to avoid counting the same cow herd twice
+long long bas[120000],ans;
+int n,m,fl[120000];// fl[] is the number of the models in each location 
+long long tot;
+vector<int>adj[120000]; 
+priority_queue<pair<long long,int> >pq;// priority queue storing the value from the different roots of the persistent segment tree
+const int inf=1000000000;
+inline void update(int x)
+{
+	a[x].val=min(a[a[x].ls].val,a[a[x].rs].val);
+}
+inline void build(int x,int le,int ri) 
+{
+	if(le==ri)
+	{
+		a[x].val.second=le*100;
+		if(fl[le]==1)
+		{
+			a[x].val.first=inf;
+		}
+		else
+		{
+			a[x].val.first=adj[le][1];
+		}
+		return;
+	}
+	siz++;
+	a[x].ls=siz;
+	siz++;
+	a[x].rs=siz;
+	build(a[x].ls,le,(le+ri)/2);
+	build(a[x].rs,(le+ri)/2+1,ri);
+	update(x);
+}
+inline void edit(int x,int le,int ri,int pos,int flg,int las)// flg==1 is to erase the position, flg==0 is to add a new one 
+{
+	if(le==ri)
+	{
+		if(flg==1)
+		{
+			a[x].val.first=inf;
+			a[x].val.second=le*100+90;
+			return;
+		}
+		int fcp=a[las].val.second%100;
+		a[x].val.second=le*100+fcp+1;
+		if(fcp+2>=fl[le])
+		{
+			a[x].val.first=inf;
+		}
+		else
+		{
+			a[x].val.first=adj[le][fcp+2];
+		}
+		return;
+	}
+	if(pos<=(le+ri)/2)
+	{
+		siz++;
+		a[x].ls=siz;
+		a[x].rs=a[las].rs;
+		edit(a[x].ls,le,(le+ri)/2,pos,flg,a[las].ls);
+	}
+	else
+	{
+		siz++;
+		a[x].rs=siz;
+		a[x].ls=a[las].ls;
+		edit(a[x].rs,(le+ri)/2+1,ri,pos,flg,a[las].rs);
+	}
+	update(x);
+}
+inline pair<int,int>query(int x,int le,int ri,int lef,int rig)
+{
+	if(lef<=le&&rig>=ri)return a[x].val;
+	if(lef<=(le+ri)/2&&rig>(le+ri)/2)
+	{
+		return min(query(a[x].ls,le,(le+ri)/2,lef,rig),query(a[x].rs,(le+ri)/2+1,ri,lef,rig));
+	}
+	else if(lef<=(le+ri)/2)
+	{
+		return query(a[x].ls,le,(le+ri)/2,lef,rig);
+	}
+	else
+	{
+		return query(a[x].rs,(le+ri)/2+1,ri,lef,rig);
+	}
+}// the above part is the persistant segment tree
+inline void init()
+{
+	siz=1;
+	rot[1]=1;ori[1]=1;
+	bas[1]=tot;
+	stp=1;
+	build(1,1,n);
+	nxt[1]=1;
+	pq.push(make_pair(-(bas[1]+a[1].val.first),1));
+}
+inline void upgrade(int x)
+{
+	//to update the priority queue
+	if(query(rot[x],1,n,nxt[x],n).first!=inf)
+	pq.push(make_pair(-(bas[x]+query(rot[x],1,n,nxt[x],n).first),x));
+}
+inline long long solve(int idx)//get the idx-th cow herd 
+{
+	//take the current cow herd
+	long long f1=-pq.top().first;
+	int f2=pq.top().second;
+	pq.pop();
+	int vf=query(rot[f2],1,n,nxt[f2],n).second/100;
+	int tmp;
+	
+	siz++;
+	stp++;
+	rot[stp]=siz;ori[stp]=siz;
+	nxt[stp]=vf;
+	bas[stp]=f1;
+	edit(rot[stp],1,n,vf,0,ori[f2]);
+	
+	siz++;
+	tmp=siz;
+	edit(tmp,1,n,vf,1,rot[f2]);
+	rot[f2]=tmp;
+	
+	upgrade(stp);
+	upgrade(f2);
+	
+	return f1;
+}
+int main()
+{
+	freopen("roboherd.in","r",stdin);
+	freopen("roboherd.out","w",stdout);
+	scanf("%d %d",&n,&m);
+	for (int i=1;i<=n;i++)
+	{
+		scanf("%d",&fl[i]);
+		adj[i].resize(fl[i]);
+		for (int j=0;j<fl[i];j++)
+		{
+			scanf("%d",&adj[i][j]);
+		}
+		sort(adj[i].begin(),adj[i].end());
+		for (int j=fl[i]-1;j>=1;j--)
+		{
+			adj[i][j]-=adj[i][j-1];
+		}
+		tot+=adj[i][0];//tot is the first cow herd	
+	}
+	
+	ans=tot;
+	init();
+	for (int i=2;i<=m;i++)
+	{
+		ans+=solve(i);
+	}printf("%lld\n",ans);
+	return 0;
+}

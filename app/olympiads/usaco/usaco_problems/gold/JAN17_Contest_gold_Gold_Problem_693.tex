@@ -1,0 +1,110 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN17 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Farmer John is arranging his $N$ cows in a line to take a photo
+($1 \leq N \leq 100,000$).  The height of the $i$th cow in sequence is $h_i$,
+and the heights of all cows are distinct.
+
+As with all photographs of his cows, FJ wants this one to come out looking as
+nice as possible.  He decides that cow $i$ looks "unbalanced" if $L_i$ and $R_i$
+differ by more than factor of 2, where $L_i$ and $R_i$ are the number of cows
+taller than $i$ on her left and right, respectively.  That is, $i$ is unbalanced
+if the larger of $L_i$ and $R_i$ is strictly more than twice the smaller of
+these two numbers.  FJ is hoping that not too many of his cows are unbalanced.
+
+Please help FJ compute the total number of unbalanced cows.
+
+INPUT FORMAT (file bphoto.in):
+The first line of input contains $N$.  The next $N$ lines contain
+$h_1 \ldots h_N$, each a nonnegative integer at most 1,000,000,000.
+
+OUTPUT FORMAT (file bphoto.out):
+Please output a count of the number of cows that are unbalanced.
+
+SAMPLE INPUT:
+7
+34
+6
+23
+0
+5
+99
+2
+SAMPLE OUTPUT: 
+3
+
+In this example, the cows of heights 34, 5, and 2 are unbalanced.
+
+
+Problem credits: Brian Dean
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (file bphoto.out):Please output a count of the number of cows that are unbalanced.SAMPLE INPUT:7
+34
+6
+23
+0
+5
+99
+2SAMPLE OUTPUT:3In this example, the cows of heights 34, 5, and 2 are unbalanced.Problem credits: Brian Dean
+
+\section*{Output Format}
+SAMPLE INPUT:7
+34
+6
+23
+0
+5
+99
+2SAMPLE OUTPUT:3In this example, the cows of heights 34, 5, and 2 are unbalanced.Problem credits: Brian Dean
+
+\section*{Sample Input}
+\begin{verbatim}
+7
+34
+6
+23
+0
+5
+99
+2
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+3
+
+In this example, the cows of heights 34, 5, and 2 are unbalanced.Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=693
+
+\section*{Source}
+USACO JAN17 Contest, Gold Division, Problem ID: 693
+
+\end{document}

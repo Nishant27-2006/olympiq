@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>For convenience, let <span class='math'>$S$</span> be the given string.
+<p><strong>Subtask 1</strong> (<span class='math'>$|S| \leq 10$</span>)
+<p>There are at most <span class='math'>$4^{10} \approx 10^6$</span> possible genomes, so we can just try
+each one to see if it produces something consistent with the input after Farmer
+John&apos;s edits. This runs in <span class='math'>$O(|S|4^{|S|})$</span>.
+<p><strong>Subtask 2</strong> (<span class='math'>$|S| \leq 10^2$</span>)
+<p>Consider dividing the result of Farmer&apos;s John&apos;s edits back into the substrings
+of the genome after he had reversed them (but before he had concatenated them).
+Such a division could only correspond to one starting genome, which we could get
+by reversing the substrings back and concatenating them. However, not every
+division is valid (corresponds to some starting genome). In order for a division
+to be valid, it must satisfy two properties:
+<p><ul><li> For any two consecutive substrings <span class='math'>$s$</span> and <span class='math'>$t$</span> in our division, the first
+letter of <span class='math'>$s$</span> and the last letter of <span class='math'>$t$</span>, which were adjacent before Farmer John
+reversed the substrings, must be equal in order for Farmer John to have split
+the genome there. </li><li> Any substring <span class='math'>$s$</span> must not have two adjacent
+letters within itself that are equal, because if it did, Farmer John would have
+split the genome there as well. </li></ul>
+<p>Given these conditions, we can solve this problem using DP. It is useful to
+first compute a preliminary DP that for each substring <span class='math'>$S[j\ldots k]$</span> and
+letters <span class='math'>$l, m$</span> computes the amount of ways to replace the question marks in
+<span class='math'>$s[j\ldots k]$</span> with letters so that <span class='math'>$s[j\ldots k]$</span> starts with <span class='math'>$l$</span>, ends with
+<span class='math'>$m$</span>, and satisfies our second condition, i. e. doesn&apos;t contain any two adjacent
+equal letters. This DP is fairly straightforward to compute in <span class='math'>$O(|S|^2)$</span>.
+<p>After that, we will perform our main DP, where for each index <span class='math'>$k$</span> and letter
+<span class='math'>$l$</span>, we compute the number of divisions of <span class='math'>$S[1\ldots k]$</span> such that the last
+substring in the division begins with <span class='math'>$l$</span>. To transition, we try each possible
+ending index <span class='math'>$j$</span> of the previous substring in our division. By making use of our
+preliminary DP values for <span class='math'>$s[j + 1\ldots k]$</span>, we can do this in constant time
+for each <span class='math'>$(j, k)$</span>, making this DP, and thus the overall algorithm, <span class='math'>$O(|S|^2)$</span> as
+well.
+<p><strong>Subtask 3</strong> (<span class='math'>$|S| \leq 10^5$</span>)
+<p>To solve this subtask, we will optimize our solution to the previous subtask.
+<p>In our new DP, we will instead, for each <span class='math'>$k$</span>, count divisions of <span class='math'>$S[1 \ldots k]$</span>
+which may be incomplete, in that the last letter of the last substring may not
+match the first character of the second-to-last substring. This means that in
+addition to keeping track of the first letter <span class='math'>$l$</span> of the last substring, we also
+need to keep track of the last letter <span class='math'>$m$</span> of the last substring as well as the
+first letter <span class='math'>$n$</span> of the second-to-last substring. We will refer to said DP value
+as <span class='math'>$dp_{k, n, l, m}$</span>.
+<p>The optimization comes from the transitions necessary for this DP. Instead of
+going through all previous indexes <span class='math'>$j$</span>, our transition is either extending the
+last substring in our division up to <span class='math'>$k - 1$</span> by one character, or adding a new
+substring consisting of a single character to our division up to <span class='math'>$k - 1$</span>.
+<p>In the first type of transition, the letters <span class='math'>$n$</span> and <span class='math'>$l$</span> stay the same, and the
+last two letters in the substring we are extending must not be equal in order to
+satisfy our second condition, so we simply add <span class='math'>$dp_{k - 1, n, l, m}$</span> to
+<span class='math'>$dp_{k, n, l, m&apos;}$</span> for all <span class='math'>$n, l, m, m&apos;$</span> such that <span class='math'>$m \neq m&apos;$</span> and <span class='math'>$m&apos;$</span> is a
+valid letter for <span class='math'>$S_k$</span>.
+<p>In the second type of transition, the old values of <span class='math'>$n$</span> and <span class='math'>$m$</span> must match in
+order to satisfy our first condition, so we add <span class='math'>$dp_{k - 1, m, l, m}$</span> to
+<span class='math'>$dp_{k, l, m&apos;, m&apos;}$</span> for all <span class='math'>$m, l, m&apos;$</span> such that <span class='math'>$m&apos;$</span> is a valid letter for
+<span class='math'>$S_k$</span>.
+<p>To compute our final answer, we simply need to ensure that we have <span class='math'>$n = m$</span>, so
+our answer is the sum over <span class='math'>$dp_{|S|, m, l, m}$</span> for all <span class='math'>$m, l$</span>.
+<p>For each <span class='math'>$k$</span>, we compute at most <span class='math'>$4^4 + 4^3$</span> transitions, which is constant (and
+still small enough), making our algorithm <span class='math'>$O(|S|)$</span>.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+ 
+public class BovineGenomicsII {
+    public static final long MOD = 1000000007;
+    public static final char[] BASES = &quot;AGCT&quot;.toCharArray();
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        char[] s = in.readLine().toCharArray();
+        long[][][][] dp = new long[s.length][4][4][4];
+        for (int n = 0; n &lt; 4; n++) {
+            for (int l = 0; l &lt; 4; l++) {
+                if (s[0] == &apos;?&apos; || s[0] == BASES[l]) {
+                    dp[0][n][l][l] = 1L;
+                }
+            }
+        }
+        for (int k = 1; k &lt; s.length; k++)
+            for (int m2 = 0; m2 &lt; 4; m2++)
+                if (s[k] == &apos;?&apos; || s[k] == BASES[m2]) {
+                    for (int n = 0; n &lt; 4; n++) {
+                        for (int l = 0; l &lt; 4; l++) {
+                            for (int m = 0; m &lt; 4; m++) {
+                                if (m != m2) {
+                                    dp[k][n][l][m2] += dp[k-1][n][l][m];
+                                    dp[k][n][l][m2] %= MOD;
+                                }
+                                if (n == m) {
+                                    dp[k][l][m2][m2] += dp[k-1][n][l][m];
+                                    dp[k][l][m2][m2] %= MOD;
+                                }
+                            }
+                        }
+                    }
+                }
+        long answer = 0;
+        for (int l = 0; l &lt; 4; l++) {
+            for (int m = 0; m &lt; 4; m++) {
+                answer += dp[s.length - 1][m][l][m];
+            }
+        }
+        answer %= MOD;
+        System.out.println(answer);
+    }
+}
+</pre>
+<p></body></html>

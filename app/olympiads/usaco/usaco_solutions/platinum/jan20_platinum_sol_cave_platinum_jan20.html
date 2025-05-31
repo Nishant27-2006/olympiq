@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Daniel Zhang, Benjamin Qi)
+<p>Define a relation <span class='math'>$R$</span> on empty and water cells where <span class='math'>$aRb$</span> if and only if <span class='math'>$a$</span>
+being water implies that <span class='math'>$b$</span> is water. It is clearly reflexive and transitive.
+Also note that if <span class='math'>$aRb$</span> then <span class='math'>$height(a)\ge height(b)$</span>. Thus, cycles can only 
+exist between vertices on the same layer. However, if we restrict the relation
+to cells with the same height, it is also symmetric. Thus, we can divide cells
+on each layer into (completely connected) equivalence classes. 
+<p>Compressing these equivalence classes, we get a directed acyclic graph (DAG).
+Note that equivalence classes are not edge-connected; for example, in the sample
+case, the squares on the second row are all in the same equivalence class. Let
+<span class='math'>$G$</span> be the graph with the minimum number of edges whose transitive closure is
+the DAG. (To compute the transitive closure of a graph, if edges <span class='math'>$a\to b$</span> and
+<span class='math'>$b\to c$</span> exist then add edge <span class='math'>$a\to c$</span>, if it is not already  present in the
+graph.)
+<p>If there is an edge from <span class='math'>$a$</span> to <span class='math'>$b$</span> in the DAG, then <span class='math'>$height(a)=height(b)+1$</span>.
+Suppose otherwise. Clearly <span class='math'>$height(a)&gt;height(b)$</span>. There must be a path from <span class='math'>$a$</span>
+to <span class='math'>$b$</span> using only cells of height at most <span class='math'>$height(a)$</span>. Take the last vertex <span class='math'>$c$</span>
+on that path with height <span class='math'>$height(b)+1$</span> (it must exist). This divides the path
+into a path from <span class='math'>$a$</span> to <span class='math'>$c$</span> using cells of height at most <span class='math'>$height(a)$</span> and a path
+from <span class='math'>$c$</span> to <span class='math'>$b$</span> using cells of height at most <span class='math'>$height(c)$</span>. This contradicts the
+minimality of <span class='math'>$G$</span>.
+<p>Each node has at most one predecessor. Suppose there is an edge from <span class='math'>$a$</span> to <span class='math'>$b$</span>
+and an edge from <span class='math'>$c$</span> to <span class='math'>$b$</span>. Then, <span class='math'>$height(a)=height(b)+1=height(c)$</span> and
+concatenating the paths yields a path from <span class='math'>$a$</span> to <span class='math'>$c$</span> using only cells of height
+at most <span class='math'>$height(a)$</span>. Then <span class='math'>$a$</span> and <span class='math'>$c$</span> must be the same equivalence class.
+<p>Hence, <span class='math'>$G$</span> is a (directed) forest. <span class='math'>$G$</span> can be computed efficiently from the cave
+by sweeping upwards with a union-find data structure. Then, this problem can be
+solved by DP on <span class='math'>$G$</span>.
+<p>Ben - I didn&apos;t have any solution in mind for the <span class='math'>$N,M\le 10$</span> subtask. It was
+merely  intended to be a small correctness test.
+<p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+#include &lt;vector&gt;
+ 
+const int MOD=1e9+7;
+ 
+char grid[1005][1005];
+ 
+int uf[1005][1005];
+int up[1005][1005];
+int id[1005][1005];
+ 
+std::vector&lt;int&gt; children[1005*1005];
+int tree_size=1;
+ 
+int dp[1005*1005];
+ 
+int find(int layer,int a){
+	while(uf[layer][a]!=a){
+		a=uf[layer][a]=uf[layer][uf[layer][a]];
+	}
+	return a;
+}
+ 
+void merge(int layer,int a,int b){
+	a=find(layer,a),b=find(layer,b);
+	uf[layer][a]=b;
+}
+ 
+void pull(int i){
+	dp[i]=1;
+	//product of children if not filling root
+	for(int j:children[i]){
+		dp[i]=1LL*dp[i]*dp[j]%MOD;
+	}
+	//+1 for filling root (and everything else)
+	dp[i]++;
+}
+ 
+int main(){
+	freopen(&quot;cave.in&quot;,&quot;r&quot;,stdin);
+	freopen(&quot;cave.out&quot;,&quot;w&quot;,stdout);
+	int N,M;
+	scanf(&quot;%d %d&quot;,&amp;N,&amp;M);
+	for(int i=0;i&lt;N;i++){
+		scanf(&quot;%s&quot;,grid[i]);
+	}
+	for(int i=0;i&lt;N;i++){
+		for(int j=0;j&lt;M;j++){
+			uf[i][j]=j;
+		}
+	}
+	memset(up,-1,sizeof up);
+	for(int i=N-1;i&gt;=0;i--){
+		for(int j=0;j&lt;M;j++){
+			uf[i][j]=j;
+		}
+		
+		for(int j=0;j+1&lt;M;j++){
+			if(grid[i][j]==&apos;.&apos;&amp;&amp;grid[i][j+1]==&apos;.&apos;){
+		 		merge(i,j,j+1);
+			}
+		}
+		if(i&lt;N-1){
+			for(int j=0;j&lt;M;j++){
+				if(grid[i][j]==&apos;.&apos;&amp;&amp;grid[i+1][j]==&apos;.&apos;){
+					if(up[i+1][find(i+1,j)]==-1){
+						up[i+1][find(i+1,j)]=j;
+					}else{
+						merge(i,j,up[i+1][find(i+1,j)]);
+					}
+				}
+			}
+		}
+	}
+	for(int i=N-1;i&gt;=0;i--){
+		for(int j=0;j&lt;M;j++){
+			if(grid[i][j]==&apos;.&apos;&amp;&amp;find(i,j)==j){
+				id[i][j]=tree_size++;
+			}
+		}
+	}
+	for(int i=N-1;i&gt;=0;i--){
+		for(int j=0;j&lt;M;j++){
+			if(grid[i][j]==&apos;.&apos;&amp;&amp;find(i,j)==j){
+				if(up[i][j]!=-1){
+					children[id[i-1][find(i-1,up[i][j])]].push_back(id[i][j]);
+				}else{
+					children[0].push_back(id[i][j]);
+				}
+			}
+		}
+	}
+	for(int i=1;i&lt;tree_size;i++){
+		pull(i);
+	}
+	pull(0);
+	printf(&quot;%d\n&quot;,(dp[0]+MOD-1)%MOD);
+}
+</pre>
+<p></body></html>

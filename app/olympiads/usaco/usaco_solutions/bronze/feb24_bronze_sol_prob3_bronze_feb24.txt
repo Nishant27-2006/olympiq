@@ -1,0 +1,324 @@
+Solution ID: sol_prob3_bronze_feb24
+Contest: FEB24
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_feb24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Alex Fan)
+
+Subtask 1:
+
+$N, Q < 10^3$
+
+.
+
+We can directly simulate the process according to the problem statement. For
+each query, we iterate through all the farms and see if we can visit it in time,
+
+$t_i + S < c_i$
+
+. Each query takes
+
+$\mathcal{O}(N)$
+
+operations, giving us
+an
+
+$\mathcal{O}(NQ)$
+
+solution.
+
+Alex Fan's C++ Code:
+
+using namespace std;
+
+#include <iostream>
+
+#define MAXN 200005
+
+int N,Q,c[MAXN],t[MAXN];
+
+int main() {
+	cin >> N >> Q;
+	for(int i = 0;i < N;++i) {
+		cin >> c[i];
+	}
+	for(int i = 0;i < N;++i) {
+		cin >> t[i];
+	}
+
+	for(int i = 0;i < Q;++i) {
+		int v,s;
+		cin >> v >> s;
+		int uwu = 0;
+		for(int j = 0;j < N;++j) {
+			if(s + t[j] < c[j]) {
+				uwu++;
+			}
+		}
+		cout << (uwu >= v ? "YES" : "NO") << endl;
+	}
+
+	return 0;
+}
+
+Python Code:
+
+N, Q = (int(x) for x in input().split())
+c = [int(x) for x in input().split()]
+t = [int(x) for x in input().split()]
+for _ in range(Q):
+    V, S = (int(x) for x in input().split())
+    uwu = 0
+    for i in range(N):
+        if(S + t[i] < c[i]):
+            uwu += 1
+    print("YES" if (uwu >= V) else "NO")
+
+Subtask 2:
+
+$c_i, t_i < 20$
+
+The key observation is to notice that we can rearrange the formula
+
+$t_i + S < c_i$
+
+as
+
+$c_i - t_i > S$
+
+. Therefore, for each farm, we can take
+advantage of the fact that
+
+$c_i - t_i$
+
+can only be between
+
+$-20$
+
+to
+
+$20$
+
+.
+
+If
+
+$c_i - t_i \leq 0$
+
+, then we can get rid of it since we can never make it in
+time. Otherwise, there are only
+
+$21$
+
+possible values despite there being
+
+$2 \cdot 10^5$
+
+farms. We exploit this observation by grouping the same
+
+$c_i - t_i$
+
+values together. This can be implemented with a map, or, since the
+values are between
+
+$0$
+
+and
+
+$20$
+
+, an array of length
+
+$21$
+
+.
+
+Finally, to check if a query works, we iterate through the array and count the
+number of valid barns that satisfy the inequality. The valid range is always
+the continuous interval to the right of
+
+$S$
+
+.
+
+Each query takes
+
+$\mathcal{O}(MAXC)$
+
+time where
+
+$MAXC \leq 20$
+
+is the maximum
+value of
+
+$c_i$
+
+, so the total complexity is
+
+$\mathcal{O}(N + Q \cdot MAXC)$
+
+Alex Fan's C++ Code:
+
+using namespace std;
+
+#include <iostream>
+#include <map>
+
+#define MAXN 200005
+#define MAXA 1000005
+
+int N,Q,c[MAXN],t[MAXN],cnt[MAXA],max_element;
+
+int main() {
+	cin >> N >> Q;
+	for(int i = 0;i < N;++i) {
+		cin >> c[i];
+	}
+	for(int i = 0;i < N;++i) {
+		cin >> t[i];
+		if(c[i] > t[i]) {
+			// Maintain the count array of c[i] - t[i]
+			cnt[c[i] - t[i]]++;
+		}
+		// We can also replace max_element as the constant 20
+		max_element = max(max_element,c[i] - t[i]);
+	}
+
+	for(int i = 0;i < Q;++i) {
+		int v,s;
+		cin >> v >> s;
+		int uwu = 0;
+		if(N <= 1e3) {
+			// Subtask 1
+			for(int i = 0;i < N;++i) {
+				if(t[i] + s < c[i]) uwu++;
+			}
+		}else if(max_element <= 20) {
+			// Subatsk 2
+			for(int i = s + 1;i <= max_element;++i) {
+				uwu += cnt[i];
+			}
+		}
+		cout << (uwu >= v ? "YES" : "NO") << endl;
+	}
+
+	return 0;
+}
+
+Python Code:
+
+N, Q = (int(x) for x in input().split())
+c = [int(x) for x in input().split()]
+t = [int(x) for x in input().split()]
+
+cnt = [0] * 25
+
+for i in range(N):
+	if(c[i] > t[i]):
+		cnt[c[i] - t[i]] += 1
+
+for _ in range(Q):
+    V, S = (int(x) for x in input().split())
+    uwu = 0
+    for i in range(S + 1,25,1):
+        uwu += cnt[i]
+    print("YES" if (uwu >= V) else "NO")
+
+Full Credit:
+
+The final step is to efficiently count the number of farms such that their
+
+$c_i - t_i$
+
+is greater than some query value
+
+$S$
+
+. This is a standard setup that
+can be solved by first sorting all the differences and applying binary search. This gives an
+
+$\mathcal{O}(N\log N + Q\log N)$
+
+solution.
+
+Alternatively, you can further observe that after we sort all the values of
+
+$c_i - t_i$
+
+, the query
+
+$(V, S)$
+
+is "YES" if and only if the
+
+$V$
+
+-th largest value
+of
+
+$c_i - t_i$
+
+is more than
+
+$S$
+
+, which can be done by checking the
+
+$i$
+
+-th
+element of the sorted array. Reference Brandon Wang's Python Code for the
+implementation. This also results in a
+
+$\mathcal{O}(N\log N + Q)$
+
+solution.
+
+Alex Fan's C++ Code:
+
+using namespace std;
+
+#include <iostream>
+#include <algorithm>
+#include <fstream>
+
+#define MAXN 200005
+
+int N,Q,c[MAXN],t[MAXN];
+
+int main() {
+	cin >> N >> Q;
+	for(int i = 0;i < N;++i) {
+		cin >> c[i];
+	}
+	for(int i = 0;i < N;++i) {
+		cin >> t[i];
+		c[i] -= t[i];
+	}
+
+	sort(c,c + N);
+
+	for(int i = 0;i < Q;++i) {
+		int v,s;
+		cin >> v >> s;
+		int uwu = N - (lower_bound(c,c + N,s + 1) - c);
+		cout << (uwu >= v ? "YES" : "NO") << endl;
+	}
+
+	return 0;
+}
+
+Brandon Wang's Python Code
+
+N, Q = (int(x) for x in input().split())
+c = [int(x) for x in input().split()]
+t = [int(x) for x in input().split()]
+diffs = sorted([ci - ti for ci, ti in zip(c, t)], reverse=True)
+for _ in range(Q):
+    V, S = (int(x) for x in input().split())
+    print("YES" if (V <= N and (V <= 0 or diffs[V-1] > S)) else "NO")

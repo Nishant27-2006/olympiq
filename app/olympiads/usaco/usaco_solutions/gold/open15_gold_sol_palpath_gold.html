@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>This is a DP problem where we iteratively count the number of palindromes
+that we can build from the middle.
+<p>Let <span class='math'>$f(a, r_1, r_2)$</span> be the number of palindromic strings that we can
+build of length <span class='math'>$2a+1$</span>, where the start of the string is on row <span class='math'>$r_1$</span>,
+the end of the string is on row <span class='math'>$r_2$</span>, and the middle of the string
+is on the diagonal of the grid that goes from the top-right to the
+bottom-left of the grid. We initialize <span class='math'>$f(0, i, i) = 1$</span> for all possible
+rows. Because of the constraints of the DP state, the beginning and
+ending squares are uniquely determined by their row. Therefore,
+<span class='math'>$f(a, r_1, r_2)$</span> affects at most four other quantities: <span class='math'>$f(a+1, r_1, r_2)$</span>,
+<span class='math'>$f(a+1, r_1-1, r_2)$</span>, <span class='math'>$f(a+1, r_1, r_2+1)$</span>, and <span class='math'>$f(a+1, r_1-1, r_2+1)$</span>.
+<p>This gives an <span class='math'>$O(N^3)$</span> algorithm which can be implemented in <span class='math'>$O(N^2)$</span> memory
+because you only need to keep track of <span class='math'>$f(a, r_1, r_2)$</span> and <span class='math'>$f(a+1, r_1, r_2)$</span>
+concurrently over all possible pairs <span class='math'>$(r_1, r_2)$</span>.
+<p>Here is my code.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class palpathG {
+  static int n;
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader(&quot;palpath.in&quot;));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;palpath.out&quot;)));
+    n = Integer.parseInt(br.readLine());
+    char[][] grid = new char[n][n];
+    for(int i = 0; i &lt; n; i++) {
+      String s = br.readLine();
+      for(int j = 0; j &lt; n; j++) {
+        grid[i][j] = s.charAt(j);
+      }
+    }
+    long[][] dp = new long[n][n];
+    for(int i = 0; i &lt; n; i++) {
+      dp[i][i] = 1;
+    }
+    final long MOD = 1000000007;
+    for(int num = n-1; num &gt;= 1; num--) {
+      long[][] next = new long[n][n];
+      for(int a = 0; a &lt; n; a++) {
+        int rowA = a;
+        int colA = (num-1-a);
+        if(colA &lt; 0) continue;
+        for(int b = 0; b &lt; n; b++) {
+          int rowB = b;
+          int colB = 2*n-num-rowB-1;
+          if(colB &gt;= n) continue;
+          if(grid[rowA][colA] != grid[rowB][colB]) continue;
+          next[rowA][rowB] += dp[rowA][rowB];
+          if(rowA+1 &lt; n) next[rowA][rowB] += dp[rowA+1][rowB];
+          if(rowB-1 &gt;= 0) next[rowA][rowB] += dp[rowA][rowB-1];
+          if(rowA+1 &lt; n &amp;&amp; rowB-1 &gt;= 0) next[rowA][rowB] += dp[rowA+1][rowB-1];
+          next[rowA][rowB] %= MOD;
+        }
+      }
+      dp = next;
+    }
+    pw.println(dp[0][n-1]);
+    pw.close();
+  }
+}
+</pre></body></html>

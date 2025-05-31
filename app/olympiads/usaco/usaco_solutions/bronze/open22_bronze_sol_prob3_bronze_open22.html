@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>For notational convenience, if <span class='math'>$i&gt;j$</span>, we&apos;ll say that metal <span class='math'>$i$</span> is more valuable
+than metal <span class='math'>$j$</span>. Note that all recipes take a single unit of some metals and
+produce one unit of a metal that is more valuable than all of the original
+metals.
+<p>To solve test case 2, every unit of metal can be converted into a unit of metal
+<span class='math'>$N$</span>, so the answer is the number of units of metal that Bessie has.
+<p>To solve test cases 3 and 4, if there is no recipe that can make metal <span class='math'>$N$</span>, then
+the answer is simply the number of units of metal <span class='math'>$N$</span> that Bessie starts out
+with. Otherwise, there is some less valuable metal that can be turned directly
+into metal <span class='math'>$N$</span>, so all of those units can also be converted into metal <span class='math'>$N$</span>. If
+that less valuable metal has no recipe, then we are done. Otherwise, we repeat
+this process and sum up the counts of the less valuable metals until we reach
+one which can&apos;t be made.
+<p>To solve the problem fully, we&apos;ll take advantage of how recipes can only turn
+less valuable metals into more valuable metals. If we want to gain one unit of
+metal <span class='math'>$N$</span>, we must use that recipe, and so that means we need one unit of some
+less valuable metals. If we already have one of each unit of the less valuable
+metals, we can directly consume those. If we don&apos;t have a unit of some metal,
+and no recipe for that metal exists, we cannot make any more of metal <span class='math'>$N$</span>, and
+the process ends. If there is a recipe, then we need one unit of each of the
+metals that are ingredients in that recipe.
+<p>Since more valuable metals cannot be used as ingredients in recipes for less
+valuable metals, we can loop over the metals in order from metal <span class='math'>$N$</span> down to
+metal <span class='math'>$1$</span>, tracking at each point in time how many units of each metal we need
+in order to make one unit of metal <span class='math'>$N$</span>. 
+<p>The while loop runs at most  <span class='math'>$N\cdot \max(a_i)$</span> times and takes <span class='math'>$O(N)$</span> time per
+iteration, for a time complexity of <span class='math'>$O(N^2\cdot \max(a_i))$</span>.
+<p>C++ code that does this iteratively:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+ 
+using namespace std;
+ 
+int main() {
+  int n;
+  cin &gt;&gt; n;
+  vector&lt;int&gt; have(n);
+  for(auto&amp; x: have) cin &gt;&gt; x;
+  int k;
+  cin &gt;&gt; k;
+  vector&lt;vector&lt;int&gt;&gt; need(n);
+  while(k--) {
+    int want, m;
+    cin &gt;&gt; want &gt;&gt; m;
+    need[--want].resize(m);
+    for(auto&amp; x: need[want]) {
+      cin &gt;&gt; x;
+      x--;
+    }
+  }
+  int ret = 0;
+  while(true) {
+    vector&lt;int&gt; consume(n);
+    consume[n-1]++;
+    bool good = true;
+    for(int i = n-1; i &gt;= 0; i--) {
+      if(consume[i] &lt;= have[i]) {
+        have[i] -= consume[i];
+        continue;
+      }
+      if(need[i].size() == 0) {
+        good = false;
+        break;
+      }
+      int take = min(consume[i], have[i]);
+      consume[i] -= take;
+      have[i] -= take;
+      for(int out: need[i]) consume[out] += consume[i];
+    }
+    if(good) ret++;
+    else break;
+  }
+  cout &lt;&lt; ret &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Java code that does this recursively:
+<pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class Alchemy {
+  public static void main(String[] args) throws IOException {
+    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+    int n = Integer.parseInt(in.readLine());
+    StringTokenizer st = new StringTokenizer(in.readLine());
+    int[] have = new int[n];
+    for(int i = 0; i &lt; n; i++) have[i] = Integer.parseInt(st.nextToken());
+    int ans = 0;
+    int[][] recipes = new int[n][];
+    int k = Integer.parseInt(in.readLine());
+    while(k-- &gt; 0) {
+      st = new StringTokenizer(in.readLine());
+      int gain = Integer.parseInt(st.nextToken())-1;
+      recipes[gain] = new int[Integer.parseInt(st.nextToken())];
+      for(int i = 0; i &lt; recipes[gain].length; i++) recipes[gain][i] = Integer.parseInt(st.nextToken())-1;
+    }
+    while(canMake(recipes, have, n-1)) ans++;
+    PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    out.println(ans);
+    out.close();
+  }
+  private static boolean canMake(int[][] recipes, int[] have, int want) {
+    if(have[want] &gt; 0) {
+      have[want]--;
+      return true;
+    }
+    if(recipes[want] == null) return false;
+    for(int component: recipes[want]) if(!canMake(recipes, have, component)) return false;
+    return true;
+  }
+}
+</pre></body></html>

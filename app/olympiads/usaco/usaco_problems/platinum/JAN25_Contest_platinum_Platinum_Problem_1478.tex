@@ -1,0 +1,238 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN25 Contest - Platinum Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Bessie's garden has $N$ plants labeled $1$ through $N$
+($2\leq N\leq 5\cdot 10^5$) from left to right. Bessie knows that plant $i$
+requires at least $w_i$ ($0\leq w_i \leq 10^6$) units of water.
+
+Bessie has a very peculiar irrigation system with $N-1$ canals, numbered $1$
+through $N-1$.  Each canal $i$ has an associated unit cost $c_i$
+($1\le c_i\le 10^6$), such that Bessie can pay $c_i k$ to provide plants $i$ and
+$i+1$ each with $k$ units of water, where $k$ is a non-negative integer.
+
+Bessie is busy and may not have time to use all the canals. For each
+$2\leq i \leq N$ compute the minimum cost required to water plants $1$ through
+$i$ using only the first $i-1$ canals.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains a single positive integer $N$.
+
+The second line contains $N$ space-separated integers $w_1, \ldots, w_N$.
+
+The third line contains $N-1$ space-separated integers $c_1, \ldots, c_{N-1}$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Output $N-1$ newline-separated integers. The $(i-1)$th integer should contain
+the minimum cost to water the first $i$ plants using the first $i-1$ canals.
+
+SAMPLE INPUT:
+3
+39 69 33
+30 29
+SAMPLE OUTPUT: 
+2070
+2127
+
+The minimum cost to water the first $2$ plants using the first canal is to pay
+$30 \cdot 69 = 2070$ by using the first canal $69$ times.
+
+The minimum cost to water the first $3$ plants is to use the first canal $39$
+times and the second canal $33$ times, paying
+$39 \cdot 30 + 29 \cdot 33 = 2127$.
+
+SAMPLE INPUT:
+3
+33 82 36
+19 1
+SAMPLE OUTPUT: 
+1558
+676
+
+SAMPLE INPUT:
+8
+35 89 44 1 35 3 62 50
+7 86 94 62 63 9 49
+SAMPLE OUTPUT: 
+623
+4099
+4114
+6269
+6272
+6827
+8827
+
+SCORING:
+Input 4: $N \leq 200$, and all $w_i \leq 200$.Inputs 5-6: All $w_i \leq 200$.Inputs 7-10: $N \leq 5000$.Inputs 11-14: All $w_i$ and $c_i$ are generated independently and uniformly
+at random.Inputs 15-19: No additional constraints.
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+The second line contains $N$ space-separated integers $w_1, \ldots, w_N$.The third line contains $N-1$ space-separated integers $c_1, \ldots, c_{N-1}$.
+
+The third line contains $N-1$ space-separated integers $c_1, \ldots, c_{N-1}$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):Output $N-1$ newline-separated integers. The $(i-1)$th integer should contain
+the minimum cost to water the first $i$ plants using the first $i-1$ canals.SAMPLE INPUT:3
+39 69 33
+30 29SAMPLE OUTPUT:2070
+2127The minimum cost to water the first $2$ plants using the first canal is to pay
+$30 \cdot 69 = 2070$ by using the first canal $69$ times.The minimum cost to water the first $3$ plants is to use the first canal $39$
+times and the second canal $33$ times, paying
+$39 \cdot 30 + 29 \cdot 33 = 2127$.SAMPLE INPUT:3
+33 82 36
+19 1SAMPLE OUTPUT:1558
+676SAMPLE INPUT:8
+35 89 44 1 35 3 62 50
+7 86 94 62 63 9 49SAMPLE OUTPUT:623
+4099
+4114
+6269
+6272
+6827
+8827SCORING:Input 4: $N \leq 200$, and all $w_i \leq 200$.Inputs 5-6: All $w_i \leq 200$.Inputs 7-10: $N \leq 5000$.Inputs 11-14: All $w_i$ and $c_i$ are generated independently and uniformly
+at random.Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:3
+39 69 33
+30 29SAMPLE OUTPUT:2070
+2127The minimum cost to water the first $2$ plants using the first canal is to pay
+$30 \cdot 69 = 2070$ by using the first canal $69$ times.The minimum cost to water the first $3$ plants is to use the first canal $39$
+times and the second canal $33$ times, paying
+$39 \cdot 30 + 29 \cdot 33 = 2127$.SAMPLE INPUT:3
+33 82 36
+19 1SAMPLE OUTPUT:1558
+676SAMPLE INPUT:8
+35 89 44 1 35 3 62 50
+7 86 94 62 63 9 49SAMPLE OUTPUT:623
+4099
+4114
+6269
+6272
+6827
+8827SCORING:Input 4: $N \leq 200$, and all $w_i \leq 200$.Inputs 5-6: All $w_i \leq 200$.Inputs 7-10: $N \leq 5000$.Inputs 11-14: All $w_i$ and $c_i$ are generated independently and uniformly
+at random.Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+3
+39 69 33
+30 29
+
+3
+33 82 36
+19 1
+
+8
+35 89 44 1 35 3 62 50
+7 86 94 62 63 9 49
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+2070
+2127
+
+The minimum cost to water the first $2$ plants using the first canal is to pay
+$30 \cdot 69 = 2070$ by using the first canal $69$ times.The minimum cost to water the first $3$ plants is to use the first canal $39$
+times and the second canal $33$ times, paying
+$39 \cdot 30 + 29 \cdot 33 = 2127$.SAMPLE INPUT:3
+33 82 36
+19 1SAMPLE OUTPUT:1558
+676SAMPLE INPUT:8
+35 89 44 1 35 3 62 50
+7 86 94 62 63 9 49SAMPLE OUTPUT:623
+4099
+4114
+6269
+6272
+6827
+8827SCORING:Input 4: $N \leq 200$, and all $w_i \leq 200$.Inputs 5-6: All $w_i \leq 200$.Inputs 7-10: $N \leq 5000$.Inputs 11-14: All $w_i$ and $c_i$ are generated independently and uniformly
+at random.Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+The minimum cost to water the first $3$ plants is to use the first canal $39$
+times and the second canal $33$ times, paying
+$39 \cdot 30 + 29 \cdot 33 = 2127$.SAMPLE INPUT:3
+33 82 36
+19 1SAMPLE OUTPUT:1558
+676SAMPLE INPUT:8
+35 89 44 1 35 3 62 50
+7 86 94 62 63 9 49SAMPLE OUTPUT:623
+4099
+4114
+6269
+6272
+6827
+8827SCORING:Input 4: $N \leq 200$, and all $w_i \leq 200$.Inputs 5-6: All $w_i \leq 200$.Inputs 7-10: $N \leq 5000$.Inputs 11-14: All $w_i$ and $c_i$ are generated independently and uniformly
+at random.Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+SAMPLE INPUT:3
+33 82 36
+19 1SAMPLE OUTPUT:1558
+676SAMPLE INPUT:8
+35 89 44 1 35 3 62 50
+7 86 94 62 63 9 49SAMPLE OUTPUT:623
+4099
+4114
+6269
+6272
+6827
+8827SCORING:Input 4: $N \leq 200$, and all $w_i \leq 200$.Inputs 5-6: All $w_i \leq 200$.Inputs 7-10: $N \leq 5000$.Inputs 11-14: All $w_i$ and $c_i$ are generated independently and uniformly
+at random.Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+1558
+676
+
+SAMPLE INPUT:8
+35 89 44 1 35 3 62 50
+7 86 94 62 63 9 49SAMPLE OUTPUT:623
+4099
+4114
+6269
+6272
+6827
+8827SCORING:Input 4: $N \leq 200$, and all $w_i \leq 200$.Inputs 5-6: All $w_i \leq 200$.Inputs 7-10: $N \leq 5000$.Inputs 11-14: All $w_i$ and $c_i$ are generated independently and uniformly
+at random.Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+623
+4099
+4114
+6269
+6272
+6827
+8827
+
+SCORING:Input 4: $N \leq 200$, and all $w_i \leq 200$.Inputs 5-6: All $w_i \leq 200$.Inputs 7-10: $N \leq 5000$.Inputs 11-14: All $w_i$ and $c_i$ are generated independently and uniformly
+at random.Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1478
+
+\section*{Source}
+USACO JAN25 Contest, Platinum Division, Problem ID: 1478
+
+\end{document}

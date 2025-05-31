@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Daniel Zhang and Benjamin Qi)
+<p>Observe that after performing operations of type 1 and type 2, the grid is in
+the following form: there are permutations <span class='math'>$p_1,\ldots,p_N$</span> and <span class='math'>$q_1,\ldots,q_N$</span>
+such that the integer at row <span class='math'>$i$</span> and column <span class='math'>$j$</span> equals <span class='math'>$p_i+q_j$</span>.
+<p>Operations of type 3 will relabel the integers in the cells. Our task is now to
+find <span class='math'>$p_1,\ldots,p_N$</span> and <span class='math'>$q_1,\ldots,q_N$</span> so that <span class='math'>$p_i+q_j$</span> is the same as the
+given table up to relabeling.
+<p>Now, if <span class='math'>$p_1,\ldots,p_N$</span> and <span class='math'>$q_1,\ldots,q_N$</span> yield a valid answer, then
+<span class='math'>$N+1-p_1,\ldots,N+1-p_N$</span> and <span class='math'>$N+1-q_1,\ldots,N+1-q_N$</span> also yield a valid answer.
+This corresponds to replacing each cell with value <span class='math'>$x$</span> with value <span class='math'>$2N+2-x$</span>.
+Thus, for <span class='math'>$N&gt;1$</span>, there are always at least two possible answers. The full
+solution below will show that there can be no other answers.
+<p><strong> Subtask 1 <span class='math'>$N\le 6$</span> </strong>
+<p>We can brute force all permutations <span class='math'>$p_1,\ldots,p_N$</span> and all permutations
+<span class='math'>$q_1,\ldots,q_N$</span>, and check if the result is valid. We then take the
+lexicographically minimum valid answer.
+<p>This solution takes <span class='math'>$\mathcal{O}(N!^2\cdot N^2)$</span>.
+<p>Daniel Zhang&apos;s Python code:
+<pre class='prettyprint'>
+import itertools
+
+N = int(input())
+
+arr = [[int(x) for x in input().split()] for i in range(N)]
+
+# arr consists of numbers 2,3,...,2N each at least once.
+# candidate consists of numbers 2,3,...,2N each at least once.
+# This function checks that every instance of integer x in candidate maps to the same value in arr.
+# Since arr and candidate have the same number of distinct integers,
+# this is enough to ensure that they are relabelings of each other.
+def is_valid(candidate):
+    label = [None]*(2*N+1)
+    for i in range(N):
+        for j in range(N):
+            if label[candidate[i][j]] is None:
+                label[candidate[i][j]] = arr[i][j]
+            if label[candidate[i][j]] is not arr[i][j]:
+                return False
+    return True
+
+best = None
+for ps in itertools.permutations(range(1,N+1)):
+    for qs in itertools.permutations(range(1,N+1)):
+        candidate = [[ps[i]+qs[j] for j in range(N)] for i in range(N)]
+        if is_valid(candidate):
+            if best is None or candidate &lt; best:
+                best = candidate
+
+for line in best:
+    print(&quot; &quot;.join(map(str,line)))
+
+</pre>
+<p><strong> Subtask 2 <span class='math'>$N\le 8$</span> </strong>
+<p>We brute force all possible permutations of rows <span class='math'>$p_1,\ldots,p_N$</span> (type 1
+operations).
+<p>Suppose we guessed correctly and undid the permutation. The first two rows of
+the table would look like
+<pre>
+2 3 4 ... N
+3 4 5 ... N+1
+</pre>
+with columns permuted (type 2 operations), and integers relabeled (type 3
+operations)
+<p>Now, before type 3 operations, 2 is the only number appearing in the first row
+but not the second row, 3 is the number in the second row belonging to the 2 in
+the first row, 4 is the number in the second row belonging to the 3 in the first
+row, and so on. From this, we can determine <span class='math'>$q_1,\ldots,q_N$</span>.
+<p>Among all our guesses for <span class='math'>$p_1,\ldots,p_N$</span> and <span class='math'>$q_1,\ldots,q_N$</span>, we check if it
+is valid, and take the lexicographically minimal solution.
+<p>This solution takes <span class='math'>$\mathcal{O}(N!\cdot N^2)$</span>. A more careful analysis of the
+below implementation shows it is actually <span class='math'>$O(N!\cdot N)$</span>.
+<p>Daniel Zhang&apos;s Python code:
+<p><pre class='prettyprint'>
+import itertools
+
+N = int(input())
+
+arr = [[int(x) for x in input().split()] for i in range(N)]
+
+if N == 1:
+    print(2)
+    exit()
+
+# arr consists of numbers 2,3,...,2N each at least once
+# candidate consists of numbers 2,3,...,2N each at least once
+# This function checks that every instance of integer x in candidate maps to the same value in arr
+def is_valid(candidate):
+    label = [None]*(2*N+1)
+    for i in range(N):
+        for j in range(N):
+            if label[candidate[i][j]] is None:
+                label[candidate[i][j]] = arr[i][j]
+            if label[candidate[i][j]] is not arr[i][j]:
+                return False
+    return True
+
+best = None
+for pinv in itertools.permutations(range(0,N)):
+    where0 = [None]*(2*N+1)
+    where1 = [None]*(2*N+1)
+
+    for j in range(N):
+        where0[arr[pinv[0]][j]] = j
+        where1[arr[pinv[1]][j]] = j
+
+    qinv = []
+
+    for v in range(N*2+1):
+        if where0[v] is not None and where1[v] is None:
+            qinv.append(where0[v])
+
+    # At this point, qinv contains all integers in row pinv[0] that are not in row pinv[1]
+    if len(qinv) != 1:
+        continue
+
+    # There is exactly one integer in row pinv[0] that is not in row pinv[1]
+    # These two rows look like
+    # 2 3 4 ... N
+    # 3 4 5 ... N+1
+    # under some permutation of columns, and relabeling of integers
+
+    for j in range(N):
+        qinv.append(where0[arr[pinv[1]][qinv[j]]])
+
+    ps = [0]*N
+    qs = [0]*N
+    for j in range(N):
+        ps[pinv[j]] = j+1
+        qs[qinv[j]] = j+1
+
+    candidate = [[ps[i]+qs[j] for j in range(N)] for i in range(N)]
+    if is_valid(candidate):
+        if best is None or candidate &lt; best:
+            best = candidate
+
+for line in best:
+    print(&quot; &quot;.join(map(str,line)))
+</pre>
+<p><strong> Subtask 3 <span class='math'>$N\le 100$</span> </strong>
+<p>Observe that row <span class='math'>$i$</span> and row <span class='math'>$j$</span> will have <span class='math'>$N-1$</span> integers in common if and only
+if <span class='math'>$|p_i-p_j|=1$</span>.
+<p>The graph on vertices <span class='math'>$1,\ldots,N$</span> with an edge between <span class='math'>$i$</span> and <span class='math'>$j$</span> if row <span class='math'>$i$</span>
+and row <span class='math'>$j$</span> have <span class='math'>$N-1$</span> integers in common is a path, and the ordering of
+vertices on this path determines two possibilities for <span class='math'>$p_1,\ldots,p_N$</span>
+(corresponding to traversing the path in two directions).
+<p>We can do the same to determine two possibilities for <span class='math'>$q_1,\ldots,q_N$</span>.
+<p>We can check all four candidate answers and take the lexicographical minimum of
+the valid ones.
+<p>This solution takes <span class='math'>$\mathcal{O}(N^3)$</span>.
+<p>Daniel Zhang&apos;s Python code:
+<pre class='prettyprint'>
+import itertools
+
+N = int(input())
+
+arr = [[int(x) for x in input().split()] for i in range(N)]
+
+# arr consists of numbers 2,3,...,2N each at least once
+# candidate consists of numbers 2,3,...,2N each at least once
+# This function checks that every instance of integer x in candidate maps to the same value in arr
+def is_valid(candidate):
+    label = [None]*(2*N+1)
+    for i in range(N):
+        for j in range(N):
+            if label[candidate[i][j]] is None:
+                label[candidate[i][j]] = arr[i][j]
+            if label[candidate[i][j]] is not arr[i][j]:
+                return False
+    return True
+
+def get_ps(arr):
+    adj = [[] for i in range(N)]
+    for i1 in range(N):
+        for i2 in range(i1+1,N):
+            if len(set(arr[i1]) &amp; set(arr[i2])) == N-1:
+                adj[i1].append(i2)
+                adj[i2].append(i1)
+                
+    res = []
+    for i in range(N):
+        if len(adj[i]) &lt;= 1:
+            pinv = [i]
+            for j in range(N):
+                for k in adj[pinv[j]]:
+                    if k not in pinv:
+                        pinv.append(k)
+            ps = [None]*N
+            for j in range(N):
+                ps[pinv[j]] = j+1
+            res.append(ps)
+    return res
+    
+
+pss = get_ps(arr)
+
+qss = get_ps([[arr[j][i] for j in range(N)] for i in range(N)])
+
+best = None
+
+for ps in pss:
+    for qs in qss:
+        candidate = [[ps[i]+qs[j] for j in range(N)] for i in range(N)]
+        if is_valid(candidate):
+            if best is None or candidate &lt; best:
+                best = candidate
+
+for line in best:
+    print(&quot; &quot;.join(map(str,line)))
+</pre>
+<p><strong> Full solution </strong>
+<p>For each integer, count the number of times it occurs in the table. Note that
+the frequency of the integer in a cell is preserved under relabelings (type 3
+operations). We will use this to determine its value before relabelings.
+<p>Consider what the table looks like before type 3 operations.
+<p>There will be two integers that appear exactly once: <span class='math'>$2$</span> and <span class='math'>$2N$</span>. If <span class='math'>$2$</span> is in
+row <span class='math'>$i$</span> column <span class='math'>$j$</span>, then <span class='math'>$p_i=1$</span> and <span class='math'>$q_j=1$</span>. Then, the numbers in row <span class='math'>$i$</span> must
+be <span class='math'>$1+1,1+2,1+3,\ldots,1+N$</span> in some order. These have frequencies <span class='math'>$1,2,\ldots,N$</span>
+respectively, and the ordering of these in the row uniquely determines
+<span class='math'>$q_1,\ldots,q_N$</span>. The numbers in column <span class='math'>$j$</span> must be <span class='math'>$1+1,2+1,3+1,\ldots,N+1$</span> in
+some order. These have frequencies <span class='math'>$1,2,\ldots,N$</span> respectively, and the ordering
+of these in the column uniquely determines
+<span class='math'>$p_1,\ldots,p_N$</span>.
+<p>Since frequencies are preserved under type 3 operations, we can still perform
+this procedure on the array after type 3 operations to deduce <span class='math'>$p_1,\ldots,p_N$</span>
+and <span class='math'>$q_1,\ldots,q_N$</span>. The only caveat is that we don&apos;t know exactly where <span class='math'>$2$</span>
+was before type 3 operations, but it must be one of the two cells with a unique
+number. These two possibilities yield two potential answers. Furthermore, all
+real answers must be included among them. If <span class='math'>$N&gt;1$</span>, we know there are at least
+two answers (the one guaranteed by the problem, and the same after applying
+<span class='math'>$x\mapsto 2N+2-x$</span>), meaning that both potential answers are real, and
+differ by the map <span class='math'>$x\mapsto 2N+2-x$</span>.
+<p>This solution takes <span class='math'>$\mathcal{O}(N^2)$</span>. This also proves there are at most two
+answers, which means that the answer is unique up to the transformation
+<span class='math'>$x\mapsto 2N+2-x$</span>.
+<p>Daniel Zhang&apos;s C++ code:
+<pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;vector&gt;
+
+int table[1000][1000];
+
+int ans[2][1000][1000];
+
+int freq[2001];
+
+int rs[1000];
+int cs[1000];
+int N;
+
+int pick_lexmin(){
+  for(int i=0;i&lt;N;i++){
+    for(int j=0;j&lt;N;j++){
+      if(ans[0][i][j]&lt;ans[1][i][j]){
+	return 0;
+      }
+      if(ans[0][i][j]&gt;ans[1][i][j]){
+	return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+int main(){
+  scanf(&quot;%d&quot;,&amp;N);
+  for(int i=0;i&lt;N;i++){
+    for(int j=0;j&lt;N;j++){
+      scanf(&quot;%d&quot;,&amp;table[i][j]);
+      freq[table[i][j]]++;
+    }
+  }
+  for(int u=2;u&lt;=N*2;u++){
+    if(freq[u]==1){
+      for(int i=0;i&lt;N;i++){
+	for(int j=0;j&lt;N;j++){
+	  if(table[i][j]==u){
+	    for(int k=0;k&lt;N;k++){
+	      rs[k]=freq[table[k][j]];
+	      cs[k]=freq[table[i][k]];
+	    }
+	    break;
+	  }
+	}
+      }
+      break;
+    }
+  }
+  for(int i=0;i&lt;N;i++){
+    for(int j=0;j&lt;N;j++){
+      ans[0][i][j]=rs[i]+cs[j];
+      ans[1][i][j]=2*(N+1)-rs[i]-cs[j];
+    }
+  }
+  int k=pick_lexmin();
+  for(int i=0;i&lt;N;i++){
+    for(int j=0;j&lt;N;j++){
+      if(j) printf(&quot; &quot;);
+      printf(&quot;%d&quot;,ans[k][i][j]);
+    }
+    printf(&quot;\n&quot;);
+  }
+}
+</pre>
+<p>Brandon Wang&apos;s Python code:
+<pre class='prettyprint'>
+from collections import defaultdict
+ 
+N = int(input())
+ 
+if N == 1:
+    print(2)
+    exit()
+ 
+arr = []
+ 
+for _ in range(N):
+    arr.append(list(map(int, input().split())))
+ 
+freqs = defaultdict(lambda: 0)
+ 
+for i in range(N):
+    for j in range(N):
+        freqs[arr[i][j]] += 1
+ 
+def find(u):
+    for i in range(N):
+        for j in range(N):
+            if arr[i][j] == u:
+                return i, j
+ 
+def get_perm(u, v):
+    ui, uj = find(u)
+    vi, vj = find(v)
+    perm = {u: 2, v: 2*N}
+    for j in range(N):
+        x = arr[ui][j]
+        perm[x] = 1 + freqs[x]
+    for i in range(N):
+        x = arr[i][vj]
+        perm[x] = 2*N - freqs[x] + 1
+    return perm
+ 
+def apply(perm):
+    result = []
+    for i in range(N):
+        result.append([perm[x] for x in arr[i]])
+    return result
+ 
+u, v = None, None
+for i in range(2, 2*N+1):
+    if freqs[i] == 1:
+        if u is None:
+            u = i
+        else:
+            v = i
+            break
+ 
+arr1 = apply(get_perm(u, v))
+arr2 = apply(get_perm(v, u))
+ 
+def display(arr):
+    for row in arr:
+        print(*row)
+ 
+for i in range(N):
+    for j in range(N):
+        if arr1[i][j] &lt; arr2[i][j]:
+            display(arr1)
+            exit()
+        if arr1[i][j] &gt; arr2[i][j]:
+            display(arr2)
+            exit()
+ 
+display(arr1)
+</pre>
+<p></body></html>

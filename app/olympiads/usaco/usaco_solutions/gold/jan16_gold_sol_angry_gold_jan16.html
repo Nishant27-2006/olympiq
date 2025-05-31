@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+
+(Analysis by Brian Dean)
+<p>One approach for solving this problem is by combining a
+left-to-right scan with a right-to-left scan (one could call each scan
+either greedy or an example of dynamic programming).  We first run a
+greedy/DP algorithm from left to right to determine for each hay bale
+the minimum power with which it must explode in order to propagate all
+the way left.  We then do the same from right to left, computing for
+each hay bale the minimum power with which it must explode in order to
+propagate all the way to the right.  Finally, by scanning through the
+list of hay bales, we can use these two numbers to identify the best
+"crossover" point where we should set the initial explosion.  
+
+<p>Here is Mark Gordon's remarkably concise solution.  Note how he
+uses a couple of clever tricks -- for example to run the algorithm
+from right to left, he simply reverses the input, runs the
+left-to-right algorithm, then reverses the output so it appears in the
+forward direction.  Note also how he multiplies all haybale locations
+by 2 initially so only integer math is required; this eliminates any
+possibility of rounding error from using floating point numbers.
+This is why, for example, Mark uses "2 + max(..." in his final
+loop, since it would normally be "1 +" but the numbers are still
+scaled up by 2.
+
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+#define INF 2000000000
+
+int main() {
+  freopen("angry.in", "r", stdin);
+  freopen("angry.out", "w", stdout);
+
+  int N; cin &gt;&gt; N;
+  vector&lt;int&gt; A(N);
+  for (int i = 0; i &lt; N; i++) {
+    cin &gt;&gt; A[i];
+    A[i] *= 2;
+  }
+  sort(A.begin(), A.end());
+  A.resize(unique(A.begin(), A.end()) - A.begin());
+
+  vector&lt;int&gt; DP[2];
+  for (int it = 0; it &lt; 2; it++) {
+    int lstj = 0;
+    DP[it].resize(N, INF);
+    DP[it][0] = -2;
+    for (int i = 1; i &lt; N; i++) {
+      while (lstj + 1 &lt; i && abs(A[i] - A[lstj + 1]) &gt; DP[it][lstj + 1] + 2) {
+        lstj++;
+      }
+      DP[it][i] = min(abs(A[i] - A[lstj]), DP[it][lstj + 1] + 2);
+    }
+    reverse(A.begin(), A.end());
+  }
+  reverse(DP[1].begin(), DP[1].end());
+
+  int i = 0;
+  int j = N - 1;
+  int result = INF;
+  while (i &lt; j) {
+    result = min(result, max((A[j] - A[i]) / 2, 2 + max(DP[0][i], DP[1][j])));
+    if (DP[0][i + 1] &lt; DP[1][j - 1]) {
+      i++;
+    } else {
+      j--;
+    }
+  }
+  cout &lt;&lt; result / 2 &lt;&lt; '.' &lt;&lt; (result % 2 ? 5 : 0) &lt;&lt; '\n';
+
+  return 0;
+}
+</pre>
+
+<p>A clever observation by Victor Lin simplifies this approach by doing both
+the left-to-right and right-to-left scans simultaneously, always advancing the
+scan with the smaller blast radius:</p>
+
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class angry{
+    public static ArrayList&lt;Integer&gt; l = new ArrayList&lt;&gt;();
+    public static int N;
+    public static void main(String[] args) throws IOException {
+        BufferedReader f = new BufferedReader(new FileReader("angry.in"));
+        PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("angry.out")));
+        N = Integer.parseInt(f.readLine());
+        for (int i = 0; i &lt; N; i++) { l.add(Integer.parseInt(f.readLine()));}
+        Collections.sort(l);
+        int beg=0; int rad = 0; int end = N-1; int rad1 = 0;
+        double best = Double.MAX_VALUE;
+        while(true){
+            double val = Math.max(Math.max(rad,rad1)+1,(double)(l.get(end)-l.get(beg))/2);
+            if (val&lt;best){best=val;}
+            int pot = Math.max(rad+1,l.get(beg+1)-l.get(beg));
+            int pot1 = Math.max(rad1+1,l.get(end)-l.get(end-1));
+            if(pot&lt;pot1){
+                rad=pot; int index = beg;
+                while(index&lt;N-1 && l.get(beg)+pot&gt;=l.get(index+1)){index++; }
+                beg=index;
+            } else {
+                rad1=pot1; int index = end;
+                while(index&gt;0 && l.get(end)-pot1&lt;=l.get(index-1)){index--;}
+                end=index;
+            }
+            if(end&lt;=beg){
+                best= Math.min(best,Math.max(rad,rad1));
+                break;
+            }
+        }
+        out.printf("%.1f",best); out.close();
+    }
+}
+</pre>
+
+<p>Another (slightly slower, but still feasible) solution approach is
+illustrated by the following code by Nick Wu.  It essentially does a
+binary search on the size of the first explosion.  To test if a
+particular initial explosion size works, it then does a binary search
+for the location of the initial explosion.
+
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class angryGloglog {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("angry.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("angry.out")));
+
+		int n = Integer.parseInt(br.readLine());
+		TreeSet&lt;Long&gt; set = new TreeSet&lt;Long&gt;();
+		for(int i = 0; i &lt; n; i++) {
+			set.add(2L*Integer.parseInt(br.readLine()));
+		}
+
+		long min = 0;
+		long max = 1000000000;
+		while(min != max) {
+			long mid = (min+max)/2;
+			long l = set.first();
+			long r = set.last();
+			while(l &lt; r) {
+				long m = (l+r+1)/2;
+				if(possibleFirst(set, m, mid)) {
+					l = m;
+				}
+				else {
+					r = m-1;
+				}
+			}
+			if(possibleLast(set, l, mid)) {
+				max = mid;
+			}
+			else {
+				min = mid+1;
+			}
+		}
+		
+		pw.printf("%.1f\n", min / 2.0);
+		pw.close();
+	}
+
+	public static boolean possibleFirst(TreeSet&lt;Long&gt; set, long start, long r) {
+		if(set.first() &lt; start - r) {
+			long curr = set.ceiling(start - r);
+			long currRadius = r-2;
+			while(curr != set.first()) {
+				long next = set.ceiling(curr - currRadius);
+				if(next &gt;= curr) {
+					return false;
+				}
+				curr = next;
+				currRadius-=2;
+			}
+		}
+		return true;
+	}
+	
+	public static boolean possibleLast(TreeSet&lt;Long&gt; set, long start, long r) {
+		if(set.last() &gt; start + r) {
+			long curr = set.floor(start + r);
+			long currRadius = r-2;
+			while(curr != set.last()) {
+				long next = set.floor(curr + currRadius);
+				if(next &lt;= curr) {
+					return false;
+				}
+				curr = next;
+				currRadius-=2;
+			}
+		}
+		return true;
+	}
+
+}
+</pre>
+
+</body></html>

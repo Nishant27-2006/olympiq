@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Andi Qu)
+<p>Let&apos;s call two adjacent cows &quot;linked&quot; if they are able to pair up with each
+other. We can split the cows up into chains where each pair of adjacent cows in
+a chain are linked, and no two cows in different chains are linked.
+<p>In each case below, we process each chain independently â let <span class='math'>$n$</span> be the
+length of the current chain.
+<p><strong>Case 1: <span class='math'>$T = 1$</span></strong>
+<p>For chains with an even number of cows, we can pair up all of them. For chains
+with an odd number of cows, we want to have exactly 1 unpaired cow. If we leave
+more than 1 cow unpaired, then we can split the chain into an odd-length suffix
+with 1 unpaired cow and an even-length prefix with all the other unpaired cows.
+Since the prefix has an even length, we can pair up all of its cows, which would
+result in a smaller sum of weights of unpaired cows.
+<p>We can thus iterate through each cow in odd-length chains, check whether it
+can be unpaired (removing it should not result in two odd-length chains),
+and finally, leave the least valuable cow unpaired.
+<p>This case can thus be solved in <span class='math'>$\mathcal O(N)$</span> time.
+<p><strong>Case 2: <span class='math'>$T = 2$</span></strong>
+<p>In this case, we should try to leave unpaired cows in both even- and odd-length
+chains. We can use dynamic programming to solve this in <span class='math'>$\mathcal O(N \log N)$</span>
+time.
+<p>Let <span class='math'>$\texttt{dp}[i][j]$</span> be the maximum sum of values of unpaired cows if we only
+consider <span class='math'>$i$</span> to <span class='math'>$n$</span> cows in the current chain and there are <span class='math'>$j$</span> unpaired ones.
+Let <span class='math'>$\texttt{ub}[i]$</span> be the index of the leftmost cow to the right of cow <span class='math'>$i$</span>
+that can be unpaired if cow <span class='math'>$i$</span> is unpaired (or <span class='math'>$n + 1$</span> if it doesn&apos;t exist). We
+can compute <span class='math'>$\texttt{ub}[i]$</span> using binary search.
+<p>If it&apos;s possible to leave cow <span class='math'>$i$</span> unpaired with <span class='math'>$j$</span> unpaired cows, then
+<span class='math'>$\texttt{dp}[i][j] = \max(\texttt{dp}[i + 1][j], \texttt{dp}[\texttt{ub}[i]][j - 1] + y_i)$</span>.
+Otherwise,
+<span class='math'>$\texttt{dp}[i][j] = \texttt{dp}[i + 1][j]$</span>.
+<p>Since we only care about the parity of the number of unpaired cows, we can drop
+the second dimension of the DP array. This allows us to compute the whole DP
+array in <span class='math'>$\mathcal O(N \log N)$</span> time (which can easily be reduced to
+<span class='math'>$\mathcal O(N)$</span>).
+<p>Andi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;array&gt;
+#include &lt;iostream&gt;
+#include &lt;utility&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+const int INF = 1e9;
+
+int min_span_cost(vector&lt;pair&lt;int, int&gt;&gt;&amp; span, int k) {
+    int mn = INF;
+    for (int i = 0; i &lt; span.size(); i++) {
+        if (!(i &amp; 1) || span[i + 1].first - span[i - 1].first &lt;= k)
+            mn = min(mn, span[i].second);
+    }
+    return mn;
+}
+
+int max_span_cost(vector&lt;pair&lt;int, int&gt;&gt;&amp; span, int k) {
+    int n = span.size();
+    if (!n) return 0;
+    vector&lt;pair&lt;int, int&gt;&gt; dp(n + 1);
+    dp[n] = {0, -INF};
+    for (int i = n - 1; ~i; i--) {
+        dp[i] = dp[i + 1];
+        int ub = upper_bound(span.begin(), span.end(),
+                             make_pair(span[i].first + k, INF)) -
+                 span.begin();
+        if (i == 0 || i == n - 1 ||
+            span[i + 1].first - span[i - 1].first &lt;= k || !(n - i &amp; 1))
+            dp[i].first = max(dp[i].first, dp[ub].second + span[i].second);
+        if (i == 0 || i == n - 1 ||
+            span[i + 1].first - span[i - 1].first &lt;= k || (n - i &amp; 1))
+            dp[i].second = max(dp[i].second, dp[ub].first + span[i].second);
+    }
+    return (n &amp; 1 ? dp[0].second : dp[0].first);
+}
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int t, n, k;
+    cin &gt;&gt; t &gt;&gt; n &gt;&gt; k;
+    int prev_x = 0, ans = 0;
+    vector&lt;pair&lt;int, int&gt;&gt; curr_span;
+    while (n--) {
+        int x, y;
+        cin &gt;&gt; x &gt;&gt; y;
+        if (x - prev_x &gt; k) {
+            if (t == 1) {
+                if (curr_span.size() &amp; 1) ans += min_span_cost(curr_span, k);
+            } else
+                ans += max_span_cost(curr_span, k);
+            curr_span.clear();
+        }
+        curr_span.push_back({x, y});
+        prev_x = x;
+    }
+    if (t == 1) {
+        if (curr_span.size() &amp; 1) ans += min_span_cost(curr_span, k);
+    } else
+        ans += max_span_cost(curr_span, k);
+    cout &lt;&lt; ans;
+    return 0;
+}
+</pre>
+<p></body></html>

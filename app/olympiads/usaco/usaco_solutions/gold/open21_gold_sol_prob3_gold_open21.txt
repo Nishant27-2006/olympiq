@@ -1,0 +1,579 @@
+Solution ID: sol_prob3_gold_open21
+Contest: OPEN21
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_open21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal, Benjamin Qi)
+
+At any point in the drawing process, Bessie's drawing will always be one large
+triangle whose interior is then divided into many smaller triangles by the
+segments inside.
+
+To see this, first note that it is true after drawing the first three points,
+because at that point we simply have a triangle with nothing inside. Then, for
+each additional point that we draw, it either falls inside or outside of our
+current triangle.
+
+If it falls inside, then it must fall inside one of the interior triangles,
+which means that Bessie will draw segments from the new point to the three
+vertexes of that interior triangle, replacing it with three even smaller
+triangles. Note that this automatically satisfies the requirement that Bessie
+draw exactly three new segments each time.
+
+If it falls outside, then Bessie could only connect the new point to the three
+vertexes of the large triangle, so in order to satisfy the requirement, Bessie
+must draw connecting segments to all of the vertexes. This will have the effect
+of creating a new large triangle, composed of the previous large triangle as
+well as two new interior triangles.
+
+Therefore, in order to satisfy the requirement, we need it to be true that
+whenever we draw a point outside our current large triangle, this point can be
+connected to all the vertexes of our current large triangle.
+
+We will thus compute the number of permutations via DP.
+
+Method 1:
+
+$\mathcal{O}(N^5)$
+
+If we look at the drawing process in the forward direction, all we need to keep
+track of is the current large triangle and the number of points we've drawn so
+far. When adding a new point to the permutation, either it is contained within
+the current large triangle and the large triangle remains the same, or it is
+located outside the large triangle and all three vertices of the large triangle
+are visible from it. There are
+
+$\mathcal{O}(N^4)$
+
+states and each of them can
+transition to
+
+$\mathcal{O}(N)$
+
+other states, so the overall time complexity is
+
+$\mathcal{O}(N^5)$
+
+. As the constant factor is quite low, this solution runs well
+below the time limit.
+
+Ben's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+using P = pair<int,int>;
+using Tri = array<int,3>;
+
+#define f first
+#define s second
+
+const int MOD = 1e9+7;
+
+struct mi {
+ 	int v; explicit operator int() const { return v; } 
+	mi() { v = 0; }
+	mi(ll _v):v(_v%MOD) { v += (v<0)*MOD; }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+
+vector<mi> dp[100][100][100];
+int N;
+vector<P> points;
+ 
+P& operator-=(P& a, const P& b) {
+	a.f -= b.f, a.s -= b.s;
+	return a;
+}
+int cross(P a, P b, P c) {
+	b -= a; c -= a;
+	return b.f*c.s-b.s*c.f;
+}
+ 
+int area(Tri a) {
+	return abs(cross(points[a[0]],points[a[1]],points[a[2]]));
+}
+ 
+bool inside(Tri a, int b) {
+	int sum = 0;
+	for (int i = 0; i < 3; ++i) {
+		swap(a[i],b);
+		sum += area(a);
+		swap(a[i],b);
+	}
+	sum -= area(a); assert(sum >= 0);
+	return sum == 0;
+}
+ 
+void ad(vector<mi>& v, int ind, mi val) {
+	while (v.size() <= ind) v.push_back(0);
+	v[ind] += val;
+}
+ 
+int main() {
+	cin >> N; points.resize(N); 
+	for (P& p: points) cin >> p.f >> p.s;
+
+	vector<Tri> triangles;
+	for (int i = 0; i < N; ++i)
+		for (int j = i+1; j < N; ++j)
+			for (int k = j+1; k < N; ++k)
+				triangles.push_back({i,j,k});
+	sort(begin(triangles),end(triangles),[&](Tri a, Tri b) {
+		return area(a) < area(b); });
+
+	mi ans = 0;
+	for (Tri& t: triangles) {
+		int tot_inside = 0;
+		vector<Tri> nex;
+		for (int i = 0; i < N; ++i) {
+			if (inside(t,i)) ++tot_inside;
+			else {
+				for (int j = 0; j < 3; ++j) {
+					Tri new_t = t; new_t[j] = i;
+					sort(begin(new_t),end(new_t));
+					if (inside(new_t,t[j])) 
+						nex.push_back(new_t);
+				}
+			}
+		}
+		tot_inside -= 3;
+		assert(tot_inside >= 0);
+		dp[t[0]][t[1]][t[2]].resize(1+tot_inside);
+		dp[t[0]][t[1]][t[2]][0] = 1;
+		for (int i = 0; i <= tot_inside; ++i) {
+			mi v = dp[t[0]][t[1]][t[2]][i];
+			if (i < tot_inside)
+				ad(dp[t[0]][t[1]][t[2]],1+i,(tot_inside-i)*v);
+			for (Tri u: nex)
+				ad(dp[u[0]][u[1]][u[2]],1+i,v);
+		}
+		if (tot_inside == N-3) 
+			ans += dp[t[0]][t[1]][t[2]][tot_inside];
+	}
+	cout << (6*ans).v << "\n";
+}
+
+Method 2:
+
+$\mathcal{O}(N^4)$
+
+Our DP will actually compute the answer by looking at the drawing process in
+reverse. Our state will be the current large triangle, and we can  transition
+from one large triangle to a smaller one if the smaller triangle shares two
+vertexes with the larger one and its third vertex is contained in the larger
+one.
+
+$dp_T$
+
+, where
+
+$T$
+
+is a triangle, will be the number of valid orders in which
+Bessie draws the points
+
+outside
+
+of
+
+$T$
+
+given that before drawing any of
+those points, our large triangle was
+
+$T$
+
+.
+
+One important note is that in order for there to be any possible order at all,
+there must be a triangle containing all
+
+$N$
+
+of our points. Let this triangle be
+
+$T_{\text{everything}}$
+
+(if it doesn't exist, the answer is
+
+$0$
+
+). We then start
+with
+
+$dp_{T_{\text{everything}}} = 1$
+
+.
+
+We now need to transition. Let's say that we're trying to compute
+
+$dp_T$
+
+for
+some triangle
+
+$T$
+
+. As described previously, we can transition from all larger
+triangles
+
+$T'$
+
+such that
+
+$T$
+
+and
+
+$T'$
+
+share two vertexes and the third vertex of
+
+$T$
+
+is inside
+
+$T'$
+
+. Then,
+
+$dp_{T'}$
+
+counts the number of orders that Bessie can
+draw the points outside of
+
+$T'$
+
+. In order to compute
+
+$dp_T$
+
+, we must also
+account for the points outside of
+
+$T$
+
+but inside
+
+$T'$
+
+.
+
+Define
+
+$P(a,b)=\frac{a!}{(a-b)!}$
+
+to be the number of permutations of
+
+$b$
+
+elements that we choose from a pool of
+
+$a$
+
+elements.
+
+Let there be
+
+$x$
+
+points outside
+
+$T$
+
+and
+
+$y$
+
+points outside
+
+$T'$
+
+, so that there
+are
+
+$x - y - 1$
+
+points outside
+
+$T$
+
+but inside
+
+$T'$
+
+(because the third vertex of
+
+$T'$
+
+, which is outside of
+
+$T$
+
+, is neither inside nor outside of
+
+$T'$
+
+). This
+third vertex of
+
+$T'$
+
+must be drawn before all
+
+$x$
+
+of the points outside
+
+$T$
+
+,
+because otherwise we would have intermediate large triangles due to points
+outside of
+
+$T$
+
+being drawn while
+
+$T$
+
+is still the large triangle. After the
+third vertex is drawn and
+
+$T'$
+
+is completed, the
+
+$x - y - 1$
+
+points between
+
+$T$
+
+and
+
+$T'$
+
+can be drawn whenever we want because they are inside
+
+$T'$
+
+and thus
+drawing them is always valid. Therefore, to transition, we need to count the
+number of ways to mix these
+
+$x - y - 1$
+
+"in between" points with the
+
+$y$
+
+points
+that are outside of
+
+$T'$
+
+. This is just
+
+$P(x - y - 1 + y,x - y - 1) = P(x - 1,x - y - 1)$
+
+, and so our transition becomes
+
+$$dp_T = dp_T + P(x-1,x-y-1) dp_{T'}.$$
+
+To compute the final answer, we iterate over which triangle is used as the first
+three points that Bessie draws. If this triangle is
+
+$T$
+
+, and there are
+
+$x$
+
+points outside of
+
+$T$
+
+as before, then Bessie first draws the three vertexes of
+
+$T$
+
+(there are
+
+$3! = 6$
+
+ways to do this), then draws the points inside of
+
+$T$
+
+as
+well as the points outside of
+
+$T$
+
+. The ways to draw the points outside of
+
+$T$
+
+are counted by
+
+$dp_T$
+
+, so we simply need to mix in the points inside
+
+$T$
+
+. These
+can be mixed in however we want as
+
+$T$
+
+is already drawn, so the number of ways
+to mix them in is simply
+
+$P(N - 3, N - 3 - x)$
+
+.
+Therefore, our final answer is
+
+$$\sum_{T\text{ is a triangle}} 6 \cdot P(N - 3, N - 3 - x) dp_T.$$
+
+For the runtime, note that we have
+
+$\mathcal O(N^3)$
+
+triangles, and for each
+triangle we only consider triangles that share two vertexes, of which there are
+
+$\mathcal O(N)$
+
+, so the overall runtime is
+
+$\mathcal O(N^4)$
+
+.
+
+Danny's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class Permutation {
+    public static final long MOD = 1000000007;
+    static int n;
+    static int[] xs;
+    static int[] ys;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        n = Integer.parseInt(in.readLine());
+        xs = new int[n];
+        ys = new int[n];
+        for (int a = 0; a < n; a++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            xs[a] = Integer.parseInt(tokenizer.nextToken());
+            ys[a] = Integer.parseInt(tokenizer.nextToken());
+        }
+        List<Triangle> triangles = new ArrayList<>();
+        int[][][] inside = new int[n][n][n];
+        for (int a = 0; a < n; a++) {
+            for (int b = a + 1; b < n; b++) {
+                for (int c = b + 1; c < n; c++) {
+                    triangles.add(new Triangle(a, b, c));
+                    for (int p = 0; p < n; p++) {
+                        if (inside(a, b, c, p)) {
+                            inside[a][b][c]++;
+                        }
+                    }
+                }
+            }
+        }
+        triangles.sort(Comparator.comparingInt(triangle -> -area2(triangle.a, triangle.b, triangle.c)));
+        Triangle wholeTriangle = triangles.get(0);
+        if (inside[wholeTriangle.a][wholeTriangle.b][wholeTriangle.c] == n) {
+            long[][] choose = new long[n + 1][n + 1];
+            long[] factorial = new long[n + 1];
+            long[][] permutations = new long[n + 1][n + 1];
+            for (int a = 0; a <= n; a++) {
+                choose[a][0] = 1;
+                if (a == 0) {
+                    factorial[a] = 1;
+                } else {
+                    factorial[a] = (((long) a) * factorial[a - 1]) % MOD;
+                }
+                for (int b = 1; b <= a; b++) {
+                    choose[a][b] = (choose[a - 1][b - 1] + choose[a - 1][b]) % MOD;
+                }
+                for (int b = 0; b <= a; b++) {
+                    permutations[a][b] = (choose[a][b] * factorial[b]) % MOD;
+                }
+            }
+            long[][][] dp = new long[n][n][n];
+            long answer = 0;
+            dp[wholeTriangle.a][wholeTriangle.b][wholeTriangle.c] = 1;
+            for (Triangle triangle : triangles) {
+                int a = triangle.a;
+                int b = triangle.b;
+                int c = triangle.c;
+                answer += permutations[n - 3][inside[a][b][c] - 3] * dp[a][b][c];
+                answer %= MOD;
+                for (int p = 0; p < n; p++) {
+                    if (p != a && p != b && p != c && inside(a, b, c, p)) {
+                        for (int j = 0; j < 3; j++) {
+                            int[] newPoints = {a, b, c};
+                            newPoints[j] = p;
+                            Arrays.sort(newPoints);
+                            int d = newPoints[0];
+                            int e = newPoints[1];
+                            int f = newPoints[2];
+                            dp[d][e][f] += permutations[n - inside[d][e][f] - 1][inside[a][b][c] - inside[d][e][f] - 1] * dp[a][b][c];
+                            dp[d][e][f] %= MOD;
+                        }
+                    }
+                }
+            }
+            answer *= 6L;
+            answer %= MOD;
+            System.out.println(answer);
+        } else {
+            System.out.println(0);
+        }
+    }
+ 
+    static int area2(int a, int b, int c) {
+        return Math.abs((xs[a] * ys[b]) + (xs[b] * ys[c]) + (xs[c] * ys[a]) - (xs[a] * ys[c]) - (xs[c] * ys[b]) - (xs[b] * ys[a]));
+    }
+ 
+    static boolean inside(int a, int b, int c, int p) {
+        return area2(a, b, c) == area2(a, b, p) + area2(b, c, p) + area2(c, a, p);
+    }
+ 
+    static class Triangle {
+        final int a;
+        final int b;
+        final int c;
+ 
+        Triangle(int a, int b, int c) {
+            this.a = a;
+            this.b = b;
+            this.c = c;
+        }
+    }
+}

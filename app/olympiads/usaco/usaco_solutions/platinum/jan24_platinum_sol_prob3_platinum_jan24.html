@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>The goal of this problem is to count the number of disjoint, non-empty subsets
+of cows <span class='math'>$S, T \subset [n]$</span> so that there exists a horizontal or vertical line
+separating the cows in <span class='math'>$S$</span> from the cows in <span class='math'>$T$</span>. By a brute force search, it&apos;s
+clear that we can enumerate such <span class='math'>$S,T$</span> in time <span class='math'>$O(n \cdot 3^n)$</span>, which solves
+the first subtask. Of course, we would like to do better.
+<p><strong> To get <span class='math'>$O(n^3)$</span>: </strong> Let&apos;s start by counting the number of ways to pick
+sets that admit a horizontal separation, where <span class='math'>$S$</span> is to the left of <span class='math'>$T$</span> (the
+mirror-image case is the same). We can sort the cows in lexicographical order
+(first by <span class='math'>$x$</span>-coordinate, then tie-break by <span class='math'>$y$</span>-coordinate). For each cow <span class='math'>$i$</span>,
+let&apos;s count the number of ways to pick the sets so that <span class='math'>$i$</span> is the
+(lexicographically) last cow in <span class='math'>$S$</span>. This is exactly <span class='math'>$2^a (2^b-1)$</span>, where <span class='math'>$a$</span> is
+the number of cows that come earlier in the lexicographical order, and <span class='math'>$b$</span> is
+the number of cows with strictly larger <span class='math'>$x$</span>-coordinate than <span class='math'>$i$</span>. After sorting,
+we can easily compute these quantities for each cow in total time <span class='math'>$O(n)$</span>.
+<p>This gives us the number of ways to pick teams separated by a horizontal line,
+and we can of course do the same for teams separated by a vertical line. The
+issue (and the main difficulty of this problem) is in correcting for the
+double-counting: there are some pairs of teams <span class='math'>$S, T$</span> that are separated by both
+a horizontal and a vertical line.
+<p>As before, let&apos;s specialize the problem a little. We&apos;ll start by considering the
+number of pairs <span class='math'>$S,T$</span> so that <span class='math'>$S$</span> is above and to the left of <span class='math'>$T$</span> (i.e. all cows
+in <span class='math'>$S$</span> have smaller <span class='math'>$x$</span>-coordinate and larger <span class='math'>$y$</span>-coordinate than all cows in
+<span class='math'>$T$</span>). The other cases are similar, and there is crucially no over-counting
+between these cases, since <span class='math'>$S,T$</span> are required to be both non-empty. Fix a cow
+<span class='math'>$i$</span> at position <span class='math'>$(x_i,y_i)$</span>; we would like to count the number of sets <span class='math'>$S,T$</span> so
+that <span class='math'>$i$</span> is the final cow in <span class='math'>$S$</span> (by the lexicographical ordering), and all cows
+in <span class='math'>$T$</span> have <span class='math'>$x$</span>-coordinate larger than <span class='math'>$\max_{j \in S} x_j$</span> (which equals <span class='math'>$x_i$</span>)
+and <span class='math'>$y$</span>-coordinate smaller than <span class='math'>$\min_{j \in S} y_j$</span> (which may be equal to
+<span class='math'>$y_i$</span> or may be smaller).
+<p>Let&apos;s define a function <span class='math'>$F_i$</span> where <span class='math'>$F_i(y)$</span> is the number of sets <span class='math'>$S,T$</span> so that
+<span class='math'>$i$</span> is the final cow in <span class='math'>$S$</span>, and <span class='math'>$\min_{j \in T} x_j &gt; x_i$</span>, and
+<span class='math'>$y = \min_{j \in S} y_j &gt; \max_{j \in T} y_j$</span>. Ultimately we would like to
+compute <span class='math'>$\sum_i \sum_y F_i(y)$</span>.
+<p>What is <span class='math'>$F_i(y)$</span>? If <span class='math'>$y &gt; y_i$</span>, then of course <span class='math'>$F_i(y) = 0$</span>. If <span class='math'>$y = y_i$</span>, then
+<span class='math'>$F_i(y) = 2^{a_i(y)} (2^{b_i(y)}-1)$</span>, where <span class='math'>$a_i(y)$</span> is the number of cows <span class='math'>$j$</span>
+that precede <span class='math'>$i$</span> in lexicographical order and also satisfy <span class='math'>$y_j \geq y$</span>, and
+<span class='math'>$b_i(y)$</span> is the number of cows <span class='math'>$j$</span> with <span class='math'>$x_j &gt; x_i$</span> and <span class='math'>$y_j &lt; y$</span>. And if
+<span class='math'>$y &lt; y_i$</span>, then <span class='math'>$F_i(y) = (2^{a_i(y)} - 2^{a_i(y+1)})(2^{b_i(y)}-1)$</span>.
+<p>For any fixed <span class='math'>$i$</span> and <span class='math'>$y$</span>, we can easily compute <span class='math'>$a_i(y)$</span> and <span class='math'>$b_i(y)$</span> in time
+<span class='math'>$O(n)$</span> time. This lets us compute <span class='math'>$\sum_i \sum_y F_i(y)$</span> in <span class='math'>$O(n^3)$</span> time.
+<p><strong> To get <span class='math'>$O(n^2)$</span>: </strong> We can improve the above algorithm to quadratic time
+by observing that for each <span class='math'>$y$</span>, we can compute <span class='math'>$a_i(y)$</span> for all <span class='math'>$i$</span> in a single
+sweep through the cows in lexicographical order (and similarly for <span class='math'>$b_i(y)$</span>).
+<p><strong> To get <span class='math'>$O(n \log n)$</span>: </strong> This is somewhat harder, since we no longer have
+enough time to explicitly compute <span class='math'>$F_i(y)$</span> for each <span class='math'>$(i,y)$</span>. Instead, we&apos;ll
+compute <span class='math'>$\sum_i \sum_y F_i(y)$</span> by maintaining the function <span class='math'>$F_i$</span> in a data
+structure as we iterate <span class='math'>$i$</span> through the cows in lexicographical order, and we&apos;ll
+make sure that the data structure has a way of efficiently summing <span class='math'>$F_i$</span> over
+all <span class='math'>$y$</span>.
+<p>Let&apos;s define <span class='math'>$G_i(y) = 2^{a_i(y) + b_i(y)}$</span>, <span class='math'>$H_i(y) = 2^{a_i(y)}$</span> and
+<span class='math'>$I_i(y) = 2^{a_i(y+1) + b_i(y)}$</span>, so that
+<span class='math'>$F_i(y) = G_i(y) - H_i(y) + H_i(y+1) - I_i(y)$</span>; we&apos;ll separately maintain <span class='math'>$G_i$</span>,
+<span class='math'>$H_i$</span>, and <span class='math'>$I_i$</span>. The goal is to maintain each function in a (lazy update)
+segment tree that supports range sum queries and range ``multiply by <span class='math'>$c$</span>&apos;&apos;
+updates.
+<p>Indeed, this is possible. As we increase <span class='math'>$i$</span>, how do <span class='math'>$G_i$</span>, <span class='math'>$H_i$</span>, and <span class='math'>$I_i$</span>
+change? Going from <span class='math'>$i$</span> to <span class='math'>$i+1$</span>, <span class='math'>$a_i(y)$</span> increases by one for each
+<span class='math'>$y \leq y_i$</span>. We can implement this with a range ``multiply by <span class='math'>$2$</span>&apos;&apos; update. If
+<span class='math'>$x_i = x_{i+1}$</span>, then <span class='math'>$b_i$</span> remains unchanged. Otherwise, for each <span class='math'>$j$</span> with
+<span class='math'>$x_j = x_{i+1}$</span>, <span class='math'>$b_i(y)$</span> decreases by one for all <span class='math'>$y &gt; y_j$</span>. We can implement
+this with one range ``divide by <span class='math'>$2$</span>&apos;&apos; update for each such <span class='math'>$j$</span> (note that during
+the sweep, each <span class='math'>$j$</span> causes such an update only once).
+<p>The total number of range updates is <span class='math'>$O(n)$</span>, and for each <span class='math'>$i$</span>, we can easily
+compute <span class='math'>$\sum_y F_i(y)$</span> after performing a constant number of range sum queries
+for <span class='math'>$G_i$</span>, <span class='math'>$H_i$</span>, and <span class='math'>$I_i$</span> on appropriate ranges. With a standard lazy segment
+tree, the overall time complexity is <span class='math'>$O(n \log n)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+using namespace std;
+#define MAXN 200005
+#define MOD 1000000007
+#define HALF (1000000008/2)
+#define SEG (1&lt;&lt;18)
+
+int x[MAXN];
+int y[MAXN];
+int cid[MAXN];
+int numx[MAXN];
+int numy[MAXN];
+long long pow_array[MAXN];
+long long zpow_array[2*MAXN+1];
+
+int cmp(int a,int b)
+{
+	if(x[a]!=x[b]) return x[a]&lt;x[b];
+	return y[a]&gt;y[b];
+}
+
+long long G[2*SEG], H[2*SEG], scaleG[2*SEG], scaleH[2*SEG]; //G = 2^{a(y) + b(y)}; H = 2^{a(y)}
+long long I[2*SEG], scaleI[2*SEG]; //I = 2^{a(y+1) + b(y)}
+int l[2*SEG], r[2*SEG];
+
+void init()
+{
+	for(int i=SEG;i&lt;2*SEG;i++)
+	{
+		G[i] = H[i] = I[i] = 1;
+		scaleG[i] = scaleH[i] = scaleI[i] = 0;
+		l[i] = r[i] = i-SEG;
+	}
+	for(int i=SEG-1;i&gt;0;i--)
+	{
+		G[i] = (G[2*i] + G[2*i+1])%MOD;
+		H[i] = (H[2*i] + H[2*i+1])%MOD;
+		I[i] = (I[2*i] + I[2*i+1])%MOD;
+		scaleG[i] = scaleH[i] = scaleI[i] = 0;
+		l[i] = l[2*i], r[i] = r[2*i+1];
+	}
+}
+
+void push(long long *seg, long long *scale, int i)
+{
+	if(scale[i] != 0)
+	{
+		seg[i] = (seg[i] * zpow_array[MAXN+scale[i]])%MOD;
+		if(i&lt;SEG)
+		{
+			scale[2*i] += scale[i];
+			scale[2*i+1] += scale[i];
+		}
+		scale[i] = 0;
+	}
+}
+
+int low,high,mult;
+
+void updateLeftFast(long long *seg, long long *scale)
+{
+	int i = 1;
+	if(r[i] &lt;= high)
+	{
+		scale[i] += mult;
+		return;
+	}
+	while(i &lt; SEG)
+	{
+		push(seg,scale,i);
+		if(r[2*i] &lt;= high)
+		{
+			scale[2*i] += mult;
+			push(seg,scale,2*i);
+			i = 2*i+1;
+		}
+		else
+		{
+			push(seg,scale,2*i+1);
+			i = 2*i;
+		}
+	}
+	push(seg,scale,i);
+	while(i&gt;1)
+	{
+		i /= 2;
+		seg[i] = (seg[2*i] + seg[2*i+1])%MOD;
+	}
+}
+
+void updateRightFast(long long *seg, long long *scale)
+{
+	int i = 1;
+	if(l[i] &gt;= low)
+	{
+		scale[i] += mult;
+		return;
+	}
+	while(i &lt; SEG)
+	{
+		push(seg,scale,i);
+		if(l[2*i+1] &gt;= low)
+		{
+			scale[2*i+1] += mult;
+			push(seg,scale,2*i+1);
+			i = 2*i;
+		}
+		else
+		{
+			push(seg,scale,2*i);
+			i = 2*i+1;
+		}
+	}
+	push(seg,scale,i);
+	while(i&gt;1)
+	{
+		i /= 2;
+		seg[i] = (seg[2*i] + seg[2*i+1])%MOD;
+	}
+}
+
+long long getSumFast(long long *seg, long long *scale)
+{
+	int i = 1;
+	long long sm = 0;
+	if(r[i] &lt;= high)
+	{
+		push(seg,scale,1);
+		return seg[i];
+	}
+	while(i &lt; SEG)
+	{
+		if(r[2*i] &lt;= high)
+		{
+			push(seg,scale,2*i);
+			push(seg,scale,2*i+1);
+			sm = (sm + seg[2*i])%MOD;
+			i = 2*i+1;
+		}
+		else
+		{
+			push(seg,scale,2*i);
+			i = 2*i;
+		}
+	}
+	return sm;
+}
+
+long long ans;
+int N;
+
+void fix_double_counting()
+{
+	init();
+	for(int i=0;i&lt;N;i++)
+	{
+		G[y[i]+1+SEG] = (G[y[i]+1+SEG] * 2)%MOD;
+		I[y[i]+1+SEG] = (I[y[i]+1+SEG] * 2)%MOD;
+	}
+	for(int i=SEG+1;i&lt;2*SEG;i++)
+	{
+		G[i] = (G[i] * G[i-1])%MOD;
+		I[i] = (I[i] * I[i-1])%MOD;
+	}
+	for(int i=SEG-1;i&gt;0;i--)
+	{
+		G[i] = (G[2*i] + G[2*i+1])%MOD;
+		I[i] = (I[2*i] + I[2*i+1])%MOD;
+	}
+	for(int i=0;i&lt;N;i++)
+	{
+		if(i == 0 || x[cid[i]] &gt; x[cid[i-1]])
+		{
+			for(int j=i;j&lt;N;j++)
+			{
+				if(x[cid[j]]&gt;x[cid[i]]) break;
+				low = y[cid[j]]+1, high = N;
+				mult = -1;
+				updateRightFast(G, scaleG);
+				updateRightFast(I, scaleI);
+			}
+		}
+		low = 0, high = y[cid[i]];
+		long long sumF = getSumFast(G, scaleG);
+		if(y[cid[i]] &gt; 0)
+		{
+			low = 0, high = y[cid[i]] - 1;
+			sumF = (sumF + MOD - getSumFast(I, scaleI))%MOD;
+		}
+		low = high = 0;
+		sumF = (sumF + MOD - getSumFast(H, scaleH))%MOD;
+		ans = (ans + MOD - sumF)%MOD;
+		low = 0, high = y[cid[i]];
+		mult = 1;
+		updateLeftFast(G, scaleG);
+		updateLeftFast(H, scaleH);
+		if(y[cid[i]]&gt;0)
+		{
+			low = 0, high = y[cid[i]]-1;
+			updateLeftFast(I, scaleI);
+		}
+	}
+}
+
+int main()
+{
+	scanf(&quot;%d&quot;,&amp;N);
+	for(int i=0;i&lt;N;i++)
+	{
+		scanf(&quot;%d %d&quot;,&amp;x[i],&amp;y[i]);
+		x[i]--, y[i]--;
+		numx[x[i]]++, numy[y[i]]++;
+		cid[i] = i;
+	}
+	pow_array[0] = 1;
+	for(int i=1;i&lt;MAXN;i++)
+		pow_array[i] = (2LL * pow_array[i-1])%MOD;
+	zpow_array[MAXN] = 1;
+	for(int i=MAXN+1;i&lt;=2*MAXN;i++) zpow_array[i] = (zpow_array[i-1] * 2)%MOD;
+	for(int i=MAXN-1;i&gt;=0;i--) zpow_array[i] = (zpow_array[i+1] * HALF)%MOD;
+	sort(cid,cid+N,cmp);
+	for(int i=0;i&lt;N;i++) // Count horizontally separable teams
+		ans = (ans + pow_array[i] * (pow_array[N-i-numx[x[i]]] + MOD - 1))%MOD;
+	for(int i=0;i&lt;N;i++) // Count vertically separable teams
+		ans = (ans + pow_array[i] * (pow_array[N-i-numy[y[i]]] + MOD - 1))%MOD;
+	fix_double_counting(); // Fix double-counting where first team is left &amp; above second team
+	for(int i=0;i&lt;N;i++)
+		x[i] = N-1-x[i];
+	sort(cid,cid+N,cmp);
+	fix_double_counting(); // Fix double-counting where first team is right &amp; above second team
+	ans = (ans * 2)%MOD; // Account for red/blue symmetry
+	printf(&quot;%d\n&quot;,ans);
+}
+</pre>
+<p></body></html>

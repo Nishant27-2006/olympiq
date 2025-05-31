@@ -1,0 +1,327 @@
+Solution ID: sol_prob2_gold_jan21
+Contest: JAN21
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_jan21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+There's a fairly simple quadratic-time solution: let every cow be the vertex of
+a graph, and say that there is a directed edge of weight
+
+$|i-j|$
+
+from cow
+
+$i$
+
+to
+cow
+
+$j$
+
+if cow
+
+$i$
+
+is willing to talk to cow
+
+$j$
+
+. Then the cost of the shortest
+path from cow
+
+$1$
+
+to cow
+
+$N$
+
+is precisely the answer, and we can find it with
+e.g. Dijkstra's algorithm. However, since the graph has
+
+$O(N^2)$
+
+edges, this is
+too slow.
+
+That approach uses none of the structure of the original problem: that the edge
+weights are linear, or that the number of types of cows is very small. Let's try
+to use this structure to make a different graph with fewer edges that has the
+same shortest-path costs.
+
+The physical intuition for a cost of
+
+$|i-j|$
+
+to transmit a message from cow
+
+$i$
+
+to
+
+$j$
+
+is that the message travels
+
+$1$
+
+cow per unit time. Leveraging this
+intuition, let's make a graph where each vertex encodes the location of the
+message. Then in one timestep, the message can either move left by one, or right
+by one. So we no longer have a quadratic number of edges.
+
+Of course, the location of the message is not quite enough information to
+determine where it could go next. If we knew the cow who most recently sent the
+message, that would be enough information: in one unit time, a message sent by
+cow
+
+$i$
+
+can either move one unit away from cow
+
+$i$
+
+; or it can be "received" by
+the cow at its current location if cow
+
+$i$
+
+is happy to talk to this cow. The
+former edge updates the message's location, and the latter edge updates the
+message's sender. Thus, this graph has
+
+$O(N^2)$
+
+vertices (for every
+location/sender pair) and
+
+$O(N^2)$
+
+edges (
+
+$2$
+
+per vertex).
+
+Despite appearances, that is progress: we used the specifically chosen edge
+weights to lower the degree of the graph to
+
+$O(1)$
+
+. It remains to decrease the
+number of vertices, using the other symmetry of the problem: the small number of
+cow breeds. The key is that we don't need to remember the sender, just the
+sender's breed. Now we only have
+
+$O(NK)$
+
+vertices and
+
+$O(NK)$
+
+edges. Every edge
+has weight either
+
+$0$
+
+or
+
+$1$
+
+(cost
+
+$1$
+
+to move left or right; cost
+
+$0$
+
+to be
+received by the cow at the current location, if the breed matches the sending
+breed). The shortest path from (cow
+
+$1$
+
+, breed of cow
+
+$1$
+
+) to (cow
+
+$N$
+
+, breed of
+cow
+
+$N$
+
+) in this graph is (almost) the answer we need, and can be found by 0-1
+BFS or Dijkstra's algorithm.
+
+There is one more catch: if the first and last cows are the same breed, this
+graph will always output
+
+$N-1$
+
+as the shortest path, which may be incorrect if
+this breed doesn't talk to itself. There are a number of ways to resolve this,
+e.g. by changing the breed of cow
+
+$N$
+
+to a fake breed
+
+$0$
+
+, and remembering which
+breeds of cows are willing to talk to cow
+
+$N$
+
+.
+
+Here is Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.StringTokenizer;
+ 
+public class TelephoneCorrect {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int[] breeds = new int[n + 1];
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 1; j <= n; j++) {
+            breeds[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        boolean[][] adj = new boolean[k + 1][k + 1];
+        for (int b = 1; b <= k; b++) {
+            String line = " " + in.readLine();
+            for (int c = 1; c <= k; c++) {
+                adj[b][c] = line.charAt(c) == '1';
+            }
+            adj[b][0] = adj[b][breeds[n]];
+        }
+        breeds[n] = 0;
+        int[][] dist = new int[k + 1][n + 1];
+        for (int b = 0; b <= k; b++) {
+            Arrays.fill(dist[b], -1);
+        }
+        dist[breeds[1]][1] = 0;
+        LinkedList<Integer> q = new LinkedList<>();
+        q.add(breeds[1]);
+        q.add(1);
+        while (!q.isEmpty()) {
+            int b = q.remove();
+            int j = q.remove();
+            if (j > 1 && dist[b][j - 1] == -1) {
+                dist[b][j - 1] = dist[b][j] + 1;
+                q.add(b);
+                q.add(j - 1);
+            }
+            if (j < n && dist[b][j + 1] == -1) {
+                dist[b][j + 1] = dist[b][j] + 1;
+                q.add(b);
+                q.add(j + 1);
+            }
+            if (adj[b][breeds[j]] && dist[breeds[j]][j] == -1) {
+                dist[breeds[j]][j] = dist[b][j];
+                q.addFirst(j);
+                q.addFirst(breeds[j]);
+            }
+        }
+        System.out.println(dist[0][n]);
+    }
+}
+
+Additional note (thanks to Justin Wu for suggesting that this be included): As
+an alternative means of simplifying the graph, we can note that if the solution
+includes a transition from a cow at index
+
+$i$
+
+to another cow (say,
+of breed
+
+$b$
+
+), then without loss of generality we can assume this other cow is
+one of the two cows of breed
+
+$b$
+
+closest to index
+
+$i$
+
+--- either the one
+closest on the left or closest on the right (the only exception here is the transition to the final cow in the
+last position).
+
+One can argue this by taking an optimal path and noting that if any of its
+transitions (except the last) do not fit this pattern, they can be modified
+without penalty to fit the pattern. E.g., if the optimal solution goes from
+index
+
+$1$
+
+to
+
+$i$
+
+to
+
+$j$
+
+to
+
+$N$
+
+and there is another cow of the same breed as the
+one at position
+
+$i$
+
+between 1 and
+
+$i$
+
+(say at
+
+$i'$
+
+), we loose nothing by
+changing the first leg of the path so it moves from 1 to
+
+$i'$
+
+(so now we have an
+optimal solution that moves from
+
+$1$
+
+to
+
+$i'$
+
+to
+
+$j$
+
+to
+
+$n$
+
+);  we then adjust the
+next leg of the path the same way, and so on.

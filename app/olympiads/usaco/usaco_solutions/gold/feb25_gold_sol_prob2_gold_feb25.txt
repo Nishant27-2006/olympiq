@@ -1,0 +1,821 @@
+Solution ID: sol_prob2_gold_feb25
+Contest: FEB25
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_feb25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Weiming Zhou)
+
+Let
+
+$s_{1 \dots n}$
+
+be the string generated after applying the
+
+$m$
+
+initial flip
+updates.
+
+Subtask 1:
+
+We can make
+
+$s$
+
+by directly applying the flips in
+
+$O(nm)$
+
+time. For each query,
+we can then use
+
+$O(2^n)$
+
+time to enumerate all possible subsequences and take
+the lexicographically largest one.
+
+This takes
+
+$O(nm + q 2^n)$
+
+time, which runs in time for
+
+$n \leq 10, q \leq 1000$
+
+.
+
+Subtask 2, 3:
+
+To make further progress on the problem, we consider the following greedy
+strategy:
+
+Let
+
+$sz = r - l + 1$
+
+and
+
+$z$
+
+be the number of
+
+$0$
+
+'s in
+
+$s_{l \dots r}$
+
+. Let
+
+$t_{1 \dots k}$
+
+be our final string.
+
+If
+
+$z \leq sz - k$
+
+, our answer string is
+
+$t = 11 \dots 1$
+
+with length
+
+$k$
+
+.
+
+Otherwise, we will take
+
+$t$
+
+to be
+
+$s_{l \dots r}$
+
+with the first
+
+$sz - k$
+
+zeroes removed.
+
+Remember that comparing the lexicographical order of two strings
+
+$t_1$
+
+and
+
+$t_2$
+
+is equivalent to comparing the numbers they interpret in binary.
+
+It is never more optimal to remove a
+
+$1$
+
+than to remove a
+
+$0$
+
+.
+
+It is never more optimal to remove a later
+
+$0$
+
+than an earlier
+
+$0$
+
+. This is
+because we can add the
+
+$0$
+
+back without decreasing the cost.
+
+Thus, our solution that removes all the earliest
+
+$0$
+
+s (and
+
+$1$
+
+s when we run out of
+
+$0$
+
+s) is optimal.
+
+For the sake of simplicity, we will analyze subtask 3 first.
+
+We can loop over the elements in
+
+$s_{l \dots r}$
+
+and directly apply our greedy
+strategy. If there are enough
+
+$1$
+
+'s, our answer is a string with all ones,
+otherwise, we remove the first
+
+$sz-k$
+
+zeroes. Finally, we can interpret our
+answer as a binary number with the formula given.
+
+Here is Alex Fan's C++ code:
+
+using namespace std;
+ 
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <map>
+ 
+#define MAXN 200005
+#define MOD 1000000007
+ 
+int N, M, Q, a[MAXN];
+ 
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+ 
+    cin >> N >> M >> Q;
+    for(int i = 0;i < M;++i) {
+        int l, r;
+        cin >> l >> r;
+        l--;r--;
+        for(int i = l;i <= r;++i) {
+            a[i] ^= 1;
+        }
+    }
+ 
+    for(int i = 0;i < Q;++i) {
+        int l, r, k;
+        cin >> l >> r >> k;
+        l--;r--;
+        int owo = l;
+        int uwu = 0;
+        for(int i = l;i <= r;++i) {
+            uwu += a[i];
+            if(uwu + (r - i) >= k) owo = i;
+        }
+        uwu = 0;
+        for(int i = l;i <= owo;++i) uwu += a[i];
+        if(uwu >= k) {
+            int xwx = 0;
+            for(int i = 0;i < k;++i) {
+                xwx = (2 * xwx + 1) % MOD;
+            }
+            cout << xwx << endl;
+            continue;
+        }
+        int xwx = 0;
+        for(int i = 0;i < uwu;++i) {
+            xwx = (2 * xwx + 1) % MOD;
+        }
+        for(int i = owo + 1;i <= r;++i) {
+            xwx = (2 * xwx + a[i]) % MOD;
+        }
+        cout << xwx << endl;
+ 
+    }
+ 
+    return 0;
+}
+
+For subtask 2, we can observe that even though
+
+$n$
+
+is large, we can describe it
+as
+
+$O(m)$
+
+intervals of
+
+$0$
+
+'s or
+
+$1$
+
+'s. We can still apply our greedy but
+slightly modified to account for the larger intervals. This approach would
+require us to raise
+
+$2$
+
+a large power modulo
+
+$10^9 +7$
+
+, which can be efficiently
+done using binary exponentiation. For more on binary exponentiation, refer to
+this
+
+USACO guide article
+
+. This takes
+
+$O(mq \log n)$
+
+time, which runs in time for
+
+$m \leq 10$
+
+.
+
+Subtask 4:
+
+To improve past
+
+$O(n)$
+
+or
+
+$O(m)$
+
+per query, we must perform the greedy strategy
+more efficiently. We can binary search on the index
+
+$i$
+
+of the
+
+$sz - k + 1$
+
+'th
+zero. This can be done with an auxiliary array
+
+$cnt$
+
+that counts the number of
+
+$1$
+
+'s in the prefix of
+
+$1 \dots i-1$
+
+. Once we have found it, our string
+
+$t$
+
+is
+
+$11 \dots 1$
+
+for
+
+$i - l$
+
+ones followed by
+
+$s_{i \dots r}$
+
+. Even though we cannot
+explicitly store
+
+$t$
+
+, we can still interpret it.
+
+Suppose we precomputed prefix sums
+
+$\text{pre}_{1 \dots n}$
+
+where
+
+$\text{pre}_{i} = \sum_{j = 1}^{i-1} s_j \cdot 2^{n - j - 1}$
+
+.
+
+Then,
+
+$t$
+
+will be intepretted as:
+
+$$
+2^{k} - 2^{k - (cnt_i - cnt_l)} + \left(1/2\right)^{n - r}(\text{pre}_{r+1} - \text{pre}_{i})
+$$
+
+This can be evaluated in
+
+$O(\log n)$
+
+or
+
+$O(1)$
+
+time depending on how the powers
+of
+
+$2$
+
+and
+
+$\frac{1}{2}$
+
+mod
+
+$10^9 + 7$
+
+are computed. Note that
+
+$\frac{1}{2} \equiv 500000004 \bmod 10^9 + 7$
+
+. There is an alternate approach
+using
+
+$pre_{i} = \sum_{j = 1}^{i} s_j \cdot 2^{i - j}$
+
+, which does not require
+inverse mod (division under mod).
+
+This has complexity
+
+$O(n \log n + q \log n)$
+
+or
+
+$O(n + q \log n)$
+
+as we have to
+binary search on the index
+
+$i$
+
+.
+
+Here is my code in C++:
+
+//i dont code with uwus.... qaq
+
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <array>
+#include <map>
+
+#define sz(x) ((int)(x.size()))
+#define all(x) x.begin(), x.end()
+
+
+using ll = long long;
+
+const ll mod = 1e9 + 7;
+const ll half = (mod + 1)/2;
+const int MX = 2e5 + 10;
+
+using namespace std;
+
+
+int n, m, q;
+
+ll pre[MX], cnt[MX], val[MX];
+
+ll binpow(ll base, int p){ //as all the exponents are <= n, we can also precompute it
+	ll ans = 1;
+	for(int i = 0; (1ll << i) <= p; i++){
+		if(p&(1ll << i)){
+			(ans *= base) %= mod;
+		}
+		(base *= base) %= mod;
+	}
+	return ans;
+}
+
+int main(){
+	cin.tie(0) -> sync_with_stdio(0);
+	cin >> n >> m >> q ;
+	for(int i = 1; i<=m; i++){
+		int l, r;
+		cin >> l >> r;
+		val[l] ^= 1;
+		val[r+1] ^= 1;
+	}
+	for(int i = 1; i<=n+1; i++){
+		val[i] ^= val[i-1];
+		cnt[i] = cnt[i-1] + val[i-1];
+		pre[i] = pre[i-1] + val[i-1] * binpow(2, n - i + 1);
+		pre[i] %= mod;
+	}
+	while(q--){
+		int l, r, k;
+		cin >> l >> r >> k;
+		if(cnt[r+1] - cnt[l] >= k){
+			cout << binpow(2, k) - 1 << "\n";
+			continue;
+		}
+		int lo = 0, hi = n+1;
+		while(lo + 1 != hi){
+			int mid = (lo + hi)/2;
+			if(cnt[mid] - cnt[l] + (r + 1 - mid) >= k){
+				lo = mid;
+			}else{
+				hi = mid;
+			}
+		}
+		int i = lo;
+		ll front = binpow(2, k) - binpow(2, k - (cnt[i] - cnt[l]));
+		(front += mod) %= mod;
+		ll back = binpow(half, n - r) * (pre[r+1] - pre[i])%mod;
+		(back += mod) %= mod;
+		cout << (front + back)%mod << "\n";
+	}
+}
+
+Subtask 5:
+
+Again, as
+
+$n$
+
+is large, we can describe
+
+$s$
+
+as
+
+$O(m)$
+
+intervals of
+
+$0$
+
+'s and
+
+$1$
+
+'s. Additionally, with
+
+$q$
+
+queries, we can determine
+
+$n' = O(m + q)$
+
+relevant
+points for which to precompute information. Suppose the start points of these
+
+$0$
+
+/
+
+$1$
+
+and query intervals in sorted order are
+
+$e_{1 \dots n'}$
+
+.
+
+Imagine the two prefix sums array of length
+
+$n$
+
+,
+
+$cnt$
+
+and
+
+$pre$
+
+, as the same as
+defined above. It is not practical to store both arrays explicitly, so we will
+only store the values at
+
+$e_1, e_2, \dots, e_{n'}$
+
+. Suppose we defined
+
+$cnt'_i = cnt_{e_i}$
+
+and
+
+$pre'_{i} = pre_{e_i}$
+
+(and
+
+$cnt'_0 = pre'_0 = 0$
+
+). We
+can compute
+
+$pre'$
+
+efficiently by computing the powers of
+
+$2$
+
+using binary
+exponentiation.
+
+When we binary search, we find
+
+$j$
+
+such that
+
+$e_j \leq i < e_{j+1}$
+
+. Then as all
+the elements in
+
+$s_{e_j \dots e_{j+1}-1}$
+
+are either all
+
+$0$
+
+or all
+
+$1$
+
+, we can
+directly solve for
+
+$i$
+
+with casework.
+
+When we finally interpret
+
+$t$
+
+, we can break the sum of
+
+$s_{i \dots r}$
+
+into two
+parts: the prefix of
+
+$1$
+
+'s and the suffix of our subarray. The suffix of our
+subarray is given as
+
+$(1/2)^{n - r}(pre'_{r+1} - pre'_{i})$
+
+. Note that we cannot
+precompute the value of
+
+$pre'_{i}$
+
+(as we don't know what
+
+$i$
+
+is), but we can
+efficiently evaluate it on the fly. This again follows from having a precomputed
+value up until
+
+$e_j$
+
+and knowing that the interval from
+
+$e_j$
+
+to
+
+$i$
+
+is either
+all
+
+$0$
+
+'s or all
+
+$1$
+
+'s.
+
+This takes
+
+$O(\log m)$
+
+time to binary search
+
+$i$
+
+, and
+
+$O(\log n)$
+
+time to
+compute the powers of two per query. We also need
+
+$O((m + q) (\log (m + q) + \log n))$
+
+time to precompute
+
+$cnt'$
+
+and
+
+$pre'$
+
+. This
+gives our final complexity to be
+
+$O((m + q)(\log (m + q) + \log n))$
+
+. Other
+complexity with
+
+$\log^2$
+
+complexities might be fast enough to pass.
+
+Here is my C++ code:
+
+//i dont code with uwus.... qaq
+
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <array>
+#include <map>
+
+#define sz(x) ((int)(x.size()))
+#define all(x) x.begin(), x.end()
+
+
+using ll = long long;
+
+const ll mod = 1e9 + 7;
+const ll half = (mod + 1)/2;
+
+using namespace std;
+
+
+
+vector<int> e;
+vector<ll> pre, cnt;
+vector<int> val;
+
+map<int, int> delta;
+
+int n, m, q;
+
+
+vector<array<int, 3>> qqs;
+
+ll binpow(ll base, int p){
+	ll ans = 1;
+	for(int i = 0; (1ll << i) <= p; i++){
+		if(p&(1ll << i)){
+			(ans *= base) %= mod;
+		}
+		(base *= base) %= mod;
+	}
+	return ans;
+}
+
+#define gind(x) (lower_bound(all(e), x) - e.begin())
+
+
+int main(){
+	cin.tie(0) -> sync_with_stdio(0);
+
+	cin >> n >> m >> q;
+	for(int i = 1; i<=m; i++){
+		int l, r;
+		cin >> l >> r;
+		delta[l] ^= 1;
+		delta[r+1] ^= 1;
+		e.push_back(l);
+		e.push_back(r+1);
+	}
+	for(int i = 1; i<=q; i++){
+		int l, r, k;
+		cin >> l >> r >> k; 
+		qqs.push_back({l, r, k}); //no need to make queries offline, but makes impl easier
+		e.push_back(l);
+		e.push_back(r+1);
+	}
+	e.push_back(0);
+	e.push_back(n+1);
+	sort(all(e));
+	e.resize(unique(all(e)) - e.begin());
+
+	m = sz(e); //n'
+
+	val.resize(m);
+	pre.resize(m);
+	cnt.resize(m);
+
+	for(auto [i, v] : delta){
+		val[gind(i)] ^= v;
+	}
+	for(int i = 1; i<m; i++){
+		val[i] ^= val[i-1]; //value of s_e_i
+		cnt[i] += cnt[i-1]; //sum of [0, e_i)
+		pre[i] += pre[i-1]; //sum of [0, e_i)
+
+		cnt[i] += val[i-1] * (e[i] - e[i-1]);
+		pre[i] += val[i-1] * (binpow(2, n+1 - e[i-1]) - binpow(2, n+1 - e[i]));
+
+		pre[i] %= mod;
+	}
+
+
+	for(auto [l, r, k] : qqs){
+		int gl = gind(l);
+		int gr = gind(r+1);
+
+		if(cnt[gr] - cnt[gl] >= k){
+			cout << binpow(2, k) - 1 << "\n";
+			continue;
+		}
+
+
+		int cntl = cnt[gl];
+
+		int lo = 0, hi = m;
+
+		while(lo + 1 != hi){
+			int mid = (lo + hi)/2;
+			if(cnt[mid] - cntl + (r - e[mid]) >= k){
+				lo = mid;
+			}else{
+				hi = mid;
+			}
+		}
+
+		int i = cnt[lo] + r - cntl - k;
+
+		ll front = binpow(2, k) -  binpow(2, k - (cnt[lo] - cntl));
+		ll prei = pre[lo] + val[lo] * (binpow(2, n+1 - e[lo]) - binpow(2, n+1 - i))%mod;
+		(prei += mod) %= mod;
+		ll back = binpow(half, n-r) * (pre[gr] - prei)%mod;
+		(front += mod) %= mod;
+		(back += mod) %= mod;
+		cout << (front + mod + back) % mod << "\n";
+	}
+
+	return 0;
+}
+
+Bonus:
+
+Can you solve this in
+
+$O(n + q)$
+
+time?

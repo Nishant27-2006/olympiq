@@ -1,0 +1,260 @@
+Solution ID: sol_prob1_silver_dec23
+Contest: DEC23
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_dec23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Eric Hsu)
+
+Subtask 1:
+
+Solution 1:
+
+We can greedily build towers one at a time as such: process
+the remaining cows from heaviest to lightest, adding a cow to the current tower
+if possible. Repeat this
+
+$M$
+
+times, once for each tower.
+
+Code:
+
+N, M, K = map(int, input().split())
+ 
+cows = []
+for _ in range(N):
+	w, a = map(int, input().split())
+	cows += [w] * a
+cows.sort(reverse=True)
+ 
+answer = 0
+for _ in range(M):
+	remaining_cows = []
+	current_cow = 1e100 #arbitrary large number
+	for cow in cows:
+		if cow + K <= current_cow:
+			current_cow = cow
+			answer += 1
+		else:
+			remaining_cows += [cow]		
+ 
+	if len(remaining_cows) == 0:
+		break
+	cows = remaining_cows
+ 
+print(answer)
+
+Time Complexity:
+
+$O(c^2)$
+
+, where
+
+$c$
+
+is the number of cows.
+
+Solution 2a:
+
+Process the cows from heaviest to lightest. When we process
+a cow, we try to put it on any tower. This is always optimal since we could put
+any of the remaining cows on a tower that the current cow can be placed on, so
+it doesn't matter where we place the current cow.
+
+Code:
+
+N, M, K = map(int, input().split())
+ 
+cows = []
+for _ in range(N):
+	w, a = map(int, input().split())
+	cows += [w] * a
+cows.sort(reverse=True)
+ 
+answer = 0
+towers = [1e100]*min(M, len(cows))
+for cow in cows:
+	for i in range(M):
+		if cow + K <= towers[i]:
+			towers[i] = cow
+			answer += 1
+			break
+ 
+print(answer)
+
+Solution 2b:
+
+Instead of placing the cow on an arbitrary tower, we only
+try to place it on the tower with the heaviest cow on top. This is because if it
+is possible to place a cow on a tower, it is possible to place it on the tower
+with the heaviest cow on top.
+
+Time Complexity:
+
+$O(c^2)$
+
+Note that the number of towers is bounded by the number of cows, since if the
+number of towers is greater than the number of cows, we can just remove the
+excess towers.
+
+Subtask 2:
+
+We can optimize
+
+solution 2b
+
+in
+
+subtask 1
+
+by speeding up the
+search for the heaviest cow. We can do this by keeping a sorted queue of towers
+where the front of the queue is the tower with the heaviest cow on top. When we
+place the current cow on a tower, we move that tower to the back of the queue
+since the current cow is lighter than all of the cows processed before it.
+
+Time complexity:
+
+$O(c\log c)$
+
+, where the log factor comes from sorting the cows by weight.
+
+Code:
+
+from collections import deque
+N, M, K = map(int, input().split())
+ 
+cows = []
+for _ in range(N):
+	w, a = map(int, input().split())
+	cows += [w] * a
+cows.sort(reverse=True)
+ 
+answer = 0
+towers = deque([1e100]*min(M, len(cows)))
+for cow in cows:
+	if cow + K <= towers[0]:
+		answer += 1
+		towers.popleft()
+		towers.append(cow)
+ 
+print(answer)
+
+Subtask 3:
+
+Instead of processing individual cows and towers, compress
+them into (weight, count) pairs. See the code for the details.  The time
+complexity of the remaining portion of the code after the sorting step is
+bounded by the number of insertions to and deletions from the queue.  Both of
+these are at most
+
+$N$
+
+, so the time complexity of the remaining portion is
+
+$O(N)$
+
+.
+
+Overall time complexity:
+
+$O(N \log N)$
+
+Code:
+
+from collections import deque
+N, M, K = map(int, input().split())
+ 
+pairs = []
+for _ in range(N):
+	w, a = map(int, input().split())
+	pairs.append([w, a])
+pairs.sort(reverse = True)
+ 
+towers = deque()
+towers.append([1e100, M])
+answer = 0
+for w, a in pairs:
+	remaining = a
+	while len(towers) > 0 and remaining > 0 and w + K <= towers[0][0]:
+		if towers[0][1] > remaining:
+			towers[0][1] -= remaining
+			remaining = 0
+		else:
+			remaining -= towers[0][1]
+			towers.popleft()
+	cnt = a - remaining
+	if cnt > 0:
+		towers.append([w, cnt])
+		answer += cnt
+	
+ 
+print(answer)
+
+Using an ordered set rather than a deque can also pass with given constraints.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class BovineAcrobaticsBR {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        CowGroup[] cowGroups = new CowGroup[n];
+        for (int j = 0; j < n; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int weight = Integer.parseInt(tokenizer.nextToken());
+            int amt = Integer.parseInt(tokenizer.nextToken());
+            cowGroups[j] = new CowGroup(weight, amt);
+        }
+        Arrays.sort(cowGroups, Comparator.comparingInt(group -> group.weight));
+ 
+        TreeSet<CowGroup> treeSet = new TreeSet<>(Comparator.comparingInt(group -> group.weight));
+        int towers = 0;
+        long answer = 0;
+        for (CowGroup group : cowGroups) {
+            int disp = group.amt;
+            while (disp > 0) {
+                CowGroup floor = treeSet.floor(new CowGroup(group.weight - k, 0));
+                if (floor == null) {
+                    break;
+                }
+                treeSet.remove(floor);
+                if (floor.amt <= disp) {
+                    disp -= floor.amt;
+                } else {
+                    treeSet.add(new CowGroup(floor.weight, floor.amt - disp));
+                    disp = 0;
+                }
+            }
+            towers -= group.amt - disp;
+            int canAdd = Math.min(group.amt, m - towers);
+            towers += canAdd;
+            answer += canAdd;
+            treeSet.add(new CowGroup(group.weight, canAdd));
+        }
+        System.out.println(answer);
+    }
+ 
+    static class CowGroup {
+        final int weight;
+        final int amt;
+ 
+        CowGroup(int weight, int amt) {
+            this.weight = weight;
+            this.amt = amt;
+        }
+    }
+}

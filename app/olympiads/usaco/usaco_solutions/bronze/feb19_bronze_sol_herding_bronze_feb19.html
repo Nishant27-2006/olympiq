@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>To solve this problem, the coding isn&apos;t hard -- it&apos;s more about understanding
+the  underlying structure of the cow herding process in the first place.
+<p>Suppose our three cows are at locations <span class='math'>$a &lt; b &lt; c$</span>.  For the minimum number of
+moves, there are a few different cases to differentiate.  The answer is  clearly
+zero if the three cows are already consecutive, and one if there is a unit-sized gap 
+between two cows (e.g., &quot;3, 4, 6&quot; or &quot;1, 14, 16&quot;). In all other
+cases, the answer is two.  For example, if there is a gap  between <span class='math'>$a$</span> and <span class='math'>$b$</span>
+and also between <span class='math'>$b$</span> and <span class='math'>$c$</span>, then we can move <span class='math'>$a$</span> to  <span class='math'>$b+1$</span> and then <span class='math'>$c$</span> to
+<span class='math'>$b-1$</span>.  Otherwise, we have two adjacent cows (say, <span class='math'>$a$</span> and <span class='math'>$b$</span>)  and a gap of
+size at least two with the third cow --- in which case we can move <span class='math'>$a$</span> to <span class='math'>$b+2$</span>
+and <span class='math'>$c$</span> to <span class='math'>$b+1$</span>.
+<p>For the maximum number of moves, our main observation is the following: consider
+the gap between <span class='math'>$a$</span> and <span class='math'>$b$</span>, and the gap between <span class='math'>$b$</span> and <span class='math'>$c$</span>. After the first
+move, one of these gaps essentially &quot;goes away&quot;, meaning there cannot be any
+cows landing inside the gap.  On the other hand, we can strategically move cows
+so the other gap has every empty space used by a cow at some point in time ---
+the main idea here is to ensure we always have two adjacent cows at one
+endpoint, flipping back and forth between which side has the two adjacent cows. 
+So the answer for the maximum is related to which of the <span class='math'>$a \ldots b$</span> and
+<span class='math'>$b \ldots c$</span> gaps is largest, since we can land cows in all the empty spaces in
+this gap, and none in the other gap.
+<p>Here is my code that expresses this idea:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+ 
+int main(void)
+{
+  int a, b, c;
+  ifstream fin (&quot;herding.in&quot;);
+  fin &gt;&gt; a &gt;&gt; b &gt;&gt; c;
+ 
+  // Arrange in sorted order
+  if (a &gt; b) swap(a,b);
+  if (b &gt; c) swap(b,c);
+  if (a &gt; b) swap(a,b);
+ 
+  ofstream fout (&quot;herding.out&quot;);
+  if (c==a+2)
+    fout &lt;&lt; &quot;0\n&quot;;
+  else if (b==a+2 || c==b+2)
+    fout &lt;&lt; &quot;1\n&quot;;
+  else fout &lt;&lt; &quot;2\n&quot;;
+  fout &lt;&lt; max(b-a, c-b) - 1 &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+</body></html>

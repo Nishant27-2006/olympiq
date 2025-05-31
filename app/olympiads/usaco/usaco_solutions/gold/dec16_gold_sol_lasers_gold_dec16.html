@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we want to shoot a laser from a source point to
+a destination point. The laser starts out being horizontal or vertical,
+and diagonal mirrors can be inserted in certain locations to change the
+orientation of the laser. We want to insert the minimum number of lasers
+needed to reach the destination.
+<p>We start by making an observation about any optimal path of the laser -
+given any horizontal or vertical line, the laser will only cover at
+most one contiguous interval of the line. If the laser covers
+two disjoint intervals, we can &quot;skip&quot; part of the path that goes off of
+that line and get a more optimal path.
+<p>Therefore, there are at most <span class='math'>$2N+2$</span> lines that the laser can travel on - 
+<span class='math'>$N+1$</span> horizontal ones and <span class='math'>$N+1$</span> vertical ones each corresponding to the initial
+point and the <span class='math'>$N$</span> points where we can place mirrors.
+<p>We can then model this problem as a shortest path problem. We want to get
+to either a horizontal or vertical line that goes through the destination point,
+and we start on a horizontal or vertical line that goes through the start point.
+We can transfer between two lines if and only if their intersection point
+is one of the <span class='math'>$N$</span> points given to us, and we want to minimize the number
+of transfers we do.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class lasers {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;lasers.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;lasers.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int x1 = Integer.parseInt(st.nextToken());
+		int y1 = Integer.parseInt(st.nextToken());
+		int x2 = Integer.parseInt(st.nextToken());
+		int y2 = Integer.parseInt(st.nextToken());
+		Map&lt;Line, Integer&gt; dist = new HashMap&lt;Line, Integer&gt;();
+		LinkedList&lt;Line&gt; q = new LinkedList&lt;Line&gt;();
+		q.add(new Line(y1, true));
+		dist.put(new Line(y1, true), 0);
+		q.add(new Line(x1, false));
+		dist.put(new Line(x1, false), 0);
+		Map&lt;Integer, ArrayList&lt;Integer&gt;&gt; xtoY = new HashMap&lt;Integer, ArrayList&lt;Integer&gt;&gt;();
+		Map&lt;Integer, ArrayList&lt;Integer&gt;&gt; ytoX = new HashMap&lt;Integer, ArrayList&lt;Integer&gt;&gt;();
+		for(int i = 0; i &lt; n; i++) {
+			st = new StringTokenizer(br.readLine());
+			int x = Integer.parseInt(st.nextToken());
+			int y = Integer.parseInt(st.nextToken());
+			if(!xtoY.containsKey(x)) {
+				xtoY.put(x, new ArrayList&lt;Integer&gt;());
+			}
+			xtoY.get(x).add(y);
+			if(!ytoX.containsKey(y)) {
+				ytoX.put(y, new ArrayList&lt;Integer&gt;());
+			}
+			ytoX.get(y).add(x);
+		}
+		int ret = -1;
+		while(!q.isEmpty()) {
+			Line curr = q.removeFirst();
+			if(curr.horizontal &amp;&amp; curr.val == y2) {
+				ret = dist.get(curr);
+				break;
+			}
+			if(!curr.horizontal &amp;&amp; curr.val == x2) {
+				ret = dist.get(curr);
+				break;
+			}
+			Map&lt;Integer, ArrayList&lt;Integer&gt;&gt; source = curr.horizontal ? ytoX : xtoY;
+			if(source.containsKey(curr.val)) {
+				for(int dest: source.get(curr.val)) {
+					Line nextLine = new Line(dest, !curr.horizontal);
+					if(!dist.containsKey(nextLine)) {
+						dist.put(nextLine, dist.get(curr) + 1);
+						q.add(nextLine);
+					}
+				}
+			}
+		}
+		pw.println(ret);
+		pw.close();
+	}
+	
+	static class Line {
+		public int val;
+		public boolean horizontal;
+		public Line(int val, boolean horizontal) {
+			super();
+			this.val = val;
+			this.horizontal = horizontal;
+		}
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (horizontal ? 1231 : 1237);
+			result = prime * result + val;
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Line other = (Line) obj;
+			if (horizontal != other.horizontal)
+				return false;
+			if (val != other.val)
+				return false;
+			return true;
+		}
+		
+	}
+}
+</pre>
+</body></html>

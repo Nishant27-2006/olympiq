@@ -1,0 +1,361 @@
+Solution ID: sol_prob2_bronze_open23
+Contest: OPEN23
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_open23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Chongtian Ma)
+
+This problem can be solved with complete search and careful implementation.
+
+To achieve full credit,
+
+$\mathcal{O}(N^2)$
+
+will suffice. We can loop through the
+number of type
+
+$1$
+
+and the most basic form of type
+
+$2$
+
+sentences (i.e., with
+only one noun at the end) and check if it is possible to create a paragraph with
+that configuration; let's call these numbers
+
+$t_1$
+
+and
+
+$t_2$
+
+respectively. Both
+
+$t_1$
+
+and
+
+$t_2$
+
+are capped by the number of intransitive and transitive verbs,
+respectively.
+
+Let
+
+$n$
+
+be the total number of nouns in the input. Then
+
+$t_1 + 2 \cdot t_2 \leq n$
+
+must hold. Now, let's consider conjunctions: Let
+
+$T$
+
+be the total number of sentences we are going to make (
+
+$T = t_1+ t_2$
+
+). There
+must be
+
+$T - 1$
+
+connections between the
+
+$T$
+
+sentences, which can be filled with
+either conjunctions or periods. We want to maximize conjunction usage as
+conjunctions increase the word count.
+
+However, due to the problem constraints, conjunctions cannot be placed
+consecutively. Let
+
+$J$
+
+be the number of conjunctions we can place, then
+
+$J = \min(\text{# of conjunctions}, T / 2)$
+
+. Then, we need to place
+
+$T - J$
+
+periods in the other connections (including the last period at the end of the
+last sentence), so we need to check that
+
+$T - J \le P$
+
+.
+
+Now let's consider commas. Without loss of generality and for ease of
+implementation, if we have at least one type
+
+$2$
+
+sentence, let's just tack all
+the commas at the end of our last type
+
+$2$
+
+sentence as that won't affect the
+number of total words. Let
+
+$M$
+
+be the number of nouns we can tack on at the end
+with commas. Then
+
+$M = \min(n - (t_1 + 2 \cdot t_2), C)$
+
+.
+
+Summing everything up, we get a total of
+
+$W = 2 \cdot t_1 + 3 \cdot t_2 + J + M$
+
+words used. The answer to the problem is the maximum of all
+
+$W$
+
+among all
+configurations. When taking the maximum
+
+$W$
+
+, it is useful to store information
+about the best
+
+$t_1, t_2, J$
+
+, and
+
+$M$
+
+somewhere, so you'll have an easier time
+constructing the paragraph afterward.
+
+Interestingly, this problem is also solvable in
+
+$\mathcal{O}(N)$
+
+time. Instead
+of looping over the number of type
+
+$2$
+
+sentences, we can maximize
+
+$t_2$
+
+after
+fixing
+
+$t_1$
+
+. Let
+
+$\mathtt{conj}$
+
+be the total number of conjunctions in the
+input; using only information from
+
+$t_1$
+
+, we can achieve
+
+$t_2 = \min(\text{# of transitive verbs}, (n - t_1) / 2, 2 \cdot \min(\mathtt{conj}, P) + \max(0, P - \mathtt{conj}))$
+
+.
+
+Make sure to be extra careful about formatting while constructing the paragraph
+as well (watch out for double spaces, trailing spaces, unnecessary spaces,
+etc.)!
+
+Chongtian's
+
+$\mathcal O(N)$
+
+code:
+
+#include <bits/stdc++.h>
+using namespace std;
+#define sz(x) (int)x.size()
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int T;
+    cin >> T;
+    while (T--) {
+        int n, c, p;
+        cin >> n >> c >> p;
+        vector<string> nouns, tverb, iverb, conj;
+        for (int i = 0; i < n; i++) {
+            string w, t;
+            cin >> w >> t;
+
+            if (t == "noun") nouns.push_back(w);
+            else if (t == "transitive-verb") tverb.push_back(w);
+            else if (t == "intransitive-verb") iverb.push_back(w);
+            else conj.push_back(w);
+        }
+
+        int ans = 0;
+        // vars that track info related to the answer
+        int t1, t2, combine, tack_end;
+        for (int type_1 = 0; type_1 <= sz(iverb); type_1++) {
+            int noun_cnt = sz(nouns), conj_cnt = sz(conj);
+            int period = p, comma = c;
+            int cur_words = 0;
+
+            // let's make type 1 sentences yay
+            cur_words += 2 * type_1;
+            noun_cnt -= type_1;
+            if (noun_cnt < 0) continue;
+
+            // now let's make the most basic type of type 2 sentences
+            int type_2 = min({sz(tverb), noun_cnt / 2, min(conj_cnt, period) * 2 + max(0, period - conj_cnt)});
+            cur_words += 3 * type_2;
+            noun_cnt -= 2 * type_2;
+
+            // try to combine as much sentences with conj as possible
+            int total = type_1 + type_2;
+            int connections = type_1 + type_2 - 1;
+            int can_combine = min((connections + 1) / 2, conj_cnt);
+            cur_words += can_combine;
+            // whatever we cannot combine, fill with periods
+            period -= total - can_combine;
+            if (period < 0) continue;
+
+            // tack extra nouns we have at the end with commas
+            // at the end of the last type 2 sentence
+            int tack = 0;
+            if (type_2 > 0) {
+                tack = min(noun_cnt, comma);
+                cur_words += tack;
+            }
+            if (cur_words > ans) {
+                ans = cur_words;
+                t1 = type_1;
+                t2 = type_2;
+                combine = can_combine;
+                tack_end = tack;
+            }
+        }
+        cout << ans << endl;
+
+        if (ans == 0) {
+            cout << endl;
+            continue;
+        }
+
+        vector<vector<string>> sentences;
+        // construct type 1 sentences
+        for (int i = 0; i < t1; i++) {
+            sentences.push_back({nouns.back(), iverb.back()});
+            nouns.pop_back();
+            iverb.pop_back();
+        }
+        // construct type 2 sentences
+        for (int i = 0; i < t2; i++) {
+            sentences.push_back({nouns.back(), tverb.back()});
+            nouns.pop_back();
+            tverb.pop_back();
+            sentences.back().push_back(nouns.back());
+            nouns.pop_back();
+        }
+        string output;
+        for (int i = 0; i < sz(sentences); i++) {
+            for (string j : sentences[i]) { output += j + " "; }
+            if (i % 2 == 0 && combine) {
+                combine--;
+                // ADD A CONJUNCTION
+                output += conj.back() + " ";
+                conj.pop_back();
+            } else {
+                // remove the last whitespace and add a period
+                output.pop_back();
+                output += ". ";
+            }
+        }
+        // remove the last whitespace
+        output.pop_back();
+        if (tack_end > 0) {
+            // remove the last period
+            output.pop_back();
+            // and add a series of commas and nouns
+            for (int i = 0; i < tack_end; i++) {
+                output += ", " + nouns.back();
+                nouns.pop_back();
+            }
+            // add back the last period
+            output += ".";
+        }
+        cout << output << endl;
+    }
+}
+
+Ben's
+
+$\mathcal O(N^2)$
+
+code (which can also be sped up to
+
+$O(N)$
+
+):
+
+def solve():
+    N, C, P = map(int, input().split())
+    nouns, tverbs, iverbs, conjs = [], [], [], []
+    for _ in range(N):
+        word, t = input().split()
+        if t[0] == "n":
+            nouns.append(word)
+        if t[0] == "t":
+            tverbs.append(word)
+        if t[0] == "i":
+            iverbs.append(word)
+        if t[0] == "c":
+            conjs.append(word)
+    ans = (0, 0, 0, 0)
+    for n_tverb in range(len(tverbs) + 1):
+        n_iverb = min(len(iverbs), len(nouns) - 2 * n_tverb)
+        while n_iverb >= 0:
+            n_conj = min(len(conjs), (n_tverb + n_iverb) // 2)
+            if n_tverb + n_iverb - n_conj <= P:
+                break
+            n_iverb -= 1
+        if n_iverb < 0:
+            continue
+        extra_nouns = min(C, len(nouns) - (n_iverb + 2 * n_tverb))
+        if n_tverb == 0:
+            extra_nouns = 0
+        n_words = 3 * n_tverb + 2 * n_iverb + n_conj + extra_nouns
+        ans = max(ans, (n_words, n_tverb, n_iverb, n_conj))
+
+    n_words, n_tverb, n_iverb, n_conj = ans
+    print(n_words)
+    basic_sentences = [nouns.pop() + " " + iverbs.pop() for _ in range(n_iverb)] + [
+        nouns.pop() + " " + tverbs.pop() + " " + nouns.pop() for _ in range(n_tverb)
+    ]
+    while n_tverb > 0 and C > 0 and len(nouns) > 0:
+        basic_sentences[-1] += ", " + nouns.pop()
+        C -= 1
+    compound_sentences = [
+        basic_sentences.pop() + " " + conjs.pop() + " " + basic_sentences.pop()
+        for _ in range(n_conj)
+    ]
+    sentences = [sentence + "." for sentence in basic_sentences + compound_sentences]
+    print(" ".join(sentences))
+
+
+T = int(input())
+for t in range(T):
+    solve()

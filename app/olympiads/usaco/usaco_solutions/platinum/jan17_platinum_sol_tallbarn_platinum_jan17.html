@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Yang Liu)
+<p>Note that the benefits from a marginal cow on a job is decreasing - in
+particular, the marginal benefit of going from <span class='math'>$c$</span> cows to <span class='math'>$c+1$</span> cows is 
+<span class='math'>$\frac{a}{(c(c+1))}$</span>, which is decreasing. Therefore, we get an <span class='math'>$O(K
+\log N)$</span>
+solution just by operating greedily: start with a single cow on each job, and
+for the next <span class='math'>$K-N$</span> steps, add a cow to a job that decreases the answer by the
+most.
+<p>However, because <span class='math'>$K$</span> is large, this solution is too slow. Instead, we binary
+search on a parameter <span class='math'>$x$</span>, which represents the last marginal benefit we got
+from adding a cow to a job.
+<p>For a fixed <span class='math'>$x$</span>, we can compute how many cows we can add until our benefit
+becomes less than <span class='math'>$x$</span>. We find the value <span class='math'>$x$</span> such that we use <span class='math'>$K$</span> cows
+(which exists by monotonicity) and then compute the answer.  More precisely, for some <span class='math'>$x$</span> we will be close to <span class='math'>$K$</span>, say with <span class='math'>$T$</span> workers used. Then the actual answer should be adjusted by <span class='math'>$(K-T)*x$</span> because all the extra / less workers will be providing marginal value <span class='math'>$x$</span>. This is what the last few lines of the code below are doing.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+typedef long long ll;
+
+const int MAXN = 1e5+5;
+
+ll n, k, a[MAXN];
+
+ll ct(double x) {
+	ll tot = 0;
+	for (int i = 0; i &lt; n; ++i)
+                // Using the quadratic formula to solve a[i]/(c(c+1)) >= x
+		tot += ll((sqrt(1 + 4*a[i]/x)-1)/2);
+	return tot;
+}
+
+int main() {
+	cin &gt;&gt; n &gt;&gt; k;
+	k -= n;
+	
+	for (int i = 0; i &lt; n; ++i)
+		cin &gt;&gt; a[i];
+
+	double lo = 0, hi = 1e18;
+	for (int i = 0; i &lt; 200; ++i) {
+		double mid = (lo+hi)/2;
+		if (ct(mid) &gt;= k)
+			lo = mid;
+		else
+			hi = mid;
+	}
+
+	double ans = 0;
+	ll tot = 0;
+
+	for (int i = 0; i &lt; n; ++i) {
+		ll x = ll((sqrt(1 + 4*a[i]/lo)-1)/2);
+		ans += 1.0*a[i]/(x+1);
+		tot += x;
+	}
+    
+	cout &lt;&lt; (ll)round(ans - (k-tot)*lo) &lt;&lt; endl;
+}
+</pre>
+<p></body></html>

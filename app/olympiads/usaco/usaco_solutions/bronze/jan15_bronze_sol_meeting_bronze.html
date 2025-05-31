@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type='text/x-mathjax-config'>
+MathJax.Hub.Config({
+  "HTML-CSS": {
+    preferredFont: "TeX",
+    availableFonts: ["STIX","TeX"],
+    linebreaks: {
+      automatic: true
+    },
+    EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+  },
+  tex2jax: {
+    inlineMath: [
+      ["$", "$"],
+    ],
+    displayMath: [
+      ["$$","$$"],
+    ],
+    processEscapes: true,
+    ignoreClass: ".*",
+    processClass: "math"
+  },
+  TeX: {
+    noUndefined: {
+      attributes: {
+        mathcolor: "red",
+        mathbackground: "#FFEEEE",
+        mathsize: "90%"
+      }
+    },
+  },
+  messageStyle: "none"
+});
+</script>
+<script src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full'></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<html>
+<p>(Analysis by Nick Wu)</p><p>
+
+For each of Bessie and Elsie, we will simply try all possible paths that they can take to get from field 1 to field N. Because there are only at most 14 fields in between field 1 and field N, and all paths go downward, there are only 2^{14} = 16384 different paths that each of Bessie and Elsie could take. We can recursively keep track of which field Bessie and Elsie are at, along with how far they&apos;ve walked, and keep track of whether it&apos;s possible for them to get to field N in K units of time.</p><p>
+
+After we&apos;ve figured out this information, noting that the longest path can be at most 15000 units of time, we can simply loop to see if both Bessie and Elsie can make it to field N in K units of time, and report the smallest such time.</p><p>
+
+Here is my Java solution:</p><p>
+
+</p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class meeting {
+  static int[][] bessieGrid;
+  static int[][] elsieGrid;
+
+  static boolean[] bessieCan;
+  static boolean[] elsieCan;
+
+  static int n;
+  
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    StringTokenizer st = new StringTokenizer(br.readLine());
+    n = Integer.parseInt(st.nextToken());
+    int m = Integer.parseInt(st.nextToken());
+    bessieGrid = new int[n][n];
+    elsieGrid = new int[n][n];
+    for(int i = 0; i &lt; m; i++) {
+      st = new StringTokenizer(br.readLine());
+      int x = Integer.parseInt(st.nextToken())-1;
+      int y = Integer.parseInt(st.nextToken())-1;
+      bessieGrid[x][y] = Integer.parseInt(st.nextToken());
+      elsieGrid[x][y] = Integer.parseInt(st.nextToken());
+    }
+    bessieCan = new boolean[20000];
+    elsieCan = new boolean[20000];
+    dfs(bessieGrid, bessieCan, 0, 0);
+    dfs(elsieGrid, elsieCan, 0, 0);
+    int best = Integer.MAX_VALUE;
+    for(int i = 0; i &lt; bessieCan.length; i++) {
+      if(bessieCan[i] &amp;&amp; elsieCan[i]) {
+        best = i;
+        break;
+      }
+    }
+    if(best == Integer.MAX_VALUE) {
+      pw.println(&quot;IMPOSSIBLE&quot;);
+    }
+    else {
+      pw.println(best);
+    }
+    pw.close();
+  }
+
+  public static void dfs(int[][] dist, boolean[] can, int currV, int currD) {
+    if(currV == n-1) {
+      can[currD] = true;
+      return;
+    }
+    for(int a = currV+1; a &lt; n; a++) {
+      if(dist[currV][a] &gt; 0) {
+        dfs(dist, can, a, currD + dist[currV][a]);
+      }
+    }
+  }
+
+}
+</pre><p></p>
+</html>

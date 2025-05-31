@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>For each <span class='math'>$0\le j&lt;N$</span> we need to count the number of pairs <span class='math'>$(x,y)$</span> such that
+<span class='math'>$x&lt;y$</span>, <span class='math'>$A[x]&gt;A[y]$</span> and <span class='math'>$A[y]&lt;j$</span>. It suffices to compute the number of <span class='math'>$x&lt;y$</span> such
+that <span class='math'>$A[x]&gt;A[y]$</span> for every <span class='math'>$y$</span>; call this quantity <span class='math'>$n[y]$</span>. Then
+<span class='math'>$ans[j]=\sum_{A[y]&lt;j}n[y]$</span> can  be computed with prefix sums.
+<p>The value of <span class='math'>$n[y]$</span> for each <span class='math'>$y$</span> can be found via the following process:
+<p><ol><li>Set <span class='math'>$h=N.$</span> </li><li>Maintain a collection of indices, initially empty.</li><li>For each <span class='math'>$y$</span> with <span class='math'>$A[y]=h$</span>, set the corresponding quantity for <span class='math'>$y$</span> equal to 
+the number of indices in the collection less than <span class='math'>$y$</span>.</li><li>For each <span class='math'>$y$</span> with <span class='math'>$A[y]=h$</span>, insert <span class='math'>$y$</span> into the set.</li><li>If <span class='math'>$h=0,$</span> terminate. Otherwise, decrease <span class='math'>$h$</span> by one and repeat from step
+2.</li></ol>
+<p>The collection can be a <a href='https://codeforces.com/blog/entry/11080'>policy-based
+data structure</a> in C++ or a binary indexed tree.
+<p>My code:
+<p><pre class='prettyprint'>
+#include &quot;bits/stdc++.h&quot;
+ 
+using namespace std;
+ 
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+#include &lt;ext/pb_ds/tree_policy.hpp&gt;
+#include &lt;ext/pb_ds/assoc_container.hpp&gt;
+using namespace __gnu_pbds;
+template &lt;class T&gt; using Tree = tree&lt;T, null_type, less&lt;T&gt;, 
+	rb_tree_tag, tree_order_statistics_node_update&gt;; 
+ 
+const int MX = 1e5+5;
+
+int N;
+long long numInv[MX];
+vector&lt;int&gt; todo[MX];
+ 
+int main() {
+	setIO(&quot;haircut&quot;);
+	int N; cin &gt;&gt; N;
+	vector&lt;int&gt; A(N); for (int&amp; t: A) cin &gt;&gt; t;
+	for (int i = 0; i &lt; N; ++i) todo[A[i]].push_back(i);
+	Tree&lt;int&gt; T;
+	for (int i = N; i &gt;= 0; --i) {
+		for (int t: todo[i]) numInv[i+1] += T.order_of_key(t);
+		for (int t: todo[i]) T.insert(t);
+	}
+	for (int i = 1; i &lt; N; ++i) numInv[i] += numInv[i-1];
+	for (int i = 0; i &lt; N; ++i) cout &lt;&lt; numInv[i] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Dhruv Rohatgi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MAXN 100005
+ 
+int N;
+int A[100000];
+int T[MAXN+1];
+ 
+int getSum(int i)
+{
+	int c=0;
+	for(++i; i &gt; 0 ; i -= (i &amp; -i))
+		c += T[i];
+	return c;
+}
+void set(int i,int dif)
+{
+	for(++i; i &lt; MAXN ; i += (i &amp; -i))
+		T[i] += dif;
+}
+ 
+long long cnt[100000];
+ 
+int main()
+{
+	freopen(&quot;haircut.in&quot;,&quot;r&quot;,stdin);
+	freopen(&quot;haircut.out&quot;,&quot;w&quot;,stdout);
+	cin &gt;&gt; N;
+	int a;
+	for(int i=0;i&lt;N;i++)
+	{
+		cin &gt;&gt; a;
+		a++;
+		cnt[a] += i - getSum(a);
+		set(a, 1);
+	}
+	long long ans = 0;
+	for(int j=1;j&lt;=N;j++)
+	{
+		cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+		ans += cnt[j];
+	}
+}
+</pre>
+<p></body></html>

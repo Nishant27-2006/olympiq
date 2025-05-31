@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Lewin Gan)
+<p>Let&apos;s consider the problem without any cyclic shifts.
+<p>Let <span class='math'>$a_i$</span> be the position of the <span class='math'>$i$</span>th cow in the first line, and <span class='math'>$b_i$</span> be the
+position of the <span class='math'>$i$</span>th cow in the second sequence.
+<p>Two cows <span class='math'>$i,j$</span> will cross if <span class='math'>$(a_i &lt; a_j) \neq (b_i &lt; b_j)$</span>.
+<p>Define a sequence <span class='math'>$s$</span> such that <span class='math'>$s_{a_i} = b_i$</span>. Intuitively, this encodes the
+position of the <span class='math'>$k$</span>th cow in the first line from the left in the second line.
+<p>So, we can rewrite our condition of two cows intersecting as <span class='math'>$p &lt; q$</span> and <span class='math'>$s_p &gt;
+s_q$</span>. Note this looks like the formula for number of inversions.
+<p>So, initially we can get the number of crossings without any cyclic shifts by
+counting the number of inversions. This is a classic problem that can be done
+with divide and conquer or with a binary indexed tree.
+<p>Now, let&apos;s consider what happens when we move one cow from the end of the line
+to the beginning. Suppose this cow ends up in position <span class='math'>$P$</span> in the second line.
+Since this cow is the last cow in the first line, we can see it contributes <span class='math'>$N-P$</span>
+intersections. Moving it to the beginning would then contribute <span class='math'>$P-1$</span>
+intersections. So moving it from the first position to last position would
+change the number of pairs by <span class='math'>$(P-1) - (N-P)$</span>.
+<p>Below is Mark Chen&apos;s implementation. Note that he uses divide and conquer to
+count the number of intersections at the beginning.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+#include &lt;stdio.h&gt;
+#include &lt;set&gt;
+#include &lt;vector&gt;
+#include &lt;map&gt;
+#include &lt;cmath&gt;
+#include &lt;algorithm&gt;
+#include &lt;memory.h&gt;
+#include &lt;string&gt;
+#include &lt;sstream&gt;
+#include &lt;cstdlib&gt;
+#include &lt;ctime&gt;
+#include &lt;cassert&gt;
+
+using namespace std;
+
+typedef long long LL;
+typedef pair&lt;int,int&gt; PII;
+
+#define MP make_pair
+#define PB push_back
+#define FF first
+#define SS second
+
+#define FORN(i, n) for (int i = 0; i &lt;  (int)(n); i++)
+#define FOR1(i, n) for (int i = 1; i &lt;= (int)(n); i++)
+#define FORD(i, n) for (int i = (int)(n) - 1; i &gt;= 0; i--)
+
+#define DEBUG(X) { cout &lt;&lt; #X &lt;&lt; &quot; = &quot; &lt;&lt; (X) &lt;&lt; endl; }
+#define PR0(A,n) { cout &lt;&lt; #A &lt;&lt; &quot; = &quot;; FORN(_,n) cout &lt;&lt; A[_] &lt;&lt; &apos; &apos;; cout &lt;&lt; endl; }
+
+#define MOD 1000000007
+#define INF 2000000000
+
+int GLL(LL&amp; x) {
+    return scanf(&quot;%lld&quot;, &amp;x);
+}
+
+int GI(int&amp; x) {
+    return scanf(&quot;%d&quot;, &amp;x);
+}
+
+const int MAXN = 100005;
+int q[2][MAXN], qInv[2][MAXN], qCopy[2][MAXN];
+
+int n, x;
+
+vector&lt;int&gt; merged;
+
+LL inversions(int p[], int l, int r) {
+    if (l != r) {
+        int m = (l+r) / 2;  // [l,m], [m+1,r]
+
+        LL res = inversions(p, l, m) + inversions(p, m + 1, r);
+
+        merged.clear();
+
+        int i = l; int j = m + 1;
+
+        while (i &lt;= m &amp;&amp; j &lt;= r) {
+            if (p[i] &lt; p[j]) {
+                res += j - (m + 1);
+                merged.PB(p[i]);
+                i++;
+            }
+            else {
+                merged.PB(p[j]);
+                j++;
+            }
+        }
+        while (i &lt;= m) {
+            res += j - (m + 1);
+            merged.PB(p[i]);
+            i++;
+        }
+        while (j &lt;= r) {
+            merged.PB(p[j]);
+            j++;
+        }
+
+        i = 0;
+        for (j = l; j &lt;= r; j++) {
+            p[j] = merged[i];
+            i++;
+        }
+
+        return res;
+    }
+    else {
+        return 0;
+    }
+}
+
+int main() {
+    GI(n);
+
+    FORN(seq, 2) FOR1(i, n) {
+        GI(q[seq][i]);
+        qInv[seq][q[seq][i]] = i;
+    }
+
+    FORN(seq, 2) FOR1(i, n) {
+        qCopy[seq][i] = qInv[1-seq][q[seq][i]];
+    }
+
+    FORN(seq, 2) FOR1(i, n) {
+        q[seq][i] = qCopy[seq][i];
+    }
+
+    LL res = 1LL*INF*INF;
+
+    FORN(seq, 2) {
+        LL cur = inversions(q[seq], 1, n);
+
+        for (int i = n; i &gt;= 1; i--) {
+            cur += 2 * qCopy[seq][i] - n - 1;
+            res = min(res, cur);
+        }
+    }
+
+    printf(&quot;%lld\n&quot;, res);
+    return 0;
+}
+</pre>
+</body></html>

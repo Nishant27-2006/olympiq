@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have several hay bales on the number line and a few
+exploding cows. We can send an exploding cow to a certain location on the line
+and it will cause all the hay bales to explode within a given radius. We want to
+figure out the smallest radius that the cows can explode at so that we can force
+all the hay bales to explode.
+<p>Note that if there is some radius <span class='math'>$r$</span> such that it is possible for all hay bales
+to explode, then all the hay bales will explode for any radius <span class='math'>$R &gt; r$</span>.
+Therefore, we can binary search for the minimum radius <span class='math'>$r$</span>.
+<p>To check if a given radius <span class='math'>$r$</span> is feasible, consider the leftmost hay bale at
+location <span class='math'>$x$</span>. We have to place a cow somewhere between <span class='math'>$x-r$</span> and <span class='math'>$x+r$</span> in order
+to make that hay bale explode. To make as many other hay bales explode, it makes
+sense to move the cow to the right as much as possible, because there are no hay
+bales to the left of <span class='math'>$x$</span> so shifting the cow to the right can only include more
+hay bales. Therefore, we would have the hay bale explode at location <span class='math'>$x+r$</span> and
+all hay bales in between <span class='math'>$x$</span> and <span class='math'>$x+2r$</span> explode. We can then find the leftmost
+hay bale that is at location greater than <span class='math'>$x+2r$</span> and repeat this process, then
+count the number of cows that we placed. If the number of cows used is less than
+or equal to <span class='math'>$K$</span>, then <span class='math'>$r$</span> is feasible. Otherwise, the answer must be at least
+<span class='math'>$r+1$</span>.
+<p>Here is my Java code demonstrating this.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class angry {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;angry.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;angry.out&quot;)));
+
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int k = Integer.parseInt(st.nextToken());
+		
+		int[] locations = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			locations[i] = Integer.parseInt(br.readLine());
+		}
+		
+		Arrays.sort(locations);
+		
+		int min = 0;
+		int max = 500000000;
+		while(min != max) {
+			int mid = (min+max)/2;
+			int used = 0;
+			int last = 0;
+			while(last &lt; n) {
+				used++;
+				int curr = last+1;
+				while(curr &lt; n &amp;&amp; locations[curr] - locations[last] &lt;= 2*mid) {
+					curr++;
+				}
+				last = curr;
+			}
+			if(used &lt;= k) {
+				max = mid;
+			}
+			else {
+				min = mid+1;
+			}
+		}
+		pw.println(min);
+		pw.close();
+	}
+	
+}
+</pre>
+</body></html>

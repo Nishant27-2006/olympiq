@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have <span class='math'>$N$</span> cows scattered on the plane and want to compute the
+minimum distance <span class='math'>$D$</span> such that all cows are able to communicate with each other
+(perhaps through some intermediate cows), given that two cows can only
+communicate directly if the distance between them is less than or equal to
+<span class='math'>$D$</span>.
+<p>We can model this problem as a graph problem where each cow is a vertex
+connected to every other cow with an edge with the weight being the distance
+between the two cows. We therefore want to compute the minimum edge weight such
+that the graph is connected.
+<p>We can solve this problem using a union-find data structure. A simple 
+union-find data structure supports two operations:
+<p><span class='math'>$Find(x)$</span> - return a unique identifier for vertex <span class='math'>$x$</span>. <span class='math'>$Find(x) = Find(y)$</span> if
+and only if <span class='math'>$x$</span> and <span class='math'>$y$</span> are in the same connected component.
+<p><span class='math'>$Merge(x, y)$</span> - connect <span class='math'>$x$</span> and <span class='math'>$y$</span> with an edge.
+<p>Let&apos;s assume that we have a sufficiently efficient implementation of a
+union-find data structure. Given the original <span class='math'>$N$</span> vertices are all pairwise
+disconnected, we can loop over the edges in nondecreasing order by weight and
+add an edge between two vertices if they are not already in the same component.
+After we add <span class='math'>$N-1$</span> edges, the graph is necessarily connected, and the last edge
+gives us our answer.
+<p>It remains to implement the union-find data structure efficiently. We will
+describe an implementation that supports both operations in essentially <span class='math'>$O(1)$</span>.
+<p>We start by describing an approach that supports both operations in linear time,
+which will not be fast enough for our purposes.
+<p>We start by annotating each node with a &quot;parent&quot; field - each node starts out
+with itself being the parent. When we call <span class='math'>$Find(x)$</span>, either <span class='math'>$x$</span> is its own
+parent, in which case we return <span class='math'>$x$</span>, or we return <span class='math'>$Find(parent(x))$</span>. When we
+call <span class='math'>$Merge(x, y)$</span>, we set the parent of <span class='math'>$Find(x)$</span> to <span class='math'>$Find(y)$</span>. 
+<p>Intuitively, what we are doing here is building a rooted tree and when we want
+to merge two trees, we have the root of one tree point to the root of the other
+tree.
+<p>The reason that this runs in linear time is that the depth of the tree may be
+linear. There are a couple ways to improve the performance here - if we always
+are careful to set the parent of the root of the smaller tree to the root of the
+larger tree, then the depth of the tree is bounded to <span class='math'>$O(\log N)$</span>. Another
+approach we can take is path compression - when we compute <span class='math'>$Find(parent(x))$</span>, we
+can memoize that value.
+<p>My Java solution uses the latter approach.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class moocast {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;moocast.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;moocast.out&quot;)));
+		int n = Integer.parseInt(br.readLine());
+		int[] x = new int[n];
+		int[] y = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			x[i] = Integer.parseInt(st.nextToken());
+			y[i] = Integer.parseInt(st.nextToken());
+		}
+		parent = new int[n];
+		ArrayList&lt;Edge&gt; edges = new ArrayList&lt;Edge&gt;();
+		for(int i = 0; i &lt; n; i++) {
+			parent[i] = i;
+			for(int j = 0; j &lt; i; j++) {
+				int distance = (x[i] - x[j]) * (x[i] - x[j]) + (y[i] - y[j]) * (y[i] - y[j]);
+				edges.add(new Edge(i, j, distance));
+			}
+		}
+		Collections.sort(edges);
+		int lastWeight = 0;
+		int numComponents = n;
+		for(Edge curr: edges) {
+			if(find(curr.i) != find(curr.j)) {
+				merge(curr.i, curr.j);
+				lastWeight = curr.w;
+				if(--numComponents == 1) {
+					break;
+				}
+			}
+		}
+		pw.println(lastWeight);
+		pw.close();
+	}
+	
+	static int[] parent;
+	public static int find(int curr) {
+		return parent[curr] == curr ? curr : (parent[curr] = find(parent[curr]));
+	}
+	
+	public static void merge(int x, int y) {
+		parent[find(x)] = find(y);
+	}
+	
+	static class Edge implements Comparable&lt;Edge&gt; {
+		public int i, j, w;
+		public Edge(int a, int b, int c){
+			i=a;
+			j=b;
+			w=c;
+		}
+		public int compareTo(Edge e) {
+			return w - e.w;
+		}
+	}
+	
+}
+</pre>
+</body></html>

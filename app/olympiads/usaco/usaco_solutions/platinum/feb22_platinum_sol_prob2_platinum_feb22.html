@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Daniel Zhang, Benjamin Qi)
+<p><strong>Partial Credit:</strong> <span class='math'>$N,Q\le 5000$</span>
+<p>To solve this subtask, we need to be able to answer each query in <span class='math'>$O(N)$</span> time.
+Define <span class='math'>$S=a_1+a_2+\cdots +a_N$</span>, and suppose that the candidate we are
+considering is <span class='math'>$d$</span>.
+<p><ol><li>If <span class='math'>$d\not \mid S$</span>, then the answer is <span class='math'>$-1$</span>.</li><li>Otherwise, define <span class='math'>$p_i=\sum_{j=1}^ia_j$</span> for <span class='math'>$1\le i\le N$</span> to be the <span class='math'>$i$</span>-th
+prefix sum of the input sequence. Consider how the set of prefix sums changes
+with each operation. Splitting a class period inserts a number into the set of
+prefix sums, while merging two class periods removes a number from the set of
+prefix sums. The set of prefix sums is initially all <span class='math'>$p_i$</span>, and at the end is
+all multiples of <span class='math'>$d$</span> up to <span class='math'>$S$</span>. Hence, the minimum number of operations is the
+size of the symmetric difference between the two sets. Letting <span class='math'>$x_d=(\#\text{ of }i\text{ such that }d|p_i)$</span> be the number of prefix sums in
+common between the initial and final sequences, the size of the symmetric difference is <span class='math'>$N+\frac{S}{d}-2x_d$</span>.
+<p></li></ol>
+<p>This immediately leads to an <span class='math'>$O(NQ)$</span> solution.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class SleepingInClassHarder {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        long[] times = new long[n];
+        long sum = 0;
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 0; j &lt; n; j++) {
+            times[j] = Long.parseLong(tokenizer.nextToken());
+            sum += times[j];
+        }
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q &gt; 0; q--) {
+            long targetNumber = Long.parseLong(in.readLine());
+            if (sum % targetNumber == 0L) {
+                long res = ((long) n) + (sum / targetNumber);
+                long curr = 0;
+                for (long time : times) {
+                    curr += time;
+                    if (curr % targetNumber == 0L) {
+                        res -= 2L;
+                    }
+                }
+                out.append(res);
+            } else {
+                out.append(-1);
+            }
+            out.append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p><strong>Full Solution:</strong> We need a faster way to compute <span class='math'>$x_d$</span>.
+<p>Define <span class='math'>$q_i=\gcd(p_i,S)$</span>. If <span class='math'>$d|S$</span>, then <span class='math'>$d|p_i\Leftrightarrow d|q_i$</span>, so we can
+ignore all the <span class='math'>$p_i$</span> and instead count the number of <span class='math'>$i$</span> such that <span class='math'>$d|q_i$</span>. Each
+<span class='math'>$q_i$</span> is a factor of <span class='math'>$S$</span>. Knowing the number of times each factor occurs is
+enough to answer all queries, so we first count them.
+<p>Let <span class='math'>$\sigma_0(S)$</span> denote the number of factors of <span class='math'>$S$</span>. The maximum number of
+factors that can occur within the input constraints is achieved by the largest
+<a href='https://en.wikipedia.org/wiki/Highly_composite_number'>highly composite
+number</a> not exceeding <span class='math'>$10^{18}$</span>. This is
+<p><div class='math'>$$897612484786617600=2^8\times 3^4\times 5^2\times 7^2\times 11\times 13\times 17\times 19\times 23\times 29\times 31\times 37$$</div>
+<p>which has <span class='math'>$103680$</span> factors (see <a href='https://oeis.org/A066150'>OEIS</a>).
+<p>In the worst case, there are <span class='math'>$O(\sigma_0(S))$</span> distinct nontrivial queries. If we
+can answer each query naively in <span class='math'>$O(\sigma_0(S))$</span>, this part by itself will take
+<span class='math'>$O(\sigma_0(S)^2)$</span>, which is too slow.
+<p>A faster way is to observe that if we arrange the factors in a multidimensional
+array, with a dimension for each prime factor, answering the queries from the
+frequencies is just computing multidimensional prefix sums.
+<p>Using inclusion-exclusion, we can compute each prefix sum in <span class='math'>$O(2^{\omega(S)})$</span>,
+where <span class='math'>$\omega(S)$</span> counts the number of distinct prime factors of <span class='math'>$S$</span> (not to be
+confused with the <span class='math'>$\omega$</span> from complexity theory), but this is still slow.
+<p>A better way is to iterate over the dimensions, and compute prefix sums along
+that direction. This is a generalization of what is commonly referred to as Sum
+Over Subsets (SOS) and runs in <span class='math'>$O(\omega(S)\sigma_0(S))$</span>.
+<p>To compute the dimensions of the array, it helps to know the prime factorization
+of <span class='math'>$S$</span>. One way to do this is to use a factorization algorithm that is fast
+enough to factor numbers up to <span class='math'>$10^{18}$</span>. Alternatively, one can use trial
+division up to <span class='math'>$10^6$</span> to eliminate all but at most two prime factors, then
+compute <span class='math'>$\gcd$</span>s of the remaining factor with the prefix sums and the queries. It
+is possible that a semiprime is left unfactored, but treating it as prime will
+not affect the correctness of the queries in that case since no query could
+distinguish it from being prime.
+<p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;vector&gt;
+#include &lt;numeric&gt;
+
+int N;
+long long prefix[100005];
+int Q;
+long long queries[100005];
+
+std::vector&lt;std::pair&lt;long long,int&gt; &gt; primes;
+
+int num_factors(){
+  int cnt=1;
+  for(int i=0;i&lt;primes.size();i++){
+    cnt*=primes[i].second+1;
+  }
+  return cnt;
+}
+
+int freq[103680];
+
+int&amp; get_freq(long long num){
+  int code=0;
+  for(int j=0;j&lt;primes.size();j++){
+    int cnt=0;
+    while(num%primes[j].first==0){
+      num/=primes[j].first;
+      cnt++;
+    }
+    code=code*(primes[j].second+1)+std::min(cnt,primes[j].second);
+  }
+  return freq[code];
+}
+
+int main(){
+  scanf(&quot;%d&quot;,&amp;N);
+  for(int i=1;i&lt;=N;i++){
+    scanf(&quot;%lld&quot;,&amp;prefix[i]);
+    prefix[i]+=prefix[i-1];
+  }
+  long long rest=prefix[N];
+  for(int p=2;p&lt;=1000000;p++){
+    if(rest%p==0){
+      int cnt=0;
+      while(rest%p==0){
+        rest/=p;
+        cnt++;
+      }
+      primes.emplace_back(p,cnt);
+    }
+  }
+  //now rest has at most two prime factors
+  for(int i=1;i&lt;N;i++){
+    long long tmp=std::gcd(rest,prefix[i]);
+    if(tmp!=1&amp;&amp;tmp!=rest){
+      if(tmp&gt;rest/tmp){
+        tmp=rest/tmp;
+      }
+      if(tmp*tmp==rest){
+        primes.emplace_back(tmp,2);
+      }else{
+        primes.emplace_back(tmp,1);
+        primes.emplace_back(rest/tmp,1);
+      }
+      rest=1;
+    }
+  }
+  scanf(&quot;%d&quot;,&amp;Q);
+  for(int i=0;i&lt;Q;i++){
+    scanf(&quot;%lld&quot;,&amp;queries[i]);
+    long long tmp=queries[i];
+    if(rest%tmp==0&amp;&amp;tmp!=1&amp;&amp;tmp!=rest){
+      if(tmp&gt;rest/tmp){
+        tmp=rest/tmp;
+      }
+      if(tmp*tmp==rest){
+        primes.emplace_back(tmp,2);
+      }else{
+        primes.emplace_back(tmp,1);
+        primes.emplace_back(rest/tmp,1);
+      }
+      rest=1;
+    }
+  }
+  if(rest!=1){
+    //assume it is prime; can&apos;t tell anyway
+    primes.emplace_back(rest,1);
+  }
+  for(int i=1;i&lt;=N;i++){
+    get_freq(prefix[i])++;
+  }
+  int block=1;
+  for(int i=primes.size()-1;i&gt;=0;i--){
+    for(int code=num_factors()-1;code&gt;=0;code--){
+      if(code/block%(primes[i].second+1)!=0){
+        freq[code-block]+=freq[code];
+      }
+    }
+    block*=primes[i].second+1;
+  }
+  for(int i=0;i&lt;Q;i++){
+    if(prefix[N]%queries[i]!=0){
+      printf(&quot;-1\n&quot;);
+    }else{
+      long long ans=N+prefix[N]/queries[i];
+      ans-=get_freq(queries[i])*2;
+      printf(&quot;%lld\n&quot;,ans);
+    }
+  }
+}
+</pre>
+<p>In the implementation above, each factor <span class='math'>$f$</span> of <span class='math'>$S$</span> gets encoded to a location 
+<span class='math'>$\text{code}(f)$</span> in the <span class='math'>$\texttt{freq}$</span> array. This encoding is generalized to
+other numbers <span class='math'>$g$</span> by mapping them to the location <span class='math'>$\text{code}(\gcd(S,g))$</span>.
+<p>The part that performs the multidimensional prefix sum is as follows:
+<p><pre class='prettyprint'>
+int block=1;
+for(int i=primes.size()-1;i&gt;=0;i--){
+  for(int code=num_factors()-1;code&gt;=0;code--){
+    if(code/block%(primes[i].second+1)!=0){
+      freq[code-block]+=freq[code];
+    }
+  }
+  block*=primes[i].second+1;
+}
+</pre>
+<p><ul><li>Initially, <span class='math'>$\texttt{freq}[\text{code}(f)]$</span> stores the number of <span class='math'>$q_i$</span> that
+equal <span class='math'>$f$</span> (equivalently, the number of <span class='math'>$p_i$</span> such that <span class='math'>$\gcd(p_i,S)=f$</span>).</li><li>After
+processing some primes, <span class='math'>$\texttt{freq}[\text{code}(f)]$</span>  will store the number
+of <span class='math'>$i$</span> such that <span class='math'>$\frac{q_i}{f}$</span> only contains prime factors among the already
+processed primes.</li><li>
+After processing all primes, <span class='math'>$\texttt{freq}[\text{code}(f)]=x_f$</span>: the number of
+<span class='math'>$q_i$</span> such that <span class='math'>$q_i$</span> is a multiple of <span class='math'>$f$</span> (equivalently, the number of <span class='math'>$p_i$</span>
+that is a multiple of
+<span class='math'>$f$</span>).</li></ul>
+<p></body></html>

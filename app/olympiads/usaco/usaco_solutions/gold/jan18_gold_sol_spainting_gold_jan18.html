@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>The first step is to find some criterion for which paintings can be created,
+where a painting is defined by <span class='math'>$N$</span> numbers, each between <span class='math'>$1$</span> and <span class='math'>$M$</span> inclusive.
+<p>To this end, note that the last stamp Bessie uses will color <span class='math'>$K$</span> consecutive
+units with the same color, and so in the final painting, there must be <span class='math'>$K$</span>
+consecutive units with the same color. 
+<p>Conversely, consider an arbitrary painting which satisfies this condition. It is
+not difficult to see that this painting must be attainable by some sequence of
+stampings: suppose the units in range <span class='math'>$[i,i+K)$</span> have the same color. Start at
+the left end and work rightwards, stamping <span class='math'>$[1,K+1)$</span> with the desired color for
+unit <span class='math'>$1$</span>, then stamping <span class='math'>$[2, K+2)$</span> with the desired color for unit <span class='math'>$2$</span>, all the
+way until we reach <span class='math'>$[i, K+i)$</span>. Then similarly start from the right end and work
+leftwards. Once <span class='math'>$[i, K+i)$</span> has been reached a second time, we have produced the
+desired painting.
+<p>So this problem is asking us to count the number of ways to pick <span class='math'>$N$</span> numbers
+between <span class='math'>$1$</span> and <span class='math'>$M$</span> inclusive, so that some <span class='math'>$K$</span> consecutive numbers are equal.
+As is often the case, it is simpler to count the complement. We will count the
+number of ways to pick <span class='math'>$N$</span> numbers between <span class='math'>$1$</span> and <span class='math'>$M$</span> so that no <span class='math'>$K$</span>
+consecutive numbers are all equal. Since there are <span class='math'>$M^N$</span> ways to pick the
+numbers with no such restrictions, we will then subtract our complementary
+answer from <span class='math'>$M^N$</span>, to obtain our final answer.
+<p>We can use dynamic programming to solve this reduced problem. Let <span class='math'>$\text{dp}(n)$</span>
+be the number of ways to pick <span class='math'>$n$</span> numbers between <span class='math'>$1$</span> and <span class='math'>$M$</span> so that no <span class='math'>$K$</span>
+consecutive numbers are equal. If <span class='math'>$n&lt;K$</span>, this is a base case and the answer is
+<span class='math'>$M^n$</span>. Otherwise, note that in any good coloring, the last <span class='math'>$K$</span> numbers cannot be
+equal. So for each good coloring, there is some <span class='math'>$c &lt; K$</span> so that the last <span class='math'>$c$</span>
+numbers are equal, but the <span class='math'>$c+1$</span>-st number is different. Fix some <span class='math'>$c$</span>. Then
+there are <span class='math'>$\text{dp}(n-c)$</span> ways to pick numbers for the first <span class='math'>$n-c$</span> units, and
+<span class='math'>$M-1$</span> ways to pick one number for the last <span class='math'>$c$</span> units. This yields the recurrence
+relation <div class='math'>$$\text{dp}(n) = (M-1) \cdot \sum_{c=1}^{K-1} \text{dp}(n-c).$$</div>
+<p>We immediately have a <span class='math'>$O(NK)$</span> solution, which gets 75% of the points on this
+problem. To get full credit, one must make the following final observation. Let
+<span class='math'>$s(n) = \sum_{i=1}^n \text{dp}(n)$</span>. Then the above recurrence implies the
+following closed-form recurrence: <div class='math'>$$s(n) - s(n-1) = (M-1)(s(n-1) - s(n-K))$$</div> or
+<div class='math'>$$s(n) = Ms(n-1) - (M-1)s(n-K).$$</div>
+<p>So rather than computing <span class='math'>$\text{dp}(n)$</span> directly, we compute <span class='math'>$s(n)$</span>, and observe
+that <span class='math'>$\text{dp}(N) = s(N) - s(N-1)$</span>. This yields an <span class='math'>$O(N)$</span> algorithm.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MOD 1000000007
+ 
+int s[10000001];
+ 
+int main()
+{
+	int N,M,K;
+	cin &gt;&gt; N &gt;&gt; M &gt;&gt; K;
+	
+	s[0] = 0;
+	for(int i=1;i&lt;K;i++)
+		s[i] = (M*((long long)s[i-1]) + M)%MOD;
+	for(int i=K;i&lt;=N;i++)
+		s[i] = (M*((long long)s[i-1]) + MOD - ((M-1)*((long long)s[i-K]))%MOD)%MOD;
+ 
+	int ans = 1;
+	for(int i=1;i&lt;=N;i++)
+		ans = (M*((long long)ans))%MOD;
+	
+	cout &lt;&lt; (((long long)ans) + MOD - ((long long)s[N]) + s[N-1])%MOD &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

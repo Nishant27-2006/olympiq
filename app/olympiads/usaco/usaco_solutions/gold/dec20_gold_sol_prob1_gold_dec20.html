@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Spencer Compton)
+<p>First, we make an observation about what our swarm of robots will look like as
+they replicate. As the robots replicate, they would take the following shape:
+<p><pre>
+.....    .....    ..X..
+.....    ..X..    .XXX.
+..X.. -&gt; .XXX. -&gt; XXXXX
+.....    ..X..    .XXX.
+.....    .....    ..X..
+</pre>
+<p>More intuitively, we can view the shape of our swarm as some cell with a center
+robot, and after <span class='math'>$i$</span> replications all cells within distance <span class='math'>$i$</span> of the center
+will have robots in the swarm.
+<p>If a cell can have a robot, then we know there is either a way to have a center
+robot at that cell, or there is a way to have a center robot with <span class='math'>$i$</span>
+replications within distance <span class='math'>$i$</span> of the cell. 
+<p>This motivates us to figure out which cells can have a center robot, and the
+maximum number of replications it can have. To accomplish this, we intend to
+make a modified BFS from the source cells to figure out which cells can have a
+center robot. In order to accomplish this, however, we will need to know if at
+some time, the swarm is too big to go to a certain cell (and thus moving there
+would cause robots to go into rocks). 
+<p>To help with this, we will calculate the distance from every cell to its nearest
+rock cell. We can do this with a BFS where all the rocks are sources. We call
+the distance from each cell to a rock <span class='math'>$rock\_dist[r][c]$</span>. Now, we use a modified
+BFS to determine which cells could contain a center robot.  As we expand our
+BFS, we only move to a cell if it would not cause any robots to crash into
+rocks.  If we are moving from a cell <span class='math'>$r_1,c_1$</span> to a cell <span class='math'>$r_2,c_2$</span> for hour <span class='math'>$t$</span>
+(0-indexed), then this  condition is met if
+<span class='math'>$t-1 &lt; D \times rock\_dist[r_1][c_1]$</span> and 
+<span class='math'>$t \le D \times rock\_dist[r_2][c_2]$</span>.
+<p>Armed with what cells can be center robots, we observe that we can stay at said
+cell until the swarm has replicated a total of <span class='math'>$rock\_dist[r][c]-1$</span> times.
+<p>Thus, our final condition for whether a cell <span class='math'>$r,c$</span> can ever have a robot is if
+there is some cell <span class='math'>$r&apos;,c&apos;$</span> where a center robot can be at <span class='math'>$r&apos;,c&apos;$</span> and
+<span class='math'>$|r-r&apos;|+|c-c&apos;| \le rock\_dist[r&apos;][c&apos;]-1$</span>. To calculate this, we again utilize a
+modified BFS. One such way of accomplishing this is having a set <span class='math'>$centers[i]$</span>
+that contains all cells <span class='math'>$r,c$</span> that can have a center robot and
+<span class='math'>$rock\_dist[r][c]=i$</span>. We can do our BFS in stages from <span class='math'>$n/2$</span> (because this is
+the maximum possible <span class='math'>$rock\_dist$</span>) to <span class='math'>$0$</span>, and at the end of each stage <span class='math'>$i$</span> add
+all cells in <span class='math'>$centers[i]$</span> as sources. A cell will then be reached by our
+modified BFS exactly if it satisfies our condition, meaning we can determine the
+cells that can have robots.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+typedef long long ll;
+int dr[4] = {-1,1,0,0};
+int dc[4] = {0,0,-1,1};
+
+int main(){
+	int n;
+	ll d;
+	cin &gt;&gt; n &gt;&gt; d;
+	bool empty[n][n];
+	vector&lt;pair&lt;int, int&gt; &gt; starts;
+	vector&lt;pair&lt;int, int&gt; &gt; rocks;
+	int dist_rock[n][n];
+	int dist_source[n][n];
+	bool ans[n][n];
+	for(int i = 0; i&lt;n; i++){
+		string s;
+		cin &gt;&gt; s;
+		for(int j = 0; j&lt;n; j++){
+			if(s[j]==&apos;#&apos;){
+				empty[i][j] = false;
+				rocks.push_back(make_pair(i,j));
+			}
+			else{
+				empty[i][j] = true;
+			}
+			if(s[j]==&apos;S&apos;){
+				starts.push_back(make_pair(i,j));
+			}
+			dist_rock[i][j] = -1;
+			dist_source[i][j] = -1;
+			ans[i][j] = false;
+		}
+	}
+	// First, we calculate distance of everything to a rock
+	vector&lt;pair&lt;int, int&gt; &gt; bfs_list;
+	for(int i = 0; i&lt;rocks.size(); i++){
+		bfs_list.push_back(rocks[i]);
+		dist_rock[rocks[i].first][rocks[i].second] = 0;
+	}
+	for(int i = 0; i&lt;bfs_list.size(); i++){
+		pair&lt;int, int&gt; now = bfs_list[i];
+		for(int j = 0; j&lt;4; j++){
+			pair&lt;int, int&gt; to = make_pair(now.first+dr[j],now.second+dc[j]);
+			if(!(to.first&gt;=0 &amp;&amp; to.first&lt;n &amp;&amp; to.second&gt;=0 &amp;&amp; to.second&lt;n)){
+				continue;
+			} 
+			if(dist_rock[to.first][to.second]!=-1){
+				continue;
+			}
+			int to_dist = dist_rock[now.first][now.second] + 1;
+			dist_rock[to.first][to.second] = to_dist;
+			bfs_list.push_back(to);
+		}
+	}
+	// Then, we do a BFS from the sources
+	bfs_list.clear();
+	for(int i = 0; i&lt;starts.size(); i++){
+		bfs_list.push_back(starts[i]);
+		dist_source[starts[i].first][starts[i].second] = 0;
+	}
+	// centers[i] will store all empty cells i that our center 
+	// can reach, and who are distance i+1 from a rock
+	// (meaning they can replicate i times)
+	vector&lt;pair&lt;int, int&gt; &gt; centers[n*n];
+	for(int i = 0; i&lt;bfs_list.size(); i++){
+		pair&lt;int, int&gt; now = bfs_list[i];
+		ans[now.first][now.second] = true;
+		int now_dist = dist_source[now.first][now.second];
+		centers[dist_rock[now.first][now.second]-1].push_back(now);
+		// Do not continue if replicating would force robots to rocks
+		if(now_dist&gt;=d*dist_rock[now.first][now.second]){
+			continue;
+		}
+		for(int j = 0; j&lt;4; j++){
+			pair&lt;int, int&gt; to = make_pair(now.first+dr[j],now.second+dc[j]);
+
+			if(!(to.first&gt;=0 &amp;&amp; to.first&lt;n &amp;&amp; to.second&gt;=0 &amp;&amp; to.second&lt;n)){
+				continue;
+			} 
+			if(dist_source[to.first][to.second]!=-1){
+				continue;
+			}
+			if(!empty[to.first][to.second]){
+				continue;
+			}
+			int to_dist = now_dist + 1;
+			// Do not move if it would force robots to rocks
+			if(to_dist &gt; d*dist_rock[to.first][to.second]){
+				continue;
+			}
+			dist_source[to.first][to.second] = to_dist;
+			bfs_list.push_back(to);
+		}
+	}
+	// Do a modified BFS such that we reach every cell where
+	// there is some other cell in centers[z] and the distance
+	// between the two is &lt;=z
+	vector&lt;pair&lt;int, int&gt; &gt; next_stage;
+	for(int i = n*n-1; i&gt;=0; i--){
+		swap(bfs_list,next_stage);
+		next_stage.clear();
+		for(int j = 0; j&lt;bfs_list.size(); j++){
+			pair&lt;int, int&gt; now = bfs_list[j];
+			for(int k = 0; k&lt;4; k++){
+				pair&lt;int, int&gt; to = make_pair(now.first+dr[k],now.second+dc[k]);
+
+				if(!(to.first&gt;=0 &amp;&amp; to.first&lt;n &amp;&amp; to.second&gt;=0 &amp;&amp; to.second&lt;n)){
+					continue;
+				} 
+				if(ans[to.first][to.second]){
+					continue;
+				}
+				if(!empty[to.first][to.second]){
+					continue;
+				}
+				ans[to.first][to.second] = true;
+				next_stage.push_back(to);
+			}
+		}
+		for(int j = 0; j&lt;centers[i].size(); j++){
+			next_stage.push_back(centers[i][j]);
+		}
+	}
+	int tot = 0;
+	for(int i = 0; i&lt;n; i++){
+		for(int j = 0; j&lt;n; j++){
+			if(ans[i][j]){
+				tot++;
+			}
+		}
+	}
+	cout &lt;&lt; tot &lt;&lt; endl;
+}
+</pre>
+<p>
+</body></html>

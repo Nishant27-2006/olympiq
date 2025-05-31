@@ -1,0 +1,159 @@
+Solution ID: sol_bcount_silver_dec15
+Contest: DEC15
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_bcount_silver_dec15.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we have a list of N integers, each either being 1, 2, or 3. For
+a list of certain intervals, we want to count how many numbers in that list are
+1's, 2's, or 3's.
+
+The straightforward way to do this is, for each interval, to count the number of
+1's, 2's, and 3's in each interval. This solution will take at most
+
+$N \cdot Q$
+
+operations, which can be on the order of
+
+$10^{10}$
+
+, which is too many
+operations.
+
+For intervals that are small, it takes relatively few operations to count how
+many of each number are in the given interval. However, for intervals which are
+large, it would actually be faster to count how many of each number are not
+inside the given interval, and to precompute how many of each number there are
+in the entire list.
+
+In particular, if we want to count how many of each number appears in the
+interval
+
+$[A, B]$
+
+, we can count how many of each number appears in the interval
+
+$[1, B]$
+
+, and then
+count how many of each number appears in the interval
+
+$[1, A-1]$
+
+and subtract the
+two quantities.
+
+Now, it remains to effectively answer questions of the form: for a given number
+
+$K$
+
+,
+how many times does
+
+$K$
+
+appear in the interval
+
+$[1, B]$
+
+?
+
+Define
+
+$f(K, X)$
+
+to be the number of times that
+
+$K$
+
+appears in the interval
+
+$[1, X]$
+
+.
+If the
+
+$i$
+
+th number in the list is
+
+$L$
+
+, then
+
+$f(L, i) = F(L, i-1) + 1$
+
+. Otherwise,
+for all other numbers
+
+$M$
+
+,
+
+$f(M, i) = f(M-1, I)$
+
+. By definition,
+
+$f(K, 0) = 0$
+
+for all
+
+$K$
+
+.
+
+We can compute
+
+$f$
+
+in
+
+$O(N)$
+
+time, and then each query can be answered in
+
+$O(1)$
+
+time.
+
+This technique is known as maintaining
+
+prefix sums
+
+.
+
+Here is my code illustrating this process.
+
+import java.io.*;
+import java.util.*;
+public class bcount {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("bcount.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("bcount.out")));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int q = Integer.parseInt(st.nextToken());
+		int[][] prefix = new int[4][n+1];
+		for(int i = 1; i <= n; i++) {
+			int curr = Integer.parseInt(br.readLine());
+			// shift over the prefix sums for each value from 1 to 3
+			for(int j = 1; j <= 3; j++) {
+				prefix[j][i] = prefix[j][i-1];
+			}
+			// increment the prefix sum for the number that we read in
+			prefix[curr][i]++;
+		}
+		for(int i = 0; i < q; i++) {
+			st = new StringTokenizer(br.readLine());
+			int a = Integer.parseInt(st.nextToken());
+			int b = Integer.parseInt(st.nextToken());
+			pw.println((prefix[1][b] - prefix[1][a-1]) + " " + (prefix[2][b] - prefix[2][a-1]) + " " + (prefix[3][b] - prefix[3][a-1]));
+		}
+		pw.close();
+	}
+}

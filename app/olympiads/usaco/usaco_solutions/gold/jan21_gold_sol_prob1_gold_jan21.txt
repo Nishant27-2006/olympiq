@@ -1,0 +1,475 @@
+Solution ID: sol_prob1_gold_jan21
+Contest: JAN21
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob1_gold_jan21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi, Sofia Yang)
+
+Let
+
+$c_1, c_2, \ldots, c_N$
+
+be the distinct letters that appear in the input
+string (all other letters can be ignored). Note how the scoring gives bounds on
+
+$N$
+
+(
+
+rather
+unoriginally
+
+). Specifically,
+
+$N\le 8$
+
+for the first few test cases and
+
+$N\le 20$
+
+for the remaining test cases.
+
+For a permutation
+
+$p$
+
+of
+
+$1\ldots N$
+
+, define
+
+$\text{evaluate}([p_1,p_2,\ldots,p_N])$
+
+to be the minimum number of times the
+cowphabet is hummed when the order of the cowphabet is fixed as
+
+$[c_{p_1},c_{p_2},\ldots,c_{p_N}]$
+
+. From the analysis for the Bronze version of
+this problem,
+
+$\text{evaluate}(p)$
+
+equals one plus the number of consecutive
+substrings of the form
+
+$c_{p_i}c_{p_j}$
+
+where
+
+$i\ge j$
+
+.
+
+Defining
+
+$\texttt{adjacent}[i][j]$
+
+to be the number of consecutive substrings of
+the form
+
+$c_ic_j$
+
+in the input string, we may rewrite
+
+$\text{evaluate}(p)$
+
+as:
+
+$$\text{evaluate}(p):=1+\sum_{i=1}^N\sum_{j=1}^i\texttt{adjacent}[p_i][p_j].$$
+
+The answer is equal is to compute the minimum of
+
+$\text{evaluate}([p_1,p_2,\ldots,p_N])$
+
+over all permutations
+
+$p$
+
+of
+
+$1\ldots N$
+
+:
+
+$$\texttt{ans}:=\min_{(p_1,p_2,\ldots,p_N)\sim (1,2,\ldots N)}\text{evaluate}(p).$$
+
+Subtask:
+
+$N\le 8$
+
+Compute all entries of
+
+$\texttt{adjacent}$
+
+in
+
+$O(\text{length}(\text{input string}))$
+
+time. Then iterate over all
+
+$N!$
+
+possible permutations
+
+$p$
+
+of the cowphabet. For each
+
+$p$
+
+,
+
+$\text{evaluate}(p)$
+
+may be computed in
+
+$\mathcal{O}(N^2)$
+
+time.
+
+Time Complexity:
+
+$\mathcal{O}(N!\cdot N^2+\text{length}(\text{input string}))$
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	string heard; cin >> heard;
+	int n = 0; // number of unique letters
+	map<char,int> index;
+	for (char letter: heard) if (!index.count(letter)) index[letter] = n++;
+	vector<vector<int>> adjacent(n, vector<int>(n));
+	for (int j = 1; j < heard.size(); ++j)
+		++adjacent[index[heard[j-1]]][index[heard[j]]];
+	vector<int> p(n); iota(begin(p), end(p), 0); // 0 ... n-1
+	int ans = INT_MAX;
+	do {
+		int cur_ans = 1;
+		for (int i = 0; i < n; ++i)
+			for (int j = 0; j <= i; ++j)
+				cur_ans += adjacent[p[i]][p[j]];
+		// now cur_ans = evaluate(p)
+		ans = min(ans, cur_ans);
+	} while (next_permutation(begin(p), end(p)));
+	cout << ans << "\n";
+}
+
+Full Solution:
+
+$N\le 20$
+
+The idea is to apply dynamic programming on subsets of the cowphabet.
+
+Let
+
+$S=\{i_1,i_2,\ldots,i_n\}$
+
+be the indices of any subset of the letters of
+the cowphabet (
+
+$0\le n\le N$
+
+). We initially defined
+
+$\text{evaluate}$
+
+only when
+
+$p$
+
+was a permutation of
+
+$1\ldots N$
+
+, but observe that the definition naturally
+extends to the case where
+
+$p$
+
+is a permutation of
+
+$S$
+
+. Then similarly to our
+definition of
+
+$\texttt{ans}$
+
+above, we may define
+
+$$\texttt{dp}[S]=\min_{(p_1, p_2,\ldots, p_n)\sim S}\text{evaluate}(p).$$
+
+To compute this quantity when
+
+$S$
+
+is nonempty, suppose that we fix
+
+$p_n$
+
+, the
+index of the character in
+
+$S$
+
+that appears last in the cowphabet. The minimum
+number of times the cowphabet needs to be sung considering only the remaining
+indices in
+
+$S$
+
+is precisely
+
+$\texttt{dp}[S\setminus \{p_n\}]$
+
+, and then we need
+to add the number of consecutive pairs between
+
+$p_n$
+
+and all the letters in
+
+$S$
+
+.
+Specifically, we may write
+
+$$\texttt{dp}[S]=\min_{p_n\in S}\left(\texttt{dp}[S\setminus \{p_n\}]+\sum_{i\in S}\text{adjacent}[p_n][i]\right).$$
+
+For example, for the input âabcac,â
+
+$\texttt{adjacent}$
+
+would be as follows:
+
++===+===+===+===+
+|   | a | b | c |
++===+===+===+===+
+| a | 0 | 1 | 1 |
++---+---+---+---+
+| b | 0 | 0 | 1 |
++---+---+---+---+
+| c | 1 | 0 | 0 |
++---+---+---+---+
+
+And the calculations would be as follows:
+
+dp[000] = 1;
+dp[001] = 1;
+dp[010] = 1;
+
+dp[011] = 1;
+dp[001] + adjacent[b][b] + adjacent[b][c] = 1
+dp[010] + adjacent[c][b] + adjacent[c][c] = 2
+
+dp[100] = 1;
+
+dp[101] = 2;
+dp[001] + adjacent[a][a] + adjacent[a][c] = 2
+dp[100] + adjacent[c][a] + adjacent[c][c] = 2
+
+dp[110] = 1;
+dp[010] + adjacent[a][a] + adjacent[a][b] = 2
+dp[100] + adjacent[b][a] + adjacent[b][b] = 1
+
+dp[111] = 2;
+dp[011] + adjacent[a][a] + adjacent[a][b] + adjacent[a][c] = 3
+dp[101] + adjacent[b][a] + adjacent[b][b] + adjacent[b][c] = 3
+dp[110] + adjacent[c][a] + adjacent[c][b] + adjacent[c][c] = 2
+
+In the code, we represent
+
+$S$
+
+with a length
+
+$N$
+
+bitmask
+
+$\texttt{mask}$
+
+, where
+the
+
+$i$
+
+'th bit of
+
+$\texttt{mask}$
+
+is 1 if
+
+$i\in S$
+
+, and 0 otherwise. The final
+answer corresponds to
+
+$\texttt{dp}[(1\ll N)-1]$
+
+, corresponding to
+
+$S=\{1,2,\ldots,N\}$
+
+.
+
+Time Complexity:
+
+$\mathcal{O}(2^N\cdot N^2+\text{length}(\text{input string}))$
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
+ 
+public class UdderedButNotHerdGold {
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        String heard = in.readLine();
+        // Index stores the index of every unique letter in the string.
+        Map<Character, Integer> index = new HashMap<>();
+        for (char letter : heard.toCharArray()) {
+            if (!index.containsKey(letter)) {
+                index.put(letter, index.size());
+            }
+        }
+        // Number of unique letters
+        int n = index.size();
+        /*
+         * adjacent[i][j] is the number of pairs where
+         * the ith unique letter appears directly before the jth.
+         */
+        int[][] adjacent = new int[n][n];
+        for (int j = 1; j < heard.length(); j++) {
+            adjacent[index.get(heard.charAt(j - 1))][index.get(heard.charAt(j))]++;
+        }
+        /*
+         * DP on subsets.
+         * (1 means this bit is in the subset, 0 means not)
+         */
+        int[] dp = new int[1 << n];
+        dp[0] = 1;
+        for (int mask = 1; mask < (1 << n); mask++) {
+            dp[mask] = heard.length();
+            for (int j = 0; j < n; j++) {
+                // If jth letter comes last in the cowphabet out of those in the subset
+                if ((mask & (1 << j)) != 0) {
+                    // this is the answer for the state corresponding to removing j from mask
+                    int sum = dp[mask ^ (1 << j)];
+                    // add the number of consecutive pairs between j and all bits in mask
+                    for (int k = 0; k < n; ++k) if ((mask & (1 << k)) != 0) sum += adjacent[j][k];
+                    dp[mask] = Math.min(dp[mask], sum);
+                }
+            }
+        }
+        // the answer corresponds to all n bits set
+        System.out.println(dp[(1 << n) - 1]);
+    }
+}
+
+It was possible (but not necessary) to remove a factor of
+
+$N$
+
+from the runtime.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
+ 
+public class UdderedButNotHerdGold {
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        String heard = in.readLine();
+        Map<Character, Integer> index = new HashMap<>();
+        for (char letter : heard.toCharArray()) {
+            if (!index.containsKey(letter)) {
+                index.put(letter, index.size());
+            }
+        }
+        int n = index.size();
+        int[][] adjacent = new int[n][n];
+        for (int j = 1; j < heard.length(); j++) {
+            adjacent[index.get(heard.charAt(j - 1))][index.get(heard.charAt(j))]++;
+        }
+        int[][] sums = new int[n][1 << n];
+        int[] dp = new int[1 << n];
+        dp[0] = 1;
+        for (int mask = 1; mask < (1 << n); mask++) {
+            dp[mask] = heard.length();
+            int k = 0;
+            while ((mask & (1 << k)) == 0) {
+                k++;
+            }
+            for (int j = 0; j < n; j++) {
+                sums[j][mask] = sums[j][mask - (1 << k)] + adjacent[j][k];
+                if ((mask & (1 << j)) != 0) {
+                    dp[mask] = Math.min(dp[mask], dp[mask - (1 << j)] + sums[j][mask]);
+                }
+            }
+        }
+        System.out.println(dp[(1 << n) - 1]);
+    }
+}
+
+However, this solution uses
+
+$\Theta(N\cdot 2^N)$
+
+memory. We can reduce the
+required memory to
+
+$\mathcal{O}(2^N)$
+
+and the runtime by a constant factor by
+using two 2D arrays to store the sums rather than one:
+
+#include <bits/stdc++.h>
+
+#define f first
+#define s second
+
+using namespace std;
+
+int stor1[1<<10][20], stor2[1<<10][20];
+ 
+int main() {
+	string s; cin >> s;
+	map<char,int> m; for(char c: s) m[c] = 0;
+	int cnt = 0; for (auto& t: m) t.s = cnt++;
+	int N = m.size(); assert(N <= 20);
+	vector<vector<int>> oc(N,vector<int>(N));
+	for (int i = 0; i+1 < s.size(); ++i) 
+		++oc[m[s[i]]][m[s[i+1]]];
+	vector<int> dp(1<<N,1e9);
+	dp[0] = 1;
+	int bits = N/2;
+	for (int j = 0; j < N; ++j) {
+		for (int i = 0; i < 1<<bits; ++i) 
+			for (int k = 0; k < bits; ++k) if (i&1<<k) 
+				stor1[i][j] += oc[k][j];
+		for (int i = 0; i < 1<<(N-bits); ++i) 
+			for (int k = 0; k < N-bits; ++k) if (i&1<<k)
+				stor2[i][j] += oc[bits+k][j];
+	}
+	for (int i = 0; i < 1<<N; ++i)
+		for (int j = 0; j < N; ++j) if (i&1<<j) {
+			int sum = dp[i^1<<j];
+			sum += stor1[i&((1<<bits)-1)][j];
+			sum += stor2[i>>bits][j];
+			dp[i] = min(dp[i],sum);
+		}
+	cout << dp[(1<<N)-1] << "\n";
+}

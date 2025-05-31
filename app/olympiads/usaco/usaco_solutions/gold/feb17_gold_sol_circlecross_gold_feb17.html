@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>For two cows <span class='math'>$A$</span> and <span class='math'>$B$</span>, they will form a crossing point if and only if, when
+looping over the elements in the circle, the entry and exit points are seen in
+the order <span class='math'>$ABAB$</span> or <span class='math'>$BABA$</span>.
+<p>This lets us outline the following <span class='math'>$O(N^2)$</span> algorithm. Loop over the entry and exit
+points. For a cow of a given breed, we see if we have already seen it or not. If we have not seen it,
+insert it into a set. Otherwise, remove it from the set, and loop over the remaining
+elements in the set. Count how many of them were inserted after the element that was just removed.
+<p>To optimize this from <span class='math'>$O(N^2)$</span> to <span class='math'>$O(N \log N)$</span>, note that we are trying to compute how many
+numbers were inserted in a specific range of the subarray. We can use a binary indexed tree (BIT)
+to perform this query in <span class='math'>$O(\log N)$</span> time.
+<p>To fully describe the changes to the algorithm, we maintain a BIT that maps indices to <span class='math'>$1$</span> if there was
+an unmatched insertion at that index and <span class='math'>$0$</span> otherwise. We loop over the points in order. If we haven&apos;t
+seen one before, insert it into the BIT. Otherwise, remove it from the BIT and do a range sum between the
+current index and the index when the number was originally inserted.
+<p>Here is Mark Gordon&apos;s code.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+
+using namespace std;
+
+#define MAXN (1 &lt;&lt; 17)
+
+int BT[MAXN];
+
+/* Logically executes array[x] += v. */
+void bit_add(int x, int v) {
+  for(int i = x | MAXN; i &lt; (MAXN &lt;&lt; 1); i += i &amp; -i) {
+    BT[i ^ MAXN] += v;
+  }
+}
+ 
+/* Returns the sum of array[i] for 0 &lt;= i &lt; x */
+int bit_get(int x) {
+  int ret = 0;
+  for(int i = x - 1; x != 0; i &amp;= i - 1) {
+    ret += BT[i];
+    if(!i) break;
+  }
+  return ret;
+}
+
+int main() {
+  int N; cin &gt;&gt; N;
+
+  vector&lt;pair&lt;int, int&gt; &gt; A(N, make_pair(-1, -1));
+  for (int i = 0; i &lt; 2 * N; i++) {
+    int x; cin &gt;&gt; x; x--;
+    if (A[x].first == -1) {
+      A[x].first = i;
+    } else {
+      A[x].second = i;
+    }
+  }
+  sort(A.begin(), A.end());
+
+  int result = 0;
+  for (int i = 0; i &lt; A.size(); i++) {
+    result += bit_get(A[i].second) - bit_get(A[i].first);
+    bit_add(A[i].second, 1);
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+<p></body></html>

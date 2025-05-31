@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brandon Wang)
+<p>The first thing we should do is remove duplicates of <span class='math'>$a_i$</span>.  After this, we&apos;ll
+assume all the <span class='math'>$a_i$</span> are distinct, and let <span class='math'>$N&apos;$</span> denote the number of distinct
+<span class='math'>$a_i$</span>. Note that if <span class='math'>$N&apos; \leq 3$</span>, then any <span class='math'>$L$</span> satisfies the second condition.
+So, the answer is just <span class='math'>$1 + 2 + \cdots + (\min a_i)/4$</span>.
+<p><strong>Subtask 1 (<span class='math'>$a_i\leq 10^6$</span>):</strong>
+<p>For this subtask, we first consider the following naive algorithm:  Let
+<span class='math'>$U = (\min a_i)/4$</span> be an upper bound on <span class='math'>$L$</span>.  For each <span class='math'>$1\leq L \leq U$</span>, we can
+check how many possible values of <span class='math'>$a_i\pmod L$</span> there are. It turns out that if
+we break once we see 4 distinct values, then we will pass this subtask.
+<p>Here is an implementation:
+<p><pre class='prettyprint'>
+N = input()
+S = list(set([int(x) for x in input().split()]))
+
+U = min(S) // 4
+if len(S) &lt; 4:
+    print(U*(U+1)//2)
+    exit()
+
+def test(L):
+    mods = set()
+    for a in S:
+        mods.add(a%L)
+        if len(mods) &gt;= 4:
+            return False
+    return True
+
+print(sum([L for L in range(1, U+1) if test(L)]))
+</pre>
+<p>Now, why do we pass? A naive analysis says that this time should take <span class='math'>$O(UN&apos;)$</span>
+time, where <span class='math'>$U\leq 2.5\cdot 10^5$</span> and <span class='math'>$N&apos; \leq 10^4$</span>. So this should not
+actually be fast enough. 
+<p>Let&apos;s consider the test function again, which takes <span class='math'>$O(N&apos;)$</span> time in the worst
+case. However,  note that in order for the function to not return after 4
+iterations (and so only take <span class='math'>$O(1)$</span> time), among
+<span class='math'>$a_1\bmod L, a_2\bmod L, a_3\bmod L, a_4\bmod L$</span>, there are at most <span class='math'>$3$</span> distinct
+values.
+<p>This implies that <span class='math'>$L$</span> divides one of
+<span class='math'>$(a_2 - a_1, a_3 - a_1, a_4 - a_1, a_3 - a_2, a_4 - a_2, a_4 - a_3)$</span>. Now, if we
+let <span class='math'>$n(A)$</span> denote the maximum number of divisors that a number at most <span class='math'>$A$</span> can
+have, then we see that for all but at most <span class='math'>$6n(10^6)$</span> values of <span class='math'>$L$</span>,  we break
+after 4 loop iterations. So, we can bound the runtime of this step by
+<span class='math'>$O(U + n(10^6)\cdot N&apos;)$</span>, where we run the loop <span class='math'>$O(U)$</span> times, and only run past
+4 iterations <span class='math'>$O(n(10^6))$</span> times. Since <span class='math'>$n(10^6) \leq 2\cdot 10^3$</span> (here, note
+that any positive integer <span class='math'>$x$</span> has at most <span class='math'>$2\sqrt x$</span> divisors),  this will run
+in time.
+<p><strong>General Case (<span class='math'>$a_i \leq 4\cdot 10^9$</span>):</strong>
+<p>Now, <span class='math'>$U$</span> can be up to <span class='math'>$10^9$</span>, so the preceding algorithm is too slow. On the
+other hand, <span class='math'>$n(4\cdot 10^9)$</span> is actually <span class='math'>$2000$</span>, so we just need to speed up the
+<span class='math'>$O(U)$</span> step. To do this, instead of checking <em>every</em> possible value of <span class='math'>$L$</span>
+and seeing if it breaks after trying the first four <span class='math'>$a_i$</span>, we will instead
+explicitly only consider <span class='math'>$L$</span> that would not have broken. The only such values of
+<span class='math'>$L$</span> are those that divide one of
+<span class='math'>$(a_2 - a_1, a_3 - a_1, a_4 - a_1, a_3 - a_2, a_4 - a_2, a_4 - a_3)$</span>. So, we can
+just compute these divisors.  We can compute the divisors of <span class='math'>$A$</span> in <span class='math'>$O(\sqrt A)$</span>
+time, so the total runtime of this is
+<span class='math'>$O(\sqrt{\max a_i} + n(4\cdot 10^9) \cdot N&apos;)$</span>, which runs in time.
+<p>Here is an implementation:
+<p><pre class='prettyprint'>
+N = input()
+S = list(set([int(x) for x in input().split()]))
+
+U = min(S) // 4
+if len(S) &lt; 4:
+    print(U*(U+1)//2)
+    exit()
+
+divs = set()
+for i, s in enumerate(S[:4]):
+    for _, r in enumerate(S[i:4]):
+        diff = abs(s-r)
+        for t in range(1, int(diff**(0.5) + 1)):
+            if diff%t == 0:
+                divs.add(t)
+                divs.add(diff//t)
+
+def test(L):
+    if L &gt; U:
+        return False
+    mods = set()
+    for a in S:
+        mods.add(a%L)
+        if len(mods) &gt;= 4:
+            return False
+    return True
+
+print(sum([L for L in divs if test(L)]))
+</pre>
+<p>Danny Mittal&apos;s implementation:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.StringTokenizer;
+ 
+public class Cowlendar {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        Set&lt;Long&gt; months = new HashSet&lt;&gt;();
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        long maxWeekLength = Integer.MAX_VALUE;
+        for (; n &gt; 0; n--) {
+            long month = Long.parseLong(tokenizer.nextToken());
+            months.add(month);
+            maxWeekLength = Math.min(maxWeekLength, month / 4L);
+        }
+        if (months.size() &lt;= 3) {
+            System.out.println((maxWeekLength * (maxWeekLength + 1L)) / 2L);
+        } else {
+            Set&lt;Long&gt; candidates = new HashSet&lt;&gt;();
+            Long[] distinctMonths = months.toArray(new Long[0]);
+            for (int j = 0; j &lt; 4; j++) {
+                for (int k = 0; k &lt; j; k++) {
+                    long diff = Math.abs(distinctMonths[k] - distinctMonths[j]);
+                    for (long x = 1; x &lt;= 100000; x++) {
+                        if (diff % x == 0L) {
+                            candidates.add(x);
+                            candidates.add(diff / x);
+                        }
+                    }
+                }
+            }
+ 
+            long answer = 0;
+            for (long candidate : candidates) {
+                if (candidate &lt;= maxWeekLength) {
+                    Set&lt;Long&gt; seen = new HashSet&lt;&gt;();
+                    for (long month : distinctMonths) {
+                        seen.add(month % candidate);
+                    }
+                    if (seen.size() &lt;= 3) {
+                        answer += candidate;
+                    }
+                }
+            }
+            System.out.println(answer);
+        }
+    }
+}
+</pre>
+</body></html>

@@ -1,0 +1,679 @@
+Solution ID: sol_prob3_gold_open25
+Contest: OPEN25
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_open25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Eric Yang, Larry Xing, Benjamin Qi)
+
+First, let's get an intuitive sense for what actually happens in each day.
+
+Intuitively, Farmer John would always want to add milk to the bottles currently
+with the most milk. This is because
+
+$$(m+1)^2-m^2 = 2m+1$$
+
+increases as
+
+$m$
+
+increases.
+
+Similarly, Farmer Nhoj would intuitively want to remove milk from the highest
+bottles he can remove the milk from. This, by the same logic, decreases the
+amount of profit Farmer John can make by the highest amount. A proof sketch is included at the bottom of this analysis.
+
+Thus, each day, it turns out that if we sort the array, the bottles indexed from
+
+$N-A+1$
+
+to
+
+$N-B$
+
+will gain one unit of milk. We will refer to this as the
+interval from now on.
+
+Subtask 1:
+
+It remains to efficiently simulate this process. When
+
+$N$
+
+and
+
+$D$
+
+are
+sufficiently small,  as in this subtask, we can simply sort the array in each
+iteration and simulate Farmer John and Farmer Nhoj's moves.
+
+Subtask 2:
+
+To optimize this, let's consider the structure of the sorted array during each
+day.
+
+We can observe that most of the time, the sorted order of the array does not
+change much. In fact,  the only times the sorted order of the array changes is
+when the rightmost part of the  interval ``catches up" with the element to the
+right of the interval.
+
+To characterize this, let's call the group of elements on the right of our
+interval whose values are the same the
+
+$\textbf{border}$
+
+, and we say that
+
+$k$
+
+of
+them are activated if the intersection of the border and our interval as length
+
+$k$
+
+.
+
+Then, each day,
+
+All values within our interval AND to the left of the border will increase
+by one.
+
+The
+
+$k$
+
+smallest elements within the border increase by
+
+$1$
+
+.
+
+The border will expand to include all elements to the left and right whose
+values are the same as the smallest element in the border.  Specifically, if an
+element to the left (within the interval) is added,
+
+$k$
+
+increases by
+
+$1$
+
+.
+
+To implement this, we just need to keep track of the left and right endpoints of
+the border,  the smallest element of the border (we can call it
+
+$num$
+
+), and the
+number of elements in the border whose value is
+
+$num+1$
+
+(we can call it
+
+$p$
+
+). We
+can implicitly store all of the values within our interval and to the left of
+the border as
+
+$m[i]+t$
+
+, where
+
+$t$
+
+is the time that has already elapsed. We can
+increase the
+
+$k$
+
+smallest elements by simply updating our values for
+
+$num$
+
+and
+
+$p$
+
+,  and we can update our border by simply checking to the left and right of
+our border.
+
+The runtime becomes
+
+$O(N \log N+D)$
+
+with sorting.
+
+Larry's Code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int MAX_N = 2e5+5;
+const ll MOD = 1e9+7;
+
+ll n, d, a, b, l, r;
+ll c[MAX_N];
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)->sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin >> n >> d >> a >> b;
+    for(int i = 0; i < n; i++) cin >> c[i];
+    sort(c, c+n);
+    l = n-a, r = n-b-1;
+    ll ql = r, qr = r;
+    while(ql > 0 && c[ql-1] == c[r]) ql--;
+    while(qr+1 < n && c[qr+1] == c[r]) qr++;
+    ll p = 0, num = c[r];
+    for(int k = 0; k < d; k++){
+        ll x = (r-ql+1)+p;
+        num += x/(qr-ql+1), p = x%(qr-ql+1);
+        while(qr+1 < n && c[qr+1] == num) qr++;
+        while(ql > l && c[ql-1]+k+1 == num) ql--;
+    }
+    for(int i = l; i < ql; i++) c[i] += d;
+    for(int i = ql; i <= qr; i++) c[i] = qr-i < p ? num+1 : num;
+    ll ans = 0;
+    for(int i = 0; i < n; i++)
+        ans = (ans+(c[i]%MOD)*(c[i]%MOD))%MOD;
+    cout << ans << '\n';
+    return 0;
+}
+
+Full Solution
+
+Instead of iterating over each day individually, let's calculate the next time
+our  border changes.
+
+Our border can only ever expand, so we can simply calculate the time when the
+border will expand to the  left, and when our border would expand to the right,
+and take the earlier one.
+
+To do this, let's take another look at how the border's values grow. Clearly,
+the  sum of the values within the border grows by
+
+$k$
+
+each day; in fact, it is
+pretty easy to then derive that
+
+$$num = \lfloor \Sigma/\text{length(border)}\rfloor, p = \Sigma \mod{\text{length(border)}}$$
+
+Thus, the first time
+
+$num$
+
+will exceed a certain theshold
+
+$M$
+
+(the element to
+the right of the border) is
+
+$$\left\lceil \frac{(M-num)\cdot \text{length(border)}-p}{k}\right\rceil$$
+
+Similarly, we can do some algebra to obtain the minimum time for the border to
+expand on the left:
+
+$$\left\lfloor \frac{(num-M-t)\cdot \text{length(border)}+p}{\text{length(border)}-k} \right\rfloor$$
+
+Once we've calculated these times, we can update our values accordingly and
+expand the border.
+
+Since the border can only expand at most
+
+$O(N)$
+
+times,  this process can only
+occur at most
+
+$O(N)$
+
+times. So, with sorting, the overall runtime is
+
+$O(N \log N)$
+
+.
+
+Larry's Code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef pair<ll, ll> pll;
+#define ff first
+#define ss second
+const int MAX_N = 2e5+5;
+const ll MOD = 1e9+7;
+const ll INF = 1e18;
+
+ll n, d, a, b, l, r;
+ll c[MAX_N];
+
+ll ceil(ll a, ll b){
+    return (a+b-1)/b;
+}
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)->sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin >> n >> d >> a >> b;
+    for(int i = 0; i < n; i++) cin >> c[i];
+    sort(c, c+n);
+    l = n-a, r = n-b-1;
+    ll ql = r, qr = r;
+    while(ql > l && c[ql-1] == c[r]) ql--;
+    while(qr+1 < n && c[qr+1] == c[r]) qr++;
+    ll k = 0, p = 0, num = c[r];
+    while(true){
+        ll numx = qr+1 < n ? ceil((c[qr+1]-num)*(qr-ql+1)-p, r-ql+1) : INF;
+        ll numy = ql > l && r != qr ? ((qr-ql+1)*(num-(c[ql-1]+k))+p)/(qr-r) : INF;
+        if(k+min(numx, numy) > d) break;
+        ll x = min(numx, numy)*(r-ql+1)+p;
+        num += x/(qr-ql+1), p = x%(qr-ql+1), k += min(numx, numy);
+        while(qr+1 < n && c[qr+1] == num) qr++;
+        while(ql > l && c[ql-1]+k == num) ql--;
+    }
+    ll x = ((d-k)*(r-ql+1)+p)/(qr-ql+1), y = (d-k)*(r-ql+1)+p-x*(qr-ql+1);
+    num += ((d-k)*(r-ql+1)+p)/(qr-ql+1), p = y, k = d;
+    for(int i = l; i < ql; i++) c[i] += d;
+    for(int i = ql; i <= qr; i++) c[i] = qr-i < p ? num+1 : num;
+    ll ans = 0;
+    for(int i = 0; i < n; i++)
+        ans = (ans+(c[i]%MOD)*(c[i]%MOD))%MOD;
+    cout << ans << '\n';
+    return 0;
+}
+
+Alternatively, you can model the values within the border as fractions. At any
+time, the values within the interval and not in the border increase at a steady
+rate of
+
+$1$
+
+unit of milk per day,  and the values within the border increase at
+a steady rate of
+
+$k/\text{length(border)}$
+
+per day.
+
+Storing each of these as fractions, we can greatly simplify our transitions.
+
+Eric's Code:
+
+import sys
+from fractions import Fraction
+import math
+ 
+input = sys.stdin.readline
+ 
+N, D = map(int, input().split())
+A, B = map(int, input().split())
+M = list(sorted(map(int, input().split())))
+ 
+constant = M[:N-A]
+V = M[N-A:]
+ 
+C = A-B
+ 
+assert C > 0
+ 
+border_value = V[C-1]
+border_min = C-1
+border_max = C-1
+ 
+ct = 0
+ 
+def expand_border():
+    global border_min, border_max
+    while border_min > 0 and V[border_min-1] + ct == border_value:
+        border_min -= 1
+    while border_max < A-1 and V[border_max+1] == border_value:
+        border_max += 1
+ 
+while ct < D:
+    expand_border()
+    delta_to_min = Fraction(1000000000, 1)
+    delta_to_max = Fraction(1000000000, 1)
+    num_border = border_max - border_min + 1
+    alloc_to_border = C - border_min
+    border_rate = Fraction(alloc_to_border, num_border)
+    if border_min > 0:
+        val = V[border_min-1] + ct
+        if val == border_value:
+            delta_to_min = Fraction(0, 1)
+        elif border_rate < 1:
+            delta_to_min = Fraction((border_value - val), 1 - border_rate)
+    if border_max < A-1:
+        val = V[border_max+1]
+        if val == border_value:
+            delta_to_max = Fraction(0, 1)
+        elif border_rate > 0:
+            delta_to_max = Fraction((val - border_value), border_rate)
+    delta = min(delta_to_min, delta_to_max)
+    if ct + delta >= D:
+        delta = D - ct
+    border_value += border_rate * delta
+    ct += delta
+ 
+assert ct == D
+ 
+ans = 0
+for m in constant:
+    ans += m * m
+for m in V[:border_min]:
+    ans += (m+ct) * (m+ct)
+for m in V[border_max+1:]:
+    ans += m * m
+ 
+num_border = border_max - border_min + 1
+floor_value = math.floor(border_value)
+num_ceil = 0
+while floor_value < border_value:
+    floor_value += Fraction(1, num_border)
+    num_ceil += 1
+ 
+assert floor_value == border_value
+ 
+ans += pow(math.floor(border_value), 2) * (num_border - num_ceil)
+ans += pow(math.ceil(border_value), 2) * num_ceil
+ 
+print(ans % (10 ** 9 + 7))
+
+Note: The complexity of this solution is difficult to analyze, since the size of
+the denominator may contribute to the time complexity. However, it is possible
+to show that the denominator is at most
+
+$N\cdot D$
+
+,  so the solution comfortably
+runs in time.
+
+Proof Sketch
+
+Model the problem as a two-player game. A game state consists of the array of
+milk values. A move consists of either Farmer John or Farmer Nhoj performing
+their action.
+
+For two game states
+
+$x$
+
+and
+
+$y$
+
+,
+
+$x \succ y$
+
+means
+
+$x$
+
+majorizes
+
+$y$
+
+, or that
+for all
+
+$k$
+
+, the sum of the
+
+$k$
+
+largest elements of
+
+$x$
+
+is
+
+$\ge$
+
+the
+
+$k$
+
+largest
+elements of
+
+$y$
+
+. Additionally, the sums of
+
+$x$
+
+and
+
+$y$
+
+must be equal.
+Equivalently,
+
+$x$
+
+majorizes
+
+$y$
+
+iff
+
+$x$
+
+can be transformed into
+
+$y$
+
+by
+repeatedly performing one of the following operations on
+
+$x$
+
+:
+
+Permute
+
+$x$
+
+arbitrarily.
+
+Move one unit of milk from a bottle with more milk to a bottle with less
+milk.
+
+Our goal is to show for all
+
+$m$
+
+that if
+
+$x \succ y$
+
+, then
+
+$\text{final_profit}_m(x) \ge \text{final_profit}_m(y)$
+
+. We proceed by induction
+on
+
+$m$
+
+, the number of moves remaining (
+
+$0\le m\le 2D$
+
+).
+
+Base case:
+
+For
+
+$m=0$
+
+, if
+
+$x \succ y$
+
+, then by
+
+Karamata's
+inequality
+
+,
+
+$\text{final_profit}_0(x)=\sum x_i^2 \ge \sum y_i^2=\text{final_profit}_0(y)$
+
+.
+
+Inductive step:
+
+Assume that the inductive hypothesis holds if
+
+$m-1$
+
+moves
+remain, for
+
+$1\le m\le 2D$
+
+.  We would like to show that the hypothesis holds for
+
+$m$
+
+moves remaining.
+
+Suppose it is Farmer John to move, and that the state before the move was
+
+$x$
+
+.  Let
+
+$\text{move_largest}(x)$
+
+represent the state of
+
+$x$
+
+after adding 1 to
+the
+
+$A$
+
+largest bottles and
+
+$\text{move}(x)$
+
+represent any possible state of
+
+$x$
+
+after FJ moves. Clearly
+
+$\text{move_largest}(x) \succ \text{move}(x)$
+
+, and for
+any state
+
+$y$
+
+such that
+
+$x \succ y$
+
+,
+
+$\text{move_largest}(x) \succ \text{move_largest}(y)$
+
+.  So
+
+$$\text{final_profit}_m(x)=\text{final_profit}_{m-1}(\text{move_largest}(x))\ge \text{final_profit}_{m-1}(\text{move_largest}(y))=\text{final_profit}_m(y),$$
+
+implying that the inductive hypothesis holds for
+
+$m$
+
+.
+
+On the other hand, suppose it is Farmer Nhoj to move. Similarly, let
+
+$\text{move_largest}$
+
+represent subtracting 1 from the
+
+$B$
+
+largest bottles and
+
+$\text{move}$
+
+represent any possible move. It may be shown that
+
+$\text{move_largest}(x) \prec \text{move}(x)$
+
+. Also, we claim that for any state
+
+$y$
+
+such that
+
+$x\prec y$
+
+,
+
+$\text{move_largest}(x)\prec \text{move_largest}(y)$
+
+(left as an exercise to the reader). This claim is harder to show than in the
+case where it is Farmer John to move since the sorted order of the bottles may
+change after Farmer Nhoj moves. However, keep in mind that we only need to show
+that it holds when
+
+$x$
+
+and
+
+$y$
+
+differ by only a single operation of type 2,
+after which it naturally extends to the case where
+
+$x$
+
+and
+
+$y$
+
+differ by
+multiple operations of type 2.
+
+Assuming the above,
+
+$$\text{final_profit}_m(x)=\text{final_profit}_{m-1}(\text{move_largest}(x))\le \text{final_profit}_{m-1}(\text{move_largest}(y))=\text{final_profit}_m(y),$$
+
+implying that the inductive hypothesis holds for
+
+$m$
+
+.
+
+(Note that it is always possible for Farmer Nhoj to make
+
+$\text{move_largest}$
+
+,
+since
+
+$A > B$
+
+.)

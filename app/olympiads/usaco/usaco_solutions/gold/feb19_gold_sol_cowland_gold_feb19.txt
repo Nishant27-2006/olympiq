@@ -1,0 +1,291 @@
+Solution ID: sol_cowland_gold_feb19
+Contest: FEB19
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_cowland_gold_feb19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+We'll start by solving some simpler versions of this problem and using these to build to
+a full solution on the original problem. We'll assume familiarity with segment trees
+in this solution.
+
+In the simplest version of this problem, imagine that the graph is a linked list and there are no
+modifications. We can compute prefix XORs along the linked list to answer any query in constant
+time.
+
+If we add modifications to this version, we can maintain a segment tree on the linked list.
+An internal node maintains the XOR of all vertices that are inside the segment of the linked list
+that it covers. We can update the value at a given vertex in
+
+$O(\log N)$
+
+time as a result.
+We'll come back to this idea of using a segment tree later.
+
+Instead of solving this problem on a linked list, we'll work on solving it for an arbitrary tree
+but with no modifications. A subroutine that will be useful is efficiently finding the lowest
+common ancestor (LCA) of two arbitrary vertices. For each vertex, we can precompute the
+
+$2^d$
+
+th ancestor
+of that vertex - the
+
+$2^d$
+
+th ancestor for
+
+$d > 0$
+
+is just the
+
+$2^{d-1}$
+
+th ancestor of the
+
+$2^{d-1}$
+
+th ancestor. To compute the LCA of two arbitrary vertices, we first go up
+the ancestor of the one lower in the tree until the two vertices are at the same height. We can
+then push both vertices up the tree as long as the
+
+$2^d$
+
+th ancestors differ, decreasing
+
+$d$
+
+until it becomes zero. This runs in
+
+$O(\log N)$
+
+. We can augment this subroutine by, for each
+
+$2^d$
+
+th ancestor, adding
+the XOR of all values that we encounter going up the tree.
+
+Adding in modifications is tricky - there are too many values to change if we explicitly try to
+maintain this data structure as accurately as possible. It is at this point that we will revisit
+trying to use a segment tree to store the XOR values. There are a few problems - primarily that
+a segment tree that backs an array guarantees that all the values that we want to XOR are
+contiguous, but on a tree the labeled vertices may not form a contiguous subarray.
+
+We can mitigate this partially with a technique known as heavy-light decomposition. We'll start
+by labeling the edges of the graph as being either heavy or light. For a given vertex
+
+$v$
+
+that is not a
+leaf, enumerate all of its children and the sizes of their subtrees. The child
+
+$c$
+
+with the largest
+subtree has the edge
+
+$(v, c)$
+
+get labeled as heavy. All other child edges out of
+
+$v$
+
+are light.
+
+We claim that any path between two vertices can go through at most
+
+$O(\log N)$
+
+light edges.
+The reason for this is that in going up a light edge in the tree, the number of vertices
+in that tree must increase by more than a factor of 2. Therefore, every path going from any
+given vertex to the root cannot visit more than
+
+$O(\log N)$
+
+light edges. The heavy edges are a different story.
+However, collections of adjacent heavy edges form long chains.
+The most extreme example of this is in the case of a linked list, in which case every edge in the
+graph is considered heavy.
+
+After identifying whether each edge is heavy or light, we can relabel the vertices as follows - 
+the root of the tree gets label 0. DFS down the tree, prioritizing heavy edges over light edges.
+Every time a new vertex is seen, assign it the next label that is available.
+
+Note that the labels on a collection of heavy edges now form a contiguous subinterval, so now we can
+maintain a segment tree leveraging these new labels. We can then use this segment tree to compute
+the XOR of all values from some child to any ancestor. We check if the parent is connected via
+a heavy edge or a light edge. If it's a light edge, we travel it directly. Otherwise, we look
+at the top of the chain and go to the lower of the top of the chain and the ancestor.
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAX_N = 100000;
+int segtree[4 * MAX_N];
+
+void segtreeupd(int idx, int l, int r, int i, int v) {
+  if(l == r) segtree[idx] = v;
+  else {
+    int m = (l+r)/2;
+    if(i <= m) segtreeupd(2*idx, l, m, i, v);
+    else segtreeupd(2*idx+1, m+1, r, i, v);
+    segtree[idx] = segtree[2*idx] ^ segtree[2*idx+1];
+  }
+}
+void segtreeupd(int i, int v) {
+  segtreeupd(1, 0, MAX_N-1, i, v);
+}
+
+int segtreeqry(int idx, int l, int r, int lhs, int rhs) {
+  if(l >= lhs && r <= rhs) return segtree[idx];
+  int ret = 0;
+  int m = (l+r)/2;
+  if(m >= lhs) ret ^= segtreeqry(2*idx, l, m, lhs, rhs);
+  if(m+1 <= rhs) ret ^= segtreeqry(2*idx+1, m+1, r, lhs, rhs);
+  return ret;
+}
+int segtreeqry(int l, int r) {
+  return segtreeqry(1, 0, MAX_N-1, l, r);
+}
+
+const int MAX_D = 17;
+int lca[MAX_N][MAX_D];
+int depth[MAX_N];
+
+int getLCA(int a, int b) {
+  if(depth[a] < depth[b]) swap(a, b);
+  for(int d = MAX_D-1; d >= 0; d--) {
+    if(depth[a] - (1<<d) >= depth[b]) {
+      a = lca[a][d];
+    }
+  }
+  for(int d = MAX_D-1; d >= 0; d--) {
+    if(lca[a][d] != lca[b][d]) {
+      a = lca[a][d];
+      b = lca[b][d];
+    }
+  }
+  if(a != b) {
+    a = lca[a][0];
+    b = lca[b][0];
+  }
+  return a;
+}
+
+void initLCA() {
+  for(int d = 1; d < MAX_D; d++) {
+    for(int i = 0; i < MAX_N; i++) {
+      lca[i][d] = lca[lca[i][d-1]][d-1];
+    }
+  }
+}
+
+vector<int> edges[MAX_N];
+int treesz[MAX_N];
+int vertextosegtree[MAX_N];
+int topchain[MAX_N];
+int vals[MAX_N];
+
+void dfsForHLD(int curr, int topPtr, int par, int& internalsegtreeidx) {
+  vertextosegtree[curr] = internalsegtreeidx++;
+  segtreeupd(vertextosegtree[curr], vals[curr]);
+  topchain[curr] = topPtr;
+  int largestchild = -1;
+  int largestsz = -1;
+  for(int out: edges[curr]) {
+    if(out == par) continue;
+    if(treesz[out] > largestsz) {
+      largestsz = treesz[out];
+      largestchild = out;
+    }
+  }
+  if(largestchild < 0) return;
+  dfsForHLD(largestchild, topPtr, curr, internalsegtreeidx);
+  for(int out: edges[curr]) {
+    if(out == par || out == largestchild) continue;
+    dfsForHLD(out, out, curr, internalsegtreeidx);
+  }
+}
+
+void dfsForSize(int curr, int par) {
+  treesz[curr]++;
+  for(int out: edges[curr]) {
+    if(out == par) continue;
+    depth[out] = depth[curr] + 1;
+    lca[out][0] = curr;
+    dfsForSize(out, curr);
+    treesz[curr] += treesz[out];
+  }
+}
+
+void initHLD() {
+  dfsForSize(0, -1);
+  initLCA();
+  int internalsegtreeidx = 0;
+  dfsForHLD(0, 0, -1, internalsegtreeidx);
+}
+
+int pathQuery(int child, int par) {
+  int ret = 0;
+  while(child != par) {
+    if(topchain[child] == child) {
+      // light edge
+      ret ^= vals[child];
+      child = lca[child][0];
+    }
+    else if(depth[topchain[child]] > depth[par]) {
+      ret ^= segtreeqry(vertextosegtree[topchain[child]], vertextosegtree[child]);
+      child = lca[topchain[child]][0];
+    }
+    else {
+      ret ^= segtreeqry(vertextosegtree[par]+1, vertextosegtree[child]);
+      break;
+    }
+  }
+  return ret;
+}
+
+int query(int a, int b) {
+  int r = getLCA(a, b);
+  return pathQuery(a, r) ^ pathQuery(b, r) ^ vals[r];
+}
+
+int main() {
+  freopen("cowland.in", "r", stdin);
+  freopen("cowland.out", "w", stdout);
+  int n, q;
+  cin >> n >> q;
+  for(int i = 0; i < n; i++) {
+    cin >> vals[i];
+  }
+  for(int i = 1; i < n; i++) {
+    int a, b;
+    cin >> a >> b;
+    a--; b--;
+    edges[a].push_back(b);
+    edges[b].push_back(a);
+  }
+  initHLD();
+  while(q--) {
+    int t;
+    cin >> t;
+    if(t == 1) {
+      int i, v;
+      cin >> i >> v;
+      vals[--i] = v;
+      segtreeupd(vertextosegtree[i], v);
+    }
+    else {
+      int a, b;
+      cin >> a >> b;
+      cout << query(--a, --b) << "\n";
+    }
+  }
+}

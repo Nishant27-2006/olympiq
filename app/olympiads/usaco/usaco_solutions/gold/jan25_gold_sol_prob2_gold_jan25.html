@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by William Lin)
+<p>As we are counting the number of pairs of reachable nodes, we are allowed to
+modify the graph structure as long as the connectivity of the nodes do not
+change. Intuitively, for <span class='math'>$s_t=1$</span> nodes, we should actually keep this node in the
+graph for the purposes of checking connectivity, but not include it when
+counting pairs of reachable nodes.
+<p>We can formalize a new problem as follows. Initially, all nodes are active. At
+time <span class='math'>$t$</span>,
+<p><ul><li>If <span class='math'>$s_t=0$</span>, node <span class='math'>$t$</span> is deactivated and disconnected from all of its
+neighbors.</li><li>If <span class='math'>$s_t=1$</span>, node <span class='math'>$t$</span> is deactivated.</li></ul>
+<p>Note that a node is active in our implicit graph iff it still exists in the real
+graph. We now want to count the number of pairs of active nodes that can reach
+each other just before each of timesteps <span class='math'>$1\ldots N$</span>.
+<p>We can prove by induction on <span class='math'>$t$</span> that there is an edge <span class='math'>$(u, v)$</span> in the real
+graph iff there is a path from <span class='math'>$u$</span> to <span class='math'>$v$</span> that only passes through deactivated
+nodes in the implicit graph. This implies that the connectivity of active nodes
+in both graphs are the same. Initially, no nodes are deactivated so the only
+valid paths are the real edges.
+<p>If <span class='math'>$s_t=0$</span>, the adjacent edges of <span class='math'>$t$</span> in the real graph disappear, similarly the
+paths from <span class='math'>$t$</span> in the implicit graph are no longer valid.
+<p>If <span class='math'>$s_t=1$</span>, for each pair of neighbors <span class='math'>$(u, v)$</span> of <span class='math'>$t$</span>, <span class='math'>$(u, v)$</span> is added as an
+edge in the real graph. <span class='math'>$(u, t)$</span> and <span class='math'>$(t, v)$</span> were edges, so in the implicit
+graph there were paths <span class='math'>$u\to x_1 \to \dots \to x_k \to t$</span> and
+<span class='math'>$t \to x_{k+1} \to \dots \to v$</span>, where all <span class='math'>$x_i$</span> are deactivated. Since <span class='math'>$t$</span> gets
+deactivated, <span class='math'>$u\to x_1 \to \dots \to x_k \to t \to x_{k+1} \to \dots \to v$</span> is
+now a path that only passes through deactivated nodes.
+<p>As our only graph-modifying operations are removing edges, we simulate this process
+in reverse, so that our operations are adding edges and activating nodes. We use a DSU that can also maintain the number of active nodes in each
+connected component.
+<p>Solution code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define ll long long
+const int mxN=2e5;
+int n, m, p[mxN], s[mxN];
+string a;
+vector&lt;int&gt; adj[mxN];
+bool b[mxN];
+ll ca, ans[mxN];
+ 
+int find(int x) {
+	return p[x]=x^p[x]?find(p[x]):x;
+}
+ 
+void join(int x, int y) {
+	if((x=find(x))==(y=find(y)))
+		return;
+	ca+=(ll)s[x]*s[y];
+	p[x]=y;
+	s[y]+=s[x];
+}
+ 
+void act(int i) {
+	b[i]=1;
+	for(int j : adj[i])
+		if(b[j])
+			join(i, j);
+}
+ 
+int main() {
+	ios::sync_with_stdio(0);
+	cin.tie(0);
+	
+	cin &gt;&gt; n &gt;&gt; m &gt;&gt; a;
+	for(int i=0, u, v; i&lt;m; ++i) {
+		cin &gt;&gt; u &gt;&gt; v, --u, --v;
+		adj[u].push_back(v);
+		adj[v].push_back(u);
+	}
+	iota(p, p+n, 0);
+	for(int i=0; i&lt;n; ++i)
+		if(a[i]&amp;1)
+			act(i);
+	for(int i=n-1; ~i; --i) {
+		if(a[i]&amp;1^1)
+			act(i);
+		ca+=s[find(i)]++;
+		ans[i]=ca;
+	}
+	for(int i=0; i&lt;n; ++i)
+		cout &lt;&lt; ans[i] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+</body></html>

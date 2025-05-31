@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Let <span class='math'>$ans_y(x)$</span> denote the minimum cost to go from <span class='math'>$(1,1)$</span> to <span class='math'>$(x,y)$</span>. The key
+observation is that for a fixed <span class='math'>$y$</span>, the function <span class='math'>$ans_y$</span> is concave up.
+Specifically, <span class='math'>$ans_y[x]-ans_y[x-1]\le ans_y[x+1]-ans_y[x]$</span>. 
+<p>To get <span class='math'>$ans_{y+1}$</span> from <span class='math'>$ans_y$</span>, we must
+<p><ol><li>Set <span class='math'>$ans_{y+1}(x)=ans_y(x)+x^2$</span> for all <span class='math'>$x$</span>.</li><li>Set
+<span class='math'>$ans_{y+1}(x)=\min(ans_{y+1}(x),ans_{y+1}(x-1)+c_x)$</span> for all <span class='math'>$x$</span>.</li></ol>
+<p>The latter operation is equivalent to replacing a suffix of <span class='math'>$ans_{y+1}$</span> with a 
+straight line. 
+<p>We can maintain the piecewise quadratic function <span class='math'>$ans_y$</span> with a stack (similarly
+to <a href='https://usaco.guide/plat/cht'>convex hull trick</a>). Whenever we perform the second operation, we pop some
+elements off the top of the stack and add a new element. To answer a query
+<span class='math'>$(x,y)$</span>, binary search on the stack corresponding to <span class='math'>$ans_y$</span> to find the piece
+of the function that corresponds to <span class='math'>$x$</span> and evaluate it.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+
+using ll = long long;
+using namespace std;
+
+#define f first 
+#define s second
+
+template&lt;class T, class U&gt; T fstTrue(T lo, T hi, U f) { 
+	hi ++; assert(lo &lt;= hi); // assuming f is increasing
+	while (lo &lt; hi) { // find first index such that f is true 
+		T mid = lo+(hi-lo)/2;
+		f(mid) ? hi = mid : lo = mid+1; 
+	} 
+	return lo;
+}
+
+ll sq(ll x) { return x*x; }
+
+int N,M;
+vector&lt;pair&lt;int,int&gt;&gt; todo[200005];
+ 
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	cin &gt;&gt; N &gt;&gt; M;
+	vector&lt;ll&gt; C(M); for (ll&amp; t: C) cin &gt;&gt; t;
+	int Q; cin &gt;&gt; Q;
+	vector&lt;ll&gt; ans(Q);
+	for (int i = 0; i &lt; Q; ++i) {
+		int x,y; cin &gt;&gt; x &gt;&gt; y; --y;
+		todo[y].push_back({x,i});
+	}
+	vector&lt;pair&lt;int,pair&lt;int,ll&gt;&gt;&gt; stk;
+	for (int col = 0; col &lt; M; ++col) {
+		auto eval_pair = [&amp;](const pair&lt;int,ll&gt;&amp; a, ll x) {
+			int pre_col = a.f;
+			return sq(x)*(col-pre_col)+x*C[pre_col]+a.s;
+		};
+		auto eval = [&amp;](int x) -&gt; ll { // binary search to find corresponding stack element
+			int fst_ind = fstTrue(0,(int)stk.size()-1,[&amp;](int ind) {
+				return stk[ind].f &gt;= x; });
+			return eval_pair(stk[fst_ind].s,x); // evaluate stack element at x
+		};
+		if (col) {
+			while (stk.size() &gt; 1) { // pop off stack
+				int x = end(stk)[-2].f;
+				pair&lt;int,ll&gt; lst = stk.back().s;
+				ll val_at_x =          eval_pair(lst,x);
+				ll val_at_x_plus_one = eval_pair(lst,x+1);
+				if (val_at_x+C[col] &lt; val_at_x_plus_one) {
+					stk.pop_back();
+					continue;
+				}
+				stk.back().f = fstTrue(x+1,stk.back().f-1,[&amp;](int mid) {
+					return eval_pair(lst,mid)+C[col] &lt; eval_pair(lst,mid+1); });
+				break;
+			}
+			if (stk.back().f &lt; N) { // add to stack
+				int x = stk.back().f;
+				stk.push_back({N,{col,eval_pair(stk.back().s,x)-x*C[col]}});
+			}
+		} else { // initialize stack
+			stk.push_back({1,{0,-C[0]}});
+			stk.push_back({N,{0,-C[0]}});
+		}
+		for (pair&lt;int,int&gt; t: todo[col]) // answer all queries with y=col+1
+			ans[t.s] = eval(t.f);
+	}
+	for (ll t: ans) cout &lt;&lt; t &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

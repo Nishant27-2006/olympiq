@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>Let&apos;s suppose that <span class='math'>$L = 0$</span>; then we just want to compute the <span class='math'>$h$</span>-index of
+Bessie&apos;s papers with no additional citations. To find this, we can sort the
+citation counts from largest to smallest, and find the largest <span class='math'>$h$</span> such that the
+first <span class='math'>$h$</span> papers all have at least <span class='math'>$h$</span> citations. This can be done in one pass
+through the sorted counts.
+<p>Now let&apos;s consider how to use <span class='math'>$L$</span> extra citations to increase the <span class='math'>$h$</span>-index.
+Since the survey cannot cite any one paper multiple times, it&apos;s not possible to
+increase the <span class='math'>$h$</span>-index by more than <span class='math'>$1$</span>: the <span class='math'>$(h+1)$</span>-st most cited paper before
+the survey had at most <span class='math'>$h$</span> citations, so afterwards it cannot have more than
+<span class='math'>$h+1$</span> citations.
+<p>But it&apos;s not always possible to increase the <span class='math'>$h$</span>-index by one. When is it
+possible? Well, out of the top <span class='math'>$h$</span> papers before the survey, some <span class='math'>$k$</span> of them
+have exactly <span class='math'>$h$</span> citations (and the rest have more than <span class='math'>$h$</span>). We need to cite
+each of these <span class='math'>$k$</span> papers. Additionally, we need to cite the <span class='math'>$(h+1)$</span>-st most
+cited paper. So it&apos;s necessary that <span class='math'>$L \geq k+1$</span>. Finally, if the <span class='math'>$(h+1)$</span>-st
+most cited paper has less than <span class='math'>$h$</span> citations, then we cannot hope to increase
+the <span class='math'>$h$</span>-index. Conversely, if it has <span class='math'>$h$</span> citations (it cannot have more than
+<span class='math'>$h$</span>), and if <span class='math'>$L \geq k+1$</span>, then the <span class='math'>$h$</span>-index can be increased to <span class='math'>$h+1$</span>.
+<p>Below is Danny Mittal&apos;s code, which does a slight variation on the above idea. This program increments the citation counts of the <span class='math'>$[h-L+2, h+1]$</span>-most cited papers (which we&apos;ve seen is optimal) and checks what the new <span class='math'>$h$</span>-index is.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.StringTokenizer;
+ 
+public class AcowdemiaI {
+ 
+    static int hIndex(Integer[] papers) {
+        int h = papers.length;
+        while (h &gt; 0 &amp;&amp; papers[h - 1] &lt; h) {
+            h--;
+        }
+        return h;
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int l = Integer.parseInt(tokenizer.nextToken());
+        Integer[] papers = new Integer[n];
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 0; j &lt; n; j++) {
+            papers[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        Arrays.sort(papers, Comparator.reverseOrder());
+        int h = hIndex(papers);
+        if (h != n) {
+            for (int j = h; j &gt;= 0 &amp;&amp; j &gt; h - l; j--) {
+                papers[j]++;
+            }
+        }
+        Arrays.sort(papers, Comparator.reverseOrder());
+        System.out.println(hIndex(papers));
+    }
+}
+</pre>
+<p></body></html>

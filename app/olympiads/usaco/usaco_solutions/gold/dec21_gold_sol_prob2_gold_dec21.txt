@@ -1,0 +1,624 @@
+Solution ID: sol_prob2_gold_dec21
+Contest: DEC21
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_dec21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Andi Qu, Benjamin Qi)
+
+To solve this problem in
+
+$\mathcal O(N^2)$
+
+time, we can simulate the process for
+each
+
+$x$
+
+.
+
+#include <iostream>
+
+int main() {
+    std::cin.tie(0)->sync_with_stdio(0);
+    int n, p[200001];
+    std::cin >> n;
+    for (int i = 0; i < n; i++) std::cin >> p[i];
+    for (int x = 0; x <= n; x++) {
+        int mn = 0, mx = n + 1, ans = 0;
+        bool hi = false;
+        for (int i = 0; i < n; i++) {
+            if (p[i] > mx || p[i] < mn) continue;
+            if (p[i] > x) {
+                hi = true;
+                mx = p[i];
+            } else {
+                ans += hi;
+                hi = false;
+                mn = p[i];
+            }
+        }
+        std::cout << ans << '\n';
+    }
+    return 0;
+}
+
+Another solution that takes
+
+$\mathcal O(N^2)$
+
+time in the worst case is to keep
+track of each "HI" and "LO" for each
+
+$x$
+
+, and then go through the 2 lists to
+find the number of "HILO" pairs. However, this solution passes the test cases
+with data generated uniformly at random because the expected number of "HI"s and
+"LO"s is
+
+$\mathcal{O}(\log N)$
+
+for each
+
+$x$
+
+, resulting in an overall expected
+runtime of
+
+$\mathcal{O}(N\log N)$
+
+.
+
+To keep track of the 2 lists, we can use 2
+
+monotone stacks
+
+. Essentially, we maintain
+a sorted list of indices where Bessie says "LO". When we transition from
+
+$x$
+
+to
+
+$x + 1$
+
+, we know that the last "LO" that Bessie will say will be to
+
+$x + 1$
+
+. If
+Bessie doesn't say "LO" to
+
+$k$
+
+while thinking of
+
+$x + 1$
+
+, then she will never
+say "LO" to some
+
+$k$
+
+while thinking of
+
+$y > x + 1$
+
+, so we can remove all "LO"s
+that used to be said after the index of
+
+$x + 1$
+
+in the permutation.
+
+Conveniently, the indices that we remove form a suffix of the list (because the
+list is sorted), so we can use a stack and pop elements from it. Since each
+index is pushed into and popped from the stack at most once, this takes
+
+$\mathcal O(N)$
+
+time overall; iterating through the stack for each
+
+$x$
+
+takes a
+further
+
+$\mathcal O(N)$
+
+time per element.
+
+Here's a C++ code snippet for finding the list of "LO"s for each
+
+$x$
+
+:
+
+std::vector<int> los[200001];
+for (int i = 1; i <= n; i++) {
+    los[i] = los[i - 1];
+    while (los[i].size() != 0 && los[i].back() > pos[i]) los[i].pop_back();
+    los[i].push_back(pos[i]);
+}
+
+(Bonus: Find out how the rest of the test data for this problem was generated.)
+
+To solve the problem in
+
+$\mathcal O(N)$
+
+time, we need a way to efficiently
+transition from
+
+$x$
+
+to
+
+$x + 1$
+
+.
+
+Full Solution 1:
+
+Claim:
+
+Let
+
+$p$
+
+be the given permutation. If index
+
+$i$
+
+is the "LO" in a
+"HILO" pair, then the "HI" in the pair must be the index
+
+$k$
+
+such that
+
+$k < i$
+
+,
+
+$p[k] > p[i]$
+
+, and
+
+$p[k]$
+
+is minimal.
+
+Proof:
+
+If no such
+
+$k$
+
+exists, then there is no greater element before
+
+$i$
+
+, so
+
+$i$
+
+can't be the "LO" in a "HILO" pair. If Bessie says "LO" to
+
+$p[k]$
+
+,
+then Elsie will not guess
+
+$p[i]$
+
+, so
+
+$i$
+
+can't be the "LO" in a "HILO" pair.
+Otherwise, the last "HI" that Bessie says, before saying "LO" to
+
+$p[i]$
+
+, must be
+to
+
+$p[k]$
+
+.
+
+Knowing this, we can compute an array
+
+$\texttt{prv}$
+
+where
+
+$\texttt{prv}[i] = k$
+
+as described above using a monotone stack.
+
+Claim:
+
+Let index
+
+$j$
+
+be the last "LO" before Bessie says "LO" to
+
+$p[i]$
+
+.
+For each
+
+$x$
+
+where Elsie doesn't skip
+
+$p[i]$
+
+,
+
+$j$
+
+is the same.
+
+Proof:
+
+Let
+
+$j_1 < j_2 < i$
+
+and
+
+$p[j_1], p[j_2] < p[i]$
+
+. If Bessie says
+"LO" to
+
+$p[i]$
+
+, then there are 3 possibilities:
+
+Bessie never says "LO" to either
+
+$p[j_1]$
+
+or
+
+$p[j_2]$
+
+because she already
+said "LO" at some index
+
+$k < j_1$
+
+where
+
+$p[k] > p[j_1], p[j_2]$
+
+.
+
+Bessie
+always says "LO" to
+
+$p[j_1]$
+
+but never to
+
+$p[j_2]$
+
+because she said "LO" at some
+index
+
+$j_1 \leq k < j_2$
+
+where
+
+$p[k] > p[j_2]$
+
+.
+
+Bessie always "LO" to
+both
+
+$p[j_1]$
+
+and
+
+$p[j_2]$
+
+because neither of the above happen.
+
+If transitioning causes Bessie to stop saying "LO" to some index before
+
+$i$
+
+,
+then it must also cause her to stop saying "LO" to
+
+$p[i]$
+
+too. Therefore,
+
+$j$
+
+is
+the same for each
+
+$p[i]$
+
+.
+
+Claim:
+
+Let
+
+$j$
+
+be defined as above. Index
+
+$i$
+
+is the "LO" in a "HILO"
+pair if and only
+
+$\texttt{prv}[i]$
+
+exists, and
+
+$j$
+
+doesn't exist or
+
+$\texttt{prv}[i] \neq \texttt{prv}[j]$
+
+.
+
+Proof:
+
+If
+
+$\texttt{prv}[i]$
+
+doesn't exist, then Bessie never says "HI"
+before saying "LO" to
+
+$p[i]$
+
+, so it can't be the "LO" in a "HILO" pair.
+Otherwise, if
+
+$\texttt{prv}[i] \neq \texttt{prv}[j]$
+
+, then the last "HI" that
+Bessie says before saying "LO" to
+
+$p[i]$
+
+must be after saying "LO" to
+
+$p[j]$
+
+by
+definition. In this case, index
+
+$i$
+
+is the "LO" in a "HILO" pair.
+
+Knowing this, we can then determine, once for each index, whether it's the "LO"
+in a "HILO" pair, and thus how many "HILO" pairs there are for each
+
+$x$
+
+.
+
+Andi's code:
+
+#include <iostream>
+#include <stack>
+
+int main() {
+    std::cin.tie(0)->sync_with_stdio(0);
+    int n, pos[200001], prv[200001];
+    bool hilo[200001];
+    std::cin >> n;
+    for (int i = 1; i <= n; i++) {
+        int p;
+        std::cin >> p;
+        pos[p] = i;
+    }
+
+    std::stack<int> stck;
+    stck.push(0);
+    for (int i = n; i > 0; i--) {
+        while (stck.top() > pos[i]) stck.pop();
+        prv[pos[i]] = stck.top();
+        stck.push(pos[i]);
+    }
+    while (stck.size() != 1) stck.pop();
+
+    std::cout << "0\n";
+    int cnt = 0;
+    for (int i = 1; i <= n; i++) {
+        while (stck.top() > pos[i]) {
+            cnt -= hilo[stck.top()];
+            stck.pop();
+        }
+        hilo[pos[i]] = prv[pos[i]] != 0 &&
+                       (stck.top() == 0 || prv[pos[i]] != prv[stck.top()]);
+        stck.push(pos[i]);
+        cnt += hilo[pos[i]];
+        std::cout << cnt << '\n';
+    }
+    return 0;
+}
+
+Full Solution 2:
+
+Another way we can solve this problem in
+
+$\mathcal O(N \log N)$
+
+time is with stacks plus a sorted set.
+
+First, we compute, for each
+
+$x \rightarrow x + 1$
+
+event, which elements of the
+permutation start and stop becoming "HI"s and "LO"s. We can do this with a
+stack.
+
+Next, we process the events for each
+
+$x$
+
+. We can maintain an ordered map of
+"HI"s and "LO"s, and inserting or erasing any element from that map changes a
+constant number of "HILO" pairs. Using C++'s iterators, we can process these
+changes efficiently.
+
+Ben's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	int N;
+	cin >> N;
+	V<int> P(N);
+	for (auto &t : P) {
+		cin >> t;
+		--t;
+	}
+	V<int> pos(N);
+	for (int i = 0; i < N; ++i)
+		pos[P[i]] = i;
+	V<V<pair<int, char>>> to_ins(N + 1);
+	V<V<int>> to_del(N + 1);
+	{ // process "LO"s from lowest to highest, record insertions and deletions
+		stack<int> cur;
+		for (int i = 0; i < N; ++i) {
+			while (!cur.empty() && cur.top() > pos[i]) {
+				to_del.at(i + 1).push_back(cur.top());
+				cur.pop();
+			}
+			cur.push(pos[i]);
+			to_ins.at(i + 1).push_back({pos[i], 'L'});
+		}
+	}
+	{ // process "HI"s from highest to lowest, record insertions and deletions
+		stack<int> cur;
+		for (int i = N - 1; i >= 0; --i) {
+			while (!cur.empty() && cur.top() > pos[i]) {
+				to_ins.at(i + 1).push_back({cur.top(), 'H'});
+				cur.pop();
+			}
+			cur.push(pos[i]);
+			to_del.at(i + 1).push_back(pos[i]);
+		}
+		while (!cur.empty()) {
+			to_ins.at(0).push_back({cur.top(), 'H'});
+			cur.pop();
+		}
+	}
+	int ans = 0;
+	map<int, char> m; // maps each position to 'H' or 'L'
+	auto hilo = [&](map<int, char>::iterator it,
+					map<int, char>::iterator next_it) {
+		return it->second == 'H' && next_it->second == 'L';
+	};
+	auto get_dif = [&](map<int, char>::iterator it) {
+		int dif = 0;
+		if (it != begin(m))
+			dif += hilo(prev(it), it);
+		if (next(it) != end(m))
+			dif += hilo(it, next(it));
+		if (it != begin(m) && next(it) != end(m))
+			dif -= hilo(prev(it), next(it));
+		return dif;
+	};
+	for (int i = 0; i <= N; ++i) { // to finish, go from lowest to highest again
+		for (auto &t : to_del.at(i)) {
+			auto it = m.find(t);
+			assert(it != end(m));
+			ans -= get_dif(it);
+			m.erase(it);
+		}
+		for (auto &t : to_ins.at(i)) {
+			auto it = m.insert(t).first;
+			assert(it->second);
+			ans += get_dif(it);
+		}
+		cout << ans << "\n";
+	}
+}
+
+Full Solution 3:
+
+Here is a simpler solution that also runs in
+
+$\mathcal O(N\log N)$
+
+.  This one doesn't explicitly make use of monotonic
+stacks, though it is possible to modify it to run in
+
+$\mathcal O(N)$
+
+time with
+them.
+
+Allen Wu's code:
+
+#include <iostream>
+#include <map>
+#include <set>
+#include <utility>
+#include <vector>
+using namespace std;
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	int n;
+	cin >> n;
+	vector<int> arr(n);
+	for (int i = 0; i < n; ++i)
+		cin >> arr[i];
+	vector<int> pos(n + 1);
+	for (int i = 0; i < n; ++i)
+		pos[arr[i]] = i;
+	map<int, int> existing;
+	vector<int> changes(n + 1);
+	for (int i = 0; i < n; ++i) {
+		int num = arr[i];
+		// goal is to compute how the number of HILOs changes
+		// when we go from x = num-1 to x = num
+		auto it = existing.upper_bound(num);
+		if (it != existing.end()) {
+			// add one if num is involved in a HILO when x = num
+			if (it == existing.begin())
+				++changes[num];
+			else if (it->second > prev(it)->second)
+				++changes[num];
+		}
+		// subtract one if num is involved in a HILO when x = num-1
+		if (pos[num - 1] > pos[num])
+			--changes[num];
+		existing[num] = i;
+	}
+	int sum = 0;
+	for (int i = 0; i <= n; ++i) {
+		sum += changes[i];
+		cout << sum << "\n";
+	}
+}

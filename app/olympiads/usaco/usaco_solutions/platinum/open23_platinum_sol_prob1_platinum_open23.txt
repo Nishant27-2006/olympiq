@@ -1,0 +1,348 @@
+Solution ID: sol_prob1_platinum_open23
+Contest: OPEN23
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob1_platinum_open23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal)
+
+A prerequisite to solving this problem is to compute
+
+$A(t)$
+
+(without any
+updates) in
+
+$\mathcal O(|t|)$
+
+. The below pseudocode solves this problem; see the
+analysis of the Silver version for an explanation.
+
+answer = 0
+tokenAmts = 6 * [0]
+
+for k in 1..|t|:
+    tokenAmts[0] += 1
+    newTokenAmts = 6 * [0]
+
+    for j in 0..5:
+        if t[k] == "bessie"[j]:
+           if j == 5:
+               answer += (|t| - k + 1) * tokenAmts[j]
+           newTokenAmts[(j + 1) % 6] += tokenAmts[j]
+        else:
+           newTokenAmts[j] += tokenAmts[j]
+    tokenAmts = newTokenAmts
+
+return answer
+
+This algorithm can be used to solve the first two subtasks. The first subtask
+can be solved more easily by using the
+
+$O(|t|^2)$
+
+algorithm from the Silver
+analysis after each update.
+
+To solve the full problem, we will optimize recalculation of the answer after
+updates using a segment tree. In order to do this, we will want to convert the
+above algorithm into a "transition" structure that encapsulates, for a given
+substring
+
+$s$
+
+, how the algorithm goes from its before state to its after state
+by looking through
+
+$s$
+
+.
+
+Such a transition structure needs to encapsulate two things:
+
+How we calculate
+
+$tokenAmts$
+
+after, given
+
+$tokenAmts$
+
+before
+
+How
+we increase the answer, given
+
+$tokenAmts$
+
+before
+
+Both of these relationships have two sources.
+
+The first is that for a given index
+
+$j$
+
+in
+
+$tokenAmts$
+
+before, all of
+
+$tokenAmts[j]$
+
+, throughout the process of the algorithm reading
+
+$s$
+
+, is moved
+together to other positions in
+
+$tokenAmts$
+
+, and each time this amount goes from
+the end to the beginning of
+
+$tokenAmts$
+
+, contributes to the answer by being
+multiplied by some fixed amount dependent on the index of
+
+$s$
+
+that the algorithm
+is currently at. This means that to encapsulate this source, the transition
+structure needs to know the following:
+
+For each index
+
+$j$
+
+from
+
+$0$
+
+to
+
+$5$
+
+, the index
+
+$j'$
+
+such that all of
+
+$tokenAmts[j]$
+
+before ends up at
+
+$tokenAmts[j']$
+
+after
+
+For each index
+
+$j$
+
+from
+
+$0$
+
+to
+
+$5$
+
+, the overall coefficient
+
+$c$
+
+such that
+
+$c \cdot tokenAmts[j]$
+
+is contributed to the answer
+
+The second source is that while going through
+
+$s$
+
+, the algorithm adds
+
+$1$
+
+to
+
+$tokenAmts[0]$
+
+at every step. This operates similarly to the first source,
+except that we instead have fixed amounts ending up in the after version of
+
+$tokenAmts$
+
+and a fixed overall contribution to the answer. Thus, the transition
+structure needs to know the following:
+
+For each index
+
+$j$
+
+from
+
+$0$
+
+to
+
+$5$
+
+, the additional fixed amount that ends
+up in
+
+$tokenAmts[j]$
+
+after
+
+A single number representing the additional
+fixed contribution to the answer
+
+Given this transition structure, we can solve the problem as follows. Create a
+segment tree on the indexes of
+
+$t$
+
+that will contain a transition structure at
+each index. In order to be able to update the segment tree, we need to be able
+to create the transition structure for a single step of the algorithm given the
+index
+
+$k$
+
+and the character
+
+$t[k]$
+
+, and we need to be able to merge two
+transition structures, but both of these tasks are fairly straightforward; for
+details see the solution code below. The answer after each update will then be
+the fixed contribution to the answer of the transition structure at the root
+node of the segment tree.
+
+Since the segment tree updates are
+
+$\mathcal O(\log N)$
+
+as usual, the overall
+time complexity of the algorithm is
+
+$\mathcal O((N + U)\log N)$
+
+. This can be
+improved to
+
+$O(N + U\log N)$
+
+by doing the initial setup of the segment tree all
+at once.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+
+public class Pareidolia {
+    public static final String BESSIE = "bessie";
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        char[] string = in.readLine().toCharArray();
+        SegmentTree segTree = new SegmentTree(string.length);
+        for (int j = 0; j < string.length; j++) {
+            segTree.update(j, Transition.create(string[j], j, string.length));
+        }
+        StringBuilder out = new StringBuilder();
+        out.append(segTree.get()).append('\n');
+        for (int u = Integer.parseInt(in.readLine()); u > 0; u--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int j = Integer.parseInt(tokenizer.nextToken()) - 1;
+            string[j] = tokenizer.nextToken().charAt(0);
+            segTree.update(j, Transition.create(string[j], j, string.length));
+            out.append(segTree.get()).append('\n');
+        }
+        System.out.print(out);
+    }
+
+    static class Transition {
+        final int[] endsUpAt = new int[6];
+        final long[] coefficients = new long[6];
+        final long[] fixedEndsUpAt = new long[6];
+        long fixedContributionToAnswer = 0;
+
+        Transition compose(Transition other) {
+            Transition result = new Transition();
+            result.fixedContributionToAnswer += fixedContributionToAnswer;
+            result.fixedContributionToAnswer += other.fixedContributionToAnswer;
+            for (int d = 0; d < 6; d++) {
+                result.endsUpAt[d] = other.endsUpAt[endsUpAt[d]];
+                result.coefficients[d] += coefficients[d];
+                result.coefficients[d] += other.coefficients[endsUpAt[d]];
+                result.fixedEndsUpAt[other.endsUpAt[d]] += fixedEndsUpAt[d];
+                result.fixedEndsUpAt[d] += other.fixedEndsUpAt[d];
+                result.fixedContributionToAnswer += other.coefficients[d] * fixedEndsUpAt[d];
+            }
+            return result;
+        }
+
+        static Transition create(char letter, int index, int n) {
+            Transition result = new Transition();
+            for (int d = 0; d < 6; d++) {
+                if (letter == BESSIE.charAt(d)) {
+                    result.endsUpAt[d] = (d + 1) % 6;
+                } else {
+                    result.endsUpAt[d] = d;
+                }
+            }
+            result.fixedEndsUpAt[result.endsUpAt[0]] = 1;
+            if (result.endsUpAt[5] == 0) {
+                result.coefficients[5] = n - index;
+            }
+            return result;
+        }
+    }
+
+    static class SegmentTree {
+        final int size;
+        final Transition[] values = new Transition[600000];
+
+        SegmentTree(int size) {
+            this.size = size;
+            Arrays.fill(values, new Transition());
+        }
+
+        void update(int index, Transition delta, int node, int segFrom, int segTo) {
+            if (segFrom == segTo) {
+                values[node] = delta;
+            } else {
+                int mid = (segFrom + segTo) / 2;
+                int left = 2 * node;
+                int right = left + 1;
+                if (index <= mid) {
+                    update(index, delta, left, segFrom, mid);
+                } else {
+                    update(index, delta, right, mid + 1, segTo);
+                }
+                values[node] = values[left].compose(values[right]);
+            }
+        }
+
+        void update(int index, Transition delta) {
+            update(index, delta, 1, 0, size - 1);
+        }
+
+        long get() {
+            return values[1].fixedContributionToAnswer;
+        }
+    }
+}

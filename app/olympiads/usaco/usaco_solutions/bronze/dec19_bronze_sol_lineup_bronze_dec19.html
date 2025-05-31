@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>There are two approaches to this problem, a brute force one that tries all ordering
+and a more analytical one that tries to build up the alphabetically first ordering
+one cow at a time.
+<p>Because there are only <span class='math'>$8$</span> cows, there are <span class='math'>$8 \times 7 \times 6 \times 5 \times 4 \times 3 \times 2 \times 1 = 40320$</span>
+different orderings, which is small enough that we can try all of them. If we
+generate them in alphabetic ordering and stop when we see one that satisfies
+all the given constraints, then we can print the answer then and there. Here
+is Brian Dean&apos;s code following this approach:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+vector&lt;string&gt; cows, beside_a, beside_b;
+int N;
+ 
+int where(string c)
+{
+  for (int i=0; i&lt;8; i++)
+    if (cows[i]==c) return i;
+  return -1;
+}
+ 
+bool satisfies_constraints(void)
+{
+  for (int i=0; i&lt;N; i++)
+    if (abs(where(beside_a[i]) - where(beside_b[i])) != 1) return false;
+  return true;
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;lineup.in&quot;);
+  ofstream fout (&quot;lineup.out&quot;);
+  fin &gt;&gt; N;
+  cows.push_back(&quot;Beatrice&quot;);
+  cows.push_back(&quot;Belinda&quot;);
+  cows.push_back(&quot;Bella&quot;);
+  cows.push_back(&quot;Bessie&quot;);
+  cows.push_back(&quot;Betsy&quot;);
+  cows.push_back(&quot;Blue&quot;);
+  cows.push_back(&quot;Buttercup&quot;);
+  cows.push_back(&quot;Sue&quot;);
+  string a, b, t;
+  for (int i=0; i&lt;N; i++) {
+    fin &gt;&gt; a;
+    fin &gt;&gt; t; // must
+    fin &gt;&gt; t; // be
+    fin &gt;&gt; t; // milked
+    fin &gt;&gt; t; // beside
+    fin &gt;&gt; b;
+    beside_a.push_back(a);
+    beside_b.push_back(b);
+  }
+  do {
+    if (satisfies_constraints()) {
+      for (int i=0; i&lt;8; i++) fout &lt;&lt; cows[i] &lt;&lt; &quot;\n&quot;;
+      break;
+    }
+  } while (next_permutation(cows.begin(), cows.end()));
+  return 0;
+}
+</pre>
+<p>The more analytic approach tries to build the ordering one cow at a time. We start by asking
+the question - can Beatrice be the very first cow in the ordering? It turns out that
+the answer is yes, if and only if Beatrice must be next to at most one cow. If Beatrice
+has to be next to two cows, then one of the cows must be in front of her. On the other hand,
+if Beatrice needs to be next to only one cow, then we can put Beatrice first in line, and
+then the cow who needs to be beside her goes immediately after. Similarly, if Beatrice
+doesn&apos;t need to be next to any cows, we can move her to the front of the line.
+<p>We can loop over the cows in alphabetic order to find the cow that should go first in line.
+What about the cows that come after? If the cow currently at the end of the ordering
+must be next to some other cow, then that cow is forced to be next in line. Otherwise,
+we are free to pick any cow we wish, and we apply the procedure in the previous paragraph
+to figure out the next cow to put in line.
+<p>Here is Brian Dean&apos;s code simulating this approach:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+vector&lt;string&gt; cows, beside_a, beside_b, answer;
+int N;
+ 
+int where(string c)
+{
+  for (int i=0; i&lt;answer.size(); i++)
+    if (answer[i]==c) return i;
+  return 999;
+}
+ 
+bool can_go_first(string c)
+{
+  int n = answer.size(), nbrs=0;
+  if (where(c)!=999) return false;
+  for (int i=0; i&lt;N; i++) {
+    if (beside_a[i]==c &amp;&amp; where(beside_b[i])==999) nbrs++;
+    if (beside_b[i]==c &amp;&amp; where(beside_a[i])==999) nbrs++;
+  }
+  if (nbrs == 2) return false;
+  if (n&gt;0) {
+    string last_cow = answer[n-1];
+    for (int i=0; i&lt;N; i++) {
+      if (beside_a[i]==last_cow &amp;&amp; where(beside_b[i])==999 &amp;&amp; beside_b[i]!=c) return false;
+      if (beside_b[i]==last_cow &amp;&amp; where(beside_a[i])==999 &amp;&amp; beside_a[i]!=c) return false;
+    }
+  }
+  return true;
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;lineup.in&quot;);
+  ofstream fout (&quot;lineup.out&quot;);
+  fin &gt;&gt; N;
+  cows.push_back(&quot;Beatrice&quot;);
+  cows.push_back(&quot;Belinda&quot;);
+  cows.push_back(&quot;Bella&quot;);
+  cows.push_back(&quot;Bessie&quot;);
+  cows.push_back(&quot;Betsy&quot;);
+  cows.push_back(&quot;Blue&quot;);
+  cows.push_back(&quot;Buttercup&quot;);
+  cows.push_back(&quot;Sue&quot;);
+  string a, b, t;
+  for (int i=0; i&lt;N; i++) {
+    fin &gt;&gt; a;
+    fin &gt;&gt; t; // must
+    fin &gt;&gt; t; // be
+    fin &gt;&gt; t; // milked
+    fin &gt;&gt; t; // beside
+    fin &gt;&gt; b;
+    beside_a.push_back(a);
+    beside_b.push_back(b);
+  }
+  for (int i=0; i&lt;8; i++) {
+    int next_cow = 0;
+    while (!can_go_first(cows[next_cow])) next_cow++;
+    answer.push_back(cows[next_cow]);
+    fout &lt;&lt; cows[next_cow] &lt;&lt; &quot;\n&quot;;
+  }
+  return 0;
+}
+</pre></body></html>

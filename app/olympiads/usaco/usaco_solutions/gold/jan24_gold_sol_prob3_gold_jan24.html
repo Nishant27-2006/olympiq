@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Subtask 1: <span class='math'>$O(2^N\cdot N\log N)$</span></strong>
+<p>Iterate over all <span class='math'>$2^N$</span> ways to split into piles, and check each of them in
+<span class='math'>$O(N\log N)$</span> time.
+<p><strong>Subtask 2: <span class='math'>$O(N^3)$</span></strong>
+<p>First, sort the <span class='math'>$a_i$</span> in increasing order (<span class='math'>$a_1\le a_2\le a_3\le \dots\le a_N$</span>).
+Let <span class='math'>$B$</span> be the size of Bessie&apos;s pile. The answer must be at most <span class='math'>$a_N$</span> since we
+can take <span class='math'>$B=0$</span>. If the answer is less than <span class='math'>$a_N$</span>, then <span class='math'>$a_N$</span> must be added to
+the array by Bessie at time <span class='math'>$B(B+1)/2$</span>.  Our goal is to find the minimum <span class='math'>$B$</span>
+such this is possible, and output <span class='math'>$\min(B(B+1)/2, a_N)$</span> as the answer.
+<p>For convenience, let&apos;s assume that the indices in the Bessie pile are in
+increasing order (<span class='math'>$1\le b_1 &lt; b_2 &lt; \dots &lt; b_B\le N$</span>) and similarly for the
+Helper pile (<span class='math'>$1\le h_1 &lt; h_2 &lt; \dots &lt; h_{N-B}\le N$</span>). Then the final array is
+defined by the following pseudocode.
+<p><pre>
+i_b = 0, i_h = 0
+index_seq = []
+repeat(N) {
+  if (i_h == N - B or (i_b &lt; B and sum(B - i_b, B) &lt;= a_{h_{i_h + 1}})) {
+    i_b += 1
+    index_seq.append(b_{i_b})
+  } else {
+    i_h += 1
+    index_seq.append(h_{i_h})
+  }
+}
+final_array = [a_i for i in index_seq]
+</pre>
+<p>Note that if <span class='math'>$\texttt{index_seq}=[1,2,\dots,N]$</span>, then the final array is sorted.
+The converse holds if all <span class='math'>$a_i$</span> are distinct, but not necessarily if there are
+duplicate <span class='math'>$a_i$</span>s. However, if we have a division producing a sorted final array
+but <span class='math'>$\texttt{index_seq}\neq [1,2,\dots,N]$</span>, there is always a way to modify the
+division such that the time to sort the array remains the same and
+<span class='math'>$\texttt{index_seq}= [1,2,\dots,N]$</span>. This is true because we can freely take any
+two indices <span class='math'>$b_i$</span> and <span class='math'>$h_j$</span> with <span class='math'>$a_{b_i}=a_{h_j}$</span> and exchange them, leaving
+the final array unchanged but potentially changing  <span class='math'>$\texttt{index_seq}$</span>. The
+details are left as an exercise to the reader.
+<p>For this subtask, we provide an <span class='math'>$O(N^2)$</span> to check whether a given <span class='math'>$B$</span> is
+possible. Given such a checking algorithm, we can iterate from <span class='math'>$B=1$</span> to <span class='math'>$B=N$</span> in
+increasing order and stop once we find <span class='math'>$B$</span> such that <span class='math'>$B$</span> is possible.
+<p>Checking whether a given <span class='math'>$B$</span> is possible can be done with dynamic programming. 
+Iterate over each index <span class='math'>$i$</span> in <span class='math'>$1\dots N$</span> and decide whether to add it to the 
+Bessie or the Helper pile. The only state we need to keep track of about the
+previous indices are how many of them are in the Bessie pile, and whether index
+<span class='math'>$i-1$</span> was added to the  Bessie or the Helper pile. Each state has up to two
+transitions out of it: either add <span class='math'>$i$</span> to the Bessie pile or the Helper pile, as
+long as <span class='math'>$i$</span> is added to <span class='math'>$\texttt{index_seq}$</span> after <span class='math'>$i-1$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+#define mp make_pair
+
+// sum(l ... r)
+int64_t arith(int64_t l, int64_t r) { return (l + r) * (r - l + 1) / 2; }
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin &gt;&gt; T;
+    while (T--) {
+        int N;
+        cin &gt;&gt; N;
+        vector&lt;int64_t&gt; A(N);
+        for (auto &amp;a : A) cin &gt;&gt; a;
+        sort(all(A));
+        auto possible = [&amp;](int B) {
+            const int H = N - B;
+            vector&lt;vector&lt;array&lt;bool, 2&gt;&gt;&gt; dp(
+                B + 1, vector&lt;array&lt;bool, 2&gt;&gt;(H + 1, {0, 0}));
+            // size of Bessie pile, Helper pile so far
+            // p: {0 -&gt; last was in Bessie pile, 1 -&gt; last was in Helper pile}
+            dp[0][0][0] = 1;
+            for (int b = 0; b &lt;= B; ++b)
+                for (int h = 0; h &lt;= H; ++h)
+                    for (int p : {0, 1})
+                        if (dp[b][h][p]) {
+                            // i = b + h + 1
+                            auto get_last = [&amp;]() {
+                                // time when i-1 was added to array
+                                // (tiebreaking by pile)
+                                return p == 0 ? mp(arith(B + 1 - b, B), 0)
+                                              : mp(A.at(b + h - 1), 1);
+                            };
+                            auto get_next_0 = [&amp;]() {
+                                // time when i will be added to array if in
+                                // Bessie pile
+                                return mp(arith(B - b, B), 0);
+                            };
+                            auto get_next_1 = [&amp;]() {
+                                // time when i will be added to array if in
+                                // Helper pile
+                                return mp(A.at(b + h), 1);
+                            };
+                            if (b &lt; B &amp;&amp; get_last() &lt;= get_next_0())
+                                dp[b + 1][h][0] = 1;
+                            if (h &lt; H &amp;&amp; get_last() &lt;= get_next_1())
+                                dp[b][h + 1][1] = 1;
+                        }
+            return dp.at(B).at(N - B).at(0);
+            // 0 -&gt; last element must be in Bessie pile
+        };
+        int B = 1;
+        while (!possible(B)) ++B;
+        cout &lt;&lt; min(arith(1, B), A.back()) &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p><strong>Subtask 3: <span class='math'>$O(N^2)$</span></strong>
+<p>We provide an <span class='math'>$O(N)$</span> time algorithm to check whether a given <span class='math'>$B$</span> is possible.
+<span class='math'>$B=N$</span> is always possible, so let&apos;s restrict consideration to the case <span class='math'>$B&lt;N$</span> (the
+Helper pile is nonempty). Note that for each index <span class='math'>$i$</span>, if we choose to place it
+in the Helper pile, then its position is uniquely determined regardless of what
+other indices we place in the Helper pile. Specifically, its position in the
+Helper pile must be 
+<div class='math'>$$pos_i=i-(\text{the number of integers in Bessie&apos;s pile that would be added before }a_i\text{ is added by a Helper})$$</div>
+in order for <span class='math'>$i$</span> to be the <span class='math'>$i$</span>th index added to <span class='math'>$\texttt{index_seq}$</span>. Then <span class='math'>$B$</span>
+is possible iff there exist indices <span class='math'>$1\le h_1&lt;h_2&lt;\dots &lt; h_{N-B} &lt; N$</span> such that
+<span class='math'>$pos_{h_1}=1, pos_{h_2}=2, \dots, pos_{h_{N-B}}=N-B$</span>. We can compute <span class='math'>$pos_i$</span> in
+increasing order of <span class='math'>$i$</span> in <span class='math'>$O(N)$</span> with two pointers.
+<p>Additional observations: <span class='math'>$pos_1\le 1$</span> and <span class='math'>$pos_{i+1}\le pos_i+1$</span>. So actually
+there exist such indices if and only if there exists some <span class='math'>$1\le i&lt;N$</span> with
+<span class='math'>$pos_i=N-B$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+#define mp make_pair
+
+// sum(l ... r)
+int64_t arith(int64_t l, int64_t r) { return (l + r) * (r - l + 1) / 2; }
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin &gt;&gt; T;
+    while (T--) {
+        int N;
+        cin &gt;&gt; N;
+        vector&lt;int64_t&gt; A(N);
+        for (auto &amp;a : A) cin &gt;&gt; a;
+        sort(all(A));
+        auto possible = [&amp;](int B) {
+            if (B == N) return true;
+            int num_before = 0;
+            for (int i = 0; i + 1 &lt; N; ++i) {
+                while (num_before &lt; B &amp;&amp; arith(B - num_before, B) &lt;= A[i])
+                    ++num_before;
+                if (i + 1 - num_before == N - B)
+                    return true;  // found potential last element of Helper pile
+            }
+            return false;
+        };
+        int B = 1;
+        while (!possible(B)) ++B;
+        cout &lt;&lt; min(arith(1, B), A.back()) &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p><strong>Full Credit: <span class='math'>$O(N\log N)$</span></strong>
+<p>We claim that if <span class='math'>$B&lt;N$</span> and <span class='math'>$B$</span> is possible, then <span class='math'>$B+1$</span> is also possible. 
+<ol><li>This holds when <span class='math'>$B=N-1$</span>, since <span class='math'>$B=N$</span> is always possible.</li><li>Otherwise, from subtask 3 we have that <span class='math'>$B$</span> is possible if and only if there
+exists some <span class='math'>$1\le i&lt;N$</span> with <span class='math'>$pos_i\ge N-B$</span> (such <span class='math'>$i$</span> immediately implies the
+existence of <span class='math'>$j$</span> such that <span class='math'>$pos_j=N-B$</span>). If <span class='math'>$B$</span> is possible, take any index
+<span class='math'>$i\in [1,N)$</span> such that the inequality <span class='math'>$pos_i\ge N-B$</span> is satisfied. Then if <span class='math'>$B$</span>
+increases by one, the right-hand side decreases, the left-hand side of this
+inequality stays the same or increases,  which means that this inequality will
+still be satisfied.  Thus, <span class='math'>$B+1$</span> is also possible.
+<p>Note: To see this fact about the left-hand side, let <span class='math'>$n_i\in [0,B)$</span> be the value
+of the subtrahend in <span class='math'>$pos_i$</span> for <span class='math'>$B$</span>. Then the <span class='math'>$n_i+1$</span>-st index in Bessie&apos;s pile
+must be added after time <span class='math'>$a_i$</span>. If <span class='math'>$B$</span> increases by one, then the <span class='math'>$n_i+1$</span>-st
+index in Bessie&apos;s pile must still be added after time <span class='math'>$a_i$</span>, since the time it
+is added increases.
+</li></ol>
+<p>So we can binary search to find the first possible <span class='math'>$B$</span>, reducing the number of
+<span class='math'>$B$</span> we need to check to <span class='math'>$O(\log N)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+#define mp make_pair
+
+// sum(l ... r)
+int64_t arith(int64_t l, int64_t r) { return (l + r) * (r - l + 1) / 2; }
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin &gt;&gt; T;
+    while (T--) {
+        int N;
+        cin &gt;&gt; N;
+        vector&lt;int64_t&gt; A(N);
+        for (auto &amp;a : A) cin &gt;&gt; a;
+        sort(all(A));
+        auto possible = [&amp;](int B) {
+            if (B == N) return true;
+            int num_before = 0;
+            for (int i = 0; i + 1 &lt; N; ++i) {
+                while (num_before &lt; B &amp;&amp; arith(B - num_before, B) &lt;= A[i])
+                    ++num_before;
+                if (i + 1 - num_before == N - B)
+                    // found potential last element of Helper pile
+                    return true;
+            }
+            return false;
+        };
+        int lo = 1, hi = N;
+        while (lo &lt; hi) {
+            int mid = (lo + hi) / 2;
+            if (possible(mid)) hi = mid;
+            else lo = mid + 1;
+        }
+        cout &lt;&lt; min(arith(1, lo), A.back()) &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p></body></html>

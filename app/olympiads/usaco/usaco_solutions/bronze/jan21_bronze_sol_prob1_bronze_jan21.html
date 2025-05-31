@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>The minimum number of times Bessie must have hummed the cowphabet for a string of
+length <span class='math'>$N$</span> is at most <span class='math'>$N$</span> - we can just map the <span class='math'>$i$</span>th letter that Farmer John
+heard to the <span class='math'>$i$</span>th iteration that Bessie hummed.
+<p>Because of this, we can naively try to see if it is possible to hum the cowphabet
+once to get Bessie&apos;s hummed string. If not, then we see if it&apos;s possible if
+Bessie hummed it twice, then three times, and so on.
+<p>How do we validate that it is possible to hum the cowphabet <span class='math'>$K$</span> times to get the
+string that Farmer John heard? Consider the very first character that Bessie
+hummed. Does it match the first character that Farmer John heard? If not, then
+Farmer John must have ignored it, and we can discard this character.
+<p>What happens if the two characters match? It seems that we have a choice to
+make, whether Farmer John might have missed this character in favor of a later
+one, or if Farmer John actually heard this character. We claim that if Farmer
+John could have heard the string that Bessie hummed, then it must be possible
+for Farmer John to have heard this specific character. If Farmer John could have
+heard the string without using this specific character, then the first character
+that Farmer John heard must have come strictly later. However, if that is the
+case, then we can safely replace that character with this one.
+<p>Therefore, if two characters match, we can assert that Farmer John heard it, and
+then advance the character that Farmer John expects to hear to the next
+character.
+<p>Some people may recognize this problem as the classical problem of determining
+if one string is a subsequence of another string.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+ 
+int main() {
+  std::string alphabet, s;
+  std::cin &gt;&gt; alphabet &gt;&gt; s;
+  std::string hummed = &quot;&quot;;
+  for(int numHums = 1; true; numHums++) {
+    hummed += alphabet;
+    int idx = 0;
+    for(int i = 0; i &lt; hummed.size() &amp;&amp; idx &lt; s.size(); i++) {
+      if(hummed[i] == s[idx]) {
+        idx++;
+      }
+    }
+    if(idx == s.size()) {
+      std::cout &lt;&lt; numHums &lt;&lt; &quot;\n&quot;;
+      return 0;
+    }
+  }
+}
+</pre>
+<p>Can we do better than trying to brute force for the answer?
+<p>If we consider two adjacent letters that Bessie hums, they can only be in the
+same iteration of the cowphabet if the latter character comes after the former
+character in the cowphabet. This lets us come up with a very short solution -
+notably, we can count the number of times a letter is not after the letter that
+immediately was heard before it in the cowphabet, and then the answer is just one
+larger than the number of times this inversion is observed.
+<p><pre class='prettyprint'>
+alphabet, hum = input(), input()
+print(1 + sum([alphabet.find(hum[i+1]) &lt;= alphabet.find(hum[i]) for i in range(len(hum)-1)]))
+</pre>
+<p></body></html>

@@ -1,0 +1,788 @@
+Solution ID: sol_prob3_platinum_jan21
+Contest: JAN21
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_jan21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Andi Qu, Benjamin Qi, Danny Mittal)
+
+For any subrectangle we can construct a graph where there exists an edge
+separating two cells if they are of different colors. For example, the graph for
+
+AAB
+BBA
+BBB
+
+would be
+
+._._._.
+|   | |
+._._._.
+|   | |
+. . ._.
+|     |
+._._._.
+
+The main idea is to use
+
+Euler's formula
+
+for
+planar graphs. This equation states that
+
+$F = E - V + C + 1$
+
+, where
+
+$F\implies$
+
+# of faces
+
+$E\implies$
+
+# of edges
+
+$V\implies$
+
+# of vertices
+
+$C\implies$
+
+# of connected components
+
+So in the above example,
+
+$F=4+1=5,$
+
+where
+
+$1$
+
+comes from the face consisting of everything outside of
+the subrectangle.
+
+$E=18,$
+
+the total number of cell borders (horizontal and vertical unit
+segments).
+
+$V=4\cdot 4=16,$
+
+one for each cell corner (dot).
+
+$C=2,$
+
+one for the vertex that has no edges coming out of it and one for the
+remaining vertices.
+
+So the answer for each candidate is just
+
+$E - V + C.$
+
+$V$
+
+depends only on the
+dimensions of the subrectangle, and
+
+$E$
+
+can be found in
+
+$O(1)$
+
+time using prefix
+sums. The main challenge is finding
+
+$C$
+
+, the number of connected components
+completely inside the subrectangle (plus one for the component corresponding to
+the border).
+
+We can use the same concept as
+
+Romanian
+IOI Selection 2017 "Rooms"
+
+, which was the inspiration for this problem. For 
+each component, call its topmost vertex "special". Then the number of special
+vertices that lie strictly within the border of the subrectangle is a good
+approximation for the number of components completely inside the subrectangle,
+and can also be computed via prefix sums.
+
+However, it is possible that a component does not lie completely within the 
+subrectangle but its special vertex does, leading to an overcount. Notice that 
+such components must have at least one vertex on the border of the 
+subrectangle, so simply traverse the border of the subrectangle and delete all
+such components from the count. This solution takes
+
+$\mathcal{O}(MN + Q(M + N))$
+
+time in total.
+
+/*
+Paint by Letters
+Andi Qu
+- F = E - V + C + 1
+- Every corner of a cell is a node
+- Every side of a cell is an edge if it is between 2 different colours
+- DFS to find connected components
+- To check if a component is completely inside a query rectangle, traverse
+  the perimeter of the rectangle
+- Complexity: O(MN + Q(M + N))
+*/
+ 
+#include <bits/stdc++.h>
+#define FOR(i, x, y) for (int i = x; i < y; i++)
+using namespace std;
+ 
+int n, m, q;
+ 
+char grid[2001][2001];
+pair<int, int> special[2002][2002], d[4]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+int s_pref[2002][2002], v_pref[2002][2002], h_pref[2002][2002];
+bool deleted[2002][2002];
+ 
+bool inside(int x, int y, int nx, int ny) {
+    if (!(~nx && ~ny && nx <= n + 1 && ny <= m + 1)) return false;
+    if (nx == x + 1) return grid[x][y] != grid[x][y - 1];
+    if (nx == x - 1) return grid[nx][y] != grid[nx][y - 1];
+    if (ny == y + 1) return grid[x][y] != grid[x - 1][y];
+    return grid[x][ny] != grid[x - 1][ny];
+}
+ 
+bool outside(int x, int y, int x1, int y1, int x2, int y2) {
+    int a = special[x][y].first, b = special[x][y].second;
+    if (a > x1 && a <= x2 && b > y1 && b <= y2 && !deleted[a][b]) {
+        deleted[a][b] = true;
+        return true;
+    }
+    return false;
+}
+ 
+void deactivate(int x, int y) {
+    int a = special[x][y].first, b = special[x][y].second;
+    deleted[a][b] = false;
+}
+ 
+void dfs(int x, int y) {
+    FOR(i, 0, 4) {
+        int nx = x + d[i].first, ny = y + d[i].second;
+        if (inside(x, y, nx, ny)) {
+            if (nx == x + 1) v_pref[x][y] = 1;
+            else if (nx == x - 1) v_pref[nx][y] = 1;
+            else if (ny == y + 1) h_pref[x][y] = 1;
+            else h_pref[x][ny] = 1;
+ 
+            if (!special[nx][ny].first) {
+                special[nx][ny] = special[x][y];
+                dfs(nx, ny);
+            }
+        }
+    }
+}
+ 
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    // freopen("paint.in", "r", stdin);
+    // freopen("paint.out", "w", stdout);
+ 
+    cin >> n >> m >> q;
+    FOR(i, 1, n + 1) FOR(j, 1, m + 1) cin >> grid[i][j];
+    FOR(i, 1, n + 2) FOR(j, 1, m + 2) if (!special[i][j].first) {
+        s_pref[i][j] = 1;
+        special[i][j] = {i, j};
+        dfs(i, j);
+    }
+    FOR(i, 1, n + 2) FOR(j, 1, m + 2) {
+        s_pref[i][j] += s_pref[i - 1][j] + s_pref[i][j - 1] - s_pref[i - 1][j - 1];
+        v_pref[i][j] += v_pref[i - 1][j] + v_pref[i][j - 1] - v_pref[i - 1][j - 1];
+        h_pref[i][j] += h_pref[i - 1][j] + h_pref[i][j - 1] - h_pref[i - 1][j - 1];
+    }
+ 
+    while (q--) {
+        int x1, x2, y1, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+        if (x1 > x2) swap(x1, x2);
+        if (y1 > y2) swap(y1, y2);
+ 
+        int E = v_pref[x2][y2] - v_pref[x2][y1] - v_pref[x1 - 1][y2] + v_pref[x1 - 1][y1] +
+                h_pref[x2][y2] - h_pref[x2][y1 - 1] - h_pref[x1][y2] + h_pref[x1][y1 - 1];
+        int V = (x2 - x1) * (y2 - y1);
+        int C = s_pref[x2][y2] - s_pref[x2][y1] - s_pref[x1][y2] + s_pref[x1][y1];
+ 
+        // Delete connected components not entirely inside the query rectangle
+        FOR(i, x1, x2 + 2) {
+            if (outside(i, y2 + 1, x1, y1, x2, y2)) C--;
+            if (outside(i, y1, x1, y1, x2, y2)) C--;
+        }
+        FOR(i, y1, y2 + 2) {
+            if (outside(x2 + 1, i, x1, y1, x2, y2)) C--;
+            if (outside(x1, i, x1, y1, x2, y2)) C--;
+        }
+        FOR(i, x1, x2 + 2) {
+            deactivate(i, y2 + 1);
+            deactivate(i, y1);
+        }
+        FOR(i, y1, y2 + 2) {
+            deactivate(x2 + 1, i);
+            deactivate(x1, i);
+        }
+ 
+        cout << E - V + C + 1 << '\n';
+    }
+    return 0;
+}
+
+A similar approach involves treating cells as vertices, two adjacent cells of
+the same color as an edge, and a cycle of a single color (as described in the
+problem statement) which contains no smaller cycles as a face. Then we can use
+Euler's formula to count the number of connected components (
+
+$V-E+F$
+
+). Partial
+credit corresponded to no faces, faces of a single type (a
+
+$2\times 2$
+
+square of
+a single color), and faces of two types  (in addition to the one previously
+mentioned, a
+
+$3\times 3$
+
+square with the border of a  single color and the
+center square of a different color).
+
+Some additional problems for which you can use Euler's formula can be found
+
+here.
+
+A completely different approach is to simply optimize the naive
+brute-force-every-query approach by using a two dimensional segment tree. To
+build the segment tree, in each two dimensional "segment", we use either DFS or
+union find to determine its connected components, and then store the number of
+components along with the connected component that each cell on the segment's
+boundary belongs to. This takes
+
+$O(MN(\log M + \log N))$
+
+if implemented
+properly.
+
+To answer queries, we find the corresponding segments, summing the amount of
+components in each one, and then merge them along their boundaries (again using
+either DFS or union find), subtracting 1 from our result each time two
+components become connected. This takes
+
+$O(M\log N + N\log M)$
+
+per query,
+yielding an overall runtime of
+
+$O(MN(\log M + \log N) + Q(M\log N + N\log M))$
+
+,
+or simply
+
+$O(N^2\log N + QN\log N)$
+
+when
+
+$M = N$
+
+.
+
+Note that the above complexities should be multiplied by
+
+$\alpha(N)$
+
+when using
+union find, though in practice union find is faster than DFS for the given
+constraints.
+
+The time and memory limits were raised to allow such solutions to pass (though
+depending on your implementation, you might need to spend some time optimizing
+the constant factor).
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class PaintByLettersPlatinum2 {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        int q = Integer.parseInt(tokenizer.nextToken());
+        char[][] canvas = new char[n + 1][];
+        for (int y = 1; y <= n; y++) {
+            canvas[y] = (" " + in.readLine()).toCharArray();
+        }
+        SegmentTree segTree = new SegmentTree(n, m, canvas);
+        StringBuilder out = new StringBuilder();
+        for (int t = 1; t <= q; t++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int y1 = Integer.parseInt(tokenizer.nextToken());
+            int x1 = Integer.parseInt(tokenizer.nextToken());
+            int y2 = Integer.parseInt(tokenizer.nextToken());
+            int x2 = Integer.parseInt(tokenizer.nextToken());
+            out.append(segTree.query(y1, y2, x1, x2)).append('\n');
+        }
+        System.out.print(out);
+    }
+ 
+    static class SegmentTree {
+        static final int LIMIT = 512;
+        
+        final int n;
+        final int m;
+        final char[][] canvas;
+        final int[][][] top = new int[LIMIT][LIMIT][];
+        final int[][][] bottom = new int[LIMIT][LIMIT][];
+        final int[][][] left = new int[LIMIT][LIMIT][];
+        final int[][][] right = new int[LIMIT][LIMIT][];
+        final int[][] amt = new int[LIMIT][LIMIT];
+        final int[][] component;
+        final int[] seen;
+        final int[] union;
+        int t = 0;
+        int res = 0;
+ 
+        int find(int u) {
+            if (seen[u] < t) {
+                seen[u] = t;
+                union[u] = u;
+            } else if (union[union[u]] != union[u]) {
+                union[u] = find(union[u]);
+            }
+            return union[u];
+        }
+ 
+        void merge(int u, int v) {
+            u = find(u);
+            v = find(v);
+            if (u != v) {
+                union[u] = v;
+                res--;
+            }
+        }
+ 
+        SegmentTree(int n, int m, char[][] canvas) {
+            this.n = n;
+            this.m = m;
+            this.canvas = canvas;
+            this.component = new int[n + 1][m + 1];
+            this.seen = new int[(n * m) + m + 1];
+            this.union = new int[(n * m) + m + 1];
+            construct(1, 1, n);
+        }
+ 
+        void construct(int nodeY, int segFromY, int segToY) {
+            if (segFromY != segToY) {
+                int mid = (segFromY + segToY) / 2;
+                construct(2 * nodeY, segFromY, mid);
+                construct((2 * nodeY) + 1, mid + 1, segToY);
+            }
+            construct(nodeY, segFromY, segToY, 1, 1, m);
+        }
+ 
+        void construct(int nodeY, int segFromY, int segToY, int nodeX, int segFromX, int segToX) {
+            if (segFromX != segToX) {
+                int mid = (segFromX + segToX) / 2;
+                construct(nodeY, segFromY, segToY, 2 * nodeX, segFromX, mid);
+                construct(nodeY, segFromY, segToY, (2 * nodeX) + 1, mid + 1, segToX);
+            }
+            if (nodeY < LIMIT && nodeX < LIMIT) {
+                t++;
+                if ((segFromX == segToX || 2 * nodeX >= LIMIT) && (segFromY == segToY || 2 * nodeY >= LIMIT)) {
+                    res = (segToY - segFromY + 1) * (segToX - segFromX + 1);
+                    for (int y = segFromY; y <= segToY; y++) {
+                        for (int x = segFromX; x <= segToX; x++) {
+                            int c = (y * m) + x;
+                            if (y > segFromY && canvas[y - 1][x] == canvas[y][x]) {
+                                merge(c, c - m);
+                            }
+                            if (x > segFromX && canvas[y][x - 1] == canvas[y][x]) {
+                                merge(c, c - 1);
+                            }
+                        }
+                    }
+                    amt[nodeY][nodeX] = res;
+                    top[nodeY][nodeX] = new int[segToX - segFromX + 1];
+                    bottom[nodeY][nodeX] = new int[segToX - segFromX + 1];
+                    for (int x = segFromX; x <= segToX; x++) {
+                        top[nodeY][nodeX][x - segFromX] = find((segFromY * m) + x);
+                        bottom[nodeY][nodeX][x - segFromX] = find((segToY * m) + x);
+                    }
+                    left[nodeY][nodeX] = new int[segToY - segFromY + 1];
+                    right[nodeY][nodeX] = new int[segToY - segFromY + 1];
+                    for (int y = segFromY; y <= segToY; y++) {
+                        left[nodeY][nodeX][y - segFromY] = find((y * m) + segFromX);
+                        right[nodeY][nodeX][y - segFromY] = find((y * m) + segToX);
+                    }
+                } else if (segFromY == segToY || 2 * nodeY >= LIMIT) {
+                    res = amt[nodeY][2 * nodeX] + amt[nodeY][(2 * nodeX) + 1];
+                    int mid = (segFromX + segToX) / 2;
+                    for (int y = segFromY; y <= segToY; y++) {
+                        if (canvas[y][mid] == canvas[y][mid + 1]) {
+                            merge(right[nodeY][2 * nodeX][y - segFromY], left[nodeY][(2 * nodeX) + 1][y - segFromY]);
+                        }
+                    }
+                    amt[nodeY][nodeX] = res;
+                    left[nodeY][nodeX] = new int[segToY - segFromY + 1];
+                    right[nodeY][nodeX] = new int[segToY - segFromY + 1];
+                    for (int y = segFromY; y <= segToY; y++) {
+                        left[nodeY][nodeX][y - segFromY] = find(left[nodeY][2 * nodeX][y - segFromY]);
+                        right[nodeY][nodeX][y - segFromY] = find(right[nodeY][(2 * nodeX) + 1][y - segFromY]);
+                    }
+                    top[nodeY][nodeX] = new int[segToX - segFromX + 1];
+                    bottom[nodeY][nodeX] = new int[segToX - segFromX + 1];
+                    for (int x = segFromX; x <= segToX; x++) {
+                        if (x <= mid) {
+                            top[nodeY][nodeX][x - segFromX] = find(top[nodeY][2 * nodeX][x - segFromX]);
+                            bottom[nodeY][nodeX][x - segFromX] = find(bottom[nodeY][2 * nodeX][x - segFromX]);
+                        } else {
+                            top[nodeY][nodeX][x - segFromX] = find(top[nodeY][(2 * nodeX) + 1][x - mid - 1]);
+                            bottom[nodeY][nodeX][x - segFromX] = find(bottom[nodeY][(2 * nodeX) + 1][x - mid - 1]);
+                        }
+                    }
+                } else {
+                    res = amt[2 * nodeY][nodeX] + amt[(2 * nodeY) + 1][nodeX];
+                    int mid = (segFromY + segToY) / 2;
+                    for (int x = segFromX; x <= segToX; x++) {
+                        if (canvas[mid][x] == canvas[mid + 1][x]) {
+                            merge(bottom[2 * nodeY][nodeX][x - segFromX], top[(2 * nodeY) + 1][nodeX][x - segFromX]);
+                        }
+                    }
+                    amt[nodeY][nodeX] = res;
+                    top[nodeY][nodeX] = new int[segToX - segFromX + 1];
+                    bottom[nodeY][nodeX] = new int[segToX - segFromX + 1];
+                    for (int x = segFromX; x <= segToX; x++) {
+                        top[nodeY][nodeX][x - segFromX] = find(top[2 * nodeY][nodeX][x - segFromX]);
+                        bottom[nodeY][nodeX][x - segFromX] = find(bottom[(2 * nodeY) + 1][nodeX][x - segFromX]);
+                    }
+                    left[nodeY][nodeX] = new int[segToY - segFromY + 1];
+                    right[nodeY][nodeX] = new int[segToY - segFromY + 1];
+                    for (int y = segFromY; y <= segToY; y++) {
+                        if (y <= mid) {
+                            left[nodeY][nodeX][y - segFromY] = find(left[2 * nodeY][nodeX][y - segFromY]);
+                            right[nodeY][nodeX][y - segFromY] = find(right[2 * nodeY][nodeX][y - segFromY]);
+                        } else {
+                            left[nodeY][nodeX][y - segFromY] = find(left[(2 * nodeY) + 1][nodeX][y - mid - 1]);
+                            right[nodeY][nodeX][y - segFromY] = find(right[(2 * nodeY) + 1][nodeX][y - mid - 1]);
+                        }
+                    }
+                }
+            }
+        }
+ 
+        int query(int fromY, int toY, int fromX, int toX) {
+            t++;
+            res = 0;
+            query(fromY, toY, fromX, toX, 1, 1, n);
+            return res;
+        }
+ 
+        void query(int fromY, int toY, int fromX, int toX, int nodeY, int segFromY, int segToY) {
+            if (segFromY > toY || segToY < fromY) {
+ 
+            } else if (fromY <= segFromY && segToY <= toY) {
+                query(fromY, toY, fromX, toX, nodeY, segFromY, segToY, 1, 1, m);
+            } else {
+                int mid = (segFromY + segToY) / 2;
+                query(fromY, toY, fromX, toX, 2 * nodeY, segFromY, mid);
+                query(fromY, toY, fromX, toX, (2 * nodeY) + 1, mid + 1, segToY);
+            }
+        }
+ 
+        void query(int fromY, int toY, int fromX, int toX, int nodeY, int segFromY, int segToY, int nodeX, int segFromX, int segToX) {
+            if (segFromX > toX || segToX < fromX) {
+ 
+            } else if (fromX <= segFromX && segToX <= toX) {
+                if (nodeY < LIMIT && nodeX < LIMIT) {
+                    for (int x = segFromX; x <= segToX; x++) {
+                        int c = top[nodeY][nodeX][x - segFromX];
+                        if (segFromY > fromY && canvas[segFromY - 1][x] == canvas[segFromY][x]) {
+                            merge(c, component[segFromY - 1][x]);
+                        }
+                    }
+                    for (int x = segFromX; x <= segToX; x++) {
+                        int c = bottom[nodeY][nodeX][x - segFromX];
+                        component[segToY][x] = c;
+                    }
+                    for (int y = segFromY; y <= segToY; y++) {
+                        int c = left[nodeY][nodeX][y - segFromY];
+                        if (segFromX > fromX && canvas[y][segFromX - 1] == canvas[y][segFromX]) {
+                            merge(c, component[y][segFromX - 1]);
+                        }
+                    }
+                    for (int y = segFromY; y <= segToY; y++) {
+                        int c = right[nodeY][nodeX][y - segFromY];
+                        component[y][segToX] = c;
+                    }
+                    res += amt[nodeY][nodeX];
+                } else {
+                    for (int y = segFromY; y <= segToY; y++) {
+                        for (int x = segFromX; x <= segToX; x++) {
+                            int c = (y * m) + x;
+                            component[y][x] = c;
+                            if (y > fromY && canvas[y - 1][x] == canvas[y][x]) {
+                                merge(c, component[y - 1][x]);
+                            }
+                            if (x > fromX && canvas[y][x - 1] == canvas[y][x]) {
+                                merge(c, component[y][x - 1]);
+                            }
+                        }
+                    }
+                    res += (segToY - segFromY + 1) * (segToX - segFromX + 1);
+                }
+            } else {
+                int mid = (segFromX + segToX) / 2;
+                query(fromY, toY, fromX, toX, nodeY, segFromY, segToY, 2 * nodeX, segFromX, mid);
+                query(fromY, toY, fromX, toX, nodeY, segFromY, segToY, (2 * nodeX) + 1, mid + 1, segToX);
+            }
+        }
+    }
+}
+
+In C++:
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+struct SegmentTree {
+    static const int LIMIT = 512;
+    
+    int n;
+    int m;
+    vector<string> canvas;
+    vector<int> top[LIMIT][LIMIT];
+    vector<int> bottom[LIMIT][LIMIT];
+    vector<int> left[LIMIT][LIMIT];
+    vector<int> right[LIMIT][LIMIT];
+    int amt[LIMIT][LIMIT];
+    int component[1001][1001];
+    vector<int> seen, uni;
+    int t = 0;
+    int res = 0;
+ 
+    int find(int u) {
+        if (seen[u] < t) {
+            seen[u] = t;
+            uni[u] = u;
+        } else if (uni[uni[u]] != uni[u]) {
+            uni[u] = find(uni[u]);
+        }
+        return uni[u];
+    }
+ 
+    void merge(int u, int v) {
+        u = find(u);
+        v = find(v);
+        if (u != v) {
+            uni[u] = v;
+            res--;
+        }
+    }
+ 
+    SegmentTree(int n, int m, vector<string> canvas) {
+        this->n = n;
+        this->m = m;
+        this->canvas = canvas;
+        seen = uni = vector<int>((n * m) + m + 1);
+        construct(1, 1, n);
+    }
+ 
+    void construct(int nodeY, int segFromY, int segToY) {
+        if (segFromY != segToY) {
+            int mid = (segFromY + segToY) / 2;
+            construct(2 * nodeY, segFromY, mid);
+            construct((2 * nodeY) + 1, mid + 1, segToY);
+        }
+        construct(nodeY, segFromY, segToY, 1, 1, m);
+    }
+ 
+    void construct(int nodeY, int segFromY, int segToY, int nodeX, int segFromX, int segToX) {
+        if (segFromX != segToX) {
+            int mid = (segFromX + segToX) / 2;
+            construct(nodeY, segFromY, segToY, 2 * nodeX, segFromX, mid);
+            construct(nodeY, segFromY, segToY, (2 * nodeX) + 1, mid + 1, segToX);
+        }
+        if (nodeY < LIMIT && nodeX < LIMIT) {
+            t++;
+            if ((segFromX == segToX || 2 * nodeX >= LIMIT) && (segFromY == segToY || 2 * nodeY >= LIMIT)) {
+                res = (segToY - segFromY + 1) * (segToX - segFromX + 1);
+                for (int y = segFromY; y <= segToY; y++) {
+                    for (int x = segFromX; x <= segToX; x++) {
+                        int c = (y * m) + x;
+                        if (y > segFromY && canvas[y - 1][x] == canvas[y][x]) {
+                            merge(c, c - m);
+                        }
+                        if (x > segFromX && canvas[y][x - 1] == canvas[y][x]) {
+                            merge(c, c - 1);
+                        }
+                    }
+                }
+                amt[nodeY][nodeX] = res;
+                top[nodeY][nodeX] = vector<int>(segToX - segFromX + 1);
+                bottom[nodeY][nodeX] = vector<int>(segToX - segFromX + 1);
+                for (int x = segFromX; x <= segToX; x++) {
+                    top[nodeY][nodeX][x - segFromX] = find((segFromY * m) + x);
+                    bottom[nodeY][nodeX][x - segFromX] = find((segToY * m) + x);
+                }
+                left[nodeY][nodeX] = vector<int>(segToY - segFromY + 1);
+                right[nodeY][nodeX] = vector<int>(segToY - segFromY + 1);
+                for (int y = segFromY; y <= segToY; y++) {
+                    left[nodeY][nodeX][y - segFromY] = find((y * m) + segFromX);
+                    right[nodeY][nodeX][y - segFromY] = find((y * m) + segToX);
+                }
+            } else if (segFromY == segToY || 2 * nodeY >= LIMIT) {
+                res = amt[nodeY][2 * nodeX] + amt[nodeY][(2 * nodeX) + 1];
+                int mid = (segFromX + segToX) / 2;
+                for (int y = segFromY; y <= segToY; y++) {
+                    if (canvas[y][mid] == canvas[y][mid + 1]) {
+                        merge(right[nodeY][2 * nodeX][y - segFromY], left[nodeY][(2 * nodeX) + 1][y - segFromY]);
+                    }
+                }
+                amt[nodeY][nodeX] = res;
+                left[nodeY][nodeX] = vector<int>(segToY - segFromY + 1);
+                right[nodeY][nodeX] = vector<int>(segToY - segFromY + 1);
+                for (int y = segFromY; y <= segToY; y++) {
+                    left[nodeY][nodeX][y - segFromY] = find(left[nodeY][2 * nodeX][y - segFromY]);
+                    right[nodeY][nodeX][y - segFromY] = find(right[nodeY][(2 * nodeX) + 1][y - segFromY]);
+                }
+                top[nodeY][nodeX] = vector<int>(segToX - segFromX + 1);
+                bottom[nodeY][nodeX] = vector<int>(segToX - segFromX + 1);
+                for (int x = segFromX; x <= segToX; x++) {
+                    if (x <= mid) {
+                        top[nodeY][nodeX][x - segFromX] = find(top[nodeY][2 * nodeX][x - segFromX]);
+                        bottom[nodeY][nodeX][x - segFromX] = find(bottom[nodeY][2 * nodeX][x - segFromX]);
+                    } else {
+                        top[nodeY][nodeX][x - segFromX] = find(top[nodeY][(2 * nodeX) + 1][x - mid - 1]);
+                        bottom[nodeY][nodeX][x - segFromX] = find(bottom[nodeY][(2 * nodeX) + 1][x - mid - 1]);
+                    }
+                }
+            } else {
+                res = amt[2 * nodeY][nodeX] + amt[(2 * nodeY) + 1][nodeX];
+                int mid = (segFromY + segToY) / 2;
+                for (int x = segFromX; x <= segToX; x++) {
+                    if (canvas[mid][x] == canvas[mid + 1][x]) {
+                        merge(bottom[2 * nodeY][nodeX][x - segFromX], top[(2 * nodeY) + 1][nodeX][x - segFromX]);
+                    }
+                }
+                amt[nodeY][nodeX] = res;
+                top[nodeY][nodeX] = vector<int>(segToX - segFromX + 1);
+                bottom[nodeY][nodeX] = vector<int>(segToX - segFromX + 1);
+                for (int x = segFromX; x <= segToX; x++) {
+                    top[nodeY][nodeX][x - segFromX] = find(top[2 * nodeY][nodeX][x - segFromX]);
+                    bottom[nodeY][nodeX][x - segFromX] = find(bottom[(2 * nodeY) + 1][nodeX][x - segFromX]);
+                }
+                left[nodeY][nodeX] = vector<int>(segToY - segFromY + 1);
+                right[nodeY][nodeX] = vector<int>(segToY - segFromY + 1);
+                for (int y = segFromY; y <= segToY; y++) {
+                    if (y <= mid) {
+                        left[nodeY][nodeX][y - segFromY] = find(left[2 * nodeY][nodeX][y - segFromY]);
+                        right[nodeY][nodeX][y - segFromY] = find(right[2 * nodeY][nodeX][y - segFromY]);
+                    } else {
+                        left[nodeY][nodeX][y - segFromY] = find(left[(2 * nodeY) + 1][nodeX][y - mid - 1]);
+                        right[nodeY][nodeX][y - segFromY] = find(right[(2 * nodeY) + 1][nodeX][y - mid - 1]);
+                    }
+                }
+            }
+        }
+    }
+ 
+    int query(int fromY, int toY, int fromX, int toX) {
+        t++;
+        res = 0;
+        query(fromY, toY, fromX, toX, 1, 1, n);
+        return res;
+    }
+ 
+    void query(int fromY, int toY, int fromX, int toX, int nodeY, int segFromY, int segToY) {
+        if (segFromY > toY || segToY < fromY) {
+ 
+        } else if (fromY <= segFromY && segToY <= toY) {
+            query(fromY, toY, fromX, toX, nodeY, segFromY, segToY, 1, 1, m);
+        } else {
+            int mid = (segFromY + segToY) / 2;
+            query(fromY, toY, fromX, toX, 2 * nodeY, segFromY, mid);
+            query(fromY, toY, fromX, toX, (2 * nodeY) + 1, mid + 1, segToY);
+        }
+    }
+ 
+    void query(int fromY, int toY, int fromX, int toX, int nodeY, int segFromY, int segToY, int nodeX, int segFromX, int segToX) {
+        if (segFromX > toX || segToX < fromX) {
+ 
+        } else if (fromX <= segFromX && segToX <= toX) {
+            if (nodeY < LIMIT && nodeX < LIMIT) {
+                for (int x = segFromX; x <= segToX; x++) {
+                    int c = top[nodeY][nodeX][x - segFromX];
+                    if (segFromY > fromY && canvas[segFromY - 1][x] == canvas[segFromY][x]) {
+                        merge(c, component[segFromY - 1][x]);
+                    }
+                }
+                for (int x = segFromX; x <= segToX; x++) {
+                    int c = bottom[nodeY][nodeX][x - segFromX];
+                    component[segToY][x] = c;
+                }
+                for (int y = segFromY; y <= segToY; y++) {
+                    int c = left[nodeY][nodeX][y - segFromY];
+                    if (segFromX > fromX && canvas[y][segFromX - 1] == canvas[y][segFromX]) {
+                        merge(c, component[y][segFromX - 1]);
+                    }
+                }
+                for (int y = segFromY; y <= segToY; y++) {
+                    int c = right[nodeY][nodeX][y - segFromY];
+                    component[y][segToX] = c;
+                }
+                res += amt[nodeY][nodeX];
+            } else {
+                for (int y = segFromY; y <= segToY; y++) {
+                    for (int x = segFromX; x <= segToX; x++) {
+                        int c = (y * m) + x;
+                        component[y][x] = c;
+                        if (y > fromY && canvas[y - 1][x] == canvas[y][x]) {
+                            merge(c, component[y - 1][x]);
+                        }
+                        if (x > fromX && canvas[y][x - 1] == canvas[y][x]) {
+                            merge(c, component[y][x - 1]);
+                        }
+                    }
+                }
+                res += (segToY - segFromY + 1) * (segToX - segFromX + 1);
+            }
+        } else {
+            int mid = (segFromX + segToX) / 2;
+            query(fromY, toY, fromX, toX, nodeY, segFromY, segToY, 2 * nodeX, segFromX, mid);
+            query(fromY, toY, fromX, toX, nodeY, segFromY, segToY, (2 * nodeX) + 1, mid + 1, segToX);
+        }
+    }
+};
+ 
+ 
+int main() {
+    int n,m,q; cin >> n >> m >> q;
+    vector<string> canvas(n+1);
+    for (int y = 1; y <= n; y++) {
+        string s; cin >> s;
+        canvas[y] = " " + s;
+    }
+    SegmentTree segTree(n, m, canvas);
+    for (int t = 1; t <= q; t++) {
+        int y1,x1,y2,x2; cin >> y1 >> x1 >> y2 >> x2;
+        cout << segTree.query(y1, y2, x1, x2) << "\n";
+    }
+}

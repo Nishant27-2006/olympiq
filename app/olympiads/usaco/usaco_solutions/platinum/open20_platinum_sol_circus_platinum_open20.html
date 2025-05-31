@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>In the following tree diagrams, - and | denote edges of the tree, * denotes an 
+unoccupied vertex, and ? denotes an occupied vertex. 
+<p>For <span class='math'>$K=N$</span> the answer is always <span class='math'>$N!.$</span> Now let&apos;s consider the case <span class='math'>$K&lt;N.$</span>
+<p>Say that a state is in &quot;normalized&quot; if the cows occupy vertices <span class='math'>$1\ldots K$</span>.
+Clearly any state can be normalized via a series of moves. Call two normalized
+states &quot;friends&quot; if one is reachable from the other. The number of friends for
+each state must be the same. The answer will equal <span class='math'>$K!$</span> over the number of
+friends of any normalized state with <span class='math'>$K$</span> cows has.
+<p>For any two cows <span class='math'>$x$</span> and <span class='math'>$y$</span> in the normalized state, we wish to know whether we
+can swap <span class='math'>$x$</span> and <span class='math'>$y$</span> while leaving all other cows in the same vertices. The goal
+is to move until the tree contains the following as a subgraph:
+<p><pre>
+   *
+   |
+   |
+x--*--y
+</pre>
+<p>Then you can swap <span class='math'>$x$</span> and <span class='math'>$y$</span> and undo all the moves made up to this point to
+re-normalize the state.
+<p>Consider the following method that moves <span class='math'>$x$</span> and <span class='math'>$y$</span> into the above state if
+possible, or otherwise states that it is impossible to swap <span class='math'>$x$</span> and <span class='math'>$y$</span>.
+<p><ul><li>First, move all cows aside from <span class='math'>$x$</span> as far away from <span class='math'>$x$</span> is possible. Then
+the union of the current vertex of <span class='math'>$x$</span> and all unoccupied vertices forms a
+connected subgraph; call this subgraph &quot;admissible.&quot;</li><li>Repeat the following steps until the process terminates:
+<p><ul><li>Let <span class='math'>$z$</span> be the next occupied vertex on the path from <span class='math'>$x$</span> to <span class='math'>$y$</span>.</li><li><strong>Case 1:</strong> Suppose that the admissible subgraph is a line
+<span class='math'>$v_1,v_2,\ldots,v_k$</span> with <span class='math'>$dist(v_i,y)=dist(v_{i+1},y)+1$</span> for all <span class='math'>$1\le i&lt;k$</span>. 
+<p><ul><li>Consider the degrees <span class='math'>$d_1,d_2,\ldots,d_k$</span> of <span class='math'>$v_1,\ldots,v_k$</span>.</li><li>Let <span class='math'>$j$</span> be the largest integer less than <span class='math'>$k$</span> such that <span class='math'>$d_j&gt;2$</span>. If <span class='math'>$j&gt;2$</span>
+then it&apos;s possible to move some cow such that the admissible subgraph is no
+longer a line satisfying this property. Go to case 2. In the diagram below,
+<span class='math'>$j=3$</span>.
+<p><pre>
+x--*--*--*--z--y    ?--*--*--*--z--y
+      |          -&gt;       |
+      |                   |
+      ?                   x
+</pre>
+<p></li><li>Otherwise, it is impossible to swap <span class='math'>$x$</span> and <span class='math'>$y$</span>. Terminate. 
+<p><pre>
+x--*--*--z--y   
+   |
+   |          
+   ?
+</pre></li></ul>
+<p></li><li><strong>Case 2:</strong> The admissible subgraph is not covered by case 1.
+<p><ul><li> If <span class='math'>$z=y$</span>, then we can successfully swap <span class='math'>$x$</span> and <span class='math'>$y$</span> (as in the diagram
+above). </li><li>Otherwise, we can move <span class='math'>$z$</span> and <span class='math'>$x$</span> such that <span class='math'>$z$</span> does not lie on the path
+from <span class='math'>$x$</span> to <span class='math'>$y$</span>.
+<p><pre>
+   *               z
+   |               |
+   |         -&gt;    |
+*--x--z--y      x--*--*--y
+</pre>
+</li></ul>
+<p></li></ul>
+</li></ul>
+<p>Let&apos;s further examine the case where it is impossible to swap <span class='math'>$x$</span> and <span class='math'>$y$</span>. Call
+a vertex &quot;intermediate&quot; if it has degree 2.  Move <span class='math'>$x$</span> such that is adjacent to
+<span class='math'>$z$</span>, and suppose that the shortest path with non-intermediate endpoints that
+contains edge <span class='math'>$x\leftrightarrow z$</span> at the time of termination is <span class='math'>$(a,b)$</span>; call
+this the <strong>extension</strong> of <span class='math'>$x\leftrightarrow z$</span>.
+<p>Let <span class='math'>$A$</span> be the size of the subtree of <span class='math'>$a$</span> when the tree is rooted at <span class='math'>$b$</span> and
+define <span class='math'>$B$</span> similarly. We can show that if <span class='math'>$x$</span> and <span class='math'>$y$</span> can&apos;t be swapped, then
+<span class='math'>$K\ge (A-1)+(B-1).$</span> In fact, there will be
+<p><div class='math'>$$K-(A-1)-(B-1)=(\text{# of vertices on extension})+K-N$$</div>  
+<p>vertices that always remain on the <span class='math'>$(a,b)$</span> path (and their relative order on the
+path can never change). Plus, cows that are in the subtree of <span class='math'>$a$</span> rooted at <span class='math'>$b$</span>
+excluding <span class='math'>$a$</span> can never reach the subtree of <span class='math'>$b$</span> rooted at <span class='math'>$a$</span> excluding <span class='math'>$b$</span>,
+and vice versa. For example, consider the following <span class='math'>$(a,b)$</span> extension:
+<p><pre>
+.     .
+|     |
+|     |
+a--.--b
+|     |
+|     |
+.     .
+|
+|
+.
+
+</pre>
+<p>In the following situation, <span class='math'>$K=(A-1)+(B-1)$</span>, so none of <span class='math'>$\{1,2,3\}$</span> can swap
+with any of <span class='math'>$\{4,5\}$</span>.
+<p><pre>
+1     4
+|     |
+|     |
+*--*--*
+|     |
+|     |
+2     5
+|
+|
+3
+</pre>
+In the following situation, <span class='math'>$K=(A-1)+(B-1)+1$</span>, so <span class='math'>$6$</span> cannot leave the
+<span class='math'>$a\leftrightarrow b$</span> path.
+<p><pre>
+1     4
+|     |
+|     |
+6--*--*
+|     |
+|     |
+2     5
+|
+|
+3
+</pre>
+<p>Call every edge on each such extension &quot;saturated,&quot; and the cows that are
+constrained to some extension &quot;stuck.&quot; 
+<p>Now consider each connected component that remains after removing all saturated
+edges. Suppose that connected component <span class='math'>$c$</span> contains exactly <span class='math'>$x$</span> unsaturated
+edges and is adjacent to exactly <span class='math'>$y$</span> saturated edges. To compute the number of
+non-stuck cows within <span class='math'>$c$</span>, we should start with <span class='math'>$K$</span> and then subtract some
+quantity for each adjacent saturated edge.
+<p>For the extension <span class='math'>$(a,b)$</span> of each adjacent saturated edge, let <span class='math'>$a$</span> be the vertex
+outside the component and <span class='math'>$b$</span> be the vertex inside the component. Then number of
+vertices removed from the component by this edge is equal to
+<div class='math'>$$\begin{align*}
+K-(B-1)&amp;=(A-1)+(\text{# of vertices on extension})+K-N\\
+&amp;=(\text{# of edges outside subtree of }b)+K-N+1.
+\end{align*}$$</div>
+If we sum this over all adjacent saturated edges, the result will be
+<div class='math'>$$(\text{# of edges outside component})+(K-N+1)y=(N-1-x)+(K-N+1)y.$$</div>
+The number of cows in <span class='math'>$c$</span> is <span class='math'>$K$</span> minus this expression, or <span class='math'>$s_c=(N-1-K)(y-1)+x$</span>.
+Note that when <span class='math'>$y=0,$</span> all of the vertices are in the same connected component
+and <span class='math'>$s_c=K-(N-1)+(N-1)=K,$</span> which makes sense since no cows are stuck.
+<p>For any friend, the stuck cows must remain in the same relative positions.
+However, the unstuck cows in each component mentioned above can permute
+themselves arbitrarily. So the number of friends of each state is <span class='math'>$\prod_c s_c!$</span>
+and the answer will be <span class='math'>$\frac{K!}{\prod_c s_c!}.$</span>
+<p>We can compute this expression for all <span class='math'>$K$</span> in decreasing order. For each path
+that transitions from saturated to unsaturated when <span class='math'>$K$</span> is decremented, we can
+update <span class='math'>$x$</span> and <span class='math'>$y$</span> for the resulting combined component with the &quot;Disjoint Set
+Union&quot; data structure. Furthermore, the sum of the number of components over all
+<span class='math'>$1\le K&lt;N$</span> is equal to
+<div class='math'>$$N-1+\sum_{\text{path}}(1+\text{length}(\text{path}))=2N-2+(\#\text{ of paths})\le 3N-3=O(N),$$</div>
+so we can afford to iterate over all of the components for each <span class='math'>$K$</span> to compute
+<span class='math'>$\prod_c s_c!$</span>. This solution runs in <span class='math'>$O(N\log N)$</span> or <span class='math'>$O(N\alpha(N)),$</span> depending
+on the implementation.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define f first
+#define s second
+
+typedef long long ll;
+const int MOD = 1e9+7;
+const int MX = 1e5+5;
+
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+struct mi {
+ 	int v; explicit operator int() const { return v; } 
+	mi() { v = 0; }
+	mi(ll _v):v(_v%MOD) { v += (v&lt;0)*MOD; }
+};
+mi&amp; operator+=(mi&amp; a, mi b) { 
+	if ((a.v += b.v) &gt;= MOD) a.v -= MOD; 
+	return a; }
+mi&amp; operator-=(mi&amp; a, mi b) { 
+	if ((a.v -= b.v) &lt; 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi&amp; operator*=(mi&amp; a, mi b) { return a = a*b; }
+
+vector&lt;int&gt; invs, fac, ifac;
+void genFac(int SZ) {
+	invs.resize(SZ), fac.resize(SZ), ifac.resize(SZ); 
+	invs[1] = fac[0] = ifac[0] = 1; 
+	for (int i = 2; i &lt; SZ; ++i) invs[i] = MOD-(ll)MOD/i*invs[MOD%i]%MOD;
+	for (int i = 1; i &lt; SZ; ++i) {
+		fac[i] = (ll)fac[i-1]*i%MOD;
+		ifac[i] = (ll)ifac[i-1]*invs[i]%MOD;
+	}
+}
+ll comb(int a, int b) {
+	if (a &lt; b || b &lt; 0) return 0;
+	return (ll)fac[a]*ifac[b]%MOD*ifac[a-b]%MOD;
+}
+ 
+int N, par[MX];
+vector&lt;int&gt; adj[MX];
+mi ans[MX];
+pair&lt;int,int&gt; cur[MX];
+vector&lt;pair&lt;int,pair&lt;int,int&gt;&gt;&gt; ed;
+set&lt;int&gt; con;
+ 
+struct DSU {
+	vector&lt;int&gt; e; void init(int n) { e = vector&lt;int&gt;(n,-1); }
+	int get(int x) { return e[x] &lt; 0 ? x : e[x] = get(e[x]); } 
+	bool unite(int len, int x, int y) { // union-by-rank
+		x = get(x), y = get(y); assert(x != y);
+		if (e[x] &gt; e[y]) swap(x,y);
+		e[x] += e[y]; e[y] = x; 
+		assert(con.count(y)); con.erase(y);
+		cur[x].f += cur[y].f-2; cur[x].s += cur[y].s+len;
+		return 1;
+	}
+};
+DSU D;
+ 
+void dfs(int x) {
+	for (int t: adj[x]) if (t != par[x]) {
+		par[t] = x;
+		dfs(t);
+	}
+}
+ 
+void dfs(int x, int lst, int d) {
+	if (adj[x].size() != 2) {
+		if (lst) ed.push_back({d,{x,lst}});
+		d = 0; lst = x;
+	}
+	for (int y: adj[x]) if (y != par[x]) {
+		par[y] = x;
+		dfs(y,lst,d+1);
+	}
+}
+ 
+int main() {
+	setIO(&quot;circus&quot;);
+	cin &gt;&gt; N; genFac(N+1);
+	for (int i = 0; i &lt; N-1; ++i) {
+		int a,b; cin &gt;&gt; a &gt;&gt; b;
+		adj[a].push_back(b), adj[b].push_back(a);
+	}
+	int root = 1; while (adj[root].size() == 2) root ++;
+	dfs(root,0,0);
+	sort(begin(ed),end(ed));
+	for (int i = 1; i &lt;= N; ++i) if (adj[i].size() != 2) {
+		cur[i] = {adj[i].size(),0};
+		con.insert(i);
+	}
+	ans[N] = fac[N];
+	int ind = 0;
+	D.init(N+1);
+	for (int k = N-1; k &gt; 0; --k) {
+		while (ind &lt; ed.size() &amp;&amp; N-1-ed[ind].f &gt; k) {
+			D.unite(ed[ind].f,ed[ind].s.f,ed[ind].s.s);
+			ind ++;
+		}
+		mi ret = fac[k];
+		for (int t: con) ret *= ifac[(N-1-k)*(cur[t].f-1)+cur[t].s];
+		ans[k] = ret;
+	}
+	for (int i = 1; i &lt;= N; ++i) cout &lt;&lt; ans[i].v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

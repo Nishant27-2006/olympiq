@@ -1,0 +1,229 @@
+Solution ID: sol_prob2_bronze_open22
+Contest: OPEN22
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+We can rephrase the problem as finding an integer
+
+$h$
+
+such that the number of
+cows who provided information inconsistent with Bessie hiding at
+
+$h$
+
+is
+minimized. For the first sample input, any
+
+$h$
+
+satisfying
+
+$3\le h\le 5$
+
+is
+consistent with there being zero liars. For the second sample input, any
+
+$h$
+
+satisfying
+
+$h\le 1$
+
+or
+
+$h\ge 2$
+
+is consistent with there being a single liar.
+
+Of course, we don't have time to try all possible values of
+
+$h$
+
+. We can reduce
+the number of
+
+$h$
+
+we need to consider by observing that if we move
+
+$h$
+
+leftwards
+or rightward until it equals one of the
+
+$p_i$
+
+provided in the input, the number
+of cows that are inconsistent with
+
+$h$
+
+either stays the same or decreases. For
+example, consider the first sample input:
+
+If we move
+
+$h=6$
+
+leftwards to
+
+$h=5$
+
+, the number of cows inconsistent with
+
+$h$
+
+stays the same (zero for both values of
+
+$h$
+
+).
+
+If we move
+
+$h=4$
+
+rightwards to
+
+$h=5$
+
+, the number of cows inconsistent with
+
+$h$
+
+decreases from one to zero.
+
+So it suffices to only consider the case when
+
+$h=p_i$
+
+for some
+
+$i$
+
+. That is,
+
+$$\min_{\text{all integers }h}(\text{# cows inconsistent with }h)=\min_{1\le i\le N}(\text{# cows inconsistent with }h=p_i).$$
+
+For a single value of
+
+$h$
+
+, we can count the number of cows inconsistent with
+
+$h$
+
+in
+
+$O(N)$
+
+time by looping over all cows in the input. So the overall time
+complexity is
+
+$O(N^2)$
+
+.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class CountingLiarsQuadratic {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        Information[] infos = new Information[n];
+        for (int j = 0; j < n; j++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            char direction = tokenizer.nextToken().charAt(0);
+            int reference = Integer.parseInt(tokenizer.nextToken());
+            infos[j] = new Information(direction, reference);
+        }
+        int answer = n;
+        for (Information tight : infos) {
+            int x = tight.reference;
+            int liars = 0;
+            for (Information info : infos) {
+                if (info.direction == 'G' ? x < info.reference : x > info.reference) {
+                    liars++;
+                }
+            }
+            answer = Math.min(answer, liars);
+        }
+        System.out.println(answer);
+    }
+ 
+    public static class Information {
+        public final char direction;
+        public final int reference;
+ 
+        public Information(char direction, int reference) {
+            this.direction = direction;
+            this.reference = reference;
+        }
+    }
+}
+
+Jichao Qian's code:
+
+#include <stdio.h>
+#include <stdint.h>
+ 
+#include <vector>
+#include <algorithm>
+using namespace std;
+ 
+ 
+int main()
+{
+    int N;
+    scanf("%d", &N);
+ 
+    vector<pair<int, int>> locations(N);
+    for (int idx = 0; idx < N; ++idx)
+    {
+        char dir[10];
+        scanf("%s", dir);
+        scanf("%d", &locations[idx].first);
+        if (dir[0] == 'G')
+            locations[idx].second = -1;
+        else
+            locations[idx].second = +1;
+    }
+ 
+    int minLiars = N;
+    sort(locations.begin(), locations.end());
+ 
+    for (int idx = 0; idx < N; ++idx)
+    {
+        int numLiars = 0;
+        for (int jdx = 0; jdx < idx; ++jdx)
+            if (locations[jdx].second == 1)
+                ++numLiars;
+ 
+        for (int jdx = idx+1; jdx < N; ++jdx)
+            if (locations[jdx].second == -1)
+                ++numLiars;
+ 
+        minLiars = min(numLiars, minLiars);
+    }
+ 
+    printf("%d\n", minLiars);
+}
+
+Bonus: Solve the problem in
+
+$O(N\log N)$
+
+time.

@@ -1,0 +1,939 @@
+Solution ID: sol_prob2_platinum_feb24
+Contest: FEB24
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_feb24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi, Richard Qi)
+
+Call the tiles which are stuck in place "fixed values", and call all other
+values "unfixed values".  First, append large fixed values (say,
+
+$10^6$
+
+) to
+either end of the array, so that every unfixed value is between two fixed
+values. At the end, we then subtract
+
+$2 \cdot 10^6$
+
+from the answer.
+
+Define a range to be the space between two consecutive fixed tiles
+
+$a_l$
+
+and
+
+$a_r$
+
+.
+
+Instead of the original scenario of a sequence of tiles, we can imagine that we
+have
+
+$K+1$
+
+"ranges", where the
+
+$i$
+
+th range consists of two values
+
+$m_i = \min(a_l, a_r), M_i = \max(a_l, a_r)$
+
+, and some size
+
+$len_i$
+
+, satisfying
+
+$\sum_{i=1}^{K+1} len_i = N-K$
+
+. Our job is to allocate
+
+$N-K$
+
+values to the
+
+$K+1$
+
+ranges, where the
+
+$i$
+
+th range gets a sequence of values
+
+$b_{i, 1}, b_{i, 2}, \dots, b_{i, len_i}$
+
+, such that the value we want to
+minimize is
+
+$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \max(b_{i, j}, b_{i, j+1})$
+
+where we also define
+
+$b_{i, 0} = m_i$
+
+,
+
+$b_{i, len_i+1} = M_i$
+
+as fixed values.
+
+Claim: For a range
+
+$i$
+
+, it is optimal for the values to be sorted such that
+
+$b_{i, j} \le b_{i, j+1}$
+
+for
+
+$j \in [1, len_i-1]$
+
+.
+
+Proof: This holds from the
+
+$0-1$
+
+principle. If all numbers are
+
+$0$
+
+or
+
+$1$
+
+, then
+clearly it is optimal for the values to be sorted in the above manner. So, it is
+optimal to sort even when the numbers are not
+
+$0$
+
+or
+
+$1$
+
+.
+
+More rigorously, the objective function we want to minimize can be written as
+
+$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \sum_{v=0}^{\infty} \max(f_v(b_{i, j}), f_v(b_{i, j+1})) = \sum_{v=0}^{\infty} \sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \max(f_v(b_{i, j}), f_v(b_{i, j+1}))$
+
+.
+where
+
+$f_v(x) = 1$
+
+if
+
+$x > v$
+
+, and otherwise
+
+$f_v(x) = 0$
+
+. Now, for each value
+of
+
+$v$
+
+, the inner summation is minimized when the values are sorted. So, it is
+optimal to sort the values in increasing order.
+
+So, for the
+
+$K = 0$
+
+case, there is only one range, and we simply sort the values
+to compute
+
+$\sum_{j=0}^{len_1} \max(b_{1, j}, b_{1, j+1})$
+
+.
+
+For
+
+$N \le 50$
+
+, we can do a
+
+$O(\prod_{i=1}^{K+1} len_i) \le O((\frac{N}{K+1})^{K+1})$
+
+state DP. For each of
+the unfixed values in increasing value order, we decide which range to put it
+in, and place the value in the first position which is unfilled in the range.
+The DP state is the number of elements filled for each range so far
+
+$(placed_1, placed_2, \dots, placed_{K+1})$
+
+, and the value of the state is the
+sum over all
+
+$i$
+
+of
+
+$\sum_{j=0}^{placed_i-1} \max(b_{i, j}, b_{i, j+1})$
+
+if
+
+$placed_i < len_i$
+
+, and
+
+$\sum_{j=0}^{len_i} \max(b_{i, j}, b_{i, j+1})$
+
+if
+
+$placed_i = len_i$
+
+.
+
+Richard's Code for
+
+$N \le 50$
+
+:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define sz(x) int((x).size())
+ 
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	int N, K;
+	cin >> N >> K;
+	multiset<int> multi_vals;
+	vector<int> inp_a;
+	for (int i = 1; i <= N; i++) {
+		int a;
+		cin >> a;
+		multi_vals.insert(a);
+		inp_a.push_back(a);
+	}
+ 
+	vector<pair<int, int>> xys;
+	for (int i = 1; i <= K; i++) {
+		int x, y;
+		cin >> x;
+		y = inp_a[x - 1];
+		xys.push_back(make_pair(x, y));
+		multi_vals.erase(multi_vals.find(y));
+	}
+	xys.push_back(make_pair(0, 1000000));
+	xys.push_back(make_pair(N + 1, 1000000));
+	sort(begin(xys), end(xys));
+ 
+	vector<int> vals;
+	for (auto u : multi_vals) vals.push_back(u);
+ 
+	// xys and vals store the input
+ 
+	vector<pair<pair<int, int>, int>> rangs; //ranges: ((min value, max value), size)
+	
+	int addon_zerosz = 0;
+	for (int i = 0; i + 1 < sz(xys); i++) {
+		int rang_size = xys[i + 1].first - xys[i].first - 1;
+		if (rang_size == 0) {
+			addon_zerosz += max(xys[i + 1].second, xys[i].second);
+		} else {
+			pair<int, int> rang_vals = make_pair(xys[i].second, xys[i + 1].second);
+			if (rang_vals.first > rang_vals.second) swap(rang_vals.first, rang_vals.second);
+			rangs.push_back(make_pair(rang_vals, rang_size));
+		}
+	}
+ 
+	map<vector<int>, int> dp;
+	dp[vector<int>(sz(rangs), 0)] = 0;
+ 
+	for(auto v: vals){ //for each value in increasing order
+		map<vector<int>, int> ndp;
+		for(const auto& u: dp){
+			vector<int> st = u.first; //current # of placed values in each range
+			for(int i = 0; i < sz(rangs); i++){ //place the next value in range i
+				if(st[i]+1 <= rangs[i].second){
+					vector<int> new_st = st;
+					int new_val = u.second;
+					new_st[i]++;
+					if(st[i] == 0){
+						new_val+=max(v, rangs[i].first.first)-v;
+					}
+					if(st[i] == rangs[i].second-1){
+						new_val+=max(v, rangs[i].first.second)-rangs[i].first.second;
+					}
+ 
+					if(!ndp.count(new_st) || ndp[new_st] >= new_val){
+ 						ndp[new_st] = new_val;
+					}
+				}
+			}
+		}
+		swap(dp, ndp);
+	}
+ 
+	assert(sz(dp) == 1);
+	int ans = dp.begin()->second;
+ 
+	//add in fixed values
+	for (auto u : vals) { ans += u; }
+	for (auto u : rangs) { ans += u.first.second; }
+	ans += addon_zerosz;
+	ans -= 2 * 1000000;
+	cout << ans << "\n";
+}
+
+Now, using the sorted property, notice that in the expression
+
+$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \max(b_{i, j}, b_{i, j+1})$
+
+, we almost
+always have
+
+$\max(b_{i, j}, b_{i, j+1}) = b_{i, j+1}$
+
+. The only
+
+$j$
+
+where this
+might not be the case are
+
+$j = 0, len_i$
+
+.  However, we know the value of
+
+$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} b_{i, j+1}$
+
+is just the sum of all
+non-fixed values plus
+
+$\sum_{i=1}^{K+1} M_i$
+
+.
+
+So, it suffices to minimize
+
+$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \max(b_{i, j}, b_{i, j+1}) - b_{i, j+1}$
+
+instead. From the above observation, we know that
+
+$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \max(b_{i, j}, b_{i, j+1}) - b_{i, j+1} = \sum_{i=1}^{K+1} \max(b_{i, 0}, b_{i, 1}) - b_{i, 1} + \max(b_{i, len_i}, b_{i, len_i+1})-b_{i, len_i + 1} = \sum_{i=1}^{K+1} \max(m_i, b_{i, 1}) - b_{i, 1} + \max(b_{i, len_i}, M_i)-M_i$
+
+For the
+
+$K = 1$
+
+subtask, we have
+
+$2$
+
+ranges. Notice that
+
+$M_1 = M_2 = +10^6,$
+
+so
+that for
+
+$i = 1, 2$
+
+, we have
+
+$\max(b_{i, len_i}, b_{i, len_i+1})-b_{i, len_i + 1} = M_i-M_i = 0$
+
+. Also, for
+
+$K = 1$
+
+, we have both
+
+$m_1 = m_2 = m$
+
+as the only fixed value. So, we want to
+minimize
+
+$\sum_{i=1}^{2} \max(m, b_{i, 1}) - b_{i, 1}$
+
+. Let the unfixed values
+be
+
+$c_1, c_2, \dots, c_{N-1}$
+
+, in increasing value order. One of the values
+
+$b_{i, 1}$
+
+is forced to be the value
+
+$c_1$
+
+, and because
+
+$\max(m, b_{i, 1}) - b_{i, 1}$
+
+is a decreasing function in
+
+$b_{i, 1}$
+
+, it
+suffices to maximize the other
+
+$b_{i, 1}$
+
+. It is easy to prove that the maximum
+such value is
+
+$c_{\max(len_1, len_2)+1}$
+
+, where we allocate a prefix of the
+values
+
+$c_1, c_2, \dots, c_{N-1}$
+
+to be in one range, and a suffix of the values
+to be in the other range.
+
+Now, we go for the full solution. Define the bounds of a range
+
+$i$
+
+to be
+
+$[b_{i, 1}, b_{i, len_i}]$
+
+. Define the sequence of non-fixed values in
+increasing order as
+
+$c_1, c_2, \dots, c_{N-K}$
+
+.
+
+Claim: There is an optimal solution where for every two ranges one of the bounds
+contains the other, or the bounds do not intersect.
+
+Proof: WLOG, let the two ranges be ranges
+
+$1$
+
+and
+
+$2$
+
+. Let the values currently
+allocated to range
+
+$1$
+
+and
+
+$2$
+
+be
+
+$c_{s_1} \le c_{s_2} \le \dots \le c_{s_{len_1+len_2}}$
+
+for some sequence of
+indices
+
+$s_1 < s_2 \dots < s_{len_1+len_2}$
+
+, such that
+
+$len_1$
+
+of the values are
+allocated to range
+
+$1$
+
+and
+
+$len_2$
+
+of the values are allocated to range
+
+$2$
+
+.
+
+Now, if indices
+
+$s_1, s_{len_1+len_2}$
+
+both belonged to the same range, then one
+range would contain the other. Thus, we can assume WLOG that range
+
+$1$
+
+contains
+index
+
+$s_1$
+
+and range
+
+$2$
+
+contains index
+
+$s_{len_1+len_2}$
+
+. Also, if first
+
+$len_1$
+
+values corresponding to indices
+
+$s_1, \dots, s_{len_1}$
+
+all belong to
+range
+
+$1$
+
+, then the bounds do not intersect, and we are done.
+
+Otherwise, there is a
+
+$k$
+
+such that
+
+$s_k$
+
+belongs to range
+
+$2$
+
+and
+
+$s_{k+1}$
+
+belongs to range
+
+$1$
+
+. Now, if we can show that we can swap the values such that
+
+$s_k$
+
+belongs to range
+
+$1$
+
+and
+
+$s_{k+1}$
+
+belongs to range
+
+$2$
+
+, then after making
+as many of these repeated swaps as possible, we are left in the case where the
+bounds do not intersect, and we are done. This is because if we list out which
+range each
+
+$s_k$
+
+belongs to as a sequence of
+
+$1$
+
+s and
+
+$2$
+
+s, each swap decreases
+the number of inversions by
+
+$1$
+
+.
+
+Notice that because
+
+$s_1$
+
+corresponds to
+
+$b_{1, 1}$
+
+and
+
+$s_{len_1+len_2}$
+
+corresponds to
+
+$b_{2, len_2}$
+
+,
+
+$s_k$
+
+does not correspond to
+
+$b_{2, len_2}$
+
+, and
+
+$s_{k+1}$
+
+does not correspond to
+
+$b_{1, 1}$
+
+. So, the effect of making the swap
+on
+
+$s_k, s_{k+1}$
+
+on
+
+$b_{1, 1}, b_{1, len_1}, b_{2, 1}, b_{2, len_2}$
+
+can only
+result in increasing
+
+$b_{2, 1}$
+
+and decreasing
+
+$b_{1, len_1}$
+
+.
+
+Recall that the quantity for range
+
+$i$
+
+that we want to minimize is
+
+$\max(m_i, b_{i, 1}) - b_{i, 1} + \max(b_{i, len_i}, M_i)-M_i$
+
+, which is
+decreasing when we increase
+
+$b_{i, 1}$
+
+and decrease
+
+$b_{i, len_i}$
+
+. Thus, making
+the swap does not decrease the summation, as desired.
+
+Now, we can use dynamic programming, on consecutive subsegments of the array
+
+$c_1, c_2, \dots, c_{N-K}$
+
+and a subset of ranges (
+
+$O(N^22^K)$
+
+states in total).
+The state stores the  minimum sum of differences attainable if for each range in
+the subset we only allocate values within the contiguous subsequence to it.
+
+Specifically,
+
+$dp[L][R][sub]$
+
+to be the minimum cost of assigning non-fixed
+values
+
+$c_L, c_{L+1}, \dots, c_{R}$
+
+to completely fill the ranges determined by
+the mask
+
+$sub$
+
+, where do not necessarily use all of the values
+
+$c_L, \dots, c_R$
+
+.
+
+First, if the number of required values to fill all ranges in
+
+$sub$
+
+is more than
+
+$R-L+1$
+
+, then we set the cost to
+
+$+\infty$
+
+. Now, there are three types of
+transitions:
+
+If
+
+$c_L$
+
+does not belong to any range in
+
+$sub$
+
+, we transition to state
+
+$dp[L+1][R][sub]$
+
+. Similarly, if
+
+$c_R$
+
+does not belong to any range in
+
+$sub$
+
+we
+transition to state
+
+$dp[L][R-1][sub]$
+
+.
+
+If
+
+$c_L$
+
+and
+
+$c_R$
+
+belong to the same range
+
+$i$
+
+, then we know the value
+
+$\max(m_i, b_{i, 1}) - b_{i, 1} + \max(b_{i, len_i}, M_i)-M_i$
+
+for range
+
+$i$
+
+,
+which we add to the current cost, and then transition to
+
+$dp[L+1][R-1][sub-2^i]$
+
+.
+
+Else, there must be some split point
+
+$M$
+
+such that
+
+$c_L, \dots, c_M$
+
+belong to
+some nonempty subset of ranges
+
+$sub_1$
+
+, and
+
+$c_{M+1}, \dots, c_R$
+
+belong to some
+nonempty subset of ranges
+
+$sub_2$
+
+, where
+
+$sub_1 \cap sub_2 = \emptyset$
+
+, and
+
+$sub_1 \cup sub_2 = sub$
+
+.  So, we transition to
+
+$dp[L][M][sub_1] + dp[M+1][R][sub_2]$
+
+.
+
+Clearly, we must have
+
+$M \ge L+size(sub_1)-1$
+
+, where
+
+$size(sub_1) = \sum_{i \in sub_1} len_i$
+
+. Using a similar swapping argument as
+the proof of the previous claim, it can be shown that it is optimal for
+
+$M = L+size(sub_1)-1$
+
+(in other words, all of the values in the range
+
+$[L, M]$
+
+exactly correspond to ranges in
+
+$sub_1$
+
+and no other ranges.
+
+The answer is
+
+$dp[1][N-K][2^{\text{# of ranges}}-1]$
+
+, plus the fixed quantity
+that we subtracted out earlier.
+
+For each
+
+$L, R$
+
+and mask
+
+$sub$
+
+, we iterate over all submasks of
+
+$sub$
+
+, for a
+total time complexity of
+
+$O(N^2 3^K)$
+
+.
+
+Richard's Code (Full Solution):
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define sz(x) int((x).size())
+ 
+const int MOD = 1e9+7;
+ 
+int dp[305][305][1<<7];
+int size_sum[1<<7];
+ 
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int N, K; cin >> N >> K;
+    multiset<int> multi_vals;
+    vector<int> inp_a;
+    for(int i = 1; i <= N; i++){
+        int a; cin >> a; multi_vals.insert(a);
+        inp_a.push_back(a);
+    }
+ 
+    vector<pair<int, int>> xys;
+    for(int i = 1; i <= K; i++){
+        int x, y; cin >> x; y = inp_a[x-1];
+        xys.push_back(make_pair(x, y));
+        multi_vals.erase(multi_vals.find(y));
+    }
+    xys.push_back(make_pair(0, 1000000));
+    xys.push_back(make_pair(N+1, 1000000));
+    sort(begin(xys), end(xys));
+ 
+    vector<int> vals;
+    for(auto u: multi_vals) vals.push_back(u);
+ 
+    //xys and vals store the input
+ 
+    vector<pair<pair<int, int>, int>> rangs;
+    //((min, max), size)
+    int addon_zerosz = 0;
+    for(int i = 0; i+1 < sz(xys); i++){
+        int rang_size = xys[i+1].first-xys[i].first-1;
+        if(rang_size == 0){
+            addon_zerosz+=max(xys[i+1].second, xys[i].second);
+        }
+        else{
+            pair<int, int> rang_vals = make_pair(xys[i].second, xys[i+1].second);
+            if(rang_vals.first > rang_vals.second) swap(rang_vals.first, rang_vals.second);
+            rangs.push_back(make_pair(rang_vals, rang_size));
+        }
+    }
+ 
+    for(int i = 0; i < (1<<sz(rangs)); i++){
+        for(int j = 0; j < sz(rangs); j++){
+            if((i>>j)&1){
+                size_sum[i]+=rangs[j].second;
+            }
+        }
+    }
+ 
+ 
+    for(int i = 0; i < 305; i++) for(int j = 0; j < 305; j++) for(int k = 0; k < (1<<7); k++) dp[i][j][k] = MOD;
+ 
+    for(int L = sz(vals)-1; L >= 0; L--){
+        for(int R = L; R < sz(vals); R++){
+            for(int mask = 0; mask < (1<<sz(rangs)); mask++){
+                //compute dp[L][R][mask]
+                int rang_size = R-L+1;
+                if(size_sum[mask] > rang_size) continue;
+ 
+                if(size_sum[mask] <= rang_size-1){ //not use either end
+                    dp[L][R][mask] = min(dp[L][R][mask], dp[L+1][R][mask]);
+                    dp[L][R][mask] = min(dp[L][R][mask], dp[L][R-1][mask]);
+                }
+ 
+                //split in half somewhere by some submask
+                for(int submask = mask; ; submask = ((submask-1)&mask)){
+                    if(submask == 0) break;
+                    if(submask == mask) continue;
+                    dp[L][R][mask] = min(dp[L][R][mask], dp[L][L+size_sum[submask]-1][submask]+dp[L+size_sum[submask]][R][mask^submask]);
+                }
+ 
+                for(int k = 0; k < sz(rangs); k++){
+                    //assign L, R to be left and right of range k
+                    if((mask>>k)&1){
+                        if(size_sum[1<<k] == 1 && L < R) continue;
+                        
+                        //compute contribution of range k to the sum
+                        int small_val = vals[L];
+                        int big_val = vals[R];
+                        int contrib = max(big_val, rangs[k].first.second)-rangs[k].first.second + max(small_val, rangs[k].first.first)-small_val;
+                        assert(contrib >= 0);
+ 
+                        if((1<<k) == mask){
+                            //only thing left
+                        }
+                        else{
+                            assert(L+1 <= R-1);
+                            contrib+=dp[L+1][R-1][mask^(1<<k)];
+                        }
+                        dp[L][R][mask] = min(dp[L][R][mask], contrib);
+                    }
+                }
+                
+            }
+        }
+    }
+ 
+    int ans = dp[0][sz(vals)-1][(1<<sz(rangs))-1];
+ 
+    //add fixed term
+    for(auto u: vals){
+        ans+=u;
+    }
+    for(auto u: rangs){
+        ans+=u.first.second;
+    }
+    ans+=addon_zerosz;
+    ans-=2*1000000;
+    cout << ans << "\n";
+}

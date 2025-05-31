@@ -1,0 +1,90 @@
+Solution ID: sol_blocks_bronze_dec16
+Contest: DEC16
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_blocks_bronze_dec16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we have several pairs of words. We want to count the maximum
+number of times a letter will appear when we write out a word from each pair,
+no matter which word we pick from each pair.
+
+We can start to tackle this problem by handling the case where there is exactly
+one pair of words to consider. When there is exactly one pair of words to consider,
+the maximum number of times the letter 'a' will appear is the maximum of the number
+of times the letter 'a' appears in the first word and the number of times the letter
+'a' appears in the second word. We can replace 'a' with any letter and that will get
+us the maximum number of times any given letter will appear.
+
+Now that we've handled the case where there is exactly one pair of words to consider,
+we need to figure out how to extend this to multiple pairs. Intuitively, the situation
+where we'll need to write 'a' the maximum possible number of times in total is when we
+need to write 'a' the maximum possible number of times for each individual pair.
+What we can do therefore is compute the maximum frequency count for a given letter in a pair
+and then add up the maximum frequency counts over all pairs.
+
+Here is my Java code.
+
+import java.io.*;
+import java.util.*;
+public class blocks {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader("blocks.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("blocks.out")));
+
+		// allocate array to track total blocks needed
+		// letter a maps to index 0, letter b maps to index 1, ...
+		// letter z maps to index 25
+		int[] blocksNeeded = new int[26];
+
+		// read in the number of blocks
+		int n = Integer.parseInt(br.readLine());
+		
+		for(int i = 0; i < n; i++) {
+			// read in each pair of words
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			String firstWord = st.nextToken();
+			String secondWord = st.nextToken();
+			
+			// get the frequency counts
+			int[] firstFrequency = getFrequency(firstWord);
+			int[] secondFrequency = getFrequency(secondWord);
+			
+			// update the number of blocks needed
+			for(int j = 0; j < 26; j++) {
+				if(firstFrequency[j] > secondFrequency[j]) {
+					blocksNeeded[j] += firstFrequency[j];
+				}
+				else {
+					blocksNeeded[j] += secondFrequency[j];
+				}
+			}
+		}
+
+		// print the answer
+		for(int i = 0; i < 26; i++) {
+			pw.println(blocksNeeded[i]);
+		}
+		
+		pw.close();
+	}
+	
+	/**
+	 * This function takes in a string and returns an integer array
+	 * of the number of blocks needed to spell out the given word. 
+	 */
+	public static int[] getFrequency(String s) {
+		int[] blocksNeeded = new int[26];
+		for(int i = 0; i < s.length(); i++) {
+			int index = s.charAt(i) - 'a';
+			blocksNeeded[index]++;
+		}
+		return blocksNeeded;
+	}
+	
+}

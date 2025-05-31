@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have several red points and blue points, both colors with
+their own internal ordering. We start at the first red point and want to end
+at the last red point, meanwhile visiting all points preserving ordering
+within a given color. The amount of energy it takes to travel between two given
+points is the square of the distance, and we wish to minimize the total energy used.
+<p>Imagine the last step that we must take to walk to the last red point - we must walk
+either from the second-to-last red point to the last one, or we walk from the last blue point
+directly to the last red point. Irrespective of which one we choose, we would want to
+pick the optimal path that ends with us either at the last blue point with one more red point
+to visit, or at the second-to-last red point with no blue points left to visit.
+<p>This motivates a dynamic programming solution. Let <span class='math'>$f(n, m)$</span> be the minimum energy expended
+to visit <span class='math'>$n$</span> red points and <span class='math'>$m$</span> blue points, ending at the <span class='math'>$n$</span>th red point, and get <span class='math'>$g(n, m)$</span>
+be the minimum energy expended to visit <span class='math'>$n$</span> red points and <span class='math'>$m$</span> blue points, ending at the
+<span class='math'>$m$</span>th blue point. <span class='math'>$f(n, m)$</span> depends on <span class='math'>$f(n-1, m)$</span> and <span class='math'>$g(n-1, m)$</span>, while <span class='math'>$g(n, m)$</span>
+depends on <span class='math'>$f(n, m-1)$</span> and <span class='math'>$g(n, m-1)$</span>.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class checklist {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;checklist.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;checklist.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int m = Integer.parseInt(st.nextToken());
+		State[] holstein = new State[n];
+		State[] guernsey = new State[m];
+		for(int i = 0; i &lt; n; i++) {
+			st = new StringTokenizer(br.readLine());
+			holstein[i] = new State(Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken()));
+		}
+		for(int i = 0; i &lt; m; i++) {
+			st = new StringTokenizer(br.readLine());
+			guernsey[i] = new State(Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken()));
+		}
+		long[][][] dp = new long[n+1][m+1][2];
+		for(int i = 0; i &lt; dp.length; i++) {
+			for(int j = 0; j &lt; dp[i].length; j++) {
+				Arrays.fill(dp[i][j], 1L &lt;&lt; 60);
+			}
+		}
+		dp[1][0][0] = 0;
+		for(int i = 0; i &lt; dp.length; i++) {
+			for(int j = 0; j &lt; dp[i].length; j++) {
+				for(int k = 0; k &lt; 2; k++) {
+					if(k == 0 &amp;&amp; i == 0) continue;
+					if(k == 1 &amp;&amp; j == 0) continue;
+					State source;
+					if(k == 0) source = holstein[i-1];
+					else source = guernsey[j-1];
+					if(i &lt; n) {
+						dp[i+1][j][0] = Math.min(dp[i+1][j][0], dp[i][j][k] + source.dist(holstein[i]));
+					}
+					if(j &lt; m) {
+						dp[i][j+1][1] = Math.min(dp[i][j+1][1], dp[i][j][k] + source.dist(guernsey[j]));
+					}
+				}
+			}
+		}
+		pw.println(dp[n][m][0]);
+		pw.close();
+	}
+
+	static class State {
+		public int x, y;
+		public State(int a, int b) {
+			x=a;
+			y=b;
+		}
+		public int dist(State s) {
+			return (x-s.x)*(x-s.x) + (y-s.y)*(y-s.y);
+		}
+	}
+	
+}
+</pre></body></html>

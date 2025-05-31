@@ -1,0 +1,94 @@
+Solution ID: sol_cowtip_bronze_jan17
+Contest: JAN17
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_cowtip_bronze_jan17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we have a rectangles of zeroes and ones. A "toggle" of a
+subrectangle consists of taking every 0 in the rectangle and turning it into a
+1, and taking every 1 in the rectangle and turning it into a 0. We want to
+toggle as few subrectangles as possible to turn every number in the rectangle to
+zero.
+
+If we look at the various squares in the grid, we see that the ones closer to
+the top-left corner can be toggled by more subrectangles, whereas the ones
+closer to the bottom-right corner can be toggled by fewer subrectangles. In
+particular, we note that the bottom-right corner can only be toggled by one
+subrectangle - the entire rectangle. Whether we need to toggle the entire
+rectangle then is entirely determined by whether the bottom-right corner needs
+to be toggled.
+
+After we decide whether to toggle that one, we can now consider the square that
+is directly to the left of the bottom-right corner. That square can now only be
+toggled by one rectangle, and the decision there is uniquely determined as well.
+We can then consider every square in the bottom row from right-to-left and
+toggle the subrectangle when that square needs to be toggled.
+
+After inspecting every square in the bottom row, it is guaranteed that the bottom row is
+entirely zeroes.
+Thus, one can treat the rectangle as if it had one fewer row, and we can repeat
+the above process again. We do this repeatedly until the entire rectangle is correctly
+formatted.
+
+import java.io.*;
+import java.util.*;
+public class cowtip {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader("cowtip.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("cowtip.out")));
+		
+		// read in the size of the grid
+		int n = Integer.parseInt(br.readLine());
+		
+		// allocate a 2D array for the grid
+		char[][] grid = new char[n][n];
+		
+		// define constants to indicate which squares are correct 
+		final char WRONG = '1';
+		final char RIGHT = '0';
+		
+		// read in the grid
+		for(int i = 0; i < n; i++) {
+			// read in a row of the grid
+			String s = br.readLine();
+			for(int j = 0; j < n; j++) {
+				// update the relevant row in the array
+				grid[i][j] = s.charAt(j);
+			}
+		}
+		
+		int numTips = 0;
+		// loop over the rectangles to consider from bottom to top, right to left
+		for(int i = n-1; i >= 0; i--) {
+			for(int j = n-1; j >= 0; j--) {
+				if(grid[i][j] == WRONG) {
+					// the rectangles with bottom-right corner at (i, j) needs to be toggled
+					numTips++;
+					for(int a = 0; a <= i; a++) {
+						for(int b = 0; b <= j; b++) {
+							// flip each entry in that rectangle
+							if(grid[a][b] == WRONG) {
+								grid[a][b] = RIGHT;
+							}
+							else {
+								grid[a][b] = WRONG;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		// print the answer
+		pw.println(numTips);
+		
+		// close the file
+		pw.close();
+	}
+}

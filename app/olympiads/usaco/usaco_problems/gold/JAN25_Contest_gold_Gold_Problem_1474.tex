@@ -1,0 +1,308 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN25 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Consider an undirected graph with $N$ nodes labeled $1\dots N$ and $M$ edges
+($1\le N\le 2\cdot 10^5, 0\le M\le 4\cdot 10^5$). You're given a binary string
+$s_1s_2\dots s_N$. At time $t$ for each $t\in [1,N]$, 
+
+If $s_t=0$, node $t$ is removed from the graph.If $s_t=1$, node $t$ is removed from the graph, and edges are added between
+every pair of neighbors that node $t$ had just before removal.
+Note that in both cases, when a node is removed from the graph all of its
+incident edges are removed as well.
+
+Count the number of pairs of nodes that can reach each other via some sequence
+of edges just before each of timesteps $1\ldots N$.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$ and $M$.
+
+The second line contains the bit string $s$ of length $N$.
+
+The next $M$ lines each contain two integers denoting an edge of the graph.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+$N$ lines, the number of pairs before each timestep.
+
+SAMPLE INPUT:
+3 2
+111
+1 2
+1 3
+SAMPLE OUTPUT: 
+3
+1
+0
+
+Before any removals, all pairs of nodes are reachable from each other. After
+node $1$ is removed, an edge is added between $2$ and $3$, so they can still
+reach each other.
+
+SAMPLE INPUT:
+3 2
+000
+1 2
+1 3
+SAMPLE OUTPUT: 
+3
+0
+0
+
+Before any removals, all pairs of nodes are reachable from each other. After
+node $1$ is removed, $2$ and $3$ can no longer reach each other.
+
+SAMPLE INPUT:
+7 8
+1101101
+6 2
+1 2
+2 3
+6 3
+1 3
+1 7
+4 5
+2 7
+SAMPLE OUTPUT: 
+11
+7
+4
+2
+1
+1
+0
+
+SCORING:
+Inputs 4-6: $N\le 100$Inputs 7-8: All $s_i$ equal zero.Inputs 9-11: All $s_i$ equal one.Inputs 12-23: No additional
+constraints.
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+The second line contains the bit string $s$ of length $N$.The next $M$ lines each contain two integers denoting an edge of the graph.
+
+The next $M$ lines each contain two integers denoting an edge of the graph.
+
+OUTPUT FORMAT (print output to the terminal / stdout):$N$ lines, the number of pairs before each timestep.SAMPLE INPUT:3 2
+111
+1 2
+1 3SAMPLE OUTPUT:3
+1
+0Before any removals, all pairs of nodes are reachable from each other. After
+node $1$ is removed, an edge is added between $2$ and $3$, so they can still
+reach each other.SAMPLE INPUT:3 2
+000
+1 2
+1 3SAMPLE OUTPUT:3
+0
+0Before any removals, all pairs of nodes are reachable from each other. After
+node $1$ is removed, $2$ and $3$ can no longer reach each other.SAMPLE INPUT:7 8
+1101101
+6 2
+1 2
+2 3
+6 3
+1 3
+1 7
+4 5
+2 7SAMPLE OUTPUT:11
+7
+4
+2
+1
+1
+0SCORING:Inputs 4-6: $N\le 100$Inputs 7-8: All $s_i$ equal zero.Inputs 9-11: All $s_i$ equal one.Inputs 12-23: No additional
+constraints.Problem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:3 2
+111
+1 2
+1 3SAMPLE OUTPUT:3
+1
+0Before any removals, all pairs of nodes are reachable from each other. After
+node $1$ is removed, an edge is added between $2$ and $3$, so they can still
+reach each other.SAMPLE INPUT:3 2
+000
+1 2
+1 3SAMPLE OUTPUT:3
+0
+0Before any removals, all pairs of nodes are reachable from each other. After
+node $1$ is removed, $2$ and $3$ can no longer reach each other.SAMPLE INPUT:7 8
+1101101
+6 2
+1 2
+2 3
+6 3
+1 3
+1 7
+4 5
+2 7SAMPLE OUTPUT:11
+7
+4
+2
+1
+1
+0SCORING:Inputs 4-6: $N\le 100$Inputs 7-8: All $s_i$ equal zero.Inputs 9-11: All $s_i$ equal one.Inputs 12-23: No additional
+constraints.Problem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+3 2
+111
+1 2
+1 3
+
+3 2
+000
+1 2
+1 3
+
+7 8
+1101101
+6 2
+1 2
+2 3
+6 3
+1 3
+1 7
+4 5
+2 7
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+3
+1
+0
+
+Before any removals, all pairs of nodes are reachable from each other. After
+node $1$ is removed, an edge is added between $2$ and $3$, so they can still
+reach each other.SAMPLE INPUT:3 2
+000
+1 2
+1 3SAMPLE OUTPUT:3
+0
+0Before any removals, all pairs of nodes are reachable from each other. After
+node $1$ is removed, $2$ and $3$ can no longer reach each other.SAMPLE INPUT:7 8
+1101101
+6 2
+1 2
+2 3
+6 3
+1 3
+1 7
+4 5
+2 7SAMPLE OUTPUT:11
+7
+4
+2
+1
+1
+0SCORING:Inputs 4-6: $N\le 100$Inputs 7-8: All $s_i$ equal zero.Inputs 9-11: All $s_i$ equal one.Inputs 12-23: No additional
+constraints.Problem credits: Benjamin Qi
+
+SAMPLE INPUT:3 2
+000
+1 2
+1 3SAMPLE OUTPUT:3
+0
+0Before any removals, all pairs of nodes are reachable from each other. After
+node $1$ is removed, $2$ and $3$ can no longer reach each other.SAMPLE INPUT:7 8
+1101101
+6 2
+1 2
+2 3
+6 3
+1 3
+1 7
+4 5
+2 7SAMPLE OUTPUT:11
+7
+4
+2
+1
+1
+0SCORING:Inputs 4-6: $N\le 100$Inputs 7-8: All $s_i$ equal zero.Inputs 9-11: All $s_i$ equal one.Inputs 12-23: No additional
+constraints.Problem credits: Benjamin Qi
+
+3
+0
+0
+
+Before any removals, all pairs of nodes are reachable from each other. After
+node $1$ is removed, $2$ and $3$ can no longer reach each other.SAMPLE INPUT:7 8
+1101101
+6 2
+1 2
+2 3
+6 3
+1 3
+1 7
+4 5
+2 7SAMPLE OUTPUT:11
+7
+4
+2
+1
+1
+0SCORING:Inputs 4-6: $N\le 100$Inputs 7-8: All $s_i$ equal zero.Inputs 9-11: All $s_i$ equal one.Inputs 12-23: No additional
+constraints.Problem credits: Benjamin Qi
+
+SAMPLE INPUT:7 8
+1101101
+6 2
+1 2
+2 3
+6 3
+1 3
+1 7
+4 5
+2 7SAMPLE OUTPUT:11
+7
+4
+2
+1
+1
+0SCORING:Inputs 4-6: $N\le 100$Inputs 7-8: All $s_i$ equal zero.Inputs 9-11: All $s_i$ equal one.Inputs 12-23: No additional
+constraints.Problem credits: Benjamin Qi
+
+11
+7
+4
+2
+1
+1
+0
+
+SCORING:Inputs 4-6: $N\le 100$Inputs 7-8: All $s_i$ equal zero.Inputs 9-11: All $s_i$ equal one.Inputs 12-23: No additional
+constraints.Problem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1474
+
+\section*{Source}
+USACO JAN25 Contest, Gold Division, Problem ID: 1474
+
+\end{document}

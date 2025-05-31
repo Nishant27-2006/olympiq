@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi, Jesse Choe)
+<p>Suppose that we can compute the answers for all prefixes of the input array in 
+<span class='math'>$T$</span> time. Then computing the answer for all contiguous subarrays of  the input
+array can be done in <span class='math'>$O(NT)$</span> time, and answering the queries takes <span class='math'>$O(Q)$</span>
+additional time.
+<p>For all subtasks, we use dynamic programming.
+<p><strong>Subtask 1: <span class='math'>$T=O(NB)$</span></strong> 
+<p>For each <span class='math'>$i\in [0,N]$</span> and <span class='math'>$x\in [0,B]$</span>, let <span class='math'>$dp[i][x]$</span> denote the number of ways
+to form <span class='math'>$x$</span> after moving over papers <span class='math'>$1\dots i$</span>. The answer for the prefix 
+<span class='math'>$1\dots i$</span> is <span class='math'>$\sum_{j=A}^Bdp[i][j]$</span>. 
+<p>Next, we describe how to compute all of these DP states. We initialize
+<span class='math'>$dp[0][0]=1$</span> and use the following reasoning to generate <span class='math'>$dp[i]$</span> from <span class='math'>$dp[i-1]$</span>.
+Suppose our pile currently has size <span class='math'>$s$</span>, has value <span class='math'>$k$</span> when read from top to
+bottom, and that the cows are considering adding digit <span class='math'>$a_i$</span> to the pile.
+<p><ul><li>Adding <span class='math'>$a_i$</span> to the top of the pile is equivalent to adding <span class='math'>$a_i \cdot 10^{s}$</span>
+to <span class='math'>$k$</span>. This corresponds to the DP transition
+<span class='math'>$dp[i][a_i \cdot 10^s+k] \mathrel{+}= dp[i-1][k]$</span>.</li><li>Adding <span class='math'>$a_i$</span> to the bottom of the pile is equivalent to changing <span class='math'>$k$</span> to
+<span class='math'>$10\cdot k + a_i$</span>, corresponding to
+<span class='math'>$dp[i][10 \cdot k + a_i]\mathrel{+}= dp[i-1][k]$</span>. </li><li>Not adding <span class='math'>$a_i$</span> to the pile corresponds to
+<span class='math'>$dp[i][k] \mathrel{+}= dp[i-1][k]$</span>.</li></ul>
+<p>Since each DP transition runs in constant time, computing all these DP states
+takes time proportional to the number of DP states, which is <span class='math'>$O(NB)$</span>. 
+<p>Jesse Choe&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int countDigits(int x) {
+	int ans = 0;
+	while (x) { ans++, x /= 10; }
+	return ans;
+}
+
+int main() {
+	int n;
+	long long a, b;
+	cin &gt;&gt; n &gt;&gt; a &gt;&gt; b;
+	int dp[n][n + 1][b + 1]{};
+	vector&lt;int&gt; d(n);
+	for (int i = 0; i &lt; n; i++) cin &gt;&gt; d[i];
+	for (int i = 0; i &lt; n; i++) { dp[i][i][0] = 1; }
+	for (int i = 0; i &lt; n; i++) {
+		for (int j = i; j &lt; n; j++) {
+			for (int k = 0; k &lt;= b; k++) {
+				dp[i][j + 1][k] += dp[i][j][k], dp[i][j + 1][k] %= MOD;
+				int addRight = 10 * k + d[j];
+				if (addRight &lt;= b) {
+					dp[i][j + 1][addRight] += dp[i][j][k];
+					dp[i][j + 1][addRight] %= MOD;
+				}
+				int addLeft = pow(10, countDigits(k)) * d[j] + k;
+				if (addLeft &lt;= b) {
+					dp[i][j + 1][addLeft] += dp[i][j][k];
+					dp[i][j + 1][addLeft] %= MOD;
+				}
+			}
+		}
+	}
+	for (int i = 0; i &lt; n; i++) {
+		for (int j = i + 1; j &lt;= n; j++) {
+			for (int k = 1; k &lt;= b; k++) dp[i][j][k] += dp[i][j][k - 1];
+		}
+	}
+	int q;
+	cin &gt;&gt; q;
+	for (int i = 0; i &lt; q; i++) {
+		int l, r;
+		cin &gt;&gt; l &gt;&gt; r;
+		--l;
+		cout &lt;&lt; (dp[l][r][b] - dp[l][r][a - 1] + MOD) % MOD &lt;&lt; endl;
+	}
+}
+</pre>
+<p><strong>Subtask 2: <span class='math'>$A=B$</span>, <span class='math'>$T=O(N(\log_{10}B)^2)$</span></strong>
+<p>Let <span class='math'>$d$</span> be the number of digits in <span class='math'>$B$</span>. For each <span class='math'>$i\in [1,N]$</span> and
+<span class='math'>$1\le l\le r\le d$</span>,  let <span class='math'>$dp[i][l][r]$</span> denote the number of ways to form
+<span class='math'>$B_{l\dots r}$</span> (the integer formed by concatenating the <span class='math'>$l$</span>th through <span class='math'>$r$</span>th
+digits of <span class='math'>$B$</span>) after moving over papers <span class='math'>$1\dots i$</span>. There are <span class='math'>$O(Nd^2)$</span> such 
+states, each of which can be computed in <span class='math'>$O(1)$</span> time from <span class='math'>$dp[i-1][l][r]$</span>, 
+<span class='math'>$dp[i-1][l+1][r]$</span>, and <span class='math'>$dp[i][l][r-1]$</span>. The answer for prefix <span class='math'>$1\dots i$</span> is
+<span class='math'>$dp[i][1][d]$</span>.
+<p><strong>Full credit: <span class='math'>$T=O(N(\log_{10}B)^2)$</span></strong>
+<p>We subtract the number of ways to form an integer at most <span class='math'>$A-1$</span> from the number
+of ways to form an integer at most <span class='math'>$B$</span>. To count the number of ways to form an
+integer at most <span class='math'>$B$</span>, we augment our DP states from the previous subtask with an
+additional flag that is equal to <span class='math'>$0$</span>, <span class='math'>$1$</span>, or <span class='math'>$2$</span>. Then <span class='math'>$dp[i][l][r][0]$</span>,
+<span class='math'>$dp[i][l][r][1]$</span>, and <span class='math'>$dp[i][l][r][2]$</span> denote  the number of ways to form an
+<span class='math'>$r-l+1$</span>-digit integer less than, equal  to, or greater than <span class='math'>$B_{l\dots r}$</span> after
+moving over papers <span class='math'>$1\dots i$</span>, respectively. The DP transitions are similar to
+the previous subtask. The answer for prefix <span class='math'>$1\dots i$</span> is
+<span class='math'>$dp[i][1][d][1]+dp[i][1][d][0]+\sum_{j=2}^d\sum_{k=0}^2dp[i][j][d][k]$</span>. Here,
+<span class='math'>$dp[i][1][d][1]$</span> is the number of ways to make a <span class='math'>$d$</span>-digit number equal to <span class='math'>$B$</span>,
+<span class='math'>$dp[i][1][d][0]$</span> is the number of ways to make a <span class='math'>$d$</span>-digit number less than <span class='math'>$B$</span>,
+and <span class='math'>$\sum_{k=0}^2dp[i][j][d][k]$</span> is the number of ways to make a <span class='math'>$(d-j+1)$</span>-digit
+number.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class Milkshake {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        long a = Long.parseLong(tokenizer.nextToken());
+        long b = Long.parseLong(tokenizer.nextToken());
+        char[] digits = in.readLine().replace(&quot; &quot;, &quot;&quot;).toCharArray();
+ 
+        long[][] answersLeft = solve((&quot;&quot; + (a - 1L)).toCharArray(), digits);
+        long[][] answersRight = solve((&quot;&quot; + b).toCharArray(), digits);
+ 
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q &gt; 0; q--) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int l = Integer.parseInt(tokenizer.nextToken()) - 1;
+            int r = Integer.parseInt(tokenizer.nextToken()) - 1;
+            long answer = answersRight[l][r] - answersLeft[l][r];
+            answer += MOD;
+            answer %= MOD;
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+ 
+    static long[][] solve(char[] limit, char[] digits) {
+        long[][] answers = new long[digits.length][digits.length];
+        for (int j = 0; j &lt; digits.length; j++) {
+            long[][][] dp = new long[limit.length][limit.length][3];
+            for (int k = j; k &lt; digits.length; k++) {
+                for (int x = 0; x &lt; limit.length; x++) {
+                    for (int y = limit.length - 1; y &gt; x; y--) {
+                        if (digits[k] &gt; limit[x]) {
+                            for (int c = 0; c &lt;= 2; c++) {
+                                dp[x][y][2] += dp[x + 1][y][c];
+                            }
+                        } else if (digits[k] == limit[x]) {
+                            for (int c = 0; c &lt;= 2; c++) {
+                                dp[x][y][c] += dp[x + 1][y][c];
+                            }
+                        } else {
+                            for (int c = 0; c &lt;= 2; c++) {
+                                dp[x][y][0] += dp[x + 1][y][c];
+                            }
+                        }
+ 
+                        dp[x][y][2] += dp[x][y - 1][2];
+                        dp[x][y][compare(digits[k], limit[y])] += dp[x][y - 1][1];
+                        dp[x][y][0] += dp[x][y - 1][0];
+ 
+                        for (int c = 0; c &lt;= 2; c++) {
+                            dp[x][y][c] %= MOD;
+                        }
+                    }
+                }
+                for (int x = 0; x &lt; limit.length; x++) {
+                    dp[x][x][compare(digits[k], limit[x])] += 2;
+                }
+ 
+                for (int x = 0; x &lt; limit.length; x++) {
+                    answers[j][k] += dp[x][limit.length - 1][0];
+                    answers[j][k] += dp[x][limit.length - 1][1];
+                    if (x != 0) {
+                        answers[j][k] += dp[x][limit.length - 1][2];
+                    }
+                    answers[j][k] %= MOD;
+                }
+            }
+        }
+        return answers;
+    }
+ 
+    static int compare(char a, char b) {
+        return Integer.signum(a - b) + 1;
+    }
+}
+</pre>
+<p></body></html>

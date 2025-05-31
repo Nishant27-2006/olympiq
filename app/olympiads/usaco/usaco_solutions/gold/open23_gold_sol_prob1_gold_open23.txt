@@ -1,0 +1,308 @@
+Solution ID: sol_prob1_gold_open23
+Contest: OPEN23
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob1_gold_open23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Eric Yachbes)
+
+The first part is simple, we should BFS to pick up as many keys as possible from
+all the stalls. This works because having a key is always better than not having
+a key. This can be done in
+
+$O(N+M)$
+
+. If there are some keys that we can't pick
+up, we must ensure these keys already are in their intended locations
+(
+
+$S_i = F_i$
+
+for each stall
+
+$i$
+
+that we did not visit in our BFS). If not, print
+"NO" and return. If yes, and the input is one of inputs 7-10, we can print "YES"
+and return.  Otherwise cut these stalls from the graph and continue with the
+next stage of the algorithm.
+
+At this point in time we have some list of keys that we are holding and a
+subgraph where each stall in the graph has a color
+
+$C_i$
+
+and an intended key of
+color
+
+$F_i$
+
+. Unfortunately, there is no easy way to greedily place the keys. The
+trick we will use to place down the keys is to notice that if there existed a
+way to place down the keys, we could reverse that process and it would look
+almost identical to the previous process of picking up the keys. Thus, we will
+first assume that every key is in its intended place and then start at stall 1,
+attempting to pick up keys until we get back to a situation in which we have
+every key. To do this, we will use the same BFS as before, when we were trying
+to take keys. The only difference is instead of needing a key of color
+
+$C_i$
+
+to
+enter stall
+
+$i$
+
+, we will need a key of color
+
+$C_i$
+
+to exit stall
+
+$i$
+
+. This means
+we can only add stall
+
+$i$
+
+to the BFS queue if we either already have a key of
+color
+
+$C_i$
+
+or if
+
+$C_i = F_i$
+
+. This BFS in reverse works because having more
+keys at any point in time is better, so we might as well pick up these keys as
+quickly as we can.
+
+If our BFS can visit all nodes then we are certain that a solution exists
+because we can just run this process in reverse to place down all the keys. If
+the BFS does not visit all nodes, there can also be no "place" process (if there
+existed a valid âplaceâ process, reversing it would give us a valid reversed
+process, which we proved to be impossible because the greedy solution did not
+find one).
+
+Eric's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using vi = vector<int>;
+using vvi = vector<vi>;
+using vb = vector<bool>;
+ 
+void solve() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+ 
+    // input
+    int n, m;
+    cin >> n >> m;
+ 
+    vi c(n);
+    vi s(n);
+    vi f(n);
+ 
+    for (int i = 0; i < n; i++) { cin >> c[i]; }
+ 
+    for (int i = 0; i < n; i++) { cin >> s[i]; }
+ 
+    for (int i = 0; i < n; i++) { cin >> f[i]; }
+ 
+    vvi g(n);
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        u--, v--;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+ 
+    // the subgraph of visited nodes for each stage
+    vector<vb> sg(2, vb(n));
+    for (int t = 0; t < 2; t++) {
+        vi a;
+ 
+        // if this is stage 1, we are trying to pick up from s
+        // if this is stage 2, we are trying to pick up from f
+        if (t == 0) a = s;
+        else a = f;
+ 
+        // keys we are holding
+        vb k(n + 1);
+ 
+        // a linked list for each node
+        vi pt(n, -1);
+ 
+        // the start of the linked list for nodes of a specific color
+        vi l(n + 1, -1);
+ 
+        // our queue
+        queue<int> q;
+        vb vis(n);
+ 
+        // push node 1 to the queue
+        q.push(0);
+ 
+        // we are currently holding the key in stall 1
+        k[a[0]] = true;
+ 
+        // we have visited stall 1
+        vis[0] = true;
+ 
+        while (!q.empty()) {
+            // the next node we can visit
+            int v = q.front();
+            q.pop();
+ 
+            // add this node to the subgraph of visited nodes for this stage
+            sg[t][v] = true;
+ 
+            // for all of the nodes connected in our stall
+            for (int ch : g[v]) {
+                // we shouldnt add this node to the queue twice
+                if (vis[ch]) continue;
+                // we cannot visit this node if we are in stage 2 and it was not
+                // in our stage 1 visited subgraph
+                if (t == 1 && !sg[0][ch]) continue;
+                vis[ch] = true;
+ 
+                // if we can visit the node, add it to our queue
+                if (k[c[ch]] || (t == 1 && c[ch] == a[ch])) {
+                    q.push(ch);
+                } else {
+                    // otherwise add it to the linked list of nodes we could
+                    // visit if we held a key of the stall's color
+                    pt[ch] = l[c[ch]];
+                    l[c[ch]] = ch;
+                }
+            }
+ 
+            // we now have access to the key in this stall since we have visited
+            // it
+            k[a[v]] = true;
+ 
+            // add all pending stalls to the queue that required this key
+            int cur = l[a[v]];
+            while (cur != -1) {
+                q.push(cur);
+                cur = pt[cur];
+            }
+            // the linked list is now empty so dereference its head
+            l[a[v]] = -1;
+        }
+    }
+ 
+    bool works = true;
+    for (int i = 0; i < n; i++) {
+        // if its in our stage 1 subgraph we must be able to visit it
+        if (sg[0][i]) {
+            if (!sg[1][i]) works = false;
+        } else {
+            // else it must not need to be visited (the starting key must equal
+            // the final key)
+            if (s[i] != f[i]) works = false;
+        }
+    }
+ 
+    cout << (works ? "YES" : "NO") << endl;
+}
+ 
+int main() {
+    int t;
+    cin >> t;
+ 
+    while (t--) solve();
+ 
+    return 0;
+}
+
+Danny's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class CustodialCleanup {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int t = Integer.parseInt(in.readLine()); t > 0; t--) {
+            in.readLine();
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int n = Integer.parseInt(tokenizer.nextToken());
+            int m = Integer.parseInt(tokenizer.nextToken());
+            int[] roomColors = new int[n + 1];
+            int[] initialKeys = new int[n + 1];
+            int[] goalKeys = new int[n + 1];
+            List<Integer>[] graph = new List[n + 1];
+            StringTokenizer roomColorsTokenizer = new StringTokenizer(in.readLine());
+            StringTokenizer initialKeysTokenizer = new StringTokenizer(in.readLine());
+            StringTokenizer goalKeysTokenizer = new StringTokenizer(in.readLine());
+            Set<Integer> fixed = new HashSet<>();
+            for (int a = 1; a <= n; a++) {
+                roomColors[a] = Integer.parseInt(roomColorsTokenizer.nextToken());
+                initialKeys[a] = Integer.parseInt(initialKeysTokenizer.nextToken());
+                goalKeys[a] = Integer.parseInt(goalKeysTokenizer.nextToken());
+                graph[a] = new ArrayList<>();
+                if (initialKeys[a] == goalKeys[a]) {
+                    fixed.add(a);
+                }
+            }
+            for (; m > 0; m--) {
+                tokenizer = new StringTokenizer(in.readLine());
+                int a = Integer.parseInt(tokenizer.nextToken());
+                int b = Integer.parseInt(tokenizer.nextToken());
+                graph[a].add(b);
+                graph[b].add(a);
+            }
+            Set<Integer> forward = cleanable(graph, roomColors, initialKeys, null);
+            Set<Integer> backward = cleanable(graph, roomColors, goalKeys, forward);
+            fixed.addAll(backward);
+            boolean answer = fixed.size() == n;
+            out.append(answer ? "YES" : "NO").append('\n');
+        }
+        System.out.print(out);
+    }
+ 
+    static Set<Integer> cleanable(List<Integer>[] graph, int[] roomColors, int[] keys, Set<Integer> allowed) {
+        boolean[] haveKey = new boolean[graph.length];
+        List<Integer>[] waiting = new List[graph.length];
+        for (int color = 1; color < graph.length; color++) {
+            waiting[color] = new ArrayList<>();
+        }
+        Stack<Integer> stack = new Stack<>();
+        boolean[] seen = new boolean[graph.length];
+        seen[1] = true;
+        stack.push(1);
+        Set<Integer> reachable = new HashSet<>();
+        while (!stack.isEmpty()) {
+            int a = stack.pop();
+            reachable.add(a);
+            if (!haveKey[keys[a]]) {
+                haveKey[keys[a]] = true;
+                stack.addAll(waiting[keys[a]]);
+            }
+            for (int b : graph[a]) {
+                if (!seen[b] && (allowed == null || allowed.contains(b))) {
+                    seen[b] = true;
+                    if (haveKey[roomColors[b]] || (allowed != null && keys[b] == roomColors[b])) {
+                        stack.push(b);
+                    } else {
+                        waiting[roomColors[b]].add(b);
+                    }
+                }
+            }
+        }
+        return reachable;
+    }
+}

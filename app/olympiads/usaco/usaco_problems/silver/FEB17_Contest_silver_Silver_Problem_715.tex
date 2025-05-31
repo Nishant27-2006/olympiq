@@ -1,0 +1,98 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB17 Contest - Silver Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+The long road through Farmer John's farm has $N$ crosswalks across it,
+conveniently numbered $1 \ldots N$ ($1 \leq N \leq 100,000$).   To allow cows to
+cross at these crosswalks, FJ installs electric crossing signals, which light up
+with a green cow icon when it is ok for the cow to cross, and red otherwise. 
+Unfortunately, a large electrical storm has damaged some of his signals.  Given
+a list of the damaged signals, please compute the minimum number of signals that
+FJ needs to repair in order for there to exist some contiguous block of at least
+$K$ working signals.
+
+INPUT FORMAT (file maxcross.in):
+The first line of input contains $N$, $K$, and $B$ ($1 \leq B, K \leq N$).  The
+next $B$ lines each describe the ID number of a broken signal.
+
+OUTPUT FORMAT (file maxcross.out):
+Please compute the minimum number of signals that need to be repaired in order
+for there to be a contiguous block of $K$ working signals somewhere along the
+road.
+
+SAMPLE INPUT:
+10 6 5
+2
+10
+1
+5
+9
+SAMPLE OUTPUT: 
+1
+
+
+Problem credits: Brian Dean
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (file maxcross.out):Please compute the minimum number of signals that need to be repaired in order
+for there to be a contiguous block of $K$ working signals somewhere along the
+road.SAMPLE INPUT:10 6 5
+2
+10
+1
+5
+9SAMPLE OUTPUT:1Problem credits: Brian Dean
+
+\section*{Output Format}
+SAMPLE INPUT:10 6 5
+2
+10
+1
+5
+9SAMPLE OUTPUT:1Problem credits: Brian Dean
+
+\section*{Sample Input}
+\begin{verbatim}
+10 6 5
+2
+10
+1
+5
+9
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+1
+
+Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=715
+
+\section*{Source}
+USACO FEB17 Contest, Silver Division, Problem ID: 715
+
+\end{document}

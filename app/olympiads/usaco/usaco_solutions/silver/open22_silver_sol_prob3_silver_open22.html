@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>Since <span class='math'>$N$</span> and <span class='math'>$Q$</span> are both large, we are motivated to look for way to
+characterize the answer to any query that can be evaluated very quickly.  
+<p>Let <span class='math'>$C$</span>, <span class='math'>$O$</span>, and <span class='math'>$W$</span> be the counts of their respective characters in a  query
+substring.  We can evaluate these in constant time for any query using a
+difference of two pre-computed prefix sums -- e.g. the number of <span class='math'>$C$</span>&apos;s in the
+query window <span class='math'>$i \ldots j$</span> is the cumulative number of <span class='math'>$C$</span>&apos;s  up to index <span class='math'>$j$</span>
+minus the cumulative number up to index <span class='math'>$i-1$</span> (as in
+<a href='https://www.usaco.org/index.php?page=viewproblem2&amp;cpid=572'>Breed
+Counting</a>).
+<p>We claim the answer to a query is YES if and only if <span class='math'>$O+W$</span> has even parity and
+<span class='math'>$C+O$</span> has odd parity (this is equivalent to saying <span class='math'>$O+W$</span> is even and <span class='math'>$C+W$</span> is
+odd).  Note that any modification of our string has no impact on  the parity of
+any sum of two of <span class='math'>$C$</span>, <span class='math'>$O$</span>, and <span class='math'>$W$</span> like <span class='math'>$O+W$</span>.
+<p>The answer to a query is clearly NO if <span class='math'>$O+W$</span> is odd, since in this case  <span class='math'>$O+W$</span>
+stays odd as an invariant, and we can never reduce it to zero.  The answer is
+also clearly NO if <span class='math'>$C+O$</span> (or <span class='math'>$C+W$</span>) is even, since in this case we can&apos;t ever
+get down to a single <span class='math'>$C$</span> without also having <span class='math'>$O$</span>&apos;s or <span class='math'>$W$</span>&apos;s.  All that remains
+is showing that the answer is always YES when <span class='math'>$O+W$</span> is even and <span class='math'>$C+O$</span> is odd. 
+There are several ways to do this.  For example, starting with an arbitrary
+query,  first get rid of all the <span class='math'>$W$</span>&apos;s.  Then reduce any run of more than one of
+the same character to just one of that character.  This leaves a string of
+alternating <span class='math'>$C$</span>&apos;s and <span class='math'>$O$</span>&apos;s.  You can transform <span class='math'>$OCO$</span> into <span class='math'>$C$</span>, so we can
+further reduce the string down to the point where it has at most one <span class='math'>$O$</span>, and
+since <span class='math'>$O+W$</span> must be even, it most actually have no <span class='math'>$O$</span>&apos;s, and hence just one
+<span class='math'>$C$</span>.  Here is another way: first, note that you can always convert any adjacent two characters in a string into at most one.
+Either theyâre the same and you can directly apply the first operation to remove them, or if theyâre different, you can convert the first one into the not-present character followed by the second one, and then delete the two adjacent occurrences of the second character.  This way any string can be reduced to a string with at most one character, and if O + W is even and C + O is odd the only such string is âCâ.
+<p>Benjamin Qi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	vector&lt;array&lt;int, 3&gt;&gt; prefix_counts{{}};
+	string s;
+	cin &gt;&gt; s;
+	for (char c : s) {
+		prefix_counts.push_back(prefix_counts.back());
+		if (c == &apos;C&apos;) ++prefix_counts.back()[0];
+		if (c == &apos;O&apos;) ++prefix_counts.back()[1];
+		if (c == &apos;W&apos;) ++prefix_counts.back()[2];
+	}
+	int Q;
+	cin &gt;&gt; Q;
+	string ans;
+	while (Q--) {
+		int l, r;
+		cin &gt;&gt; l &gt;&gt; r;
+		array&lt;int, 3&gt; query_counts;
+		for (int i = 0; i &lt; 3; ++i) {
+			query_counts[i] = prefix_counts[r][i] - prefix_counts[l - 1][i];
+		}
+		ans += ((query_counts[1] + query_counts[2]) % 2 == 0 &amp;&amp;
+		        (query_counts[0] + query_counts[1]) % 2 == 1)
+		           ? &apos;Y&apos;
+		           : &apos;N&apos;;
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>An elegant take on this solution is as follows. Since two adjacent equal characters can be removed and two adjacent different characters can be converted into single instance of the other character, we can identify each of the letters C, O, W with 1, 2, 3 and an empty string with 0. Then the XOR operation has exactly the same effect when combining two numbers, so for any substring we can calculate its XOR using prefix "XOR sums", then check whether this XOR is equal to 1.
+<p>Ray Bai&apos;s code:
+<p><pre class='prettyprint'>
+import java.util.*;
+import java.io.*;
+ 
+public class COW
+{
+    public static void main(String omkar[]) throws Exception
+    {
+        int[] map = new int[420];
+        map[&apos;C&apos;] = 1;
+        map[&apos;O&apos;] = 2;
+        map[&apos;W&apos;] = 3;
+        BufferedReader infile = new BufferedReader(new InputStreamReader(System.in));
+        char[] arr = infile.readLine().toCharArray();
+        int N = arr.length;
+        int[] prefix = new int[N+1];
+        for(int i=1; i &lt;= N; i++)
+            prefix[i] = prefix[i-1]^map[arr[i-1]];
+        StringBuilder sb = new StringBuilder();
+        int Q = Integer.parseInt(infile.readLine());
+        while(Q--&gt;0)
+        {
+            StringTokenizer st = new StringTokenizer(infile.readLine());
+            int L = Integer.parseInt(st.nextToken());
+            int R = Integer.parseInt(st.nextToken());
+            if((prefix[R]^prefix[L-1]) == 1)
+                sb.append(&quot;Y&quot;);
+            else
+                sb.append(&quot;N&quot;);
+        }
+        System.out.println(sb);
+    }
+}
+</pre>
+<p>Interestingly, including GCC optimization pragmas allows an <span class='math'>$O(N^2)$</span> solution to
+pass. See <a href='https://codeforces.com/blog/entry/96344'>this CodeForces blog</a>
+for details.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#pragma GCC optimize(&quot;O3,unroll-loops&quot;)
+
+unsigned char xo[200005];
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	string s;
+	cin &gt;&gt; s;
+	s = &quot;?&quot; + s;
+	for (int i = 0; i &lt; (int)size(s); ++i) {
+		if (s[i] == &apos;C&apos;) xo[i] = 1;
+		if (s[i] == &apos;O&apos;) xo[i] = 2;
+		if (s[i] == &apos;W&apos;) xo[i] = 3;
+	}
+	int Q;
+	cin &gt;&gt; Q;
+	string ans;
+	while (Q--) {
+		int l, r;
+		cin &gt;&gt; l &gt;&gt; r;
+		unsigned char acc = 0;
+		for (int j = l; j &lt;= r; j++) {
+			acc ^= xo[j];
+		}
+		ans += acc == 1 ? &apos;Y&apos; : &apos;N&apos;;
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>
+</body></html>

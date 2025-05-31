@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi, Richard Qi)
+<p>Let&apos;s first describe parts common to all solutions.
+<p><ul><li>Let <span class='math'>$cnt[i]$</span> denote the number of cows associated with <span class='math'>$i$</span>, for each
+<span class='math'>$i\in (0,2^K)$</span>.</li><li>The inverses of <span class='math'>$1\dots K$</span> modulo <span class='math'>$10^9+7$</span> can be computed using binary
+exponentiation or other methods.</li><li>The runtime dependence on <span class='math'>$N$</span> will always be <span class='math'>$O(N)$</span> or <span class='math'>$O(NK)$</span>. Such factors
+will be omitted below.</li></ul>
+<p><strong>Partial Solution (<span class='math'>$K\le 10$</span>):</strong> <span class='math'>$O(4^K)$</span> time
+<p>The sum for a bitstring <span class='math'>$i$</span> is
+<span class='math'>$\sum_{k=1}^{2^K-1}cnt[k]\cdot popcount(i\&amp;k)/popcount(i|k)$</span>. This can be
+computed in <span class='math'>$O(2^K)$</span> time for a single <span class='math'>$i$</span>, and there are only <span class='math'>$O(2^K)$</span> distinct
+values of <span class='math'>$i$</span> in total.
+<p><em>Full Solutions:</em> To solve this problem fully, you&apos;ll need to be familiar
+with fast subset summation (aka <a href='https://usaco.guide/adv/dp-sos?lang=cpp'>SOS
+DP</a>). Given an array <span class='math'>$v[0\dots 2^N-1]$</span>, this method can be used to compute
+<span class='math'>$v&apos;[i]=\sum_{j:j\&amp;i=j}v[j]$</span> for all <span class='math'>$i$</span> in <span class='math'>$O(N2^N)$</span> time. The way it works is
+by adding in the effect of each bit from <span class='math'>$0$</span> to <span class='math'>$N-1$</span> one at a time. Here is a
+concise implementation that does this in place.
+<p><pre class='prettyprint'>
+void sos(int N, vector&lt;int&gt; &amp;v) {
+    assert(size(v) == (1 &lt;&lt; N));
+    for (int b = 0; b &lt; N; ++b)
+        for (int i = 0; i &lt; (1 &lt;&lt; N); ++i)
+            if (i &amp; (1 &lt;&lt; b)) v[i] += v[i ^ (1 &lt;&lt; b)];
+}
+</pre>
+<p>After <span class='math'>$B$</span> iterations of the outer loop, we will have computed the desired sums
+considering only <span class='math'>$j$</span> such that the last <span class='math'>$N-B$</span> bits of <span class='math'>$i$</span> and <span class='math'>$j$</span> are equal. 
+Intuitively, we start with <span class='math'>$2^N$</span> independent subproblems, and then each time we
+add a bit the number of independent subproblems halves.
+<p><strong>Full Solution 1:</strong> <span class='math'>$O(K^22^K)$</span> time, <span class='math'>$O(K2^K)$</span> memory
+<p>For each <span class='math'>$i\in [0, 2^K)$</span> and <span class='math'>$j\in [0,K]$</span>, let <span class='math'>$dp[i][j]$</span> be the sum of
+<span class='math'>$cnt[k]\cdot popcount(i\&amp;k)$</span> over all <span class='math'>$k$</span> such that <span class='math'>$popcount(i|k)=j$</span>; that is,
+the total number of intersection bits if we fix the number of bits in the union.
+Then the desired sum for <span class='math'>$i$</span> will be <span class='math'>$\sum_{j=1}^Kdp[i][j]/j$</span>.
+<p>It remains to describe how to compute all <span class='math'>$dp[i][j]$</span>. As with fast subset
+summation described above, we can do this by adding one bit at a time.
+Specifically, define <span class='math'>$dp_b[i][j]$</span>, where <span class='math'>$j\in [0,b]$</span>, as a pair with elements
+equal to the sums of <span class='math'>$cnt[k]$</span> and <span class='math'>$cnt[k]\cdot popcount_b(i\&amp;k)$</span>, respectively,
+over all <span class='math'>$k$</span> such that the last <span class='math'>$K-b$</span> bits of <span class='math'>$i$</span> and <span class='math'>$k$</span> are equal and
+<span class='math'>$popcount_b(i|k)=j$</span>. Here, <span class='math'>$popcount_b$</span> means that we only count set bits among
+the first <span class='math'>$b$</span> bits. We will initialize <span class='math'>$dp_{b=0}[i][0]=\{cnt[i], 0\}$</span>
+independently for each <span class='math'>$i$</span>, then increase <span class='math'>$b$</span> until it equals <span class='math'>$K$</span>. In the end,
+<span class='math'>$dp[i][j]$</span> will be the second element of
+<span class='math'>$dp_K[i][j]$</span>.
+<p>Runtime: <span class='math'>$dp_{b}[i][j]$</span> only depends on <span class='math'>$dp_{b-1}[i&apos;][j&apos;]$</span> where
+<span class='math'>$i&apos;\in \{i, i\oplus (1\ll (b-1))\}$</span> and <span class='math'>$j&apos;\in \{j-1,j\}$</span>, so transitions can be
+performed in constant time for each DP state. There are <span class='math'>$O(K^22^K)$</span> total DP
+states.
+<p>Memory: We can transform <span class='math'>$dp_{b-1}$</span> to <span class='math'>$dp_b$</span> in place, so <span class='math'>$O(K2^K)$</span>.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using ll = long long;
+
+using vi = vector&lt;int&gt;;
+using pi = pair&lt;int, int&gt;;
+#define f first
+#define s second
+
+const int MOD = 1e9 + 7;
+
+int mod_mul(int a, int b) { return (ll)a * b % MOD; }
+void operator+=(pi &amp;a, const pi &amp;b) {
+    a.f += b.f;
+    a.s += b.s;
+}
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int N, K;
+    cin &gt;&gt; N &gt;&gt; K;
+    vi A(N);
+    for (int &amp;t : A) cin &gt;&gt; t;
+    pi dp[1 &lt;&lt; K][K + 1]{};
+    for (int &amp;t : A) {
+        assert(0 &lt; t &amp;&amp; t &lt; (1 &lt;&lt; K));
+        ++dp[t][0].f;
+    }
+    for (int b = 0; b &lt; K; ++b) {  // dp_b -&gt; dp_{b+1}
+        for (int i = 0; i &lt; (1 &lt;&lt; K); ++i)
+            if (!(i &amp; (1 &lt;&lt; b))) {
+                for (int j = b + 1; j &gt;= 0; --j) {
+                    if (j) dp[i][j] += dp[i ^ (1 &lt;&lt; b)][j - 1];
+                    if (j == 0) dp[i ^ (1 &lt;&lt; b)][j] = {};
+                    else {
+                        dp[i ^ (1 &lt;&lt; b)][j] = {
+                            dp[i][j - 1].f + dp[i ^ (1 &lt;&lt; b)][j - 1].f,
+                            dp[i][j - 1].s + dp[i ^ (1 &lt;&lt; b)][j - 1].f +
+                                dp[i ^ (1 &lt;&lt; b)][j - 1].s};
+                    }
+                }
+            }
+    }
+    vi invs{0, 1};
+    for (int i = 2; i &lt;= K; ++i)  // mod inverses in O(K) time
+        invs.push_back(mod_mul(MOD / i + 1, invs[i - MOD % i]));
+    for (int t : A) {
+        int ans = 0;
+        for (int j = 1; j &lt;= K; ++j) {
+            ans += mod_mul(dp[t][j].s, invs.at(j));
+            ans %= MOD;
+        }
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p><a href='https://codeforces.com/contest/1975/problem/F'>Here</a> is a Codeforces
+problem that uses a similar idea.
+<p><strong>Full Solution 2:</strong> <span class='math'>$O(K2^K)$</span> time, <span class='math'>$O(2^K)$</span> memory using principle of
+inclusion-exclusion
+<p>Notice that we can split up
+<span class='math'>$\frac{|A \cap B|}{|A \cup B|} = \frac{|A|}{|A \cup B|} + \frac{|B|}{|A \cup B|} - 1$</span>.
+<p>Consider a fixed cow <span class='math'>$A$</span>. If we sum over all cows <span class='math'>$B$</span>, the third term is clearly
+<span class='math'>$-N$</span>. For the first two terms, we reduce computing each term to instead summing
+<span class='math'>$\frac{1}{|A \cup B|}$</span> (inverse size of the union).
+<p>For the first term, we can instead sum the quantity <span class='math'>$\frac{1}{|A \cup B|}$</span>, and
+multiply by <span class='math'>$|A|$</span> at the end.
+<p>For the second term, we can create <span class='math'>$|B|$</span> copies of every <span class='math'>$B$</span>, and then sum the
+quantity <span class='math'>$\frac{1}{|A \cup B|}$</span>. 
+<p>Now, we&apos;ve reduced the problem to computing the sum
+<span class='math'>$\sum_{B} \frac{1}{|A \cup B|}$</span> for each <span class='math'>$A$</span>. We can rewrite this sum as
+<span class='math'>$\sum_{B} \frac{1}{|A \cup B|} = \sum_{U \supseteq A} \sum_{B \subseteq U, A \cup B = U} \frac{1}{|U|}$</span>.
+<p>We now use PIE to rearrange this sum. Some intuition for this: it would be nice
+if our sum was <span class='math'>$\sum_{U \supseteq A} \sum_{B \subseteq U} \frac{1}{|U|}$</span>,
+because then we could rewrite this as
+<span class='math'>$\sum_{U \supseteq A} \frac{1}{|U|} \sum_{B \subseteq U} 1 = \sum_{U \supseteq A} \frac{1}{|U|} f(U)$</span>,
+where <span class='math'>$f(U) = \sum_{B \subseteq U} 1$</span> can be computed using fast subset sum.
+Then, <span class='math'>$\sum_{U \supseteq A} \frac{1}{|U|} f(U)$</span> can be computed for all <span class='math'>$A$</span>
+using fast superset sum.
+<p>However, this new sum overcounts by many terms: specifically, for a fixed <span class='math'>$A$</span>,
+the contribution of <span class='math'>$B$</span> to the sum would be
+<span class='math'>$\sum_{U \supseteq A \cup B} \frac{1}{|U|}$</span>, where we want it to actually be
+just <span class='math'>$\frac{1}{|A \cup B|}$</span>.
+<p>Instead, let&apos;s compute the sum <span class='math'>$\sum_{U \supseteq A} \sum_{B \subseteq U} g(U)$</span>
+for some function <span class='math'>$g(U) \neq \frac{1}{|U|}$</span>. Then, for a fixed <span class='math'>$A$</span>, the
+contribution of <span class='math'>$B$</span> to the sum is <span class='math'>$\sum_{U \supseteq A \cup B} g(U)$</span>.
+<p>The key insight here is that because <span class='math'>$g$</span> is arbitrary, we can set <span class='math'>$g$</span> exactly so
+that for every set <span class='math'>$S$</span>, <span class='math'>$\sum_{U \supseteq S} g(U) = \frac{1}{|S|}$</span>. 
+<p>In general, this is the inverse subset sum problem: given all subset sums of a
+function on sets, reconstruct the original function. This can be implemented by
+doing the same operations one does for subset sum, but in reverse, and replacing
+all additions with subtractions.
+<p>Alternatively, for this specific function, the function value <span class='math'>$g(U)$</span> relies only
+on <span class='math'>$|U|$</span>, of which there are only <span class='math'>$K$</span> possibilities for. Specifically, we have
+<span class='math'>$g(U) = g&apos;(|U|)$</span> for some function <span class='math'>$g&apos;$</span>, and
+<span class='math'>$\frac{1}{|S|} = \sum_{U \supseteq S} g(U) = \sum_{U \supseteq S} g&apos;(|U|) = \sum_{k=|S|}^{K} \binom{K-|U|}{k-|U|} g&apos;(k)$</span>.
+The <span class='math'>$\binom{K-|U|}{k-|U|}$</span> term comes from the number of ways to choose a set of
+size <span class='math'>$k$</span> that contains <span class='math'>$U$</span>.
+<p>Then, we see that
+<span class='math'>$g&apos;(|U|) = \frac{1}{|U|} - \sum_{k=|U|+1}^{K} \binom{K-|U|}{k-|U|} g&apos;(k)$</span>, so we
+can compute all <span class='math'>$g&apos;(k)$</span> in <span class='math'>$O(K^2)$</span> time by going from <span class='math'>$k=K$</span> to <span class='math'>$k=1$</span>.
+<p>So, our final algorithm is to compute the function <span class='math'>$g$</span> using inverse superset
+sum (or using combinations), then compute the function
+<span class='math'>$f(U) = \sum_{B \subseteq U} 1$</span> using subset sum, and finally compute
+<span class='math'>$\sum_{U \supseteq A} g(U) \cdot f(U)$</span> using a superset sum.
+<p>Richard&apos;s code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using ll = long long;
+using vi = vector&lt;int&gt;;
+
+#define sz(x) int((x).size())
+#define pb push_back
+
+const int MOD = 1e9+7;
+
+/**
+ * Description: Modular arithmetic.
+ * Source: KACTL
+ * Verification: https://open.kattis.com/problems/modulararithmetic
+ * Usage: mi a = MOD+5; cout &lt;&lt; (int)inv(a); // 400000003
+ */
+
+struct mi {
+ 	int v; explicit operator int() const { return v; } 
+	mi():v(0) {}
+	mi(ll _v):v(int(_v%MOD)) { v += (v&lt;0)*MOD; }
+};
+mi&amp; operator+=(mi&amp; a, mi b) { 
+	if ((a.v += b.v) &gt;= MOD) a.v -= MOD; 
+	return a; }
+mi&amp; operator-=(mi&amp; a, mi b) { 
+	if ((a.v -= b.v) &lt; 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi&amp; operator*=(mi&amp; a, mi b) { return a = a*b; }
+mi pow(mi a, ll p) { assert(p &gt;= 0); // won&apos;t work for negative p
+	return p==0?1:pow(a*a,p/2)*(p&amp;1?a:1); }
+mi inv(mi a) { assert(a.v != 0); return pow(a,MOD-2); }
+mi operator/(mi a, mi b) { return a*inv(b); }
+bool operator==(mi a, mi b) { return a.v == b.v; }
+
+using vmi = vector&lt;mi&gt;;
+ 
+int K;
+ 
+vmi supersetSum(vmi C) {
+	// for every j &lt; 2^K, compute sum over i superset j of C[i]
+	for (int b = 0; b &lt; K; b++) {
+		for (int i = sz(C) - 1; i &gt;= 0; i--) {
+			if (!((i &gt;&gt; b) &amp; 1)) { C[i] += C[i ^ (1 &lt;&lt; b)]; }
+		}
+	}
+	return C;
+}
+
+vmi inverseSupersetSum(vmi C){
+	// inverse operation of supersetSum: operations reversed
+	for (int b = K-1; b &gt;= 0; b--) {
+		for (int i = 0; i &lt; sz(C); i++) {
+			if (!((i &gt;&gt; b) &amp; 1)) { C[i] -= C[i ^ (1 &lt;&lt; b)]; }
+		}
+	}
+	return C;
+}
+ 
+vmi subsetSum(vmi C) {
+	// for every j &lt; 2^K, compute sum over i subset j of C[i]
+	for (int b = 0; b &lt; K; b++) {
+		for (int i = 0; i &lt; sz(C); i++) {
+			if ((i &gt;&gt; b) &amp; 1) { C[i] += C[i ^ (1 &lt;&lt; b)]; }
+		}
+	}
+	return C;
+}
+ 
+vmi unionSum(vmi C, vmi f) {
+	// for every j &lt; 2^K, compute sum over i of C_i * f(i intersect j)
+	assert(sz(C) == (1 &lt;&lt; K) &amp;&amp; sz(f) == (1 &lt;&lt; K));
+ 
+	// compute superset sum of C
+	C = subsetSum(C);
+	vmi g = inverseSupersetSum(f);
+	for (int i = 0; i &lt; sz(C); i++) { C[i] *= g[i]; }
+	C = supersetSum(C);
+	return C;
+}
+ 
+vmi sumSimilarities(vi cows) {
+	vmi cnt(1 &lt;&lt; K);
+	for (int c : cows) cnt[c] += 1;
+ 
+	vmi f(1&lt;&lt;K, mi(0));
+	vmi invs(K+1, mi(0));
+	for (int i = 1; i &lt;= K; i++) { invs[i] = mi(1) / mi(i); }
+	for(int i = 1; i &lt; (1&lt;&lt;K); i++){
+		f[i] = invs[__builtin_popcount(i)];
+	}
+
+	vmi one_sum = unionSum(cnt, f);
+
+	vmi size_cnt;
+	for (int i = 0; i &lt; sz(cnt); i++)
+		size_cnt.pb(cnt[i] * mi(__builtin_popcount(i)));
+	vmi size_sum = unionSum(size_cnt, f);
+ 
+	vmi res;
+	for (int c : cows) res.pb(one_sum[c] * __builtin_popcount(c) + size_sum[c] - sz(cows));
+	return res;
+}
+ 
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0); 
+	int N;
+	cin &gt;&gt; N &gt;&gt; K;
+ 
+	vi cows(N);
+	for(int i = 0; i &lt; N; i++) cin &gt;&gt; cows[i];
+
+	auto ans = sumSimilarities(cows);
+	for(auto u: ans) cout &lt;&lt; u.v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Other Partial Solutions:</strong> Slower solutions using some of the ideas  from
+full solution 2 can receive partial credit. Possible time complexities include
+<span class='math'>$O(K3^K)$</span> and <span class='math'>$O(K^32^K)$</span>.
+<p></body></html>

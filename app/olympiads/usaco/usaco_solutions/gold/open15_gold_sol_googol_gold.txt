@@ -1,0 +1,250 @@
+Solution ID: sol_googol_gold
+Contest: OPEN15
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_googol_gold.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Steven Hao)
+
+We first present a naive algorithm that recursively iterates through all nodes.
+
+Below is Python code implementing this naive algorithm, which we will soon
+optimize.
+
+import sys
+
+def ask(cur):
+  print cur
+  sys.stdout.flush()
+  return [int(_) for _ in raw_input().split()]
+
+def count(cur): # count size of subtree at cur
+  if cur == 0:
+    return 0
+  a, b = ask(cur)
+  rgt = count(b)
+  lft = count(a)
+  return 1 + lft + rgt
+
+ans = count(1)
+print 'Answer %d' % ans
+
+Of course, with
+
+$N \le 10^{100}$
+
+, this code is too slow!
+
+We will make an optimization that makes use of the fact
+
+$lft - rgt \in \{0, 1\}$
+
+, where
+
+$lft$
+
+and
+
+$rgt$
+
+are the size of the left and
+right subtree of
+
+$cur$
+
+(as used in the above code).
+
+We do not need to compute
+
+$lft$
+
+from scratch; we merely need to compute it given
+that it is either
+
+$rgt$
+
+or
+
+$rgt + 1$
+
+.
+
+In other words, we evaluate
+
+$lft = countGiven(a, rgt)$
+
+.
+
+When computing
+
+$countGiven(cur, x)$
+
+, we use the same approach as before: compute
+the size of the left subtree of
+
+$cur$
+
+and the right subtree of
+
+$cur$
+
+(which we
+shall again name
+
+$lft$
+
+and
+
+$rgt$
+
+), then evaluate
+
+$1 + lft + rgt$
+
+to find the
+size of the subtree at
+
+$cur$
+
+.
+
+In general, if
+
+$lft + rgt = z$
+
+, then
+
+$lft = \lceil \frac{z}{2}\rceil$
+
+and
+
+$rgt = \lfloor\frac{z}{2}\rfloor$
+
+. This is very useful, as we know
+
+$z + 1$
+
+is
+either
+
+$x$
+
+or
+
+$x + 1$
+
+.
+
+If
+
+$x$
+
+is even, then
+
+$lft \in \{\lceil \frac{x - 1}{2}\rceil, \lceil \frac{x}{2}\rceil\} \implies lft = \frac{x}{2}$
+
+.
+
+If
+
+$x$
+
+is odd, then
+
+$rgt \in \{\lfloor\frac{x - 1}{2}\rfloor,  \lfloor\frac{x}{2}\rfloor\}\implies rgt = \frac{x-1}{2}$
+
+.
+
+Knowing
+
+$lft$
+
+lets us recursively find
+
+$rgt = countGiven(b, lft - 1)$
+
+, and vice
+versa --
+
+$lft = countGiven(a, rgt)$
+
+. Overall, this means we only need to recurse
+once to count the size of a tree given that its size is one of two options.
+
+Below is code implementing this optimization.
+
+def countGiven(cur, x): # given ret = x or ret = x + 1, find ret
+  if cur == 0:
+    return 0
+
+  a, b = ask(cur)
+  # lft + rgt = x - 1 or lft + rgt = x
+  if x % 2 == 1:
+    rgt = (x - 1) / 2
+    lft = countGiven(a, rgt)
+    return 1 + lft + rgt
+  else:
+    lft = x / 2
+    rgt = countGiven(b, lft - 1)
+    return 1 + lft + rgt
+
+def count(cur): # count size of subtree at cur
+  if cur == 0:
+    return 0
+  a, b = ask(cur)
+  rgt = count(b)
+  lft = countGiven(a, rgt)
+  return 1 + lft + rgt
+
+We can analyze the number of queries this code makes -- we want it to be less
+than the allowed
+
+$70,000$
+
+.
+
+In the maximum case,
+
+$N = 10^{100}$
+
+. Then the height
+
+$H \approx \lg_2 N = 100 \lg_2 10 < 100 \cdot \frac{10}{3} \approx 333$
+
+The procedure
+
+$count$
+
+is called once for each level. At a height
+
+$h$
+
+,
+
+$count$
+
+spawns a
+
+$countGiven$
+
+which makes
+
+$h$
+
+queries, so overall, there are
+
+$1 + 2 + \ldots + 333 \approx 10^6/18 < 70000$
+
+queries.
+
+[Note from problem author: Trees of this sort are sometimes called "Braun trees" in the computing
+literature; they have a number of nice uses particularly in "functional" programming languages,
+since they are easy to manipulate in a recursive context.  For example, to insert a new element in
+
+$O(\log n)$
+
+time while maintaining the balancing condition, we can just insert it recursively into our left 
+subtree and then swap the left and right children of the root.]

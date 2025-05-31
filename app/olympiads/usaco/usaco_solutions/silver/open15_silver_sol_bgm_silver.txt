@@ -1,0 +1,68 @@
+Solution ID: sol_bgm_silver
+Contest: OPEN15
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_bgm_silver.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+There are
+
+$500^7$
+
+different combinations to check, which is far too many.
+
+However, just like with the bronze version of this problem, where we were only
+concerned about the parity of the answer, we are only concerned with the result
+of the product mod 7, so we only care about the values of the variables mod 7.
+This gives us
+
+$7^7$
+
+different combinations to check, which will run in time.
+
+Here is Mark Gordon's code.
+
+#include <iostream>
+#include <cstdio>
+
+using namespace std;
+
+long long num[256][7];
+
+int main() {
+  freopen("bgm.in", "r", stdin);
+  freopen("bgm.out", "w", stdout);
+
+  int N;
+  cin >> N;
+
+  for (int i = 0; i < N; i++) {
+    char letter;
+    int val;
+    cin >> letter >> val;
+    num[letter][(val % 7 + 7) % 7]++;
+  }
+
+  long long result = 0;
+
+  /* Try every possible residue mod 7 for the variables. */
+  for(int B = 0; B < 7; B++)
+  for(int E = 0; E < 7; E++)
+  for(int S = 0; S < 7; S++)
+  for(int I = 0; I < 7; I++)
+  for(int G = 0; G < 7; G++)
+  for(int O = 0; O < 7; O++)
+  for(int M = 0; M < 7; M++) {
+    if (((B + E + S + S + I + E) * (G + O + E + S) * (M + O + O)) % 7 == 0) {
+      result += num['B'][B] * num['E'][E] * num['S'][S] * num['I'][I] *
+                num['G'][G] * num['O'][O] * num['M'][M];
+    }
+  }
+  cout << result << endl;
+
+  return 0;
+}

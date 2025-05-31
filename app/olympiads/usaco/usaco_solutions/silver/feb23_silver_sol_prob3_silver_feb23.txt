@@ -1,0 +1,225 @@
+Solution ID: sol_prob3_silver_feb23
+Contest: FEB23
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_feb23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brandon Wang)
+
+First, we describe how to deal with the layovers.  They can be ignored for
+airport 1, since Bessie can access any flight leaving airport 1. For any other
+airport
+
+$i$
+
+, Bessie can access a flight leaving
+
+$i$
+
+at time
+
+$r$
+
+if and only if
+she can get to airport
+
+$j$
+
+by time
+
+$r - a_i$
+
+. Thus, we can decrement all such
+
+$r$
+
+'s by
+
+$a_i$
+
+.
+
+Subtask 1:
+
+$r_j < s_j$
+
+For this subtask, note that Bessie can use flight
+
+$j$
+
+if and only if she can
+get to airport
+
+$c_j$
+
+at or before
+
+$r_j$
+
+,  which must be done using earlier
+flights. So, we can just iterate through the flights in increasing order of
+
+$r_j$
+
+,  and maintain the earliest possible arrival time at each airport.
+
+This takes
+
+$O(M\log M + N)$
+
+.
+
+Subtask 2:
+
+$M, N \leq 5000$
+
+For this subtask, we use a Bellman-Ford like algorithm. Specifically, to relax
+an edge corresponding to flight
+
+$j$
+
+, we just check if it is possible to arrive
+at airport
+
+$c_j$
+
+at or before
+
+$r_j$
+
+, and if so, we update the earliest possible
+arrival time at airport
+
+$d_j$
+
+.
+
+Since the optimal path uses at most
+
+$M$
+
+edges (there is never any use for Bessie
+to take the same flight twice), this can be done in
+
+$O(M^2 + N)$
+
+.
+
+No further constraints
+
+For a complete solution, we combine ideas from both subtasks. Note that since
+Bessie never takes the same edge twice, we never actually need to relax along an
+edge twice, since the second time we update the arrival time at
+
+$d_j$
+
+there will
+be no improvement.
+
+Thus, if we update the arrival time at airport
+
+$i$
+
+from
+
+$t_i$
+
+to
+
+$t_i'$
+
+, we only
+need to relax edges
+
+$j$
+
+such that
+
+$c_j = i$
+
+and
+
+$t_i' \leq r_j < t_i$
+
+. In
+particular, if we maintain a queue of edges that need to be relaxed,  and a
+sorted list of flights leaving each airport in increasing order of departure
+time, then each edge relaxation step only takes
+
+$O(f)$
+
+time, where
+
+$f$
+
+is the
+number of new flights that  are added to the queue. Since each edge is added to
+the queue at most once, the total runtime of all the edge relaxations would just
+be
+
+$O(M)$
+
+. So, the total runtime would be
+
+$O(M\log M + N)$
+
+, where
+
+$O(M\log M)$
+
+comes from sorting the flights departing each airport.
+
+Python implementation:
+
+N, M = input().strip().split()
+N = int(N)
+M = int(M)
+INFTY = int(1e9+7)
+
+flights_base = [[] for _ in range(N+1)]
+
+for _ in range(M):
+    c, r, d, s = input().strip().split()
+    flights_base[int(c)].append((int(r), int(d), int(s)))
+
+layovers = [0] + [int(x) for x in input().strip().split()]
+
+# ignore layovers at airport 1
+layovers[1] = 0
+
+flights = [[] for _ in range(N+1)]
+
+for c in range(1, N+1):
+    for r, d, s in flights_base[c]:
+        flights[c].append((r - layovers[c], d, s))
+    flights[c].sort(reverse=True)
+
+time = [INFTY for _ in range(N+1)]
+time[1] = 0
+idx = [0 for _ in range(N+1)]
+
+# list implementation of a queue
+q = []
+qid = 0
+
+for flight in flights[1]:
+    q.append(flight)
+
+while qid < len(q): 
+    r, d, s = q[qid]
+    # relax this edge
+    time[d] = min(time[d], s)
+    # check if any new edges need to be relaxed, and add them to the queue if so
+    while idx[d] < len(flights[d]) and flights[d][idx[d]][0] >= s:
+        q.append(flights[d][idx[d]])
+        idx[d] += 1
+    qid += 1
+
+for i in range(1, N+1):
+    if time[i] != INFTY:
+        print(time[i])
+    else:
+        print(-1)

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Suhas Nagar and Andi Qu)
+<p>Let <span class='math'>$c_i$</span> be the <span class='math'>$i$</span>-th cowmpetency value in the sequence. We can think of each
+<span class='math'>$c_i$</span> as a free variable (i.e., we can adjust its value as we see fit) and each
+pair <span class='math'>$(a_i, h_i)$</span> as a constraint on the free variables. Specifically, each
+constraint dictates that:
+<div class='math'>$$
+\max_{a_i &lt; k &lt; h_i}(c_k) \le \max_{k \le a_i}(c_k) &lt; c_{h_i}
+$$</div>
+<p><strong>Subtask 1:</strong> <span class='math'>$O(NQC^N)$</span>
+<p>For this subtask, it works to iterate over all <span class='math'>$C^N$</span> sequences and check each
+one against the list of constraints.
+<p><strong>Subtasks 2 and 3:</strong> <span class='math'>$O(NC^2)$</span>
+<p>Like many other problems involving counting something modulo a large number,
+this problem&apos;s full solution involves dynamic programming (DP). Let <span class='math'>$dp[i][j]$</span>
+be the number of ways to satisfy the constraints when you only consider the
+first <span class='math'>$i$</span> cows and have
+<span class='math'>$\max_{k \le i}(c_k) = j$</span>.
+<p>There are two different contributions to <span class='math'>$dp[i][j]$</span>:
+<ol><li>
+<strong>Case 1:</strong> <span class='math'>$c_i \le \max_{k &lt; i}(c_k) \implies c_i \le j$</span>. This case is only
+possible if no constraint has <span class='math'>$h_k = i$</span>. If so, there are <span class='math'>$j$</span> options for <span class='math'>$c_i$</span>
+in this case, so this case contributes <span class='math'>$j \cdot dp[i - 1][j]$</span>.
+</li><li>
+<strong>Case 2:</strong> <span class='math'>$c_i &gt; \max_{k &lt; i}(c_k) \implies c_i = j$</span>. This case is only
+possible if no constraint has <span class='math'>$a_k \le i &lt; h_k$</span>. If so, there is <span class='math'>$1$</span> option for
+<span class='math'>$c_i$</span> in this case, so this case contributes <span class='math'>$\sum_{k = 1}^{j - 1} dp[i - 1][k]$</span>.
+</li></ol>
+<p>Computing these two contributions naively takes <span class='math'>$O(C)$</span> time for each <span class='math'>$dp[i][j]$</span>,
+so this approach runs in <span class='math'>$O(NC^2)$</span> time overall. Slower solutions that run in
+<span class='math'>$O(NC(C + Q))$</span> time may also pass both subtasks, but more likely pass only
+Subtask 2.
+<p>Python code:
+<p><pre class='prettyprint'>
+MOD = int(1e9 + 7)
+n, q, c = map(int, input().split())
+
+i_start = [False for i in range(n + 1)]
+i_end = [False for i in range(n + 1)]
+for i in range(q):
+    a, h = map(int, input().split())
+    i_start[a] = True
+    i_end[h] = True
+
+dp = [[0 for j in range(c + 1)] for i in range(n + 1)]
+dp[0][0] = 1
+restrict = False
+for i in range(1, n + 1):
+    if i_end[i]:
+        restrict = False
+    for j in range(1, c + 1):
+        if not i_end[i]:
+            dp[i][j] = j * dp[i - 1][j] % MOD
+        if not restrict:
+            for k in range(j):
+                dp[i][j] += dp[i - 1][k]
+                if dp[i][j] &gt;= MOD:
+                    dp[i][j] -= MOD
+    if i_start[i]:
+        restrict = True
+
+print(sum(dp[n]) % MOD)
+</pre>
+<p><strong>Subtask 4:</strong> <span class='math'>$O(NC)$</span>
+<p>We can speed up the above solution by using a prefix sum array to compute Case
+2. This optimization improves the time complexity by a factor of
+<span class='math'>$C$</span>.
+<p>Python code:
+<p><pre class='prettyprint'>
+MOD = int(1e9 + 7)
+n, q, c = map(int, input().split())
+
+i_start = [False for i in range(n + 1)]
+i_end = [False for i in range(n + 1)]
+for i in range(q):
+    a, h = map(int, input().split())
+    i_start[a] = True
+    i_end[h] = True
+
+dp = [[0 for j in range(c + 1)] for i in range(n + 1)]
+pref = [[0 for j in range(c + 1)] for i in range(n + 1)]
+dp[0][0] = 1
+pref[0] = [1 for j in range(c + 1)]
+restrict = False
+for i in range(1, n + 1):
+    if i_end[i]:
+        restrict = False
+    for j in range(1, c + 1):
+        if not i_end[i]:
+            dp[i][j] = j * dp[i - 1][j] % MOD
+        if not restrict:
+            dp[i][j] += pref[i - 1][j - 1]
+            if dp[i][j] &gt;= MOD:
+                dp[i][j] -= MOD
+    pref[i][0] = dp[i][0]
+    for j in range(1, c + 1):
+        pref[i][j] = pref[i][j - 1] + dp[i][j]
+        if pref[i][j] &gt;= MOD:
+            pref[i][j] -= MOD
+    if i_start[i]:
+        restrict = True
+
+print(pref[n][c])
+</pre>
+<p><strong>Full Credit:</strong> <span class='math'>$O(QC \log N)$</span>
+<p>Consider each constraint <span class='math'>$(a_i, h_i)$</span> as a range <span class='math'>$[a_i, h_i - 1]$</span> on a number
+line. Because the problem guarantees that the number of valid sequences is not
+<span class='math'>$0$</span>, two of these ranges (say <span class='math'>$i$</span> and <span class='math'>$j$</span>) can intersect only if <span class='math'>$h_i = h_j$</span>.
+For any two such intersecting ranges, only the one with the smaller <span class='math'>$a$</span> value
+affects the answer.
+<p>From this observation, the list of constraints splits the sequence into <span class='math'>$Q$</span>
+disjoint ranges. Because each free variable in a given range is essentially
+identical, we can compute the answer more efficiently by iterating over
+<em>constraints</em> (after sorting them) instead of <em>cows</em>.
+<p>Now, let <span class='math'>$dp[i][j]$</span> be the number of ways to satisfy up to the first <span class='math'>$i$</span>
+constraints and have <span class='math'>$c_{h_i} = j$</span>. Additionally, let <span class='math'>$w_i$</span> be the number of
+free variables in constraint <span class='math'>$i$</span>&apos;s range, and <span class='math'>$u_i$</span> be the number of free
+variables between constraint <span class='math'>$i$</span>&apos;s range and constraint <span class='math'>$i - 1$</span>&apos;s range.
+<p>There are three different contributions to <span class='math'>$dp[i][j]$</span>:
+<p><ol><li><strong>Case 1:</strong> Any sequence counted in <span class='math'>$dp[i][j-1]$</span> can also count toward
+<span class='math'>$dp[i][j]$</span> by changing <span class='math'>$c_{h_i}$</span> from <span class='math'>$j-1$</span> to <span class='math'>$j$</span>. 
+</li><li>
+<strong>Case 2:</strong> Any sequence counted in <span class='math'>$dp[i-1][j-1]$</span> can also count toward
+<span class='math'>$dp[i][j]$</span> if all <span class='math'>$w_i + u_i$</span> free variables under consideration are assigned
+values between <span class='math'>$1$</span> to <span class='math'>$j-1$</span>.
+</li><li>
+<strong>Case 3:</strong> Any sequence counted in <span class='math'>$dp[i-1][k]$</span> where <span class='math'>$k &lt; j-1$</span> can also
+count toward <span class='math'>$dp[i][j]$</span> if at least one of the <span class='math'>$w_i$</span> free variables in
+constraint <span class='math'>$i$</span>&apos;s range is equal to <span class='math'>$j - 1$</span> and the rest are no more than
+<span class='math'>$j - 1$</span>. There are <span class='math'>$((j-1)^{w_i} - (j-2)^{w_i}) \cdot j^{u_i}$</span> ways to do this
+assignment.
+</li></ol>
+<p>Putting it all together, our DP recurrence is:
+<div class='math'>$$dp[i][j] = dp[i][j-1]+dp[i-1][j-1] \cdot (j-1)^{w_i+u_i}+\sum_{k = 0}^{j-2} dp[i-1][k] \cdot ((j-1)^{w_i}-(j-2)^{w_i}) \cdot j^{u_i}$$</div>
+<p>We can compute each term in <span class='math'>$O(\log N)$</span> time using a running sum and
+<a href='https://usaco.guide/gold/modular?lang=cpp#modular-exponentiation'> binary
+exponentiation</a>.
+<p>Python code:
+<pre class='prettyprint'>
+MOD = int(1e9 + 7)
+
+
+def expo(base, pow):
+    if pow == 0:
+        return 1
+    x = expo(base * base % MOD, pow // 2)
+    return base * x % MOD if pow % 2 == 1 else x
+
+
+n, q, c = map(int, input().split())
+
+pairs_dict = {0: 0}
+for i in range(q):
+    a, h = map(int, input().split())
+    pairs_dict[h] = min(a, pairs_dict.get(h, h))
+pairs = sorted((a, h) for h, a in pairs_dict.items())
+q = len(pairs_dict) - 1
+
+dp = [[0 for j in range(c + 1)] for i in range(q + 1)]
+dp[0][0] = 1
+for i in range(1, q + 1):
+    gap1 = pairs[i][0] - pairs[i - 1][1]
+    gap2 = pairs[i][1] - pairs[i][0] - 1
+    pref_sum = 0
+    for j in range(1, c + 1):
+        dp[i][j] = (dp[i][j - 1] + dp[i - 1][j - 1] * expo(j - 1, gap1 + gap2) +
+                    pref_sum * (expo(j - 1, gap1) - expo(j - 2, gap1)) * expo(j - 1, gap2)) % MOD
+        pref_sum = (pref_sum + dp[i - 1][j - 1]) % MOD
+
+print(sum(dp[q]) * expo(c, n - pairs[q][1]) % MOD)
+</pre>
+<p></body></html>

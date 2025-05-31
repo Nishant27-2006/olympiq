@@ -1,0 +1,232 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: OPEN24 Contest - Bronze Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Farmer John has a permutation $p$ of length $N$ ($2 \leq N \leq 10^5)$,
+containing each positive integer from $1$ to $N$ exactly once. However, Farmer
+Nhoj has broken into FJ's barn and disassembled $p$. To not be too cruel, FN has
+written some hints that will help FJ reconstruct $p$. While there is more than
+one element remaining in $p$, FN does the following:
+
+Let the remaining elements of $p$ be
+$p'_1, p'_2, \dots , p'_n$,
+ If $p'_1 > p'_n$, he writes down $p'_2$ and removes $p'_1$ from the
+permutation. Otherwise, he writes down $p'_{n-1}$ and removes $p'_n$ from the
+permutation.
+At the end, Farmer Nhoj will have written down $N - 1$ integers
+$h_1, h_2, \dots, h_{N-1}$, in that order. Given $h$, Farmer John wants to
+enlist your help to reconstruct the lexicographically minimum $p$ consistent
+with Farmer Nhoj's hints, or determine that Farmer Nhoj must have made a
+mistake.  Recall that if you are given two permutations $p$ and $p'$,
+$p$ is lexicographically smaller than $p'$ if $p_i < p'_i$ at the first
+position $i$ where the two differ.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+Each input consists of $T$ independent test cases ($1\le T\le 10$). Each test
+case is described as follows:
+
+The first line contains $N$.
+
+The second line contains $N - 1$ integers $h_1, h_2, \dots, h_{N-1}$
+($1\le h_i\le N$).
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Output $T$ lines, one for each test case.
+
+If there is a permutation $p$ of $1\dots N$ consistent with $h$, output the
+lexicographically smallest such $p$. If no such $p$ exists, output $-1$.
+
+SAMPLE INPUT:
+5
+2
+1
+2
+2
+4
+1 1 1
+4
+2 1 1
+4
+3 2 1
+SAMPLE OUTPUT: 
+1 2
+-1
+-1
+3 1 2 4
+1 2 3 4
+
+For the fourth test case, if $p=[3,1,2,4]$ then FN will have written down
+$h=[2,1,1]$.
+
+
+p' = [3,1,2,4]
+p_1' < p_n' -> h_1 = 2
+p' = [3,1,2]
+p_1' > p_n' -> h_2 = 1
+p' = [1,2]
+p_1' < p_n' -> h_3 = 1
+p' = [1]
+
+Note that the permutation $p=[4,2,1,3]$ would also produce the same $h$, but
+$[3,1,2,4]$ is lexiocgraphically smaller.
+
+For the second test case, there is no $p$ consistent with $h$; both $p=[1,2]$
+and $p=[2,1]$ would produce $h=[1]$, not $h=[2]$.
+
+SCORING:
+Input 2: $N\le 8$Inputs 3-6: $N\le 100$Inputs 7-11: No additional constraints.
+
+
+Problem credits: Chongtian Ma
+
+
+
+\section*{Input Format}
+The first line contains $N$.The second line contains $N - 1$ integers $h_1, h_2, \dots, h_{N-1}$
+($1\le h_i\le N$).
+
+The second line contains $N - 1$ integers $h_1, h_2, \dots, h_{N-1}$
+($1\le h_i\le N$).
+
+OUTPUT FORMAT (print output to the terminal / stdout):Output $T$ lines, one for each test case.If there is a permutation $p$ of $1\dots N$ consistent with $h$, output the
+lexicographically smallest such $p$. If no such $p$ exists, output $-1$.SAMPLE INPUT:5
+2
+1
+2
+2
+4
+1 1 1
+4
+2 1 1
+4
+3 2 1SAMPLE OUTPUT:1 2
+-1
+-1
+3 1 2 4
+1 2 3 4For the fourth test case, if $p=[3,1,2,4]$ then FN will have written down
+$h=[2,1,1]$.p' = [3,1,2,4]
+p_1' < p_n' -> h_1 = 2
+p' = [3,1,2]
+p_1' > p_n' -> h_2 = 1
+p' = [1,2]
+p_1' < p_n' -> h_3 = 1
+p' = [1]Note that the permutation $p=[4,2,1,3]$ would also produce the same $h$, but
+$[3,1,2,4]$ is lexiocgraphically smaller.For the second test case, there is no $p$ consistent with $h$; both $p=[1,2]$
+and $p=[2,1]$ would produce $h=[1]$, not $h=[2]$.SCORING:Input 2: $N\le 8$Inputs 3-6: $N\le 100$Inputs 7-11: No additional constraints.Problem credits: Chongtian Ma
+
+\section*{Output Format}
+If there is a permutation $p$ of $1\dots N$ consistent with $h$, output the
+lexicographically smallest such $p$. If no such $p$ exists, output $-1$.
+
+SAMPLE INPUT:5
+2
+1
+2
+2
+4
+1 1 1
+4
+2 1 1
+4
+3 2 1SAMPLE OUTPUT:1 2
+-1
+-1
+3 1 2 4
+1 2 3 4For the fourth test case, if $p=[3,1,2,4]$ then FN will have written down
+$h=[2,1,1]$.p' = [3,1,2,4]
+p_1' < p_n' -> h_1 = 2
+p' = [3,1,2]
+p_1' > p_n' -> h_2 = 1
+p' = [1,2]
+p_1' < p_n' -> h_3 = 1
+p' = [1]Note that the permutation $p=[4,2,1,3]$ would also produce the same $h$, but
+$[3,1,2,4]$ is lexiocgraphically smaller.For the second test case, there is no $p$ consistent with $h$; both $p=[1,2]$
+and $p=[2,1]$ would produce $h=[1]$, not $h=[2]$.SCORING:Input 2: $N\le 8$Inputs 3-6: $N\le 100$Inputs 7-11: No additional constraints.Problem credits: Chongtian Ma
+
+\section*{Sample Input}
+\begin{verbatim}
+5
+2
+1
+2
+2
+4
+1 1 1
+4
+2 1 1
+4
+3 2 1
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+1 2
+-1
+-1
+3 1 2 4
+1 2 3 4
+
+For the fourth test case, if $p=[3,1,2,4]$ then FN will have written down
+$h=[2,1,1]$.p' = [3,1,2,4]
+p_1' < p_n' -> h_1 = 2
+p' = [3,1,2]
+p_1' > p_n' -> h_2 = 1
+p' = [1,2]
+p_1' < p_n' -> h_3 = 1
+p' = [1]Note that the permutation $p=[4,2,1,3]$ would also produce the same $h$, but
+$[3,1,2,4]$ is lexiocgraphically smaller.For the second test case, there is no $p$ consistent with $h$; both $p=[1,2]$
+and $p=[2,1]$ would produce $h=[1]$, not $h=[2]$.SCORING:Input 2: $N\le 8$Inputs 3-6: $N\le 100$Inputs 7-11: No additional constraints.Problem credits: Chongtian Ma
+
+p' = [3,1,2,4]
+p_1' < p_n' -> h_1 = 2
+p' = [3,1,2]
+p_1' > p_n' -> h_2 = 1
+p' = [1,2]
+p_1' < p_n' -> h_3 = 1
+p' = [1]Note that the permutation $p=[4,2,1,3]$ would also produce the same $h$, but
+$[3,1,2,4]$ is lexiocgraphically smaller.For the second test case, there is no $p$ consistent with $h$; both $p=[1,2]$
+and $p=[2,1]$ would produce $h=[1]$, not $h=[2]$.SCORING:Input 2: $N\le 8$Inputs 3-6: $N\le 100$Inputs 7-11: No additional constraints.Problem credits: Chongtian Ma
+
+p' = [3,1,2,4]
+p_1' < p_n' -> h_1 = 2
+p' = [3,1,2]
+p_1' > p_n' -> h_2 = 1
+p' = [1,2]
+p_1' < p_n' -> h_3 = 1
+p' = [1]
+
+Note that the permutation $p=[4,2,1,3]$ would also produce the same $h$, but
+$[3,1,2,4]$ is lexiocgraphically smaller.For the second test case, there is no $p$ consistent with $h$; both $p=[1,2]$
+and $p=[2,1]$ would produce $h=[1]$, not $h=[2]$.SCORING:Input 2: $N\le 8$Inputs 3-6: $N\le 100$Inputs 7-11: No additional constraints.Problem credits: Chongtian Ma
+
+For the second test case, there is no $p$ consistent with $h$; both $p=[1,2]$
+and $p=[2,1]$ would produce $h=[1]$, not $h=[2]$.SCORING:Input 2: $N\le 8$Inputs 3-6: $N\le 100$Inputs 7-11: No additional constraints.Problem credits: Chongtian Ma
+
+SCORING:Input 2: $N\le 8$Inputs 3-6: $N\le 100$Inputs 7-11: No additional constraints.Problem credits: Chongtian Ma
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1421
+
+\section*{Source}
+USACO OPEN24 Contest, Bronze Division, Problem ID: 1421
+
+\end{document}

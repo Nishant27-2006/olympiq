@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>My code for solving this problem is below (in C++, but if you speak Java or Python it
+should hopefully  still be easy to follow).  I first wrote a helper function
+target(i) that computes to whom cow i passes the ball.  Using this, I count for
+each cow i the number of cows passing to her.  If this number is zero, the cow
+is a &quot;source&quot; -- she passes the ball away but never gets a ball back.  Such cows
+all need their own starting ball from Farmer John.  
+<p>The only other special case where Farmer John needs to distribute a ball
+initially is to a pair of adjacent cows that both pass to each-other, and where
+neither receives a pass from anyone else, so this pair is isolated from the rest
+of the game.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+
+int N, x[100], passto[100];   // passto[i] is # of cows passing to cow i                                                                         
+
+// To whom does cow i pass the ball?                                                                                                             
+int target(int i)
+{
+  int left_nbr=-1, left_dist = 1000;
+  int right_nbr=-1, right_dist = 1000;
+
+  // Find closet neighbors on left and right                                                                                                     
+  for (int j=0; j&lt;N; j++)
+    if (x[j] &lt; x[i] &amp;&amp; x[i]-x[j] &lt; left_dist) { left_nbr = j; left_dist = x[i]-x[j]; }
+  for (int j=0; j&lt;N; j++)
+    if (x[j] &gt; x[i] &amp;&amp; x[j]-x[i] &lt; right_dist) { right_nbr = j; right_dist = x[j]-x[i]; }
+
+  if (left_dist &lt;= right_dist) return left_nbr;
+  return right_nbr;
+}
+
+int main(void)
+{
+  ifstream fin (&quot;hoofball.in&quot;);
+  ofstream fout (&quot;hoofball.out&quot;);
+  fin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++) fin &gt;&gt; x[i];
+  for (int i=0; i&lt;N; i++) passto[target(i)]++;
+
+  int answer = 0;
+  for (int i=0; i&lt;N; i++) {
+    if (passto[i] == 0) answer++;  // +1 for every &quot;source&quot; cow, to whom nobody passes                                                           
+    if (i &lt; target(i) &amp;&amp; target(target(i))==i &amp;&amp; passto[i]==1 &amp;&amp; passto[target(i)]==1)
+      answer++;  // +1 for every pair passing to each-other                                                                                      
+  }
+
+  fout &lt;&lt; answer &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+<p></body></html>

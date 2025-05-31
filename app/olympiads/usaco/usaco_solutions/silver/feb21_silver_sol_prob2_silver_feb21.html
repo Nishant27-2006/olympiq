@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Spencer Compton)
+<p>We start by thinking about the structure of Bessie&apos;s journey through time. Since
+there are only time portals on years that are multiples of 12, and none of
+Bessie&apos;s relatives are born in such a year, to visit some relative Bessie must
+also visit the preceding year of the Ox and wait 12 years. For example, if
+Bessie has a relative from 15 years ago, Bessie must visit the year of the Ox 24
+years ago and must wait until at least the year of the Ox 12 years ago. In other
+words, we can think of each year <span class='math'>$x$</span> as belonging to a 12-year cycle
+<span class='math'>$\lfloor \frac{x+11}{12} \rfloor$</span>, so <span class='math'>$0$</span> belongs to cycle <span class='math'>$0$</span>, 
+<span class='math'>$[1, \dots, 12]$</span> to cycle <span class='math'>$1$</span>, <span class='math'>$[13, \dots, 24]$</span> to cycle <span class='math'>$2$</span>, and so on.
+Meaning, if Bessie has a relative in cycle <span class='math'>$x$</span> then Bessie must spend all 12
+years in that cycle.
+<p>We must use a jump to go back to the earliest cycle, then with the remaining
+<span class='math'>$K-1$</span> jumps Bessie can skip over contiguous ranges of unnecessary cycles. It is
+then optimal to skip over the <span class='math'>$K-1$</span> largest contiguous ranges of unused cycles.
+One way we can accomplish this is by identifying all the cycles Bessie has
+relatives in, sorting them, identifying the gaps between adjacent cycles in the
+sorted list, and sorting those gaps to find the <span class='math'>$K-1$</span> largest. In total, this
+takes  <span class='math'>$O(n \log (n) ) $</span> time.
+<p>Brian Dean&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;set&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+set&lt;int&gt; blocks;
+vector&lt;int&gt; gaps;
+ 
+int main(void)
+{
+  int N, K, years_ago, answer, last = 0;
+  cin &gt;&gt; N &gt;&gt; K;
+  for (int i=0; i&lt;N; i++) { cin &gt;&gt; years_ago; blocks.insert ((years_ago+11)/12); }
+  answer = *blocks.rbegin();
+  while (!blocks.empty()) {
+    gaps.push_back(*blocks.begin() - last - 1);
+    last = *blocks.begin();
+    blocks.erase(*blocks.begin());
+  }
+  sort (gaps.rbegin(), gaps.rend());
+  for (int i=0; i&lt;K-1 &amp;&amp; i&lt;gaps.size(); i++) answer -= gaps[i];
+  cout &lt;&lt; answer * 12 &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

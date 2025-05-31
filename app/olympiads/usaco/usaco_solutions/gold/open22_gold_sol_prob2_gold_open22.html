@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>First, discard all occurrences of <span class='math'>$\times 1$</span> since they don&apos;t affect the answer.
+Also, if a program contains an occurrence of <span class='math'>$\times 0$</span>, discard the portion of
+the program before the last such occurrence.
+<p>Say that two instructions are of the same type if they are both <span class='math'>$\times d$</span> or
+both <span class='math'>$+s$</span>. When do two interleaved programs produce the same expression? It
+turns out that this happens if and only if one interleaved program can be
+transformed into the other by repeatedly swapping two adjacent instructions of
+the same type, where one of the instructions belongs to Bessie and the other
+belongs to Elsie.
+<p>Therefore, the number of distinct expressions is precisely the number of
+interleaved programs that do not contain a pair of adjacent instructions of the
+same type where the first instruction belongs to Elsie and the second
+instruction belongs to Bessie, because every such program that contains such a
+pair  can be uniquely transformed via a series of swaps into a program that does
+not contain such a pair (while there exists such a pair, swap the two
+instructions in the pair).
+<p>The full solution involves dynamic programming on a grid. In the code below, 
+<span class='math'>$\texttt{dp}[i][j][k]$</span> is the number of ways to interleave  the first <span class='math'>$i$</span>
+instructions of Bessie&apos;s program with the first <span class='math'>$j$</span> instructions of Elsie&apos;s
+program such that the last instruction in the interleaving belongs to Bessie if
+<span class='math'>$k=0$</span> or Elsie if <span class='math'>$k=1$</span>. <span class='math'>$\texttt{dp}[i][j][k]$</span> is used to update both
+<span class='math'>$\texttt{dp}[i][j+1][1]$</span> (if Elsie adds her <span class='math'>$j$</span>-th instruction to the end of the
+interleaving)  and <span class='math'>$\texttt{dp}[i+1][j][0]$</span> (if Bessie adds her <span class='math'>$i$</span>-th
+instruction to the end of the interleaving) unless Elsie last added to the
+interleaving and the <span class='math'>$j-1$</span>-th instruction of Elsie&apos;s program has the same type
+as the <span class='math'>$i$</span>-th instruction of Bessie&apos;s program.
+<p>The overall time complexity is proportional to the number of DP states, which is
+<span class='math'>$O(N^2)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+
+const int MOD = 1e9 + 7;
+void mod_add(int &amp;a, int b) { a = (a + b) % MOD; }
+
+void read(string &amp;s) {
+	string _s;
+	cin &gt;&gt; _s;
+	for (char c : _s) {
+		if (c == &apos;1&apos;) continue;
+		if (c == &apos;0&apos;) s.clear();
+		if (c != &apos;+&apos;) c = &apos;2&apos;;
+		s += c;
+	}
+}
+
+int solve() {
+	int N;
+	cin &gt;&gt; N;
+	string A, B;
+	read(A);
+	read(B);
+	V&lt;V&lt;array&lt;int, 2&gt;&gt;&gt; dp((int)size(A) + 1,
+	                       V&lt;array&lt;int, 2&gt;&gt;((int)size(B) + 1));
+	int ans = 0;
+	auto upd = [&amp;](int x, int y, int k, int v) {
+		if (x &lt;= (int)size(A) &amp;&amp; y &lt;= (int)size(B))
+			mod_add(dp.at(x).at(y).at(k), v);
+	};
+	dp.at(0).at(0).at(0) = 1;
+	for (int i = 0; i &lt;= (int)size(A); ++i) {
+		for (int j = 0; j &lt;= (int)size(B); ++j) {
+			for (int k : {0, 1}) {
+				int v = dp.at(i).at(j).at(k);
+				if (v == 0) continue;
+				if (i == (int)size(A) &amp;&amp; j == (int)size(B)) mod_add(ans, v);
+				else {
+					upd(i, j + 1, 1, v);
+					if (k == 0) upd(i + 1, j, 0, v);
+					else {
+						assert(j &gt; 0);
+						if (i &lt; (int)size(A) &amp;&amp; B.at(j - 1) != A.at(i))
+							upd(i + 1, j, 0, v);
+					}
+				}
+			}
+		}
+	}
+	return ans;
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int T;
+	cin &gt;&gt; T;
+	while (T--) cout &lt;&lt; solve() &lt;&lt; &quot;\n&quot;;
+}
+
+</pre>
+<p></body></html>

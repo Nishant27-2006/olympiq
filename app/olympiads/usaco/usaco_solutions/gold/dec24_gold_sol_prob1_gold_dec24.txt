@@ -1,0 +1,540 @@
+Solution ID: sol_prob1_gold_dec24
+Contest: DEC24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob1_gold_dec24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Chongtian Ma)
+
+Since a friendship group must all have the same label, let's lock in on a
+specific label
+
+$L$
+
+and denote the sorted indices of the cows with label
+
+$L$
+
+as
+
+$b_1, b_2, \ldots, b_k$
+
+(assuming there are
+
+$k$
+
+cows with label
+
+$L$
+
+). The number
+of friendship groups contributed by the label is the minimum number of disjoint
+subarrays that
+
+$b$
+
+must be partitioned such that the last element of each
+subarray must be at most
+
+$x$
+
+more than the first element of the subarray.
+
+For a fixed
+
+$x$
+
+and
+
+$L$
+
+, this can be solved with a greedy algorithm. Let's
+iterate over the indices in sorted order and keep two pointers
+
+$l$
+
+and
+
+$r$
+
+, the
+left and right pointers respectively. We will keep incrementing
+
+$r$
+
+until
+
+$b_r - b_l > x$
+
+. Then, we will increase the number of groups by
+
+$1$
+
+and set
+
+$l$
+
+to
+
+$r$
+
+. We will repeat this process until
+
+$r$
+
+has reached the end of
+
+$b$
+
+. Over
+all
+
+$x$
+
+, since the sum of lengths of
+
+$b$
+
+over all
+
+$L$
+
+is
+
+$N$
+
+, this will take
+
+$\mathcal{O}(N^2)$
+
+time. This is sufficient to pass subtask
+
+$1$
+
+.
+
+For subtask
+
+$2$
+
+, there are only
+
+$10$
+
+possible values of
+
+$L$
+
+. For each
+
+$L$
+
+, let's
+create an array
+
+$\mathtt{next}$
+
+where
+
+$\mathtt{next}_i$
+
+stores the least
+
+$j \geq i$
+
+such that
+
+$a_j = L$
+
+(or
+
+$N + 1$
+
+if there is no such
+
+$j$
+
+). This array
+can be precomputed by looping through
+
+$a$
+
+backwards. For a fixed
+
+$x$
+
+, we can
+count the number of groups in
+
+$\mathcal{O}(\frac{N}{x})$
+
+time using the
+following algorithm:
+
+pointer = first i such that a[i] = L
+while pointer <= n:
+   add 1 to number of groups
+   if pointer + x + 1 > n:
+      break out of the loop
+   pointer = next[pointer + x + 1]
+
+Initially, the pointer is at the first index of first group. In every iteration,
+we are jumping to the start of the next group, which must be at least
+
+$x + 1$
+
+indices forwards. In the worst case, we will jump
+
+$\frac{N}{x}$
+
+times.  Over all
+
+$x$
+
+, the total running time is
+
+$\mathcal{O}(N \log N)$
+
+due to the harmonic
+series. Finally, over all
+
+$L$
+
+this becomes
+
+$\mathcal{O}(10N \log N) \approx \mathcal{O}(N \log N)$
+
+.
+
+For subtask
+
+$3$
+
+, the number of possible
+
+$L$
+
+can be huge, but the length of
+
+$b$
+
+for each
+
+$L$
+
+is at most
+
+$10$
+
+. Observe that the maximum number of groups that can
+be made is
+
+$10$
+
+because each group must have at least
+
+$1$
+
+element. If we fix and
+denote the number of groups we want to make as
+
+$g$
+
+, then we want to find
+
+$l$
+
+,
+the minimum
+
+$x$
+
+such that
+
+$g$
+
+groups can be made. This can be done with binary
+search.
+
+Let's create an array
+
+$c_1, c_2, \ldots, c_k$
+
+, where
+
+$c_i$
+
+is the value of
+
+$l$
+
+for each
+
+$i = g$
+
+. It is apparent that
+
+$c$
+
+must be sorted in decreasing order.
+Essentially,
+
+$c_g$
+
+is the barrier point of
+
+$x$
+
+that splits
+
+$g$
+
+groups and
+
+$g+1$
+
+groups. We know that
+
+$1$
+
+group can be made for
+
+$x$
+
+in the interval
+
+$[c_1, N]$
+
+,
+
+$2$
+
+groups for
+
+$[c_2, c_1-1]$
+
+, and so on.
+
+The complexity for a fixed
+
+$L$
+
+is
+
+$\mathcal{O}(10^2 \log N) \approx \mathcal{O}(\log N)$
+
+. Over all
+
+$L$
+
+, the total
+complexity is
+
+$\mathcal{O}(\frac{N}{10} \cdot 10^2 \log N) \approx \mathcal{O}(N \log N)$
+
+.
+
+For full credit, make the following observation:
+
+If we collect all
+
+$L$
+
+such that
+
+$L$
+
+appears at least
+
+$z$
+
+times in
+
+$a$
+
+, then
+there can be no more than
+
+$\frac{N}{z}$
+
+values of
+
+$L$
+
+.
+
+Inevitably, if we set
+
+$z$
+
+to be a relatively large value, then the number of
+
+$L$
+
+we have to process will be relatively small since they are inversely
+proportional. Using our subtask
+
+$2$
+
+algorithm, the total complexity to process
+all such
+
+$L$
+
+is
+
+$\mathcal{O}(\frac{N}{z} \cdot N \log N)$
+
+.
+
+Now, collect all
+
+$L$
+
+such that
+
+$L$
+
+appears less than
+
+$z$
+
+times in
+
+$a$
+
+. Using our
+subtask
+
+$3$
+
+algorithm, the total complexity to process all such
+
+$L$
+
+is
+
+$\mathcal{O}(\frac{N}{z} \cdot z^2 \log N)$
+
+.
+
+It becomes apparent that the complexities of our subtask
+
+$2$
+
+and
+
+$3$
+
+algorithms
+are inversely proportional. We must choose a suitable value for
+
+$z$
+
+such that
+the complexities for both subtasks are as equal as possible.
+
+Finally, if we set
+
+$z \approx \sqrt{N}$
+
+, then the complexity of both subtasks is
+
+$\mathcal{O}(N \sqrt{N} \log {N})$
+
+, which is enough to receive full credit.
+
+My C++ Code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e5 + 5;
+vector<int> lab_idx[N];
+
+// use two pointers to manually calculate number of groups
+int get_groups(int label, int x) {
+	int cnt = 0, l = 0, r = 0;
+	auto &v = lab_idx[label];
+	while (l < (int)v.size()) {
+		while (r < (int)v.size() && v[r] - v[l] <= x) { r++; }
+		cnt++;
+		l = r;
+	}
+	return cnt;
+}
+
+int n;
+vector<int> nxt;
+
+int get_groups_big(int label, int x) {
+	int cnt = 0, i = lab_idx[label][0];
+	while (i < n) {
+		cnt++;
+		if (i + x + 1 >= n) break;
+		i = nxt[i + x + 1];
+	}
+	return cnt;
+}
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	cin >> n;
+	nxt.resize(n + 1);
+	for (int i = 0; i < n; i++) {
+		int c;
+		cin >> c;
+		lab_idx[c].push_back(i);
+	}
+	vector<int> small_ans(n + 1), large_ans(n + 1);
+	int SQ = (int)sqrt(n);
+	for (int label = 1; label <= n; label++) {
+		auto& v = lab_idx[label];
+		int lab_sz = v.size();
+		if (lab_sz > SQ) {
+			// Subtask 2
+			fill(nxt.begin(), nxt.end(), 0);
+			for (int i : v) { nxt[i] = i; }
+			nxt[n] = n;
+			for (int i = n - 1; i >= 0; i--) {
+				if (!nxt[i]) nxt[i] = nxt[i + 1];
+			}
+			for (int x = 1; x <= n; x++) {
+				large_ans[x] += get_groups_big(label, x);
+			}
+		} else {
+			// Subtask 3
+			for (int groups = 1; groups <= lab_sz; groups++) {
+				int l = 0, r = n + 1;
+				while (l < r - 1) {
+					int mid = l + (r - l) / 2;
+					if (get_groups(label, mid) < groups) {
+						r = mid;
+					} else {
+						l = mid;
+					}
+				}
+				// will contribute to x in the range of [1, r)
+				small_ans[1]++;
+				if (r <= n) small_ans[r]--;
+			}
+		}
+	}
+	for (int i = 2; i <= n; i++) { small_ans[i] += small_ans[i - 1]; }
+	for (int i = 1; i <= n; i++) {
+		cout << small_ans[i] + large_ans[i] << "\n";
+	}
+}
+
+Bonus: Solve this problem in
+
+$O(N\sqrt N)$
+
+time using the method from
+
+this
+
+blog post.

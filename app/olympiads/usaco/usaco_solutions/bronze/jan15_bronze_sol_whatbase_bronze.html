@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type='text/x-mathjax-config'>
+MathJax.Hub.Config({
+  "HTML-CSS": {
+    preferredFont: "TeX",
+    availableFonts: ["STIX","TeX"],
+    linebreaks: {
+      automatic: true
+    },
+    EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+  },
+  tex2jax: {
+    inlineMath: [
+      ["$", "$"],
+    ],
+    displayMath: [
+      ["$$","$$"],
+    ],
+    processEscapes: true,
+    ignoreClass: ".*",
+    processClass: "math"
+  },
+  TeX: {
+    noUndefined: {
+      attributes: {
+        mathcolor: "red",
+        mathbackground: "#FFEEEE",
+        mathsize: "90%"
+      }
+    },
+  },
+  messageStyle: "none"
+});
+</script>
+<script src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full'></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<html>
+<p>(Analysis by Mark Gordon)</p><p>
+
+This problem gives us two three digit strings and asks us to determine the bases X and Y such that those strings evaluate to the same integer.  We are also guaranteed that there is a unique result where X, Y &lt;= 15,000.</p><p>
+
+There are a number of ways to approach this.  However, the naive approach of simply testing each pair of bases X, Y &lt;= 15,000 is too slow and will time out.</p><p>
+
+A better approach is to compute all integers each input number could evaluate to and find the overlap.  An even better approach, shown below, is to observe that a positive number interpreted in base X is larger when interpreted instead in base X+1.  This means that what we&apos;re really trying to do is find an equal element in two sorted arrays.  We can do this simply by incrementing the base that produces the smaller corresponding evaluation until they are equal.</p><p>
+
+</p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+#define MAXB 15000
+
+int evaluate(const string&amp; num, int base) {
+  return (num[0] - &apos;0&apos;) * base * base +
+         (num[1] - &apos;0&apos;) * base +
+         (num[2] - &apos;0&apos;);
+}
+
+int main() {
+  freopen(&quot;whatbase.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;whatbase.out&quot;, &quot;w&quot;, stdout);
+
+  int T; cin &gt;&gt; T;
+  for (int t = 1; t &lt;= T; t++) {
+    string num_in_x, num_in_y;
+    cin &gt;&gt; num_in_x &gt;&gt; num_in_y;
+
+    /* Initialize both bases at 10.  Increment the base that produces the
+     * smaller evaluated result until they yield an equal result. */
+    int X = 10;
+    int Y = 10;
+    while (X &lt;= MAXB &amp;&amp; Y &lt;= MAXB) {
+      int num_x = evaluate(num_in_x, X);
+      int num_y = evaluate(num_in_y, Y);
+      if (num_x &lt; num_y) {
+        X++;
+      } else if (num_y &lt; num_x) {
+        Y++;
+      } else {
+        cout &lt;&lt; X &lt;&lt; &apos; &apos; &lt;&lt; Y &lt;&lt; &apos;\n&apos;;
+        break;
+      }
+    }
+  }
+  return 0;
+}
+</pre><p></p>
+</html>

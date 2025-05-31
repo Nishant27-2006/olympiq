@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>Let&apos;s first look at this puzzle without the one exceptional cow, to try and gain
+an  understanding of when it is solvable and when it isn&apos;t.  It helps to think
+of a minimal example that is not solvable, which turns out to be:
+<p><pre>
+11
+10
+</pre>
+<p>Here, we are switching to 0s and 1s instead of Ls and Rs for convenience.  If
+you think about this example for a few moments, you notice that no matter how
+many times you toggle rows and columns, there will always be 3 of one bit and 1
+of the other --- it is never  possible to make all four bits agree.  
+<p>In fact, this ends up being the only bad structure that can prevent us from
+solving the puzzle.  If we have any four bits that are corners of a rectangle
+where three of the four agree (let&apos;s call this a &quot;bad rectangle&quot;), then the
+puzzle is not solvable, and this is for the same reason as above, since  exactly
+three of the four bits will always agree no matter what rows and columns we
+toggle.  This condition, which persists throughout the toggling of rows and
+columns, is called an &quot;invariant&quot;, and many times when you see  unsolvable
+puzzles like this, it helps to try and find some sort of invariant that 
+prevents solution of the puzzle.  
+<p>Suppose now that there aren&apos;t any bad rectangles.  Let&apos;s try to make the entire
+grid into 0s as follows: for any 1 in the top row, flip its entire column.  Then
+for any 1 in the left row, flip its entire row.  This transforms the top row and
+left column into all 0s.  If all the other entries are 0s, we are done.
+Otherwise, if there is a 1 somewhere, this in combination with the top row and
+left column forms a bad rectangle, which we had assumed could not exist.  Hence,
+the puzzle is actually solvable if and only if there is no bad rectangle.
+<p>The insight above is now enough to add back the one exceptional cow.  Let&apos;s 
+proceed as before to set the top row and left column to all zeros.  If the
+remaining elements are all 1s, then the top-left element was the exceptional
+cow.  If any row or column is filled with 1s (except the first element, which we
+have set to zero), then its first element is the exceptional cow.  Otherwise,
+there should be a single 1 somewhere in the grid, which indicates the position
+of the exceptional cow.
+<p>My code in C++ is below.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+ 
+int N;
+char grid[1000][1000];
+ 
+int num(int i1, int j1, int i2, int j2, int b)
+{
+  int total = 0;
+  for (int i=i1; i&lt;=i2; i++)
+    for (int j=j1; j&lt;=j2; j++)
+      if (grid[i][j] == b) total++;
+  return total;
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;leftout.in&quot;);
+  string s;
+  fin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++) {
+    fin &gt;&gt; s;
+    for (int j=0; j&lt;N; j++) grid[i][j] = s[j]==&apos;L&apos;;
+  }
+ 
+  // Flip columns and rows so top row and left column all zero
+  for (int i=1; i&lt;N; i++) {
+    grid[i][0] = grid[i][0] ^ grid[0][0];
+    for (int j=1; j&lt;N; j++) grid[i][j] = grid[i][j] ^ grid[0][j] ^ grid[i][0];
+  }
+ 
+  ofstream fout (&quot;leftout.out&quot;);
+ 
+  if (num (1,1,N-1,N-1,0) == 0) { fout &lt;&lt; &quot;1 1\n&quot;; return 0; }
+  if (num (1,1,N-1,N-1,1) == N-1) {
+    for (int j=1; j&lt;N; j++) if (num(1,j,N-1,j,1)==N-1) { fout &lt;&lt; &quot;1 &quot; &lt;&lt; j+1 &lt;&lt; &quot;\n&quot;; return 0; }
+    for (int i=1; i&lt;N; i++) if (num(i,1,i,N-1,1)==N-1) { fout &lt;&lt; i+1 &lt;&lt; &quot; 1\n&quot;; return 0; } 
+    fout &lt;&lt; &quot;-1\n&quot;; return 0;
+  }
+  if (num(1,1,N-1,N-1,1)!=1) { fout &lt;&lt; &quot;-1\n&quot;; return 0; } 
+  for (int i=1; i&lt;N; i++)
+    for (int j=1; j&lt;N; j++)
+      if (grid[i][j]==1) { fout &lt;&lt; i+1 &lt;&lt; &quot; &quot; &lt;&lt; j+1 &lt;&lt; &quot;\n&quot;; }
+  return 0;
+}
+</pre>
+<p></body></html>

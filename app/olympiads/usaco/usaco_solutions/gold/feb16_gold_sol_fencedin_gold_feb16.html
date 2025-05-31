@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nathan Pinsker)
+<p>For this problem, we&apos;re given a grid and want to connect all the interiors to
+each other. If we think of each interior region as a point and add edges between
+points representing the length of the fence that separates them, then this
+problem becomes one of finding a minimum spanning tree on a graph. Since our
+graph has <span class='math'>$O(n*m)$</span> vertices and each vertex has at most 4 edges, it also has
+<span class='math'>$O(n*m)$</span> edges, meaning that we can simply run our favorite minimum spanning
+tree algorithm to solve the problem.
+<p>However, we can actually make this solution even faster! If you&apos;re interested,
+see the platinum version of this problem.
+<p>Here is Mark Gordon&apos;s code, with an implementation of Kruskal&apos;s algorithm:
+<p><pre>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+
+using namespace std;
+
+int A, B, N, M;
+
+int nd(int r, int c) {
+  return r * M + c;
+}
+
+int P[2010*2010];
+
+int find(int x) {
+  return x == P[x] ? x : P[x] = find(P[x]);
+}
+
+bool merge(int x, int y) {
+  int X = find(x);
+  int Y = find(y);
+  if (X == Y) return false;
+  P[X] = P[Y] = P[x] = P[y] = rand() % 2 ? X : Y;
+  return true;
+}
+
+int main() {
+  cin &gt;&gt; A &gt;&gt; B &gt;&gt; N &gt;&gt; M;
+
+  vector&lt;int&gt; VA(N + 1), HA(M + 1);
+  for (int i = 0; i &lt; N; i++) {
+    cin &gt;&gt; VA[i];
+  }
+  for (int j = 0; j &lt; M; j++) {
+    cin &gt;&gt; HA[j];
+  }
+
+  sort(VA.begin(), VA.end());
+  for (int i = 0; i &lt; N; i++) {
+    VA[i] = VA[i + 1] - VA[i];
+  }
+  VA[N] = B - VA[N];
+
+  sort(HA.begin(), HA.end());
+  for (int i = 0; i &lt; M; i++) {
+    HA[i] = HA[i + 1] - HA[i];
+  }
+  HA[M] = A - HA[M];
+
+  sort(VA.begin(), VA.end());
+  sort(HA.begin(), HA.end());
+  N++; M++;
+
+  for (int i = 0; i &lt; N * M; i++) {
+    P[i] = i;
+  }
+
+  long long result = 0;
+  for (int vi = 0, hi = 0; vi &lt; N || hi &lt; M; ) {
+    if (hi == M || (vi &lt; N &amp;&amp; VA[vi] &lt; HA[hi])) {
+      for (int i = 0; i + 1 &lt; M; i++) {
+        if (merge(nd(vi, i), nd(vi, i + 1))) {
+          result += VA[vi];
+        }
+      }
+      vi++;
+    } else {
+      for (int i = 0; i + 1 &lt; N; i++) {
+        if (merge(nd(i, hi), nd(i + 1, hi))) {
+          result += HA[hi];
+        }
+      }
+      hi++;
+    }
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+</body></html>

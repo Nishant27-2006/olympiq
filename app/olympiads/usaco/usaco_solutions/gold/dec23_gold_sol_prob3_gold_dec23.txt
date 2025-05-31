@@ -1,0 +1,335 @@
+Solution ID: sol_prob3_gold_dec23
+Contest: DEC23
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_dec23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by David Hu, Benjamin Qi)
+
+Sort all of the
+
+$x_i$
+
+(zero-indexed) in increasing order. Consider some fixed
+individual query
+
+$(a_i, b_i) = (a, b)$
+
+.
+
+Suppose that Farmer John delivers the haybales to some point
+
+$x_{i-1} < y < x_{i}$
+
+. Consider what happens if Farmer John instead delivers the
+haybales to some point
+
+$x_{i-1} < y + d < x_{i}$
+
+. The total cost Farmer John
+pays changes by
+
+$a \cdot d$
+
+for each of the
+
+$i$
+
+haybales to the left of the
+starting point and
+
+$-b \cdot d$
+
+for each of the
+
+$N - i$
+
+haybales to the right of
+the starting point, making an overall change of
+
+$a \cdot i \cdot d - b \cdot (N-i) \cdot d$
+
+. Since this is linear in
+
+$d$
+
+, the
+cost to start at point
+
+$y$
+
+is linear in the range
+
+$y \in [x_{i-1}, x_i]$
+
+. Thus
+it is always optimal for the haybales to be delivered to one of the
+
+$x_i$
+
+.
+
+Full Solution 1:
+
+$O(1)$
+
+time per query
+
+Suppose Farmer John is deciding whether to deliver the haybales to
+
+$x_{i-1}$
+
+or
+
+$x_{i}$
+
+.  Let the distance between
+
+$x_{i-1}$
+
+and
+
+$x_i$
+
+be
+
+$d>0$
+
+.
+
+If he delivers the haybales to
+
+$x_{i-1}$
+
+, then the total cost for delivering
+each of the
+
+$i$
+
+haybales
+
+$x_0, \dots x_{i-1}$
+
+is
+
+$d \cdot
+a$
+
+less, but the total
+cost for delivering each of the
+
+$N-i$
+
+haybales
+
+$x_i, \dots
+x_{N-1}$
+
+is
+
+$d \cdot b$
+
+more. Thus in order for
+
+$x_{i-1}$
+
+to be a strictly better place to
+deliver the haybales than
+
+$x_i$
+
+,
+
+$d \cdot a \cdot i > d \cdot b \cdot (N-i) \implies \frac{N-i}{i} < \frac{a}{b} \implies \frac{N}{i} < \frac{a + b}{b}
+\implies i > \frac{Nb}{a + b}$
+
+.
+We conclude that the following statements hold (even when
+
+$d=0$
+
+):
+
+If
+
+$i > \left\lfloor\frac{Nb}{a + b}\right\rfloor$
+
+, it is at least as good
+to deliver the haybales to
+
+$x_{i-1}$
+
+rather than
+
+$x_i$
+
+.
+
+If
+
+$i < \left\lfloor\frac{Nb}{a + b}\right\rfloor$
+
+, it is at least as good to
+deliver the haybales to
+
+$x_{i+1}$
+
+rather than
+
+$x_i$
+
+.
+
+So in fact we know the exact optimal location for Farmer John to deliver the
+haybales to: it is
+
+$x_i$
+
+, where
+
+$i = \left\lfloor \frac{Nb}{a+b} \right\rfloor$
+
+.
+
+To answer queries in
+
+$O(1)$
+
+, we can precompute the sum of distances to all
+haybales to the left of and to the right of each haybale.
+
+David's code:
+
+#include <iostream>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 2e5 + 13;
+int N, Q;
+int arr[MAXN];
+ll lt[MAXN], rt[MAXN];
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cin >> N;
+    for (int i = 0; i < N; i++) {
+        cin >> arr[i];
+    }
+    sort(arr, arr + N);
+    for (int i = 1; i < N; i++) {
+        int d = arr[i] - arr[i - 1];
+        lt[i] = lt[i - 1] + (ll) d * i;
+    }
+    for (int i = N - 2; i >= 0; i--) {
+        int d = arr[i + 1] - arr[i];
+        rt[i] = rt[i + 1] + (ll) d * (N - 1 - i);
+    }
+    cin >> Q;
+    while(Q--) {
+        int a, b;
+        cin >> a >> b;
+        int idx = (ll) N * b / (a + b);
+        ll ans = lt[idx] * a + rt[idx] * b;
+        cout << ans << '\n';
+    }
+    return 0;
+}
+
+Full Solution 2:
+
+$O(\log N)$
+
+time per query
+
+For a single
+
+$x$
+
+, the function in the problem statement is a
+
+convex
+
+function of
+
+$y$
+
+. 
+The total number of haybales wasted across all
+
+$x$
+
+is given by a sum of a convex
+functions, which is also convex. Any convex function is unimodal (specifically,
+it strictly decreases until the minimum is reached, then strictly increases),
+and thus can be minimized using binary or
+
+ternary search.
+
+As in the first full solution, we precompute prefix sums so that evaluating the
+number of wasted haybales when
+
+$y$
+
+equals some
+
+$x_i$
+
+takes
+
+$O(1)$
+
+time.
+
+Note: Make sure to search only on distinct values of
+
+$x$
+
+, or you might end up
+with the wrong answer.
+
+Ben's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin >> N;
+	vector<int> X(N);
+	for (int &x : X) cin >> x;
+	sort(begin(X), end(X));
+	int Q;
+	cin >> Q;
+	vector<int64_t> cum{0};
+	for (int x : X) cum.push_back(cum.back() + x);
+	auto cumsum = [&](int l, int r) { return cum.at(r + 1) - cum.at(l); };
+	vector<int> distinct_X{0};  // keep only distinct X[i]
+	for (int i = 1; i < N; ++i)
+		if (X[i] > X[i - 1]) distinct_X.push_back(i);
+	while (Q--) {
+		int A, B;
+		cin >> A >> B;
+		auto eval = [&](int idx) {
+			int i = distinct_X.at(idx);
+			int64_t ans = B * (cumsum(i, N - 1) - (int64_t)(N - i) * X[i]);
+			ans += A * ((int64_t)i * X[i] - cumsum(0, i - 1));
+			return ans;
+		};
+		int lo = 0, hi = size(distinct_X) - 1;
+		while (lo < hi) {
+			int mid = (lo + hi) / 2;
+			if (eval(mid) < eval(mid + 1)) hi = mid;
+			else lo = mid + 1;
+		}
+		cout << eval(lo) << "\n";
+	}
+}

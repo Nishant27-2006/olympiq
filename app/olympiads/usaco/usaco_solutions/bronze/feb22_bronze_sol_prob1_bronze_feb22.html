@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Jesse Choe, Benjamin Qi)
+<p><strong>Key Observation:</strong>
+After any modification, the quantity <span class='math'>$\text{sum}(a)=a_1+a_2+\cdots+a_N$</span> stays the same.
+<p><strong>Solution:</strong>
+Rather than figuring out the minimum number of operations to make the array equal, let&apos;s figure out the maximum number of elements <span class='math'>$r$</span> that could remain in the array after all modifications. Then the minimum number of modifications will equal <span class='math'>$N-r$</span>.
+<p>For a certain <span class='math'>$r$</span> to be achievable, <span class='math'>$\frac{\text{sum}(a)}{r}$</span> must be an integer and it must be possible to partition the array into <span class='math'>$r$</span> ranges such that each range sums to exactly <span class='math'>$\frac{\text{sum}(a)}{r}$</span>. For example, in the first test case of the sample input, we can partition the array into <span class='math'>$r=3$</span> ranges each with sum <span class='math'>$\frac{\text{sum}(a)}{r}=3$</span>:
+<p><pre>
+[1 2] [3] [1 1 1]
+</pre>
+<p>For a single <span class='math'>$r$</span>, checking whether this is possible can be done in <span class='math'>$O(N)$</span> time by iterating over the elements of <span class='math'>$a$</span> from left to right. For each element, we can either choose to extend the current range or start a new one; see the code for details.
+<p><strong>Time Complexity:</strong> <span class='math'>$O(N\cdot (\#\text{ divisors of }\text{sum}(a)))$</span>
+<p>This allows us to solve the problem under the time constraints because the sum of the array is at most <span class='math'>$10^6$</span>, and the maximum number of divisors for any number <span class='math'>$\leq 10^6$</span> is <span class='math'>$240$</span>.
+<p>Jesseâs code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+
+using namespace std;
+
+void solve() {
+	int n;
+	cin &gt;&gt; n;
+	vector&lt;int&gt; a(n);
+	int sum_a = 0;
+	for (int i = 0; i &lt; n; i++) {
+		cin &gt;&gt; a[i];
+		sum_a += a[i];
+	}
+	for (int r = n; r &gt;= 1; r--) {
+		if (sum_a % r == 0) {
+			int targetSum = sum_a / r; // the desired sum for each range
+			int curSum = 0;			   // the sum of the current range
+			bool ok = true;
+			for (int i = 0; i &lt; n; i++) {
+				curSum += a[i];
+				if (curSum &gt; targetSum) {
+					/*
+					 * Can&apos;t split the array into
+					 * r equal elements.
+					 */
+					ok = false;
+					break;
+				}
+				if (curSum == targetSum) {
+					/*
+					 * Start a new range
+					 */
+					curSum = 0;
+				}
+			}
+			if (ok) {
+				cout &lt;&lt; n - r &lt;&lt; endl;
+				return;
+			}
+		}
+	}
+}
+
+int main() {
+	int t;
+	cin &gt;&gt; t;
+	for (int i = 0; i &lt; t; i++) {
+		solve();
+	}
+}
+</pre>
+</body></html>

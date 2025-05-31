@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Mihir Singhal, Benjamin Qi)
+<p>This problem is quite tricky considering that it contains multiple nontrivial
+subproblems:
+<p><ol><li>Which posts are connected by fence segments?</li><li>Given a cow, where along the fence is it located?</li><li>Once we know which range of fence posts a walk will touch, how do we
+efficiently add one to the number of touches for each fence post within the
+range?</li></ol>
+<p>We will answer these subproblems one at a time.
+<p><strong>Part 1:</strong> 
+<p>Consider the set of fenceposts with a fixed <span class='math'>$x$</span>-coordinate (that is, all
+fenceposts on a given vertical line), ordered by <span class='math'>$y$</span>-coordinate. Note that 
+every fencepost is the endpoint of exactly one vertical fence segment, so the
+fenceposts must be connected in adjacent pairs. That is, the first fencepost
+must be connected by a vertical fence segment to the second, the third to the
+fourth, and so on. The same applies to horizontal lines.
+<p><strong>Part 2:</strong> 
+<p>Using a dictionary of lists, we can store a list of posts along every vertical
+line that has a post. We do the same for each horizontal line. At the end of
+this, we sort each list -- for a line with <span class='math'>$k$</span> posts, this takes at most
+<span class='math'>$O(k \log k) \le O(k \log P)$</span> time, so the total amount of time taken is
+<span class='math'>$O(P \log P)$</span>. Now, we can start at an arbitrary post, and follow the fence (in
+either direction). As we traverse the fence, we can renumber the posts in order
+from <span class='math'>$1$</span> to <span class='math'>$P$</span>, storing the mapping from old to new post numbers in a list.
+Also, we can record the total distance traveled so far, so that we know how far
+each fencepost is from post 1 (in the direction of traversal). At the end, we
+record the total perimeter <span class='math'>$\ell$</span> of the fence. 
+<p>Now, upon receiving a query consisting of two points on the fence, we first
+ascertain which fence segment each point is on. To do this, we check  the
+horizontal and vertical lines it lies on, binary search for the posts it lies
+between, and check if it is between an odd-indexed and the following
+even-indexed fencepost. This binary search takes <span class='math'>$O(\log P)$</span> time per cow. Thus,
+we can find the fence segment each cow lies on, and from this we can also
+determine the distance between them in the direction of traversal. If this
+distance is more than <span class='math'>$\ell/2$</span>, then the cow will actually travel in the reverse
+direction of traversal (or equivalently, from the second point to the first
+point).
+<p><strong>Part 3:</strong> 
+<p>From the numberings of posts, we can determine the range of posts that will be
+painted. This range is one contiguous interval along the fence, which may be
+split up into two subintervals of <span class='math'>$[1, P]$</span> if it goes from <span class='math'>$P$</span> to <span class='math'>$1$</span>. We use a
+difference array to store how many times each post has been painted (by the
+number of each post - see the analysis for 
+<a href='https://usaco.org/current/index.php?page=viewproblem2&amp;cpid=104'>Haybale
+Stacking</a>). Adding 1 to every element of a range takes <span class='math'>$O(1)$</span> time.
+<p>Finally, to calculate the final answers, we take prefix sums of the difference
+array, look up each old post number&apos;s new number, and then query its entry in
+the difference array. This step takes <span class='math'>$O(\log P)$</span> time per step. Thus  the
+overall running time of this algorithm is <span class='math'>$O((N+P) \log P)$</span>.
+<p>Benjamin Qi&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;cassert&gt;
+#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;optional&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+using ll = int64_t;
+using pi = pair&lt;int, int&gt;;
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define f first
+#define s second
+
+V&lt;ll&gt; tot_along;
+
+// represent a position along a fence by
+// - the index of the last fence post you touch when walking from the first
+// fence post to that point (idx)
+// - the additional distance you walk after touching that fence post (along)
+struct Position {
+    int idx, along;
+    ll val() { return tot_along.at(idx) + along; }  // dist along fence
+    int round_up() {                                // next fence post
+        if (along == 0) return idx;
+        return idx + 1;
+    }
+    int round_down() { return idx; }  // prev fence post
+};
+
+int dist(pi a, pi b) { return abs(a.f - b.f) + abs(a.s - b.s); }
+
+V&lt;int&gt; index_in_ord;
+map&lt;int, V&lt;pi&gt;&gt; by_x, by_y;
+int P;
+
+// get position of a cow along the fence, if
+// located on a vertical segment
+optional&lt;Position&gt; lookup(const V&lt;pi&gt; &amp;v, int y) {
+    int i = lower_bound(begin(v), end(v), make_pair(y, 0)) - begin(v);
+    if (i &lt; size(v) &amp;&amp; v.at(i).f == y)
+        return Position{index_in_ord.at(v.at(i).s), 0};
+    if (i &amp; 1) {
+        pi a = v.at(i - 1), b = v.at(i);
+        if ((index_in_ord.at(a.s) + 1) % P != index_in_ord.at(b.s)) swap(a, b);
+        assert((index_in_ord.at(a.s) + 1) % P == index_in_ord.at(b.s));
+        return Position{index_in_ord.at(a.s), abs(a.f - y)};
+    }
+    return nullopt;
+}
+
+// get position of a cow along the fence
+Position get_pos(pi p) {
+    if (by_x.count(p.f)) {
+        auto res = lookup(by_x.at(p.f), p.s);
+        if (res.has_value()) return res.value();
+    }
+    auto res = lookup(by_y.at(p.s), p.f);
+    assert(res.has_value());
+    return res.value();
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N;
+    cin &gt;&gt; N &gt;&gt; P;
+    V&lt;pi&gt; posts(P);
+    for (auto &amp;[x, y] : posts) cin &gt;&gt; x &gt;&gt; y;
+    for (int i = 0; i &lt; P; ++i) {
+        // fence posts for each x-coordinate, sorted by y
+        by_x[posts[i].f].push_back({posts[i].s, i});
+        // fence posts for each y-coordinate, sorted by x
+        by_y[posts[i].s].push_back({posts[i].f, i});
+    }
+    V&lt;V&lt;int&gt;&gt; adj(P);  // posts adjacent to each post
+    for (auto &amp;[_, v] : by_x) {
+        assert(size(v) % 2 == 0);
+        sort(begin(v), end(v));
+        for (int i = 0; i &lt; size(v); ++i) adj[v[i].s].push_back(v[i ^ 1].s);
+    }
+    for (auto &amp;[_, v] : by_y) {
+        assert(size(v) % 2 == 0);
+        sort(begin(v), end(v));
+        for (int i = 0; i &lt; size(v); ++i) adj[v[i].s].push_back(v[i ^ 1].s);
+    }
+    {
+        V&lt;int&gt; ord{0};  // indices of posts we encounter if we walk around
+                        // the fence starting from the first post
+        while (true) {
+            for (int x : adj[ord.back()]) {
+                if (size(ord) &gt; 1 &amp;&amp; end(ord)[-2] == x) continue;
+                ord.push_back(x);
+                break;
+            }
+            if (ord.back() == 0) break;
+        }
+        ord.pop_back();
+        assert(size(ord) == P);
+        tot_along = {0};  // distance of each post along the fence
+        for (int i = 1; i &lt;= P; ++i)
+            tot_along.push_back(
+                tot_along.back() +
+                dist(posts.at(ord.at(i - 1)), posts.at(ord.at(i % P))));
+        index_in_ord.resize(P, -1);
+        for (int i = 0; i &lt; P; ++i) index_in_ord.at(ord[i]) = i;
+    }
+    V&lt;int&gt; cum(P + 1);  // difference array
+    auto add = [&amp;](int l, int r) {
+        ++cum.at(l), --cum.at(r + 1);
+    };  // add to range in difference array
+    while (N--) {
+        pi f1, f2;
+        cin &gt;&gt; f1.f &gt;&gt; f1.s &gt;&gt; f2.f &gt;&gt; f2.s;
+        auto p1 = get_pos(f1),
+             p2 = get_pos(f2);  // position of each cow along the fence
+        if (p1.val() &gt; p2.val()) swap(p1, p2);
+        const ll perim = tot_along.back();
+        assert(2 * (p2.val() - p1.val()) != perim);
+        if (2 * (p2.val() - p1.val()) &gt; perim) {
+            add(p2.round_up(), P - 1);
+            add(0, p1.round_down());
+        } else {
+            add(p1.round_up(), p2.round_down());
+        }
+    }
+    for (int i = 1; i &lt; P; ++i) cum.at(i) += cum.at(i - 1);  // prefix sums
+    for (int i = 0; i &lt; P; ++i) cout &lt;&lt; cum.at(index_in_ord.at(i)) &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Richard Qi&apos;s Python code (note that the positions of the fence posts are determined
+offline rather than online, thus avoiding the use of binary search):
+<p><pre class='prettyprint'>
+from collections import defaultdict
+
+N, P = (int(x) for x in input().split())
+
+posts = []
+for i in range(P):
+    x, y = (int(x) for x in input().split())
+    posts.append((x, y))
+
+start_ends = []
+for i in range(N):
+    x1, y1, x2, y2 = (int(x) for x in input().split())
+    start_ends.append(((x1, y1), (x2, y2)))
+
+query_poses = []
+for a, b in start_ends:
+    query_poses.append(a)
+    query_poses.append(b)
+
+orig_posts = posts.copy()
+posts = sorted(posts)
+
+query_poses = sorted(query_poses)
+
+# list of fences in order: (post a, post b)
+
+# want to map query position --&gt; fence index, distance along that fence
+
+# for a certain x: look at all query positions with that x, posts with that x
+# we get: query position --&gt; pair of posts &amp; distance and also this post is linked to this vertical fence
+# query position --&gt; pair of posts &amp; distance and also this post is linked to this horizontal fence
+posts_at_x = defaultdict(list)
+posts_at_y = defaultdict(list)
+
+
+for idx, post in enumerate(posts):
+    posts_at_x[post[0]].append(post)
+    posts_at_y[post[1]].append(post)
+
+queries_at_x = defaultdict(list)
+queries_at_y = defaultdict(list)
+
+for query_pos in query_poses:
+    queries_at_x[query_pos[0]].append(query_pos)
+    queries_at_y[query_pos[1]].append(query_pos)
+
+vert_fence = dict()
+on_fence = dict()
+
+for x, x_posts in posts_at_x.items():
+    assert len(x_posts) % 2 == 0
+    post_index = 0
+
+    for i in range(0, len(x_posts), 2):
+        vert_fence[x_posts[i]] = vert_fence[x_posts[i + 1]] = (
+            x_posts[i],
+            x_posts[i + 1],
+        )
+
+    for query in queries_at_x.get(x, []):
+        while post_index + 2 &lt; len(x_posts) and x_posts[post_index + 1][1] &lt; query[1]:
+            post_index += 2
+
+        if (
+            x_posts[post_index][1] &lt;= query[1]
+            and query[1] &lt;= x_posts[post_index + 1][1]
+        ):
+            # vertical fence pos
+            fence = (x_posts[post_index], x_posts[post_index + 1])
+
+            on_fence[query] = fence
+horz_fence = dict()
+
+for y, y_posts in posts_at_y.items():
+    assert len(y_posts) % 2 == 0
+    post_index = 0
+
+    for i in range(0, len(y_posts), 2):
+        horz_fence[y_posts[i]] = horz_fence[y_posts[i + 1]] = (
+            y_posts[i],
+            y_posts[i + 1],
+        )
+
+    for query in queries_at_y.get(y, []):
+        while post_index + 2 &lt; len(y_posts) and y_posts[post_index + 1][0] &lt; query[0]:
+            post_index += 2
+
+        if (
+            y_posts[post_index][0] &lt;= query[0]
+            and query[0] &lt;= y_posts[post_index + 1][0]
+        ):
+            fence = (y_posts[post_index], y_posts[post_index + 1])
+            on_fence[query] = fence
+
+posts = [tuple(posts_at_x.values())[0][0]]
+
+
+def getOther(fence, post):
+    if post == fence[0]:
+        return fence[1]
+    return fence[0]
+
+
+for i in range(1, P):
+    if i % 2 == 1:
+        # horizontal fence
+        posts.append(getOther(horz_fence[posts[-1]], posts[-1]))
+    else:
+        posts.append(getOther(vert_fence[posts[-1]], posts[-1]))
+
+directed_fence_to_ind = dict()
+for i in range(P):
+    directed_fence_to_ind[(posts[i], posts[(i + 1) % P])] = i
+post_to_ind = dict()
+for i in range(len(posts)):
+    post_to_ind[posts[i]] = i
+
+for post in on_fence.keys():
+    if on_fence[post] not in directed_fence_to_ind:
+        on_fence[post] = on_fence[post][1], on_fence[post][0]
+    assert on_fence[post] in directed_fence_to_ind
+
+tot_dist = 0
+dist_to = [0] * P
+
+
+def getDist(tup_a, tup_b):
+    return abs(tup_b[0] - tup_a[0]) + abs(tup_b[1] - tup_a[1])
+
+
+for i in range(P):
+    dist_to[i] = tot_dist
+    tot_dist += getDist(posts[i], posts[(i + 1) % P])
+
+
+def get_dist_along(query):
+    fence = on_fence[query]
+    ind = post_to_ind[fence[0]]
+    return dist_to[ind] + getDist(fence[0], query)
+
+
+ans = [0] * P
+
+for start, end in start_ends:
+    start_fence = on_fence[start]
+    end_fence = on_fence[end]
+
+    assert start_fence in directed_fence_to_ind and end_fence in directed_fence_to_ind
+    start_dist = get_dist_along(start)
+    end_dist = get_dist_along(end)
+    if start_dist &gt; end_dist:
+        start, end = end, start
+        start_dist, end_dist = end_dist, start_dist
+        start_fence, end_fence = end_fence, start_fence
+
+    if end_dist - start_dist &gt; tot_dist - (end_dist - start_dist):
+        start, end = end, start
+        start_fence, end_fence = end_fence, start_fence
+
+    if start_fence == end_fence and start not in start_fence and end not in end_fence:
+        continue
+
+    if start == start_fence[0]:
+        start_ind = post_to_ind[start_fence[0]]
+    else:
+        start_ind = post_to_ind[start_fence[1]]
+
+    if end == end_fence[1]:
+        end_ind = post_to_ind[end_fence[1]]
+    else:
+        end_ind = post_to_ind[end_fence[0]]
+    ans[start_ind] += 1
+    if end_ind + 1 &lt; P:
+        ans[end_ind + 1] -= 1
+    if start_ind &gt; end_ind:
+        ans[0] += 1
+    cur = start_ind
+
+for i in range(1, P):
+    ans[i] += ans[i - 1]
+
+new_index = dict()
+for i in range(len(posts)):
+    new_index[posts[i]] = i
+
+for post in orig_posts:
+    print(ans[new_index[post]])
+</pre>
+<p></body></html>

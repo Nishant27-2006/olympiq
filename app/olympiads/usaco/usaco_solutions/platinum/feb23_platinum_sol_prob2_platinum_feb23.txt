@@ -1,0 +1,346 @@
+Solution ID: sol_prob2_platinum_feb23
+Contest: FEB23
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_feb23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+For each problem
+
+$p$
+
+, we can associate a bitmask
+
+$b_p$
+
+with the test-solvers who
+think
+
+$p$
+
+is hard. A problemset
+
+$[p_1,p_2,\dots,p_k]$
+
+must satisfy
+
+$b_{p_i}\&b_{p_{i+1}}=b_{p_i}$
+
+since it is in difficulty order. For each
+
+$b\in [0,2^N)$
+
+, let
+
+$cnt[b]$
+
+denote the number  of problems such that the
+bitmask  of solvers who think the problem is hard is
+
+$b$
+
+.
+
+Subtask
+
+$M=1$
+
+:
+
+Let
+
+$order(x)=\sum_{i=0}^{x}\frac{x!}{i!}$
+
+denote the number of ways to select
+and  order a possibly empty subset of
+
+$x$
+
+problems if we ignore difficulty.  The
+answer is
+
+$order(cnt[0])\cdot order(cnt[1])-1$
+
+, which can be computed in
+
+$O(N)$
+
+time.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+template <class T> using V = vector<T>;
+ 
+using ll = long long;
+ 
+const int MOD = 1e9 + 7;
+ 
+struct mi {
+	int v;
+	mi() : v(0) {}
+	mi(int _v) : v(_v) {
+		if (v >= MOD) v -= MOD;
+	}
+};
+mi operator*(mi a, mi b) { return mi((ll)a.v * b.v % MOD); }
+mi operator+(mi a, mi b) { return mi(a.v + b.v); }
+mi operator-(mi a, mi b) { return mi(a.v + MOD - b.v); }
+ 
+mi order(int x) { return 1 + (x == 0 ? 0 : x * order(x - 1)); }
+ 
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, M;
+	cin >> N >> M;
+	V<string> solvers(M);
+	for (auto &s : solvers) cin >> s;
+	vector<int> cnt(1 << M);
+	for (int j = 0; j < N; ++j) {
+		int mask = 0;
+		for (int i = 0; i < M; ++i)
+			if (solvers[i][j] == 'H') mask ^= 1 << i;
+		++cnt[mask];
+	}
+	cout << (order(cnt[0]) * order(cnt[1]) - 1).v << "\n";
+}
+
+Subtask
+
+$M\le 16$
+
+:
+
+Let
+
+$dp[b]$
+
+be the number of ways to create a problemset such that the bitmask
+associated with the last problem is
+
+$b$
+
+. Either all the problems in the
+problemset are associated with
+
+$b$
+
+, or the last problem in the problemset not
+associated with
+
+$b$
+
+is associated with some bitmask
+
+$b'\neq b$
+
+satisfying
+
+$b'\&b=b'$
+
+. Thus, we have:
+
+$$dp[b]=\left(1+\sum_{b'\colon b'\neq b\text{ and }b'\&b=b'}dp[b']\right)\cdot(order(cnt[b])-1).$$
+
+Naively evaluating these summations allows us to compute all
+
+$dp[b]$
+
+in
+
+$O(NM+3^M)$
+
+time. We obtain the answer by summing all
+
+$dp[b]$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+template <class T> using V = vector<T>;
+using ll = long long;
+ 
+const int MOD = 1e9 + 7;
+ 
+struct mi {
+	int v;
+	mi() : v(0) {}
+	mi(int _v) : v(_v) {
+		if (v >= MOD) v -= MOD;
+	}
+};
+mi operator*(mi a, mi b) { return mi((ll)a.v * b.v % MOD); }
+mi operator+(mi a, mi b) { return mi(a.v + b.v); }
+mi operator-(mi a, mi b) { return mi(a.v + MOD - b.v); }
+ 
+mi order(int x) { return 1 + (x == 0 ? 0 : x * order(x - 1)); }
+ 
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, M;
+	cin >> N >> M;
+	V<string> solvers(M);
+	for (auto &s : solvers) cin >> s;
+	vector<int> cnt(1 << M);
+	for (int j = 0; j < N; ++j) {
+		int mask = 0;
+		for (int i = 0; i < M; ++i)
+			if (solvers[i][j] == 'H') mask ^= 1 << i;
+		++cnt[mask];
+	}
+	V<mi> dp(1 << M);
+	mi ans = 0;
+	for (int i = 0; i < (1 << M); ++i) {
+		mi sum = 1;
+		for (int j = i;; j = (j - 1) & i) {
+			if (j < i) { sum = sum + dp[j]; }
+			if (j == 0) break;
+		}
+		dp[i] = sum * (order(cnt[i]) - 1);
+		ans = ans + dp[i];
+	}
+	cout << ans.v << "\n";
+}
+
+Full Credit:
+
+It suffices to optimize the solution from the previous subtask. Let
+
+$sdp[b][i]$
+
+equal the sum of
+
+$dp[b']$
+
+over all submasks
+
+$b'$
+
+of
+
+$b$
+
+that differ from
+
+$b'$
+
+only in the first
+
+$i$
+
+bits; that is,
+
+$\sum_{b'\colon b'\&b=b'\text{ and }b\oplus b'<2^{i}}dp[b'][i]$
+
+. We can compute
+
+$sdp[b][0]=dp[b]$
+
+and
+
+$sdp[b][i+1]=sdp[b][i]+\begin{cases}
+0 & b\&(1\ll i) = 0\\
+sdp[b\oplus (1\ll i)][i] & \text{otherwise} 
+\end{cases}$
+
+.
+Given
+
+$sdp[b']$
+
+for all
+
+$b'<b$
+
+, we can compute
+
+$dp[b]$
+
+in
+
+$O(M)$
+
+time, and then
+we can compute
+
+$sdp[b]$
+
+. There are a total of
+
+$2^M\cdot M$
+
+$sdp$
+
+states, each
+of which can be computed in
+
+$O(1)$
+
+time, giving us a solution that runs in
+
+$O(NM+2^M\cdot M)$
+
+time.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+using ll = long long;
+
+const int MOD = 1e9 + 7;
+
+struct mi {
+	int v;
+	mi() : v(0) {}
+	mi(int _v) : v(_v) {
+		if (v >= MOD) v -= MOD;
+	}
+};
+mi operator*(mi a, mi b) { return mi((ll)a.v * b.v % MOD); }
+mi operator+(mi a, mi b) { return mi(a.v + b.v); }
+mi operator-(mi a, mi b) { return mi(a.v + MOD - b.v); }
+
+mi order(int x) { return 1 + (x == 0 ? 0 : x * order(x - 1)); }
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, M;
+	cin >> N >> M;
+	V<string> solvers(M);
+	for (auto &s : solvers) cin >> s;
+	vector<int> cnt(1 << M);
+	for (int j = 0; j < N; ++j) {
+		int mask = 0;
+		for (int i = 0; i < M; ++i)
+			if (solvers[i][j] == 'H') mask ^= 1 << i;
+		++cnt[mask];
+	}
+	V<mi> dp(1 << M);
+	V<V<mi>> sdp(1 << M, V<mi>(M));
+	mi ans = 0;
+	for (int i = 0; i < (1 << M); ++i) {
+		mi sum = 1;
+		for (int j = M - 1; j >= 0; --j) {
+			if (i & (1 << j)) sum = sum + sdp[i ^ (1 << j)][j];
+		}
+		dp[i] = sum * (order(cnt[i]) - 1);
+		ans = ans + dp[i];
+		sdp[i][0] = dp[i];
+		for (int j = 0; j < M - 1; ++j) {
+			sdp[i][j + 1] = sdp[i][j];
+			if (i & (1 << j))
+				sdp[i][j + 1] = sdp[i][j + 1] + sdp[i ^ (1 << j)][j];
+		}
+	}
+	cout << ans.v << "\n";
+}

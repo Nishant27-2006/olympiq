@@ -1,0 +1,174 @@
+Solution ID: sol_guess_bronze_jan19
+Contest: JAN19
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_guess_bronze_jan19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brian Dean)
+
+This is a nice example of a problem where half the work goes into figuring out
+useful structural properties of the solution, and then the other half goes into
+writing code to search for a solution based on this knowledge.  In this case,
+let
+
+$M$
+
+be the maximum number of characteristics any two cows have in common,
+over all pairs of cows.  We claim that
+
+$M+1$
+
+is the answer.
+
+Here is a simple argument.  If we pick two cows (say
+
+$A$
+
+and
+
+$B$
+
+) that have
+
+$M$
+
+traits in common, then we can ask about just those traits, generating
+
+$M$
+
+"yes"
+answers and leaving a feasible set that still contains
+
+$A$
+
+and
+
+$B$
+
+.  Hence, the
+maximum number of "yes" answers in a transcript could be larger than
+
+$M$
+
+. On the
+other hand, the number of "yes" answers in any transcript cannot be larger than
+
+$M+1$
+
+.  Suppose we have a transcript involving
+
+$M+1$
+
+yes answers after which
+there are still multiple cows in our feasible set.  If so, those cows must have
+had more than
+
+$M$
+
+traits in common, which cannot be the case!  After
+
+$M+1$
+
+"yes"
+answers, we therefore must have reduced the feasible set down to at most a
+single cow.
+
+Now that we know all we need to do is compute
+
+$M$
+
+, the coding part isn't too
+bad. My code below does this in perhaps the most straightforward way, looping
+over all pairs of cows and for each, checking the number of characteristics in
+common again with two "for" loops.  The input size is small enough that this
+runs fast enough to pass all test cases.
+
+As a note to those en route to silver, however, one could make the "num_common"
+function quite a bit faster using fancier data structures like a binary search
+tree (e.g., a "set" in C++) or a hash table (e.g., an "unordered_set" in C++). 
+To compare cows
+
+$A$
+
+and
+
+$B$
+
+, we would add all of
+
+$A$
+
+'s characteristics to the
+data structure, then do lookups for all of
+
+$B$
+
+'s characteristics, counting the
+number that succeed.  Alternatively, we could have sorted every cow's list of
+characteristics, and to compare
+
+$A$
+
+with
+
+$B$
+
+we enact the process of "merging"
+their sorted characteristics into one larger sorted list, a standard algorithmic
+procedure (e.g., part of the "merge sort" algorithm) that allows us to easily 
+count duplicates along the way.  Alternatively still, after sorting, we could
+run through all of
+
+$B$
+
+'s characteristics and binary search for them in
+
+$A$
+
+'s
+sorted list of characteristics.
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+using namespace std;
+ 
+int N;
+vector<string> characteristics[100];
+ 
+int num_common(int i, int j)
+{
+  int count = 0;
+  vector<string> &v1 = characteristics[i], &v2 = characteristics[j];
+  for (int i=0; i<v1.size(); i++)
+    for (int j=0; j<v2.size(); j++)
+      if (v1[i] == v2[j]) count++;
+  return count;
+}
+ 
+int main(void)
+{
+  ifstream fin ("guess.in");
+  fin >> N;
+  string s;
+  for (int i=0; i<N; i++) {
+    int K;
+    fin >> s >> K;
+    for (int j=0; j<K; j++) {
+      fin >> s;
+      characteristics[i].push_back(s);
+    }
+  }
+    
+  int largest = 0;
+  for (int i=0; i<N; i++)
+    for (int j=i+1; j<N; j++)
+      largest = max(largest, num_common(i,j));
+ 
+  ofstream fout ("guess.out");
+  fout << largest+1 << "\n";
+  return 0;
+}

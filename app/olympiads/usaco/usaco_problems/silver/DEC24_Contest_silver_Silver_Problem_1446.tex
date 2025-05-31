@@ -1,0 +1,142 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: DEC24 Contest - Silver Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Bessie and Elsie have discovered a row of $N$ cakes
+$(2 \leq N \leq 5\cdot 10^5, N \text{ even})$ cakes, with sizes
+$a_1,a_2,\dots,a_N$ in that order ($1\le a_i\le 10^9$).
+
+Each cow wants to eat as much as possible.  However, being very civilized cows,
+they decided to play a game to split it! The game proceeds with both cows
+alternating turns. Each turn consists of one of the following:
+
+Bessie chooses two adjacent cakes and stacks them, creating a new cake with
+the sum of the sizes.Elsie chooses either the leftmost or rightmost cake and puts it in her
+stash.
+When only one cake remains, Bessie eats it, and Elsie eats all cakes in her
+stash. If both cows play optimally to maximize the amount of cake they eat and
+Bessie plays first, how much cake will each cow eat?
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+Each input consists of $T$ ($1\le T\le 10$) independent test cases. It is
+guaranteed that the sum of all $N$ within an input does not exceed $10^6$.
+
+Each test case is formatted as follows. The first line contains $N$. The next
+line contains $N$ space-separated integers, $a_1,a_2,\ldots,a_N$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+For each test case, output a line containing $b$ and $e$, representing the
+amounts of cake Bessie and Elsie respectively will consume if both cows play
+optimally.
+
+SAMPLE INPUT:
+2
+4
+40 30 20 10
+4
+10 20 30 40
+SAMPLE OUTPUT: 
+60 40
+60 40
+
+For the first test case, under optimal play,
+
+Bessie will stack the middle two cakes. The cakes now have sizes
+$[40,50,10]$.Elsie will eat the leftmost cake. The remaining cakes now
+have sizes
+$[50,10]$.Bessie stacks the remaining two cakes.
+Bessie will eat $30+20+10=60$ cake, while Elsie will eat $40$ cake.
+
+The second test case is the reverse of the first, so the answer is the same.
+
+SCORING:
+Input 2: All $a_i$ are equal.Input 3: $N\le 10$Inputs 4-7: $N\le 5000$Inputs 8-11: No additional constraints.
+
+
+Problem credits: Linda Zhao, Agastya Goel, Gavin Ye
+
+
+
+\section*{Input Format}
+Each test case is formatted as follows. The first line contains $N$. The next
+line contains $N$ space-separated integers, $a_1,a_2,\ldots,a_N$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):For each test case, output a line containing $b$ and $e$, representing the
+amounts of cake Bessie and Elsie respectively will consume if both cows play
+optimally.SAMPLE INPUT:2
+4
+40 30 20 10
+4
+10 20 30 40SAMPLE OUTPUT:60 40
+60 40For the first test case, under optimal play,Bessie will stack the middle two cakes. The cakes now have sizes
+$[40,50,10]$.Elsie will eat the leftmost cake. The remaining cakes now
+have sizes
+$[50,10]$.Bessie stacks the remaining two cakes.Bessie will eat $30+20+10=60$ cake, while Elsie will eat $40$ cake.The second test case is the reverse of the first, so the answer is the same.SCORING:Input 2: All $a_i$ are equal.Input 3: $N\le 10$Inputs 4-7: $N\le 5000$Inputs 8-11: No additional constraints.Problem credits: Linda Zhao, Agastya Goel, Gavin Ye
+
+\section*{Output Format}
+SAMPLE INPUT:2
+4
+40 30 20 10
+4
+10 20 30 40SAMPLE OUTPUT:60 40
+60 40For the first test case, under optimal play,Bessie will stack the middle two cakes. The cakes now have sizes
+$[40,50,10]$.Elsie will eat the leftmost cake. The remaining cakes now
+have sizes
+$[50,10]$.Bessie stacks the remaining two cakes.Bessie will eat $30+20+10=60$ cake, while Elsie will eat $40$ cake.The second test case is the reverse of the first, so the answer is the same.SCORING:Input 2: All $a_i$ are equal.Input 3: $N\le 10$Inputs 4-7: $N\le 5000$Inputs 8-11: No additional constraints.Problem credits: Linda Zhao, Agastya Goel, Gavin Ye
+
+\section*{Sample Input}
+\begin{verbatim}
+2
+4
+40 30 20 10
+4
+10 20 30 40
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+60 40
+60 40
+
+For the first test case, under optimal play,Bessie will stack the middle two cakes. The cakes now have sizes
+$[40,50,10]$.Elsie will eat the leftmost cake. The remaining cakes now
+have sizes
+$[50,10]$.Bessie stacks the remaining two cakes.Bessie will eat $30+20+10=60$ cake, while Elsie will eat $40$ cake.The second test case is the reverse of the first, so the answer is the same.SCORING:Input 2: All $a_i$ are equal.Input 3: $N\le 10$Inputs 4-7: $N\le 5000$Inputs 8-11: No additional constraints.Problem credits: Linda Zhao, Agastya Goel, Gavin Ye
+
+Bessie will stack the middle two cakes. The cakes now have sizes
+$[40,50,10]$.Elsie will eat the leftmost cake. The remaining cakes now
+have sizes
+$[50,10]$.Bessie stacks the remaining two cakes.Bessie will eat $30+20+10=60$ cake, while Elsie will eat $40$ cake.The second test case is the reverse of the first, so the answer is the same.SCORING:Input 2: All $a_i$ are equal.Input 3: $N\le 10$Inputs 4-7: $N\le 5000$Inputs 8-11: No additional constraints.Problem credits: Linda Zhao, Agastya Goel, Gavin Ye
+
+Bessie will eat $30+20+10=60$ cake, while Elsie will eat $40$ cake.The second test case is the reverse of the first, so the answer is the same.SCORING:Input 2: All $a_i$ are equal.Input 3: $N\le 10$Inputs 4-7: $N\le 5000$Inputs 8-11: No additional constraints.Problem credits: Linda Zhao, Agastya Goel, Gavin Ye
+
+The second test case is the reverse of the first, so the answer is the same.SCORING:Input 2: All $a_i$ are equal.Input 3: $N\le 10$Inputs 4-7: $N\le 5000$Inputs 8-11: No additional constraints.Problem credits: Linda Zhao, Agastya Goel, Gavin Ye
+
+SCORING:Input 2: All $a_i$ are equal.Input 3: $N\le 10$Inputs 4-7: $N\le 5000$Inputs 8-11: No additional constraints.Problem credits: Linda Zhao, Agastya Goel, Gavin Ye
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1446
+
+\section*{Source}
+USACO DEC24 Contest, Silver Division, Problem ID: 1446
+
+\end{document}

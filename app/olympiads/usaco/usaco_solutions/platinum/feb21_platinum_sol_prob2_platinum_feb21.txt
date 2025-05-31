@@ -1,0 +1,1129 @@
+Solution ID: sol_prob2_platinum_feb21
+Contest: FEB21
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_feb21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi, Danny Mittal)
+
+If the graph is bipartite, the answer is
+
+$N-1$
+
+. Otherwise, let
+
+$$g(i)=(dist_{even}(i),dist_{odd}(i))$$
+
+for each vertex
+
+$1\le i\le N$
+
+, the same as "Sum of Distances" from the January
+contest. Also define
+
+$$h(i)=(\min(dist_{even}(i),dist_{odd}(i)),\max(dist_{even}(i),dist_{odd}(i)))=(a_i,b_i).$$
+
+For convenience, define
+
+$s(a, b)$
+
+to be the set of all nodes
+
+$i$
+
+with
+
+$h(i) = (a, b)$
+
+.
+
+A graph having
+
+$f_G$
+
+equivalent to that of the given graph must have edges
+adjacent to vertex
+
+$i$
+
+satisfying at least one of the following conditions for
+each
+
+$2\le i\le N$
+
+(the condition is slightly different for vertex
+
+$1$
+
+since
+
+$a_1=0$
+
+).
+
+$i$
+
+is adjacent to a vertex in
+
+$s(a_i-1,b_i-1)$
+
+. Call this an edge of type
+A.
+
+If
+
+$a_i+1<b_i$
+
+, then
+
+$i$
+
+is adjacent to a vertex in
+
+$s(a_i-1,b_i+1)$
+
+and a
+vertex in
+
+$s(a_i+1,b_i-1)$
+
+. Call these edges of type B.
+
+If
+
+$a_i+1=b_i$
+
+, then
+
+$i$
+
+is adjacent to a vertex in
+
+$s(a_i-1,b_i+1)$
+
+and a
+vertex in
+
+$s(a_i,b_i)$
+
+(possibly
+
+$i$
+
+itself). Call an edge from
+
+$i$
+
+to a vertex
+in
+
+$s(a_i, b_i)$
+
+an edge of type C.
+
+Edges that are not type A, B, or C edges cannot exist in the graph.
+
+We can look at each layer (vertices with a fixed
+
+$a_i+b_i$
+
+) independently, as
+edges of type A are only relevant to the vertex in the higher layer, and edges
+of type B and C are between vertices in the same layer. For a given layer, let's
+satisfy the constraints in increasing order of
+
+$a_i$
+
+.
+
+We'll describe two ways of doing this, of which the second approach is
+sufficient for full credit.
+
+Suppose that we are currently deciding which edges to construct involving
+
+$s_{a,b}$
+
+. For simplicity, we'll only deal with the case that
+
+$|s_{a-1,b-1}|>0$
+
+and
+
+$|s_{a+1,b-1}|>0$
+
+(for the other cases, see the code for details). Our goal
+is to satisfy one of the first two conditions for each vertex
+
+$v$
+
+.
+
+Approach 1:
+
+Define:
+
+$j$
+
+as the number of type B edges from
+
+$s_{a,b}$
+
+to
+
+$s_{a-1,b+1}$
+
+$k$
+
+as the number of type B edges from
+
+$s_{a,b}$
+
+to
+
+$s_{a+1,b-1}$
+
+Then we'll need to add
+
+$\max(|s_{a,b}|-\min(j,k),0)$
+
+additional edges of type A.
+
+These observations are sufficient for an
+
+$\mathcal{O}(N^2)$
+
+DP. Store
+
+$dp_{a,b}[j]$
+
+for each
+
+$0\le j\le \max(|s_{a-1,b+1}|,|s_{a,b}|)$
+
+and transition
+to
+
+$dp_{a+1,b-1}[k]$
+
+for each
+
+$0\le k\le \max(|s_{a,b}|,|s_{a+1,b-1}|)$
+
+. See my
+
+$\texttt{solve_between}$
+
+function below for details:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using ll = long long;
+using db = long double; // or double, if TL is tight
+using str = string; // yay python!
+ 
+using pi = pair<int,int>;
+using pl = pair<ll,ll>;
+using pd = pair<db,db>;
+ 
+using vi = vector<int>;
+using vb = vector<bool>;
+using vl = vector<ll>;
+using vd = vector<db>; 
+using vs = vector<str>;
+using vpi = vector<pi>;
+using vpl = vector<pl>; 
+using vpd = vector<pd>;
+ 
+#define tcT template<class T
+#define tcTU tcT, class U
+// ^ lol this makes everything look weird but I'll try it
+tcT> using V = vector<T>; 
+tcT, size_t SZ> using AR = array<T,SZ>; 
+tcT> using PR = pair<T,T>;
+ 
+// pairs
+#define mp make_pair
+#define f first
+#define s second
+ 
+// vectors
+// oops size(x), rbegin(x), rend(x) need C++17
+#define sz(x) int((x).size())
+#define bg(x) begin(x)
+#define all(x) bg(x), end(x)
+#define rall(x) x.rbegin(), x.rend() 
+#define sor(x) sort(all(x)) 
+#define rsz resize
+#define ins insert 
+#define ft front()
+#define bk back()
+#define pb push_back
+#define eb emplace_back 
+#define pf push_front
+#define rtn return
+ 
+#define lb lower_bound
+#define ub upper_bound 
+tcT> int lwb(V<T>& a, const T& b) { return int(lb(all(a),b)-bg(a)); }
+ 
+// loops
+#define FOR(i,a,b) for (int i = (a); i < (b); ++i)
+#define F0R(i,a) FOR(i,0,a)
+#define ROF(i,a,b) for (int i = (b)-1; i >= (a); --i)
+#define R0F(i,a) ROF(i,0,a)
+#define rep(a) F0R(_,a)
+#define each(a,x) for (auto& a: x)
+ 
+const int MOD = 1e9+7; // 998244353;
+const int MX = 2e5+5;
+const ll INF = 1e18; // not too close to LLONG_MAX
+const db PI = acos((db)-1);
+const int dx[4] = {1,0,-1,0}, dy[4] = {0,1,0,-1}; // for every grid problem!!
+mt19937 rng((uint32_t)chrono::steady_clock::now().time_since_epoch().count()); 
+template<class T> using pqg = priority_queue<T,vector<T>,greater<T>>;
+ 
+// bitwise ops
+// also see https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
+constexpr int pct(int x) { return __builtin_popcount(x); } // # of bits set
+constexpr int bits(int x) { // assert(x >= 0); // make C++11 compatible until USACO updates ...
+	return x == 0 ? 0 : 31-__builtin_clz(x); } // floor(log2(x)) 
+constexpr int p2(int x) { return 1<<x; }
+constexpr int msk2(int x) { return p2(x)-1; }
+ 
+ll cdiv(ll a, ll b) { return a/b+((a^b)>0&&a%b); } // divide a by b rounded up
+ll fdiv(ll a, ll b) { return a/b-((a^b)<0&&a%b); } // divide a by b rounded down
+ 
+tcT> bool ckmin(T& a, const T& b) {
+	return b < a ? a = b, 1 : 0; } // set a = min(a,b)
+tcT> bool ckmax(T& a, const T& b) {
+	return a < b ? a = b, 1 : 0; }
+ 
+tcTU> T fstTrue(T lo, T hi, U f) {
+	hi ++; assert(lo <= hi); // assuming f is increasing
+	while (lo < hi) { // find first index such that f is true 
+		T mid = lo+(hi-lo)/2;
+		f(mid) ? hi = mid : lo = mid+1; 
+	} 
+	return lo;
+}
+tcTU> T lstTrue(T lo, T hi, U f) {
+	lo --; assert(lo <= hi); // assuming f is decreasing
+	while (lo < hi) { // find first index such that f is true 
+		T mid = lo+(hi-lo+1)/2;
+		f(mid) ? lo = mid : hi = mid-1;
+	} 
+	return lo;
+}
+tcT> void remDup(vector<T>& v) { // sort and remove duplicates
+	sort(all(v)); v.erase(unique(all(v)),end(v)); }
+tcTU> void erase(T& t, const U& u) { // don't erase
+	auto it = t.find(u); assert(it != end(t));
+	t.erase(it); } // element that doesn't exist from (multi)set
+ 
+// INPUT
+#define tcTUU tcT, class ...U
+tcT> void re(complex<T>& c);
+tcTU> void re(pair<T,U>& p);
+tcT> void re(V<T>& v);
+tcT, size_t SZ> void re(AR<T,SZ>& a);
+ 
+tcT> void re(T& x) { cin >> x; }
+void re(double& d) { str t; re(t); d = stod(t); }
+void re(long double& d) { str t; re(t); d = stold(t); }
+tcTUU> void re(T& t, U&... u) { re(t); re(u...); }
+ 
+tcT> void re(complex<T>& c) { T a,b; re(a,b); c = {a,b}; }
+tcTU> void re(pair<T,U>& p) { re(p.f,p.s); }
+tcT> void re(V<T>& x) { each(a,x) re(a); }
+tcT, size_t SZ> void re(AR<T,SZ>& x) { each(a,x) re(a); }
+tcT> void rv(int n, V<T>& x) { x.rsz(n); re(x); }
+ 
+// TO_STRING
+#define ts to_string
+str ts(char c) { return str(1,c); }
+str ts(const char* s) { return (str)s; }
+str ts(str s) { return s; }
+str ts(bool b) { 
+	// #ifdef LOCAL
+	// 	return b ? "true" : "false"; 
+	// #else 
+	return ts((int)b);
+	// #endif
+}
+tcT> str ts(complex<T> c) { 
+	stringstream ss; ss << c; return ss.str(); }
+str ts(V<bool> v) {
+	str res = "{"; F0R(i,sz(v)) res += char('0'+v[i]);
+	res += "}"; return res; }
+template<size_t SZ> str ts(bitset<SZ> b) {
+	str res = ""; F0R(i,SZ) res += char('0'+b[i]);
+	return res; }
+tcTU> str ts(pair<T,U> p);
+tcT> str ts(T v) { // containers with begin(), end()
+	#ifdef LOCAL
+		bool fst = 1; str res = "{";
+		for (const auto& x: v) {
+			if (!fst) res += ", ";
+			fst = 0; res += ts(x);
+		}
+		res += "}"; return res;
+	#else
+		bool fst = 1; str res = "";
+		for (const auto& x: v) {
+			if (!fst) res += " ";
+			fst = 0; res += ts(x);
+		}
+		return res;
+ 
+	#endif
+}
+tcTU> str ts(pair<T,U> p) {
+	#ifdef LOCAL
+		return "("+ts(p.f)+", "+ts(p.s)+")"; 
+	#else
+		return ts(p.f)+" "+ts(p.s);
+	#endif
+}
+ 
+// OUTPUT
+tcT> void pr(T x) { cout << ts(x); }
+tcTUU> void pr(const T& t, const U&... u) { 
+	pr(t); pr(u...); }
+void ps() { pr("\n"); } // print w/ spaces
+tcTUU> void ps(const T& t, const U&... u) { 
+	pr(t); if (sizeof...(u)) pr(" "); ps(u...); }
+ 
+// DEBUG
+void DBG() { cerr << "]" << endl; }
+tcTUU> void DBG(const T& t, const U&... u) {
+	cerr << ts(t); if (sizeof...(u)) cerr << ", ";
+	DBG(u...); }
+#ifdef LOCAL // compile with -DLOCAL, chk -> fake assert
+	#define dbg(...) cerr << "Line(" << __LINE__ << ") -> [" << #__VA_ARGS__ << "]: [", DBG(__VA_ARGS__)
+	#define chk(...) if (!(__VA_ARGS__)) cerr << "Line(" << __LINE__ << ") -> function(" \
+		 << __FUNCTION__  << ") -> CHK FAILED: (" << #__VA_ARGS__ << ")" << "\n", exit(0);
+#else
+	#define dbg(...) 0
+	#define chk(...) 0
+#endif
+ 
+void setPrec() { cout << fixed << setprecision(15); }
+void unsyncIO() { cin.tie(0)->sync_with_stdio(0); }
+// FILE I/O
+void setIn(str s) { freopen(s.c_str(),"r",stdin); }
+void setOut(str s) { freopen(s.c_str(),"w",stdout); }
+void setIO(str s = "") {
+	unsyncIO(); setPrec();
+	// cin.exceptions(cin.failbit); 
+	// throws exception when do smth illegal
+	// ex. try to read letter into int
+	if (sz(s)) setIn(s+".in"), setOut(s+".out"); // for USACO
+}
+ 
+#define ints(...); int __VA_ARGS__; re(__VA_ARGS__);
+ 
+ 
+int N,M;
+vi adj[MX];
+ 
+V<AR<int,2>> gen_dist() {
+	V<AR<int,2>> dist(N,{MOD,MOD});
+	queue<pi> q;
+	auto ad = [&](int a, int b) {
+		if (dist[a][b%2] != MOD) return;
+		dist[a][b%2] = b; q.push({a,b});
+	};
+	ad(0,0);
+	while (sz(q)) {
+		pi p = q.ft; q.pop();
+		each(t,adj[p.f]) ad(t,p.s+1);
+	}
+	return dist;
+}
+ 
+int ans = 0;
+set<pi> distinct;
+ 
+int div2(int x) { return (x+1)/2; }
+ 
+void solve_between(vi nums, vb exists, bool special) {
+	vi dp{0};
+	int res = MOD;
+	F0R(i,sz(nums)) {
+		if (i == sz(nums)-1) {
+			if (special) {
+				F0R(j,sz(dp)) F0R(k,nums[i]+1) {
+					int need_one = max(nums[i]-min(j,2*k),0);
+					if (!exists[i] && need_one) continue;
+					ckmin(res,dp[j]+need_one+k);
+				}
+			} else {
+				assert(exists[i]);
+				each(t,dp) ckmin(res,t+nums[i]);
+			}
+		} else {
+			vi DP(max(nums[i],nums[i+1])+1,MOD);
+			F0R(j,sz(dp)) F0R(k,max(nums[i],nums[i+1])+1) {
+				int need_one = max(nums[i]-min(j,k),0);
+				if (!exists[i] && need_one) continue;
+				ckmin(DP[k],dp[j]+need_one+k);
+			}
+			swap(dp,DP);
+		}
+	}
+	ans += res;
+}
+ 
+void solve_sum(int sum, vpi v) {
+	dbg("SOLVE SUM",sum,v);
+	assert(sz(v));
+	if (v[0].f == 0) {
+		F0R(i,sz(v)-1) ans += max(v[i].s,v[i+1].s);
+		ans += div2(v.bk.s);
+		return;
+	}
+	for (int i = 0; i < sz(v); ++i) {
+		vi nums{v[i].s};
+		vb exists{distinct.count({v[i].f-1,sum-v[i].f-1})};
+		while (i+1 < sz(v) && v[i+1].f == v[i].f+1) {
+			++i; nums.pb(v[i].s);
+			exists.pb(distinct.count({v[i].f-1,sum-v[i].f-1}));
+		}
+		bool special = 0;
+		if (2*v[i].f+1 == sum) special = 1;
+		solve_between(nums,exists,special);
+	}
+}
+ 
+void go() {
+	auto a = gen_dist();
+	if (a[0][1] == MOD) {
+		ps(N-1);
+		return;
+	}
+	map<int,map<int,int>> cnt;
+	each(t,a) {
+		pi p{t[0],t[1]};
+		if (p.f > p.s) swap(p.f,p.s);
+		distinct.ins(p);
+		++cnt[p.f+p.s][p.f];
+	}
+	each(t,cnt) solve_sum(t.f,vpi(all(t.s)));
+	ps(ans);
+}
+ 
+int main() {
+	setIO(); 
+	int T; re(T);
+	F0R(_,T) {
+		re(N,M);
+		F0R(i,N) adj[i].clear();
+		ans = 0; distinct.clear();
+		F0R(i,M) {
+			int a,b; re(a,b); --a,--b;
+			adj[a].pb(b), adj[b].pb(a);
+		}
+		go();
+	}
+}
+/* stuff you should look for
+	* int overflow, array bounds
+	* special cases (n=1?)
+	* do smth instead of nothing and stay organized
+	* WRITE STUFF DOWN
+	* DON'T GET STUCK ON ONE APPROACH
+*/
+
+Approach 2:
+
+For full credit, we can assign edges greedily.
+
+Suppose that we have already added
+
+$\texttt{prev}$
+
+edges from
+
+$s_{a,b}$
+
+to
+
+$s_{a+1,b-1}$
+
+in order to satisfy the conditions for vertices
+
+$w$
+
+. Let's assign
+each of these edges to different vertices
+
+$v$
+
+if possible, meaning that we have
+at least
+
+$x=\min(\texttt{prev},|s_{a,b}|)$
+
+vertices
+
+$v$
+
+with edges to
+
+$(a-1,b+1)$
+
+.
+
+If we cannot add edges of type A (no vertex exists with
+
+$(a-1,b-1)$
+
+), then
+we must satisfy the second condition for each vertex
+
+$v$
+
+. We'll need to add
+
+$|s_{a,b}|-x$
+
+additional edges of type B to
+
+$(a-1,b+1)$
+
+and
+
+$|s_{a,b}|$
+
+edges to
+
+$(a+1,b-1)$
+
+.
+
+Otherwise, we need to choose whether to satisfy the first or the second
+condition for each vertex.
+
+For each of the
+
+$x$
+
+vertices that already have an edge of type B to
+
+$(a-1,b+1)$
+
+, we can satisfy the first condition by adding an edge of type A to
+
+$(a-1,b-1)$
+
+or satisfy the second condition by adding an edge of type B to
+
+$(a+1,b-1)$
+
+. It's  always at least as good to do the latter. Both options add a
+single edge, and in the case of a tie it's always better to increase the number
+of edges between
+
+$(a,b)\Leftrightarrow (a+1,b-1)$
+
+.
+
+For each of the
+
+$|s_{a,b}|-x$
+
+vertices without an edge of type B to
+
+$(a-1,b+1)$
+
+, we can satisfy the first condition by adding an edge of type A to
+
+$(a-1,b-1)$
+
+or  add two edges of type B, one to
+
+$(a-1,b+1)$
+
+and the other to
+
+$(a+1,b-1)$
+
+. It's always at least as good to do the former, since it results in
+the addition of only a single edge (we can always add an additional edge between
+
+$(a,b)\Leftrightarrow (a+1,b-1)$
+
+later on).
+
+Danny's code (which doesn't explicitly group vertices by
+
+$a+b$
+
+):
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class MinimizingEdgesActuallyCorrect {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        List<Integer>[] adj = new List[(2 * n) + 1];
+        for (int a = 1; a <= 2 * n; a++) {
+            adj[a] = new ArrayList<>();
+        }
+        for (int j = 1; j <= m; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            adj[a].add(b + n);
+            adj[b + n].add(a);
+            adj[a + n].add(b);
+            adj[b].add(a + n);
+        }
+        int[] dist = new int[(2 * n) + 1];
+        Arrays.fill(dist, -1);
+        dist[1] = 0;
+        LinkedList<Integer> q = new LinkedList<>();
+        q.add(1);
+        while (!q.isEmpty()) {
+            int a = q.remove();
+            for (int b : adj[a]) {
+                if (dist[b] == -1) {
+                    dist[b] = dist[a] + 1;
+                    q.add(b);
+                }
+            }
+        }
+        int answer = 0;
+        if (dist[n + 1] == -1) {
+            answer = n - 1;
+        } else {
+            TreeMap<Pair, Integer> freq = new TreeMap<>();
+            TreeMap<Pair, List<Integer>> buckets = new TreeMap<>();
+            for (int a = 1; a <= n; a++) {
+                freq.merge(new Pair(Math.min(dist[a], dist[n + a]), Math.max(dist[a], dist[n + a])), 1, Integer::sum);
+                buckets.computeIfAbsent(new Pair(Math.min(dist[a], dist[n + a]), Math.max(dist[a], dist[n + a])), __ -> new ArrayList<>()).add(a);
+            }
+            TreeMap<Pair, Integer> edgeAmt = new TreeMap<>();
+            for (Map.Entry<Pair, Integer> entry : freq.entrySet()) {
+                Pair p = entry.getKey();
+                int f = entry.getValue();
+                int prev = edgeAmt.getOrDefault(new Pair(p.first - 1, p.second + 1), 0);
+                if (p.second == p.first + 1) {
+                    if (p.first == 0) {
+                        answer += (f + 1) / 2;
+                    } else if (freq.containsKey(new Pair(p.first - 1, p.second - 1))) {
+                        answer += Math.max((f - prev) + ((prev + 1) / 2), (f + 1) / 2);
+                    } else {
+                        if (prev < f) {
+                            answer += f - prev;
+                        }
+                        answer += (f + 1) / 2;
+                    }
+                } else {
+                    answer += f;
+                    if (p.first == 0) {
+                        edgeAmt.put(p, f);
+                    } else if (freq.containsKey(new Pair(p.first - 1, p.second - 1))) {
+                        edgeAmt.put(p, Math.min(f, prev));
+                    } else {
+                        if (prev < f) {
+                            answer += f - prev;
+                        }
+                        edgeAmt.put(p, f);
+                    }
+                }
+            }
+        }
+        System.out.println(answer);
+    }
+ 
+    static class Pair implements Comparable<Pair> {
+        final int first;
+        final int second;
+ 
+        Pair(int first, int second) {
+            this.first = first;
+            this.second = second;
+        }
+ 
+        @Override
+        public int compareTo(Pair other) {
+            if (first != other.first) {
+                return first - other.first;
+            } else {
+                return second - other.second;
+            }
+        }
+    }
+}
+
+My code (which constructs a solution):
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using ll = long long;
+using db = long double; // or double, if TL is tight
+using str = string; // yay python!
+ 
+using pi = pair<int,int>;
+using pl = pair<ll,ll>;
+using pd = pair<db,db>;
+ 
+using vi = vector<int>;
+using vb = vector<bool>;
+using vl = vector<ll>;
+using vd = vector<db>; 
+using vs = vector<str>;
+using vpi = vector<pi>;
+using vpl = vector<pl>; 
+using vpd = vector<pd>;
+ 
+#define tcT template<class T
+#define tcTU tcT, class U
+// ^ lol this makes everything look weird but I'll try it
+tcT> using V = vector<T>; 
+tcT, size_t SZ> using AR = array<T,SZ>; 
+tcT> using PR = pair<T,T>;
+ 
+// pairs
+#define mp make_pair
+#define f first
+#define s second
+ 
+// vectors
+// oops size(x), rbegin(x), rend(x) need C++17
+#define sz(x) int((x).size())
+#define bg(x) begin(x)
+#define all(x) bg(x), end(x)
+#define rall(x) x.rbegin(), x.rend() 
+#define sor(x) sort(all(x)) 
+#define rsz resize
+#define ins insert 
+#define ft front()
+#define bk back()
+#define pb push_back
+#define eb emplace_back 
+#define pf push_front
+#define rtn return
+ 
+#define lb lower_bound
+#define ub upper_bound 
+tcT> int lwb(V<T>& a, const T& b) { return int(lb(all(a),b)-bg(a)); }
+ 
+// loops
+#define FOR(i,a,b) for (int i = (a); i < (b); ++i)
+#define F0R(i,a) FOR(i,0,a)
+#define ROF(i,a,b) for (int i = (b)-1; i >= (a); --i)
+#define R0F(i,a) ROF(i,0,a)
+#define rep(a) F0R(_,a)
+#define each(a,x) for (auto& a: x)
+ 
+const int MOD = 1e9+7; // 998244353;
+const int MX = 2e5+5;
+const ll INF = 1e18; // not too close to LLONG_MAX
+const db PI = acos((db)-1);
+const int dx[4] = {1,0,-1,0}, dy[4] = {0,1,0,-1}; // for every grid problem!!
+mt19937 rng((uint32_t)chrono::steady_clock::now().time_since_epoch().count()); 
+template<class T> using pqg = priority_queue<T,vector<T>,greater<T>>;
+ 
+// bitwise ops
+// also see https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
+constexpr int pct(int x) { return __builtin_popcount(x); } // # of bits set
+constexpr int bits(int x) { // assert(x >= 0); // make C++11 compatible until USACO updates ...
+	return x == 0 ? 0 : 31-__builtin_clz(x); } // floor(log2(x)) 
+constexpr int p2(int x) { return 1<<x; }
+constexpr int msk2(int x) { return p2(x)-1; }
+ 
+ll cdiv(ll a, ll b) { return a/b+((a^b)>0&&a%b); } // divide a by b rounded up
+ll fdiv(ll a, ll b) { return a/b-((a^b)<0&&a%b); } // divide a by b rounded down
+ 
+tcT> bool ckmin(T& a, const T& b) {
+	return b < a ? a = b, 1 : 0; } // set a = min(a,b)
+tcT> bool ckmax(T& a, const T& b) {
+	return a < b ? a = b, 1 : 0; }
+ 
+tcTU> T fstTrue(T lo, T hi, U f) {
+	hi ++; assert(lo <= hi); // assuming f is increasing
+	while (lo < hi) { // find first index such that f is true 
+		T mid = lo+(hi-lo)/2;
+		f(mid) ? hi = mid : lo = mid+1; 
+	} 
+	return lo;
+}
+tcTU> T lstTrue(T lo, T hi, U f) {
+	lo --; assert(lo <= hi); // assuming f is decreasing
+	while (lo < hi) { // find first index such that f is true 
+		T mid = lo+(hi-lo+1)/2;
+		f(mid) ? lo = mid : hi = mid-1;
+	} 
+	return lo;
+}
+tcT> void remDup(vector<T>& v) { // sort and remove duplicates
+	sort(all(v)); v.erase(unique(all(v)),end(v)); }
+tcTU> void erase(T& t, const U& u) { // don't erase
+	auto it = t.find(u); assert(it != end(t));
+	t.erase(it); } // element that doesn't exist from (multi)set
+ 
+// INPUT
+#define tcTUU tcT, class ...U
+tcT> void re(complex<T>& c);
+tcTU> void re(pair<T,U>& p);
+tcT> void re(V<T>& v);
+tcT, size_t SZ> void re(AR<T,SZ>& a);
+ 
+tcT> void re(T& x) { cin >> x; }
+void re(double& d) { str t; re(t); d = stod(t); }
+void re(long double& d) { str t; re(t); d = stold(t); }
+tcTUU> void re(T& t, U&... u) { re(t); re(u...); }
+ 
+tcT> void re(complex<T>& c) { T a,b; re(a,b); c = {a,b}; }
+tcTU> void re(pair<T,U>& p) { re(p.f,p.s); }
+tcT> void re(V<T>& x) { each(a,x) re(a); }
+tcT, size_t SZ> void re(AR<T,SZ>& x) { each(a,x) re(a); }
+tcT> void rv(int n, V<T>& x) { x.rsz(n); re(x); }
+ 
+// TO_STRING
+#define ts to_string
+str ts(char c) { return str(1,c); }
+str ts(const char* s) { return (str)s; }
+str ts(str s) { return s; }
+str ts(bool b) { 
+	// #ifdef LOCAL
+	// 	return b ? "true" : "false"; 
+	// #else 
+	return ts((int)b);
+	// #endif
+}
+tcT> str ts(complex<T> c) { 
+	stringstream ss; ss << c; return ss.str(); }
+str ts(V<bool> v) {
+	str res = "{"; F0R(i,sz(v)) res += char('0'+v[i]);
+	res += "}"; return res; }
+template<size_t SZ> str ts(bitset<SZ> b) {
+	str res = ""; F0R(i,SZ) res += char('0'+b[i]);
+	return res; }
+tcTU> str ts(pair<T,U> p);
+tcT> str ts(T v) { // containers with begin(), end()
+	#ifdef LOCAL
+		bool fst = 1; str res = "{";
+		for (const auto& x: v) {
+			if (!fst) res += ", ";
+			fst = 0; res += ts(x);
+		}
+		res += "}"; return res;
+	#else
+		bool fst = 1; str res = "";
+		for (const auto& x: v) {
+			if (!fst) res += " ";
+			fst = 0; res += ts(x);
+		}
+		return res;
+ 
+	#endif
+}
+tcTU> str ts(pair<T,U> p) {
+	#ifdef LOCAL
+		return "("+ts(p.f)+", "+ts(p.s)+")"; 
+	#else
+		return ts(p.f)+" "+ts(p.s);
+	#endif
+}
+ 
+// OUTPUT
+tcT> void pr(T x) { cout << ts(x); }
+tcTUU> void pr(const T& t, const U&... u) { 
+	pr(t); pr(u...); }
+void ps() { pr("\n"); } // print w/ spaces
+tcTUU> void ps(const T& t, const U&... u) { 
+	pr(t); if (sizeof...(u)) pr(" "); ps(u...); }
+ 
+// DEBUG
+void DBG() { cerr << "]" << endl; }
+tcTUU> void DBG(const T& t, const U&... u) {
+	cerr << ts(t); if (sizeof...(u)) cerr << ", ";
+	DBG(u...); }
+#ifdef LOCAL // compile with -DLOCAL, chk -> fake assert
+	#define dbg(...) cerr << "Line(" << __LINE__ << ") -> [" << #__VA_ARGS__ << "]: [", DBG(__VA_ARGS__)
+	#define chk(...) if (!(__VA_ARGS__)) cerr << "Line(" << __LINE__ << ") -> function(" \
+		 << __FUNCTION__  << ") -> CHK FAILED: (" << #__VA_ARGS__ << ")" << "\n", exit(0);
+#else
+	#define dbg(...) 0
+	#define chk(...) 0
+#endif
+ 
+void setPrec() { cout << fixed << setprecision(15); }
+void unsyncIO() { cin.tie(0)->sync_with_stdio(0); }
+// FILE I/O
+void setIn(str s) { freopen(s.c_str(),"r",stdin); }
+void setOut(str s) { freopen(s.c_str(),"w",stdout); }
+void setIO(str s = "") {
+	unsyncIO(); setPrec();
+	// cin.exceptions(cin.failbit); 
+	// throws exception when do smth illegal
+	// ex. try to read letter into int
+	if (sz(s)) setIn(s+".in"), setOut(s+".out"); // for USACO
+}
+ 
+#define ints(...); int __VA_ARGS__; re(__VA_ARGS__);
+ 
+ 
+int N,M;
+vi adj[MX];
+ 
+V<AR<int,2>> gen_dist() {
+	V<AR<int,2>> dist(N,{MOD,MOD});
+	queue<pi> q;
+	auto ad = [&](int a, int b) {
+		if (dist[a][b%2] != MOD) return;
+		dist[a][b%2] = b; q.push({a,b});
+	};
+	ad(0,0);
+	while (sz(q)) {
+		pi p = q.ft; q.pop();
+		each(t,adj[p.f]) ad(t,p.s+1);
+	}
+	return dist;
+}
+ 
+vpi ans_ed;
+map<pi,int> distinct;
+vpi group;
+ 
+int div2(int x) { return (x+1)/2; }
+ 
+void satisfy(vi a, vi b) {
+	F0R(i,max(sz(a),sz(b))) ans_ed.pb({a[min(i,sz(a)-1)],b[min(i,sz(b)-1)]});
+}
+ 
+void satisfy_self(vi a) {
+	for (int i = 0; i < sz(a); i += 2) {
+		if (i == sz(a)-1) ans_ed.pb({a[i],a[i]});
+		else ans_ed.pb({a[i],a[i+1]});
+	}
+}
+ 
+void satisfy_lower_left(vi v) {
+	each(t,v) {
+		pi p = group[t]; --p.f,--p.s;
+		assert(distinct.count(p));
+		ans_ed.pb({t,distinct[p]});
+	}
+}
+ 
+void satisfy_upper_left(vi v) {
+	each(t,v) {
+		pi p = group[t]; --p.f,++p.s;
+		assert(distinct.count(p));
+		ans_ed.pb({t,distinct[p]});
+	}
+}
+ 
+void solve_between(V<vi> nums, vb exists, bool special) {
+	vi bef;
+	F0R(i,sz(nums)) {
+		vi yes = nums[i], no; 
+		while (sz(yes) > sz(bef)) {
+			no.pb(yes.bk);
+			yes.pop_back();
+		}
+		satisfy(bef,yes);
+		if (i == sz(nums)-1) {
+			if (special) {
+				// ans += nums[i]-sz(bef);
+				if (exists[i]) {
+					satisfy_lower_left(no);
+					// for each in yes: loop
+					// for each in no: go to
+					// ans += div2(bef);
+					satisfy_self(yes);
+				} else {
+					satisfy_upper_left(no);
+					satisfy_self(nums[i]);
+				}
+			} else {
+				assert(exists[i]);
+				satisfy_lower_left(nums[i]);
+			}
+		} else if (exists[i]) {
+			bef = yes;
+			satisfy_lower_left(no);
+		} else {
+			satisfy_upper_left(no);
+			bef = nums[i];
+		}
+	}
+}
+ 
+void solve_sum(int sum, V<pair<int,vi>> v) {
+	dbg("SOLVE SUM",sum,v);
+	assert(sz(v));
+	if (v[0].f == 0) {
+		F0R(i,sz(v)-1) satisfy(v[i].s,v[i+1].s);
+		satisfy_self(v.bk.s);
+		return;
+	}
+	for (int i = 0; i < sz(v); ++i) {
+		V<vi> nums{v[i].s};
+		vb exists{distinct.count({v[i].f-1,sum-v[i].f-1})};
+		while (i+1 < sz(v) && v[i+1].f == v[i].f+1) {
+			++i; nums.pb(v[i].s);
+			exists.pb(distinct.count({v[i].f-1,sum-v[i].f-1}));
+		}
+		bool special = 0;
+		if (2*v[i].f+1 == sum) special = 1;
+		solve_between(nums,exists,special);
+	}
+}
+ 
+ 
+void solve() {
+	auto a = gen_dist();
+	// dbg(a);
+	if (a[0][1] == MOD) {
+		ps(N-1);
+		return;
+	}
+	map<int,map<int,vi>> cnt;
+	F0R(i,N) {
+		AR<int,2> t = a[i];
+		pi p{t[0],t[1]};
+		if (p.f > p.s) swap(p.f,p.s);
+		group.pb(p);
+		distinct[p] = i;
+		cnt[p.f+p.s][p.f].pb(i);
+	}
+	each(t,cnt) solve_sum(t.f,V<pair<int,vi>>(all(t.s)));
+	F0R(i,N) adj[i].clear();
+	each(t,ans_ed) adj[t.f].pb(t.s), adj[t.s].pb(t.f);
+	assert(a == gen_dist());
+	ps(sz(ans_ed));
+	assert(sz(ans_ed) <= M);
+}
+ 
+int main() {
+	setIO(); 
+	int TC; re(TC);
+	F0R(_,TC) {
+		re(N,M);
+		distinct.clear();
+		F0R(i,N) adj[i].clear();
+		ans_ed.clear(); group.clear();
+		F0R(i,M) {
+			int a,b; re(a,b); --a,--b;
+			adj[a].pb(b), adj[b].pb(a);
+		}
+		solve();
+	}
+}

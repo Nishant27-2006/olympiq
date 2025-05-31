@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Subtask 1:</strong>
+<p>We can use bitmask DP and construct the sequence in order. Let <span class='math'>$cur$</span> be the
+bitmask representing the cows which have already been chosen and let <span class='math'>$res[cur]$</span>
+be the maximum possible length of the sequence for this state. Furthermore, let
+<span class='math'>$mask[cur]$</span> be the bitmask representing the pies that are chosen by these cows
+and <span class='math'>$tot[i]$</span> be the bitmask representing the pies which cow <span class='math'>$i$</span> enjoys. Then we
+can only add cow <span class='math'>$i$</span> to the sequence if <span class='math'>$mask[cur]\neq (mask[cur]\&amp;tot[i])$</span>.
+<p>It&apos;s easy to implement a solution that runs in <span class='math'>$O(M2^M)$</span> time.
+<p><strong>Subtask 2:</strong>
+<p>Any reasonable solution which is polynomial in <span class='math'>$N$</span> should pass.
+<p><strong>Subtask 3:</strong>
+<p>We can solve this problem in <span class='math'>$O(N^3).$</span> Let <span class='math'>$dp[l][r]$</span> denote the maximum number
+of cows such that the set of eaten pies is a <strong>subset</strong> of the range
+<span class='math'>$l\ldots r.$</span> Then we can write
+<div class='math'>$$dp[l][r]:=\max_{l\le i&lt;r}(dp[l][i]+dp[i+1][r]).$$</div>
+Furthermore, suppose that the last cow in the sequence ate pie <span class='math'>$i$</span> for some 
+<span class='math'>$l\le i\le r.$</span> Then if there exists an interval <span class='math'>$[a,b]$</span> such that 
+<span class='math'>$l\le a\le i\le b\le r,$</span> we can write
+<div class='math'>$$dp[l][r]:=\max(dp[l][r],dp[l][i-1]+dp[i+1][r]+mx[i][l][r]),$$</div>
+where <span class='math'>$mx[i][l][r]$</span> is the maximum weight over all cows <span class='math'>$[l_i,r_i]$</span> satisfying
+<span class='math'>$l\le l_i\le i\le r_i\le r.$</span> Our answer will be the value of <span class='math'>$dp[0][N-1].$</span> 
+<p>This DP can be computed in <span class='math'>$O(N^3)$</span> time.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+typedef vector&lt;int&gt; vi; 
+ 
+#define FOR(i,a,b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i,a) FOR(i,0,a)
+#define ROF(i,a,b) for (int i = (b)-1; i &gt;= (a); --i)
+#define R0F(i,a) ROF(i,0,a)
+#define trav(a,x) for (auto&amp; a: x)
+ 
+#define pb push_back
+#define rsz resize
+#define sz(x) int(x.size())
+ 
+template&lt;class T&gt; bool ckmax(T&amp; a, const T&amp; b) { 
+	return a &lt; b ? a = b, 1 : 0; }
+	
+void setIO(string name) {
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	freopen((name+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((name+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+const int MX = 300;
+ 
+int N,M,dp[MX][MX];
+int mx[MX][MX][MX];
+vi w,l,r;
+ 
+int main() {
+	setIO(&quot;pieaters&quot;); 
+	cin &gt;&gt; N &gt;&gt; M;
+	w.rsz(M); l.rsz(M), r.rsz(M);
+	F0R(i,M) {
+		cin &gt;&gt; w[i] &gt;&gt; l[i] &gt;&gt; r[i]; 
+		l[i] --,r[i] --;
+		FOR(j,l[i],r[i]+1) 
+			ckmax(mx[j][l[i]][r[i]],w[i]);
+	}
+	F0R(i,N) {
+		R0F(j,i+1) FOR(k,i,N) {
+			if (j) ckmax(mx[i][j-1][k],mx[i][j][k]);
+			if (k &lt; N-1) ckmax(mx[i][j][k+1],mx[i][j][k]);
+		}
+	}
+	R0F(a,N) FOR(b,a,N) {
+		FOR(c,a,b) ckmax(dp[a][b],dp[a][c]+dp[c+1][b]);
+		FOR(c,a,b+1) if (mx[c][a][b]) { // among all those covering c &gt;= a
+			int res = mx[c][a][b];
+			if (c &gt; a) res += dp[a][c-1];
+			if (c &lt; b) res += dp[c+1][b];
+			ckmax(dp[a][b],res);
+		}
+	}
+	cout &lt;&lt; dp[0][N-1] &lt;&lt; &quot;\n&quot;;
+}
+ 
+</pre>
+<p></body></html>

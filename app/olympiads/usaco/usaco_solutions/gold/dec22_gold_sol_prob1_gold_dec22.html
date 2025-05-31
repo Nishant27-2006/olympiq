@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Timothy Feng)
+<p>Define <span class='math'>$\text{dp}[i][j][k]$</span> to be the maximum amount of popularity Bessie can
+achieve with her friends <span class='math'>$1 \ldots i$</span>, <span class='math'>$j$</span> moonies, and <span class='math'>$k$</span> ice cream cones.
+<p><ul><li>If Bessie does not want to bribe cow <span class='math'>$i$</span>, then we can update
+<span class='math'>$\text{dp}[i+1][j][k] = \text{dp}[i][j][k]$</span>.</li><li>If Bessie chooses to bribe cow <span class='math'>$i$</span>, she can optionally spend some ice cream
+cones to decrease her cost. Loop through <span class='math'>$0 \ldots k$</span> to brute force how many
+ice cream cones Bessie will spend on cow <span class='math'>$i$</span>. If Bessie chooses to spend <span class='math'>$c$</span>
+cones, then Bessie needs to spend <span class='math'>$C_i - \lfloor \frac{c}{X_i} \rfloor$</span> moonies.
+Therefore,
+<span class='math'>$\text{dp}[i + 1][j - (C_i - \lfloor \frac{c}{X_i} \rfloor)][k - c] = \text{dp}[i][j][k]$</span>.</li></ul>
+<p>However, this code runs in <span class='math'>$\mathcal{O}(NAB^2)$</span> time. 
+<p>To do better, suppose that we already know the set of cows that we plan to take.
+How do we check that inviting these cows is within our budget? We can do this
+greedily. Start by not spending any cones at all, and spending only money to
+invite these cows. This might cost more money than we have. Next, we will try to
+spend some ice cream cones to reduce the amount of money we need to spend. Note
+that at this point, we would always choose the cow with the smallest <span class='math'>$X_i$</span> to
+decrease the total cost most efficiently. In other words, the cows that we bribe
+with cones is a prefix of all cows when sorted by <span class='math'>$X_i$</span>. This observation leads
+us to the fact that for each <span class='math'>$j$</span> and <span class='math'>$k$</span>, to choose a new cow <span class='math'>$i$</span>, we only have
+one transition to consider. Sort Bessieâs friends by increasing <span class='math'>$X_i$</span>.  Note
+that if we take cow <span class='math'>$i$</span>, we want to spend all our ice cream cones first before
+we move on to spending money, so we would use <span class='math'>$c = \min(k, C_i\cdot X_i)$</span> cones and 
+<span class='math'>$C_i - \lfloor \frac{c}{X_i} \rfloor$</span> moonies. Due to the <span class='math'>$\mathcal{O}(NAB)$</span>
+states we have, this results in an <span class='math'>$\mathcal{O}(NAB)$</span> time dp.
+<p>We can further remove one dimension. By the same observation from before - that
+cones are used to the maximum before moonies - for all dp states, either <span class='math'>$k$</span>
+equals zero or <span class='math'>$j$</span> equals <span class='math'>$A$</span>.  For each <span class='math'>$i$</span>, we now only consider
+<span class='math'>$\mathcal{O}(A + B)$</span> states, leading us to our final <span class='math'>$\mathcal{O}(N(A+B))$</span>
+solution.
+<p>Timothy&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int N = 2000 + 1;
+ 
+int dp[N][2 * N];
+ 
+void set_max(int &amp;a, int b) {
+    if (b &gt; a) a = b;
+}
+ 
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+ 
+    int n, moonie, cones;
+    cin &gt;&gt; n &gt;&gt; moonie &gt;&gt; cones;
+ 
+    vector&lt;array&lt;int, 3&gt;&gt; cows(n);
+    for (auto &amp;[x, p, c] : cows) {
+        cin &gt;&gt; p &gt;&gt; c &gt;&gt; x;
+    }
+    sort(cows.begin(), cows.end());
+ 
+    memset(dp, -1, sizeof dp);
+ 
+    dp[0][moonie + cones] = 0;
+    for (int i = 0; i &lt; n; ++i) {
+        auto [x, p, c] = cows[i];
+        for (int j = 0; j &lt;= moonie + cones; ++j) {
+            if (dp[i][j] == -1) continue;
+ 
+            set_max(dp[i + 1][j], dp[i][j]);
+            if (j - c * x &gt;= moonie) {
+                set_max(dp[i + 1][j - c * x], dp[i][j] + p);
+            } else if (j &gt; moonie) {
+                int cost_left = c - (j - moonie) / x;
+                if (moonie - cost_left &gt;= 0)
+                    set_max(dp[i + 1][moonie - cost_left], dp[i][j] + p);
+            } else if (j &lt;= moonie &amp;&amp; j - c &gt;= 0) {
+                set_max(dp[i + 1][j - c], dp[i][j] + p);
+            }
+        }
+    }
+ 
+    cout &lt;&lt; *max_element(dp[n], dp[n] + moonie + cones + 1) &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Nick Wu&apos;s Python code:
+<p><pre class='prettyprint'>
+n, a, b = (int(x) for x in input().split())
+dpmoney = [0] * (a+1)
+dpcones = [0] * (b+1)
+v = sorted([[int(x) for x in input().split()] for _ in range(n)], key = lambda x: x[2])
+for p, c, x in v:
+  for i in range(a-c+1):
+    dpmoney[i] = max(dpmoney[i], dpmoney[i+c] + p)
+  for i in range(max(0, a-c+1), min(a+1, a-c+1 + (b // x))):
+    conesneed = (i-(a-c)) * x
+    dpmoney[i] = max(dpmoney[i], dpcones[conesneed] + p)
+  for i in range(b-x*c+1):
+    dpcones[i] = max(dpcones[i], dpcones[i+x*c] + p)
+    dpmoney[a] = max(dpmoney[a], dpcones[i])
+print(dpmoney[0])
+</pre>
+<p></body></html>

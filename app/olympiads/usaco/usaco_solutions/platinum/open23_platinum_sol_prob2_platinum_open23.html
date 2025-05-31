@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi, Reviewed by Richard Qi) 
+<p><em>Note:</em> The model solutions for all subtasks are very short, though
+understanding why they work is not easy.
+<p>Suppose we are trying to compute the answer for <span class='math'>$A=a$</span> and <span class='math'>$B=b$</span>.
+<p><strong>Subtask 2: <span class='math'>$O((a+b)^2)$</span></strong>
+<p>Let <span class='math'>$s=\texttt{gen_string}(a,b)$</span>. For each prefix of <span class='math'>$s$</span>, count the number of 0s
+and 1s (let these be <span class='math'>$c$</span> and <span class='math'>$d$</span>, respectively), and then check whether
+<span class='math'>$\texttt{gen_string}(c, d)$</span> is a prefix of <span class='math'>$s$</span>.
+<p><strong>Subtask 3: <span class='math'>$O(a+b)$</span></strong>
+<p>The first step is to treat each bit string as a path on the upper-right quadrant
+of a 2D grid (all lattice points <span class='math'>$(x,y)$</span> satisfying <span class='math'>$x\ge 0$</span> and <span class='math'>$y\ge 0$</span>).
+Henceforth,  we use &quot;point&quot; as shorthand for &quot;lattice point.&quot; Starting at the
+point <span class='math'>$(0,0)$</span>,  we repeatedly move right if we are on or above the line
+<span class='math'>$y=b/a\cdot x$</span>, and up otherwise, until we reach the point  <span class='math'>$(a,b)$</span>. This is
+equivalent to the function provided in the problem statement  because the
+condition <span class='math'>$ia * b \le ib * a$</span> compares the slope of the line  from the origin to
+<span class='math'>$(ia, ib)$</span> with the slope of the line from the origin to <span class='math'>$(a, b)$</span>.
+<p><strong>Definition:</strong> Say that a point <span class='math'>$(x,y)$</span> with <span class='math'>$0&lt;x\le a$</span> and <span class='math'>$0&lt;y\le b$</span> is
+<em>good</em> if <span class='math'>$\texttt{gen_string}(x,y)$</span> is a prefix of
+<span class='math'>$\texttt{gen_string}(a,b)$</span>. 
+<p>Our goal is to count the number of good points.
+<p><strong>Condition:</strong> A point <span class='math'>$(x,y)$</span> is good if and only if  every point
+<span class='math'>$(x_p,y_p)$</span> in the upper-right quadrant satisfying  <span class='math'>$0\le x_p&lt;x$</span> or <span class='math'>$0\le y_p&lt;y$</span>
+is on the same side of the  lines through the origin with slopes <span class='math'>$y/x$</span> and
+<span class='math'>$b/a$</span>. Specifically, <span class='math'>$(x_p,y_p)$</span> is either above or on both lines, or below both
+lines.
+<p><em>Proof:</em> Consider pairing the steps of <span class='math'>$\texttt{gen_string}(x,y)$</span>  and the
+first <span class='math'>$x+y$</span> steps of <span class='math'>$\texttt{gen_string}(a,b)$</span>. The  given condition is
+sufficient to ensure that every pair of steps moves in the same direction. For
+the other direction, observe if both steps in a pair move  from <span class='math'>$(c,d)$</span> to
+<span class='math'>$(c,d+1)$</span>, then every point <span class='math'>$(x_p,y_p)$</span> with <span class='math'>$y_p=d$</span> and <span class='math'>$x_p\ge c$</span>  is below
+the line, while if both steps in a pair move from <span class='math'>$(c,d)$</span> to <span class='math'>$(c+1,d)$</span>, then
+every point <span class='math'>$(x_p,y_p)$</span> with <span class='math'>$x_p=c$</span> and <span class='math'>$y_p\ge d$</span> is above on or on the line.
+Necessity follows from taking the union of these statements for all <span class='math'>$(c,d)$</span>
+along the path from <span class='math'>$(0,0)$</span> to <span class='math'>$(x,y)$</span>. <span class='math'>$\blacksquare$</span>
+<p>This condition isn&apos;t immediately useful because it tells us to check an infinite
+number of points to see whether <span class='math'>$(x,y)$</span> is good. The following corollary tells
+us that actually, we only need to check a finite number of points.
+<p><strong>Corollary:</strong> A point <span class='math'>$(x,y)$</span> is good if and only if  every point
+<span class='math'>$(x_p,y_p)\neq (x,y)$</span> in the upper-right quadrant satisfying  <span class='math'>$0\le x_p\le x$</span>
+<em>and</em> <span class='math'>$0\le y_p\le y$</span> is on the same side of the  lines through the origin
+with slopes <span class='math'>$y/x$</span> and <span class='math'>$b/a$</span>. We call this set of points the <em>bounding
+rectangle</em> associated with <span class='math'>$(x,y)$</span>.
+<p>We use this corollary to separately count good points below the ray from the
+origin through <span class='math'>$(a,b)$</span> and good points on or above this ray.
+<p><ol><li>A point <span class='math'>$(x,y)$</span> below the ray through <span class='math'>$(a,b)$</span> is good if and only if
+<span class='math'>$(x-1,y)$</span>  is not strictly below the ray through <span class='math'>$(a,b)$</span>, and there exist no
+points with smaller y-coordinate that lie on or above the ray through <span class='math'>$(x,y)$</span>
+and below the ray through <span class='math'>$(a,b)$</span>.</li><li>A point <span class='math'>$(x,y)$</span> on or above the ray through <span class='math'>$(a,b)$</span> is good if and only if
+<span class='math'>$(x,y-1)$</span> is not on or above the ray through <span class='math'>$(a,b)$</span>, and there exist no points
+with smaller x-coordinate that lie on or above the ray through <span class='math'>$(a,b)$</span> and below
+the ray through 
+<span class='math'>$(x,y)$</span>.</li></ol>
+<p>To count good points of the first form, note that for every y-coordinate, there
+is at most one point with that y-coordinate that can potentially be good.
+Iterate over all y-coordinates from <span class='math'>$1$</span> to <span class='math'>$b-1$</span> in increasing order and find 
+the leftmost point with that y-coordinate that is below the ray through <span class='math'>$(a,b)$</span>.
+If the last good point we found is on or above the ray through the current
+point, then the current point cannot be good. Otherwise, the current point
+produces the greatest slope through the origin out of all points below the ray
+with y-coordinate less than or equal to the current y-coordinate, so it is good.
+Counting good points of the  second form can be done similarly.
+<p><em>Implementation Note:</em> We can check whether a point lies above a ray
+without division using the
+<a href='https://www.mathsisfun.com/algebra/vectors-cross-product.html'>cross
+product</a> operation.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;utility&gt;
+using namespace std;
+ 
+int64_t cross(pair&lt;int64_t, int64_t&gt; p1, pair&lt;int64_t, int64_t&gt; p2) {
+	int64_t x1 = p1.first, y1 = p1.second;
+	int64_t x2 = p2.first, y2 = p2.second;
+	return x1 * y2 - x2 * y1;
+}
+ 
+int64_t solve(int64_t a, int64_t b) {
+	int64_t ans = 0;
+	pair&lt;int64_t, int64_t&gt; best = {1, 0};
+	for (int64_t y = 1; y &lt; b; ++y) {  // below
+		int64_t x = y * a / b + 1;
+		if (cross(best, {x, y}) &gt; 0) {
+			best = {x, y};
+			ans += 1;
+		}
+	}
+	best = {0, 1};
+	for (int64_t x = 1; x &lt;= a; ++x) {  // above or on
+		int64_t y = (x * b + a - 1) / a;
+		if (cross({x, y}, best) &gt;= 0) {
+			best = {x, y};
+			ans += 1;
+		}
+	}
+	return ans;
+}
+ 
+int main() {
+	int64_t T;
+	cin &gt;&gt; T;
+	for (int64_t i = 0; i &lt; T; ++i) {
+		int64_t a, b;
+		cin &gt;&gt; a &gt;&gt; b;
+		cout &lt;&lt; solve(a, b) &lt;&lt; endl;
+	}
+	return 0;
+}
+</pre>
+<p>Equivalent Python code (though this isn&apos;t fast enough to pass the subtask):
+<p><pre class='prettyprint'>
+def cross(p1, p2):
+    x1, y1 = p1
+    x2, y2 = p2
+    return x1 * y2 - x2 * y1
+
+
+def solve(a, b):
+    ans = 0
+    best = (1, 0)
+    for y in range(1, b):  # below
+        x = y * a // b + 1
+        if cross(best, (x, y)) &gt; 0:
+            best = (x, y)
+            ans += 1
+    best = (0, 1)
+    for x in range(1, a + 1):  # above or on
+        y = (x * b + a - 1) // a
+        if cross((x, y), best) &gt;= 0:
+            best = (x, y)
+            ans += 1
+    return ans
+
+
+T = int(input())
+for _ in range(T):
+    a, b = map(int, input().split())
+    print(solve(a, b))
+
+</pre>
+<p><strong>Subtask 4: <span class='math'>$O(answer)$</span></strong>
+<p>Suppose that we want to generate the good pairs in increasing order of  size. If
+we look at the good pairs from the sample explanation, we can see that every one
+of them is the sum of two previous good pairs (if we treat <span class='math'>$(1,0)$</span>  and <span class='math'>$(0,1)$</span>
+as good). For example, <span class='math'>$(1, 2)+(1, 3)=(2, 5)$</span> and <span class='math'>$(1, 2)+(2, 5)=(3,7)$</span>.  Why is
+this happening?
+<p>To show this, let&apos;s make some additional observations. Let <span class='math'>$f_1=(a_1,b_1)$</span> and
+<span class='math'>$f_2=(a_2,b_2)$</span> be any two points in the upper-right quadrant satisfying
+<span class='math'>$cross(f_1,f_2)=a_1b_2-a_2b_1=1$</span>. Note that this implies <span class='math'>$b_1/a_1&lt;b_2/a_2$</span>, as
+we can divide both sides by <span class='math'>$a_1a_2$</span> (here we assume <span class='math'>$1/0=\infty$</span>). 
+Furthermore, by <a href='https://en.wikipedia.org/wiki/Pick%27s_theorem'>Pick&apos;s
+theorem</a>, no point lies strictly within the triangle with <span class='math'>$(0,0)$</span>, <span class='math'>$f_1$</span>, and
+<span class='math'>$f_2$</span> as vertices (this triangle has <span class='math'>$A=cross(f_1,f_2)/2=1/2, i=0, b=3$</span>).
+<p><strong>Fact:</strong> A point <span class='math'>$f&apos;=(a&apos;,b&apos;)$</span> lies on or between the rays from the origin
+through <span class='math'>$f_1$</span> and <span class='math'>$f_2$</span> (<span class='math'>$b_1/a_1\le b&apos;/a&apos;\le b_2/a_2$</span>) if and only if <span class='math'>$f&apos;$</span> can
+be written as a non-negative integer multiple of <span class='math'>$f_1$</span> plus a non-negative
+integer multiple of <span class='math'>$f_2$</span>.
+<p><em>Proof:</em> The &quot;if&quot; direction is obvious. For the &quot;only if&quot; direction, we may
+write <span class='math'>$f&apos;=cross(f_1, f&apos;)\cdot f_2 + cross(f&apos;, f_2)\cdot f_1$</span>. Equality holds
+because
+<div class='math'>$$\begin{align*}
+&amp;cross(f_1,cross(f_1, f&apos;)\cdot f_2 + cross(f&apos;, f_2)\cdot f_1)\\
+&amp;=cross(f_1, cross(f_1, f&apos;)\cdot f_2)+cross(f_1, cross(f&apos;, f_2)\cdot f_1)\\
+&amp;=cross(f_1, f&apos;)\cdot cross(f_1,f_2)+cross(f&apos;,f_2)\cdot cross(f_1,f_1)\\
+&amp;=cross(f_1,f&apos;),
+\end{align*}$$</div>
+where we have used that the cross product is bilinear (linear in each of its
+arguments), and similarly,
+<span class='math'>$cross(f&apos;,f_2)=cross(cross(f_1, f&apos;)\cdot f_2 + cross(f&apos;, f_2)\cdot f_1, f_2).$</span>
+Both <span class='math'>$cross(f_1, f&apos;)$</span> and <span class='math'>$cross(f&apos;,f_2)$</span> are non-negative integers because <span class='math'>$f&apos;$</span>
+lies on or between the rays. Alternatively, we can loop the following steps
+until termination occurs with <span class='math'>$f_2=(a&apos;/\gcd(a&apos;,b&apos;), b&apos;/\gcd(a&apos;,b&apos;))$</span>.
+<ol><li>If <span class='math'>$f&apos;$</span> is a multiple of either <span class='math'>$f_1$</span> or <span class='math'>$f_2$</span>, we&apos;re done.</li><li>Otherwise, let <span class='math'>$f_3=f_1+f_2$</span>. Note that <span class='math'>$cross(f_1,f_3)=cross(f_3,f_2)=1$</span> by
+bilinearity.
+<p><ul><li>If <span class='math'>$cross(f_3, f&apos;)&gt;0$</span>, set <span class='math'>$f_1=f_3$</span>.</li><li>Otherwise, set <span class='math'>$f_2=f_3$</span>.
+<span class='math'>$\blacksquare$</span></li></ul>
+<p></li></ol>
+<p>One easy consequence of the Fact is that for <span class='math'>$(a_1,b_1)$</span> and <span class='math'>$(a_2,b_2)$</span>
+satisfying the preconditions of the Fact, the &quot;smallest&quot; point (by either x- or
+y-coordinate)  strictly in between the rays through these points is
+<span class='math'>$(a_1+a_2,b_1+b_2)$</span>. For example, <span class='math'>$cross((1,2),(1,3))=1$</span>, the smallest point
+between  <span class='math'>$(1,2)$</span> and <span class='math'>$(1,3)$</span> is <span class='math'>$(1+1, 2+3)=(2,5)$</span>, <span class='math'>$cross((1,2),(2,5))=1$</span>, and
+the smallest  point between <span class='math'>$(1,2)$</span> and <span class='math'>$(2,5)$</span> is <span class='math'>$(1+2,2+5)=(3,7)$</span>. This
+partially explains  our observation from the start of this subtask.
+<p>The solution to this subtask is essentially the loop from the Fact starting at
+<span class='math'>$f_1=(1,0)$</span>, <span class='math'>$f_2=(0,1)$</span>, and <span class='math'>$f&apos;=(a,b)$</span>, modified to maintain a counter <span class='math'>$ans$</span>. 
+Initially, <span class='math'>$ans=0$</span>. At every step of the loop, we will ensure that
+<p><ol><li>All good points below or on the ray through <span class='math'>$f_1$</span>, or strictly above the 
+ray through <span class='math'>$f_2$</span>, have been added to <span class='math'>$ans$</span>.</li><li>All good points strictly in between the rays through <span class='math'>$f_1$</span> and <span class='math'>$f_2$</span> have
+not been added to <span class='math'>$ans$</span> yet.</li><li>The multiples of <span class='math'>$f_2$</span> that we know satisfy the Corollary have been added to
+<span class='math'>$ans$</span>. There may be additional multiples of <span class='math'>$f_2$</span> that we will add to <span class='math'>$ans$</span>
+later, but we haven&apos;t yet verified that the Corollary holds.</li></ol>
+<p>More details: If <span class='math'>$cross(f_3, f&apos;)&gt;0$</span>, then 
+<p><ol><li><span class='math'>$f_3$</span> lies below the ray through <span class='math'>$f&apos;$</span>.</li><li><span class='math'>$f_3$</span> is good; no point strictly between the rays through <span class='math'>$f_3$</span> and <span class='math'>$f_2$</span> 
+lie in the bounding rectangle of <span class='math'>$f_3$</span> by the Fact, so the Corollary holds.</li><li>No other integer multiples <span class='math'>$m$</span> of <span class='math'>$f_3$</span> are good because <span class='math'>$f_3$</span> will be on 
+different sides of the rays through <span class='math'>$m$</span> and <span class='math'>$f&apos;$</span>.</li><li>No points <span class='math'>$p$</span> strictly in between the rays <span class='math'>$f_1$</span> and <span class='math'>$f_3$</span> are good because
+<span class='math'>$f_3$</span> will lie in the bounding rectangle of <span class='math'>$p$</span> by the Fact, and <span class='math'>$f_3$</span> will be
+on opposite sides of the rays through <span class='math'>$p$</span> and <span class='math'>$f&apos;$</span>.</li><li>If <span class='math'>$f_2\neq (0,1)$</span>, then <span class='math'>$f_2$</span> plus the last good multiple  of <span class='math'>$f_2$</span> found
+so far satisfies the Corollary, and therefore must be good. Call this point <span class='math'>$m$</span>.
+To check that <span class='math'>$m$</span> satisfies the Corollary, note that <span class='math'>$m$</span> lies in the bounding
+rectangle of <span class='math'>$f_2+f_3$</span> and any point lying strictly between the rays through
+<span class='math'>$f_3$</span> and the ray through <span class='math'>$f_2$</span> must equal <span class='math'>$f_2+f_3$</span> or contain <span class='math'>$f_2+f_3$</span> in its
+bounding rectangle by the Fact, so no point in the bounding rectangle of <span class='math'>$m$</span>
+lies on opposite sides of the rays through <span class='math'>$f&apos;$</span> and <span class='math'>$m$</span>.</li></ol>
+<p>The reasoning for <span class='math'>$cross(f_3, f&apos;)\le 0$</span> is similar; <span class='math'>$f_3$</span> is good, no additional
+multiples of <span class='math'>$f_3$</span> are good, and no points strictly in between the rays <span class='math'>$f_3$</span> 
+and <span class='math'>$f_2$</span> are good. One difference is that in this case, no additional multiples
+of <span class='math'>$f_2$</span> are good.
+<p>The loop terminates with <span class='math'>$f_2=(a/\gcd(a,b),b/\gcd(a,b))$</span>, <span class='math'>$cross(f&apos;,f_2)=0$</span>,
+<span class='math'>$f_1$</span> in the bounding rectangle of <span class='math'>$f_2$</span>, and <span class='math'>$cross(f_1,f&apos;)=\gcd(a,b)$</span>. Add
+<span class='math'>$2(cross(f_1,f&apos;)-1)$</span> to the answer and return. This additional contribution
+comes from good points that are formed by adding a multiple of  <span class='math'>$f_2$</span> to <span class='math'>$(0,0)$</span>
+or <span class='math'>$f_1$</span>.
+<p><em>Implementation Note:</em> It is not necessary to maintain the values of <span class='math'>$f_1$</span>
+and <span class='math'>$f_2$</span>.  The code below only maintains <span class='math'>$crs\_below=cross(f_1, f&apos;)$</span> and
+<span class='math'>$crs\_above=cross(f&apos;, f_2)$</span>. When we set <span class='math'>$f_1=f_1+f_2$</span>, we update 
+<span class='math'>$crs\_below=cross(f_1,f&apos;)-cross(f_2,f&apos;)=crs\_below-crs\_above$</span>. When we set
+<span class='math'>$f_2=f_1+f_2$</span>, we update
+<span class='math'>$crs\_above=cross(f&apos;, f_2)-cross(f_1,f&apos;)=crs\_above-crs\_below$</span>.
+<p><pre class='prettyprint'>
+def solve(a, b):
+    crs_below, crs_above = b, a  # cross(f_1, f&apos;), cross(f&apos;, f_2)
+    ans = 0
+    on_y_axis = True
+    while True:
+        if crs_below &gt; crs_above:  # f_1 = f_1 + f_2
+            crs_below -= crs_above
+            ans += 1 + (not on_y_axis)
+        else:  # f_2 = f_1 + f_2
+            crs_above -= crs_below
+            on_y_axis = False
+            ans += 1
+        if crs_above == 0:
+            break
+    return ans + 2 * (crs_below - 1)
+
+
+T = int(input())
+for _ in range(T):
+    a, b = map(int, input().split())
+    print(solve(a, b))
+</pre>
+<p>Here is a version that prints the good multiples:
+<p><pre class='prettyprint'>
+def add(a, b):
+    return (a[0] + b[0], a[1] + b[1])
+
+
+def solve(a, b):
+    crs_below, crs_above = b, a  # cross(f_1, f&apos;), cross(f&apos;, f_2)
+    ans = 0
+    on_y_axis = True
+    f1 = (1, 0)
+    f2 = (0, 1)
+    lst_rep = None
+    lst = None
+    while True:
+        print(&quot;f3 =&quot;, add(f1, f2), &quot;(good)&quot;)
+        if crs_below &gt; crs_above:  # f_1 = f_1 + f_2
+            print(&quot;f1 = f3&quot;)
+            crs_below -= crs_above
+            ans += 1 + (not on_y_axis)
+            if not on_y_axis:
+                if lst_rep != f2:
+                    lst_rep = f2
+                    lst = f2
+                lst = add(lst, f2)
+                print(lst, &quot;(good: multiple of f2)&quot;)
+            f1 = add(f1, f2)
+        else:  # f_2 = f_1 + f_2
+            print(&quot;f2 = f3&quot;)
+            crs_above -= crs_below
+            on_y_axis = False
+            ans += 1
+            f2 = add(f1, f2)
+        if crs_above == 0:
+            print(&quot;terminating soon ... (a, b) is multiple of f2&quot;)
+            lst = f2
+            for _ in range(crs_below - 1):
+                print(add(f1, lst), &quot;(good: f1 + multiple of f2)&quot;)
+                lst = add(lst, f2)
+                print(lst, &quot;(good: multiple of f2)&quot;)
+            break
+    return ans + 2 * (crs_below - 1)
+
+
+T = int(input())
+for _ in range(T):
+    a, b = map(int, input().split())
+    print(solve(a, b))
+</pre>
+<p>And here is the output of the program above for the last test case of the sample
+input:
+<p><pre>
+f3 = (1, 1) (good)
+f2 = f3
+f3 = (2, 1) (good)
+f1 = f3
+(2, 2) (good: multiple of f2)
+f3 = (3, 2) (good)
+f1 = f3
+(3, 3) (good: multiple of f2)
+f3 = (4, 3) (good)
+f1 = f3
+(4, 4) (good: multiple of f2)
+f3 = (5, 4) (good)
+f2 = f3
+f3 = (9, 7) (good)
+f2 = f3
+terminating soon ... (a, b) is multiple of f2
+(13, 10) (good: f1 + multiple of f2)
+(18, 14) (good: multiple of f2)
+(22, 17) (good: f1 + multiple of f2)
+(27, 21) (good: multiple of f2)
+</pre>
+<p><strong>Full Solution:</strong> To speed up the above solution, we modify the loop to
+quickly process many steps corresponding to the same branch of the  while loop.
+This runs in <span class='math'>$O(\log (a+b))$</span> time because it is equivalent to the
+<a href='https://www.khanacademy.org/computing/computer-science/cryptography/modarithmetic/a/the-euclidean-algorithm'>Euclidean
+algorithm</a>.
+<p><em>Implementation:</em>
+<p><pre class='prettyprint'>
+def solve(a, b):
+    crs_below, crs_above = b, a  # cross(f_1, f&apos;), cross(f&apos;, f_2)
+    ans = 0
+    on_y_axis = True
+    while True:
+        if crs_below &gt; crs_above:  # f_1 = f_1 + f_2
+            mul = (crs_below - 1) // crs_above
+            ans += mul * (1 + (not on_y_axis))
+            crs_below -= mul * crs_above
+        else:  # f_2 = f_1 + f_2
+            mul = crs_above // crs_below
+            ans += mul
+            crs_above -= mul * crs_below
+            on_y_axis = False
+        if crs_above == 0:
+            break
+    return ans + 2 * (crs_below - 1)
+
+
+T = int(input())
+for _ in range(T):
+    a, b = map(int, input().split())
+    print(solve(a, b))
+</pre>
+<p><strong>Note 1:</strong> This problem was inspired by
+<a href='https://www.facebook.com/codingcompetitions/hacker-cup/2013/final-round/problems/A'>this
+Hacker Cup problem,</a> though I don&apos;t know the intended solution. The only
+solution that passed in-contest runs in <span class='math'>$O(N^2)$</span> time (with <span class='math'>$N=10^6$</span>).
+<p><strong>Note 2:</strong> This problem is related to
+<a href='https://cp-algorithms.com/algebra/continued-fractions.html'>continued
+fractions</a> and
+<a href='https://cp-algorithms.com/others/stern_brocot_tree_farey_sequences.html'>Farey
+sequences.</a>
+<p></body></html>

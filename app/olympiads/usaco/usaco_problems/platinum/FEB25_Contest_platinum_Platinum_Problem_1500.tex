@@ -1,0 +1,154 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB25 Contest - Platinum Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+**Note: The time limit for this problem is 3s, 1.5x the default.**
+You are given a length-$N$ integer array $a_1,a_2,\dots,a_N$
+($2\le N\le 10^6, 1\le a_i\le N$). Output the sum of the answers for the
+subproblem below over all $N(N+1)/2$ contiguous subarrays of $a$.
+
+Given a nonempty list of integers, alternate the following operations (starting
+with the first operation) until the list has size exactly one.
+
+Replace two consecutive integers in the list with their minimum.Replace two consecutive integers in the list with their maximum.
+Determine the maximum possible value of the final remaining integer.
+
+For example,
+
+
+[4, 10, 3] -> [4, 3] -> [4]
+[3, 4, 10] -> [3, 10] -> [10]
+
+In the first array, $(10, 3)$ is replaced by $\min(10, 3)=3$ and $(4, 3)$ is
+replaced by $\max(4, 3)=4$.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$.
+
+The second line contains $a_1,a_2,\dots,a_N$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+The sum of the answer to the subproblem over all subarrays.
+
+SAMPLE INPUT:
+2
+2 1
+SAMPLE OUTPUT: 
+4
+
+The answer for $[2]$ is $2$, the answer for $[1]$ is $1$, and the answer for
+$[2, 1]$ is $1$. 
+
+Thus, our output should be $2+1+1 = 4$. 
+
+SAMPLE INPUT:
+3
+3 1 3
+SAMPLE OUTPUT: 
+12
+
+SAMPLE INPUT:
+4
+2 4 1 3
+SAMPLE OUTPUT: 
+22
+
+Consider the subarray $[2, 4, 1, 3]$. 
+
+ Applying the first operation on (1, 3), our new array is $[2, 4, 1]$.  Applying the second operation on (4, 1), our new array is $[2, 4]$.  Applying the third operation on (2, 4), our final number is $2$. 
+It can be proven that $2$ is the maximum possible value of the final number. 
+
+SCORING:
+Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+The second line contains $a_1,a_2,\dots,a_N$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):The sum of the answer to the subproblem over all subarrays.SAMPLE INPUT:2
+2 1SAMPLE OUTPUT:4The answer for $[2]$ is $2$, the answer for $[1]$ is $1$, and the answer for
+$[2, 1]$ is $1$.Thus, our output should be $2+1+1 = 4$.SAMPLE INPUT:3
+3 1 3SAMPLE OUTPUT:12SAMPLE INPUT:4
+2 4 1 3SAMPLE OUTPUT:22Consider the subarray $[2, 4, 1, 3]$.Applying the first operation on (1, 3), our new array is $[2, 4, 1]$.Applying the second operation on (4, 1), our new array is $[2, 4]$.Applying the third operation on (2, 4), our final number is $2$.It can be proven that $2$ is the maximum possible value of the final number.SCORING:Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.Problem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:2
+2 1SAMPLE OUTPUT:4The answer for $[2]$ is $2$, the answer for $[1]$ is $1$, and the answer for
+$[2, 1]$ is $1$.Thus, our output should be $2+1+1 = 4$.SAMPLE INPUT:3
+3 1 3SAMPLE OUTPUT:12SAMPLE INPUT:4
+2 4 1 3SAMPLE OUTPUT:22Consider the subarray $[2, 4, 1, 3]$.Applying the first operation on (1, 3), our new array is $[2, 4, 1]$.Applying the second operation on (4, 1), our new array is $[2, 4]$.Applying the third operation on (2, 4), our final number is $2$.It can be proven that $2$ is the maximum possible value of the final number.SCORING:Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.Problem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+2
+2 1
+
+3
+3 1 3
+
+4
+2 4 1 3
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+4
+
+The answer for $[2]$ is $2$, the answer for $[1]$ is $1$, and the answer for
+$[2, 1]$ is $1$.Thus, our output should be $2+1+1 = 4$.SAMPLE INPUT:3
+3 1 3SAMPLE OUTPUT:12SAMPLE INPUT:4
+2 4 1 3SAMPLE OUTPUT:22Consider the subarray $[2, 4, 1, 3]$.Applying the first operation on (1, 3), our new array is $[2, 4, 1]$.Applying the second operation on (4, 1), our new array is $[2, 4]$.Applying the third operation on (2, 4), our final number is $2$.It can be proven that $2$ is the maximum possible value of the final number.SCORING:Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.Problem credits: Benjamin Qi
+
+Thus, our output should be $2+1+1 = 4$.SAMPLE INPUT:3
+3 1 3SAMPLE OUTPUT:12SAMPLE INPUT:4
+2 4 1 3SAMPLE OUTPUT:22Consider the subarray $[2, 4, 1, 3]$.Applying the first operation on (1, 3), our new array is $[2, 4, 1]$.Applying the second operation on (4, 1), our new array is $[2, 4]$.Applying the third operation on (2, 4), our final number is $2$.It can be proven that $2$ is the maximum possible value of the final number.SCORING:Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.Problem credits: Benjamin Qi
+
+SAMPLE INPUT:3
+3 1 3SAMPLE OUTPUT:12SAMPLE INPUT:4
+2 4 1 3SAMPLE OUTPUT:22Consider the subarray $[2, 4, 1, 3]$.Applying the first operation on (1, 3), our new array is $[2, 4, 1]$.Applying the second operation on (4, 1), our new array is $[2, 4]$.Applying the third operation on (2, 4), our final number is $2$.It can be proven that $2$ is the maximum possible value of the final number.SCORING:Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.Problem credits: Benjamin Qi
+
+12
+
+SAMPLE INPUT:4
+2 4 1 3SAMPLE OUTPUT:22Consider the subarray $[2, 4, 1, 3]$.Applying the first operation on (1, 3), our new array is $[2, 4, 1]$.Applying the second operation on (4, 1), our new array is $[2, 4]$.Applying the third operation on (2, 4), our final number is $2$.It can be proven that $2$ is the maximum possible value of the final number.SCORING:Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.Problem credits: Benjamin Qi
+
+22
+
+Consider the subarray $[2, 4, 1, 3]$.Applying the first operation on (1, 3), our new array is $[2, 4, 1]$.Applying the second operation on (4, 1), our new array is $[2, 4]$.Applying the third operation on (2, 4), our final number is $2$.It can be proven that $2$ is the maximum possible value of the final number.SCORING:Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.Problem credits: Benjamin Qi
+
+Applying the first operation on (1, 3), our new array is $[2, 4, 1]$.Applying the second operation on (4, 1), our new array is $[2, 4]$.Applying the third operation on (2, 4), our final number is $2$.It can be proven that $2$ is the maximum possible value of the final number.SCORING:Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.Problem credits: Benjamin Qi
+
+It can be proven that $2$ is the maximum possible value of the final number.SCORING:Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.Problem credits: Benjamin Qi
+
+SCORING:Inputs 4-5: $N\le 100$Inputs 6-7: $N\le 5000$Inputs 8-9: $\max(a)\le 10$Inputs 10-13: No additional constraints.Problem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1500
+
+\section*{Source}
+USACO FEB25 Contest, Platinum Division, Problem ID: 1500
+
+\end{document}

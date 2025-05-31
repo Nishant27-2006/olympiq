@@ -1,0 +1,289 @@
+Solution ID: sol_prob2_gold_open24
+Contest: OPEN24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_open24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Subtask 2:
+
+All
+
+$k$
+
+equal
+
+The intervals with intersection at least
+
+$k$
+
+with
+
+$[\ell_i, r_i]$
+
+are all
+intervals besides those satisfying
+
+$r_j<\ell+k$
+
+or
+
+$\ell_j>r-k$
+
+. Note that these
+inequalities can't hold simultaneously, as it would imply
+
+$r_j-\ell_j<\ell-r+2k<k$
+
+,  contradicting the requirement that all intervals have
+length at least
+
+$k$
+
+.
+
+So  our answer is simply
+
+$N-1$
+
+minus the number of intervals satisfying each
+inequality, which can be computed with sorting (and optionally, binary search).
+
+Full Solution:
+
+To count the number of intervals with intersection at least
+
+$k_i$
+
+with
+
+$[\ell_i,r_i]$
+
+, count the number of intervals with  length at least
+
+$k_i$
+
+, and
+subtract out those with right endpoint
+
+$<l_i+k_i$
+
+or left endpoint
+
+$>r_i-k_i$
+
+.
+Since an interval with left endpoint
+
+$>r_i-k_i$
+
+and right endpoint
+
+$<l_i+k_i$
+
+must have length
+
+$<l_i-r_i+2k_i\le k_i$
+
+, no interval is subtracted more than
+once.
+
+Since we may compute the counts in any order, let's sort them in decreasing
+order of
+
+$k$
+
+. Maintain lists of the left endpoints and right endpoints of the
+intervals with length at least
+
+$k$
+
+. As
+
+$k$
+
+decreases, we need to efficiently add
+to the lists and answer queries of the form: how many elements in the list are
+
+$\le x$
+
+for some given
+
+$x$
+
+? There are many  ways to do this, such as using a
+
+binary indexed
+tree
+
+with coordinate compression, or an
+
+order statistic
+tree
+
+in C++.
+
+Implementation with order statistic tree (Benjamin Chen):
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ar array
+
+#include <ext/pb_ds/assoc_container.hpp>
+using namespace __gnu_pbds;
+
+template<class T> using Tree = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
+
+const int mxN=2e5;
+int n, l[mxN], r[mxN], k[mxN], ans[mxN], len_order[mxN], k_order[mxN];
+
+int main() {
+	ios::sync_with_stdio(0);
+	cin.tie(0);
+	cin >> n;
+	for (int i = 0; i < n; ++i) {
+		cin >> l[i] >> r[i] >> k[i];
+		len_order[i] = k_order[i] = i;
+	}
+	sort(len_order, len_order + n, [](int a, int b) { return make_pair(r[a]-l[a], a) > make_pair(r[b]-l[b], b); });
+	sort(k_order, k_order + n, [](int a, int b) { return make_pair(k[a], a) > make_pair(k[b], b); });
+	Tree<ar<int, 2>> left_endpoints, right_endpoints;
+	for (int i = 0, j = 0; i < n; ++i) {
+		for (; j < n && r[len_order[j]] - l[len_order[j]] >= k[k_order[i]]; ++j) {
+			left_endpoints.insert({l[len_order[j]], j});
+			right_endpoints.insert({r[len_order[j]], j});
+		}
+		ans[k_order[i]] = j - 1;
+		ans[k_order[i]] -= j - left_endpoints.order_of_key({r[k_order[i]] - k[k_order[i]] + 1, -1});
+	   	ans[k_order[i]]	-= right_endpoints.order_of_key({l[k_order[i]] + k[k_order[i]], -1});
+	}
+	for (int i=0; i<n; ++i)
+		cout << ans[i] << "\n";
+	return 0;
+}
+
+Implementation with binary indexed tree and coordinate compression (Brandon
+Wang):
+
+#include <algorithm>
+#include <iostream>
+#include <map>
+ 
+const int MAXN = 200005;
+const int MAXT = 4 * MAXN + 5;
+ 
+int N;
+int l[MAXN];
+int r[MAXN];
+int k[MAXN];
+ 
+std::map<int, int> cc;
+std::vector<int> coords;
+ 
+std::pair<int, std::pair<int, int>> keys[MAXN];
+std::pair<std::pair<int,int>, std::pair<int,int>> queries[MAXN];
+ 
+int ans[MAXN];
+int lbit[MAXT];
+int rbit[MAXT];
+ 
+void input () {
+	std::cin >> N;
+	for (int i = 0; i < N; i++) {
+		std::cin >> l[i] >> r[i] >> k[i];
+	}
+}
+ 
+void compress () {
+	for (int i = 0; i < N; i++) {
+		coords.push_back(l[i]);
+		coords.push_back(r[i]);
+		coords.push_back(l[i] + k[i] - 1);
+		coords.push_back(r[i] - k[i] + 1);
+	}
+	std::sort(coords.begin(), coords.end());
+	int idx = 1;
+	for (int i = 0; i < int(coords.size()); i++) {
+		cc[coords[i]] = idx;
+		idx++;
+	}
+}
+ 
+void proc () {
+	for (int i = 0; i < N; i++) {
+		keys[i] = {r[i] - l[i], {cc[l[i]], cc[r[i]]}};
+		queries[i] = {{k[i], i}, {cc[l[i]+k[i]-1], cc[r[i]-k[i]+1]}};
+	}
+	std::sort(keys, keys+N);
+	std::sort(queries, queries+N);
+}
+ 
+void lupd (int x, int d) {
+	while (x < MAXT) {
+		lbit[x] += d;
+		x += (x & (-x));
+	}
+}
+ 
+void rupd (int x, int d) {
+	while (x < MAXT) {
+		rbit[x] += d;
+		x += (x & (-x));
+	}
+}
+ 
+int lqr (int x) {
+	if (x == 0) return 0;
+	return lbit[x] + lqr(x - (x & (-x)));
+}
+ 
+int rqr (int x) {
+	if (x == 0) return 0;
+	return rbit[x] + rqr(x - (x & (-x)));
+}
+ 
+void solve () {
+	int qdx = N-1;
+	for (int i = (N-1); i >= 0; i--) {
+		while ((qdx >= 0) && (queries[qdx].first.first > keys[i].first)) {
+			int idx = queries[qdx].first.second;
+			ans[idx] += (N-2-i);
+			ans[idx] -= rqr(queries[qdx].second.first);
+			ans[idx] -= (lqr(MAXT-1) - lqr(queries[qdx].second.second - 1));
+			// std::cout << queries[qdx].first.second << " " << queries[qdx].second.first << " " << queries[qdx].second.second << "\n";
+			qdx--;
+		}
+		lupd(keys[i].second.first, 1);
+		// std::cout << keys[i].second.first << " " << keys[i].second.second << "\n";
+		rupd(keys[i].second.second, 1);
+	}
+	while (qdx >= 0) {
+		int idx = queries[qdx].first.second;
+		ans[idx] += (N-1);
+		ans[idx] -= rqr(queries[qdx].second.first);
+		ans[idx] -= (lqr(MAXT-1) - lqr(queries[qdx].second.second - 1));
+		// std::cout << queries[qdx].first.second << " " << queries[qdx].second.first << " " << queries[qdx].second.second << "\n";
+		qdx--;
+	}
+}
+ 
+void print () {
+	for (int i = 0; i < N; i++) {
+		std::cout << ans[i] << "\n";
+	}
+}
+ 
+int main () {
+	std::cin.tie(0);
+	std::ios_base::sync_with_stdio(0);
+	input();
+	compress();
+	proc();
+	solve();
+	print();
+}

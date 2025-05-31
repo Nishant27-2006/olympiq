@@ -1,0 +1,85 @@
+Solution ID: sol_lifeguards_silver_jan18
+Contest: JAN18
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_lifeguards_silver_jan18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Unlike with the bronze version of this problem, we cannot naively simulate removing
+every lifeguard and seeing what duration of time is still covered.
+
+There are only
+
+$2N$
+
+points of interest - namely, every point in time where some
+lifeguard starts working or when some lifeguard stops working. We'll start by sorting
+all of them and processing the events in order.
+
+Maintain a set of lifeguards that are known to be working. If some lifeguard is working,
+then track how much time any lifeguard is working. If exactly one lifeguard is working,
+track that this is time that will be lost if that lifeguard gets fired. Then, update
+the set of working lifeguards appropriately.
+
+Afterwards, see which lifeguard has the minimum amount of time spent working alone,
+and subtract that from the total amount of time any lifeguard is working to get the answer.
+
+import java.io.*;
+import java.util.*;
+public class lifeguards {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("lifeguards.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("lifeguards.out")));
+		TreeSet<Integer> set = new TreeSet<Integer>();
+		int n = Integer.parseInt(br.readLine());
+		State[] l = new State[2*n];
+		for(int i = 0; i < n; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			int start = Integer.parseInt(st.nextToken());
+			int end = Integer.parseInt(st.nextToken());
+			l[2*i] = new State(start, i);
+			l[2*i+1] = new State(end, i);
+		}
+		Arrays.sort(l);
+		int actualCover = 0;
+		int[] alone = new int[n];
+		int last = 0;
+		for(State out: l) {
+			if(set.size() == 1) {
+				alone[set.first()] += out.time - last;
+			}
+			if(!set.isEmpty()) {
+				actualCover += out.time - last;
+			}
+			if(set.contains(out.index)) {
+				set.remove(out.index);
+			}
+			else {
+				set.add(out.index);
+			}
+			last = out.time;
+		}
+		int ret = 0;
+		for(int out: alone) {
+			ret = Math.max(ret, actualCover - out);
+		}
+		pw.println(ret);
+		pw.close();
+	}
+	
+	static class State implements Comparable<State> {
+		public int time, index;
+		public State(int a, int b) {
+			time=a;
+			index=b;
+		}
+		public int compareTo(State s) {
+			return time - s.time;
+		}
+	}
+	
+}

@@ -1,0 +1,466 @@
+Solution ID: sol_prob3_silver_feb24
+Contest: FEB24
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_feb24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Subtask 1:
+
+$M \leq 16$
+
+:
+
+For this subtask, it suffices to iterate through all of Elsie's
+
+$2^M$
+
+candidate
+turn sequences in lexicographical order. If with Elsie's current candidate turn
+sequence, she is guaranteed to not lose, output the current sequence, and exit.
+
+It remains to describe how to check whether Elsie is guaranteed to not lose with
+a given candidate turn sequence. Given Elsie's guess
+
+$p$
+
+for a turn
+
+$t$
+
+, the
+best response for Bessie is the one that causes Elsie to lose the most marbles
+on that turn (or gain the least marbles if none of Bessie's responses can cause
+Elsie to lose marbles on that turn). Define
+
+$\texttt{changes}[t][p]$
+
+to be the
+amount
+
+$N$
+
+will change on turn
+
+$t$
+
+if Elsie guesses parity
+
+$p$
+
+and Bessie moves
+optimally. After precomputing all entries of
+
+$\texttt{changes}$
+
+in
+
+$O(MK)$
+
+time,
+we can check whether a given turn  sequence causes Elsie to not lose in
+
+$O(M)$
+
+time.
+
+The overall time complexity is
+
+$O(MK+M\cdot 2^M)$
+
+.
+
+Implementation (Python):
+
+def solve():
+    N, M, K = map(int, input().split())
+
+    # changes[t][p] = how many marbles Elsie will gain on turn t,
+    # if Elsie guesses parity p and Bessie responds optimally
+    changes = []
+    for _ in range(M):
+        change_for_turn = [float("inf")] * 2
+        for a in map(int, input().split()):
+            parity = a & 1
+            change_for_turn[parity] = min(change_for_turn[parity], a)
+            change_for_turn[parity ^ 1] = min(change_for_turn[parity ^ 1], -a)
+        changes.append(change_for_turn)
+    ans = None
+
+    def elsie_does_not_lose(seq):
+        state = N
+        for turn in range(M):
+            state += changes[turn][seq[turn]]
+            if state <= 0:
+                return False
+        return True
+
+    def find_best_move_seq_starting_with(seq):
+        nonlocal ans
+        if ans is not None:
+            return
+        if len(seq) == M:
+            if elsie_does_not_lose(seq):
+                ans = seq
+            return
+        for parity in range(2):
+            find_best_move_seq_starting_with(seq + [parity])
+
+    find_best_move_seq_starting_with([])
+    if ans is None:
+        print(-1)
+        return
+    print(" ".join([["Even", "Odd"][p] for p in ans]))
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+
+Subtask 2:
+
+$M\le 1000$
+
+To remove the
+
+$O(M\cdot 2^M)$
+
+from the time complexity, we can make the
+following optimization to the function
+
+$\texttt{find_best_move_seq_starting_with}(seq)$
+
+from the above solution code:
+if there is no sequence of moves starting with
+
+$seq$
+
+that allows Elsie to not
+lose, then immediately return. To check whether such a sequence exists or not,
+we assume that for every turn after
+
+$|seq|$
+
+, Elsie guesses the parity that
+causes her to gain the most marbles, assuming Bessie responds optimally.  If
+this allows Elsie to not lose, then a sequence exists. Otherwise, no sequence
+exists, since Elsie lost despite always making the best move after
+
+$seq$
+
+. This
+can be checked in
+
+$O(M)$
+
+time.
+
+After adding the optimization, the function
+
+$\texttt{find_best_move_seq_starting_with}$
+
+is called
+
+$O(M)$
+
+times rather than
+
+$O(2^M)$
+
+times, because if
+
+$\texttt{find_best_move_seq_starting_with}(seq)$
+
+does
+not immediately return, then
+
+If there is a move sequence starting with
+
+$seq + [0]$
+
+, then the answer will
+be found after calling
+
+$\texttt{find_best_move_seq_starting_with}(seq + [0])$
+
+.
+
+Otherwise,
+
+$\texttt{find_best_move_seq_starting_with}(seq + [0])$
+
+immediately returns and the answer will be found after calling
+
+$\texttt{find_best_move_seq_starting_with}(seq + [1])$
+
+.
+
+The overall time complexity is
+
+$O(MK+M^2)$
+
+.
+
+Implementation with recursion:
+
+import sys
+
+
+def solve():
+    N, M, K = map(int, input().split())
+    sys.setrecursionlimit(M + 5)
+
+    changes = []
+    for _ in range(M):
+        change_for_turn = [float("inf")] * 2
+        for a in map(int, input().split()):
+            parity = a & 1
+            change_for_turn[parity] = min(change_for_turn[parity], a)
+            change_for_turn[parity ^ 1] = min(change_for_turn[parity ^ 1], -a)
+        changes.append(change_for_turn)
+    ans = None
+
+    def cannot_start_with(seq):
+        state = N
+        for turn in range(M):
+            if turn < len(seq):
+                state += changes[turn][seq[turn]]
+            else:
+                state += max(changes[turn])
+            if state <= 0:
+                return True
+        return False
+
+    def find_best_move_seq_starting_with(seq):
+        nonlocal ans
+        if ans is not None:
+            return
+        if cannot_start_with(seq):
+            return
+        if len(seq) == M:
+            ans = seq
+            return
+        for parity in range(2):
+            find_best_move_seq_starting_with(seq + [parity])
+
+    find_best_move_seq_starting_with([])
+    if ans is None:
+        print(-1)
+        return
+    print(" ".join([["Even", "Odd"][p] for p in ans]))
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+
+Implementation without recursion:
+
+def solve():
+    N, M, K = map(int, input().split())
+
+    changes = []
+    for _ in range(M):
+        change_for_turn = [float("inf")] * 2
+        for a in map(int, input().split()):
+            parity = a & 1
+            change_for_turn[parity] = min(change_for_turn[parity], a)
+            change_for_turn[parity ^ 1] = min(change_for_turn[parity ^ 1], -a)
+        changes.append(change_for_turn)
+    ans = None
+
+    def cannot_start_with(seq):
+        state = N
+        for turn in range(M):
+            if turn < len(seq):
+                state += changes[turn][seq[turn]]
+            else:
+                state += max(changes[turn])
+            if state <= 0:
+                return True
+        return False
+
+    if cannot_start_with([]):
+        print(-1)
+        return
+    ans = []
+    for _ in range(M):
+        ans.append(1 if cannot_start_with(ans + [0]) else 0)
+    print(" ".join([["Even", "Odd"][p] for p in ans]))
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+
+Full solution:
+
+To reduce
+
+$O(M^2)$
+
+to
+
+$O(M)$
+
+time, we need to speed up the function
+
+$\texttt{cannot_start_with}(seq)$
+
+from the above solution code. This function
+checks the following two conditions:
+
+$N+\sum_{t=0}^{l-1}\texttt{changes}[t][seq[t]]>0$
+
+for all
+
+$l < |seq|$
+
+.
+
+$N+\sum_{t=0}^{|seq|-1}\texttt{changes}[t][seq[t]] + \sum_{t=|seq|}^{l-1}\max(\texttt{changes}[t][0], \texttt{changes}[t][1])>0$
+
+for all
+
+$|seq|\le l\le M$
+
+.
+
+Suppose that the first condition already holds; then the second condition holds
+if and only if the minimum prefix sum (including the empty prefix) of the array
+
+[max(changes[t]) for t in range(len(seq), M)]
+
+is greater than some threshold. Let
+
+$\texttt{min_psum}[t]$
+
+denote the minimum
+prefix sum when
+
+$|seq| = t$
+
+; then we have
+
+$\texttt{min_psum}[t]=\min(0, \max(\texttt{changes}[t]) + \texttt{min_psum}[t+1])$
+
+for
+
+$t<M$
+
+. So
+
+$\texttt{min_psum}[t]$
+
+can be computed for all
+
+$t$
+
+in reverse
+order in
+
+$O(M)$
+
+time.
+
+The full solution is now clear; it is the same as the non-recursive solution to
+the previous subtask but replacing the call to
+
+$\texttt{cannot_start_with}(seq)$
+
+with a comparison involving the current value of
+
+$N$
+
+and
+
+$\texttt{min_psum}$
+
+.
+
+The overall time complexity is
+
+$O(MK)$
+
+.
+
+My Implementation:
+
+def solve():
+    N, M, K = map(int, input().split())
+
+    changes = []
+    for _ in range(M):
+        change_for_turn = [float("inf")] * 2
+        for a in map(int, input().split()):
+            parity = a & 1
+            change_for_turn[parity] = min(change_for_turn[parity], a)
+            change_for_turn[parity ^ 1] = min(change_for_turn[parity ^ 1], -a)
+        changes.append(change_for_turn)
+    min_psum = [0] * (M + 1)
+    for t in reversed(range(M)):
+        min_psum[t] = min(0, max(changes[t]) + min_psum[t + 1])
+    if N + min_psum[0] <= 0:
+        print(-1)
+        return
+    ans = []
+    for t in range(M):
+        p = 1 if (N + changes[t][0] + min_psum[t + 1] <= 0) else 0
+        ans.append(p)
+        N += changes[t][p]
+    print(" ".join([["Even", "Odd"][p] for p in ans]))
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+
+Danny Mittal's Implementation (Java):
+
+import java.util.Arrays;
+import java.util.Scanner;
+import java.util.StringJoiner;
+ 
+public class Moorbles {
+ 
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        for (int t = in.nextInt(); t > 0; t--) {
+            int n = in.nextInt();
+            int m = in.nextInt();
+            int k = in.nextInt();
+            int[][] deltas = new int[m][2];
+            for (int j = 0; j < m; j++) {
+                Arrays.fill(deltas[j], 10000);
+                for (int u = k; u > 0; u--) {
+                    int x = in.nextInt();
+                    deltas[j][x % 2] = Math.min(deltas[j][x % 2], x);
+                    deltas[j][(x + 1) % 2] = Math.min(deltas[j][(x + 1) % 2], -x);
+                }
+            }
+            int[] bounds = new int[m + 1];
+            for (int j = m - 1; j >= 0; j--) {
+                bounds[j] = Math.max(0, bounds[j + 1] - Math.max(deltas[j][0], deltas[j][1]));
+            }
+            if (n <= bounds[0]) {
+                System.out.println(-1);
+            } else {
+                StringJoiner joiner = new StringJoiner(" ");
+                for (int j = 0; j < m; j++) {
+                    if (n + deltas[j][0] > bounds[j + 1]) {
+                        n += deltas[j][0];
+                        joiner.add("Even");
+                    } else {
+                        n += deltas[j][1];
+                        joiner.add("Odd");
+                    }
+                }
+                System.out.println(joiner);
+            }
+        }
+    }
+}

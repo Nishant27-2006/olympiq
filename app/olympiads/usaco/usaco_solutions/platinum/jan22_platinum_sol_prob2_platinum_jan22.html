@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Daniel Zhang, Benjamin Qi)
+<p>The problem is asking for the number of arrangements obtainable if we are
+allowed to transpose adjacent elements if they differ by exactly one.
+<p>Another way of phrasing the problem is as follows: Consider a graph <span class='math'>$G$</span> with
+vertices labeled <span class='math'>$1\ldots N$</span> and a directed edge from <span class='math'>$i$</span> to <span class='math'>$j$</span> if <span class='math'>$i&lt;j$</span> and 
+<span class='math'>$|h_i-h_j|\neq 1$</span>. Count the number of topological sorts of <span class='math'>$G$</span>.
+<p><strong>Subtask 2 (<span class='math'>$1\le h_i\le 3$</span>):</strong>
+<p>The answer is just <span class='math'>$\binom{N}{(\#\text{ of }2\text{s})}$</span>.
+<p><strong>Full Solution 1:</strong>
+<p>First, let&apos;s consider the problem of determining if a fixed arrangement is
+obtainable. If we ignore the constraint on which elements we can transpose, we
+can determine where each element will end up and use insertion sort. Namely, for
+each element in order from left to right, move it left some number of times. In
+fact,  this still works because insertion sort will only swap elements that must
+be swapped in any sequence of transpositions.
+<p>Thus, we can build all obtainable arrangements by inserting elements one by one
+into partial arrangements.
+<p>For the third subtask (<span class='math'>$|h_i-i|\le 1$</span>), we can apply this insertion sort idea
+and notice that we only need to keep track of the last three elements of the
+prefix, because it is impossible for a haystack to move left more than three
+times.
+<p>Since we only care about the number of arrangements, most arrangements are
+indistinguishable. If we are about to insert <span class='math'>$x$</span>, we only really care about the
+longest suffix consisting of only <span class='math'>$x-1$</span> and <span class='math'>$x+1$</span>. This information can also be
+easily updated after each insertion. These values will correspond to our states
+in our DP, along with the length of the partial arrangement.
+<p>These values are zero for almost all values of <span class='math'>$x$</span>. We could equivalently store
+the last element (<span class='math'>$a$</span>), the length of the longest suffix containing only <span class='math'>$a$</span> and
+<span class='math'>$a+2$</span> (<span class='math'>$\ell_1$</span>), and the length of the longest suffix containing only <span class='math'>$a$</span> and
+<span class='math'>$a-2$</span> (<span class='math'>$\ell_2$</span>).
+<p>It turns out after inserting any prefix of elements of length <span class='math'>$n$</span>, only <span class='math'>$O(n)$</span>
+states are obtainable. Specifically, <span class='math'>$a\in [x-1,x+1]$</span>, and if we fix <span class='math'>$a$</span>, we can
+show that either
+<p><div class='math'>$$(\ell_1,\ell_2)\in \{(i,\min(i,\ell_a)): 1\le i\le n\}$$</div>
+<p>or
+<p><div class='math'>$$(\ell_1,\ell_2)\in \{(\min(i,\ell_a),i): 1\le i\le n\},$$</div>
+<p>where <span class='math'>$\ell_a$</span> is the number of occurrences of <span class='math'>$a$</span> in the longest suffix of the
+prefix containing no elements outside of <span class='math'>$a-1$</span>, <span class='math'>$a$</span>, and <span class='math'>$a+1$</span>. In fact, we can
+actually show something stronger: at most <span class='math'>$2n$</span> states are attainable, since <span class='math'>$a$</span>
+can only take on two values.
+<p>As there are <span class='math'>$\mathcal O(n)$</span> states and <span class='math'>$\mathcal O(n)$</span> transitions from each,
+this automatically yields a solution that runs in <span class='math'>$\mathcal O(N^3)$</span> (possibly
+with additional log factors depending on the implementation). To speed this up,
+we can do the transitions using prefix sums, yielding a <span class='math'>$O(N^2)$</span> solution. Slower
+implementations (ex. with an additional factor of <span class='math'>$\log N$</span> from <span class='math'>$\texttt{std::map}$</span>
+might not receive full credit).
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int MOD = 1e9+7;
+
+#define f first
+#define s second
+
+struct mi {
+	int v;
+	mi(int _v): v(_v) {}
+	mi&amp; operator+=(const mi&amp; o) {
+		v += o.v;
+		if (v &gt;= MOD) v -= MOD;
+		return *this;
+	}
+};
+ 
+struct SuffixInfo {
+	int max_1 = INT_MAX, max_2 = INT_MAX;
+	vector&lt;mi&gt; dp;
+	void add(pair&lt;int,int&gt; p, mi t) {
+		if (p.f &lt; p.s) {
+			if (max_1 != INT_MAX) assert(max_1 == p.f);
+			else max_1 = p.f;
+		}
+		if (p.f &gt; p.s) {
+			if (max_2 != INT_MAX) assert(max_2 == p.s);
+			else max_2 = p.s;
+		}
+		const int idx = max(p.f,p.s);
+		while ((int)size(dp) &lt;= idx) dp.push_back(0);
+		dp.at(idx) += t;
+	}
+	// returns {ell_1, ell_2}
+	pair&lt;int,int&gt; query(int x) { return {min(max_1,x),min(max_2,x)}; }
+	void partial_sum() {
+		for (int i = (int)size(dp)-2; i &gt; 0; --i)
+			dp[i] += dp[i+1];
+	}
+};
+ 
+int prev_x;
+array&lt;SuffixInfo,3&gt; info;
+ 
+void add_to_prefix(int x) {
+	array&lt;SuffixInfo,3&gt; new_info;
+	for (int offset = 0; offset &lt; 3; ++offset) {
+		const int last_h = prev_x+offset-1;
+		for (int i = 0; i &lt; (int)size(info[offset].dp); ++i) {
+			auto [ways1, ways2] = info[offset].query(i);
+			auto query = [&amp;](int y) {
+				if (y == last_h-1) return ways1;
+				if (y == last_h+1) return ways2;
+				return 0;
+			};
+			{ // case 1: x goes in front
+				new_info.at(1).add({query(x-1)+1,query(x+1)+1},info[offset].dp[i]);
+			}
+			if (x == last_h+1) {
+				new_info.at(0).add({min(ways1,ways2),ways2},info[offset].dp[i]);
+			}
+			if (x == last_h-1) {
+				new_info.at(2).add({ways1,min(ways1,ways2)},info[offset].dp[i]);
+			}
+		}
+	}
+	new_info.at(0).partial_sum();
+	new_info.at(2).partial_sum();
+	prev_x = x;
+	swap(info,new_info);
+}
+ 
+int main() {
+	int T; cin &gt;&gt; T;
+	while (T--) {
+		int N; cin &gt;&gt; N;
+	 	for (int i = 0; i &lt; 3; ++i)
+	 		info[i] = SuffixInfo();
+		cin &gt;&gt; prev_x;
+		info.at(1).add({1,1},1);
+		for (int i = 1; i &lt; N; ++i) {
+			int h; cin &gt;&gt; h;
+			add_to_prefix(h);
+		}
+		mi ans = 0;
+		for (const SuffixInfo&amp; a: info) 
+			for (const mi&amp; b: a.dp) ans += b;
+		cout &lt;&lt; ans.v &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p><strong>Solution 2:</strong> The key observation is that the relative order of the
+haybales with even heights never changes, and that the same holds for the odd
+heights. In other words, if <span class='math'>$i&lt;j$</span> and <span class='math'>$h_i$</span> and <span class='math'>$h_j$</span> have the same parity then
+there is definitely an edge <span class='math'>$i\to j$</span> in <span class='math'>$G$</span>. Thinking about either subtasks 2 
+or 4 might have made this easier to see.
+<p>(Corollary:  The answer is bounded above by <span class='math'>$\binom{N}{\lfloor N/2\rfloor}$</span>.)
+<p>The idea is to determine the elements of the final configuration from left to
+right. Let <span class='math'>$\texttt{dp}[i][j]$</span> denote the number of ways to determine the first
+<span class='math'>$i+j$</span> elements of the final configuration such that it contains the first <span class='math'>$i$</span>
+odd heights and the first <span class='math'>$j$</span> even heights. Given <span class='math'>$\texttt{dp}[i][j]$</span>, we can
+advance to <span class='math'>$\texttt{dp}[i+1][j]$</span> if we can choose the next element of the final
+configuration to be even, or <span class='math'>$\texttt{dp}[i][j+1]$</span> if can choose the next
+element of the final configuration to be odd?
+<p>When is it okay to advance from <span class='math'>$\texttt{dp}[i][j]$</span> to <span class='math'>$\texttt{dp}[i+1][j]$</span>? It
+turns out that this is allowed when both <span class='math'>$(i,j)$</span> and <span class='math'>$(i+1,j)$</span> are
+<em>feasible</em>:
+<p>Let the indices of the odd heights be
+<span class='math'>$h_{o_0}, h_{o_1},\ldots, h_{o_{\texttt{odd}-1}}$</span> and the indices of the even
+heights be <span class='math'>$h_{e_0}, h_{e_1},\ldots, h_{e_{\texttt{even}-1}}$</span>. For all pairs
+<span class='math'>$(i,j)$</span> satisfying <span class='math'>$0\le i\le \texttt{odd}$</span> and <span class='math'>$0\le j\le \texttt{even}$</span>, say
+that <span class='math'>$(i,j)$</span> is <em>feasible</em> if there do not exist <span class='math'>$(i&apos;,j&apos;)$</span> satisfying one
+of the following two sets of conditions:
+<p><ul><li><span class='math'>$0\le i&apos;&lt;i$</span> and <span class='math'>$j\le j&apos;&lt; \texttt{even}$</span> such that <span class='math'>$o_{i&apos;}&gt;e_{j&apos;}$</span> and
+<span class='math'>$|h_{o_{i&apos;}}-h_{e_{j&apos;}}|&gt;1$</span></li><li><span class='math'>$i\le i&apos;&lt;\texttt{odd}$</span> and <span class='math'>$0\le j&apos;&lt;j$</span> such that <span class='math'>$o_{i&apos;}&lt;e_{j&apos;}$</span> and
+<span class='math'>$|h_{o_{i&apos;}}-h_{e_{j&apos;}}|&gt;1$</span></li></ul>
+<p>So it turns out that all we need to do is count the number of paths from <span class='math'>$(0,0)$</span>
+to <span class='math'>$(\texttt{odd},\texttt{even})$</span> that only pass through feasible pairs. This
+can be done in
+<span class='math'>$\mathcal{O}(\texttt{odd}\cdot \texttt{even})\le \mathcal{O}(N^2)$</span> time.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class Haybales {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int tcs = Integer.parseInt(in.readLine());
+        for (int tc = 0; tc &lt; tcs; ++tc) {
+            int n = Integer.parseInt(in.readLine());
+            int[] heights = new int[n];
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int[] position = new int[n];
+            int odd = 0;
+            int even = 0;
+            for (int j = 0; j &lt; n; j++) {
+                heights[j] = Integer.parseInt(tokenizer.nextToken());
+                if (heights[j] % 2 == 1) {
+                    odd++;
+                    position[j] = odd;
+                } else {
+                    even++;
+                    position[j] = even;
+                }
+            }
+            int[][] after = {new int[even + 1], new int[odd + 1]};
+            for (int j = 0; j &lt; n; j++) {
+                for (int k = j + 1; k &lt; n; k++) {
+                    if (heights[j] % 2 != heights[k] % 2 &amp;&amp; Math.abs(heights[j] - heights[k]) &gt;= 2) {
+                        after[heights[k] % 2][position[k]] = Math.max(after[heights[k] % 2][position[k]], position[j]);
+                    }
+                }
+            }
+            long[][] dp = new long[odd + 1][even + 1];
+            dp[0][0] = 1;
+            for (int j = 0; j &lt;= odd; j++) {
+                for (int k = 0; k &lt;= even; k++) {
+                    if (j &gt; 0 &amp;&amp; after[1][j] &lt;= k) {
+                        dp[j][k] += dp[j - 1][k];
+                    }
+                    if (k &gt; 0 &amp;&amp; after[0][k] &lt;= j) {
+                        dp[j][k] += dp[j][k - 1];
+                    }
+                    dp[j][k] %= MOD;
+                }
+            }
+            System.out.println(dp[odd][even]);
+        }
+    }
+}
+</pre>
+<p>Bonus: It is possible to solve this problem in <span class='math'>$\mathcal O(N\log N)$</span> time with
+FFT.
+<p></body></html>

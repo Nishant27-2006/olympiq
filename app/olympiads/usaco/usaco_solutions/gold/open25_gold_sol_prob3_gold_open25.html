@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Eric Yang, Larry Xing, Benjamin Qi)
+<p>First, let&apos;s get an intuitive sense for what actually happens in each day. 
+<p>Intuitively, Farmer John would always want to add milk to the bottles currently
+with the most milk. This is because <div class='math'>$$(m+1)^2-m^2 = 2m+1$$</div> increases as <span class='math'>$m$</span>
+increases. 
+<p>Similarly, Farmer Nhoj would intuitively want to remove milk from the highest
+bottles he can remove the milk from. This, by the same logic, decreases the
+amount of profit Farmer John can make by the highest amount. A proof sketch is included at the bottom of this analysis.
+<p>Thus, each day, it turns out that if we sort the array, the bottles indexed from
+<span class='math'>$N-A+1$</span> to <span class='math'>$N-B$</span> will gain one unit of milk. We will refer to this as the
+interval from now on. 
+<p><div class='prob-section'><h4>Subtask 1:</h4>
+<p>It remains to efficiently simulate this process. When <span class='math'>$N$</span> and <span class='math'>$D$</span> are
+sufficiently small,  as in this subtask, we can simply sort the array in each
+iteration and simulate Farmer John and Farmer Nhoj&apos;s moves. 
+<p></div>
+<p><div class='prob-section'><h4>Subtask 2:</h4>
+<p>To optimize this, let&apos;s consider the structure of the sorted array during each
+day. 
+<p>We can observe that most of the time, the sorted order of the array does not
+change much. In fact,  the only times the sorted order of the array changes is
+when the rightmost part of the  interval ``catches up&quot; with the element to the
+right of the interval. 
+<p>To characterize this, let&apos;s call the group of elements on the right of our
+interval whose values are the same the <span class='math'>$\textbf{border}$</span>, and we say that <span class='math'>$k$</span> of
+them are activated if the intersection of the border and our interval as length
+<span class='math'>$k$</span>. 
+<p>Then, each day, 
+<ul><li>All values within our interval AND to the left of the border will increase
+by one. </li><li>The <span class='math'>$k$</span> smallest elements within the border increase by <span class='math'>$1$</span>. </li><li>The border will expand to include all elements to the left and right whose
+values are the same as the smallest element in the border.  Specifically, if an
+element to the left (within the interval) is added, <span class='math'>$k$</span> increases by <span class='math'>$1$</span>. </li></ul>
+<p>To implement this, we just need to keep track of the left and right endpoints of
+the border,  the smallest element of the border (we can call it <span class='math'>$num$</span>), and the
+number of elements in the border whose value is <span class='math'>$num+1$</span> (we can call it <span class='math'>$p$</span>). We
+can implicitly store all of the values within our interval and to the left of
+the border as <span class='math'>$m[i]+t$</span>, where <span class='math'>$t$</span> is the time that has already elapsed. We can
+increase the <span class='math'>$k$</span> smallest elements by simply updating our values for <span class='math'>$num$</span> and
+<span class='math'>$p$</span>,  and we can update our border by simply checking to the left and right of
+our border.
+<p>The runtime becomes <span class='math'>$O(N \log N+D)$</span> with sorting. 
+<p>Larry&apos;s Code: 
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+const int MAX_N = 2e5+5;
+const ll MOD = 1e9+7;
+
+ll n, d, a, b, l, r;
+ll c[MAX_N];
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin &gt;&gt; n &gt;&gt; d &gt;&gt; a &gt;&gt; b;
+    for(int i = 0; i &lt; n; i++) cin &gt;&gt; c[i];
+    sort(c, c+n);
+    l = n-a, r = n-b-1;
+    ll ql = r, qr = r;
+    while(ql &gt; 0 &amp;&amp; c[ql-1] == c[r]) ql--;
+    while(qr+1 &lt; n &amp;&amp; c[qr+1] == c[r]) qr++;
+    ll p = 0, num = c[r];
+    for(int k = 0; k &lt; d; k++){
+        ll x = (r-ql+1)+p;
+        num += x/(qr-ql+1), p = x%(qr-ql+1);
+        while(qr+1 &lt; n &amp;&amp; c[qr+1] == num) qr++;
+        while(ql &gt; l &amp;&amp; c[ql-1]+k+1 == num) ql--;
+    }
+    for(int i = l; i &lt; ql; i++) c[i] += d;
+    for(int i = ql; i &lt;= qr; i++) c[i] = qr-i &lt; p ? num+1 : num;
+    ll ans = 0;
+    for(int i = 0; i &lt; n; i++)
+        ans = (ans+(c[i]%MOD)*(c[i]%MOD))%MOD;
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+    return 0;
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Full Solution</h4>
+<p>Instead of iterating over each day individually, let&apos;s calculate the next time
+our  border changes. 
+<p>Our border can only ever expand, so we can simply calculate the time when the
+border will expand to the  left, and when our border would expand to the right,
+and take the earlier one. 
+<p>To do this, let&apos;s take another look at how the border&apos;s values grow. Clearly,
+the  sum of the values within the border grows by <span class='math'>$k$</span> each day; in fact, it is
+pretty easy to then derive that 
+<div class='math'>$$num = \lfloor \Sigma/\text{length(border)}\rfloor, p = \Sigma \mod{\text{length(border)}}$$</div>
+<p>Thus, the first time <span class='math'>$num$</span> will exceed a certain theshold <span class='math'>$M$</span> (the element to
+the right of the border) is 
+<div class='math'>$$\left\lceil \frac{(M-num)\cdot \text{length(border)}-p}{k}\right\rceil$$</div>
+<p>Similarly, we can do some algebra to obtain the minimum time for the border to
+expand on the left:
+<div class='math'>$$\left\lfloor \frac{(num-M-t)\cdot \text{length(border)}+p}{\text{length(border)}-k} \right\rfloor$$</div>
+<p>Once we&apos;ve calculated these times, we can update our values accordingly and
+expand the border. 
+<p>Since the border can only expand at most <span class='math'>$O(N)$</span> times,  this process can only
+occur at most <span class='math'>$O(N)$</span> times. So, with sorting, the overall runtime is
+<span class='math'>$O(N \log N)$</span>.
+<p>Larry&apos;s Code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+typedef pair&lt;int, int&gt; pii;
+typedef pair&lt;ll, ll&gt; pll;
+#define ff first
+#define ss second
+const int MAX_N = 2e5+5;
+const ll MOD = 1e9+7;
+const ll INF = 1e18;
+
+ll n, d, a, b, l, r;
+ll c[MAX_N];
+
+ll ceil(ll a, ll b){
+    return (a+b-1)/b;
+}
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin &gt;&gt; n &gt;&gt; d &gt;&gt; a &gt;&gt; b;
+    for(int i = 0; i &lt; n; i++) cin &gt;&gt; c[i];
+    sort(c, c+n);
+    l = n-a, r = n-b-1;
+    ll ql = r, qr = r;
+    while(ql &gt; l &amp;&amp; c[ql-1] == c[r]) ql--;
+    while(qr+1 &lt; n &amp;&amp; c[qr+1] == c[r]) qr++;
+    ll k = 0, p = 0, num = c[r];
+    while(true){
+        ll numx = qr+1 &lt; n ? ceil((c[qr+1]-num)*(qr-ql+1)-p, r-ql+1) : INF;
+        ll numy = ql &gt; l &amp;&amp; r != qr ? ((qr-ql+1)*(num-(c[ql-1]+k))+p)/(qr-r) : INF;
+        if(k+min(numx, numy) &gt; d) break;
+        ll x = min(numx, numy)*(r-ql+1)+p;
+        num += x/(qr-ql+1), p = x%(qr-ql+1), k += min(numx, numy);
+        while(qr+1 &lt; n &amp;&amp; c[qr+1] == num) qr++;
+        while(ql &gt; l &amp;&amp; c[ql-1]+k == num) ql--;
+    }
+    ll x = ((d-k)*(r-ql+1)+p)/(qr-ql+1), y = (d-k)*(r-ql+1)+p-x*(qr-ql+1);
+    num += ((d-k)*(r-ql+1)+p)/(qr-ql+1), p = y, k = d;
+    for(int i = l; i &lt; ql; i++) c[i] += d;
+    for(int i = ql; i &lt;= qr; i++) c[i] = qr-i &lt; p ? num+1 : num;
+    ll ans = 0;
+    for(int i = 0; i &lt; n; i++)
+        ans = (ans+(c[i]%MOD)*(c[i]%MOD))%MOD;
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+    return 0;
+}
+</pre>
+<p>Alternatively, you can model the values within the border as fractions. At any
+time, the values within the interval and not in the border increase at a steady
+rate of <span class='math'>$1$</span> unit of milk per day,  and the values within the border increase at
+a steady rate of <span class='math'>$k/\text{length(border)}$</span> per day. 
+<p>Storing each of these as fractions, we can greatly simplify our transitions. 
+<p>Eric&apos;s Code: 
+<p><pre class='prettyprint'>
+import sys
+from fractions import Fraction
+import math
+ 
+input = sys.stdin.readline
+ 
+N, D = map(int, input().split())
+A, B = map(int, input().split())
+M = list(sorted(map(int, input().split())))
+ 
+constant = M[:N-A]
+V = M[N-A:]
+ 
+C = A-B
+ 
+assert C &gt; 0
+ 
+border_value = V[C-1]
+border_min = C-1
+border_max = C-1
+ 
+ct = 0
+ 
+def expand_border():
+    global border_min, border_max
+    while border_min &gt; 0 and V[border_min-1] + ct == border_value:
+        border_min -= 1
+    while border_max &lt; A-1 and V[border_max+1] == border_value:
+        border_max += 1
+ 
+while ct &lt; D:
+    expand_border()
+    delta_to_min = Fraction(1000000000, 1)
+    delta_to_max = Fraction(1000000000, 1)
+    num_border = border_max - border_min + 1
+    alloc_to_border = C - border_min
+    border_rate = Fraction(alloc_to_border, num_border)
+    if border_min &gt; 0:
+        val = V[border_min-1] + ct
+        if val == border_value:
+            delta_to_min = Fraction(0, 1)
+        elif border_rate &lt; 1:
+            delta_to_min = Fraction((border_value - val), 1 - border_rate)
+    if border_max &lt; A-1:
+        val = V[border_max+1]
+        if val == border_value:
+            delta_to_max = Fraction(0, 1)
+        elif border_rate &gt; 0:
+            delta_to_max = Fraction((val - border_value), border_rate)
+    delta = min(delta_to_min, delta_to_max)
+    if ct + delta &gt;= D:
+        delta = D - ct
+    border_value += border_rate * delta
+    ct += delta
+ 
+assert ct == D
+ 
+ans = 0
+for m in constant:
+    ans += m * m
+for m in V[:border_min]:
+    ans += (m+ct) * (m+ct)
+for m in V[border_max+1:]:
+    ans += m * m
+ 
+num_border = border_max - border_min + 1
+floor_value = math.floor(border_value)
+num_ceil = 0
+while floor_value &lt; border_value:
+    floor_value += Fraction(1, num_border)
+    num_ceil += 1
+ 
+assert floor_value == border_value
+ 
+ans += pow(math.floor(border_value), 2) * (num_border - num_ceil)
+ans += pow(math.ceil(border_value), 2) * num_ceil
+ 
+print(ans % (10 ** 9 + 7))
+</pre>
+<p>Note: The complexity of this solution is difficult to analyze, since the size of
+the denominator may contribute to the time complexity. However, it is possible
+to show that the denominator is at most <span class='math'>$N\cdot D$</span>,  so the solution comfortably
+runs in time. 
+<p></div>
+<p><div class='prob-section'><h4>Proof Sketch</h4>
+<p>Model the problem as a two-player game. A game state consists of the array of
+milk values. A move consists of either Farmer John or Farmer Nhoj performing
+their action. 
+<p>For two game states <span class='math'>$x$</span> and <span class='math'>$y$</span>, <span class='math'>$x \succ y$</span> means <span class='math'>$x$</span> majorizes <span class='math'>$y$</span>, or that
+for all <span class='math'>$k$</span>, the sum of the <span class='math'>$k$</span> largest elements of <span class='math'>$x$</span> is <span class='math'>$\ge$</span> the <span class='math'>$k$</span> largest
+elements of <span class='math'>$y$</span>. Additionally, the sums of <span class='math'>$x$</span> and <span class='math'>$y$</span> must be equal.
+Equivalently, <span class='math'>$x$</span> majorizes <span class='math'>$y$</span> iff <span class='math'>$x$</span> can be transformed into <span class='math'>$y$</span> by
+repeatedly performing one of the following operations on <span class='math'>$x$</span>:
+<p><ol><li>Permute <span class='math'>$x$</span> arbitrarily.</li><li>Move one unit of milk from a bottle with more milk to a bottle with less
+milk.</li></ol>
+<p>Our goal is to show for all <span class='math'>$m$</span> that if <span class='math'>$x \succ y$</span>, then
+<span class='math'>$\text{final_profit}_m(x) \ge \text{final_profit}_m(y)$</span>. We proceed by induction
+on <span class='math'>$m$</span>, the number of moves remaining (<span class='math'>$0\le m\le 2D$</span>). 
+<p><em>Base case:</em> For <span class='math'>$m=0$</span>, if <span class='math'>$x \succ y$</span>, then by
+<a href='https://en.wikipedia.org/wiki/Karamata%27s_inequality'>Karamata&apos;s
+inequality</a>,
+<span class='math'>$\text{final_profit}_0(x)=\sum x_i^2 \ge \sum y_i^2=\text{final_profit}_0(y)$</span>.
+<p><em>Inductive step:</em> Assume that the inductive hypothesis holds if <span class='math'>$m-1$</span> moves
+remain, for <span class='math'>$1\le m\le 2D$</span>.  We would like to show that the hypothesis holds for
+<span class='math'>$m$</span> moves remaining.
+<p><ol><li>Suppose it is Farmer John to move, and that the state before the move was
+<span class='math'>$x$</span>.  Let <span class='math'>$\text{move_largest}(x)$</span> represent the state of <span class='math'>$x$</span> after adding 1 to
+the <span class='math'>$A$</span> largest bottles and <span class='math'>$\text{move}(x)$</span> represent any possible state of <span class='math'>$x$</span>
+after FJ moves. Clearly <span class='math'>$\text{move_largest}(x) \succ \text{move}(x)$</span>, and for
+any state <span class='math'>$y$</span> such that <span class='math'>$x \succ y$</span>,
+<span class='math'>$\text{move_largest}(x) \succ \text{move_largest}(y)$</span>.  So 
+<div class='math'>$$\text{final_profit}_m(x)=\text{final_profit}_{m-1}(\text{move_largest}(x))\ge \text{final_profit}_{m-1}(\text{move_largest}(y))=\text{final_profit}_m(y),$$</div>
+implying that the inductive hypothesis holds for <span class='math'>$m$</span>.</li><li>
+<p>On the other hand, suppose it is Farmer Nhoj to move. Similarly, let
+<span class='math'>$\text{move_largest}$</span> represent subtracting 1 from the <span class='math'>$B$</span> largest bottles and
+<span class='math'>$\text{move}$</span> represent any possible move. It may be shown that
+<span class='math'>$\text{move_largest}(x) \prec \text{move}(x)$</span>. Also, we claim that for any state
+<span class='math'>$y$</span> such that <span class='math'>$x\prec y$</span>, <span class='math'>$\text{move_largest}(x)\prec \text{move_largest}(y)$</span>
+(left as an exercise to the reader). This claim is harder to show than in the
+case where it is Farmer John to move since the sorted order of the bottles may
+change after Farmer Nhoj moves. However, keep in mind that we only need to show
+that it holds when <span class='math'>$x$</span> and <span class='math'>$y$</span> differ by only a single operation of type 2,
+after which it naturally extends to the case where <span class='math'>$x$</span> and <span class='math'>$y$</span> differ by
+multiple operations of type 2.
+<p>Assuming the above,
+<div class='math'>$$\text{final_profit}_m(x)=\text{final_profit}_{m-1}(\text{move_largest}(x))\le \text{final_profit}_{m-1}(\text{move_largest}(y))=\text{final_profit}_m(y),$$</div>
+implying that the inductive hypothesis holds for <span class='math'>$m$</span>.
+<p>(Note that it is always possible for Farmer Nhoj to make <span class='math'>$\text{move_largest}$</span>,
+since <span class='math'>$A &gt; B$</span>.)
+</li></ol>
+<p></div>
+<p></body></html>

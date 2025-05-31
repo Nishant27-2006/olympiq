@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>In this problem, we&apos;re given a family tree and asked to identify the
+relationship between two cows; call them Bessie and Elsie. We will do this by
+finding the common ancestor of Bessie and Elsie (if she exists), and the number
+of generations by which each of Bessie and Elsie are removed from the ancestor
+cow. Notice that the numbers uniquely define the relationship between Bessie and
+Elsie.
+<p>But how do we find the two numbers? We can find the mother of a given cow in
+<span class='math'>$O(N)$</span> time (also determining whether the mother even exists), by looping over
+all relationships. Call this the MOTHER function. Now we can determine whether
+one cow is a direct ancestor of another cow in <span class='math'>$O(N^2)$</span> time, by repeatedly
+finding the mother of the second cow, and then her mother, and so forth. Let&apos;s
+call this the IS-ANCESTOR function. We can also have the IS-ANCESTOR function
+return the number of generations by which the first cow is removed from the
+second cow.
+<p>Now we almost have an algorithm. We can repeatedly check if Bessie is an
+ancestor of Elsie, and then if Bessie&apos;s mother is an ancestor of Elsie, and so
+forth. By keeping a counter, we can find the minimum number of generations up
+the family tree we need to go before Bessie&apos;s ancestor is an ancestor of Elsie.
+If no such ancestor satisfies the property, then we can immmediately output &quot;NOT
+RELATED.&quot;
+<p>Otherwise, let <span class='math'>$b$</span> be the distance of Bessie from the common ancestor, and let
+<span class='math'>$a$</span> be the distance of Elsie from the common ancestor (where <span class='math'>$a$</span> is returned by
+our IS-ANCESTOR function). All that remains is some casework, but it&apos;s possible
+to write less code by putting in a bit more thought. If <span class='math'>$a$</span> and <span class='math'>$b$</span> are both
+<span class='math'>$1$</span>, then Bessie and Elsie are &quot;SIBLINGS.&quot; If <span class='math'>$a$</span> and <span class='math'>$b$</span> are both greater than
+<span class='math'>$1$</span>, then they are &quot;COUSINS.&quot; Now observe that either <span class='math'>$a &gt; b$</span> or <span class='math'>$b &gt; a$</span>. In the
+former case, Bessie is the mother/grandmother/etc. or aunt/great-aunt/etc. of
+Elsie. In the latter case, the reverse is true. So if <span class='math'>$a &gt; b$</span>, we can simply
+swap the names of Elsie and Bessie, and swap <span class='math'>$a$</span> and <span class='math'>$b$</span>, and we find ourselves
+in the <span class='math'>$b &gt; a$</span> case. 
+<p>Now we can observe that either <span class='math'>$a = 0$</span> or <span class='math'>$a = 1$</span>. In the former case,
+Elsie is the mother/grandmother/etc. of Bessie, whereas in the latter case she
+is the aunt/great-aunt/etc. of Bessie. So we simply output the appropriate
+number of &quot;great-&quot;s, depending on the value of <span class='math'>$b$</span>, possibly output &quot;grand-&quot;,
+depending on <span class='math'>$a$</span> and <span class='math'>$b$</span>, and then output either &quot;mother&quot; or &quot;aunt&quot;, depending
+on <span class='math'>$a$</span>.
+<p>The overall algorithm is <span class='math'>$O(N^3)$</span>, since we call IS-ANCESTOR at most <span class='math'>$N$</span> times.
+Since <span class='math'>$N = 100$</span>, this runs in the time limit, but it is possible to speed up the
+algorithm by not recomputing the ancestors of Elsie each time.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;string&gt;
+#include &lt;cassert&gt;
+using namespace std;
+#define MAXN 100
+ 
+int N;
+string daughter[MAXN];
+string mother[MAXN];
+ 
+// returns mother of cow, or &quot;&quot; if mother does not exist
+string find_mother(string cow)
+{
+	for(int i=0;i&lt;N;i++)
+		if(cow == daughter[i])
+			return mother[i];
+	return &quot;&quot;;
+}
+ 
+// returns number of generations by which cow1 is removed from cow2
+// if cow1 is a direct ancestor of cow2.
+// returns -1 otherwise.
+int is_ancestor(string cow1, string cow2)
+{
+	int counter = 0;
+	while(cow2 != &quot;&quot;)
+	{
+		if(cow1 == cow2)
+			return counter;
+		cow2 = find_mother(cow2);
+		counter++;
+	}
+	return -1;
+}
+ 
+int main()
+{
+	string bessie, elsie;
+	cin &gt;&gt; N &gt;&gt; bessie &gt;&gt; elsie;
+	for(int i=0;i&lt;N;i++)
+		cin &gt;&gt; mother[i] &gt;&gt; daughter[i];
+	
+	string cow = bessie;
+	int b = 0;
+	while(cow != &quot;&quot;)
+	{
+		if(is_ancestor(cow, elsie) != -1)
+			break;
+		cow = find_mother(cow);
+		b++;
+	}
+	if(cow == &quot;&quot;)
+	{
+		cout &lt;&lt; &quot;NOT RELATED\n&quot;;
+		return 0;
+	}
+	int a = is_ancestor(cow, elsie);
+	if(a == 1 &amp;&amp; b == 1) cout &lt;&lt; &quot;SIBLINGS\n&quot;;
+	else if(a &gt; 1 &amp;&amp; b &gt; 1) cout &lt;&lt; &quot;COUSINS\n&quot;;
+	else
+	{
+		if(a &gt; b) swap(elsie, bessie), swap(a, b);
+		cout &lt;&lt; elsie &lt;&lt; &quot; is the &quot;;
+		for(int i=0;i&lt;b-2;i++) cout &lt;&lt; &quot;great-&quot;;
+		if(b &gt; 1 &amp;&amp; a == 0) cout &lt;&lt; &quot;grand-&quot;;
+		if(a == 0) cout &lt;&lt; &quot;mother&quot;;
+		else cout &lt;&lt; &quot;aunt&quot;;
+		cout &lt;&lt; &quot; of &quot; &lt;&lt; bessie &lt;&lt; &apos;\n&apos;;
+	}
+	return 0;
+}
+</pre>
+<p></body></html>

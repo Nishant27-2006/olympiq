@@ -1,0 +1,225 @@
+Solution ID: sol_prob3_gold_dec21
+Contest: DEC21
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_dec21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Andi Qu)
+
+For each sub-case, we need to check 4 conditions:
+
+Condition 1:
+
+Every color appears in a contiguous range of
+
+$x$
+
+'s.
+
+We can check this condition by maintaining an array that describes at which
+
+$x$
+
+a color last appeared. If the last
+
+$x$
+
+is always 1 less than the current
+
+$x$
+
+,
+then this condition holds.
+
+Sub-case 2 in the example does not satisfy this condition.
+
+Condition 2:
+
+For each
+
+$x$
+
+, if one appearance of color
+
+$a$
+
+is after the
+first appearance and before the second appearance of color
+
+$b$
+
+, then the other
+appearance of color
+
+$a$
+
+must do the same.
+
+Let's say that a color becomes "activated" when it appears for the first time,
+and then "deactivated" when it appears the second time. We can then check this
+condition by maintaining a stack of active colors. When a color becomes
+deactivated, it must be at the top of the stack. If this is always true, then
+this condition holds.
+
+Sub-case 3 in the example does not satisfy this condition.
+
+If the 2 appearances of color
+
+$a$
+
+are between the 2 appearances of color
+
+$b$
+
+,
+then we know that bracelet
+
+$a$
+
+must be contained inside bracelet
+
+$b$
+
+. This
+hierarchical relationship allows us to transform the bracelets into a tree
+structure, where:
+
+The nodes are the bracelets.
+
+If a bracelet is contained by another
+bracelet, then its parent is the innermost bracelet that contains it.
+
+Otherwise, its parent is a placeholder node (e.g. node
+
+$0$
+
+).
+
+Condition 3:
+
+Each node's parent in the tree must be consistent for every
+
+$x$
+
+it appears in.
+
+This is because if some color appears, then its parent must also appear. We can
+check this condition by maintaining an array describing the parents of colors
+we've seen before. We can then check this array against the input for each
+
+$x$
+
+.
+
+Condition 4:
+
+The ordering of colors in the input must be consistent for
+every
+
+$x$
+
+it appears in.
+
+We can check this condition by maintaining 2 lists â one for the current
+
+$x$
+
+'s
+color order and the other for all previous
+
+$x$
+
+'s' color order. To check the
+ordering, we can compare the ordering of these two lists' intersection, and then
+merge the lists after processing
+
+$x$
+
+by using 2 pointers. Since the constraints
+are so small, straightforward list insertion is fast enough for this.
+
+Sub-case 5 in the example does not satisfy this condition.
+
+Andi's code (which runs in
+
+$\mathcal{O}(N^2M)$
+
+time).
+
+#include <algorithm>
+#include <iostream>
+#include <stack>
+#include <vector>
+using namespace std;
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int t, last_appeared[51], parent[51];
+    cin >> t;
+    while (t--) {
+        int n, m;
+        bool good = true;
+        vector<int> glob_order;
+        cin >> n >> m;
+        for (int i = 0; i <= n; i++) last_appeared[i] = parent[i] = -1;
+
+        while (m--) {
+            int k, curr = 0;
+            cin >> k;
+            stack<int> stck;
+            vector<int> curr_order;
+
+            while (k--) {
+                int c;
+                cin >> c;
+                if (!good) continue;
+                if (last_appeared[c] == m && stck.top() == c) {
+                    stck.pop();
+                    curr = parent[curr];
+                } else {
+                    if ((~last_appeared[c] && last_appeared[c] != m + 1) ||
+                        last_appeared[c] == m ||
+                        (~last_appeared[c] && parent[c] != curr)) {
+                        // Conditions 1, 2, and 3
+                        good = false;
+                        continue;
+                    }
+                    // Condition 4 part A
+                    curr_order.push_back(c);
+
+                    parent[c] = curr;
+                    last_appeared[c] = m;
+                    stck.push(c);
+                    curr = c;
+                }
+            }
+            // Condition 4 part B
+            if (!good) continue;
+            int ptr = 0;
+            for (int i : curr_order) {
+                while (ptr != glob_order.size() &&
+                       !count(curr_order.begin(), curr_order.end(), glob_order[ptr]))
+                    ptr++;
+                if (!count(glob_order.begin(), glob_order.end(), i))
+                    glob_order.insert(glob_order.begin() + ptr, i);
+                else if (ptr == glob_order.size() || glob_order[ptr] != i) {
+                    good = false;
+                    break;
+                }
+                ptr++;
+            }
+        }
+        cout << (good ? "YES\n" : "NO\n");
+    }
+    return 0;
+}
+
+Of course, it is possible to solve this problem in
+
+$\mathcal{O}(NM)$
+
+time,  but
+it was not necessary to do so due to the low constraints.

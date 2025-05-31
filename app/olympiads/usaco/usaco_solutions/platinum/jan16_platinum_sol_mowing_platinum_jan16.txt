@@ -1,0 +1,178 @@
+Solution ID: sol_mowing_platinum_jan16
+Contest: JAN16
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_mowing_platinum_jan16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Mark Gordon)
+
+One way to approach this is to try to quickly compute for each vertical line the
+number of horizontal lines it passes through that were not within T units of
+being mowed.  That is, we'd like to compute the number of horizontal lines that
+cross line
+
+$i$
+
+as
+
+$$c_i = \big|\{j : x^l_j < x_i < x^r_j \land y^b_i < y < y^t_i \land abs(t_i - t_j) \ge T\}\big|$$
+
+If we break up the absolute value component into its two respective cases this
+is a classic range query problem.  Since there are three dimensions of interest
+we can answer queries using a range tree in
+
+$O(log^3 n)$
+
+time.  However, since
+we are allowed to answer queries offline we can remove a log factor by scanning
+the field from left to right.
+
+We insert a horizontal line when our scan hits the leftmost vertex and delete it
+when it reaches the rightmost vertex.  We perform queries when we reach the x
+coordinate of a vertical line.  Now it's enough to just have a data structure
+that can do two dimensional range queries and updates.
+
+In my solution I use a binary indexed tree as the first level tree and an
+allocated-on-demand range tree as the second dimension.
+
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+
+using namespace std;
+
+#define MAXN (1 << 17)
+#define MAXV (1 << 30)
+
+struct node {
+  int val;
+  struct node* C[2];
+
+  node() {
+    val = 0;
+    C[0] = C[1] = NULL;
+  }
+
+  node* getc(int c) {
+    if (!C[c]) {
+      C[c] = new node;
+    }
+    return C[c];
+  }
+
+  void add(int x, int v, int lo, int hi) {
+    val += v;
+    if (hi - lo == 1) {
+      return;
+    }
+    int md = (lo + hi) / 2;
+    if (x < md) {
+      getc(0)->add(x, v, lo, md);
+    } else {
+      getc(1)->add(x, v, md, hi);
+    }
+  }
+
+  int query(int a, int b, int lo, int hi) {
+    if (a <= lo && hi <= b) {
+      return val;
+    } else if (hi <= a || b <= lo) {
+      return 0;
+    }
+    int md = (lo + hi) / 2;
+    return (C[0] ? C[0]->query(a, b, lo, md) : 0) +
+           (C[1] ? C[1]->query(a, b, md, hi) : 0);
+  }
+};
+
+node BT[MAXN];
+
+/* Logically executes array[y].add(x, v) += v. */
+void bit_add(int x, int y, int v) {
+  for(unsigned j = y | MAXN; j < (MAXN << 1); j += j & -j) {
+    BT[j ^ MAXN].add(x, v, 0, MAXV);
+  }
+}
+
+/* Returns the sum of array[i].query(x0, x1) for 0 <= i < y */
+int bit_get(int x0, int x1, int y) {
+  int ret = 0;
+  for(int j = y - 1; y != 0; j &= j - 1) {
+    ret += BT[j].query(x0, x1, 0, MAXV);
+    if (!j) break;
+  }
+  return ret;
+}
+
+int main() {
+  freopen("mowing.in", "r", stdin);
+  freopen("mowing.out", "w", stdout);
+  ios_base::sync_with_stdio(false);
+
+  int N; cin >> N;
+  int T; cin >> T;
+  vector<pair<int, int> > A(N);
+  for (int i = 0; i < N; i++) {
+    cin >> A[i].first >> A[i].second;
+  }
+
+  vector<pair<pair<int, int>, pair<int, int> > > ev; /* The horizontal "event" set. */
+  vector<pair<pair<int, int>, pair<int, int> > > vseg; /* The vertical query lines. */
+  for (int i = 0; i + 1 < N; i++) {
+    pair<int, int> p0 = A[i];
+    pair<int, int> p1 = A[i + 1];
+    if (p1 < p0) swap(p0, p1);
+    if (p0.second == p1.second) {
+      /* Create insertion and deletion events. */
+      ev.push_back(make_pair(make_pair(p0.first + 1, p0.second),
+                             make_pair(1, i)));
+      ev.push_back(make_pair(p1, make_pair(-1, i)));
+    } else {
+      /* Create a vertical line query. */
+      vseg.push_back(make_pair(p0, make_pair(p1.second, i)));
+    }
+  }
+
+  /* Sort events and queries by x value. */
+  sort(ev.begin(), ev.end());
+  sort(vseg.begin(), vseg.end());
+
+  int evi = 0;
+  int vsegi = 0;
+  int result = 0;
+  while (vsegi < vseg.size()) {
+    int x = vseg[vsegi].first.first; /* The x-coordinate of our scan. */
+
+    /* Process all horizontal line insertions/deletions. */
+    for (; evi < ev.size() && ev[evi].first.first <= x; evi++) {
+      bit_add(ev[evi].first.second, ev[evi].second.second,
+              ev[evi].second.first);
+    }
+
+    /* Perform all vertical line queries. */
+    for (; vsegi < vseg.size() && vseg[vsegi].first.first == x; vsegi++) {
+      int lo = vseg[vsegi].first.second;
+      int hi = vseg[vsegi].second.first;
+      int tm1 = vseg[vsegi].second.second - T + 1;
+      int tm2 = vseg[vsegi].second.second + T;
+
+      /* Count horizontal lines T or more after this. */
+      if (tm2 < MAXN) {
+        result += bit_get(lo + 1, hi, MAXN);
+        result -= bit_get(lo + 1, hi, tm2);
+      }
+
+      /* Count horizontal lines T or more before this. */
+      if (tm1 > 0) {
+        result += bit_get(lo + 1, hi, tm1);
+      }
+    }
+  }
+  cout << result << endl;
+
+  return 0;
+}

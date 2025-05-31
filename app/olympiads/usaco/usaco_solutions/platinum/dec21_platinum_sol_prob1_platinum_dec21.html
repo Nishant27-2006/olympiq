@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Timothy Qian)
+<p>Consider each ticket and each checkpoint as a node in a graph. We draw the
+following edges: An edge from checkpoint <span class='math'>$i$</span> of weight <span class='math'>$p_j$</span> to ticket <span class='math'>$j$</span> if
+<span class='math'>$i = c_j$</span>, an edge from ticket <span class='math'>$i$</span> to checkpoint <span class='math'>$j$</span> of weight <span class='math'>$0$</span> if
+<span class='math'>$a_i\leq j \leq b_i$</span>. Each time we go to ticket <span class='math'>$j$</span>, it can be seen as
+activating an edge to ticket <span class='math'>$j$</span> for a price <span class='math'>$p_j$</span>. Then the goal is for each
+<span class='math'>$i$</span> to pay the minimum to activate some edges such that starting from checkpoint
+<span class='math'>$i$</span>, we can visit checkpoint <span class='math'>$1$</span> and checkpoint <span class='math'>$N$</span>. 
+<p>Now consider the optimal set of edges that we pick. Say we start at checkpoint
+<span class='math'>$s$</span>. The edges we picked must form a path from <span class='math'>$s$</span> to <span class='math'>$1$</span> and <span class='math'>$s$</span> to <span class='math'>$N$</span>.
+Consider the nodes we visit in the path from checkpoint <span class='math'>$s$</span> to checkpoint <span class='math'>$1$</span> in
+that order and call this list <span class='math'>$L$</span>, and similarly for the nodes we visited on the
+path from <span class='math'>$s$</span> to checkpoint <span class='math'>$N$</span> and call this <span class='math'>$R$</span>. Consider indices <span class='math'>$i, j$</span> such
+that <span class='math'>$L[i] = R[j]$</span>, but for any <span class='math'>$x &gt; i, y &gt; j$</span>, we have <span class='math'>$L[x] \neq R[y]$</span>. This
+can be viewed as the &quot;last common node&quot; of <span class='math'>$L, R$</span>. This exists as long as <span class='math'>$L, R$</span>
+have at least one node in common, which they do, namely checkpoint <span class='math'>$s$</span>. Note
+that <span class='math'>$i, j$</span> need not be unique, but this does not matter. Let <span class='math'>$z = L[i] = R[j]$</span>.
+Then the rest of list <span class='math'>$L$</span> after index <span class='math'>$i$</span> consists of a path from <span class='math'>$z$</span> to <span class='math'>$1$</span>.
+Similarly, the rest of list <span class='math'>$R$</span> consists of a path from <span class='math'>$z$</span> to <span class='math'>$N$</span>. The first
+part of list <span class='math'>$L$</span> consists of a path from <span class='math'>$s$</span> to <span class='math'>$z$</span>, and similarly for the first
+part of list <span class='math'>$R$</span>. Note that the paths from <span class='math'>$z$</span> to <span class='math'>$1$</span> and <span class='math'>$z$</span> to <span class='math'>$N$</span> do not
+contain any tickets in common. So for every optimal set of edges that we pick,
+we can decompose that edges into three parts: a path from our starting
+checkpoint to a node <span class='math'>$z$</span>, and two disjoint paths from <span class='math'>$z$</span> to checkpoint <span class='math'>$1$</span> and
+to checkpoint
+<span class='math'>$N$</span>.
+<p>We first compute the shortest paths from any node to checkpoint <span class='math'>$1$</span>. The same
+can be analogously done for computing the shortest paths from any node to
+checkpoint <span class='math'>$N$</span>. We instead reverse the edges, and compute the minimum distance
+from checkpoint <span class='math'>$1$</span> to any other node. The main idea is we use a multi-source
+Dijkstra&apos;s algorithm on a Segment Tree. We first initialize checkpoint <span class='math'>$1$</span> at a
+distance of <span class='math'>$0$</span>, and every other node at a distance of infinity. We put all
+checkpoints in a minimum priority queue based on their distance. After popping
+the top checkpoint, let it be <span class='math'>$i$</span>, we must find all tickets that have not yet
+been visited yet that contain <span class='math'>$i$</span>. To do this, we put the tickets in a Segment
+Tree based on their index after sorting the tickets by <span class='math'>$a_j$</span>, their left
+interval value. Then in each node of the Segment Tree, we store the maximum
+<span class='math'>$b_j$</span>, or the right interval value, of all tickets in the contained interval.
+Now we can descend down the Segment Tree to remove all the intervals that
+contain <span class='math'>$c_i$</span>. When we remove an interval from the Segment Tree, we can 
+set its right coordinate to <span class='math'>$-1$</span>. Note that we don&apos;t actually need to add this
+ticket to the priority queue. This is because this ticket&apos;s distance must be the
+same as the distance to the checkpoint that is currently being processed. Thus,
+we can just process these removed tickets immediately. Overall, these Segment
+Tree operations will take <span class='math'>$\mathcal O(N \log N)$</span> time, because each interval
+gets removed exactly once. Running this Dijkstra&apos;s algorithm thus takes
+<span class='math'>$\mathcal O(N \log N)$</span> time. 
+<p>Finally, let <span class='math'>$D_L[i], D_R[i]$</span> be the distances for going to checkpoint <span class='math'>$1$</span> and a
+ticket with checkpoint <span class='math'>$N$</span> starting from node <span class='math'>$i$</span> as computed above. Then we
+initialize each node <span class='math'>$i$</span> at a distance of <span class='math'>$D_L[i] + D_R[i]$</span>. Then we once again
+run the same Dijkstra&apos;s algorithm as above to compute the distance to each node.
+The final distances to each checkpoint stores the desired answers. 
+<p>Benjamin + Timothy Qian&apos;s Code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+ 
+using namespace std;
+ 
+struct Ticket {
+	int c, p, a, b;
+};
+ 
+struct SegmentTree {
+	int n, sz;
+	vector&lt;int&gt; mx;
+	vector&lt;Ticket&gt; tickets;
+ 
+	SegmentTree(vector&lt;Ticket&gt; tickets) : tickets(tickets) {
+		n = 1;
+		sz = (int)tickets.size();
+		while (n &lt; sz) {
+			n &lt;&lt;= 1;
+		}
+		mx.assign(2 * n, 0);
+		for (int i = 0; i &lt; n; ++i) {
+			if (i &lt; sz) {
+				mx[i + n] = tickets[i].b;
+			} else {
+				mx[i + n] = -1;				
+			}
+		}
+		for (int i = n - 1; i &gt;= 1; --i) {
+			pull(i);
+		}
+	}
+ 
+	void pull(int i) {
+		mx[i] = max(mx[2 * i], mx[2 * i + 1]);
+	}
+ 
+	void remove(vector&lt;int&gt;&amp; v, int p, int i = 1, int l = 0, int r = -1) {
+		if (r == -1) {
+			r += n;
+		}
+		if (l &gt;= sz || tickets[l].a &gt; p || mx[i] &lt; p) {
+			return;
+		} else if (l == r) {
+			mx[i] = -1;
+			v.push_back(l);
+		} else {
+			int m = (l + r) &gt;&gt; 1;
+			remove(v, p, 2 * i, l, m);
+			remove(v, p, 2 * i + 1, m + 1, r);
+			pull(i);
+		}
+	}
+};	
+ 
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	const long long INF = 1e18;
+	int n, k;
+	cin &gt;&gt; n &gt;&gt; k;
+	vector&lt;Ticket&gt; tickets(k);
+	for (auto&amp; t : tickets) {
+		cin &gt;&gt; t.c &gt;&gt; t.p &gt;&gt; t.a &gt;&gt; t.b;
+		--t.c, --t.a, --t.b;
+	}
+	sort(tickets.begin(), tickets.end(), [](const auto&amp; l, const auto&amp; r) {
+		return l.a &lt; r.a;
+	});
+	auto dijkstra = [&amp;](vector&lt;long long&gt; dist) {
+		priority_queue&lt;pair&lt;long long, int&gt;, vector&lt;pair&lt;long long, int&gt;&gt;, greater&lt;pair&lt;long long, int&gt;&gt;&gt; pq;
+		for (int i = n; i &lt; n + k; ++i) {
+			dist[tickets[i - n].c] = min(dist[tickets[i - n].c], dist[i] + tickets[i - n].p);
+		}
+		for (int i = 0; i &lt; n; ++i) {
+			if (dist[i] &lt; INF) {
+				pq.push({dist[i], i});
+			}
+		}
+		SegmentTree seg(tickets);
+		while (!pq.empty()) {
+			auto x = pq.top();
+			pq.pop();
+			if (x.first &gt; dist[x.second]) {
+				continue;
+			}
+			vector&lt;int&gt; removed;
+			seg.remove(removed, x.second);
+			for (int r : removed) {
+				if (dist[r + n] &gt; x.first) {
+					dist[r + n] = x.first;
+					if (dist[tickets[r].c] &gt; x.first + tickets[r].p) {
+						dist[tickets[r].c] = x.first + tickets[r].p;
+						pq.push({dist[tickets[r].c], tickets[r].c});
+					}
+				}
+			}
+		}
+		return dist;
+	};
+	vector&lt;long long&gt; start_left(n + k, INF);
+	start_left[0] = 0;
+	vector&lt;long long&gt; dist_left = dijkstra(start_left);
+	vector&lt;long long&gt; start_right(n + k, INF);
+	start_right[n - 1] = 0;
+	vector&lt;long long&gt; dist_right = dijkstra(start_right);
+	vector&lt;long long&gt; dist(n + k);
+	for (int i = 0; i &lt; n + k; ++i) {
+		dist[i] = dist_left[i] + dist_right[i];
+	}
+	dist = dijkstra(dist);
+	for (int i = 0; i &lt; n; ++i) {
+		if (dist[i] &lt; INF) {
+			cout &lt;&lt; dist[i] &lt;&lt; &apos;\n&apos;;
+		} else {
+			cout &lt;&lt; -1 &lt;&lt; &apos;\n&apos;;
+		}
+	}
+}
+</pre>
+<p>Author&apos;s note: This was created at the same time as (and is vaguely related to)
+<a href='https://egoi.ch/files/solutions/D-lanterns-ex.pdf'>EGOI 2021 Lanterns.</a>
+<p></body></html>

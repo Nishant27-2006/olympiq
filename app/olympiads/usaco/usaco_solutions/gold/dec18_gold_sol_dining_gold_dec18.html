@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Nathan Pinsker )
+<p>In order to know whether a given path is some amount of greater than the optimal
+path, we first need to know the optimal path! So we can begin by running
+Dijkstra&apos;s algorithm from barn N to find the minimum-length path from each
+pasture to the barn.
+<p>Since <span class='math'>$N \leq 50,000$</span>, any sort of all-pairs shortest paths approach will be too
+slow to pass. However, we can notice that the constraints of the problem suggest
+something peculiar: eating a haybale with yumminess value Y is exactly
+equivalent to &quot;subtracting&quot; Y from a cow&apos;s traveled distance. In other words,
+this problem is a normal shortest-path problem, where some edges are negative --
+but we must also modify the graph in some way to ensure that these negative
+edges can only be traveled once.
+<p>Perhaps the cleanest way of dealing with this is to add a directed edge from
+pasture <span class='math'>$N$</span> to each other pastures containing a haybale, with a weight of (the
+length of the path from that vertex to N, minus the yumminess of that haybale).
+We also delete all other edges connected to pasture <span class='math'>$N$</span>, so that any path to the
+barn *must* use some haybale. This graph would normally have negative cycles,
+but all of these cycles include vertex <span class='math'>$N$</span> (and we have deleted all edges
+leading into <span class='math'>$N$</span>) so we are still able to run Dijkstra&apos;s on the resulting graph.
+For each pasture, we take the difference between the distances obtained between
+the two runs of Dijkstra&apos;s algorithm. The cow can get to the barn if, and only
+if, the second value is at most the first (meaning eating the haybale did not
+make the path worse).
+<p>The total runtime is <span class='math'>$O(M \log N)$</span> with a priority-queue based implementation of
+Dijkstra&apos;s.
+<p>Here&apos;s Brian&apos;s code:
+<p><pre class='prettyprint'>
+
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;set&gt;
+#include &lt;map&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+using namespace std;
+ 
+int N, M, K;
+vector&lt;int&gt; nbrs[100001];
+map&lt;pair&lt;int,int&gt;, int&gt; edgewt;
+int H[100000], Y[100000];
+ 
+map&lt;int,int&gt; dist;
+ 
+void dijkstra(int source)
+{
+  set&lt;pair&lt;int,int&gt;&gt; visited;
+  visited.insert(make_pair(0,source));
+  while (!visited.empty()) {
+    int i = visited.begin()-&gt;second;
+    visited.erase(visited.begin());
+    for (auto j : nbrs[i])
+      if (dist.count(j) == 0 || dist[i] + edgewt[make_pair(i,j)] &lt; dist[j]) {
+	dist[j] = dist[i] + edgewt[make_pair(i,j)];
+	visited.insert(make_pair(dist[j],j));
+      }
+  }
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;dining.in&quot;);
+  ofstream fout (&quot;dining.out&quot;);
+  fin &gt;&gt; N &gt;&gt; M &gt;&gt; K;
+  for (int i=0; i&lt;M; i++) {
+    int a, b, t;
+    fin &gt;&gt; a &gt;&gt; b &gt;&gt; t;
+    a--; b--;
+    nbrs[a].push_back(b);
+    nbrs[b].push_back(a);
+    edgewt[make_pair(a,b)] = t;
+    edgewt[make_pair(b,a)] = t;
+  }
+  for (int i=0; i&lt;K; i++) {
+    fin &gt;&gt; H[i] &gt;&gt; Y[i];
+    H[i]--;
+  }
+  
+  dijkstra (N-1);
+  map&lt;int,int&gt; orig_dist = dist;
+  for (int i=0; i&lt;K; i++) {
+    nbrs[N].push_back(H[i]);
+    edgewt[make_pair(N,H[i])] = orig_dist[H[i]] - Y[i];
+  }
+  dist.clear();
+  dijkstra (N);
+  for (int i=0; i&lt;N-1; i++) 
+    fout &lt;&lt; (dist[i] &lt;= orig_dist[i]) &lt;&lt; &quot;\n&quot;;
+  
+  return 0;
+}
+
+</pre>
+<p></body></html>

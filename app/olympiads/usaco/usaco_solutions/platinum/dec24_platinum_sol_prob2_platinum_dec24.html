@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><div class='prob-section'><h4>Subtask 1 (small N)</h4>
+DP from left to right works in <span class='math'>$O(N^2/L)$</span> time.
+</div>
+<p><div class='prob-section'><h4>Subtask 2 (L=1)</h4>
+Treat Ms as Os with cost 0 to change. Then sort the Os in increasing order of
+cost and change them to M in that order. This works in <span class='math'>$O(N\log N)$</span>.
+<p><pre class='prettyprint'>
+L, N = map(int, input().split())
+s = input()
+c = list(map(int, input().split()))
+for i in range(N):
+    if s[i] == &apos;M&apos;:
+        c[i] = 0
+
+c.sort()
+ans = 0
+for i in range(N):
+    ans += c[i]
+    print(ans)
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Subtask 3 (L=2)</h4>
+For each <span class='math'>$i\in [1,N-1]$</span>, let <span class='math'>$a_i$</span> denote the cost to make a MO starting at <span class='math'>$i$</span>.
+Also, define <span class='math'>$a_0=a_N=\infty$</span> for convenience. A &quot;solution&quot; for <span class='math'>$k$</span> is a way to
+choose <span class='math'>$k$</span> indices with the minimum total cost so that no two chosen indices are
+adjacent.
+<p>For <span class='math'>$k=1$</span> the solution is to choose the MO corresponding to the minimum <span class='math'>$a_i$</span>.
+Let <span class='math'>$i&apos;$</span> be the <span class='math'>$i$</span> achieving the minimum.
+<p>For <span class='math'>$k&gt;1$</span>, note that there is always a solution containing either <span class='math'>$i&apos;$</span> or both
+<span class='math'>$i&apos;-1$</span> and <span class='math'>$i&apos;+1$</span>. This is because if exactly one of <span class='math'>$i&apos;-1$</span> and <span class='math'>$i&apos;+1$</span> is in the
+solution, we can replace it with <span class='math'>$i&apos;$</span> without increasing the cost. Let&apos;s produce
+a new sequence of costs by removing <span class='math'>$a_{i&apos;-1}, a_{i&apos;}, a_{i&apos;+1}$</span> and inserting
+the element <span class='math'>$a_{i&apos;-1}-a_{i&apos;}+a_{i&apos;+1}$</span> into the same location, then find a
+solution for <span class='math'>$k-1$</span> on the new sequence. The <span class='math'>$k$</span>th cost for the original sequence
+will then be the cost for this new solution plus <span class='math'>$a_{i&apos;}$</span>; if the new element is
+chosen in the new solution, that corresponds to adding both <span class='math'>$i&apos;-1$</span> and <span class='math'>$i&apos;+1$</span> to
+the original solution; otherwise, this corresponding to adding <span class='math'>$i&apos;$</span> to the
+original solution.
+<p>We can use a sorted set and a linked list to maintain the current costs in
+increasing order, and the adjacency relations between costs, respectively. This
+runs in <span class='math'>$O(N\log N)$</span> time.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+#define f first
+#define s second
+#define mp make_pair
+
+using ll = int64_t;
+using vl = V&lt;ll&gt;;
+using vi = V&lt;int&gt;;
+
+#define FOR(i, a, b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+#define sz(x) int(size(x))
+
+const ll BIG = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int L, N;
+    cin &gt;&gt; L &gt;&gt; N;
+    assert(L == 2);
+
+    string S;
+    cin &gt;&gt; S;
+    vi C(N);
+    for (int &amp;c : C) cin &gt;&gt; c;
+
+    vl cost{BIG};
+    auto make = [&amp;](int ind, char c) {
+        if (S.at(ind) == c) return 0;
+        return C.at(ind);
+    };
+    F0R(i, N - 1) cost.push_back(make(i, &apos;M&apos;) + make(i + 1, &apos;O&apos;));
+    cost.push_back(BIG);
+
+    set&lt;pair&lt;ll, int&gt;&gt; s;             // ccurrent osts
+    vi nxt(sz(cost)), prv(sz(cost));  // linked list
+    F0R(i, sz(cost)) nxt[i] = i + 1, prv[i] = i - 1;
+    F0R(i, sz(cost)) s.insert({cost[i], i});
+    ll ans = 0;
+
+    auto link = [&amp;](int l, int r) {
+        if (l &gt;= 0) nxt.at(l) = r;
+        if (r &lt; sz(cost)) prv.at(r) = l;
+    };
+
+    for (int _ = 0; _ &lt; N / 2; ++_) {
+        assert(sz(s));
+        assert(begin(s)-&gt;f &lt; BIG);
+        ans += begin(s)-&gt;f;
+
+        int i = begin(s)-&gt;s;
+        int a = prv[i], b = nxt[i];
+
+        // next, remove a and b and update the cost for i
+        s.erase(mp(cost[i], i));
+        s.erase(mp(cost.at(a), a));
+        s.erase(mp(cost.at(b), b));
+
+        cost[i] = cost[a] + cost[b] - cost[i];
+        link(prv.at(a), i);
+        link(i, nxt.at(b));
+
+        s.insert(mp(cost[i], i));
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p>Unfortunately, this subtask was somewhat of a red herring in the sense that the
+solution above does not seem to generalize easily to larger <span class='math'>$L$</span>.
+</div>
+<p><div class='prob-section'><h4>Full Credit</h4>
+From the sample cases and <span class='math'>$L=1$</span>, you might hypothesize that the answer is 
+convex as a function of <span class='math'>$k$</span>; that is, <span class='math'>$cost(k)-cost(k-1)\le cost(k+1)-cost(k)$</span>.
+It was not necessary to know the proof of this fact to solve this problem,  so
+the proof will come later.
+<p>Why is convexity helpful? Well, if you consider the <span class='math'>$L=1$</span> case and suppose you
+have the answer sequences for two strings, you can find the answer sequence for
+their concatenation in linear time with a greedy merge; if the <span class='math'>$k$</span>th answer for
+the concatenated string takes <span class='math'>$l$</span> Ms from the first string and <span class='math'>$r$</span> Ms from the
+second string where <span class='math'>$l+r=k$</span>, then for <span class='math'>$k+1$</span> either <span class='math'>$l$</span> or <span class='math'>$r$</span> should increase by
+one. This gives an alternative way to solve <span class='math'>$L=1$</span> that is equivalent to merge
+sort: split the string into equally sized halves, solve each half, and greedily
+combine the answer sequences.
+<p><pre class='prettyprint'>
+def greedy_merge(ans_l, ans_r):
+    l, r = 0, 0
+    ans = [ans_l[l] + ans_r[r]]
+    while l + 1 &lt; len(ans_l) and r + 1 &lt; len(ans_r):
+        if ans_l[l+1]-ans_l[l] &lt;= ans_r[r+1]-ans_r[r]:
+            l += 1
+        else:
+            r += 1
+        ans.append(ans_l[l] + ans_r[r])
+    while l + 1 &lt; len(ans_l):
+        l += 1
+        ans.append(ans_l[l] + ans_r[r])
+    while r + 1 &lt; len(ans_r):
+        r += 1
+        ans.append(ans_l[l] + ans_r[r])
+    return ans
+ 
+def answer_sequence(costs):
+    if len(costs) &lt;= 1:
+        return [0] + costs
+    m = len(costs) // 2
+    ans_l = answer_sequence(costs[:m])
+    ans_r = answer_sequence(costs[m:])
+    return greedy_merge(ans_l, ans_r)
+ 
+L, N = map(int, input().split())
+s = input()
+c = list(map(int, input().split()))
+for i in range(N):
+    if s[i] == &apos;M&apos;:
+        c[i] = 0
+ 
+seq = answer_sequence(c)
+for i in range(1, N + 1):
+    print(seq[i])
+</pre>
+<p>For <span class='math'>$L&gt;1$</span>, we can apply a similar approach. However, since we need to consider
+MOOs crossing the midpoint, we also need to compute the answers for removing up
+to <span class='math'>$L-1$</span> characters from the ends of each half. This means that we have to merge
+<span class='math'>$O(L^3)$</span> pairs of convex sequences rather than just one in each recursive call,
+though the sequences to merge are a factor of <span class='math'>$L$</span> shorter. The time complexity
+is <span class='math'>$O(L^2N\log N)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+using ll = int64_t;
+using vl = V&lt;ll&gt;;
+using vi = V&lt;int&gt;;
+
+#define FOR(i, a, b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+#define sz(x) int(size(x))
+
+struct Info {
+    int len;
+    array&lt;array&lt;vl, 3&gt;, 3&gt; dp;
+    // dp[i][j] = answer sequence for removing i chars from left
+    // and j chars from right of range. must be convex
+};
+
+// greedy merge convex functions
+void upd(vl &amp;a, const vl &amp;b, const vl &amp;c, int i, ll add) {
+    assert(sz(b) &amp;&amp; sz(c));
+    int nsize = sz(b) + sz(c) - 1 + i;
+    if (sz(a) &lt; nsize) a.resize(nsize, LLONG_MAX);
+    int ib = 0, ic = 0;
+    for (;; ++i) {
+        a[i] = min(a[i], add);
+        if (ib + 1 &lt; sz(b)) {
+            if (ic + 1 &lt; sz(c)) {
+                if (b[ib + 1] - b[ib] &lt;= c[ic + 1] - c[ic])
+                    add += b[ib + 1] - b[ib], ++ib;
+                else add += c[ic + 1] - c[ic], ++ic;
+            } else add += b[ib + 1] - b[ib], ++ib;
+        } else if (ic + 1 &lt; sz(c)) add += c[ic + 1] - c[ic], ++ic;
+        else break;
+    }
+}
+
+int L;
+
+vi costs;  // cost of the i-th moo
+
+Info solve(int l, int r) {  // answer sequence for S[l:r]
+    Info res;
+    res.len = r - l;
+    if (L == 1 &amp;&amp; res.len == 1) {
+        res.dp.at(0).at(0) = {0, costs.at(l)};
+        return res;
+    }
+    if (res.len &lt; L) {
+        F0R(i, L) F0R(j, L) if (i + j &lt;= res.len) res.dp.at(i).at(j) = {0};
+        return res;
+    }
+    int m = (l + r) / 2;
+    Info l_info = solve(l, m), r_info = solve(m, r);
+    F0R(i, L) F0R(j, L) if (i + j &lt;= res.len) {
+        if (i &gt;= l_info.len)
+            res.dp.at(i).at(j) = r_info.dp.at(i - l_info.len).at(j);
+        else if (j &gt;= r_info.len)
+            res.dp.at(i).at(j) = l_info.dp.at(i).at(j - r_info.len);
+        else {
+            upd(res.dp.at(i).at(j), l_info.dp.at(i).at(0),
+                r_info.dp.at(0).at(j), 0, 0);
+            FOR(p, 1, L)
+            if (l_info.len &gt;= i + p &amp;&amp; r_info.len &gt;= j + L - p)
+                upd(res.dp.at(i).at(j), l_info.dp.at(i).at(p),
+                    r_info.dp.at(L - p).at(j), 1, costs.at(m - p));
+        }
+    }
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cin &gt;&gt; L;
+    int N;
+    cin &gt;&gt; N;
+    assert(L &lt;= N);
+    string S;
+    cin &gt;&gt; S;
+    V&lt;int&gt; C(N);
+    for (int &amp;c : C) cin &gt;&gt; c;
+    auto get_cost = [&amp;](int p, char c) {
+        if (S.at(p) != c) return C.at(p);
+        return 0;
+    };
+    F0R(i, N - L + 1) {
+        string goal = &quot;MOO&quot;;
+        costs.emplace_back();
+        F0R(j, L)
+        costs.back() += get_cost(i + j, goal.at(j));
+    }
+    auto ans = solve(0, N).dp.at(0).at(0);
+    ans.erase(begin(ans));
+    assert(sz(ans) == N / L);
+    for (auto t : ans) cout &lt;&lt; t &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Proof of convexity: Define a &quot;optimal solution&quot; for <span class='math'>$k$</span> to be a set of <span class='math'>$k$</span>
+non-overlapping MOOs to pick whose cost is minimized.
+<p>Let <span class='math'>$L$</span> and <span class='math'>$R$</span> be optimal solutions for <span class='math'>$k-1$</span> and <span class='math'>$k+1$</span>, respectively; it
+suffices to show that from these two solutions, we can construct a solution <span class='math'>$M$</span>
+for <span class='math'>$k$</span> with <span class='math'>$cost(M)\le (cost(L)+cost(R))/2$</span>.
+<p>Construct a bipartite graph with a vertex on the left side for every MOO in  <span class='math'>$L$</span>
+and every MOO in <span class='math'>$R$</span>, and edges between MOOs that overlap. The connected
+components in this graph are all paths that alternate between sides
+(&quot;alternating paths&quot;), which we can classify into several different types: 
+<p><ol><li>having one moo on the left side and one moo on the right side at the same
+position</li><li>having equal numbers of vertices on each side, but not in the
+first case</li><li>having one more vertex on the left side</li><li>having one
+more vertex on the right side (augmenting path)</li></ol>
+<p>If we fix <span class='math'>$L$</span>, there always exists <span class='math'>$R$</span> such that there are exactly two
+augmenting paths, and the remaining connected components are of type 1. This is
+because whenever we have a connected component of type 2, or a pair of connected
+components where one is of type 3 and one is of type 4, we can always toggle the
+vertices along each such component in <span class='math'>$R$</span> to convert them to connected
+components of type 1, without changing the cost of <span class='math'>$R$</span>. By toggle, we mean that
+for each vertex, we insert it into the solution if it is not already there or
+remove it otherwise.
+<p>So then <span class='math'>$cost(R)=cost(L)+d_1+d_2$</span> where <span class='math'>$d_1$</span> and <span class='math'>$d_2$</span> are the differences in
+cost resulting from toggling each augmenting path. Define <span class='math'>$M$</span> to be the state of
+<span class='math'>$L$</span> after toggling the augmenting path with smaller cost. Then
+<span class='math'>$cost(M)=cost(L)+\min(d_1,d_2)\le (cost(L)+cost(R))/2$</span>, as desired.
+<p></div>
+<p>Note: coincidentally, a
+<a href='https://atcoder.jp/contests/abc383/tasks/abc383_g'>very similar problem</a>
+appeared a week before the contest. Problems involving <span class='math'>$L=2$</span> have
+also shown up in the past:
+<p><ul><li><a href='https://oj.uz/problem/view/JOI18_candies'>JOI18 Candies</a></li><li><a href='https://atcoder.jp/contests/abc218/tasks/abc218_h'>ABC218 H</a></li></ul>
+<p></body></html>

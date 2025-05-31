@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Freddie Tang and Nick Wu)
+<p>It can be proven that the optimal tuition Bessie should charge will always be
+one of the <span class='math'>$c_i$</span> values (for if not, you could always increase tuition slightly without changing
+the set of cows who pay). So all we have to do is iterate over these values and
+see how much money each one makes. To do this, we must first sort these <span class='math'>$c_i$</span>
+values to determine how many cows will be willing to pay, and then iterate from
+the lowest to the highest, keeping a count of the number of cows willing to pay,
+(after a <span class='math'>$c_i$</span> value is visited, the cow with this value will no longer be able
+to pay the tuition so the count will be decremented). Remember to use
+<span class='math'>$\texttt{long long}$</span>&apos;s because the answer could be up to
+<span class='math'>$10^5\cdot 10^6=10^{11}$</span>.
+<p>Freddie Tang&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+ 
+using namespace std;
+ 
+int main() {
+  int n; cin &gt;&gt; n;
+  long long maxTuition[n];
+  for (int i = 0; i &lt; n; i++) {
+    cin &gt;&gt; maxTuition[i];
+  }
+  
+  sort(maxTuition, maxTuition + n);
+  
+  long long maxMoney = 0, bestTuition = 0;
+  int numberOfCowsWillingToAttend = n;
+  for (int i = 0; i &lt; n; i++) {
+    long long setTuitionToIthCow = maxTuition[i]*numberOfCowsWillingToAttend;
+    if (setTuitionToIthCow &gt; maxMoney) {
+      maxMoney = setTuitionToIthCow;
+      bestTuition = maxTuition[i];
+    }
+    
+    numberOfCowsWillingToAttend--; // The ith cow isn&apos;t willing to pay any more tuition
+  }
+  
+  cout &lt;&lt; maxMoney &lt;&lt; &quot; &quot; &lt;&lt; bestTuition &lt;&lt; endl;
+  
+  return 0;
+}
+</pre>
+<p>Spencer Compton&apos;s Java code:
+<pre class='prettyprint'>
+import java.util.Arrays;
+import java.util.Scanner;
+ 
+public class cowschool {
+	public static void main(String[] args) {
+		Scanner in = new Scanner(System.in);
+		int n = in.nextInt();
+		int[] a = new int[n];
+		for(int i = 0; i&lt;n; i++) {
+			a[i] = in.nextInt();
+		}
+		long best = -1L;
+		int tuit = 0;
+		Arrays.sort(a);
+		for(int i = n-1; i&gt;=0; i--) {
+			long cur = (long)(n-i)*(long)a[i];
+			if (cur &gt;= best) {
+				best = cur;
+				tuit = a[i];
+			}
+		}
+		System.out.println(best+&quot; &quot;+tuit);
+	}
+}
+</pre>
+<p>There is an alternate solution that does not involve sorting the cows. For each
+<span class='math'>$p_i$</span>, we can maintain the number of cows that are willing to pay up to <span class='math'>$p_i$</span>.
+If we loop over tuition values going from <span class='math'>$10^6$</span> down to <span class='math'>$1$</span>, we can maintain a
+running total of how many cows are willing to pay that much tuition and track
+the maximum amount of money that Bessie can make.
+<p>Nick Wu&apos;s Python code:
+<pre class='prettyprint'>
+MAX_TUITION = 1000000
+n = int(input())
+tuitionToCow = [0] * (MAX_TUITION + 1)
+for x in input().split():
+    tuitionToCow[int(x)] += 1
+maxMoney = 0
+bestTuition = 0
+currentCows = 0
+for tuition in range(MAX_TUITION, 0, -1):
+    currentCows += tuitionToCow[tuition]
+    if tuition * currentCows &gt;= maxMoney:
+        maxMoney = tuition * currentCows
+        bestTuition = tuition
+print(maxMoney, bestTuition)
+</pre>
+<p></body></html>

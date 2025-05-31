@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Agastya Goel, Benjamin Qi, reviewed by Claire Zhang)
+<p>Since <span class='math'>$N$</span> is even, Bessie will have <span class='math'>$\frac{N}{2}$</span> turns and Elsie will have
+<span class='math'>$\frac{N}{2}-1$</span> turns. First, note that Elsie can always manage to stash any
+combination of <span class='math'>$\frac{N}{2}-1$</span> cakes off the ends. If she wants the leftmost <span class='math'>$l$</span>
+cakes and the rightmost <span class='math'>$\frac{N}{2}-1-l$</span> cakes, she can get them by spending
+the first <span class='math'>$l$</span> turns stashing the current leftmost cake and the next
+<span class='math'>$\frac{N}{2}-1-l$</span> turns stashing the current rightmost one.
+<p>However, Bessie can stop Elsie from ever stashing more than <span class='math'>$\frac{N}{2}-1$</span> of
+the initial cakes by maintaining a single large merged cake which we will call
+the *special* cake in the middle of the row. Specifically, Bessie spends her
+first turn merging the two centermost cakes, leaving <span class='math'>$\frac{N}{2}-1$</span> unmerged
+cakes on either end. For each following turn, if Elsie removes the leftmost
+cake, Bessie will merge the special cake with the cake to its right, and if
+Elsie removes the rightmost cake, Bessie will merge the special cake with the
+cake to its left. Either way, after Elsie has made <span class='math'>$i$</span> moves and Bessie has made
+<span class='math'>$i+1$</span>, there will be <span class='math'>$\frac{N}{2}-1-i$</span> cakes on either side of the special cake.
+Therefore, Elsie will never be able to stash the special cake.
+<p>In summary, Elsie can always get any combination of <span class='math'>$\frac{N}{2}-1$</span> cakes off
+the ends and Bessie can prevent her from stashing any more cakes. Thus, if both
+players play optimally, Elsie will stash the combination of <span class='math'>$\frac{N}{2}-1$</span>
+cakes  off the ends with the largest total size.
+<p>Implementation: Bessie will end up with the window of <span class='math'>$N/2+1$</span> consecutive cakes
+with the minimum total size. We can first compute
+<a href='https://usaco.guide/silver/prefix-sums'>cumulative sums</a> of the input array
+and then query for the sum of each window in <span class='math'>$O(1)$</span> time. The overall runtime is
+<span class='math'>$O(N)$</span>.
+<p>Benjamin Qi&apos;s Python code:
+<p><pre class='prettyprint'>
+T = int(input())
+ 
+for _ in range(T):
+    N = int(input())
+    A = list(map(int, input().split()))
+    cum = [0]
+    for x in A:
+        cum.append(cum[-1] + x)
+    min_bessie = float(&apos;inf&apos;)
+    for i in range(N - N // 2):
+        min_bessie = min(min_bessie, cum[i + N // 2 + 1] - cum[i])
+    print(min_bessie, sum(A) - min_bessie)
+</pre>
+<p></body></html>

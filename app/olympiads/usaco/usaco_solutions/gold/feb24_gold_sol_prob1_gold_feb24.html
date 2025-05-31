@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+We can represent the given network of chargers and destinations as a weighted,
+undirected graph <span class='math'>$G$</span>, whose vertices correspond to chargers (vertex IDs <span class='math'>$1$</span>
+through <span class='math'>$C$</span>) and destinations (vertex IDs <span class='math'>$C+1$</span> through <span class='math'>$N$</span>) and whose edges
+correspond to roads.
+<p><strong>Subtask 1</strong>
+<p>For the first subtask, we can run Dijkstra&apos;s algorithm once using each
+destination as a source to check whether that destination can reach <span class='math'>$K$</span> distinct
+charging stations. This runs in <span class='math'>$O(NM\log N)$</span> time.
+<p><strong>Subtask 2</strong>
+<p>For the second subtask, we solve the problem in <span class='math'>$O(M\log^2 N)$</span> for the case
+<span class='math'>$K = 2$</span>.
+<p>Given a partition of the chargers into two groups, we first describe how to find
+all destinations reachable from at least one charger in each group in
+<span class='math'>$O(M\log N)$</span>. For any group of chargers, we can find all destinations reachable
+by some charger in the group with a &quot;multi-source&quot; version of Dijkstra&apos;s
+algorithm by initializing all chargers in the group to distance <span class='math'>$0$</span>. Running
+this once for each group lets us identify all well-connected destinations
+&quot;verified&quot; by a given partition of the chargers into two groups. 
+<p>To turn this into a full solution for <span class='math'>$K=2$</span>, we construct a set of partitions
+such that each pair of chargers ends up in distinct groups at least once.
+Specifically, partition the chargers by the <span class='math'>$i$</span>th binary digit of their vertex
+IDs, for each <span class='math'>$i$</span> between <span class='math'>$0$</span> and <span class='math'>$\log N$</span>. Each pair of vertex IDs differs in
+at least one bit, so this set of partitions will separate each pair of chargers
+at least once. Then, running the above subroutine for each partition will
+&quot;verify&quot; every well-connected vertex at least once. Since we have <span class='math'>$O(\log N)$</span>
+partitions, this algorithm runs in <span class='math'>$O(M\log^2 N)$</span>.
+<p><strong>Subtask 3</strong>
+<p>To solve the last subtask, one can directly modify Dijkstra&apos;s algorithm. Rather
+than running &quot;multi-source&quot; Dijkstra&apos;s as in Subtask 2, we simulate running
+<span class='math'>$C$</span> parallel copies of Dijkstra&apos;s algorithm, one from each charger. In our
+simulation, we process all vertices at distance <span class='math'>$d$</span> from each source before
+processing vertices at distance <span class='math'>$d+1$</span>. We also break after processing after
+processing all vertices at distance <span class='math'>$&gt;R$</span>. Exactly those vertices that are
+visited from at least <span class='math'>$K$</span> distinct chargers are well-connected.
+<p>However, this approach as described is inefficient, because each vertex can be
+visited up to <span class='math'>$C$</span> times. The key observation to make this approach run in time
+is to note that we only need to visit each vertex <span class='math'>$v$</span> from <span class='math'>$K$</span> distinct
+chargers. We can skip further visits because the first <span class='math'>$K$</span> visits to <span class='math'>$v$</span> will
+cover any well-connected vertex <span class='math'>$u$</span> that is reachable through <span class='math'>$v$</span>.
+<p>To implement these runs of Dijkstra from <span class='math'>$C$</span> sources in parallel, we can have a
+heap consisting of tuples (distance, vertex, root), with root denoting the
+Dijkstra source of that heap element. And rather than having a boolean &quot;visited&quot;
+array (which would use <span class='math'>$O(N^2)$</span> memory), we track visited pairs (vertex, root)
+in a hash map for <span class='math'>$O(1)$</span> lookups and <span class='math'>$O(1)$</span> memory per entry. When visiting
+vertices, we skip any vertex that has been visited <span class='math'>$K$</span> times and any vertex with
+distance <span class='math'>$&gt;R$</span>.
+<p>All together, this leads to an algorithm that runs in <span class='math'>$O(KM\log N)$</span>. Since each
+vertex is visited at most <span class='math'>$K$</span> times, each edge is processed at most <span class='math'>$2K$</span> times.
+Hence, at most <span class='math'>$O(KM)$</span> elements are ever inserted into the heap.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;queue&gt;
+#include &lt;tuple&gt;
+#include &lt;unordered_set&gt;
+#include &lt;vector&gt;
+using namespace std;
+ 
+const int MAXN = 50000;
+ 
+int N, M, C, R, K;
+vector&lt;pair&lt;int, int&gt;&gt; adj[MAXN];
+ 
+int visits[MAXN];
+unordered_set&lt;int&gt; visitors[MAXN];
+ 
+int main() {
+  ios_base::sync_with_stdio(false);
+ 
+  cin &gt;&gt; N &gt;&gt; M &gt;&gt; C &gt;&gt; R &gt;&gt; K;
+ 
+  for (int i = 0; i &lt; M; i++) {
+    int u, v, l;
+    cin &gt;&gt; u &gt;&gt; v &gt;&gt; l;
+    u -= 1;
+    v -= 1;
+    adj[u].push_back({v, l});
+    adj[v].push_back({u, l});
+  }
+ 
+  priority_queue&lt;tuple&lt;int, int, int&gt;, vector&lt;tuple&lt;int, int, int&gt;&gt;, greater&lt;tuple&lt;int, int, int&gt;&gt;&gt; pq;
+  // Initialize with all charging stations in the queue
+  for (int i = 0; i &lt; C; i++) {
+    pq.push({0, i, i});
+  }
+ 
+  // Dijkstra&apos;s algorithm, except we (i) visit each node up to K times and (ii) only visit nodes
+  // along paths of length at most R
+  int well_connected = 0;
+  while (!pq.empty()) {
+    const auto [d, u, r] = pq.top();
+    pq.pop();
+    if (visits[u] == K || visitors[u].find(r) != visitors[u].end()) {
+      continue;
+    }
+    // Update the number of visits and our count of well-connected destinations
+    visits[u] += 1;
+    visitors[u].insert(r);
+    if (u &gt;= C &amp;&amp; visits[u] == K) {
+      well_connected += 1;
+    }
+    // Add all neighbors within the range that have not been visited K times to the queue
+    for (const auto&amp; [v, l] : adj[u]) {
+      if (d + l &lt;= R &amp;&amp; visits[v] &lt; K) {
+        pq.push({d + l, v, r});
+      }
+    }
+  }
+ 
+  cout &lt;&lt; well_connected &lt;&lt; &quot;\n&quot;;
+  for (int i = C; i &lt; N; i++) {
+    if (visits[i] == K) {
+      cout &lt;&lt; i + 1 &lt;&lt; &quot;\n&quot;;
+    }
+  }
+}
+</pre>
+<p></body></html>

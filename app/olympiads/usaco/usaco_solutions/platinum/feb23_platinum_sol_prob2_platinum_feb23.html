@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>For each problem <span class='math'>$p$</span>, we can associate a bitmask <span class='math'>$b_p$</span> with the test-solvers who
+think <span class='math'>$p$</span> is hard. A problemset <span class='math'>$[p_1,p_2,\dots,p_k]$</span> must satisfy
+<span class='math'>$b_{p_i}\&amp;b_{p_{i+1}}=b_{p_i}$</span> since it is in difficulty order. For each
+<span class='math'>$b\in [0,2^N)$</span>, let <span class='math'>$cnt[b]$</span> denote the number  of problems such that the
+bitmask  of solvers who think the problem is hard is <span class='math'>$b$</span>.
+<p><strong>Subtask <span class='math'>$M=1$</span>:</strong>
+<p>Let <span class='math'>$order(x)=\sum_{i=0}^{x}\frac{x!}{i!}$</span> denote the number of ways to select
+and  order a possibly empty subset of <span class='math'>$x$</span> problems if we ignore difficulty.  The
+answer is <span class='math'>$order(cnt[0])\cdot order(cnt[1])-1$</span>, which can be computed in <span class='math'>$O(N)$</span>
+time. 
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+ 
+using ll = long long;
+ 
+const int MOD = 1e9 + 7;
+ 
+struct mi {
+	int v;
+	mi() : v(0) {}
+	mi(int _v) : v(_v) {
+		if (v &gt;= MOD) v -= MOD;
+	}
+};
+mi operator*(mi a, mi b) { return mi((ll)a.v * b.v % MOD); }
+mi operator+(mi a, mi b) { return mi(a.v + b.v); }
+mi operator-(mi a, mi b) { return mi(a.v + MOD - b.v); }
+ 
+mi order(int x) { return 1 + (x == 0 ? 0 : x * order(x - 1)); }
+ 
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, M;
+	cin &gt;&gt; N &gt;&gt; M;
+	V&lt;string&gt; solvers(M);
+	for (auto &amp;s : solvers) cin &gt;&gt; s;
+	vector&lt;int&gt; cnt(1 &lt;&lt; M);
+	for (int j = 0; j &lt; N; ++j) {
+		int mask = 0;
+		for (int i = 0; i &lt; M; ++i)
+			if (solvers[i][j] == &apos;H&apos;) mask ^= 1 &lt;&lt; i;
+		++cnt[mask];
+	}
+	cout &lt;&lt; (order(cnt[0]) * order(cnt[1]) - 1).v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Subtask <span class='math'>$M\le 16$</span>:</strong>
+<p>Let <span class='math'>$dp[b]$</span> be the number of ways to create a problemset such that the bitmask
+associated with the last problem is <span class='math'>$b$</span>. Either all the problems in the
+problemset are associated with <span class='math'>$b$</span>, or the last problem in the problemset not
+associated with <span class='math'>$b$</span> is associated with some bitmask <span class='math'>$b&apos;\neq b$</span> satisfying
+<span class='math'>$b&apos;\&amp;b=b&apos;$</span>. Thus, we have:
+<div class='math'>$$dp[b]=\left(1+\sum_{b&apos;\colon b&apos;\neq b\text{ and }b&apos;\&amp;b=b&apos;}dp[b&apos;]\right)\cdot(order(cnt[b])-1).$$</div>
+Naively evaluating these summations allows us to compute all <span class='math'>$dp[b]$</span> in 
+<span class='math'>$O(NM+3^M)$</span> time. We obtain the answer by summing all <span class='math'>$dp[b]$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+using ll = long long;
+ 
+const int MOD = 1e9 + 7;
+ 
+struct mi {
+	int v;
+	mi() : v(0) {}
+	mi(int _v) : v(_v) {
+		if (v &gt;= MOD) v -= MOD;
+	}
+};
+mi operator*(mi a, mi b) { return mi((ll)a.v * b.v % MOD); }
+mi operator+(mi a, mi b) { return mi(a.v + b.v); }
+mi operator-(mi a, mi b) { return mi(a.v + MOD - b.v); }
+ 
+mi order(int x) { return 1 + (x == 0 ? 0 : x * order(x - 1)); }
+ 
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, M;
+	cin &gt;&gt; N &gt;&gt; M;
+	V&lt;string&gt; solvers(M);
+	for (auto &amp;s : solvers) cin &gt;&gt; s;
+	vector&lt;int&gt; cnt(1 &lt;&lt; M);
+	for (int j = 0; j &lt; N; ++j) {
+		int mask = 0;
+		for (int i = 0; i &lt; M; ++i)
+			if (solvers[i][j] == &apos;H&apos;) mask ^= 1 &lt;&lt; i;
+		++cnt[mask];
+	}
+	V&lt;mi&gt; dp(1 &lt;&lt; M);
+	mi ans = 0;
+	for (int i = 0; i &lt; (1 &lt;&lt; M); ++i) {
+		mi sum = 1;
+		for (int j = i;; j = (j - 1) &amp; i) {
+			if (j &lt; i) { sum = sum + dp[j]; }
+			if (j == 0) break;
+		}
+		dp[i] = sum * (order(cnt[i]) - 1);
+		ans = ans + dp[i];
+	}
+	cout &lt;&lt; ans.v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Full Credit:</strong>
+<p>It suffices to optimize the solution from the previous subtask. Let <span class='math'>$sdp[b][i]$</span>
+equal the sum of <span class='math'>$dp[b&apos;]$</span> over all submasks <span class='math'>$b&apos;$</span> of <span class='math'>$b$</span> that differ from <span class='math'>$b&apos;$</span>
+only in the first <span class='math'>$i$</span> bits; that is, 
+<span class='math'>$\sum_{b&apos;\colon b&apos;\&amp;b=b&apos;\text{ and }b\oplus b&apos;&lt;2^{i}}dp[b&apos;][i]$</span>. We can compute
+<span class='math'>$sdp[b][0]=dp[b]$</span> and
+<span class='math'>$sdp[b][i+1]=sdp[b][i]+\begin{cases}
+0 &amp; b\&amp;(1\ll i) = 0\\
+sdp[b\oplus (1\ll i)][i] &amp; \text{otherwise} 
+\end{cases}$</span>.
+Given <span class='math'>$sdp[b&apos;]$</span> for all <span class='math'>$b&apos;&lt;b$</span>, we can compute <span class='math'>$dp[b]$</span> in <span class='math'>$O(M)$</span> time, and then
+we can compute <span class='math'>$sdp[b]$</span>. There are a total of <span class='math'>$2^M\cdot M$</span> <span class='math'>$sdp$</span> states, each
+of which can be computed in <span class='math'>$O(1)$</span> time, giving us a solution that runs in
+<span class='math'>$O(NM+2^M\cdot M)$</span> time.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+using ll = long long;
+
+const int MOD = 1e9 + 7;
+
+struct mi {
+	int v;
+	mi() : v(0) {}
+	mi(int _v) : v(_v) {
+		if (v &gt;= MOD) v -= MOD;
+	}
+};
+mi operator*(mi a, mi b) { return mi((ll)a.v * b.v % MOD); }
+mi operator+(mi a, mi b) { return mi(a.v + b.v); }
+mi operator-(mi a, mi b) { return mi(a.v + MOD - b.v); }
+
+mi order(int x) { return 1 + (x == 0 ? 0 : x * order(x - 1)); }
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, M;
+	cin &gt;&gt; N &gt;&gt; M;
+	V&lt;string&gt; solvers(M);
+	for (auto &amp;s : solvers) cin &gt;&gt; s;
+	vector&lt;int&gt; cnt(1 &lt;&lt; M);
+	for (int j = 0; j &lt; N; ++j) {
+		int mask = 0;
+		for (int i = 0; i &lt; M; ++i)
+			if (solvers[i][j] == &apos;H&apos;) mask ^= 1 &lt;&lt; i;
+		++cnt[mask];
+	}
+	V&lt;mi&gt; dp(1 &lt;&lt; M);
+	V&lt;V&lt;mi&gt;&gt; sdp(1 &lt;&lt; M, V&lt;mi&gt;(M));
+	mi ans = 0;
+	for (int i = 0; i &lt; (1 &lt;&lt; M); ++i) {
+		mi sum = 1;
+		for (int j = M - 1; j &gt;= 0; --j) {
+			if (i &amp; (1 &lt;&lt; j)) sum = sum + sdp[i ^ (1 &lt;&lt; j)][j];
+		}
+		dp[i] = sum * (order(cnt[i]) - 1);
+		ans = ans + dp[i];
+		sdp[i][0] = dp[i];
+		for (int j = 0; j &lt; M - 1; ++j) {
+			sdp[i][j + 1] = sdp[i][j];
+			if (i &amp; (1 &lt;&lt; j))
+				sdp[i][j + 1] = sdp[i][j + 1] + sdp[i ^ (1 &lt;&lt; j)][j];
+		}
+	}
+	cout &lt;&lt; ans.v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

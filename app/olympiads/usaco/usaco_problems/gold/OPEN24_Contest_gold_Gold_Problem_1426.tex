@@ -1,0 +1,233 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: OPEN24 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Bessie is planting some grass on the positive real line. She has $N$
+($2\le N\le 2\cdot 10^5$) different cultivars of grass,  and will plant the
+$i$th cultivar on the interval $[\ell_i, r_i]$ ($0 < \ell_i < r_i \leq 10^9$).
+
+In addition, cultivar $i$ grows better when there is some cultivar $j$
+($j\neq i$) such that  cultivar $j$ and cultivar $i$ overlap with length at
+least $k_i$ ($0 < k_i \leq r_i - \ell_i$). Bessie wants to evaluate all of her
+cultivars.  For each $i$, compute the number of $j\neq i$ such that $j$ and $i$
+overlap with length at least $k_i$.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$.
+
+The next $N$ lines each contain three space-separated integers $\ell_i$, $r_i$,
+and
+$k_i$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+The answers for all cultivars on separate lines.
+
+SAMPLE INPUT:
+2
+3 6 3
+4 7 2
+SAMPLE OUTPUT: 
+0
+1
+
+The overlaps of the cultivars is $[4,6]$, which has length $2$, which is at
+least $2$ but not at least $3$.
+
+SAMPLE INPUT:
+4
+3 6 1
+2 5 1
+4 10 1
+1 4 1
+SAMPLE OUTPUT: 
+3
+3
+2
+2
+
+SAMPLE INPUT:
+5
+8 10 2
+4 9 2
+3 7 4
+5 7 1
+2 7 1
+SAMPLE OUTPUT: 
+0
+3
+1
+3
+3
+
+SCORING:
+Input 4-5: $N \leq 5000$Inputs 6-11: $k$ is the same for all intervalsInputs 12-20: No additional constraints.
+In addition, for Inputs 5, 7, ..., 19, $r_i \leq 2N$ for all $i$.
+
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+The next $N$ lines each contain three space-separated integers $\ell_i$, $r_i$,
+and
+$k_i$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):The answers for all cultivars on separate lines.SAMPLE INPUT:2
+3 6 3
+4 7 2SAMPLE OUTPUT:0
+1The overlaps of the cultivars is $[4,6]$, which has length $2$, which is at
+least $2$ but not at least $3$.SAMPLE INPUT:4
+3 6 1
+2 5 1
+4 10 1
+1 4 1SAMPLE OUTPUT:3
+3
+2
+2SAMPLE INPUT:5
+8 10 2
+4 9 2
+3 7 4
+5 7 1
+2 7 1SAMPLE OUTPUT:0
+3
+1
+3
+3SCORING:Input 4-5: $N \leq 5000$Inputs 6-11: $k$ is the same for all intervalsInputs 12-20: No additional constraints.In addition, for Inputs 5, 7, ..., 19, $r_i \leq 2N$ for all $i$.Problem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:2
+3 6 3
+4 7 2SAMPLE OUTPUT:0
+1The overlaps of the cultivars is $[4,6]$, which has length $2$, which is at
+least $2$ but not at least $3$.SAMPLE INPUT:4
+3 6 1
+2 5 1
+4 10 1
+1 4 1SAMPLE OUTPUT:3
+3
+2
+2SAMPLE INPUT:5
+8 10 2
+4 9 2
+3 7 4
+5 7 1
+2 7 1SAMPLE OUTPUT:0
+3
+1
+3
+3SCORING:Input 4-5: $N \leq 5000$Inputs 6-11: $k$ is the same for all intervalsInputs 12-20: No additional constraints.In addition, for Inputs 5, 7, ..., 19, $r_i \leq 2N$ for all $i$.Problem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+2
+3 6 3
+4 7 2
+
+4
+3 6 1
+2 5 1
+4 10 1
+1 4 1
+
+5
+8 10 2
+4 9 2
+3 7 4
+5 7 1
+2 7 1
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+0
+1
+
+The overlaps of the cultivars is $[4,6]$, which has length $2$, which is at
+least $2$ but not at least $3$.SAMPLE INPUT:4
+3 6 1
+2 5 1
+4 10 1
+1 4 1SAMPLE OUTPUT:3
+3
+2
+2SAMPLE INPUT:5
+8 10 2
+4 9 2
+3 7 4
+5 7 1
+2 7 1SAMPLE OUTPUT:0
+3
+1
+3
+3SCORING:Input 4-5: $N \leq 5000$Inputs 6-11: $k$ is the same for all intervalsInputs 12-20: No additional constraints.In addition, for Inputs 5, 7, ..., 19, $r_i \leq 2N$ for all $i$.Problem credits: Benjamin Qi
+
+SAMPLE INPUT:4
+3 6 1
+2 5 1
+4 10 1
+1 4 1SAMPLE OUTPUT:3
+3
+2
+2SAMPLE INPUT:5
+8 10 2
+4 9 2
+3 7 4
+5 7 1
+2 7 1SAMPLE OUTPUT:0
+3
+1
+3
+3SCORING:Input 4-5: $N \leq 5000$Inputs 6-11: $k$ is the same for all intervalsInputs 12-20: No additional constraints.In addition, for Inputs 5, 7, ..., 19, $r_i \leq 2N$ for all $i$.Problem credits: Benjamin Qi
+
+3
+3
+2
+2
+
+SAMPLE INPUT:5
+8 10 2
+4 9 2
+3 7 4
+5 7 1
+2 7 1SAMPLE OUTPUT:0
+3
+1
+3
+3SCORING:Input 4-5: $N \leq 5000$Inputs 6-11: $k$ is the same for all intervalsInputs 12-20: No additional constraints.In addition, for Inputs 5, 7, ..., 19, $r_i \leq 2N$ for all $i$.Problem credits: Benjamin Qi
+
+0
+3
+1
+3
+3
+
+SCORING:Input 4-5: $N \leq 5000$Inputs 6-11: $k$ is the same for all intervalsInputs 12-20: No additional constraints.In addition, for Inputs 5, 7, ..., 19, $r_i \leq 2N$ for all $i$.Problem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1426
+
+\section*{Source}
+USACO OPEN24 Contest, Gold Division, Problem ID: 1426
+
+\end{document}

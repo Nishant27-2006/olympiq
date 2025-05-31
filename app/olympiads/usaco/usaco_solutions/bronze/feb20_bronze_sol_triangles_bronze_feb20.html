@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Jonathan Paulson)
+<p>This problem can be solved by brute force. We can try every triple of fence
+posts to see if they form a valid pasture and take the biggest. There are only
+<span class='math'>$100$</span> posts, so there are only <span class='math'>$100^3$</span> - a million - triples to try. This is
+well within time limits (if there were over <span class='math'>$100$</span> million triples to try, that
+would be worrying).
+<p>How do we try a triple? For a triple to be valid, one post must be the corner,
+another must be directly to the left or right of the corner (i.e. have the same
+y-coordinate as the corner), and the last must be directly up or down from the
+corner (i.e. have the same <span class='math'>$x$</span>-coordinate).
+<p>Assuming the triple forms a valid triangle, how do we find the area? That&apos;s just
+one-half times base times height. The base is just the difference in
+<span class='math'>$x$</span>-coordinates between the corner and second post, and the height is the
+difference in <span class='math'>$y$</span>-coordinates between the corner and third post.
+<p>So the final solution is to try all triples, and among the valid ones take the
+biggest area.
+<p>Implementation tips: 
+<p><ol><li> You are supposed to output twice the maximum area, not the area. The
+easiest way to do this is to ignore the one-half in the area formula (rather
+than doing it at the end).</li><li> It&apos;s easier to iterate through the triples
+in all possible orders. That way you can use the order by assuming the first
+post is the corner, the second post forms the base, and the last post forms the
+height. If you were supposed to jumble them up, some other triple will catch
+that case. </li></ol>
+<p><iframe width='420' height='315' src='//www.youtube.com/embed/aZrYb2CBeH0?rel=0' frameborder='0' allowfullscreen></iframe>
+<p>C++ code:
+<pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+using namespace std;
+using ll = long long;
+
+int main() {
+  freopen(&quot;triangles.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;triangles.out&quot;, &quot;w&quot;, stdout);
+  ll n;
+  cin &gt;&gt; n;
+  vector&lt;ll&gt; X(n, 0);
+  vector&lt;ll&gt; Y(n, 0);
+  for(ll i=0; i&lt;n; i++) {
+    cin &gt;&gt; X[i] &gt;&gt; Y[i];
+  }
+  // i will be corner
+  // j will be flat (same x-coordinate as i)
+  // k will be same y-coordinate as i
+  ll best = -1;
+  for(ll i=0; i&lt;n; i++) {
+    for(ll j=0; j&lt;n; j++) {
+      for(ll k=0; k&lt;n; k++) {
+        if(Y[i]==Y[j] &amp;&amp; X[i]==X[k]) {
+          ll area = (X[j]-X[i]) * (Y[k]-Y[i]);
+          if(area &lt; 0) { area *= -1; }
+          if(area &gt; best) {
+            best = area;
+          }
+        }
+      }
+    }
+  }
+  cout &lt;&lt; best &lt;&lt; endl;
+}
+</pre>
+<p>Java code (from Nick Wu):
+<pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class Solution {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader(&quot;triangles.in&quot;));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;triangles.out&quot;)));
+    int n = Integer.parseInt(br.readLine());
+    int[] x = new int[n];
+    int[] y = new int[n];
+    for(int i = 0; i &lt; n; i++) {
+      StringTokenizer st = new StringTokenizer(br.readLine());
+      x[i] = Integer.parseInt(st.nextToken());
+      y[i] = Integer.parseInt(st.nextToken());
+    }
+    int ret = 0;
+    for(int i = 0; i &lt; n; i++) {
+      for(int j = 0; j &lt; n; j++) { // same x-coordinate
+        if(i == j || x[i] != x[j]) continue;
+        for(int k = 0; k &lt; n; k++) { // same y-coordinate
+          if(i == k || y[i] != y[k]) continue;
+          ret = Math.max(ret, Math.abs(x[k] - x[i]) * Math.abs(y[j] - y[i]));
+        }
+      }
+    }
+    pw.println(ret);
+    pw.close();
+  }
+}
+</pre>
+<p></body></html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Suhas Nagar)
+<p><strong>Subtask 1 (<span class='math'>$N \le 100$</span>):</strong>
+<p>Given a string, we can count the frequency of every kind of moo. Let
+<span class='math'>$count[abb]$</span> represent the number of occurrences of the moo <span class='math'>$abb$</span>. We can
+iterate over every substring of length <span class='math'>$3$</span>  and if it is a valid moo, increment
+its number of occurrences. If any value of <span class='math'>$count[abb] 
+\geq F$</span> at any time, we
+know that <span class='math'>$abb$</span> is a valid moo. This count function takes <span class='math'>$O(N)$</span>.
+<p>Since any character of our string could have been corrupted, we can iterate over
+all <span class='math'>$N$</span> characters and try all <span class='math'>$A$</span> possible replacements where <span class='math'>$A$</span> is the size
+of the  alphabet (<span class='math'>$26$</span> for all lowercase letters). This gives a total time
+complexity of 
+<span class='math'>$O(AN^2)$</span>.
+<p>My Python Code:
+<pre class='prettyprint'>
+from collections import defaultdict
+N,F = map(int,input().split())
+S = input()
+possible_moos = set()
+
+def find_moos(s):
+    count = defaultdict(int)
+    for i in range(0,N-2):
+        if s[i] != s[i+1] and s[i+1] == s[i+2]:
+            count[s[i:i+3]] += 1
+            if (count[s[i:i+3]] &gt;= F):
+                possible_moos.add(s[i:i+3])
+
+for i in range(0,N):
+    for j in range(26):
+        scopy = S[:i]+chr(j+ord(&apos;a&apos;))+S[i+1:]
+        find_moos(scopy)
+possible_moos = sorted(possible_moos)
+print(len(possible_moos))
+for moo in possible_moos:
+    print(moo)
+</pre>
+<p><strong>Full Credit:</strong>
+<p>In the previous subtask, we end up counting a lot of the same substrings and
+duplicating our work. Instead, we can make the observation that changing a
+single character only affects the counts for <span class='math'>$3$</span> substrings. 
+<p>Since a moo must be length <span class='math'>$3$</span>, if we change one of the characters in our string
+to <span class='math'>$x$</span>, we make our new string <span class='math'>$...##x## ...$</span> where <span class='math'>$#$</span> represents some
+characters before and after our edited position. The only substrings that get
+changed as a result of this edit are <span class='math'>$[##x,  #x#, x##]$</span>. 
+<p>This leads us to the final solution sketch, where we count the frequency of moos
+in the original string. Then we can try all <span class='math'>$A \times N$</span> edits (where we change a
+character in the string to each of the <span class='math'>$A$</span> letters in our alphabet), but for
+each edit, updating the counts only takes <span class='math'>$O(1)$</span> since we only need to update
+the counts for the <span class='math'>$3$</span> substrings that got modified by our edit. More
+specifically, we decrement the count of the original substring and increment the
+count of the new substring by 1. This now runs in <span class='math'>$O(AN)$</span>.
+<p>Benjamin Qi&apos;s Python Code:
+<pre class='prettyprint'>
+from collections import defaultdict
+from string import ascii_lowercase
+ 
+N, F = map(int, input().split())
+S = input()
+oc = defaultdict(int)
+ 
+def is_moo(s):
+	assert len(s) == 3
+	return s[0] != s[1] == s[2]
+ 
+for i in range(len(S)-2):
+	s = S[i:i+3]
+	if is_moo(s):
+		oc[s] += 1
+ 
+ans = set()
+ 
+def add(pos, c, dif):
+	for i in range(max(pos-2, 0), min(pos+1, len(S)-2)):
+		s = list(S[i:i+3])
+		s[pos-i] = c
+		s_str = &quot;&quot;.join(s)
+		if is_moo(s_str):
+			oc[s_str] += dif
+			if oc[s_str] &gt;= F:
+				ans.add(s_str)
+ 
+for i in range(len(S)):
+	add(i, S[i], -1)
+	for c in ascii_lowercase:
+		add(i, c, 1)
+		add(i, c, -1)
+	add(i, S[i], 1)
+ 
+ans = sorted(ans)
+print(len(ans))
+for m in ans:
+	print(m)
+</pre>
+<p>Alex Liang&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n, f;
+    string S;
+    cin &gt;&gt; n &gt;&gt; f &gt;&gt; S;
+ 
+    map&lt;string, int&gt; occ;
+    set&lt;string&gt; ans;
+ 
+    auto chk = [&amp;](int i){
+        if (i &lt; 0 or i + 2 &gt;= n)
+            return false;
+            
+        return (S[i] != S[i + 1] and S[i + 1] == S[i + 2]);
+    };
+    auto updPoint = [&amp;](int i, int delta){
+        if (!chk(i))
+            return;
+        
+        string t = S.substr(i, 3);
+ 
+        occ[t] += delta;
+ 
+        if (occ[t] &gt;= f)
+            ans.insert(t);
+    };
+    auto updRange = [&amp;](int i, int delta){
+        updPoint(i - 2, delta);
+        updPoint(i - 1, delta);
+        updPoint(i, delta);
+    };
+ 
+    for (int i = 0; i &lt; n; i++)
+        updPoint(i, 1);
+    
+    for (int i = 0; i &lt; n; i++){
+        char temp = S[i];
+ 
+        for (char c = &apos;a&apos;; c &lt;= &apos;z&apos;; c++){
+            updRange(i, -1);
+            S[i] = c;
+            updRange(i, 1);
+        }
+        updRange(i, -1);
+        S[i] = temp;
+        updRange(i, 1);
+    }
+    
+    cout &lt;&lt; ans.size() &lt;&lt; &quot;\n&quot;;
+ 
+    for (auto s : ans)
+        cout &lt;&lt; s &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

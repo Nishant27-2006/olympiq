@@ -1,0 +1,141 @@
+Solution ID: sol_prob1_platinum_dec20
+Contest: DEC20
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob1_platinum_dec20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Subtask 1:
+
+A naive brute-force solution involves enumerating all possible maximal
+matchings, which if implemented well should take
+
+$\mathcal{O}(N! \cdot N)$
+
+time.
+
+Subtask 2:
+
+For a solution that runs in polynomial time, we can start by sorting the cows
+and barns in  nondecreasing size order. If we fix the smallest cow that is not
+in the matching (if any), then we can count the number of matchings satisfying
+this condition in
+
+$\mathcal{O}(N^2)$
+
+time by doing a DP storing the number of
+cows / barns we have processed so far as well as the number of cows we assert
+will be included in the final matching and still need to match.
+
+When we process a cow, we can either include it in the matching or not. If we
+include it, then we increment the number of cows to match by one. Cows smaller
+than the smallest cow that is not in the matching must be included.
+
+When we process a barn, we can either try to match it with a cow that needs to
+be matched or not. Barns greater than the smallest cow that is not in the
+matching must be included.
+
+This should run in
+
+$\mathcal{O}(N^3)$
+
+time.
+
+Subtask 3:
+
+We can optimize this down to
+
+$\mathcal{O}(N^2)$
+
+time. Instead of iterating over
+all possible smallest unmatched cows, we'll store an additional piece of
+information in our DP state - a boolean flag representing whether all cows we
+have seen so far will be included in the final matching. When we decide not to
+include a cow in the matching, we set this flag to be true. We can only decide
+not to include a barn in the matching when the flag is false (otherwise, we can
+match an ignored cow with the current barn, contradicting the maximality
+property).
+
+This DP ultimately has
+
+$\mathcal{O}(N^2)$
+
+states and
+
+$\mathcal{O}(1)$
+
+transitions per state, to get us to the desired runtime of
+
+$\mathcal{O}(N^2)$
+
+.
+
+import java.io.*;
+import java.util.*;
+public class Main {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    int n = Integer.parseInt(br.readLine());
+    Event[] events = new Event[2*n];
+    for(int a = 0; a < 2; a++) {
+      StringTokenizer st = new StringTokenizer(br.readLine());
+      for(int i = 0; i < n; i++) {
+        events[a*n+i] = new Event(Integer.parseInt(st.nextToken()), a);
+      }
+    }
+    Arrays.sort(events);
+    final int MOD = 1000000007;
+    int[][] dp = new int[n+1][2];
+    dp[0][0] = 1;
+    int[][] ndp = new int[n+1][2];
+    for(Event e: events) {
+      for(int i = 0; i <= n; i++) Arrays.fill(ndp[i], 0);
+      if(e.type == 0) {
+        // cow
+        for(int a = 0; a < n; a++) {
+          for(int j = 0; j < 2; j++) {
+            ndp[a+1][j] += dp[a][j];
+            if(ndp[a+1][j] >= MOD) ndp[a+1][j] -= MOD;
+            ndp[a][1] += dp[a][j];
+            if(ndp[a][1] >= MOD) ndp[a][1] -= MOD;
+          }
+        }
+      }
+      else {
+        for(int a = 0; a < n; a++) {
+          if(a > 0) {
+            for(int j = 0; j < 2; j++) {
+              ndp[a-1][j] += (a * (long)dp[a][j]) % MOD;
+              if(ndp[a-1][j] >= MOD) ndp[a-1][j] -= MOD;
+            }
+          }
+          ndp[a][0] += dp[a][0];
+        }
+      }
+      for(int i = 0; i <= n; i++) {
+        dp[i][0] = ndp[i][0];
+        dp[i][1] = ndp[i][1];
+      }
+    }
+    pw.println((dp[0][0] + dp[0][1]) % MOD);
+    pw.close();
+  }
+  static class Event implements Comparable<Event> {
+    public int size, type;
+    public Event(int a, int b) {
+      size = a;
+      type = b;
+    }
+    public int compareTo(Event s) {
+      if(size != s.size) {
+        return size - s.size;
+      }
+      return type - s.type;
+    }
+  }
+}

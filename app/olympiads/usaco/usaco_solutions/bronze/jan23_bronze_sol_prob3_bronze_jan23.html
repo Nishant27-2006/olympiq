@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Aryansh Shrivastava)
+<p>Suppose we perform operations until we are left with a three-letter string XYZ.
+We must now modify XYZ to &quot;MOO.&quot; We require Y=&apos;O&apos; because there is no way to
+modify the string at the middle without deletions (which we cannot do at this
+point). We can replace any of X and Z with their opposites if necessary.
+<p>This gives us a plan. First, if a string has length 1 or 2, output <span class='math'>$-1$</span> and
+return. Otherwise, search for an &apos;O&apos; somewhere after the first element and
+before the last element of the string; if no &apos;O&apos; exists, output <span class='math'>$-1$</span> and return.
+If a single &apos;O&apos; exists, we consider the three-letter word around it and
+calculate the answer (removing surrounding elements and performing operations as
+necessary). If multiple &apos;O&apos;s exist, we choose the one that results in the least
+number of operations.
+<p>Operations given a position with Y=&apos;O&apos; specifically can be computed as follows:
+first, we reduce the given string to size 3 using <span class='math'>$N-3$</span> deletions, where <span class='math'>$N$</span> is
+the length of the input string. Then, we check if the first letter of the
+three-letter string is &apos;M&apos; and  if the last is &apos;O;&apos; if not, we need to perform
+replacements accordingly.
+<p>The time complexity is <span class='math'>$O(NQ)$</span>.
+<p>Aryansh Shrivastava&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int solve(string s) {
+    int ans = 1e9;
+    if (size(s) &lt;= 2) return -1;
+    for (int i = 1; i &lt; size(s) - 1; ++i) {
+        if (s[i] == &apos;O&apos;) {
+            ans = min(ans,
+                      (int)size(s) - 3 + (s[i - 1] != &apos;M&apos;) + (s[i + 1] != &apos;O&apos;));
+        }
+    }
+    return ans == 1e9 ? -1 : ans;
+}
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int q;
+    cin &gt;&gt; q;
+    while (q--) {
+        string s;
+        cin &gt;&gt; s;
+        cout &lt;&lt; solve(s) &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p>David Hu&apos;s Python code:
+<p><pre class='prettyprint'>
+TC = int(input())
+ 
+def solve(s):
+    #require zero edits
+    #there must be a MOO substring
+    for i in range(len(s) - 2):
+        if s[i:i+3] == &apos;MOO&apos;:
+            return len(s) - 3
+    #require one edit
+    #there must be a OOO or MOM subsequence
+    for i in range(len(s) - 2):
+        if s[i:i+3] == &apos;OOO&apos;:
+            return len(s) - 3 + 1
+        if s[i:i+3] == &apos;MOM&apos;:
+            return len(s) - 3 + 1
+    #require two edits
+    #there must be a OOM substring
+    for i in range(len(s) - 2):
+        if s[i:i+3] == &apos;OOM&apos;:
+            return len(s) - 3 + 2
+    return -1
+ 
+for i in range(TC):
+    s = input()
+    print(solve(s))
+</pre>
+<p>Danny Mittal&apos;s Java code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+ 
+public class MooOperations {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q &gt; 0; q--) {
+            String string = in.readLine();
+            int answer = -1;
+            if (string.contains(&quot;MOO&quot;)) {
+                answer = string.length() - 3;
+            } else if (string.contains(&quot;MOM&quot;) || string.contains(&quot;OOO&quot;)) {
+                answer = string.length() - 2;
+            } else if (string.contains(&quot;OOM&quot;)) {
+                answer = string.length() - 1;
+            }
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p></body></html>

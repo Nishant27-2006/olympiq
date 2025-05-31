@@ -1,0 +1,140 @@
+Solution ID: sol_cownomics_silver_open17
+Contest: OPEN17
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_cownomics_silver_open17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+by Nathan Pinsker
+
+How do we tell if a position can explain spottiness? Let's turn that question
+around and ask the reverse: how do we tell if a position
+
+can't
+
+explain
+spottiness? The answer to this question is that if we come across two cows, one
+of which is spotted and one of which is not, that have the same base in their
+genome at that position, then that position isn't sufficient. This is because we
+won't be able to tell those two cows apart.
+
+The way to solve this problem is to check each set of three positions
+individually to see whether they're sufficient to explain spottiness. For each
+of the
+
+$O(M^3)$
+
+possible positions, we check whether there's any matching set of
+bases that appears at that position in both a spotty and a non-spotty cow.
+
+If we're considering a set of positions
+
+$(i, j, k)$
+
+, we first iterate over every
+non-spotty cow, and recording whether we can find an A, C, G, or T in each  of
+the positions
+
+$i$
+
+,
+
+$j$
+
+, and
+
+$k$
+
+. We do the same for the spotty cows, and check
+at each step if we've already found a non-spotty cow with the same set of three
+bases. If we find a spotty cow that shares the same set of three bases with a
+non-spotty cow in this position, then these three positions don't comprise a
+valid candidate for explaining spottiness. If we can't find any of these
+overlaps, then this set of three positions can successfully be used.
+
+The most difficult part of this problem might be keeping track of which sets of
+three bases we've already seen. Luckily, there's a trick to make it a lot
+easier! We can convert 'A' to 0, 'C' to 1, 'G' to 2, and 'T' to 3. Then we can
+compare two positions
+
+$(i_1, j_1, k_1)$
+
+and
+
+$(i_2, j_2, k_2)$
+
+by comparing the
+values of
+
+$16 \cdot i_1 + 4 \cdot j_1 + k_1$
+
+and
+
+$16 \cdot i_2 + 4 \cdot j_2 + k_2$
+
+. The positions will be equal to each other if
+and only if these values will be equal -- for the same reason that you can
+compare two numbers in base 4 by comparing each of their digits.
+
+The total runtime is
+
+$O(NM^3)$
+
+, which is fast enough to receive full credit.
+
+Here's Brian Dean's code:
+
+#include <iostream>
+#include <fstream>
+#include <cmath>
+using namespace std;
+
+int N, M;
+string spotty[500], plain[500];
+int S[500][50], P[500][50], A[64];
+
+bool test_location(int j1, int j2, int j3)
+{
+  bool good = true;
+  for (int i=0; i<N; i++) 
+    A[S[i][j1]*16 + S[i][j2]*4 + S[i][j3]] = 1;
+  for (int i=0; i<N; i++) 
+    if (A[P[i][j1]*16 + P[i][j2]*4 + P[i][j3]]) good = false;
+  for (int i=0; i<N; i++) 
+    A[S[i][j1]*16 + S[i][j2]*4 + S[i][j3]] = 0;
+  return good;
+}
+
+int main(void)
+{
+  ifstream fin ("cownomics.in");
+  ofstream fout ("cownomics.out");
+  fin >> N >> M;
+  for (int i=0; i<N; i++) {
+    fin >> spotty[i];
+    for (int j=0; j<M; j++) {
+       if (spotty[i][j]=='A') S[i][j] = 0;
+       if (spotty[i][j]=='C') S[i][j] = 1;
+       if (spotty[i][j]=='G') S[i][j] = 2;
+       if (spotty[i][j]=='T') S[i][j] = 3;
+    }
+  }
+  for (int i=0; i<N; i++) {
+    fin >> plain[i];
+    for (int j=0; j<M; j++) {
+       if (plain[i][j]=='A') P[i][j] = 0;
+       if (plain[i][j]=='C') P[i][j] = 1;
+       if (plain[i][j]=='G') P[i][j] = 2;
+       if (plain[i][j]=='T') P[i][j] = 3;
+    }
+  }
+  int answer = 0;
+  for (int j1=0; j1<M; j1++) 
+    for (int j2=j1+1; j2<M; j2++) 
+      for (int j3=j2+1; j3<M; j3++) 
+	if (test_location(j1,j2,j3)) answer++;
+  fout << answer << "\n";
+  return 0;
+}

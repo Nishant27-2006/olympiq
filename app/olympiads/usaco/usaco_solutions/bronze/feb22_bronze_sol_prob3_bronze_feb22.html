@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>For a fixed ordering of four blocks, there are <span class='math'>$6^4 = 1296$</span> different words that
+can be formed. There are <span class='math'>$4 \times 3 \times 2 \times 1 = 24$</span> ways to order the four blocks,
+for a total of 31104 four-letter different arrangements that can be formed.
+<p>Doing the same math for one-letter, two-letter, and three-letter combinations,
+we can show that there are 24 one-letter arrangements, 432 two-letter
+arrangements, and 5184 three-letter arrangements. This is small enough that we
+can precompute all possible words that can be formed.
+<p>To precompute all possible words, we need to iterate over all possible orderings
+of blocks and letters. We can then throw all of these words into a set to make
+it easy to check if the word is present.
+<p>Danny Mittal&apos;s Java code picks blocks one at a time and generates letters as the
+blocks are fixed in place.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
+ 
+public class Blocks {
+    static final char[][] blocks = new char[4][];
+    static final Set&lt;String&gt; makeable = new HashSet&lt;&gt;();
+ 
+    static void recur(int usedMask, String word) {
+        makeable.add(word);
+        for (int j = 0; j &lt; 4; j++) {
+            if ((usedMask &amp; (1 &lt;&lt; j)) == 0) {
+                for (char letter : blocks[j]) {
+                    recur(usedMask + (1 &lt;&lt; j), word + letter);
+                }
+            }
+        }
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        for (int j = 0; j &lt; 4; j++) {
+            blocks[j] = in.readLine().toCharArray();
+        }
+        recur(0, &quot;&quot;);
+        StringBuilder out = new StringBuilder();
+        for (int j = 0; j &lt; n; j++) {
+            if (makeable.contains(in.readLine())) {
+                out.append(&quot;YES&quot;);
+            } else {
+                out.append(&quot;NO&quot;);
+            }
+            out.append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p>My Python 3 code fixes the ordering of the blocks first and then loops over
+letters to generate all possible words.
+<p><pre class='prettyprint'>
+def solve():
+    n = int(input())
+    l = [input() for _ in range(4)]
+    words = set()
+    for a in range(4):
+        for b in range(4):
+            if a in [b]:
+                continue
+            for c in range(4):
+                if c in [a, b]:
+                    continue
+                for d in range(4):
+                    if d in [a, b, c]:
+                        continue
+                    for l1 in l[a]:
+                        words.add(l1)
+                        for l2 in l[b]:
+                            words.add(l1+l2)
+                            for l3 in l[c]:
+                                words.add(l1+l2+l3)
+                                for l4 in l[d]:
+                                    words.add(l1+l2+l3+l4)
+    for _ in range(n):
+        print(&quot;YES&quot; if input() in words else &quot;NO&quot;)
+ 
+solve()
+</pre>
+<p>Note that you don&apos;t need to precompute all possible words. Benjamin Qi&apos;s C++
+code tries all possible orderings of blocks and sees if a given ordering can
+yield the letters in order.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+bool solve(array&lt;string, 4&gt; blocks) {
+	string word;
+	cin &gt;&gt; word;
+	do {
+		bool ok = true;
+		for(int i = 0; i &lt; word.size(); i++) {
+			if(find(blocks[i].begin(), blocks[i].end(), word[i]) == blocks[i].end()) ok = false;
+		}
+		if (ok) return true;
+	} while (next_permutation(blocks.begin(), blocks.end()));
+	return false;
+}
+ 
+int main() {
+	int TC; cin &gt;&gt; TC;
+	array&lt;string, 4&gt; blocks;
+	for(int i = 0; i &lt; 4; i++) cin &gt;&gt; blocks[i];
+	sort(blocks.begin(), blocks.end());
+	for(int i = 0; i &lt; TC; i++) {
+		bool b = solve(blocks);
+		if (b) cout &lt;&lt; &quot;YES\n&quot;;
+		else cout &lt;&lt; &quot;NO\n&quot;;
+	}
+}
+</pre>
+<p></body></html>

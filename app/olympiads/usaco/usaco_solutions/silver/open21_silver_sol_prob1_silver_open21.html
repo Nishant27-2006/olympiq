@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Spencer Compton)
+<p>For Bessie to have an attainable winning tic-tac-toe board configuration, she
+must do so  through a sequence of movements and encountering pieces of paper.
+Key to this problem is  conceptualizing a &quot;state&quot; that encompasses Bessie&apos;s
+situation at any point in time in such a process.
+<p>One aspect of Bessie&apos;s state would be what her current tic-tac-toe board looks
+like. However, there may be multiple positions in the maze Bessie could be at
+with a particular board state (which may affect the potential board states she
+could later reach). 
+<p>Another aspect of Bessie&apos;s state would be her position in the maze. However,
+there could be multiple board states Bessie could have when she is at a
+particular position in the maze.
+<p>Fortunately, when we combine both of these pieces of information, this perfectly
+encapsulates Bessie&apos;s state in the process. Our goal is to first figure out
+which states Bessie could possibly reach, and then how many distinct winning
+tic-tac-toe board configurations are there such that Bessie can reach a state
+with that board configuration.
+<p>To find all states Bessie can reach, we can use a depth first search (DFS)
+starting at Bessie&apos;s starting position in the maze and an empty tic-tac-toe
+board. From each state, we can try recursing a further level by trying to move
+in each possible direction in the maze. To make sure our DFS does not take very
+long, we will keep track of which states we have visited so we do not need to
+revisit them (e.g. we can have a boolean array that indicates whether or not we
+have visited each state). Note that if we use a set to keep track of these
+states, this might cause a solution to exceed the time limit of some test cases.
+Instead, for example, we can convert our board state to a  number and have a
+3-dimensional visited array with dimensions for Bessie&apos;s row, column, and board
+state (converted to an integer). Since there are <span class='math'>$25^2$</span> possible locations in the
+maze and <span class='math'>$\le 3^9$</span> possible board states, our number of states is bounded by <span class='math'>$25^2 \times 3^9$</span>.
+<p>Our depth first search will enable us to determine exactly which states Bessie
+could obtain, and then we can finally count the number of distinct winning
+boards among boards where there is some state such that Bessie could have that
+board.
+<p>Brian Dean&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;set&gt;
+using namespace std;
+ 
+int N;
+char board[25][25][3];
+set&lt;int&gt; answers;
+bool beenthere[25][25][19683];
+int pow3[10];
+ 
+bool test_win(int b)
+{
+  int cells[3][3];
+  for (int i=0; i&lt;3; i++)
+    for (int j=0; j&lt;3; j++) {
+      cells[i][j] = b%3;
+      b /= 3;
+    }
+  for (int r=0; r&lt;3; r++) {
+    if (cells[r][0] == 1 &amp;&amp; cells[r][1] == 2 &amp;&amp; cells[r][2] == 2) return true;
+    if (cells[r][0] == 2 &amp;&amp; cells[r][1] == 2 &amp;&amp; cells[r][2] == 1) return true;
+  }
+  for (int c=0; c&lt;3; c++) {
+    if (cells[0][c] == 1 &amp;&amp; cells[1][c] == 2 &amp;&amp; cells[2][c] == 2) return true;
+    if (cells[0][c] == 2 &amp;&amp; cells[1][c] == 2 &amp;&amp; cells[2][c] == 1) return true;
+  }
+  if (cells[0][0] == 1 &amp;&amp; cells[1][1] == 2 &amp;&amp; cells[2][2] == 2) return true;
+  if (cells[0][0] == 2 &amp;&amp; cells[1][1] == 2 &amp;&amp; cells[2][2] == 1) return true;
+  if (cells[2][0] == 1 &amp;&amp; cells[1][1] == 2 &amp;&amp; cells[0][2] == 2) return true;
+  if (cells[2][0] == 2 &amp;&amp; cells[1][1] == 2 &amp;&amp; cells[0][2] == 1) return true;
+  return false;
+}
+ 
+void dfs(int i, int j, int b)
+{
+  if (beenthere[i][j][b]) return;
+  beenthere[i][j][b] = true;
+  if (board[i][j][0]==&apos;M&apos; || board[i][j][0]==&apos;O&apos;) {
+    int r = board[i][j][1]-&apos;1&apos;, c = board[i][j][2]-&apos;1&apos;, idx = r*3+c;
+    int current_char = (b / pow3[idx]) % 3;
+    if (current_char == 0) {
+      int new_char = board[i][j][0]==&apos;M&apos; ? 1 : 2;
+      b = (b % pow3[idx]) + new_char * pow3[idx] + (b - b % pow3[idx+1]);
+      if (!beenthere[i][j][b] &amp;&amp; test_win(b)) { answers.insert(b); return; }
+      beenthere[i][j][b] = true;
+    }
+  }
+  if (board[i-1][j][0] != &apos;#&apos;) dfs(i-1,j,b);
+  if (board[i+1][j][0] != &apos;#&apos;) dfs(i+1,j,b);
+  if (board[i][j-1][0] != &apos;#&apos;) dfs(i,j-1,b);
+  if (board[i][j+1][0] != &apos;#&apos;) dfs(i,j+1,b);
+}
+ 
+int main(void)
+{
+  int bess_i, bess_j, bstate = 0;
+  pow3[0] = 1;
+  for (int i=1; i&lt;=9; i++) pow3[i] = pow3[i-1]*3;
+  scanf (&quot;%d&quot;, &amp;N);
+  for (int i=0; i&lt;N; i++)
+    for (int j=0; j&lt;N; j++) {
+      scanf (&quot; %c%c%c&quot;, &amp;board[i][j][0], &amp;board[i][j][1], &amp;board[i][j][2]);
+      if (board[i][j][0] == &apos;B&apos;) { bess_i = i; bess_j = j; }
+    }
+  dfs(bess_i, bess_j, bstate);
+  printf (&quot;%d\n&quot;, (int)answers.size()); 
+}
+</pre>
+<p></body></html>

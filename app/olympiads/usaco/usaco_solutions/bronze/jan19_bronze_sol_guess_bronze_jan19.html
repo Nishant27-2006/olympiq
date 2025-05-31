@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>This is a nice example of a problem where half the work goes into figuring out
+useful structural properties of the solution, and then the other half goes into
+writing code to search for a solution based on this knowledge.  In this case,
+let <span class='math'>$M$</span> be the maximum number of characteristics any two cows have in common,
+over all pairs of cows.  We claim that <span class='math'>$M+1$</span> is the answer.
+<p>Here is a simple argument.  If we pick two cows (say <span class='math'>$A$</span> and <span class='math'>$B$</span>) that have <span class='math'>$M$</span>
+traits in common, then we can ask about just those traits, generating <span class='math'>$M$</span> &quot;yes&quot;
+answers and leaving a feasible set that still contains <span class='math'>$A$</span> and <span class='math'>$B$</span>.  Hence, the
+maximum number of &quot;yes&quot; answers in a transcript could be larger than <span class='math'>$M$</span>. On the
+other hand, the number of &quot;yes&quot; answers in any transcript cannot be larger than
+<span class='math'>$M+1$</span>.  Suppose we have a transcript involving <span class='math'>$M+1$</span> yes answers after which
+there are still multiple cows in our feasible set.  If so, those cows must have
+had more than <span class='math'>$M$</span> traits in common, which cannot be the case!  After <span class='math'>$M+1$</span> &quot;yes&quot;
+answers, we therefore must have reduced the feasible set down to at most a
+single cow.
+<p>Now that we know all we need to do is compute <span class='math'>$M$</span>, the coding part isn&apos;t too
+bad. My code below does this in perhaps the most straightforward way, looping
+over all pairs of cows and for each, checking the number of characteristics in
+common again with two &quot;for&quot; loops.  The input size is small enough that this
+runs fast enough to pass all test cases.  
+<p>As a note to those en route to silver, however, one could make the &quot;num_common&quot;
+function quite a bit faster using fancier data structures like a binary search
+tree (e.g., a &quot;set&quot; in C++) or a hash table (e.g., an &quot;unordered_set&quot; in C++). 
+To compare cows <span class='math'>$A$</span> and <span class='math'>$B$</span>, we would add all of <span class='math'>$A$</span>&apos;s characteristics to the
+data structure, then do lookups for all of <span class='math'>$B$</span>&apos;s characteristics, counting the
+number that succeed.  Alternatively, we could have sorted every cow&apos;s list of
+characteristics, and to compare <span class='math'>$A$</span> with <span class='math'>$B$</span> we enact the process of &quot;merging&quot;
+their sorted characteristics into one larger sorted list, a standard algorithmic
+procedure (e.g., part of the &quot;merge sort&quot; algorithm) that allows us to easily 
+count duplicates along the way.  Alternatively still, after sorting, we could
+run through all of <span class='math'>$B$</span>&apos;s characteristics and binary search for them in <span class='math'>$A$</span>&apos;s
+sorted list of characteristics.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;vector&gt;
+using namespace std;
+ 
+int N;
+vector&lt;string&gt; characteristics[100];
+ 
+int num_common(int i, int j)
+{
+  int count = 0;
+  vector&lt;string&gt; &amp;v1 = characteristics[i], &amp;v2 = characteristics[j];
+  for (int i=0; i&lt;v1.size(); i++)
+    for (int j=0; j&lt;v2.size(); j++)
+      if (v1[i] == v2[j]) count++;
+  return count;
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;guess.in&quot;);
+  fin &gt;&gt; N;
+  string s;
+  for (int i=0; i&lt;N; i++) {
+    int K;
+    fin &gt;&gt; s &gt;&gt; K;
+    for (int j=0; j&lt;K; j++) {
+      fin &gt;&gt; s;
+      characteristics[i].push_back(s);
+    }
+  }
+    
+  int largest = 0;
+  for (int i=0; i&lt;N; i++)
+    for (int j=i+1; j&lt;N; j++)
+      largest = max(largest, num_common(i,j));
+ 
+  ofstream fout (&quot;guess.out&quot;);
+  fout &lt;&lt; largest+1 &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+<p></body></html>

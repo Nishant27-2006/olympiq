@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have a list of entries where each cow produced some amount
+of milk, and we need to use the entries to determine which cow produced the
+second-smallest amount of milk.
+<p>There are a couple parts to the problem. The first part is to read in the list
+of entries and determine the total amount of milk each cow produced. There are a
+few ways to maintain this information. In the provided model solution, we keep
+an array of the names of all the cows and maintain a parallel array with the
+amount of milk that the cow has produced.
+<p>After we have computed how much milk each cow has produced, we need to compute
+the second smallest amount of milk that any cow has produced. We can start by
+computing the minimum amount of milk that any cow has produced. The second
+smallest amount of milk that any cow has produced is therefore the next smallest
+amount of milk present.
+<p>After we have computed that quantity, we need to determine which cows have
+produced that amount of milk. We can loop over all the cows - if a cow produces
+that amount, then if we haven&apos;t found any other cows, then that cow is
+considered to be the only cow that has produced that amount of milk. Otherwise,
+there is a tie.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class notlast {
+	static String[] cows;
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader(&quot;notlast.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;notlast.out&quot;)));
+		
+		// initialize an array with all the cow names
+		cows = new String[]{
+				&quot;Bessie&quot;,
+				&quot;Elsie&quot;,
+				&quot;Daisy&quot;,
+				&quot;Gertie&quot;,
+				&quot;Annabelle&quot;,
+				&quot;Maggie&quot;,
+				&quot;Henrietta&quot;};
+		
+		// allocate an array to count how much milk each cow produces
+		int[] amount = new int[cows.length];
+		
+		// read in the number of log entries
+		int n = Integer.parseInt(br.readLine());
+		
+		// loop over the entries
+		for(int i = 0; i &lt; n; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			
+			// read the name of the cow and the amount of milk
+			String name = st.nextToken();
+			int milk = Integer.parseInt(st.nextToken());
+			
+			// update the amount of milk for the given cow
+			amount[findCowIndex(name)] += milk;
+		}
+		
+		// compute the minimum amount of milk produced
+		int minimumAmount = 1000000;
+		for(int i = 0; i &lt; amount.length; i++) {
+			if(amount[i] &lt; minimumAmount) {
+				minimumAmount = amount[i];
+			}
+		}
+		
+		// compute the second smallest amount of milk produced 
+		int secondSmallestAmount = 1000000;
+		for(int i = 0; i &lt; amount.length; i++) {
+			// the second smallest amount of milk must be larger than the smallest amount of milk
+			if(amount[i] &gt; minimumAmount &amp;&amp; amount[i] &lt; secondSmallestAmount) {
+				secondSmallestAmount = amount[i];
+			}
+		}
+		
+		// determine the cow that milked the second-smallest amount of milk 
+		final int NOT_FOUND = -1;
+		final int MORE_THAN_ONE = -2;
+		int indexOfSecondSmallest = NOT_FOUND;
+		for(int i = 0; i &lt; amount.length; i++) {
+			if(amount[i] == secondSmallestAmount) {
+				if(indexOfSecondSmallest == NOT_FOUND) {
+					// we haven&apos;t found any cow yet, so that cow has milked the correct amount
+					indexOfSecondSmallest = i;
+				}
+				else {
+					// we have found at least two cows, so there is a tie
+					indexOfSecondSmallest = MORE_THAN_ONE;
+				}
+			}
+		}
+		
+		// print the answer
+		if(indexOfSecondSmallest &gt;= 0) {
+			pw.println(cows[indexOfSecondSmallest]);
+		}
+		else {
+			pw.println(&quot;Tie&quot;);
+		}
+		
+		// close the file
+		pw.close();
+	}
+	
+	public static int findCowIndex(String s) {
+		// This function takes in the name of a cow and returns the index where
+		// that name can be found in the array of names.
+		for(int i = 0; i &lt; cows.length; i++) {
+			if(cows[i].equals(s)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+}
+</pre>
+<p></body></html>

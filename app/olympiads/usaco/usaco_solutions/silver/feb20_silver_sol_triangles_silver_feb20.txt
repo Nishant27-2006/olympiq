@@ -1,0 +1,157 @@
+Solution ID: sol_triangles_silver_feb20
+Contest: FEB20
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_triangles_silver_feb20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Suppose that we want to find two times the sum of areas of all triangles with
+right angle at
+
+$(X_1,Y_1)$
+
+. Let
+
+$A_1=\{Y_i\,|\,X_i=X_1\}$
+
+(the set of
+
+$Y$
+
+-coordinates for all points that share the same
+
+$X$
+
+-coordinate as post
+
+$1$
+
+)
+and
+
+$B_1=\{X_j\,|\,Y_j=Y_1\}$
+
+. Then the desired quantity will equal
+
+$$\left(\sum_{y\in A}|Y_1-y|\right)\cdot \left(\sum_{x\in B}|X_1-x|\right).$$
+
+It remains to compute the value of
+
+$\sum_{x\in B_i}|X_i-x|$
+
+for every
+
+$i$
+
+. The
+summation involving
+
+$y$
+
+can be computed similarly.
+
+What we need to do, restated more simply:
+
+For integers
+
+$x_1\le x_2\le \cdots \le x_n$
+
+, compute
+
+$s_i=\sum_{j=1}^n|x_i-x_j|$
+
+for each
+
+$i$
+
+.
+
+This can be done in linear time. First, compute
+
+$s_1$
+
+. Then for all
+
+$1\le i<N$
+
+,
+
+$s_{i+1}=s_i+(2i-N)(x_{i+1}-x_i).$
+
+Overall, the solution runs in
+
+$O(N\log N)$
+
+time because we first need to sort the
+
+$x$
+
+-coordinates for each
+
+$y$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+#define f first
+#define s second
+
+const int MOD = 1e9+7; 
+
+void setIO(string s) {
+  ios_base::sync_with_stdio(0); cin.tie(0); 
+  freopen((s+".in").c_str(),"r",stdin);
+  freopen((s+".out").c_str(),"w",stdout);
+}
+
+struct mi {
+  int v; explicit operator int() const { return v; }
+  mi(ll _v) : v(_v%MOD) { v += (v<0)*MOD; }
+  mi() : mi(0) {}
+};
+mi operator+(mi a, mi b) { return mi(a.v+b.v); }
+mi operator-(mi a, mi b) { return mi(a.v-b.v); }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+ 
+int N;
+vector<pair<int,int>> v;
+vector<mi> sum[100005];
+vector<pair<int,int>> todo[20001];
+ 
+void check() {
+	for (int i = 0; i <= 20000; ++i) if (todo[i].size() > 0) {
+		int sz = todo[i].size();
+		sort(begin(todo[i]),end(todo[i]));
+		mi cur = 0; 
+		for (int j = 0; j < sz; ++j) 
+			cur = cur+todo[i][j].f-todo[i][0].f;
+		for (int j = 0; j < sz; ++j) {
+			if (j) cur = cur+(2*j-sz)*(todo[i][j].f-todo[i][j-1].f);
+			sum[todo[i][j].s].push_back(cur);
+		}
+	}
+}
+ 
+int main() {
+	setIO("triangles"); 
+	cin >> N; v.resize(N); 
+	for (int i = 0; i < N; ++i) cin >> v[i].f >> v[i].s;
+	for (int i = 0; i <= 20000; ++i) todo[i].clear();
+	for (int i = 0; i < N; ++i) 
+		todo[v[i].f+10000].push_back({v[i].s,i});
+	check();
+	for (int i = 0; i <= 20000; ++i) todo[i].clear();
+	for (int i = 0; i < N; ++i) 
+		todo[v[i].s+10000].push_back({v[i].f,i});
+	check();
+	mi ans = 0; 
+	for (int i = 0; i < N; ++i) ans = ans+sum[i][0]*sum[i][1];
+	cout << ans.v << "\n";
+}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nathan Pinsker)
+<p>The most immediately obvious solution is to try all possible locations for one
+gate (let&apos;s arbitrarily assume the north-south gate), then  try all possible
+locations for the other gate; unfortunately, this takes <span class='math'>$O(n^2)$</span> time in total
+and is too slow.
+<p>However, we can speed up figuring out where to put the east-west gate, given the
+position of the north-south gate already. As we move our east-west gate from top
+to bottom, note that the number of cows in each of the northern two regions is a
+nondecreasing function. Similarly, the number of cows in each of the southern
+two regions is a nonincreasing function. Thus, max(cows in northwest region,
+cows in northeast region) is also nondecreasing, and max(cows in southwest
+region, cows in southeast region) is also nonincreasing.
+<p>This means that we can use a form of binary search to figure out where they
+cross: we simply look for the y-value where the two graphs of these functions
+cross. Put more simply, if there are too many cows in the top regions, then we
+need to move our fence downwards, and if there are too many cows  in the bottom
+regions, then we need to move our fence upwards. Note that as we iterate over
+all possible positions for the north-south gate, we need to efficiently keep
+track of cows as they move from one side of the fence to the other. We can do
+this using a segment tree, which also lets us compute the number of cows in each
+region very easily.
+<p>Here is Mark Gordon&apos;s code, which implements this idea:
+<p><pre>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;functional&gt;
+#include &lt;set&gt;
+#include &lt;algorithm&gt;
+#include &lt;map&gt;
+
+using namespace std;
+
+#define MAXN (1 &lt;&lt; 17)
+
+int S1[2 * MAXN];
+int S2[2 * MAXN];
+
+void update(int* S, int x, int v) {
+  x += MAXN;
+  S[x] += v;
+  for (x = x &gt;&gt; 1; x; x = x &gt;&gt; 1) {
+    S[x] = S[2 * x + 0] + S[2 * x + 1];
+  }
+}
+
+int query(int x, int l1, int r1, int l2, int r2) {
+  if (x &gt; MAXN) {
+    (l1 &lt; r1 ? l1 : r1) += S1[x];
+    (l2 &lt; r2 ? l2 : r2) += S2[x];
+    return max(max(l1, r1), max(l2, r2));
+  }
+
+  int c1 = x * 2 + 0;
+  int c2 = x * 2 + 1;
+  if (max(l1 + S1[c1], l2 + S2[c1]) &lt; max(r1 + S1[c2], r2 + S2[c2])) {
+    return query(c2, l1 + S1[c1], r1, l2 + S2[c1], r2);
+  } else {
+    return query(c1, l1, r1 + S1[c2], l2, r2 + S2[c2]);
+  }
+}
+
+int main() {
+  int N; cin &gt;&gt; N;
+
+  vector&lt;pair&lt;int, int&gt; &gt; A(N);
+  for (int i = 0; i &lt; N; i++) {
+    cin &gt;&gt; A[i].first &gt;&gt; A[i].second;
+  }
+  sort(A.begin(), A.end());
+
+  int xp = 0, lx = A[0].first;
+  for (int i = 0; i &lt; N; i++) {
+    if (A[i].first != lx) {
+      lx = A[i].first;
+      xp++;
+    }
+    A[i].first = xp;
+  }
+
+  sort(A.begin(), A.end(), [](pair&lt;int, int&gt; a, pair&lt;int, int&gt; b) {
+    return make_pair(a.second, a.first) &lt; make_pair(b.second, b.first);
+  });
+
+  for (int i = 0; i &lt; N; i++) {
+    update(S1, A[i].first, 1);
+  }
+
+  int result = N;
+  for (int i = 0; i &lt; N; ) {
+    int sz = 0;
+    while (i + sz &lt; N &amp;&amp; A[i].second == A[i + sz].second) {
+      update(S1, A[i + sz].first, -1);
+      update(S2, A[i + sz].first, 1);
+      sz++;
+    }
+    result = min(result, query(1, 0, 0, 0, 0));
+    i += sz;
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+}
+</pre>
+<p></body></html>

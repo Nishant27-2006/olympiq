@@ -1,0 +1,225 @@
+Solution ID: sol_prob2_bronze_feb24
+Contest: FEB24
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_feb24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Chongtian Ma and Alex Liang)
+
+Subtask 1:
+
+$N, M \le 1000$
+
+.
+
+We can directly simulate the process according to the problem statement. We can
+keep track of the amount of milk that each cow has and update in
+
+$\mathcal{O}(N)$
+
+each minute leading to an
+
+$\mathcal{O}(NM)$
+
+solution.
+
+Chongtian Ma's C++ Code:
+
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+    int N, M; cin >> N >> M;
+    string S; cin >> S;
+    vector<ll> a(N);
+    for (ll& i : a) cin >> i;
+    vector<ll> cap = a;
+
+    for (int t = 0; t < M; t++){
+        vector<ll> new_a = a;
+        for (int i = 0; i < N; i++){
+            if (a[i] >= 1){
+                new_a[i]--;
+                if (S[i] == 'L'){
+                    new_a[(i - 1 + N) % N]++;
+                } 
+                else{
+                    new_a[(i + 1) % N]++;
+                }
+            }
+        }
+        for (int i = 0; i < N; i++){
+            new_a[i] = min(new_a[i], cap[i]);
+        }
+        a = new_a;
+    }
+    
+    cout << accumulate(a.begin(), a.end(), 0LL) << endl;
+}
+
+Alex Liang's Python Code:
+
+N, M = map(int, input().split())
+S = list(input())
+cap = [int(x) for x in input().split()]
+cur = [i for i in cap]
+ 
+for t in range(M):
+    for i in range(N):
+        if cur[i] > 0:
+            cur[i] -= 1
+            cur[(i + (1 if S[i] == 'R' else -1) + N) % N] += 1
+    for i in range(N):
+        cur[i] = min(cur[i], cap[i])
+ 
+print(sum(cur))
+
+Full Credit:
+
+Note that we can only lose milk if we have a cow that is pointed at in both
+directions since it is outputting one unit but gaining two units of milk. Call
+this kind of cow the "deficit cow". Two deficit cows occur in the middle when we
+have substrings of
+
+$\text{âRRR}\dots \text{RL} \dots \text{LLLâ}$
+
+.
+
+The circle can be broken by these adjacent pairs of deficit cows. For a deficit
+cow to stop losing milk, only milk supply from one side needs to stop. Since the
+two deficit cows will infinitely loop each other, milk supply will never stop in the
+side they meet each other, which is why deficit cows always have a full bucket of milk. The only way for the milk source to stop is wait for the other side to end. Below is an example with the deficit cows drawn in
+red.
+
+The non-cycle side must be a chain (consecutive sequence of cows facing the direction of the corresponding deficit cow) that supplies the milk. In
+the chain, milk is always being preserved since milk is always flowing in one
+direction. So, the number of units of milk lost by the deficit cow is the sum of
+
+$a_i$
+
+of the chain, excluding the deficit cow. For example, for the left deficit
+cow in the adjacent pair (let's say, at index
+
+$i$
+
+) and
+
+$j$
+
+be the leftmost cow
+such that
+
+$s_j, s_{j+1} \dots s_i = \text{âRâ}$
+
+, then the amount of milk
+that can be lost is
+
+$\sum_{k=j}^{i-1} a_k$
+
+. Note that since only one unit is
+lost per minute, the sum is also capped by
+
+$M$
+
+.
+
+So, we can compute the sum of
+
+$a_i$
+
+for the non cycle sides for the pairs of
+deficit cows. If
+
+$S$
+
+is the chain sum, the amount of milk that the cow causes us
+to lose in
+
+$M$
+
+minutes is
+
+$\min(S, M)$
+
+. This leads to an
+
+$\mathcal{O}(N)$
+
+solution.
+
+Chongtian Ma's C++ Code:
+
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+ 
+int main(){
+    int N, M; cin >> N >> M;
+    string S; cin >> S;
+    vector<ll> a(N);
+    for(ll& i: a) cin >> i;
+	
+    vector<bool> bad_L(N), bad_R(N);
+    for(int i = 0; i < N; i++){
+        if(S[i] == 'R' && S[(i + 1) % N] == 'L'){
+            bad_L[i] = true;
+            bad_R[(i + 1) % N] = true;
+        }
+    }
+        
+    ll ans = accumulate(a.begin(), a.end(), 0LL);
+    for(int i = 0; i < N; i++){
+        ll sum = 0;
+        if(bad_L[i]){
+            int j = (i - 1 + N) % N;
+            while(S[j] == 'R'){
+                sum += a[j--];
+                if(j < 0) j += N;
+            }
+        }
+        if(bad_R[i]){
+            int j = (i + 1) % N;
+            while(S[j] == 'L'){
+                sum += a[j++];
+                if(j >= N) j -= N;
+            }
+        }
+        ans -= min(sum, (ll) M);
+    }
+    cout << ans << endl;
+}
+
+Alex Liang's Python Code:
+
+N, M = map(int, input().split())
+S = list(input())
+A = [int(x) for x in input().split()]
+ 
+ans = sum(A)
+ 
+for i in range(N):
+    if (S[i] == 'R' and S[(i + 1) % N] == 'L'):
+        j = (i - 1 + N) % N 
+        total = 0
+ 
+        while S[j] == 'R':
+            total += A[j]
+            j = (j - 1 + N) % N 
+ 
+        ans -= min(total, M)
+    
+    if (S[i] == 'L' and S[(i - 1 + N) % N] == 'R'):
+        j = (i + 1) % N 
+        total = 0
+ 
+        while S[j] == 'L':
+            total += A[j]
+            j = (j + 1) % N 
+ 
+        ans -= min(total, M)
+ 
+print(ans)

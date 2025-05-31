@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>For this problem, we are given a list of <span class='math'>$N$</span> integers and want to support the
+following three operations:
+<p>1) Compute the minimum number in an interval over the list.
+<p>2) Compute the sum of all numbers in an interval over the list.
+<p>3) Increase every number in an interval of the list by some number <span class='math'>$K$</span>.
+<p>We start by describing a data structure which will support the first two
+operations in <span class='math'>$O(\log N)$</span> time.
+<p>Given the initial list, we will maintain, for a specific set of intervals, the
+minimum number in that interval as well as the sum of all numbers in that
+interval. The list of intervals that we use will be as follows:
+<p><ul><li><span class='math'>$[1, N]$</span> is in the set.</li><li>If <span class='math'>$[a, b]$</span> is in the set with <span class='math'>$a &lt; b$</span>, then letting
+<span class='math'>$c = \lfloor \frac{a+b}{2} \rfloor$</span>, <span class='math'>$[a,
+c]$</span> and <span class='math'>$[c+1, b]$</span> are in the set.
+</li></ul>
+<p>Note that there are <span class='math'>$O(N)$</span> intervals in this set. Furthermore, for convenience,
+imagine that we are building a binary tree, where the root of the tree
+corresponds to the interval <span class='math'>$[1, N]$</span> and its minimum/sum, the leaves of the
+trees are all intervals of the form <span class='math'>$[i, i]$</span> with their minima/sums, and the
+left and right children of interval <span class='math'>$[a, b]$</span> are <span class='math'>$[a, c]$</span> and <span class='math'>$[c+1, b]$</span>
+respectively.
+<p>Given the minimum for intervals <span class='math'>$[a, c]$</span> and <span class='math'>$[c+1, b]$</span>, the minimum in the
+interval <span class='math'>$[a, b]$</span> is just the minimum of those two. By similar logic, the sum
+for interval <span class='math'>$[a, b]$</span> is the sum for intervals <span class='math'>$[a, c]$</span> and <span class='math'>$[c+1, b]$</span>.
+<p>We will now describe in detail how to support the first operation - the second
+operation is supported with very similar logic.
+<p>Given an interval <span class='math'>$[l, r]$</span> for which we want to compute the minimum number in
+that interval, generically consider how a specific interval in the tree can help
+us answer the first query. If the interval in that node is strictly inside our
+interval, then the minimum for that interval is a &quot;candidate&quot; for the minimum
+number in that interval and we don&apos;t need to inspect its children. If the
+interval in that node is strictly outside that interval, then we ignore that
+interval. Otherwise, we need to recursively look at the two children of the
+interval. When we are done searching through the tree, we just return the
+minimum candidate.
+<p>If we start this process from the root, each level of the tree can contribute a
+maximum of two candidates and we can only recurse to a lower level of the tree
+from two other nodes. If three candidates could be found from a given level of
+the tree, then two of those candidates would have to have a common parent and we
+could have short-circuited the analysis by inspecting just that interval.
+Similarly, the nodes where we would recurse to a lower level have to be directly
+to the left or the right of a valid candidate. Therefore, we only inspect
+<span class='math'>$O(\log N)$</span> nodes, as desired.
+<p>The second operation works in essentially the same way, except we sum the
+&quot;candidates&quot;.
+<p>It remains to support the third operation. If we naively update this data
+structure by updating every relevant node, since there are <span class='math'>$O(N)$</span> intervals,
+this would run in O(N) time and be no better than the naive solution of
+maintaining just the list of elements.
+<p>To get around this, we add another piece of information to the interval along
+with the minimum and the sum - the &quot;increment&quot;, which is initialized to zero for
+every interval. We will maintain the invariant that if the increment of a given
+interval is <span class='math'>$K$</span>, then we need to increment every number in that interval by <span class='math'>$K$</span>.
+These increments stack with each other, so if interval <span class='math'>$[1, 2]$</span> has an increment
+of 2 and interval <span class='math'>$[1, 4]$</span> has an increment of 3, then the numbers in the
+interval <span class='math'>$[1, 2]$</span> actually need to be incremented by 5.
+<p>To increment every number in a range <span class='math'>$[l, r]$</span> by K, start the same process of
+walking from the root down to the leaves of the tree. If we look at an interval
+which is outside <span class='math'>$[l, r]$</span>, then we can ignore it. If the interval partially
+overlaps with <span class='math'>$[l, r]$</span>, we have to recursively inspect the interval&apos;s children.
+If the interval is strictly inside the interval, then increase the increment by
+<span class='math'>$K$</span> and stop there. The interesting case is when the interval partially overlaps
+with other intervals.
+<p>In this case, the given interval may have an increment that was requested
+earlier that needs to be applied to every number in the interval. In this
+situation, we will &quot;increment&quot; every number in that interval by incrementing
+every number in the two children by the given increment, and then set the
+increment in our current interval to zero. After that, we will recursively apply
+the current increment that was requested by recursing on the two children.
+Finally, to keep the data structure accurate, we will then look at the children
+to update the minimum and sum for the current interval.
+<p>The first two operations do not change significantly now that we must support
+the third operation - the major difference is that if we need to recursively
+inspect both children, we need to apply the increment to the two children and
+then update the current interval again.
+<p>By the same logic as in the analysis of the first operation, the third operation
+only inspects <span class='math'>$O(\log N)$</span> nodes and therefore runs in <span class='math'>$O(\log N)$</span> time.
+<p>This data structure is known as a range tree with lazy propagation. We call it a
+range tree because each node in the tree stores information about a range of the
+underlying list, and the lazy propagation part comes in because when we request
+an update to the list (in this case an increase of an interval over the tree),
+we update as few nodes as possible while still keeping track of the need to
+update more nodes.
+<p>Here is my implementation of this data structure.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class haybales {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;haybales.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;haybales.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int q = Integer.parseInt(st.nextToken());
+		RangeTree tree = new RangeTree(n);
+		st = new StringTokenizer(br.readLine());
+		for(int i = 0; i &lt; n; i++) {
+			tree.update(i, i, Integer.parseInt(st.nextToken()));
+		}
+		for(int i = 0; i &lt; q; i++) {
+			st = new StringTokenizer(br.readLine());
+			String type = st.nextToken();
+			int a = Integer.parseInt(st.nextToken())-1;
+			int b = Integer.parseInt(st.nextToken())-1;
+			int c = -1;
+			if(type.equals(&quot;P&quot;)) {
+				c = Integer.parseInt(st.nextToken());
+			}
+			if(type.equals(&quot;M&quot;)) {
+				pw.println(tree.minQuery(a, b));
+			}
+			else if(type.equals(&quot;P&quot;)) {
+				tree.update(a, b, c);
+			}
+			else {
+				pw.println(tree.sumQuery(a, b));
+			}
+		}
+		pw.close();
+	}
+	static class RangeTree {
+		private long[] min;
+		private long[] lazy;
+		private long[] sum;
+		private int size;
+		public RangeTree(int size) {
+			this.size = size;
+			min = new long[4*size];
+			sum = new long[4*size];
+			lazy = new long[4*size];
+		}
+		public void update(int l, int r, int inc) {
+			update(1, 0, size-1, l, r, inc);
+		}
+		private void pushDown(int index, int l, int r) {
+			min[index] += lazy[index];
+			sum[index] += lazy[index] * (r-l+1);
+			if(l != r) {
+				lazy[2*index] += lazy[index];
+				lazy[2*index+1] += lazy[index];
+			}
+			lazy[index] = 0;
+		}
+		private void pullUp(int index, int l, int r) {
+			int m = (l+r)/2;
+			min[index] = Math.min(evaluateMin(2*index, l, m), evaluateMin(2*index+1, m+1, r));
+			sum[index] = evaluateSum(2*index, l, m) + evaluateSum(2*index+1, m+1, r);
+		}
+		private long evaluateSum(int index, int l, int r) {
+			return sum[index] + (r-l+1)*lazy[index];
+		}
+		private long evaluateMin(int index, int l, int r) {
+			return min[index] + lazy[index];
+		}
+		private void update(int index, int l, int r, int left, int right, int inc) {
+			if(r &lt; left || l &gt; right) return;
+			if(l &gt;= left &amp;&amp; r &lt;= right) {
+				lazy[index] += inc;
+				return;
+			}
+			pushDown(index, l, r);
+			int m = (l+r)/2;
+			update(2*index, l, m, left, right, inc);
+			update(2*index+1, m+1, r, left, right, inc);
+			pullUp(index, l, r);
+		}
+		public long minQuery(int l, int r) {
+			return minQuery(1, 0, size-1, l, r);
+		}
+		private long minQuery(int index, int l, int r, int left, int right) {
+			if(r &lt; left || l &gt; right) return Long.MAX_VALUE;
+			if(l &gt;= left &amp;&amp; r &lt;= right) {
+				return evaluateMin(index, l, r);
+			}
+			pushDown(index, l, r);
+			int m = (l+r)/2;
+			long ret = Long.MAX_VALUE;
+			ret = Math.min(ret, minQuery(2*index, l, m, left, right));
+			ret = Math.min(ret, minQuery(2*index+1, m+1, r, left, right));
+			pullUp(index, l, r);
+			return ret;
+		}
+		public long sumQuery(int l, int r) {
+			return sumQuery(1, 0, size-1, l, r);
+		}
+		private long sumQuery(int index, int l, int r, int left, int right) {
+			if(r &lt; left || l &gt; right) return 0;
+			if(l &gt;= left &amp;&amp; r &lt;= right) {
+				return evaluateSum(index, l, r);
+			}
+			pushDown(index, l, r);
+			int m = (l+r)/2;
+			long ret = 0;
+			ret += sumQuery(2*index, l, m, left, right);
+			ret += sumQuery(2*index+1, m+1, r, left, right);
+			pullUp(index, l, r);
+			return ret;
+		}
+	}
+}
+</pre>
+<p></body></html>

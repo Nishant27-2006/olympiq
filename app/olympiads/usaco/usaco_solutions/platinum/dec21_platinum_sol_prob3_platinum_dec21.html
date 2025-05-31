@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Richard Qi, Benjamin Qi)
+<p>There are two ways to approach this problem. One uses dynamic programming, while
+the other uses linearity of expectation.
+<p><strong>1. DP Solution</strong>
+<p>Suppose that we have already constructed some prefix of the permutation, and
+there are <span class='math'>$j$</span> remaining non-redundant values below Bessie&apos;s number and <span class='math'>$k$</span>
+remaining non-redundant values above Bessie&apos;s number (we define non-redundant
+numbers as numbers that Elsie could guess that would give her more information).
+Also, consider the two cases where Bessie has most recently said either &quot;HI&quot; or
+&quot;LO&quot;. Let <span class='math'>$b=0$</span> be the case where Bessie has most recently said  &quot;LO&quot; and let
+<span class='math'>$b=1$</span> be the case where Bessie has most recently said &quot;HI&quot;. Then, the expected
+number of &quot;HILO&quot;s for the original problem is just the case where
+<span class='math'>$j=x, k=N-x, b = 0$</span>.
+<p>Thus, it is sufficient to count the expected number of &quot;HILO&quot;s for each
+<span class='math'>$j \leq x, k \leq N-x,$</span> and <span class='math'>$b = 0$</span> or <span class='math'>$b=1$</span>. Call this quantity <span class='math'>$dp[b][j][k]$</span>.
+Now, note that all redundant values do not affect the expected number of
+&quot;HILOs&quot;, so we ignore all of them. Then, there are <span class='math'>$j+k$</span> possible values for the
+next number in the permutation, each of which occurs with probability
+<span class='math'>$\frac{1}{j+k}$</span>.
+<p>We will first consider the case where <span class='math'>$b=0$</span>. Suppose that the next value in the
+permutation is less than <span class='math'>$x+0.5,$</span> of which there are <span class='math'>$j$</span> possibilities. Denote
+these values as <span class='math'>$v_0, v_1, v_2, \cdots v_{j-1}$</span> such that
+<span class='math'>$x+0.5 &gt; v_0 &gt; v_1 &gt; v_2 \cdots &gt; v_{j-1}$</span>.
+<p>Suppose the next value in the permutation is <span class='math'>$v_{j_2}$</span> for some
+<span class='math'>$0 \leq j_2 &lt; j$</span>. Then,  Bessie says &quot;LO&quot; (because <span class='math'>$v_{j_2} &lt; x+0.5$</span>) and there
+are <span class='math'>$j_2$</span> remaining nonredundant values below Bessie&apos;s number. The <span class='math'>$k$</span> initial
+nonredundant values above Bessie&apos;s number are still nonredundant, so the
+expected number of HILOs in the remaining sequence of values is <span class='math'>$dp[0][j_2][k]$</span>.
+<p>Similarly, if we consider the values greater than <span class='math'>$x+0.5,$</span> which we label
+<span class='math'>$x+0.5 &lt; u_0 &lt; u_1 &lt; u_2 \cdots &lt; u_{k-1},$</span> if we choose one of these values
+<span class='math'>$u_{k_2}$</span>, Bessie says &quot;HI&quot; and there are <span class='math'>$k_2$</span> remaining nonredundant values
+above Bessie&apos;s number, so the expected number of HILOs in the remaining sequence
+of values is <span class='math'>$dp[1][j][k_2]$</span>.
+<p>So, we have the recurrence
+<span class='math'>$dp[0][j][k] = \frac{\sum_{j_2 &lt; j} dp[0][j_2][k] + \sum_{k_2 &lt; k} dp[1][j][k_2]}{j+k}$</span>.
+<p>For computing <span class='math'>$dp[1][j][k],$</span> we can apply the same technique. However, since
+Bessie has just said &quot;HI&quot;, if we now choose a value <span class='math'>$v_{j_2} &lt; x+0.5,$</span> Bessie
+will then say &quot;LO&quot; and the number of &quot;HILO&quot;s increases by one. We choose a value
+less than <span class='math'>$x+0.5$</span> with probability <span class='math'>$\frac{j}{j+k},$</span> so the expected number of
+&quot;HILO&quot;s increases by <span class='math'>$\frac{j}{j+k}.$</span>
+<p>So, we have the recurrence
+<span class='math'>$dp[1][j][k] = \frac{\sum_{j_2 &lt; j} dp[0][j_2][k] + \sum_{k_2 &lt; k} dp[1][j][k_2]}{j+k} + \frac{j}{j+k}.$</span>
+<p>Now, we can compute every value of <span class='math'>$dp[b][j][k]$</span> by iterating over all
+<span class='math'>$j_2 &lt; j, k_2 &lt; k$</span> and using the above recurrences. Since there are <span class='math'>$N^2$</span> dp
+states and we sum over <span class='math'>$N$</span> smaller states, this leads to a time complexity of
+<span class='math'>$\mathcal{O}(N^3),$</span> which is enough for the first two subtasks.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class ExpectedHILOCubic {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int x = Integer.parseInt(tokenizer.nextToken());
+        int y = n - x;
+        long[] inverse = new long[n + 1];
+        for (int k = 1; k &lt;= n; k++) {
+            inverse[k] = inverse(k);
+        }
+        long[][][] dp = new long[2][x + 1][y + 1];
+        for (int j = 0; j &lt;= x; j++) {
+            for (int k = 0; k &lt;= y; k++) {
+                for (int j2 = 0; j2 &lt; j; j2++) {
+                    dp[0][j][k] += dp[0][j2][k];
+                }
+                for (int k2 = 0; k2 &lt; k; k2++) {
+                    dp[0][j][k] += dp[1][j][k2];
+                }
+                dp[0][j][k] %= MOD;
+                dp[0][j][k] *= inverse[j + k];
+                dp[0][j][k] %= MOD;
+                dp[1][j][k] = (dp[0][j][k] + (inverse[j + k] * ((long) j))) % MOD;
+            }
+        }
+        long answer = dp[0][x][y];
+        for (long k = 1; k &lt;= n; k++) {
+            answer *= k;
+            answer %= MOD;
+        }
+        System.out.println(answer);
+    }
+ 
+    public static long inverse(long x) {
+        long s = x;
+        long res = 1;
+        long exponent = MOD - 2;
+        while (exponent != 0L) {
+            if ((exponent &amp; 1L) == 1L) {
+                res *= s;
+                res %= MOD;
+            }
+            exponent /= 2L;
+            s *= s;
+            s %= MOD;
+        }
+        return res;
+    }
+}
+</pre>
+<p>To speed this up, note that the bottleneck of the runtime comes from computing
+the terms like <span class='math'>$\sum_{j_2 &lt; j} dp[0][j_2][k].$</span> Now, suppose we are computing the
+value <span class='math'>$dp[0][j][k]$</span> and want to find the value <span class='math'>$\sum_{j_2 &lt; j} dp[0][j_2][k]$</span>
+without using a loop. To do this, note that we have already computed the value
+of <span class='math'>$dp[0][j-1][k],$</span> which required the value of
+<span class='math'>$\sum_{j_2 &lt; j-1} dp[0][j_2][k].$</span> Since we have already computed
+<span class='math'>$\sum_{j_2 &lt; j-1} dp[0][j_2][k],$</span> we can use the fact that
+<span class='math'>$\sum_{j_2 &lt; j} dp[0][j_2][k] = dp[0][j-1][k]+\sum_{j_2 &lt; j-1} dp[0][j_2][k],$</span>
+which takes <span class='math'>$\mathcal O(1)$</span> time instead of <span class='math'>$\mathcal O(N)$</span> time to compute. 
+<p>Since we can now compute the <span class='math'>$N^2$</span> terms of the DP in <span class='math'>$\mathcal O(1)$</span> time each,
+our overall time complexity is now <span class='math'>$\mathcal{O}(N^2).$</span>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class ExpectedHILO {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int x = Integer.parseInt(tokenizer.nextToken());
+        int y = n - x;
+        long[] inverse = new long[n + 1];
+        for (int k = 1; k &lt;= n; k++) {
+            inverse[k] = inverse(k);
+        }
+        long[][][] dp = new long[2][x + 1][y + 1];
+        long[] sums1 = new long[x + 1];
+        long[] sums2 = new long[y + 1];
+        for (int j = 0; j &lt;= x; j++) {
+            for (int k = 0; k &lt;= y; k++) {
+                dp[0][j][k] = (inverse[j + k] * (sums1[j] + sums2[k])) % MOD;
+                dp[1][j][k] = (inverse[j + k] * (sums1[j] + sums2[k] + ((long) j))) % MOD;
+                sums1[j] += dp[1][j][k];
+                sums1[j] %= MOD;
+                sums2[k] += dp[0][j][k];
+                sums2[k] %= MOD;
+            }
+        }
+        long answer = dp[0][x][y];
+        for (long k = 1; k &lt;= n; k++) {
+            answer *= k;
+            answer %= MOD;
+        }
+        System.out.println(answer);
+    }
+ 
+    public static long inverse(long x) {
+        long s = x;
+        long res = 1;
+        long exponent = MOD - 2;
+        while (exponent != 0L) {
+            if ((exponent &amp; 1L) == 1L) {
+                res *= s;
+                res %= MOD;
+            }
+            exponent /= 2L;
+            s *= s;
+            s %= MOD;
+        }
+        return res;
+    }
+}
+</pre>
+<p><strong>2. Linearity of Expectation Solution</strong>
+<p>We will distinguish between two types of HILOs and count both of them. Recall
+the definition of the string <span class='math'>$S$</span> in the problem statement. Consider a &quot;HILO,&quot;
+which occurs at position <span class='math'>$i$</span> in string <span class='math'>$S$</span>. We call this &quot;HILO&quot; &quot;special&quot; if
+there is no &quot;LO&quot; before position <span class='math'>$i$</span>; otherwise, we call it a &quot;normal&quot; HILO. For
+a normal HILO, denote the rightmost &quot;LO&quot; before position <span class='math'>$i$</span> as the
+&quot;corresponding&quot; LO to this normal HILO.
+<p>First, we will count the number of &quot;normal&quot; HILOs.
+<p>Instead of summing the number of HILOs over all permutations, we will count the 
+number of permutations over every possible HILO.
+<p>Formally, for all <span class='math'>$a, b, c, p_a, p_b, p_c$</span> such that
+<span class='math'>$1 \leq a, b, c, p_a, p_b, p_c\leq N$</span> and <span class='math'>$c &lt; a &lt; b,$</span> we will count the number
+of permutations such that the following conditions hold:
+<p>1. The <span class='math'>$a$</span>th value in the permutation is <span class='math'>$p_a,$</span> the <span class='math'>$b$</span>th value in the
+permutation is <span class='math'>$p_b$</span>, and the <span class='math'>$c$</span>th value in the permutation is <span class='math'>$p_c$</span>. 
+<p>2. Bessie says &quot;HI&quot; at position <span class='math'>$a$</span>, &quot;LO&quot; at position <span class='math'>$b$</span>, and &quot;LO&quot; at position
+<span class='math'>$c.$</span>
+<p>3. The &quot;HI&quot; at position <span class='math'>$a$</span> and the &quot;LO&quot; at position <span class='math'>$b$</span> together form a &quot;HILO&quot;
+with corresponding LO at position <span class='math'>$c$</span>.
+<p>To enforce these conditions, it is necessary and sufficient that the following
+conditions hold:
+<p>4. <span class='math'>$p_c &lt; p_b &lt; x+0.5 &lt; p_a$</span>
+<p>5. For all values <span class='math'>$v$</span> in the permutation before <span class='math'>$b$</span> (other than <span class='math'>$p_a$</span> and
+<span class='math'>$p_c$</span>), either <span class='math'>$p_a &lt; v$</span> or <span class='math'>$v &lt; p_c.$</span>
+<p>Condition <span class='math'>$4$</span> ensures that the values are in the right order, while condition
+<span class='math'>$5$</span> ensures that the &quot;HI&quot; at position <span class='math'>$a$</span> and the &quot;LO&quot; at position <span class='math'>$b$</span> together
+form a &quot;HILO&quot; with corresponding LO at position <span class='math'>$c$</span>.
+<p>Now, it remains to count the number of permutations such that conditions <span class='math'>$4$</span> and
+<span class='math'>$5$</span> hold. There are <span class='math'>$N-p_a+p_c-1$</span> possibilities for the remaining values in the
+permutation before position <span class='math'>$b,$</span> and there are <span class='math'>$b-3$</span> values that need to be
+chosen, for a total of  <span class='math'>$\frac{(N-p_a+p_c-1)!}{(N-p_a+p_c-1-(b-3))!}$</span> ways to
+choose these values. After these values have been chosen, the remaining values
+in the permutation after position <span class='math'>$b$</span> can be ordered arbitrarily, of which there
+are <span class='math'>$N-b$</span> left, for a total of <span class='math'>$(N-b)!$</span> ways.
+<p>So, the desired sum is
+<span class='math'>$\sum_{a, b, c, p_a, p_b, p_c \mid 1 \leq c &lt; a &lt; b \leq N, 1 \leq p_c &lt; p_b &lt; x+0.5 &lt; p_a \leq N} \frac{(N-p_a+p_c-1)!(N-b)!}{(N-p_a+p_c-b+2)!}$</span>.
+If we sum this naively, we get a <span class='math'>$\mathcal O(N^6)$</span> solution, which is enough for
+<span class='math'>$10$</span> test cases.
+<p>Note that <span class='math'>$p_b, a, c$</span> do not appear in the summand, so we can easily rewrite the
+sum as
+<span class='math'>$\sum_{b, p_c, p_a \mid 1 \leq b \leq N, p_c &lt; x+0.5 &lt; p_a} \frac{(N-p_a+p_c-1)!(N-b)!}{(N-p_a+p_c-b+2)!} \cdot (x-p_c) \cdot \binom{b-1}{2}.$</span>
+If we sum this naively, we get a <span class='math'>$\mathcal O(N^3)$</span> solution, which is enough for
+<span class='math'>$18$</span> test cases.
+<p>Now, to optimize this further, suppose <span class='math'>$b, p_c$</span> are fixed values. Then, the
+above summand can be expressed in the form
+<span class='math'>$\sum_{p_a = x+1}^{n}C_1\frac{(C_2-p_a)!}{(C_3-p_a)!}$</span>, which is also of the
+form <span class='math'>$\sum_{p_a=C_4}^{C_5} C_6\binom{C_7+p_a}{C_8}$</span> for constants <span class='math'>$C_i$</span> in terms
+of <span class='math'>$b, p_c.$</span> Using the
+<a href='https://en.wikipedia.org/wiki/Hockey-stick_identity'>Hockey Stick
+Identity</a>, we have that 
+<span class='math'>$\sum_{p_a=C_4}^{C_5} C_6\binom{C_7+p_a}{C_8} = C_6\binom{C_7+C_5+1}{C_8+1}-C_6\binom{C_7+C_4}{C_8+1},$</span>
+which can be computed in <span class='math'>$\mathcal O(1)$</span> time for fixed <span class='math'>$b, p_c.$</span> 
+<p>Alternatively, we can iterate over the value of <span class='math'>$p_c-p_a,$</span> which does not
+require Hockey Stick. 
+<p>Thus, for each of the <span class='math'>$N^2$</span> possible pairs <span class='math'>$b, p_c,$</span> we can find the value of
+the summand in <span class='math'>$\mathcal O(1)$</span> time, for a total of <span class='math'>$\mathcal O(N^2)$</span> time.
+<p>Counting special HILOs can be done similarly, but we only need to iterate over
+values of <span class='math'>$a, b, p_a, p_b,$</span> and  it turns out that only <span class='math'>$p_a$</span> and <span class='math'>$b$</span> appear in
+the summand, so the sum can easily be optimized to <span class='math'>$\mathcal O(N^2)$</span> without
+using Hockey Stick. Using an application of Hockey Stick, we can reduce counting
+special HILOs to an <span class='math'>$\mathcal O(N)$</span> calculation, but this is not necessary to
+solve the problem.
+<p>Richard&apos;s <span class='math'>$N^6$</span> code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+using ll = long long;
+
+const int MOD = 1e9+7;
+
+/**
+ * Description: Modular arithmetic.
+ * Source: KACTL
+ * Verification: https://open.kattis.com/problems/modulararithmetic
+ * Usage: mi a = MOD+5; cout &lt;&lt; (int)inv(a); // 400000003
+ */
+ 
+struct mi {
+ 	int v; explicit operator int() const { return v; } 
+	mi():v(0) {}
+	mi(ll _v):v(int(_v%MOD)) { v += (v&lt;0)*MOD; }
+};
+mi&amp; operator+=(mi&amp; a, mi b) { 
+	if ((a.v += b.v) &gt;= MOD) a.v -= MOD; 
+	return a; }
+mi&amp; operator-=(mi&amp; a, mi b) { 
+	if ((a.v -= b.v) &lt; 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi&amp; operator*=(mi&amp; a, mi b) { return a = a*b; }
+mi pow(mi a, ll p) { assert(p &gt;= 0); // won&apos;t work for negative p
+	return p==0?1:pow(a*a,p/2)*(p&amp;1?a:1); }
+mi inv(mi a) { assert(a.v != 0); return pow(a,MOD-2); }
+mi operator/(mi a, mi b) { return a*inv(b); }
+bool operator==(mi a, mi b) { return a.v == b.v; }
+ 
+using vmi = vector&lt;mi&gt;;
+/**
+ * Description: pre-compute factorial mod inverses,
+ 	* assumes $MOD$ is prime and $SZ &lt; MOD$.
+ * Time: O(SZ)
+ * Source: KACTL
+ * Verification: https://dmoj.ca/problem/tle17c4p5
+ */
+ 
+vmi invs, fac, ifac;
+void genFac(int SZ) {
+	invs.resize(SZ), fac.resize(SZ), ifac.resize(SZ); 
+	invs[1] = fac[0] = ifac[0] = 1; 
+	for(int i = 2; i &lt; SZ; i++) invs[i] = mi(-(ll)MOD/i*(int)invs[MOD%i]);
+	for(int i = 1; i &lt; SZ; i++) fac[i] = fac[i-1]*i, ifac[i] = ifac[i-1]*invs[i];
+}
+mi comb(int a, int b) {
+	if (a &lt; b || b &lt; 0) return 0;
+	return fac[a]*ifac[b]*ifac[a-b]; }
+ 
+ 
+mi FAC(int a){
+	if(a &lt; 0) return mi(0);
+	return fac[a];
+}
+ 
+mi IFAC(int a){
+	if(a &lt; 0) return mi(0);
+	return ifac[a];
+}
+ 
+int main() {
+	genFac(20005);
+	int N, X; cin &gt;&gt; N &gt;&gt; X;
+	mi ans = mi(0);
+	for(int c = 1; c &lt;= N; c++){
+		for(int a = c+1; a &lt;= N; a++){
+			for(int b = a+1; b &lt;= N; b++){
+				for(int p_c = 1; p_c &lt;= N; p_c++){
+					for(int p_b = p_c+1; p_b &lt;= N; p_b++){
+						if(p_b &gt; X) continue;
+						for(int p_a = X+1; p_a &lt;= N; p_a++){
+							ans+=FAC(N-p_a+p_c-1)*FAC(N-b)*IFAC(N-p_a+p_c-1-b+3);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	for(int a = 1; a &lt;= N; a++){
+		for(int b = a+1; b &lt;= N; b++){
+			for(int p_b = 1; p_b &lt;= X; p_b++){
+				for(int p_a = X+1; p_a &lt;= N; p_a++){
+					ans+=FAC(N-p_a)*FAC(N-b)*IFAC(N-p_a-b+2);
+				}
+			}
+		}
+	}
+ 
+	cout &lt;&lt; ans.v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Richard&apos;s <span class='math'>$N^2$</span> code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+using ll = long long;
+
+const int MOD = 1e9+7;
+
+/**
+ * Description: Modular arithmetic.
+ * Source: KACTL
+ * Verification: https://open.kattis.com/problems/modulararithmetic
+ * Usage: mi a = MOD+5; cout &lt;&lt; (int)inv(a); // 400000003
+ */
+ 
+struct mi { // WARNING: needs some adjustment to work with FFT
+ 	int v; explicit operator int() const { return v; } 
+	mi():v(0) {}
+	mi(ll _v):v(int(_v%MOD)) { v += (v&lt;0)*MOD; }
+};
+mi&amp; operator+=(mi&amp; a, mi b) { 
+	if ((a.v += b.v) &gt;= MOD) a.v -= MOD; 
+	return a; }
+mi&amp; operator-=(mi&amp; a, mi b) { 
+	if ((a.v -= b.v) &lt; 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi&amp; operator*=(mi&amp; a, mi b) { return a = a*b; }
+mi pow(mi a, ll p) { assert(p &gt;= 0); // won&apos;t work for negative p
+	return p==0?1:pow(a*a,p/2)*(p&amp;1?a:1); }
+mi inv(mi a) { assert(a.v != 0); return pow(a,MOD-2); }
+mi operator/(mi a, mi b) { return a*inv(b); }
+bool operator==(mi a, mi b) { return a.v == b.v; }
+ 
+using vmi = vector&lt;mi&gt;;
+/**
+ * Description: pre-compute factorial mod inverses,
+ 	* assumes $MOD$ is prime and $SZ &lt; MOD$.
+ * Time: O(SZ)
+ * Source: KACTL
+ * Verification: https://dmoj.ca/problem/tle17c4p5
+ */
+ 
+vmi invs, fac, ifac;
+void genFac(int SZ) {
+	invs.resize(SZ), fac.resize(SZ), ifac.resize(SZ); 
+	invs[1] = fac[0] = ifac[0] = 1; 
+	for(int i = 2; i &lt; SZ; i++) invs[i] = mi(-(ll)MOD/i*(int)invs[MOD%i]);
+	for(int i = 1; i &lt; SZ; i++) fac[i] = fac[i-1]*i, ifac[i] = ifac[i-1]*invs[i];
+}
+mi comb(int a, int b) {
+	if (a &lt; b || b &lt; 0) return 0;
+	return fac[a]*ifac[b]*ifac[a-b]; }
+ 
+ 
+mi FAC(int a){
+	if(a &lt; 0) return mi(0);
+	return fac[a];
+}
+ 
+mi IFAC(int a){
+	if(a &lt; 0) return mi(0);
+	return ifac[a];
+}
+
+int main() {
+	genFac(20005);
+	int N, X; cin &gt;&gt; N &gt;&gt; X;
+	mi ans = mi(0);
+	for(int b = 1; b &lt;= N; b++){
+		for(int p_c = 1; p_c &lt;= X; p_c++){
+			ans+=(comb(N+p_c-X-1, b-2)-comb(p_c-1, b-2))*FAC(b-1)*FAC(N-b)*mi(X-p_c)*invs[2];
+		}
+	}
+	for(int b = 1; b &lt;= N; b++){
+		for(int p_a = X+1; p_a &lt;= N; p_a++){
+			ans+=mi(X)*FAC(N-p_a)*FAC(N-b)*IFAC(N-p_a-b+2)*mi(b-1);
+		}
+	}
+	cout &lt;&lt; ans.v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>We now present an alternative way to optimize counting normal HILOs from
+<span class='math'>$\mathcal O(N^3)$</span> to <span class='math'>$\mathcal O(N)$</span>.
+<span class='math'>$\sum_{b, p_c, p_a \mid 1 \leq b \leq N, p_c &lt; x+0.5 &lt; p_a} \frac{(N-p_a+p_c-1)!(N-b)!}{(N-p_a+p_c-b+2)!} \cdot (x-p_c) \cdot \binom{b-1}{2}$</span>.
+<p>Let <span class='math'>$p_a-p_c = d_{ac}.$</span> Then, our sum is equal to
+<span class='math'>$\sum_{d_{ac}} \sum_{b=1}^{N} \sum_{p_c} \frac{(N-d-1)!(N-b)!}{(N-d-b+2)!} \cdot (x-p_c) \cdot \binom{b-1}{2}$</span>,
+where <span class='math'>$p_a, p_c$</span> must satisfy <span class='math'>$1 \leq p_c &lt; x+0.5 &lt; p_a \leq N.$</span> 
+<p>Consider the set of all pairs <span class='math'>$(p_a, p_c)$</span> such that the above condition holds
+for some fixed value of <span class='math'>$d_{ac} = p_a-p_c.$</span> Let <span class='math'>$f(d_{ac})$</span> be the size of the
+set, and let <span class='math'>$g(d_{ac})$</span> be the sum over all such pairs of <span class='math'>$p_c.$</span> Both of these
+values can be computed in <span class='math'>$\mathcal O(1)$</span> for each value of <span class='math'>$d_{ac}.$</span>
+<p>Then, the sum is equal to
+<span class='math'>$\sum_{d_{ac} = 1}^{N-1} \sum_{b=1}^{N} \frac{(N-d_{ac}-1)!(N-b)!}{(N-d_{ac}-b+2)!} \cdot (x \cdot f(d_{ac})-g(d_{ac})) \cdot \binom{b-1}{2}$</span>
+<span class='math'>$= \sum_{d_{ac} = 1}^{N-1} (x \cdot f(d_{ac})-g(d_{ac}))(N-d_{ac}-1)! \sum_{b=1}^{N}  \frac{(N-b)!}{(N-d_{ac}-b+2)!} \cdot \binom{b-1}{2}$</span>
+<p>If we ignore the <span class='math'>$\binom{b-1}{2}$</span> term in the inner loop, then the inner loop
+could easily be removed by an application of Hockey Stick (similar to the
+application mentioned earlier).  To do this, note that
+<span class='math'>$\binom{b-1}{2} = C_1 (N-b+1)(N-b+2) + C_2 (N-b+1)$</span> for constants <span class='math'>$C_1, C_2$</span>, so
+<p><span class='math'>$\sum_{b=1}^{N}  \frac{(N-b)!}{(N-d_{ac}-b+2)!} \cdot \binom{b-1}{2} = C_1 \sum_{b=1}^{N}  \frac{(N-b+2)!}{(N-d_{ac}-b+2)!} + C_2 \sum_{b=1}^{N} \frac{(N-b+1)!}{(N-d_{ac}-b+2)!}$</span>.
+<p>Now, similar to before, we can apply Hockey Stick to calculate both of these
+sums in <span class='math'>$\mathcal O(1)$</span> time.
+<p>Thus, we have counted both special and normal HILOs in <span class='math'>$\mathcal O(N)$</span> time,
+leading to a <span class='math'>$\mathcal O(N)$</span> time solution.
+<p>----
+<p>As Rowechen Zhong notes
+<a href='https://www.dropbox.com/s/t5qj1bc7k2kcl0f/Obliteration.pdf?dl=0'>here,</a>
+there is actually a simple formula for the number of HILOs (assuming <span class='math'>$0&lt;x&lt;N$</span>): 
+<p><div class='math'>$$\begin{align*}
+\text{Answer}(N,x)&amp;=N!\cdot \mathbb{E}[\#(HILO)]\\
+&amp;=N!\cdot \frac{1}{2}\cdot \left(H_x+H_{N-x}-H_N+\frac{N-x}{N}\right)
+\end{align*}$$</div>
+<p>where <span class='math'>$H_i\triangleq \sum_{j=1}^i\frac{1}{j}$</span>. Code:
+<p><pre class='prettyprint'>
+...
+
+mi H(int x) {
+	mi ans = 0;
+	for (int i = 1; i &lt;= x; ++i) ans += invs[i];
+	return ans;
+}
+
+int main() {
+	int N,x; cin &gt;&gt; N &gt;&gt; x;
+	if (x == 0) {
+		cout &lt;&lt; &quot;0\n&quot;;
+		exit(0);
+	}
+	genFac(N+1);
+	mi expected = (H(x)+H(N-x)-H(N)+(mi)(N-x)*invs.at(N))/2;
+	cout &lt;&lt; (fac.at(N)*expected).v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Here is a different way to come up with the above formula for
+<span class='math'>$\mathbb{E}[\#(HILO)]$</span> (as well as <span class='math'>$\mathbb{E}[\#(LOLO)], \mathbb{E}[\#(LOHI)],$</span>
+and <span class='math'>$\mathbb{E}[\#(HIHI)]$</span>):
+<p>Recall from the work above that
+<p><div class='math'>$$\begin{align*}
+\mathbb{E}[\#(HILO)]&amp;=\mathbb{E}[\text{normal }HILO\text{s}]+\mathbb{E}[\text{special }HILO\text{s}]\\
+&amp;=\mathbb{E}[\#(\text{values }a&lt;c\le x&lt;b\text{ such that }a,b,c\text{ form }LOHILO)]+\Pr[HILO\text{ without a preceding }LO]\\
+&amp;=\mathbb{E}[\#(a&lt;c\le x&lt;b\text{ such that }a,b,c\text{ form }LOHILO)]+\frac{N-x}{N}.
+\end{align*}
+$$</div>
+<p>Note that our notation here is slightly different than above; here, <span class='math'>$a,b,c$</span>
+denote values rather than positions. We can actually count the number of normal
+HILOs directly with a triply nested for loop:
+<p><pre class='prettyprint'>
+...
+ 
+int main() {
+	int N,x; cin &gt;&gt; N &gt;&gt; x;
+	if (x == 0) {
+		cout &lt;&lt; &quot;0\n&quot;;
+		exit(0);
+	}
+	genFac(N+1);
+	mi expected = (N-x)*invs.at(N); // special HILOs
+	for (int a = 1; a &lt;= x; ++a) // normal HILOs
+		for (int b = x+1; b &lt;= N; ++b) 
+			for (int c = a+1; c &lt;= x; ++c) {
+				// probability that we see LO at a, then HI at b, then LO at c
+				// only depends on relative ordering of values in a..b
+				const int len = b-a+1;
+				expected += invs.at(len)*invs.at(len-1)*invs.at(len-2);
+			}
+	cout &lt;&lt; (expected*fac.at(N)).v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Given the value of <span class='math'>$\mathbb{E}[\#(HILO)]$</span>, we can get the expected number of
+LOHIs:
+<p><div class='math'>$$\begin{align*}
+\mathbb{E}[\#(LOHI)]&amp;=\mathbb{E}[\#(HILO)]+\Pr[\text{response}=LO\ldots HI]-\Pr[\text{response}=HI\ldots LO]\\
+&amp;=\mathbb{E}[\#(HILO)]+\Pr[p_1\le x\text{ and }x\text{ appears before }x+1\text{ in }p]-\Pr[p_1&gt; x\text{ and }x+1\text{ appears before }x\text{ in }p]\\
+&amp;=\mathbb{E}[\#(HILO)]+\frac{x+1}{2N}-\frac{N-x+1}{2N}\\
+&amp;=\mathbb{E}[\#(HILO)]+\frac{2x-N}{2N}.
+\end{align*}$$</div>
+<p>Define a HILOLO triple <span class='math'>$(a,b,c)$</span> to be values satisfying <span class='math'>$b&lt;c\le x&lt;a$</span> such that 
+<span class='math'>$a$</span> appears before <span class='math'>$b$</span> before <span class='math'>$c$</span>, <span class='math'>$b$</span> and <span class='math'>$c$</span> are two consecutive LOs, and <span class='math'>$a$</span> 
+is the latest HI that appears before <span class='math'>$b$</span> We can get the expected number of LOLOs
+by adding the number of HILOLOs with the number of LOLOs with no HI preceding
+it. The code to count the expected number of HILOLOs turns out to be identical
+to the  code used to compute the expected number of LOHILOs above, so:
+<p><div class='math'>$$\begin{align*}
+\mathbb{E}[\#(LOLO)]&amp;=\mathbb{E}[\#(b&lt;c\le x&lt;a\text{ such that }a,b,c\text{ form }HILOLO)]+\mathbb{E}[(\#LOLO\text{s without a preceding }HI)]\\
+&amp;=\mathbb{E}[\#(a&lt;c\le x&lt;b\text{ such that }a,b,c\text{ form }LOHILO)]+\mathbb{E}[(\#LOLO\text{s without a preceding }HI)]\\
+&amp;=\mathbb{E}[\#(a&lt;c\le x&lt;b\text{ such that }a,b,c\text{ form }LOHILO)]+\left(\mathbb{E}[\#(LO\text{s before first }HI)]-\Pr[\text{exists }LO\text{ before first }HI]\right)\\
+&amp;=\mathbb{E}[\#(a&lt;c\le x&lt;b\text{ such that }a,b,c\text{ form }LOHILO)]+\sum_{i=1}^x\left(\frac{1}{N-x+i}\right)-\frac{x}{N}\\
+&amp;=\mathbb{E}[\#(HILO)]+H_N-H_{N-x}-1.
+\end{align*}$$</div>
+<p>The equality
+<span class='math'>$\mathbb{E}[\#(LO\text{ before first }HI)]=\sum_{i=1}^x\left(\frac{1}{N-x+i}\right)$</span>
+can be derived by starting with a permutation of the values <span class='math'>$x+1\ldots N$</span> and
+then consider adding each of the values <span class='math'>$x\ldots 1$</span> to the permutation in that
+order. <span class='math'>$x+1-i$</span> is a LO only if it precedes all of the values <span class='math'>$x+2-i\ldots N$</span>,
+which occurs with probability <span class='math'>$\frac{1}{N-x+i}$</span>.
+<p>By symmetry,
+<p><div class='math'>$$\mathbb{E}[\#(HIHI)]=\mathbb{E}[\#(LOHI)]+H_N-H_{x}-1.$$</div>
+<p>Also,
+<p><div class='math'>$$\begin{align*}
+\mathbb{E}[\#(LOHI)]+\mathbb{E}[\#(LOLO)]+\mathbb{E}[\#(HILO)]+\mathbb{E}[\#(HIHI)]&amp;=\mathbb{E}[\#(LO)]+\mathbb{E}[\#(HI)]-1\\
+&amp;=H_x+H_{N-x}-1.\end{align*}$$</div>
+<p>Combining these four equations, we get the following closed forms:
+<p><ul><li><span class='math'>$\mathbb{E}[\#(LOLO)]=\frac{H_x-H_{N-x}+H_N-1-x/N}{2}$</span></li><li><span class='math'>$\mathbb{E}[\#(HIHI)]=\frac{-H_x+H_{N-x}+H_N-1-(N-x)/N}{2}$</span></li><li><span class='math'>$\mathbb{E}[\#(HILO)]=\frac{H_x+H_{N-x}-H_N+(N-x)/N}{2}$</span></li><li><span class='math'>$\mathbb{E}[\#(LOHI)]=\frac{H_x+H_{N-x}-H_N+x/N}{2}$</span></li></ul>
+<p></body></html>

@@ -1,0 +1,172 @@
+Solution ID: sol_art2_gold_open17
+Contest: OPEN17
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_art2_gold_open17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+For a color
+
+$c$
+
+, define
+
+$S(c)$
+
+as the first occurrence of
+
+$c$
+
+and
+
+$E(c)$
+
+as the
+last occurrence of
+
+$c$
+
+in the input sequence.
+
+Our first task is to recover the left and right bounds of each painted interval.
+For each color
+
+$c$
+
+, its interval must start at or before
+
+$S(c)$
+
+and end on or
+after
+
+$E(c)$
+
+. In fact, we can assume the interval starts exactly at
+
+$S(c)$
+
+and
+ends exactly on
+
+$E(c)$
+
+. To see why this is the case, note that if we had a
+procedure to recreate the final painting that involves painting a longer
+interval for
+
+$c$
+
+, we can substitute it with
+
+$[S(c), E(c)]$
+
+without changing the
+end result.
+
+Now, letâs investigate which configurations are valid. If
+
+$S(A) < S(B) < E(A) < E(B)$
+
+for two colors A and B, we claim that the final
+configuration is impossible. Indeed, if A were painted first, then E(A) cannot
+have color A once B is painted. Similarly, we reach a contradiction assuming B
+is painted first.
+
+Therefore, any two intervals
+
+$[S(A), E(A)]$
+
+and
+
+$[S(B), E(B)]$
+
+must be
+completely disjoint, or one must be contained within the other. It follows that
+the only colors that can appear inside an interval are the colors of the
+intervals it contains. All such configurations are valid paintings since we can
+always remove the shortest interval by painting it last. Suppose to the contrary
+that the shortest interval contained the start/end of another interval. Then it
+would have to contain that interval's end/start as well, and we have a
+contradiction!
+
+Viewed another way, if we arrange all start and end points in order, replace
+start points by open braces (of the corresponding color) and end points by close
+braces (of the corresponding color), we must have a correct bracket sequence.
+
+Finally, let's look at our painting process in reverse. In the last step, we
+paint (remove) all empty bracket sequences
+
+$[]$
+
+, and apply this procedure
+recursively. This shows that our final answer is the maximum depth of the
+bracket sequence.
+
+Here is Mark Chenâs code:
+
+#include <iostream>
+#include <iomanip>
+#include <stdio.h>
+#include <set>
+#include <vector>
+#include <map>
+#include <cmath>
+#include <algorithm>
+#include <memory.h>
+#include <string>
+#include <sstream>
+#include <cstdlib>
+#include <ctime>
+#include <cassert>
+
+using namespace std;
+
+const int INF = 2000000000;
+
+const int MAXN = 100005;
+int color[MAXN], xmin[MAXN], xmax[MAXN], inStack[MAXN];
+
+int n;
+
+vector<int> stack;
+
+int main() {
+    scanf("%d", &n);
+
+    fill(xmin, xmin + MAXN, INF);
+    fill(xmax, xmax + MAXN, -INF);
+
+    color[0] = color[n+1] = 0;
+
+    for (int i = 0; i <= n+1; i++) {
+        if (i >= 1 && i <= n) scanf("%d", &color[i]);
+        xmin[color[i]] = min(xmin[color[i]], i);
+        xmax[color[i]] = max(xmax[color[i]], i);
+    }
+
+    int res = 0;  // max depth
+
+    for (int i = 0; i <= n+1; i++) {
+        int c = color[i];
+
+        if (i == xmin[c]) {
+            stack.push_back(c);
+            res = max(res, (int)stack.size());
+        }
+
+        if (stack[stack.size()-1] != c) {
+            cout << -1 << "\n";
+            return 0;
+        }
+
+        if (i == xmax[c]) {
+            stack.pop_back();
+        }
+    }
+
+    cout << res - 1 << "\n";
+    return 0;
+}

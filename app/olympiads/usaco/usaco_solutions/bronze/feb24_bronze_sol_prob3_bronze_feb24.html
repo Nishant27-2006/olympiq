@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Alex Fan)
+<p><strong>Subtask 1:</strong> <span class='math'>$N, Q &lt; 10^3$</span>.
+<p>We can directly simulate the process according to the problem statement. For
+each query, we iterate through all the farms and see if we can visit it in time,
+<span class='math'>$t_i + S &lt; c_i$</span>. Each query takes <span class='math'>$\mathcal{O}(N)$</span> operations, giving us
+an <span class='math'>$\mathcal{O}(NQ)$</span> solution.
+<p>Alex Fan&apos;s C++ Code:
+<p><pre class='prettyprint'>
+using namespace std;
+
+#include &lt;iostream&gt;
+
+#define MAXN 200005
+
+int N,Q,c[MAXN],t[MAXN];
+
+int main() {
+	cin &gt;&gt; N &gt;&gt; Q;
+	for(int i = 0;i &lt; N;++i) {
+		cin &gt;&gt; c[i];
+	}
+	for(int i = 0;i &lt; N;++i) {
+		cin &gt;&gt; t[i];
+	}
+
+	for(int i = 0;i &lt; Q;++i) {
+		int v,s;
+		cin &gt;&gt; v &gt;&gt; s;
+		int uwu = 0;
+		for(int j = 0;j &lt; N;++j) {
+			if(s + t[j] &lt; c[j]) {
+				uwu++;
+			}
+		}
+		cout &lt;&lt; (uwu &gt;= v ? &quot;YES&quot; : &quot;NO&quot;) &lt;&lt; endl;
+	}
+
+	return 0;
+}
+</pre>
+<p>Python Code:
+<p><pre class='prettyprint'>
+N, Q = (int(x) for x in input().split())
+c = [int(x) for x in input().split()]
+t = [int(x) for x in input().split()]
+for _ in range(Q):
+    V, S = (int(x) for x in input().split())
+    uwu = 0
+    for i in range(N):
+        if(S + t[i] &lt; c[i]):
+            uwu += 1
+    print(&quot;YES&quot; if (uwu &gt;= V) else &quot;NO&quot;)
+</pre>
+<p><strong>Subtask 2:</strong> <span class='math'>$c_i, t_i &lt; 20$</span>
+<p>The key observation is to notice that we can rearrange the formula
+<span class='math'>$t_i + S &lt; c_i$</span> as <span class='math'>$c_i - t_i &gt; S$</span>. Therefore, for each farm, we can take
+advantage of the fact that <span class='math'>$c_i - t_i$</span> can only be between <span class='math'>$-20$</span> to <span class='math'>$20$</span>.
+<p>If <span class='math'>$c_i - t_i \leq 0$</span>, then we can get rid of it since we can never make it in
+time. Otherwise, there are only <span class='math'>$21$</span> possible values despite there being
+<span class='math'>$2 \cdot 10^5$</span> farms. We exploit this observation by grouping the same
+<span class='math'>$c_i - t_i$</span> values together. This can be implemented with a map, or, since the
+values are between <span class='math'>$0$</span> and <span class='math'>$20$</span>, an array of length <span class='math'>$21$</span>.
+<p>Finally, to check if a query works, we iterate through the array and count the
+number of valid barns that satisfy the inequality. The valid range is always
+the continuous interval to the right of <span class='math'>$S$</span>.
+<p>Each query takes <span class='math'>$\mathcal{O}(MAXC)$</span> time where <span class='math'>$MAXC \leq 20$</span> is the maximum
+value of <span class='math'>$c_i$</span>, so the total complexity is <span class='math'>$\mathcal{O}(N + Q \cdot MAXC)$</span>
+<p>Alex Fan&apos;s C++ Code:
+<p><pre class='prettyprint'>
+using namespace std;
+
+#include &lt;iostream&gt;
+#include &lt;map&gt;
+
+#define MAXN 200005
+#define MAXA 1000005
+
+int N,Q,c[MAXN],t[MAXN],cnt[MAXA],max_element;
+
+int main() {
+	cin &gt;&gt; N &gt;&gt; Q;
+	for(int i = 0;i &lt; N;++i) {
+		cin &gt;&gt; c[i];
+	}
+	for(int i = 0;i &lt; N;++i) {
+		cin &gt;&gt; t[i];
+		if(c[i] &gt; t[i]) {
+			// Maintain the count array of c[i] - t[i]
+			cnt[c[i] - t[i]]++;
+		}
+		// We can also replace max_element as the constant 20
+		max_element = max(max_element,c[i] - t[i]);
+	}
+
+	for(int i = 0;i &lt; Q;++i) {
+		int v,s;
+		cin &gt;&gt; v &gt;&gt; s;
+		int uwu = 0;
+		if(N &lt;= 1e3) {
+			// Subtask 1
+			for(int i = 0;i &lt; N;++i) {
+				if(t[i] + s &lt; c[i]) uwu++;
+			}
+		}else if(max_element &lt;= 20) {
+			// Subatsk 2
+			for(int i = s + 1;i &lt;= max_element;++i) {
+				uwu += cnt[i];
+			}
+		}
+		cout &lt;&lt; (uwu &gt;= v ? &quot;YES&quot; : &quot;NO&quot;) &lt;&lt; endl;
+	}
+
+	return 0;
+}
+</pre>
+<p>Python Code:
+<pre class='prettyprint'>
+N, Q = (int(x) for x in input().split())
+c = [int(x) for x in input().split()]
+t = [int(x) for x in input().split()]
+
+cnt = [0] * 25
+
+for i in range(N):
+	if(c[i] &gt; t[i]):
+		cnt[c[i] - t[i]] += 1
+
+for _ in range(Q):
+    V, S = (int(x) for x in input().split())
+    uwu = 0
+    for i in range(S + 1,25,1):
+        uwu += cnt[i]
+    print(&quot;YES&quot; if (uwu &gt;= V) else &quot;NO&quot;)
+
+</pre>
+<p><strong>Full Credit:</strong>
+<p>The final step is to efficiently count the number of farms such that their
+<span class='math'>$c_i - t_i$</span> is greater than some query value <span class='math'>$S$</span>. This is a standard setup that
+can be solved by first sorting all the differences and applying binary search. This gives an <span class='math'>$\mathcal{O}(N\log N + Q\log N)$</span> solution.
+<p>Alternatively, you can further observe that after we sort all the values of
+<span class='math'>$c_i - t_i$</span>, the query <span class='math'>$(V, S)$</span> is &quot;YES&quot; if and only if the <span class='math'>$V$</span>-th largest value
+of <span class='math'>$c_i - t_i$</span> is more than <span class='math'>$S$</span>, which can be done by checking the <span class='math'>$i$</span>-th
+element of the sorted array. Reference Brandon Wang&apos;s Python Code for the
+implementation. This also results in a <span class='math'>$\mathcal{O}(N\log N + Q)$</span> solution.
+<p>Alex Fan&apos;s C++ Code:
+<pre class='prettyprint'>
+using namespace std;
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;fstream&gt;
+
+#define MAXN 200005
+
+int N,Q,c[MAXN],t[MAXN];
+
+int main() {
+	cin &gt;&gt; N &gt;&gt; Q;
+	for(int i = 0;i &lt; N;++i) {
+		cin &gt;&gt; c[i];
+	}
+	for(int i = 0;i &lt; N;++i) {
+		cin &gt;&gt; t[i];
+		c[i] -= t[i];
+	}
+
+	sort(c,c + N);
+
+	for(int i = 0;i &lt; Q;++i) {
+		int v,s;
+		cin &gt;&gt; v &gt;&gt; s;
+		int uwu = N - (lower_bound(c,c + N,s + 1) - c);
+		cout &lt;&lt; (uwu &gt;= v ? &quot;YES&quot; : &quot;NO&quot;) &lt;&lt; endl;
+	}
+
+	return 0;
+}
+</pre>
+<p>Brandon Wang&apos;s Python Code
+<pre class='prettyprint'>
+N, Q = (int(x) for x in input().split())
+c = [int(x) for x in input().split()]
+t = [int(x) for x in input().split()]
+diffs = sorted([ci - ti for ci, ti in zip(c, t)], reverse=True)
+for _ in range(Q):
+    V, S = (int(x) for x in input().split())
+    print(&quot;YES&quot; if (V &lt;= N and (V &lt;= 0 or diffs[V-1] &gt; S)) else &quot;NO&quot;)
+</pre>
+<p></body></html>

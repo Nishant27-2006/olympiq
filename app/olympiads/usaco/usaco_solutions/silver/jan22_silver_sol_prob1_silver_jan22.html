@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Richard Qi) 
+<p>Denote <span class='math'>$A$</span> as the number we start with and <span class='math'>$B$</span> as the number we want to turn <span class='math'>$A$</span>
+into. 
+<p><strong>Observation 1:</strong> The answer is always <span class='math'>$\mathcal O(\log{\max(A, B)})$</span>. 
+<p>To see why this is the case, we first prove that we can turn <span class='math'>$A$</span> into <span class='math'>$1$</span> using
+<span class='math'>$\mathcal O(\log{A})$</span> operations.
+<p>Observe the binary representation (base 2) of <span class='math'>$A$</span>.  If <span class='math'>$A$</span> is a power of two,
+then clearly we can just do dividing operations and reduce it to <span class='math'>$1$</span> quickly.
+Otherwise, if the last bit is <span class='math'>$0$</span>, do a dividing operation; if the last bit is a
+<span class='math'>$1$</span>, do a plus followed by a dividing operation. This reduces the number of bits
+in the binary representation of <span class='math'>$A$</span> by <span class='math'>$1$</span>. Thus, either <span class='math'>$A$</span> is a power of two
+and we do <span class='math'>$\mathcal O(\log{A})$</span> dividing operations, or we do a maximum of <span class='math'>$2$</span>
+operations to reduce the number of bits in the binary representation of <span class='math'>$A$</span> by
+<span class='math'>$1$</span>. Since there are only <span class='math'>$\mathcal O(\log{A})$</span> total bits in <span class='math'>$A$</span>, this takes 
+<span class='math'>$\mathcal O(\log{A})$</span> operations in total.
+<p>For the case of turning <span class='math'>$1$</span> into <span class='math'>$B$</span>, note that if we take the inverse of all
+operations, this is equivalent to turning <span class='math'>$B$</span> into <span class='math'>$1$</span> using &quot;subtract 1&quot; and
+dividing operations. By a similar argument as above, if the last bit of <span class='math'>$B$</span> is a
+<span class='math'>$0$</span>, we can divide by <span class='math'>$2$</span>, otherwise we can subtract one and then divide by <span class='math'>$2$</span>.
+This takes <span class='math'>$\mathcal O(\log{B})$</span> operations to turn <span class='math'>$B$</span> into <span class='math'>$1$</span>, so it takes
+<span class='math'>$\mathcal O(\log{B})$</span> operations to turn <span class='math'>$1$</span> into <span class='math'>$B$</span> using addition and
+multiplication operations.
+<p>Thus, it takes <span class='math'>$\mathcal O(\log{A}+\log{B})$</span> operations to turn <span class='math'>$A$</span> into <span class='math'>$1$</span>,
+and then turn <span class='math'>$1$</span> into <span class='math'>$B$</span>, so the answer is always
+<span class='math'>$\mathcal O(\log{\max(A, B)})$</span>.
+<p><strong>Observation 2:</strong> There is never a division that takes place after a
+multiplication operation. Intuitively, any <span class='math'>$1$</span>s that we add in between a
+multiplication and division operation would be more efficiently moved after the
+division operation.
+<p>We will prove this via proof by contradiction: suppose there is a division
+operation that takes place after a multiplication operation. Then, in the middle
+of the sequence of operations, we have <span class='math'>$\cdots *, +^{k}, / \cdots$</span>, where <span class='math'>$*$</span>
+denotes a multiplication operation, <span class='math'>$+^{k}$</span> denotes <span class='math'>$k \geq 0$</span> addition
+operations, <span class='math'>$/$</span> denotes a division operation, and the <span class='math'>$\cdots$</span> indicate
+operations occurring before and after this subsequence of operations.
+<p>Now, because a division operation was used, and the number after the <span class='math'>$*$</span>
+operation was even, the number of <span class='math'>$+$</span> operations in between is even. Suppose we
+replaced this subsequence of operations with <span class='math'>$\cdots +^{k/2} \cdots$</span>. Let the
+number starting the subsequence be <span class='math'>$x$</span>; in the first version of the sequence of
+operations, we have <span class='math'>$x \implies 2x \implies 2x+k \implies x+k/2$</span>, while in the
+second version of the sequence of operations, we have <span class='math'>$x \implies x+k/2$</span>.
+<p>Since <span class='math'>$+^{k/2}$</span> is always less operations than <span class='math'>$*, +^{k}, /$</span> and both
+subsequences correspond to the same function, the second subsequence never
+appears in an optimal solution.
+<p>Thus, we have proven that there is never a division that takes place after a
+multiplication operation, so  the multiplication/division operations are of the
+form <span class='math'>$/, /, /, \cdots *, *, *$</span>, with some number of addition operations added in
+between every two division/multiplication operations. We can divide the
+operations into <span class='math'>$3$</span> phases: the subsequence consisting of the last division
+operation and everything before it, the subsequence consisting of the addition
+operations after the last division and before the first multiplication, and the
+subsequence consisting of the first multiplication operation and everything
+after it. We label these subsequences <span class='math'>$S_1, S_2, S_3$</span>.
+<p>These observations are good enough for partial credit. Suppose that we have
+found all numbers <span class='math'>$x$</span> such that we need exactly <span class='math'>$k$</span> operations to turn <span class='math'>$A$</span> into
+<span class='math'>$x$</span>, and suppose we have already done this for all <span class='math'>$k&apos; \leq k$</span>.  Then, we can
+find all numbers <span class='math'>$y$</span> such that we need exactly <span class='math'>$k+1$</span> operations to reach <span class='math'>$y$</span>
+from <span class='math'>$A$</span>, as each of these <span class='math'>$y$</span> must be a previous <span class='math'>$x$</span> value after a
+division/multiplication/addition operation is applied. Additionally, each of
+these <span class='math'>$y$</span> should be numbers that could not have been reached using <span class='math'>$k$</span> or less
+operations.
+<p>It turns out that for the subtask, if we only consider small values of <span class='math'>$x$</span> and
+<span class='math'>$y$</span> in the above algorithm, we arrive at the correct answer. In other words,
+when turning <span class='math'>$A$</span> into <span class='math'>$B$</span>, the intermediate numbers do not get larger than
+<span class='math'>$10^5+\mathcal O(\log{A}+\log{B})$</span>. The first and second observations mentioned
+above imply this, because during <span class='math'>$S_1$</span>, the only way we can increase is through
+<span class='math'>$+$</span> operations (but there are only a small number of total operations), and
+during <span class='math'>$S_2$</span> and <span class='math'>$S_3$</span>, the number only increases, until it arrives at
+<span class='math'>$B \leq 10^5$</span>. Additionally, from the first observation, we only need to
+consider values of <span class='math'>$k \leq \mathcal O(\log{\max(A, B)})$</span>, which allows us to
+calculate the values of <span class='math'>$y$</span> from the values of <span class='math'>$x$</span> in linear time for each value
+of <span class='math'>$k$</span>.
+<p>Depending on implementation, this approach can be either
+<span class='math'>$O(\max(A, B)\log{\max(A, B)})$</span> or <span class='math'>$O(\max(A, B))$</span>.
+<p><strong>Observation 3:</strong> Just before a division operation, and just after a
+multiplication operation, there is at most one addition operation. &quot;Just before&quot;
+a division operation means before the division operation but after the previous
+division operation (if such a division operation exists); &quot;just after&quot; is
+defined similarly for multiplication.
+<p>We prove this for division (the proof for multiplication is similar). Suppose
+that we have a subsequence <span class='math'>$\cdots +^{2}, /, \cdots$</span>. Then, we can replace this
+with <span class='math'>$\cdots /, +, \cdots$</span>, as both subsequences represent the function
+<span class='math'>$x \implies x/2+1$</span>.
+<p>(Although not needed for this problem, this observation actually implies that
+when turning <span class='math'>$A$</span> into <span class='math'>$B$</span>, the intermediate numbers do not get larger than
+<span class='math'>$10^5$</span>, which means in the brute force solution mentioned above, we could have
+only considered numbers <span class='math'>$\le 10^5$</span>. The reason for this is that during <span class='math'>$S_1$</span>, the
+sequence consists of <span class='math'>$/$</span> or <span class='math'>$+/$</span> subsequences concatenated together. In <span class='math'>$/$</span> and
+<span class='math'>$+/$</span>, the original number cannot increase. Thus, the only way that an
+intermediate number is larger than <span class='math'>$A$</span> is immediately after the first <span class='math'>$+$</span>
+operation, which only happens if <span class='math'>$A$</span> is odd. So, all intermediate numbers are
+<span class='math'>$\leq 10^5$</span>.)
+<p><strong>Observation 4:</strong> If we fix the total number of divisions as <span class='math'>$D$</span>, then the
+sequence <span class='math'>$S_1$</span> is fixed, and if we fix the total number of multiplications as
+<span class='math'>$M$</span>, then the sequence <span class='math'>$S_3$</span> is fixed. 
+<p>We prove the first part of the statement (the second part is very similar).
+Suppose we make <span class='math'>$D$</span> divisions in <span class='math'>$S_1$</span>. Consider the first division; if <span class='math'>$A$</span> is
+odd, then we must have added one before dividing (we could not have added more
+by the result of our third observation). If <span class='math'>$A$</span> is even, then we could not have
+added anything before dividing, as we cannot add more than <span class='math'>$1$</span> by the third
+observation, and if we add exactly one, we cannot divide by <span class='math'>$2$</span>. Now, let the
+value of the number after the first division be <span class='math'>$A_2$</span>.  We now know that we need
+to transform <span class='math'>$A_2$</span> into <span class='math'>$B$</span> using exactly <span class='math'>$D-1$</span> divisions, so we can repeat the
+argument we just made. Repeating this down to <span class='math'>$D=0$</span>, we arrive at a forced
+sequence of operations in <span class='math'>$S_1$</span> given the value of <span class='math'>$D$</span>.
+<p>Similarly, given <span class='math'>$M$</span>, we can arrive at a forced sequence of operations in <span class='math'>$S_3$</span>.
+<p>Since the total number of operations is <span class='math'>$O(\log{\max(A, B)})$</span>, we can iterate
+over all pairs of values for <span class='math'>$D$</span> and <span class='math'>$M$</span> and generate the forced sequences <span class='math'>$S_1$</span>
+and <span class='math'>$S_3$</span>, which then force the number of addition operations that need to be in
+<span class='math'>$S_2$</span>. Thus, given <span class='math'>$D$</span> and <span class='math'>$M$</span>, we can generate the entire sequence, count the
+number of operations used, and record the minimum such number of operations.
+<p>Depending on implementation, this is <span class='math'>$O(\log^3{\max(A, B)})$</span> or
+<span class='math'>$O(\log^2{\max(A, B)})$</span>, both of which fit comfortably in the time limit.
+<p>In the below implementation, the outer loop &quot;removed&quot; represents the number of
+multiplications <span class='math'>$M$</span> in <span class='math'>$S_3$</span>, which fixes the number <span class='math'>$B&apos;$</span> that should be reached
+before applying the sequence of operations in <span class='math'>$S_3$</span>. The inner while loop
+represents increasing the value of <span class='math'>$D$</span> until the value of <span class='math'>$A$</span> after applying the
+operations in <span class='math'>$S_1$</span> becomes less than or equal to <span class='math'>$B&apos;$</span>.
+<p>Instead of directly simulating the process of generating the operations in
+<span class='math'>$S_3$</span>, the number of such operations can immediately be determined by looking at
+the binary representation of <span class='math'>$B$</span> and counting the number of bits in the last <span class='math'>$M$</span>
+bits of the binary representation <span class='math'>$B$</span>. In particular, the number of additions in
+<span class='math'>$S_3$</span> is equal to the number of <span class='math'>$1$</span> bits in the number <span class='math'>$B\&amp;(2^{M}-1)$</span>, where
+<span class='math'>$\&amp;$</span> denotes bitwise AND.
+<p>Danny&apos;s Implementation:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class SearchingForSoulmates {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int t = Integer.parseInt(in.readLine()); t &gt; 0; t--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            long cow1 = Long.parseLong(tokenizer.nextToken());
+            long cow2 = Long.parseLong(tokenizer.nextToken());
+            long answer = Long.MAX_VALUE;
+            for (int removed = 0; cow2 &gt;&gt; removed &gt; 0; removed++) {
+                long here = 0;
+                long prefix = cow2 &gt;&gt; removed;
+                long cow = cow1;
+                while (cow &gt; prefix) {
+                    if (cow % 2L == 1L) {
+                        cow++;
+                        here++;
+                    }
+                    cow /= 2L;
+                    here++;
+                }
+                here += prefix - cow;
+                here += removed;
+                here += Long.bitCount(cow2 &amp; ((1L &lt;&lt; removed) - 1L));
+                answer = Math.min(answer, here);
+            }
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p>Bonus: Solve this problem in <span class='math'>$\mathcal O(\log{\max(A, B)})$</span> time.
+<p></body></html>

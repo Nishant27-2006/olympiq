@@ -1,0 +1,162 @@
+Solution ID: sol_pump_gold_dec19
+Contest: DEC19
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_pump_gold_dec19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Let's first approach a simpler problem - what is the minimum cost needed to
+reach junction
+
+$N$
+
+from junction
+
+$1$
+
+, ignoring flow rate? This is a shortest paths problem and can
+be solved by applying Dijkstra's.
+
+There's a small problem though - if we just use Dijkstra's to compute the length
+of the shortest path, we don't know which edges are used so we can't compute the
+ratio of flow rate and cost directly. We need more information about the minimum
+weight edge used in the graph.
+
+There are two ways that we can handle this. The first way is to delete all edges
+with the minimum weight, and recompute the length of the shortest path. We
+repeatedly apply this process until there is no path between junctions
+
+$1$
+
+and
+
+$N$
+
+. For each application of Dijkstra's, compute the ratio between the minimum
+weight edge present in the graph and the length of the shortest path, and take
+the maximum of all of these values.
+
+This answer is clearly a lower bound on the answer since it cannot overestimate
+the flow rate within the graph, and the reason that this answer must be valid is
+that if the length of the shortest path increases after deleting edges of
+minimum weight, then all shortest paths in the prior graph must have used one of
+those edges.
+
+Here is Brian Dean's code implementing this approach.
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <set>
+#include <map>
+using namespace std;
+ 
+int N, M;
+map<int, vector<int>> nbrs;
+map<pair<int,int>,double> edgecost;
+map<pair<int,int>,double> edgeflow;
+vector<int> flows;
+ 
+int dijkstra(int source, int destination, int flowmin)
+{
+  map<int,int> dist;
+  set<pair<int,int>> visited;
+  visited.insert(make_pair(0,source));
+  while (!visited.empty()) {
+    int i = visited.begin()->second;
+    visited.erase(visited.begin());
+    if (i == destination) return dist[i];
+    for (auto j : nbrs[i])
+      if (edgeflow[make_pair(i,j)] >= flowmin)
+	if (dist.count(j) == 0 || dist[i] + edgecost[make_pair(i,j)] < dist[j]) {
+	  dist[j] = dist[i] + edgecost[make_pair(i,j)];
+	  visited.insert(make_pair(dist[j],j));
+	}
+  }
+  return -1;
+}
+ 
+int main(void)
+{
+  ifstream fin ("pump.in");
+  ofstream fout ("pump.out");
+  fin >> N >> M;
+  int i, j, c, f;
+  for (int m=0; m<M; m++) {
+    fin >> i >> j >> c >> f;
+    flows.push_back(f);
+    nbrs[i].push_back(j);
+    nbrs[j].push_back(i);
+    edgecost[make_pair(i,j)] = edgecost[make_pair(j,i)] = c;
+    edgeflow[make_pair(i,j)] = edgeflow[make_pair(j,i)] = f;
+  }
+  long long best_num = 0, best_den = 1, cur_num, cur_den;
+  for (int f : flows) {
+    cur_num = f;
+    cur_den = dijkstra(1, N, f);
+    if (cur_den != -1) {
+      if (cur_num * best_den > best_num * cur_den) {
+	best_num = cur_num; best_den = cur_den;
+      }
+    }
+  }
+  fout << best_num * 1000000LL / best_den << "\n";
+  return 0;
+}
+
+The other way to approach this is to augment the vertices to also keep track of
+the flow rate currently going through the vertex at that point in time. With
+this approach, you only run Dijkstra's once, but you have to maintain more
+information when computing the transitions. Here is my code implementing this
+approach.
+
+#include <cstring>
+#include <iostream>
+#include <queue>
+
+using namespace std;
+
+typedef pair<int, int> pii;
+typedef pair<int, pii> edge; // <flow, cost>
+typedef pair<int, pii> vertex; // <vertex, flow>
+
+int dp[1001][1001];
+vector<edge> edges[1001];
+int main() {
+  freopen("pump.in", "r", stdin);
+  freopen("pump.out", "w", stdout);
+  memset(dp, 1, sizeof(dp));
+  int n, m;
+  cin >> n >> m;
+  dp[1][1000] = 0;
+  while(m--) {
+    int a, b, c, f;
+    cin >> a >> b >> c >> f;
+    edges[a].push_back(edge(b, {f, c}));
+    edges[b].push_back(edge(a, {f, c}));
+  }
+  priority_queue<vertex> q;
+  q.push(vertex(0, {1, 1000}));
+  double ret = -1;
+  while(q.size()) {
+    vertex curr = q.top(); q.pop();
+    if(curr.second.first == n) {
+      ret = max(ret, curr.second.second / (double)dp[curr.second.first][curr.second.second]);
+      continue;
+    }
+    for(edge out: edges[curr.second.first]) {
+      int nf = min(out.second.first, curr.second.second);
+      int nc = dp[curr.second.first][curr.second.second] + out.second.second;
+      int nd = out.first;
+      if(nc < dp[nd][nf]) {
+        dp[nd][nf] = nc;
+        q.push(vertex(-dp[nd][nf], {nd, nf}));
+      }
+    }
+  }
+  cout << (int)(1000000 * ret) << "\n";
+}

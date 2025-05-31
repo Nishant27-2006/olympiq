@@ -1,0 +1,303 @@
+Solution ID: sol_prob3_silver_jan23
+Contest: JAN23
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_jan23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brandon Wang, Claire Zhang, Benjamin Qi)
+
+First,
+
+$A_i$
+
+must be even for all
+
+$0\leq i \leq N-1$
+
+because after every time we
+cross
+
+$i.5$
+
+moving right we must cross it again in the opposite direction in
+order to return to 0. We assume
+
+$A_i$
+
+is even for the rest of the analysis.
+
+Claim:
+
+The optimal number of direction changes is at least
+
+$\left(\sum_{i=-1}^{N-1}\frac{|A_i-A_{i+1}|}{2}\right)-1$
+
+, where we let
+
+$A_{-1}=A_{N}=0$
+
+.
+
+Proof:
+
+First, consider the case where
+
+$A_i<A_{i+1}$
+
+. Then Bessie must
+move right from
+
+$i$
+
+to
+
+$i+1$
+
+exactly
+
+$A_i/2$
+
+times and right from
+
+$i+1$
+
+to
+
+$i+2$
+
+exactly
+
+$A_{i+1}/2$
+
+times. For each R corresponding to moving right from
+
+$i+1$
+
+to
+
+$i+2$
+
+,  consider the character preceding it; at most
+
+$A_i/2$
+
+of these
+characters can be Rs. Thus, there must be at least
+
+$\frac{A_{i+1}-A_i}{2}$
+
+occurrences of LR in Bessie's route corresponding to changing direction at
+position
+
+$i+1$
+
+. We subtract one for
+
+$i=-1$
+
+, which is a special case because the
+first character of our route is not preceded by any character.
+
+Similarly, if
+
+$A_i>A_{i+1}$
+
+, then there must be at least
+
+$\frac{A_{i}-A_{i+1}}{2}$
+
+occurrences of  RL in Bessie's route corresponding to
+changing direction at position
+
+$i+1$
+
+.
+
+$\blacksquare$
+
+Next, we show that the optimal number of direction changes is exactly
+
+$\left(\sum_{i=-1}^{N-1}\frac{|A_i-A_{i+1}|}{2}\right)-1$
+
+by constructing a
+route with exactly this number of direction changes. We present two different 
+ways to do this below.
+
+Solution 1:
+
+Greedily move in the current direction (initially right) until we are forced to
+switch directions. Repeat.
+
+N = int(input())
+A = list(map(int, input().split())) + [0]
+ 
+route = []
+i = 0
+while not (i == 0 and A[i] == 0):
+	while A[i] > 0: # go right as far as possible
+		route.append('R')
+		A[i] -= 1
+		i += 1
+	while i > 0 and (A[i-1] > 1 or A[i] == 0): # go left as far as possible
+		route.append('L')
+		i -= 1
+		A[i] -= 1
+ 
+print("".join(route))
+
+This solution is correct because it only turns left at positions
+
+$i$
+
+where
+
+$A_{i-1}>A_{i}$
+
+and only does so
+
+$\frac{A_{i-1} - A_{i}}{2}$
+
+times (every time we reach
+position
+
+$i$
+
+after
+
+$A_{i}$
+
+becomes
+
+$0$
+
+), and similarly only turns right at
+positions where
+
+$A_{i-1}<A_{i}$
+
+and only does so
+
+$\frac{A_{i} - A_{i-1}}{2}$
+
+times (minus
+one if
+
+$i=0$
+
+).
+
+Solution 2:
+
+From
+
+$A_{-1},A_0,\dots,A_{N}$
+
+let's construct a sequence of parentheses with
+length equal to the optimal number of direction changes plus one. Iterate over
+
+$i$
+
+from
+
+$-1$
+
+to
+
+$N-1$
+
+. If
+
+$A_{i}<A_{i+1}$
+
+, then add
+
+$\frac{A_{i+1}-A_i}{2}$
+
+left parentheses to our sequence, corresponding to places in the route where we
+switch directions from L to R. On the other hand, if
+
+$A_i>A_{i+1}$
+
+, then add
+
+$\frac{A_i-A_{i+1}}{2}$
+
+right parentheses to our sequence, corresponding to
+places in the route where we need to switch directions from R to L. Observe 
+that every proper prefix of our sequence contains more left parentheses than
+right parentheses (after processing up to
+
+$A_i$
+
+the number of left parentheses
+minus the number of right parentheses is
+
+$A_i/2>0$
+
+). Also, the total number of 
+left parentheses equals the total number of right parentheses. Thus, given the 
+sequence of parentheses, we can construct a valid route as follows:
+
+Start at the leftmost left parenthesis.
+
+Go right to the rightmost right parenthesis.
+
+Go left to the rightmost left parenthesis.
+
+Go
+right to the second rightmost right parenthesis.
+
+Go left to the second rightmost left parenthesis.
+
+...
+
+Go
+right to the
+
+$k$
+
+th rightmost right parenthesis.
+
+Go left to the
+
+$k$
+
+th rightmost left parenthesis.
+
+...
+
+Go left to the leftmost left parenthesis.
+
+The number of direction changes in this route is equal to the length of the
+sequence minus one, as desired.
+
+N = int(input())
+A = list(map(int, input().split()))
+
+lparens = [0] * (A[0] // 2)
+rparens = []
+for i in range(N-1):
+	for _ in range((A[i]-A[i+1]) // 2):
+		rparens.append(i+1)
+	for _ in range((A[i+1]-A[i]) // 2):
+		lparens.append(i+1)
+
+rparens += [N] * (A[-1] // 2)
+assert len(lparens) == len(rparens)
+
+x = 0
+route = []
+for l, r in reversed(list(zip(lparens, rparens))):
+	assert x < r
+	while x < r:
+		x += 1
+		route.append('R')
+	assert x > l
+	while x > l:
+		x -= 1
+		route.append('L')
+
+print("".join(route))

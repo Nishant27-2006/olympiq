@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>Sort the citation counts largest-to-smallest, and consider a bar graph where bar
+<span class='math'>$i$</span> has width <span class='math'>$1$</span> and height <span class='math'>$c_i$</span>. The <span class='math'>$h$</span>-index of the papers before the
+surveys is simply the dimension of the largest square that fits under this bar
+graph. We want to determine how much we can increase the <span class='math'>$h$</span>-index with <span class='math'>$K$</span>
+surveys each citing <span class='math'>$L$</span> distinct papers.
+<p>Let&apos;s binary search on the final <span class='math'>$h$</span>-index. Then we just need a way to check
+whether it&apos;s possible to achieve a given <span class='math'>$h$</span>-index <span class='math'>$h$</span>.
+<p>It&apos;s clearly optimal to work only with the <span class='math'>$h$</span> papers that start off with the
+largest citation counts. Note that we have <span class='math'>$KL$</span> total citations to allocate to
+these papers. If the total citation count of these papers is less than
+<span class='math'>$h^2 - KL$</span>, then we cannot hope to achieve <span class='math'>$h$</span>. This is one failure mode.
+<p>Unfortunately, it&apos;s not the only failure mode. That is, the converse of the
+above statement is not true, because we have an added restriction that no survey
+can cite a paper twice. So for example if <span class='math'>$h=3$</span>, <span class='math'>$K = 1$</span>, and <span class='math'>$L = 2$</span>, and the
+top three papers initially have citation counts <span class='math'>$(3, 3, 1)$</span>, then we cannot
+raise the third paper to citation count <span class='math'>$3$</span> since we only have one survey. This
+illuminates another possible failure mode: if there is a paper with less than
+<span class='math'>$h-K$</span> citations initially, then we cannot achieve <span class='math'>$h$</span>.
+<p>It turns out that these are the only two failure modes. We can prove this by
+induction on <span class='math'>$K$</span>. If <span class='math'>$K=0$</span> then every paper already has at least <span class='math'>$h$</span> citations,
+so we&apos;re certainly happy. Suppose <span class='math'>$K&gt;0$</span>. Every paper needs at most <span class='math'>$K$</span> more
+citations. There is some set of papers which need exactly <span class='math'>$K$</span> more citations. By
+the assumption on the sum of citation counts, this set has size at most <span class='math'>$L$</span>, so
+with one survey we can cite all these papers (plus some others, until we&apos;ve hit
+<span class='math'>$L$</span> citations or this survey has cited every paper). Now we&apos;re in a situation
+with <span class='math'>$K-1$</span> remaining surveys, but every paper needs at most <span class='math'>$K-1$</span> more
+citations. Moreover, it can be checked that the total number of needed citations
+is now at most <span class='math'>$(K-1)L$</span>. So we can indeed induct, completing the proof.
+<p>Below is Danny Mittal&apos;s code, implementing the above idea.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.StringTokenizer;
+ 
+public class AcowdemiaSilver {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int l = Integer.parseInt(tokenizer.nextToken());
+        Integer[] publications = new Integer[n];
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 0; j &lt; n; j++) {
+            publications[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        Arrays.sort(publications, Comparator.reverseOrder());
+        int upper = n;
+        int lower = 0;
+        while (upper &gt; lower) {
+            int mid = (upper + lower + 1) / 2;
+            long needed = 0;
+            for (int j = 0; j &lt; mid; j++) {
+                needed += (long) Math.max(0, mid - publications[j]);
+            }
+            if (needed &lt;= ((long) k) * ((long) l) &amp;&amp; publications[mid - 1] + k &gt;= mid) {
+                lower = mid;
+            } else {
+                upper = mid - 1;
+            }
+        }
+        System.out.println(upper);
+    }
+}
+</pre>
+<p></body></html>

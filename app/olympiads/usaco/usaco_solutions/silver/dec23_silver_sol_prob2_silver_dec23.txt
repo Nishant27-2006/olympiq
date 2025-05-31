@@ -1,0 +1,196 @@
+Solution ID: sol_prob2_silver_dec23
+Contest: DEC23
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_dec23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Andi Qu)
+
+At first glance, this problem may seem like a messy graph problem with the barns
+forming some network. Luckily, the way the barns are connected means that we
+don't have to construct a graph explicitly.
+
+The key observation is that because there are
+
+$K$
+
+barns in a cycle and
+
+$K$
+
+total
+pairs of connections, no two barns outside the cycle are connected. (Try drawing
+some cycles and counting the connections to verify this fact!) This observation
+means that we can split the answer into a sum of two values: the number of
+same-labelled barns (a)
+
+outside
+
+and (b)
+
+inside
+
+the cycle.
+
+If a barn outside the cycle is labelled the same by Annabelle and Bessie, then
+its label must not appear in the lists
+
+$a_i$
+
+or
+
+$b_i$
+
+. And because the total
+number of barns outside the cycle is no greater than the number of integers from
+
+$1$
+
+to
+
+$N$
+
+appearing in neither
+
+$a_i$
+
+nor
+
+$b_i$
+
+, the maximum number of
+same-labelled barns outside the cycle is exactly equal to that number. This
+value can be computed in
+
+$O(N)$
+
+time with a set data structure.
+
+To find the maximum number of same-labelled barns inside the cycle, imagine
+placing the two cycles on top of each other and rotating one cycle until the
+maximum number of labels align. Rotating a cycle and counting the number of
+alignments takes
+
+$O(N)$
+
+time, so a straightforward implementation of this
+algorithm would take
+
+$O(N^2)$
+
+time. To speed it up, we can count the number of
+alignments for a particular rotation (say rotating
+
+$a_i$
+
+to the right by
+
+$r$
+
+positions) by counting the number of positions
+
+$i$
+
+where
+
+$a_i = b_{i + r}$
+
+(wrapping around as necessary). Specifically:
+
+We start with a counter array
+
+$c_0, \dots, c_{K - 1}$
+
+, initially all set to
+zeroes.
+
+We iterate over every value in
+
+$a_i$
+
+and find the corresponding
+value
+
+$b_j = a_i$
+
+if it exists.
+
+We then increment
+
+$c_r$
+
+for
+
+$r = i - j$
+
+if
+
+$i \geq j$
+
+, or
+
+$r = i - j + K$
+
+if
+
+$j > i$
+
+.
+
+Finally, we take the
+maximum
+
+$c_r$
+
+at the end of this process as the answer.
+
+(Note that we also need to consider the case where the list
+
+$a_i$
+
+or
+
+$b_i$
+
+is
+reversed!)
+
+With this improved algorithm, we no longer iterate over all barns each time we
+do a rotation, so it runs in
+
+$O(N)$
+
+time.
+
+Altogether, this solution runs in
+
+$O(N)$
+
+time.
+
+$O(N \log N)$
+
+-time solutions
+using slower set data structures should also pass all test cases.
+
+Python code implementing this solution:
+
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+b = list(map(int, input().split()))
+
+same_outside = set(range(1, n + 1)) - set(a) - set(b)
+
+def max_rotation(cycle_a, cycle_b):
+    position_a = {val: idx for idx, val in enumerate(cycle_a)}
+    with_offset = [0] * k
+    for idx, val in enumerate(cycle_b):
+        if val in position_a:
+            with_offset[idx - position_a[val]] += 1
+    return max(with_offset)
+
+print(len(same_outside) +
+      max(max_rotation(a, b), max_rotation(a, b[::-1])))

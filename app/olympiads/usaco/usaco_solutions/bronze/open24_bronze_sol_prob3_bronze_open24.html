@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Subtask 1:</strong> Try all <span class='math'>$N!=N\cdot (N-1)\cdots 1$</span> possible <span class='math'>$p$</span> in
+lexicographical order, and see if they can produce <span class='math'>$h$</span>. In Python, we can use
+<a href='https://usaco.guide/bronze/complete-rec?lang=py#generating-permutations-using-itertoolspermutations'>itertools.permutations</a>
+to do this easily.
+<p>Ben&apos;s Python code:
+<p><pre class='prettyprint'>
+def P_to_H(P):
+    H = []
+    while len(P) &gt; 1:
+        if P[0] &gt; P[-1]:
+            H.append(P[1])
+            P = P[1:]
+        else:
+            H.append(P[-2])
+            P = P[:-1]
+    return H
+ 
+ 
+import itertools
+ 
+ 
+def solve():
+    N = int(input())
+    H = list(map(int, input().split()))
+    for P in itertools.permutations(range(1, N + 1)):
+        if P_to_H(P) == H:
+            print(&quot; &quot;.join(map(str, P)))
+            return
+    print(-1)
+ 
+ 
+T = int(input())
+for _ in range(T):
+    solve()
+</pre>
+<p><strong>Subtask 2:</strong> If we are given the values of <span class='math'>$p_1$</span> and <span class='math'>$p_N$</span>, we can uniquely
+determine the rest of <span class='math'>$p$</span> by going through <span class='math'>$h$</span> one element at a time. In
+particular, when <span class='math'>$N&gt;2$</span>,
+<p><ul><li>If <span class='math'>$p_1&gt;p_N$</span>, then <span class='math'>$p_2=h_1$</span>. It remains to determine the elements between
+<span class='math'>$p_2$</span> and <span class='math'>$p_N$</span>.</li><li>Else, <span class='math'>$p_{N-1}=h_1$</span>. It remains to determine the elements between <span class='math'>$p_1$</span> and
+<span class='math'>$p_{N-1}$</span></li></ul>
+<p>and then we can process <span class='math'>$h_2,h_3,\dots, h_{N-1}$</span> similarly. At the end, we
+should check if <span class='math'>$p$</span> forms a permutation or not and actually produces <span class='math'>$h$</span>; if so,
+we update our answer. The time complexity is <span class='math'>$O(N^3)$</span> per test.
+<p>Ben&apos;s Python code:
+<p><pre class='prettyprint'>
+def P_to_H(P):
+    H = []
+    while len(P) &gt; 1:
+        if P[0] &gt; P[-1]:
+            H.append(P[1])
+            P = P[1:]
+        else:
+            H.append(P[-2])
+            P = P[:-1]
+    return H
+ 
+ 
+def solve():
+    N = int(input())
+    H = list(map(int, input().split()))
+    ans = None
+    for l_val in range(1, N + 1):
+        for r_val in range(1, N + 1):
+            cand = [-1] * N
+            l = 0
+            r = N - 1
+            cand[l] = l_val
+            cand[r] = r_val
+            for h in H:
+                if cand[l] &gt; cand[r]:
+                    l += 1
+                    cand[l] = h
+                else:
+                    r -= 1
+                    cand[r] = h
+            if len(set(cand)) == N and P_to_H(cand) == H:
+                if ans is None:
+                    ans = cand
+                ans = min(ans, cand)
+ 
+    if ans is None:
+        print(-1)
+        return
+    print(&quot; &quot;.join(map(str, ans)))
+ 
+ 
+T = int(input())
+for _ in range(T):
+    solve()
+</pre>
+<p><strong>Subtask 3:</strong> Consider the process of producing <span class='math'>$h$</span> from <span class='math'>$p$</span>. Note that the
+smallest element of <span class='math'>$p$</span>, <span class='math'>$1$</span>, will never be removed. So when two elements remain
+in <span class='math'>$p$</span>, one must be <span class='math'>$1$</span>, and <span class='math'>$1$</span> will be the last element written down. Thus, we
+must have <span class='math'>$h_{N-1}=1$</span>, or else we can output <span class='math'>$-1$</span> and exit. For the remainder of
+the problem, we will not use the last element of <span class='math'>$h$</span>, so we discard the last
+element of <span class='math'>$h$</span> and assume that <span class='math'>$h$</span> has length <span class='math'>$N-2$</span> going forward.
+<p>If the answer is not <span class='math'>$-1$</span>, the lexicographically minimum <span class='math'>$p$</span> must satisfy
+<span class='math'>$p_1&lt;p_N$</span>, or else reversing <span class='math'>$p$</span> will give a lexicographically smaller
+permutation.
+<p>Can there be more than one permutation <span class='math'>$p$</span> satisfying <span class='math'>$p_1&lt;p_N$</span> that maps to the
+same <span class='math'>$h$</span>? If we print the mapping from <span class='math'>$p$</span> to <span class='math'>$h$</span>  for all <span class='math'>$p$</span> for small <span class='math'>$N$</span>
+(e.g., <span class='math'>$N=4$</span>) using our solution for subtask 1, we observe that all <span class='math'>$h$</span> are
+distinct. So it seems true if there exists some <span class='math'>$p$</span> that maps to <span class='math'>$h$</span>, <span class='math'>$p$</span> must
+be unique up to reversal.
+<p><pre class='prettyprint'>
+def P_to_H(P):
+    H = []
+    while len(P) &gt; 1:
+        if P[0] &gt; P[-1]:
+            H.append(P[1])
+            P = P[1:]
+        else:
+            H.append(P[-2])
+            P = P[:-1]
+    return H
+ 
+ 
+import itertools
+ 
+ 
+N = 4
+for P in itertools.permutations(range(1, N + 1)):
+    if P[0] &lt; P[-1]:
+        print(P, P_to_H(P)[:-1])
+</pre>
+<p>Output:
+<p><pre>
+(1, 2, 3, 4) [3, 2]
+(1, 2, 4, 3) [4, 2]
+(1, 3, 2, 4) [2, 3]
+(1, 3, 4, 2) [4, 3]
+(1, 4, 2, 3) [2, 4]
+(1, 4, 3, 2) [3, 4]
+(2, 1, 3, 4) [3, 1]
+(2, 1, 4, 3) [4, 1]
+(2, 3, 1, 4) [1, 3]
+(2, 4, 1, 3) [1, 4]
+(3, 1, 2, 4) [2, 1]
+(3, 2, 1, 4) [1, 2]
+</pre>
+<p>Looking at the permutations above (or from working out a few cases by hand), we
+can further observe that 
+<p><ol><li>All <span class='math'>$N-2$</span> elements of <span class='math'>$h$</span> must be distinct.</li><li>The numbers at the ends of <span class='math'>$p$</span> are precisely those two missing from
+<span class='math'>$h$</span>.</li></ol>
+<p>Here&apos;s a way to see why these observations are true. If we perform the following
+operation <span class='math'>$N-2$</span> times, we will always end up writing down a permutation of
+<span class='math'>$p_2\dots p_{N-1}$</span>:
+<p><em>Operation:</em> Choose to do exactly one of the following:
+<p><ol><li>Write down <span class='math'>$p&apos;_2$</span> and remove <span class='math'>$p&apos;_1$</span> from the permutation.</li><li>Write down <span class='math'>$p&apos;_{n-1}$</span> and remove <span class='math'>$p&apos;_n$</span> from the permutation.</li></ol>
+<p>Once we&apos;ve determined the numbers at the ends of <span class='math'>$p$</span>, we can determine the
+remainder of <span class='math'>$p$</span> in the same way as subtask 2. In fact, it turns out that as
+long as all elements of <span class='math'>$h$</span> are distinct, there is some <span class='math'>$p$</span> mapping to it.
+<p>Ben&apos;s Python code:
+<p><pre class='prettyprint'>
+def solve():
+    N = int(input())
+    H = list(map(int, input().split()))
+    if H[-1] != 1:
+        print(-1)
+        return
+    H = H[:-1]
+    remaining = [False] + [True] * N
+    for h in H:
+        if not remaining[h]:
+            print(-1)
+            return
+        remaining[h] = False
+    ends = [x for x in range(1, N + 1) if remaining[x]]
+    ans = [-1] * N
+    l, r = 0, N - 1
+    ans[l], ans[r] = ends
+    for h in H:
+        if ans[l] &gt; ans[r]:
+            l += 1
+            ans[l] = h
+        else:
+            r -= 1
+            ans[r] = h
+    print(&quot; &quot;.join(map(str, ans)))
+ 
+ 
+T = int(input())
+for _ in range(T):
+    solve()
+</pre>
+<p>Chongtian&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main() {
+	int T;
+	cin &gt;&gt; T;
+	while (T--) {
+		int n;
+		cin &gt;&gt; n;
+		vector&lt;int&gt; h(n - 1);
+		for (int &amp;i : h) cin &gt;&gt; i;
+		vector&lt;bool&gt; has(n + 1);
+		for (int i : h) has[i] = 1;
+		vector&lt;int&gt; not_has;
+		for (int i = 1; i &lt;= n; i++) {
+			if (!has[i]) { not_has.push_back(i); }
+		}
+		int cnt_one = count(h.begin(), h.end(), 1);
+		if (not_has.size() &gt; 2 || h.back() != 1 ||
+		    (not_has.size() == 2 &amp;&amp; cnt_one != 2)) {
+			cout &lt;&lt; -1 &lt;&lt; endl;
+			continue;
+		}
+		vector&lt;int&gt; p(n);
+		if (not_has.size() == 1) {
+			// this must mean 1 is in the corner
+			p[0] = 1;
+			p[n - 1] = not_has[0];
+		} else {
+			p[0] = not_has[0];
+			p[n - 1] = not_has[1];
+		}
+		int l = 0, r = n - 1;
+		for (int i = 0; i &lt; n - 1; i++) {
+			if (p[l] &gt; p[r]) {
+				p[++l] = h[i];
+			} else {
+				p[--r] = h[i];
+			}
+		}
+		for (int i = 0; i &lt; n; i++) {
+			if (i) cout &lt;&lt; &quot; &quot;;
+			cout &lt;&lt; p[i];
+		}
+		cout &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p><strong>Bonus:</strong> 
+<p>In this problem, we constructed a bijection (one-to-one mapping) between all
+<span class='math'>$N!/2$</span>  line graphs with vertex set <span class='math'>$1\dots N$</span> and all <span class='math'>$N!/2$</span>  sequences of
+length <span class='math'>$N-2$</span> consisting only of <span class='math'>$1\dots N$</span> with no duplicates. More generally,
+there is a bijection between all <span class='math'>$N^{N-2}$</span>
+<a href='https://en.wikipedia.org/wiki/Tree_(graph_theory)'>trees</a> with vertex set
+<span class='math'>$1\dots N$</span> and all <span class='math'>$N^{N-2}$</span> sequences of length <span class='math'>$N-2$</span>  consisting only of
+<span class='math'>$1\dots N$</span> (<a href='https://en.wikipedia.org/wiki/Pr%C3%BCfer_sequence'>Prufer
+sequence</a>). The mapping from trees to sequences is essentially the same as
+described in this problem; <span class='math'>$N-2$</span> times, take the highest leaf, write down the
+vertex it is adjacent to, and remove the leaf. Try to figure out the reverse
+mapping (sequence to trees) on your own.
+<p></body></html>

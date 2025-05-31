@@ -1,0 +1,341 @@
+Solution ID: sol_prob1_platinum_feb21
+Contest: FEB21
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob1_platinum_feb21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+This is a harder version of a problem from last month's
+
+Silver
+contest
+
+.
+
+Let
+
+$A_a$
+
+denote the color of fence segment
+
+$a$
+
+for each
+
+$a\in [1,N]$
+
+.
+
+Approach 1:
+
+The minimum number of strokes required to paint a subrange
+
+$[a,b]$
+
+is equal  to
+
+$b-a+1$
+
+minus the number of indices
+
+$(l,r)$
+
+such that
+
+$A_l=A_r<\min_{l<i<r}{A_i}$
+
+(similarly as Modern Art from the Gold contest).
+
+In the sample case, the pairs of indices are
+
+$(1,4)$
+
+,
+
+$(2,3)$
+
+,
+
+$(4,5)$
+
+, and
+
+$(6,8)$
+
+.
+
+To generate all such pairs of indices (there are
+
+$\mathcal O(N)$
+
+of them), we
+can use a monotonic stack (as alluded to by the
+
+analysis
+
+for the silver problem).  The diagram
+below displays which elements are in the stack at what times for the sample case
+(
+
+$1$
+
+and
+
+$2$
+
+remain in the stack at the end):
+
+3
+  2-2     2---2- ...
+1-----1-1------- ...
+
+Computing the number of intervals contained within some query interval can be
+done offline in
+
+$\mathcal{O}(\log N)$
+
+per query; answer queries in increasing
+order of right endpoint and store a BIT for the left endpoints.
+
+Time Complexity:
+
+$\mathcal{O}((N+Q)\log N)$
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define f first
+#define s second
+
+const int MX = 2e5+5;
+
+int N,Q;
+vector<pair<int,int>> query[MX];
+
+struct {
+	int bit[MX];
+	int sum(int i) {
+		int sum = 0;
+		for (;i;i-=i&-i) sum += bit[i];
+		return sum;
+	}
+	int query(int l, int r) { return sum(r)-sum(l-1); }
+	void inc(int i) { for (;i<MX;i+=i&-i) ++bit[i]; }
+} BIT;
+
+int main() {
+	cin >> N >> Q; 
+	vector<int> A(N), ans(Q); 
+	for (int& t: A) cin >> t;
+	for (int i = 0; i < Q; ++i) {
+		int l,r; cin >> l >> r; --l,--r;
+		query[r].push_back({l,i});
+	}
+	vector<int> stk;
+	for (int i = 0; i < N; ++i) {
+		while (!stk.empty() && A[stk.back()] > A[i]) stk.pop_back();
+		if (!stk.empty() && A[stk.back()] == A[i]) { // consider pair (stk.back(),i)
+			BIT.inc(1+stk.back());
+			stk.back() = i;
+		} else stk.push_back(i);
+		for (pair<int,int> q: query[i])
+			ans[q.s] = i-q.f+1-BIT.query(q.f+1,i+1);
+	}
+	for (int t: ans) cout << t << "\n";
+}
+
+Approach 2 (courtesy of Spencer Compton):
+
+The pairs of indices above join the segments into several connected components.
+For example, the connected components in the sample case are
+
+$[1,4,5],[2,3],[6,8],[7]$
+
+. Define
+
+$\texttt{is_last}[i]$
+
+to be true if
+
+$i$
+
+is the
+last number in its group and there exists some
+
+$j>i$
+
+such that
+
+$A_j<A_i$
+
+. So for
+the sample case,
+
+$\texttt{is_last}[3]$
+
+and
+
+$\texttt{is_last}[7]$
+
+are both true.
+As in the above solution, we can generate all such indices
+
+$i$
+
+with a monotonic
+stack.
+
+The answer for a query
+
+$[l,r]$
+
+is equal to the number of
+
+$i\in [l,r]$
+
+such that
+
+$\texttt{is_last}[i]$
+
+is true (which we can compute in
+
+$\mathcal{O}(1)$
+
+using
+prefix sums),  plus some additional contribution by connected components that
+continue past
+
+$r$
+
+,  if the greatest index included in such a component that is
+at most
+
+$r$
+
+is at least
+
+$l$
+
+.
+
+For example, the answer to the query
+
+$(3,6)$
+
+in the sample case is
+
+$3$
+
+because
+
+$\texttt{is_last}[3]$
+
+is true
+
+The component starting at index
+
+$1$
+
+continues past index
+
+$6$
+
+, greatest index
+at most
+
+$6$
+
+is
+
+$5\ge 3$
+
+.
+
+The component starting at index
+
+$6$
+
+continues past index
+
+$6$
+
+, greatest index
+at most
+
+$6$
+
+is
+
+$6\ge 3$
+
+.
+
+We can maintain these indices in a stack
+
+$\texttt{last_found}$
+
+. For every query,
+binary search on the stack to count the number of indices at least
+
+$l$
+
+. The time
+complexity remains the same.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MX = 2e5+5;
+
+#define f first
+#define s second
+#define sz(x) (int)(x).size()
+
+int N,Q;
+vector<pair<int,int>> query[MX];
+
+int main() {
+	cin >> N >> Q;
+	vector<int> A(N);
+	for (int& t: A) cin >> t;
+	for (int i = 0; i < Q; ++i) {
+		int l,r; cin >> l >> r; --l,--r;
+		query[r].push_back({l,i});
+	}
+	vector<bool> is_last(N);
+	vector<pair<int,int>> stk;
+	for (int i = 0; i < N; ++i) {
+		while (!stk.empty() && stk.back().f > A[i]) {
+			is_last[stk.back().s] = true;
+			stk.pop_back();
+		}
+		if (!stk.empty() && stk.back().f == A[i]) stk.back().s = i;
+		else stk.push_back({A[i],i});
+	}
+	vector<int> cum_last{0}, last_found;
+	vector<int> ans(Q);
+	for (int r = 0; r < N; ++r) {
+		cum_last.push_back(cum_last.back());
+		if (!last_found.empty() && A[r] == A[last_found.back()]) 
+			last_found.pop_back();
+		last_found.push_back(r);
+		if (is_last[r]) {
+			++cum_last.back();
+			last_found.pop_back();
+		}
+		for (pair<int,int> p: query[r]) {
+			int lo = 0, hi = sz(last_found);
+			while (lo < hi) {
+				int mid = (lo+hi)/2;
+				if (p.f <= last_found[mid]) hi = mid;
+				else lo = mid+1;
+			}
+			ans[p.s] = cum_last[r+1]-cum_last[p.f]+sz(last_found)-lo;
+		}
+	}
+	for (int t: ans) cout << t << "\n";
+}

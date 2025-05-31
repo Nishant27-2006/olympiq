@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>There are two parts to solving this problem. Firstly, we need to be able to
+efficiently verify whether a given value of <span class='math'>$K$</span> is valid. Secondly, we need to
+efficiently find the minimum value of <span class='math'>$K$</span> that is valid.
+<p>We start by determining whether a given value of <span class='math'>$K$</span> is valid. We need to
+simulate the process of having cows dance on the stage and then leaving the
+stage. Whenever <span class='math'>$K$</span> cows are on the stage and we want to figure out when the
+next cow can join, we want to know the earliest time when a cow can leave the
+stage. This motivates the idea of using a priority queue, which supports
+efficient insertion as well as efficient removal of the minimum element stored
+within (both in <span class='math'>$O(\log K)$</span> time). The process of checking if a given value of <span class='math'>$K$</span> is correct therefore
+takes <span class='math'>$O(N \log K)$</span> time.
+<p>It remains to efficiently determine the minimum value of <span class='math'>$K$</span> that is valid.
+Because <span class='math'>$N$</span> is at most <span class='math'>$10^4$</span>, it is possible to iterate <span class='math'>$K$</span> from <span class='math'>$1$</span> to <span class='math'>$N$</span> to
+find such a value for an <span class='math'>$O(N^2 \log N)$</span> algorithm. We can do better though!
+<p>We are guaranteed that <span class='math'>$K=N$</span> is a valid value. Given the structure of the
+problem, note that if <span class='math'>$K$</span> is a valid value, then <span class='math'>$K+1$</span> is a valid value - this
+is because having an extra spot cannot make cows dance later than they
+originally would. Therefore, we can binary search for the minimum valid value of
+<span class='math'>$K$</span>, giving us an <span class='math'>$O(N \log^2 N)$</span> algorithm.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class cowdance {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;cowdance.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;cowdance.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int maxT = Integer.parseInt(st.nextToken());
+		int[] l = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			l[i] = Integer.parseInt(br.readLine());
+		}
+		int min = 1;
+		int max = n;
+		while(min != max) {
+			int mid = (min+max)/2;
+			if(possible(l, mid, maxT)) {
+				max = mid;
+			}
+			else {
+				min = mid+1;
+			}
+		}
+		pw.println(min);
+		pw.close();
+	}
+	
+	public static boolean possible(int[] l, int k, int t) {
+		int lastTime = 0;
+		PriorityQueue&lt;Integer&gt; q = new PriorityQueue&lt;Integer&gt;();
+		for(int i = 0; i &lt; l.length; i++) {
+			if(q.size() == k) {
+				lastTime = q.poll();
+			}
+			if(lastTime + l[i] &gt; t) {
+				return false;
+			}
+			q.add(lastTime + l[i]);
+		}
+		return true;
+	}
+	
+}	
+</pre>
+<p></body></html>

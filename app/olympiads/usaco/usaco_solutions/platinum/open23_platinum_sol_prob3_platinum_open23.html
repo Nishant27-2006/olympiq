@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Partial Credit: <span class='math'>$O(N^3)$</span></strong> 
+<p>Maintain an <span class='math'>$N\times N$</span> boolean matrix storing which pairs of cows are friends,
+as well as the number of cows that each cow is friends with.  After a cow
+leaves, update the matrix and the counts for all cows that are friends with that
+cow in <span class='math'>$O(N^2)$</span> time. The answer can be derived from the counts in <span class='math'>$O(N)$</span> time.
+<p><strong>Partial Credit: <span class='math'>$O(N^2)$</span></strong>
+<p>Construct a rooted tree with <span class='math'>$2N-1$</span> nodes, one for each cow and each pair in the
+original tree. Color the nodes corresponding to cows black, and the nodes
+corresponding to pairs white. Connect each node corresponding to a pair to the
+nodes corresponding to the cows in that pair. For convenience of implementation,
+root the new tree at the black node corresponding to cow <span class='math'>$N$</span>.
+<p>When a cow leaves, remove the black node corresponding to that cow and merge all
+of the white nodes adjacent to that cow into a single white node, so that the
+new graph remains a tree. Notice that two cows are friends if and only if their
+black nodes share a white node as a neighbor in the rooted tree. So at every
+point in time, the number of triples is the number of paths of five nodes 
+<span class='math'>$(a,b,c,d,e)$</span> in the rooted tree where <span class='math'>$a,c,e$</span> are black, <span class='math'>$b,d$</span> are white,  and
+all of <span class='math'>$a,c,e$</span> are distinct. 
+<p>For each white node <span class='math'>$u$</span>, define <span class='math'>$mass[u]$</span> to be the number of black nodes
+immediately below it (equivalently, the number of neighbors of <span class='math'>$u$</span> minus one).
+Given the new tree, we can count the total number of paths of the desired form
+by splitting into three cases:
+<p><ol><li><span class='math'>$b=d$</span>. Then <span class='math'>$a,c,e$</span> can be any three distinct neighbors of <span class='math'>$b$</span>. The  number
+of paths of this form is equal to 
+<div class='math'>$$\sum_{b:b\text{ is white}}(mass[b]+1)\cdot mass[b]\cdot (mass[b]-1).$$</div></li><li><span class='math'>$b\neq d$</span> and <span class='math'>$c$</span> is above (closer to the root than) both <span class='math'>$b$</span> and <span class='math'>$d$</span>. The
+number of paths of this form is equal to 
+<div class='math'>$$2\cdot \sum_{c:c\text{ is black}}\sum_{b&lt;d,b\text{ and }d\text{ are children of }c}mass[b]\cdot mass[d].$$</div>
+</li><li><span class='math'>$b\neq d$</span> and one of <span class='math'>$b$</span> and <span class='math'>$d$</span> is above <span class='math'>$c$</span>. The number of paths of this
+form is equal to 
+<div class='math'>$$2\cdot \sum_{a:a\text{ is white}} mass[a]\cdot combinedCombinedMass[a],$$</div>  
+where <span class='math'>$combinedCombinedMass[a]$</span> is the sum of the masses of all white nodes
+distance 2 below <span class='math'>$a$</span>.</li></ol>
+<p>We can compute the contributions of each case in <span class='math'>$O(N)$</span> time given the rooted
+tree.
+<p><strong>Full Credit: <span class='math'>$O(N\alpha(N))$</span></strong>
+<p>For this subtask, we process each update in 
+<span class='math'>$O(\alpha(N)\cdot (\text{number of nodes removed from the rooted tree}))$</span> time
+(amortized). To achieve this, we additionally maintain <span class='math'>$combinedMass[x]$</span> for
+each black node <span class='math'>$x$</span>,  which we define to be the sum of <span class='math'>$mass[y]$</span> over all
+children <span class='math'>$y$</span> of <span class='math'>$x$</span>. When we merge all neighbors of a black node <span class='math'>$x$</span> into a
+white node <span class='math'>$w$</span>, we need to:
+<p><ol><li>remove paths corresponding to nodes no longer in the tree</li><li>compute <span class='math'>$mass[w]$</span> and <span class='math'>$combinedCombinedMass[w]$</span></li><li>update <span class='math'>$combinedMass[parent[find(x)]]$</span>, where <span class='math'>$parent[find(x)]$</span> is the black
+node immediately above <span class='math'>$w$</span></li><li>update <span class='math'>$combinedCombinedMass[find(parent[find(x)])]$</span>, where
+<span class='math'>$find(parent[find(x)])$</span> is the white node immediately above the black node from
+the previous step</li></ol>
+<p>Note that the number of values we need to update is proportional to the number
+of nodes removed from the rooted tree plus a constant. Thus, the overall time 
+complexity is <span class='math'>$O(N\alpha(N))$</span>. See the code below for details on the merging
+process.
+<p><em>Note on Implementation:</em> In the code below, we initially label each white 
+node with the label of the cow in the corresponding pair that is lower in the
+rooted tree. When we merge two white nodes with labels <span class='math'>$a$</span> and <span class='math'>$b$</span>, we use a
+disjoint set union (DSU) data structure to assign the resulting white node the
+label of the cow out of <span class='math'>$a$</span> and <span class='math'>$b$</span> that is higher in the rooted tree. Also, the
+code below doesn&apos;t use union-by-rank in the DSU for ease of implementation,
+which makes the  actual time complexity slightly worse.
+<p>Danny&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+ 
+public class TriplesOfCows {
+    static int n;
+    static List&lt;Integer&gt;[] adj;
+    static int[] parent;
+    static int[] union;
+    static long[] mass;
+    static long[] combinedMass;
+    static long[] combinedCombinedMass;
+ 
+    static void dfs(int a) {
+        for (int b : adj[a]) {
+            parent[b] = a;
+            adj[b].remove((Integer) a);
+            dfs(b);
+        }
+    }
+ 
+    static int find(int u) {
+        if (union[u] != union[union[u]]) {
+            union[u] = find(union[u]);
+        }
+        return union[u];
+    }
+ 
+    static long answer = 0;
+ 
+    static void update(int u, long delta) {
+        int p = parent[u];
+        answer += 2L * (combinedMass[p] - mass[u]) * delta;
+        combinedMass[p] += delta;
+ 
+        if (p != n) {
+            int a = find(p);
+            answer += 2L * mass[a] * delta;
+            combinedCombinedMass[a] += delta;
+        }
+ 
+        answer += 2L * combinedCombinedMass[u] * delta;
+ 
+        answer -= (mass[u] + 1L) * mass[u] * (mass[u] - 1L);
+        mass[u] += delta;
+        answer += (mass[u] + 1L) * mass[u] * (mass[u] - 1L);
+    }
+ 
+    static void merge(int u) {
+        int p = parent[u];
+        int a = find(p);
+ 
+        combinedMass[p] -= mass[u];
+        answer -= 2L * combinedMass[p] * mass[u];
+        combinedCombinedMass[a] -= mass[u];
+        answer -= 2L * mass[a] * mass[u];
+ 
+        answer -= 2L * mass[u] * combinedCombinedMass[u];
+        answer += 2L * mass[a] * combinedCombinedMass[u];
+        combinedCombinedMass[a] += combinedCombinedMass[u];
+ 
+        answer -= (mass[u] + 1L) * mass[u] * (mass[u] - 1L);
+        update(a, mass[u]);
+ 
+        union[u] = a;
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        n = Integer.parseInt(in.readLine());
+        adj = new List[n + 1];
+        for (int a = 1; a &lt;= n; a++) {
+            adj[a] = new ArrayList&lt;&gt;();
+        }
+        for (int m = n - 1; m &gt; 0; m--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            adj[a].add(b);
+            adj[b].add(a);
+        }
+        parent = new int[n];
+        dfs(n);
+        union = new int[n];
+        mass = new long[n];
+        combinedMass = new long[n + 1];
+        combinedCombinedMass = new long[n];
+        for (int a = 1; a &lt; n; a++) {
+            union[a] = a;
+        }
+ 
+        StringBuilder out = new StringBuilder();
+        for (int a = 1; a &lt; n; a++) {
+            update(a, 1L);
+        }
+        out.append(answer).append(&apos;\n&apos;);
+        for (int a = 1; a &lt; n; a++) {
+            for (int b : adj[a]) {
+                merge(b);
+            }
+            update(find(a), -1L);
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+
+</pre>
+<p></body></html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Spencer Compton )
+<p>Let&apos;s think about ways we can embed a tree in a 2D plane such that paths can be
+covered by exactly two axis-aligned rectangles. One idea that comes to mind is
+that we might want to split a path into two parts and then use one box to cover
+one of those parts and another box to cover the other part.
+<p>Assume we arbitrarily root the input tree. A natural way to break a tree path 
+into two parts is to break it into two parts such that both parts consist of a 
+vertical chain in the tree (more formally, it contains a subset of the graph
+that  forms one connected component and are all ancestors of one node in the
+subset).  We can split any arbitrary path from <span class='math'>$A$</span> to <span class='math'>$B$</span> by having one path
+from <span class='math'>$A$</span> to <span class='math'>$LCA(A,B)$</span> (the lowest common ancestor of <span class='math'>$A$</span> and <span class='math'>$B$</span>) and another
+path  from <span class='math'>$B$</span> to its ancestor that is one level below <span class='math'>$LCA(A,B)$</span>. (A
+special case  is when <span class='math'>$A=LCA(A,B)$</span> and thus the original path is already in the
+desired form.) 
+<p>Now, we just need to find a way to embed a tree in a 2D plane such that vertical
+chains can be covered by one axis-aligned rectangle. Let&apos;s consider a recursive
+embedding. For each node <span class='math'>$i$</span>, we will deal with the subtree rooted at <span class='math'>$i$</span>. Let <span class='math'>$S_i$</span>
+be the size of the subtree rooted at <span class='math'>$i$</span>. We will make an embedding of <span class='math'>$i$</span>&apos;s
+subtree inside a <span class='math'>$S_i \times S_i$</span> square such that for each node <span class='math'>$j$</span> in <span class='math'>$i$</span>&apos;s
+subtree, the rectangle with <span class='math'>$j$</span> at the bottom-left corner and <span class='math'>$i$</span> at the
+top-right corner contains exactly the nodes on the path from <span class='math'>$i$</span> to <span class='math'>$j$</span>. 
+<p>As a base-case, it&apos;s clear that a leaf node satisfies this constraint no matter
+how it is embedded (as long as we don&apos;t put any two nodes at the same point).
+Now, let&apos;s embed <span class='math'>$i$</span> given that we know how to do an embedding for each of its
+children&apos;s respective subtrees. We will put <span class='math'>$i$</span> at the top-right corner of our
+<span class='math'>$S_i \times S_i$</span> square. Then, for some child <span class='math'>$j$</span> we will take the 
+<span class='math'>$S_j \times S_j$</span> embedding for it and place it at the top-left corner of our
+<span class='math'>$S_i \times S_i$</span> square. While <span class='math'>$i$</span> has another child, we will take that
+child&apos;s square embedding and place it so that its top-left corner touches the
+bottom-right corner of the previous child&apos;s square embedding. Conveniently, this
+embedding of <span class='math'>$i$</span>&apos;s subtree satisfies the desired constraints. Based on our
+embedding, the box with <span class='math'>$i$</span> at the top-right corner and some descendant <span class='math'>$j$</span> at
+the bottom-left corner will contain exactly the vertical chain from <span class='math'>$i$</span> to <span class='math'>$j$</span>.
+This shows us a method of embedding the tree recursively. We can do this in
+<span class='math'>$O(N)$</span> time.
+<p>Thus, we have <span class='math'>$O(N)$</span> embedding of a tree into the plane. Then, for every query
+we want to break it into two vertical chains. We can do this as mentioned
+previously, by calculating LCA in <span class='math'>$O(\log{N})$</span>. Our final runtime is
+<span class='math'>$O(N + Q \log{N})$</span>. 
+<p><pre class='prettyprint'>
+
+#include &quot;grader.h&quot;
+using namespace std;
+int x[100000];
+int y[100000];
+vector&lt;int&gt; adj[100000];
+int lc[18][100000];
+int sub[100000];
+int h[100000];
+int dfs(int now, int from){
+	sub[now] = 1;
+	lc[0][now] = from;
+	if(from==-1){
+		h[now] = 0;
+	}
+	else{
+		h[now] = h[from]+1;
+	}
+	for(int i = 0; i&lt;adj[now].size(); i++){
+		int to = adj[now][i];
+		if(to==from){
+			continue;
+		}
+		sub[now] += dfs(to,now);
+	}
+	return sub[now];
+}
+void go(int now, int from, int ylo, int yhi, int xlo, int xhi){
+	x[now] = xlo;
+	y[now] = ylo;
+	setFarmLocation(now,xlo++,ylo++);
+	for(int i = 0; i&lt;adj[now].size(); i++){
+		int to = adj[now][i];
+		if(to==from){
+			continue;
+		}
+		go(to,now,ylo,ylo+sub[to]-1,xhi-sub[to]+1,xhi);
+		ylo += sub[to];
+		xhi -= sub[to];
+	}
+}
+void addRoad(int a, int b){
+	adj[a].push_back(b);
+	adj[b].push_back(a);
+	
+}
+int lca(int a, int b){
+	if(h[a]&lt;h[b]){
+		swap(a,b);
+	}
+	for(int i = 17; i&gt;=0; i--){
+		int toa = lc[i][a];
+		if(toa!=-1 &amp;&amp; h[toa]&gt;=h[b]){
+			a = toa;
+		}
+	}
+	if(a==b){
+		return a;
+	}
+	for(int i = 17; i&gt;=0; i--){
+		int toa = lc[i][a];
+		int tob = lc[i][b];
+		if(toa!=tob){
+			a = toa;
+			b = tob;
+		}
+	}
+	return lc[0][a];
+}
+ 
+void buildFarms(){
+	dfs(0,-1);
+	int n = getN();
+	go(0,-1,1,n,1,n);
+	for(int i = 1; i&lt;18; i++){
+		for(int j = 0; j&lt;n; j++){
+			if(lc[i-1][j]==-1){
+				lc[i][j] = -1;
+			}
+			else{
+				lc[i][j] = lc[i-1][lc[i-1][j]];
+			}
+		}
+	}
+}
+ 
+void notifyFJ(int a, int b){
+	int l = lca(a,b);
+	addBox(x[l],y[l],x[a],y[a]);
+	if(l==b){
+		return;
+	}
+	int ogb = b;
+	
+	for(int i = 17; i&gt;=0; i--){
+		int tob = lc[i][b];
+		if(tob!=-1 &amp;&amp; h[tob]&gt;h[l]){
+			b = tob;
+		}
+	}
+	addBox(x[b],y[b],x[ogb],y[ogb]);
+}
+
+</pre>
+<p></body></html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>Because <span class='math'>$N$</span> is at most <span class='math'>$100$</span>, one approach that comes to mind is checking if
+<span class='math'>$K=1$</span> is valid. If so, then the answer is <span class='math'>$1$</span> and we can stop. Otherwise, we
+check if <span class='math'>$K=2$</span> is valid. We&apos;ll keep on increasing <span class='math'>$K$</span> until it reaches <span class='math'>$N$</span>, as
+<span class='math'>$K=N$</span> is guaranteed to be valid.
+<p>How do we check if a given value of <span class='math'>$K$</span> is valid? We can loop over all pairs of
+substrings of length <span class='math'>$K$</span> and compare them for equality. My code following this
+approach is as follows:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+
+using namespace std;
+
+int main() {
+  freopen(&quot;whereami.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;whereami.out&quot;, &quot;w&quot;, stdout);
+  int n;
+  string s;
+  cin &gt;&gt; n &gt;&gt; s;
+  for(int guess = 1; guess &lt;= n; guess++) {
+    bool good = true;
+    for(int i = 0; i + guess &lt;= n; i++) {
+      for(int j = 0; j &lt; i; j++) {
+        if(s.substr(i, guess) == s.substr(j, guess)) {
+          good = false;
+        }
+      }
+    }
+    if(good) {
+      cout &lt;&lt; guess &lt;&lt; &quot;\n&quot;;
+      break;
+    }
+  }
+}
+</pre>
+<p>It is possible to do faster by using a data structure known as a set. Sets cannot store
+duplicate elements but are able to quickly identify if a given element is already part
+of the set. Therefore, to check if a given value of <span class='math'>$K$</span> is valid using a set, we
+can check if a substring is present in the set before inserting it. If some substring
+is already present, then the given value of <span class='math'>$K$</span> is invalid.
+<p>Here is Brian Dean&apos;s solution using a set.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;string&gt;
+#include &lt;set&gt;
+using namespace std;
+ 
+int N;
+string S;
+ 
+bool dups(int len)
+{
+  set&lt;string&gt; X;
+  for (int i=0; i&lt;=N-len; i++) {
+    if (X.count(S.substr(i,len)) &gt; 0) return true;
+    X.insert(S.substr(i,len));
+  }
+  return false;
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;whereami.in&quot;);
+  ofstream fout (&quot;whereami.out&quot;);
+  fin &gt;&gt; N &gt;&gt; S;
+  int ans = 1;
+  while (dups(ans)) ans++;
+  fout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+</body></html>

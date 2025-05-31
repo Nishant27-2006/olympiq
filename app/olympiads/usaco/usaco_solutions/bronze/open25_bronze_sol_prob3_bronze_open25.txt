@@ -1,0 +1,579 @@
+Solution ID: sol_prob3_bronze_open25
+Contest: OPEN25
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_open25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Alex Liang)
+
+Subtask 1:
+
+$N,Q \le 50$
+
+For each query described by (
+
+$l,r$
+
+), we can enumerate
+
+all
+
+(
+
+$i,j,k$
+
+) such 
+that
+
+$l \le i < j < k \le r$
+
+. We need to check if each
+
+$s_i s_j s_k$
+
+is a moo
+and know that twice the area of
+
+$\Delta ijk$
+
+is
+
+$(j-i)(k-j)$
+
+.
+
+Taking the maximum area across all (
+
+$i,j,k$
+
+) such that
+
+$l \le i < j < k \le r$
+
+and
+
+$s_i s_j s_k$
+
+is a moo gives us the answer for the query. Since we iterate
+over
+
+$N^3$
+
+triplets for each query, the time complexity of this solution is
+
+$\mathcal{O}(N^3Q)$
+
+.
+
+My C++ Code:
+
+#include <bits/stdc++.h>
+using namespace std; 
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n, q;
+    cin >> n >> q;
+ 
+    string S;
+    cin >> S;
+ 
+    while (q--){
+        int ql, qr;
+        cin >> ql >> qr;
+        ql--; qr--;
+ 
+        long long ans = -1;
+ 
+        for (int i = ql; i <= qr; i++){
+            for (int j = i + 1; j <= qr; j++){
+                for (int k = j + 1; k <= qr; k++){
+                    if (S[i] != S[j] and S[j] == S[k]){
+                        ans = max(ans, 1LL * (k - j) * (j - i));
+                    }
+                }
+            }
+        }
+        cout << ans << "\n";
+    }
+}
+
+Subtask 2:
+
+$Q=1$
+
+and the singular query satisfies
+
+$l=1$
+
+and
+
+$r=N$
+
+We can iterate over the middle letter,
+
+$j$
+
+, of the moo. Now, what should
+
+$i$
+
+and
+
+$k$
+
+of the moo be? It is clear that
+
+$i$
+
+should be the leftmost legal element
+
+not
+
+equal to
+
+$s_j$
+
+and
+
+$k$
+
+be the rightmost legal element equal to
+
+$t_j$
+
+as this combination maximizes the area.
+
+One way to implement this is to calculate the first and last occurrence of each
+character. Let
+
+$C$
+
+be the number of characters in the alphabet.  This leads to a
+
+$\mathcal{O}(CNQ)$
+
+or
+
+$\mathcal{O}((N+C)Q)$
+
+solution.
+
+My C++ Code:
+
+#include <bits/stdc++.h>
+using namespace std; 
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n, q;
+    cin >> n >> q;
+ 
+    string S;
+    cin >> S;
+ 
+    while (q--){
+        int ql, qr;
+        cin >> ql >> qr;
+        ql--; qr--;
+ 
+        vector<int> firstOcc(26, n);
+        vector<int> lastOcc(26, -1);
+    
+        for (int i = ql; i <= qr; i++){
+            firstOcc[S[i] - 'a'] = min(firstOcc[S[i] - 'a'], i);
+            lastOcc[S[i] - 'a'] = max(lastOcc[S[i] - 'a'], i);
+        }
+    
+        int best = n, sbest = n;
+    
+        for (int c = 0; c < 26; c++){
+            if (firstOcc[c] < best){
+                sbest = best;
+                best = firstOcc[c];
+            }
+            else if (firstOcc[c] < sbest)
+                sbest = firstOcc[c];
+        }
+ 
+        long long ans = -1;
+ 
+        for (int j = 1; j + 1 < n; j++){
+            int i = firstOcc[S[j] - 'a'] == best ? sbest : best;
+            int k = lastOcc[S[j] - 'a'];
+ 
+            if (j > i and j < k)
+                ans = max(ans, 1LL * (k - j) * (j - i));
+        }
+        cout << ans << "\n";
+    }
+}
+
+Full credit:
+
+For some query (
+
+$l,r$
+
+), let's consider all
+
+$t_1,t_2$
+
+(
+
+$t_1 \neq t_2$
+
+). We want
+to find the best moo described by
+
+$t_1 t_2 t_2$
+
+. For each
+
+$t_1,t_2$
+
+, we know:
+
+$i$
+
+is the leftmost index
+
+$\ge l$
+
+whose corresponding element is
+
+$t_1$
+
+.
+
+$k$
+
+is the rightmost legal
+
+$\le r$
+
+whose corresponding element is
+
+$t_2$
+
+.
+
+All that's left is to determine the optimal
+
+$j$
+
+(the middle index) efficiently.
+The area of a triangle will be
+
+$(j-i)(k-j)$
+
+. Intuitively, we can see that the we
+want
+
+$j$
+
+to be
+
+as close to the middle of
+
+$[i,k]$
+
+as possible
+
+(i.e. we
+want
+
+$j$
+
+to be as close to
+
+$\frac{i+k}{2}$
+
+as possible). Below is one way to
+show that this is true.
+
+We want to maximize
+
+$(j-i)(k-j)$
+
+. Let
+
+$a=j-i$
+
+and
+
+$b=k-j$
+
+(you can think of
+
+$a$
+
+and
+
+$b$
+
+as the lengths of the legs). We want to maximize
+
+$ab$
+
+subject to
+
+$a \ge 1$
+
+,
+
+$b \ge 1$
+
+, and
+
+$a+b=k-i=l$
+
+(we let
+
+$l$
+
+be the total length from
+
+$i$
+
+to
+
+$k$
+
+).  Substituting in
+
+$b=l-a$
+
+gives us
+
+$a(l-a)=-a^2+al$
+
+. This is a parabola
+and the maximum lies at its vertex which is at
+
+$a=\frac{l}{2}$
+
+. Thus, the area
+is maximized when
+
+$a=b=\frac{l}{2}$
+
+and the closer
+
+$a$
+
+is to the middle, the
+larger the area due to the shape of such parabola.
+
+To actually find (
+
+$i,j,k$
+
+), we need to be able to determine the first index
+equal to some character at the left or right of some given index. This can be
+done efficiently by precalculating these values (see implementation for more
+details about how this is done).  We can directly find
+
+$i$
+
+and
+
+$k$
+
+with these
+precalculated values. We can then test
+
+$j$
+
+equal to index of closest character
+on the left or at
+
+$\lfloor \frac{i+k}{2} \rfloor$
+
+and on the right or at it and
+take the one with the maximum area. If we let
+
+$C$
+
+be the number of characters in
+the alphabet then this solution runs in
+
+$\mathcal{O}(CN + C^2Q)$
+
+.
+
+This solution can be optimized even further. Instead of considering every
+
+$t_1,t_2$
+
+, let's only iterate over each possible value of
+
+$t_2$
+
+. Given some
+
+$t_2$
+
+, we can directly find the optimal
+
+$i$
+
+across all
+
+$t_1 \neq t_2$
+
+. We just
+need to answer the question: what is the index of the first element on the right
+or at
+
+$l$
+
+whose corresponding character is
+
+$\neq t_2$
+
+. This can be done in
+constant time by building on our precalculation. Now that we have the optimal
+
+$i$
+
+and
+
+$k$
+
+for some
+
+$t_2$
+
+, we can test the two possible
+
+$j$
+
+and take the
+triangle with maximum area. This solution runs in
+
+$\mathcal{O}(C(N+Q))$
+
+time
+where
+
+$C$
+
+is the number of characters in the alphabet.
+
+My C++ Code:
+
+#include <bits/stdc++.h>
+using namespace std; 
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n, q;
+    cin >> n >> q;
+ 
+    string S;
+    cin >> S;
+ 
+    vector<vector<int>> left(n, vector<int>(26, -1));
+    vector<vector<int>> right(n, vector<int>(26, n));
+    vector<vector<int>> rightExclude(n, vector<int>(26, n));
+    
+    for (int i = 0; i < n; i++){
+        if (i)
+            left[i] = left[i - 1];
+ 
+        left[i][S[i] - 'a'] = i;
+    }
+    for (int i = n - 1; i >= 0; i--){
+        if (i + 1 < n)
+            right[i] = right[i + 1];
+ 
+        right[i][S[i] - 'a'] = i;
+ 
+        // Calculate minimum right if we exclude each character
+        int best = n, sbest = n;
+ 
+        for (int c = 0; c < 26; c++){ 
+            if (right[i][c] < best){
+                sbest = best;
+                best = right[i][c];
+            }
+            else if (right[i][c] < sbest)
+                sbest = right[i][c];
+        }
+        for (int c = 0; c < 26; c++)
+            rightExclude[i][c] = (right[i][c] == best ? sbest : best);
+    }
+    while (q--){
+        int ql, qr;
+        cin >> ql >> qr;
+        ql--; qr--;
+        
+        long long best = -1;
+ 
+        for (int rc = 0; rc < 26; rc++){
+            int k = left[qr][rc];
+            int i = rightExclude[ql][rc];
+ 
+            if (i >= k)
+                continue;
+
+            for (int j : {left[(i + k) / 2][rc], right[(i + k) / 2][rc]})
+                if (j > i and j < k)
+                    best = max(best, 1LL * (k - j) * (j - i));
+        }
+        cout << best << "\n";
+    }
+}
+
+My Python Code:
+
+n, q = map(int, input().split())
+S = input()
+
+left = [[-1] * 26 for _ in range(n)]
+right = [[n] * 26 for _ in range(n)]
+right_exclude = [[n] * 26 for _ in range(n)]
+
+for i, c in enumerate(S):
+    left[i] = left[i - 1][:] if i else [-1] * 26
+    left[i][ord(c) - ord('a')] = i
+
+for i, c in reversed(list(enumerate(S))):
+    right[i] = right[i + 1][:] if i + 1 < len(S) else [n] * 26
+    right[i][ord(c) - ord('a')] = i
+    
+    best, sbest = n, n
+
+    for j in range(26):
+        if right[i][j] < best:
+            sbest = best
+            best = right[i][j]
+        elif right[i][j] < sbest:
+            sbest = right[i][j]
+
+    for j in range(26):
+        right_exclude[i][j] = sbest if right[i][j] == best else best
+
+for _ in range(q):
+    ql, qr = map(int, input().split())
+    ql -= 1
+    qr -= 1
+    
+    best = -1
+
+    for t2 in range(26):
+        k = left[qr][t2]
+        i = right_exclude[ql][t2]
+
+        if i >= k:
+            continue
+
+        for j in (left[(i + k) // 2][t2], right[(i + k) // 2][t2]):
+            if j > i and j < k:
+                best = max(best, (k - j) * (j - i))
+        
+    print(best)

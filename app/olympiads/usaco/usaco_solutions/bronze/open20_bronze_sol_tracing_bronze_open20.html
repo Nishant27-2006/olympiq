@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Jonathan Paulson)
+<p>This problem can be solved by brute force - just try all possible combinations
+of which cow is patient zero and the value of <span class='math'>$K$</span>. There are <span class='math'>$N$</span> choices for
+patient zero, and <span class='math'>$K$</span> can be from <span class='math'>$0$</span> up to <span class='math'>$T$</span> (<span class='math'>$K$</span> &gt; <span class='math'>$T$</span> behaves the same as
+<span class='math'>$K = T$</span>). Simulating the course of the infection for each possible combination
+takes <span class='math'>$O(T)$</span> time. So the total runtime is <span class='math'>$O(NT^2)$</span> - approximately 6.25M steps
+- which is fine.
+<p>See the solution code for how to simulate the infection given the choice of
+patient zero and <span class='math'>$K$</span>. Surprisingly short! For each simulated infection, we need
+to check if the cows that get infected during the simulation are the same cows
+that are actually infected; if so, those choices of patient zero and <span class='math'>$K$</span> are
+valid possibilities.
+<p>Once you find all the possibilities, we just need to report the number of cows
+that could&apos;ve been patient zero and the minimum and maximum possible values of
+<span class='math'>$K$</span> (&quot;infinity&quot; if <span class='math'>$K = T$</span> is possible). Notice that different patient zeros
+might give different possible ranges of <span class='math'>$K$</span>; in particular, the minimum and
+maximum values might only be possible for different choices of patient zero.
+<p>Brian Dean&apos;s solution:
+<pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+ 
+bool cow_ends_infected[101];
+int N, cowx[251], cowy[251]; // handshake data (0 if no handshake at time t)
+ 
+// Simulate handshakes over time to see if data agrees with this choice of patient_zero and K...
+bool consistent_with_data(int patient_zero, int K)
+{
+  bool infected[101] = {false};
+  int num_handshakes[101] = {0};
+  infected[patient_zero] = true;
+  for (int t=0; t&lt;=250; t++) {
+    int x = cowx[t], y = cowy[t];
+    if (x&gt;0) {
+      if (infected[x]) num_handshakes[x]++;
+      if (infected[y]) num_handshakes[y]++;
+      if (num_handshakes[x] &lt;= K &amp;&amp; infected[x]) infected[y] = true;
+      if (num_handshakes[y] &lt;= K &amp;&amp; infected[y]) infected[x] = true;
+    }
+  }
+  for (int i=1; i&lt;=N; i++)
+    if (infected[i] != cow_ends_infected[i]) return false;
+  return true;
+}
+ 
+int main(void)
+{
+  int T, t, x, y;
+  string s;
+ 
+  ifstream fin (&quot;tracing.in&quot;);
+  fin &gt;&gt; N &gt;&gt; T &gt;&gt; s;
+  for (int i=1; i&lt;=N; i++)
+    cow_ends_infected[i] = s[i-1]==&apos;1&apos;;
+  for (int i=0; i&lt;T; i++) {
+    fin &gt;&gt; t &gt;&gt; x &gt;&gt; y;
+    cowx[t] = x;
+    cowy[t] = y;
+  }
+ 
+  bool possible_i[101] = {false};
+  bool possible_K[252] = {false};
+  for (int i=1; i&lt;=N; i++)
+    for (int K=0; K&lt;=251; K++)
+      if (consistent_with_data(i, K)) 
+	possible_i[i] = true; possible_K[K] = true;
+ 
+  int lower_K=251, upper_K=0, num_patient_zero=0;
+  for (int K=0; K&lt;=251; K++) if (possible_K[K]) upper_K = K;
+  for (int K=251; K&gt;=0; K--) if (possible_K[K]) lower_K = K;
+  for (int i=1; i&lt;=N; i++) if (possible_i[i]) num_patient_zero++;
+ 
+  ofstream fout (&quot;tracing.out&quot;);
+  fout &lt;&lt; num_patient_zero &lt;&lt; &quot; &quot; &lt;&lt; lower_K &lt;&lt; &quot; &quot;;
+  if (upper_K==251) fout &lt;&lt; &quot;Infinity\n&quot;;
+  else fout &lt;&lt; upper_K &lt;&lt; &quot;\n&quot;;
+ 
+  return 0;
+}
+</pre>
+<p></body></html>

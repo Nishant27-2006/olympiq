@@ -1,0 +1,1146 @@
+Solution ID: sol_prob2_platinum_open21
+Contest: OPEN21
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_open21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+First, create a new "start" node and add edges from it to every sender. Also add
+an "end" node and add edges from every receiver to it. In order for a routing
+scheme to exist, all
+
+$N$
+
+original nodes must now have equal in-degree as
+out-degree; let
+
+$\text{deg}(i)$
+
+equal this common degree.
+
+For each node
+
+$n\in [1,N]$
+
+, we must pair up every in-edge of the form
+
+$i\to n$
+
+with a distinct out-edge of the form
+
+$n\to o$
+
+, meaning that if a packet enters
+
+$n$
+
+through
+
+$i\to n$
+
+it will exit through
+
+$n\to o$
+
+. Such pairings will result in
+a valid routing scheme as long as no cycles are induced. For example,  in the
+first test case of the third sample input,
+
+$\{2\to 1, 1\to 2\to 3\to 1\}$
+
+uses
+all the edges but is not a valid routing scheme due to the induced cycle
+
+$1\to 2\to 3\to 1$
+
+.
+
+For
+
+$K=0$
+
+, it is impossible to induce a cycle, so we can simply compute the
+number of ways to pair for each node independently and multiply the
+contributions together. The answer is given by the following expression:
+
+$$\prod_{i=1}^N\text{deg}(i)!,$$
+
+For example, in the second test case of the first sample input,
+
+$\text{deg}(4)=3$
+
+and
+
+$\text{deg}(10)=2$
+
+, so the answer is
+
+$3!\cdot 2!=12$
+
+.
+
+Code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+using ll = long long;
+
+struct mi {
+ 	int v;
+	mi() { v = 0; }
+	mi(ll _v) { v = int(_v%MOD); }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+ 
+void solve() {
+	bool send[101]{}, recei[101]{};
+	int in_deg[101]{}, out_deg[101]{}, deg[101]{};
+
+	// setup
+	int N,K; cin >> N >> K; assert(K <= 1);
+	for (int i = 1; i <= N; ++i) {
+		char c; cin >> c;
+		if (c == 'S') send[i] = 1;
+		if (c == 'R') recei[i] = 1;
+	}
+	for (int i = 1; i <= N; ++i)
+		for (int j = 1; j <= N; ++j) {
+			char c; cin >> c;
+			if (c == '1') ++out_deg[i], ++in_deg[j];
+		}
+	for (int i = 1; i <= N; ++i) {
+		assert(in_deg[i]+send[i] == out_deg[i]+recei[i]);
+		deg[i] = in_deg[i]+send[i];
+	}
+	vector<mi> factorial(N+1); factorial[0] = 1;
+	for (int i = 1; i <= N; ++i) factorial[i] = i*factorial[i-1];
+
+	mi ans = 1;
+	for (int i = 1; i <= N; ++i) ans *= factorial[deg[i]];
+	cout << ans.v << "\n";
+}
+
+int main() {
+	int T; cin >> T;
+	while (T--) solve();
+}
+
+For
+
+$K=1$
+
+, suppose that the only edge satisfying
+
+$i>j$
+
+is
+
+$e_{start}\to e_{end}$
+
+. Then the pairing is invalid if and only if there exists
+some sequence
+
+$e_{end}=v_0\to v_1\to v_2\to \cdots\to v_k=e_{start}$
+
+such that
+
+$v_i<v_{i+1}$
+
+and edge
+
+$v_i\to v_{i+1}$
+
+paired with edge
+
+$v_{i+1}\to v_{(i+2)\%K}$
+
+at
+
+$v_{i+1}$
+
+for all
+
+$i\in [0,k)$
+
+. We can count the
+number of valid routing schemes with an
+
+$\mathcal{O}(N^2)$
+
+DP where we pair up
+the edges adjacent to
+
+$i$
+
+in increasing order of
+
+$i$
+
+. Let
+
+$dp[i][j]$
+
+equal the
+number of ways to pair up the edges adjacent to vertices
+
+$1\ldots i$
+
+such that
+there is currently a path
+
+$e_{end}=v_0\to v_1\to v_2\to \cdots\to v_k=j$
+
+where
+
+$j>i$
+
+(or
+
+$j=0$
+
+if we know that regardless of how we pair up the edges adjacent
+vertices
+
+$i+1\ldots N$
+
+, no cycle will be produced). Initially,
+
+$dp[0][e_{end}]=1$
+
+, and our answer will be
+
+$dp[N][0]$
+
+.
+
+There are several possible transitions from
+
+$dp[i-1][j]$
+
+:
+
+If
+
+$j\neq i$
+
+, it doesn't matter how we pair up the edges adjacent to
+
+$j$
+
+. 
+So add
+
+$dp[i-1][j]\cdot deg(i)!$
+
+to
+
+$dp[i][j]$
+
+.
+
+If
+
+$j=i=e_{start}$
+
+, then there are
+
+$(deg(i)-1)\cdot (deg(i)-1)!$
+
+ways to
+pair up the edges adjacent to
+
+$i$
+
+such that no cycle is produced. Then
+regardless of how the edges are paired for
+
+$i+1\ldots N$
+
+, we'll never create a
+cycle. So add
+
+$dp[i-1][j]\cdot (deg(i)-1)\cdot (deg(i)-1)$
+
+to
+
+$dp[i][0]$
+
+.
+
+If
+
+$j=i\neq e_{start}$
+
+, then we transition from
+
+$dp[i-1][j]$
+
+to
+
+$dp[i][0]$
+
+if there is a receiver at
+
+$i$
+
+and
+
+$dp[i][k]$
+
+for all
+
+$k>j$
+
+such that there
+exists  an edge from
+
+$j$
+
+to
+
+$k$
+
+.
+
+Code for
+
+$K\le 1$
+
+:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+using ll = long long;
+
+struct mi {
+ 	int v;
+	mi() { v = 0; }
+	mi(ll _v) { v = int(_v%MOD); }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+ 
+void solve() {
+	mi dp[101][101]{};
+	bool send[101]{}, recei[101]{};
+	bool adj[101][101]{};
+	int in_deg[101]{}, out_deg[101]{}, deg[101]{};
+
+	// setup
+	int N,K; cin >> N >> K; assert(K <= 1);
+	for (int i = 1; i <= N; ++i) {
+		char c; cin >> c;
+		if (c == 'S') send[i] = 1;
+		if (c == 'R') recei[i] = 1;
+	}
+	int e_start = 0, e_end = 0;
+	for (int i = 1; i <= N; ++i)
+		for (int j = 1; j <= N; ++j) {
+			char c; cin >> c;
+			if (c == '1') {
+				adj[i][j] = 1;
+				++out_deg[i], ++in_deg[j];
+				if (i > j) e_start = i, e_end = j;
+			}
+		}
+	for (int i = 1; i <= N; ++i) {
+		assert(in_deg[i]+send[i] == out_deg[i]+recei[i]);
+		deg[i] = in_deg[i]+send[i];
+	}
+	vector<mi> factorial(N+1); factorial[0] = 1;
+	for (int i = 1; i <= N; ++i) factorial[i] = i*factorial[i-1];
+
+	// now do DP
+	dp[0][e_end] = 1;
+	for (int i = 1; i <= N; ++i)
+		for (int j = 0; j <= N; ++j) if (dp[i-1][j].v != 0) {
+			assert(j == 0 || j >= i);
+			if (j == i) {
+				mi ad = dp[i-1][j]*factorial[deg[i]-1];
+				if (j == e_start) dp[i][0] += (deg[i]-1)*ad;
+				else {
+					if (recei[j]) dp[i][0] += ad;
+					for (int k = i+1; k <= N; ++k) if (adj[j][k]) dp[i][k] += ad;
+				}
+			} else {
+				dp[i][j] += dp[i-1][j]*factorial[deg[i]];
+			}
+		}
+	cout << dp[N][0].v << "\n";
+}
+
+int main() {
+	int T; cin >> T;
+	while (T--) solve();
+}
+
+Essentially, our solution for
+
+$K=1$
+
+involves sweeping a vertical line from
+
+$i=1$
+
+to
+
+$i=N$
+
+and maintaining the endpoint of a path that we want  to make sure does
+not become part of a cycle (the start point of the path is
+
+$e_{start}$
+
+). When
+the line hits the current endpoint of the path (
+
+$j=i$
+
+), we perform the
+appropriate DP transitions; otherwise, we can pair up the edges adjacent to
+
+$i$
+
+in whatever way we want (for
+
+$j\neq i$
+
+, just multiply by
+
+$deg(i)!$
+
+).
+
+$K>1$
+
+is trickier but the idea is similar. Instead of a single path, we can
+maintain  the start and end points of up to
+
+$K$
+
+paths such that both the start
+and end points of each path are to the right of the line. Specifically, let
+
+$dp[i][j][k]$
+
+equal the number of ways to pair up the edges adjacent to vertices
+
+$1\ldots i$
+
+such that there is currently a path
+
+$ends[0]\to starts[0]\to \cdots\to j$
+
+where
+
+$j\ge i$
+
+and
+
+$ends[0]\ge i$
+
+(or
+
+$j=0$
+
+if no such path exists), as well as a path
+
+$ends[1]\to starts[1]\to\cdots \to k$
+
+where
+
+$k\ge i$
+
+and
+
+$ends[1]\ge i$
+
+(or
+
+$k=0$
+
+if no such path exists). We initialize
+
+$dp[0][ends[0]][ends[1]]=1$
+
+because
+initially, the paths lying to the right of the sweepline are
+
+$starts[0]\to ends[0]$
+
+and
+
+$starts[1]\to ends[1]$
+
+. The answer will be stored in
+
+$dp[N][0][0]$
+
+.
+
+Figuring out the transitions from
+
+$dp[i-1][j][k]$
+
+depends on whether
+
+$i=j$
+
+,
+
+$i=k$
+
+,  or both. It requires a bit of casework since we may choose to merge the
+two paths into one; see the code for details.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+const int MOD = 1e9+7;
+ 
+using ll = long long;
+ 
+struct mi {
+ 	int v;
+	mi() { v = 0; }
+	mi(ll _v) { v = int(_v%MOD); }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+ 
+void solve() {
+	mi dp[101][101][101]{};
+	bool send[101]{}, recei[101]{};
+	bool adj[101][101]{};
+	int in_deg[101]{}, out_deg[101]{}, deg[101]{}, id[101][101]{};
+ 
+	// setup
+	int N,K; cin >> N >> K;
+	for (int i = 1; i <= N; ++i) {
+		char c; cin >> c;
+		if (c == 'S') send[i] = 1;
+		if (c == 'R') recei[i] = 1;
+	}
+ 
+	vector<int> starts, ends;
+	for (int i = 1; i <= N; ++i)
+		for (int j = 1; j <= N; ++j) {
+			id[i][j] = -1;
+			char c; cin >> c;
+			if (c == '1') {
+				adj[i][j] = 1;
+				++out_deg[i], ++in_deg[j];
+				if (i > j) {
+					id[i][j] = starts.size();
+					starts.push_back(i); ends.push_back(j);
+				}
+			}
+		}
+	while (starts.size() < 2) starts.push_back(0), ends.push_back(0);
+	for (int i = 1; i <= N; ++i) {
+		assert(in_deg[i]+send[i] == out_deg[i]+recei[i]);
+		deg[i] = in_deg[i]+send[i];
+	}
+	vector<mi> factorial(N+1); factorial[0] = 1;
+	for (int i = 1; i <= N; ++i) factorial[i] = i*factorial[i-1];
+ 
+	// DP
+	// sweep line: keep track of which segments cross the border
+	dp[0][ends[0]][ends[1]] = 1;
+	for (int i = 1; i <= N; ++i) for (int j = 0; j <= N; ++j) for (int k = 0; k <= N; ++k) 
+		if (dp[i-1][j][k].v != 0) { // paths are (starts[0],j), (starts[1],k)
+			mi ad = dp[i-1][j][k];
+			vector<int> in; // which path endpoints do we hit?
+			if (j) {
+				assert(starts[0] >= i && j >= i);
+				if (j == i) in.push_back(0);
+			}
+			if (k) {
+				assert(starts[1] >= i && k >= i);
+				if (k == i) in.push_back(1);
+			}
+			ad *= factorial[deg[i]-in.size()];
+			auto inc_dp = [&](int jj, int kk) {
+				if (starts[0] <= i || jj <= i) jj = 0;
+				if (starts[1] <= i || kk <= i) kk = 0;
+				dp[i][jj][kk] += ad;
+			};
+			if (in.empty()) { inc_dp(j,k); continue; } // paths remain same, ez
+			vector<int> out;
+			for (int jj = 1; jj <= N; ++jj) 
+				if (adj[i][jj] || (i == jj && recei[jj])) 
+					out.push_back(jj);
+			assert(out.size() == deg[i]);
+			if (in == vector<int>{0}) {
+				for (int jj: out) {
+					if (id[i][jj] == 0) continue;
+					if (id[i][jj] == 1) inc_dp(k,0); // merge paths
+					else inc_dp(jj,k);
+				}
+			} else if (in == vector<int>{1}) {
+				for (int kk: out) {
+					if (id[i][kk] == 1) continue;
+					if (id[i][kk] == 0) inc_dp(0,j); // merge paths
+					else inc_dp(j,kk);
+				}
+			} else {
+				assert((in == vector<int>{0,1}));
+				for (int jj: out) for (int kk: out) if (jj != kk) {
+					if (id[i][jj] == 0 || id[i][kk] == 1) continue;
+					if (id[i][jj] == 1) {
+						if (id[i][kk] == 0) continue;
+						assert(kk >= i);
+						inc_dp(kk,0); // merge paths
+					} else if (id[i][kk] == 0) {
+						assert(jj >= i);
+						inc_dp(0,jj); // merge paths
+					} else {
+						inc_dp(jj,kk);
+					}
+				}
+			}
+		}
+	cout << dp[N][0][0].v << "\n";
+}
+ 
+int main() {
+	int T; cin >> T;
+	while (T--) solve();
+}
+
+Another version that should work in
+
+$\mathcal{O}(N^{K+1})$
+
+for any fixed
+
+$K$
+
+(ignoring factors of
+
+$\log N$
+
+):
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+const int MOD = 1e9+7;
+ 
+using ll = long long;
+using vpi = vector<pair<int,int>>;
+
+#define f first
+#define s second
+#define sz(x) (int)(x).size()
+
+struct mi {
+ 	int v;
+	mi() { v = 0; }
+	mi(ll _v) { v = int(_v%MOD); }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+ 
+string G[100], nodes;
+int N,K;
+ 
+int in_deg(int i) {
+	int in = 0;
+	if (nodes[i] == 'S') ++in;
+	for (int j = 0; j < N; ++j) if (G[j][i] == '1') ++in;
+	return in;
+}
+
+namespace std {
+ 
+template<class Fun>
+class y_combinator_result {
+	Fun fun_;
+public:
+	template<class T>
+	explicit y_combinator_result(T &&fun): fun_(std::forward<T>(fun)) {}
+ 
+	template<class ...Args>
+	decltype(auto) operator()(Args &&...args) {
+		return fun_(std::ref(*this), std::forward<Args>(args)...);
+	}
+};
+ 
+template<class Fun>
+decltype(auto) y_combinator(Fun &&fun) {
+	return y_combinator_result<std::decay_t<Fun>>(std::forward<Fun>(fun));
+}
+ 
+} // namespace std
+
+vector<mi> factorial;
+map<vpi,mi> dp;
+ 
+void process_vert(int v) {
+	int deg = in_deg(v);
+	map<vpi,mi> DP;
+	for (pair<vpi,mi> tmp: dp) {
+		auto comp = [&](int x) { return -x-1; };
+		vector<int> going_in, going_out;
+		for (int j = 0; j < sz(tmp.f); ++j) {
+			if (tmp.f[j].s == v) going_in.push_back(comp(j));
+			if (tmp.f[j].f == v) going_out.push_back(comp(j));
+		}
+		for (int j = v+1; j < N; ++j) if (G[v][j] == '1') going_out.push_back(j);
+		while (sz(going_out) < deg) going_out.push_back(v);
+		vector<bool> done(sz(going_out));
+		auto tran = [&](vpi edges, mi num) {
+			map<int,int> nex, xen;
+			for (pair<int,int> e: edges) {
+				nex[e.f] = e.s;
+				xen[e.s] = e.f;
+			}
+			vpi ntmp;
+			for (pair<int,int> x: nex) {
+				set<int> vis; int lst = x.f;
+				while (1) { // check for cycle
+					if (vis.count(lst)) return; // found cycle
+					if (!nex.count(lst)) break;
+					vis.insert(lst); lst = nex[lst];
+				}
+				if (!xen.count(x.f)) {
+					if (lst < 0) lst = tmp.f[comp(lst)].s;
+					if (lst > v) ntmp.push_back({tmp.f[comp(x.f)].f,lst});
+				}
+			}
+			// if nex contains any cycle -> FAIL
+			for (pair<int,int> t: tmp.f) if (t.f > v && t.s > v) ntmp.push_back(t);
+			sort(begin(ntmp),end(ntmp)); DP[ntmp] += num;
+		};
+		auto generate = y_combinator([&](auto self, int ind, vpi edges) {
+			if (ind == sz(going_in)) {
+				tran(edges,tmp.s*factorial[sz(going_out)-ind]);
+				return;
+			}
+			for (int i = 0; i < sz(going_out); ++i) if (!done[i]) {
+				vpi nedges = edges; 
+				nedges.emplace_back(going_in[ind],going_out[i]);
+				done[i] = 1; self(ind+1,nedges); done[i] = 0;
+			}
+		});
+		generate(0,vpi());
+	}
+	swap(dp,DP);
+}
+
+void solve() {
+	cin >> N >> K;
+	factorial.resize(N+1);
+	factorial[0] = 1; for (int i = 1; i <= N; ++i) factorial[i] = i*factorial[i-1];
+ 
+ 	cin >> nodes;
+ 	for (int i = 0; i < N; ++i) cin >> G[i];
+	vpi back_edges;
+	for (int i = 0; i < N; ++i) for (int j = 0; j < i; ++j) 
+		if (G[i][j] == '1') back_edges.emplace_back(i,j);
+	assert(sz(back_edges) == K);
+	dp.clear();
+	dp[back_edges] = 1;
+	for (int i = 0; i < N; ++i) process_vert(i);
+	
+	mi ans = dp[{}];
+	cout << ans.v << "\n";
+}
+ 
+int main() {
+	int T; cin >> T;
+	while (T--) solve();
+}
+
+Danny Mittal's code (slightly different approach):
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class RoutingSchemesMultitest {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int t = Integer.parseInt(in.readLine());
+        for (int tc = 1; tc <= t; tc++) {
+            in.readLine();
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int n = Integer.parseInt(tokenizer.nextToken());
+            int k = Integer.parseInt(tokenizer.nextToken());
+            char[] types = ("." + in.readLine()).toCharArray();
+            boolean[][] adj = new boolean[n + 1][n + 1];
+            int[] inDegree = new int[n + 1];
+            int[] outDegree = new int[n + 1];
+            int specialFrom1 = 0;
+            int specialTo1 = 0;
+            int specialFrom2 = 0;
+            int specialTo2 = 0;
+            for (int a = 1; a <= n; a++) {
+                String line = " " + in.readLine();
+                for (int b = 1; b <= n; b++) {
+                    adj[a][b] = line.charAt(b) == '1';
+                    if (adj[a][b]) {
+                        outDegree[a]++;
+                        inDegree[b]++;
+                        if (a > b) {
+                            adj[a][b] = false;
+                            if (specialFrom1 == 0) {
+                                specialFrom1 = a;
+                                specialTo1 = b;
+                            } else {
+                                specialFrom2 = a;
+                                specialTo2 = b;
+                            }
+                        }
+                    }
+                }
+            }
+            for (int a = 1; a <= n; a++) {
+                if (inDegree[a] + (types[a] == 'S' ? 1 : 0) != outDegree[a] + (types[a] == 'R' ? 1 : 0)) {
+                    System.out.println(0);
+                    return;
+                }
+            }
+            long[] factorial = new long[n + 1];
+            factorial[0] = 1;
+            for (int j = 1; j <= n; j++) {
+                factorial[j] = (((long) j) * factorial[j - 1]) % MOD;
+            }
+            long[][][] dp = new long[n + 1][n + 1][n + 1];
+            dp[0][specialTo1][specialTo2] = 1;
+            for (int a = 1; a <= n; a++) {
+                int degree = Math.max(inDegree[a], outDegree[a]);
+                for (int b = 0; b <= n; b++) {
+                    for (int c = 0; c <= n; c++) {
+                        dp[a][b][c] += dp[a - 1][b][c];
+                        dp[a][b][c] %= MOD;
+                        if (adj[b][a]) {
+                            dp[a][a][c] += dp[a - 1][b][c];
+                            dp[a][a][c] %= MOD;
+                        }
+                        if (adj[c][a]) {
+                            dp[a][b][a] += dp[a - 1][b][c];
+                            dp[a][b][a] %= MOD;
+                        }
+                        if (b != c && adj[b][a] && adj[c][a]) {
+                            dp[a][a][a] += dp[a - 1][b][c];
+                            dp[a][a][a] %= MOD;
+                        }
+                    }
+                }
+                for (int b = 0; b <= n; b++) {
+                    for (int c = 0; c <= n; c++) {
+                        dp[a][b][c] *= factorial[Math.max(0, degree - (b == a ? 1 : 0) - (c == a ? 1 : 0))];
+                        dp[a][b][c] %= MOD;
+                    }
+                }
+            }
+            long answer = 0;
+            if (k == 0) {
+                answer = dp[n][0][0];
+            } else if (k == 1) {
+                for (int a = 1; a <= n; a++) {
+                    if (types[a] == 'R') {
+                        answer += dp[n][a][0];
+                        answer %= MOD;
+                    }
+                }
+            } else {
+                for (int a = 1; a <= n; a++) {
+                    if (types[a] == 'R') {
+                        for (int b = 1; b <= n; b++) {
+                            if (types[b] == 'R' && b != a) {
+                                answer += dp[n][a][b];
+                                answer %= MOD;
+                            }
+                        }
+ 
+                        answer += dp[n][specialFrom2][a];
+                        answer += dp[n][a][specialFrom1];
+                        answer %= MOD;
+                    }
+                }
+            }
+            System.out.println(answer);
+        }
+    }
+}
+
+Here is a solution that works in
+
+$\mathcal{O}(N^2)$
+
+time that uses the principle
+of inclusion and exclusion (courtesy of Andrew He). Essentially, you
+
+start with the answer for
+
+$K=0$
+
+subtract the number of ways to form a cycle with the first back-edge using
+
+$\texttt{get_path_1}$
+
+subtract
+the number of ways to form a cycle with the second back-edge using
+
+$\texttt{get_path_1}$
+
+add back the number of ways to form two cycles, one involving each
+back-edge
+
+subtract the number of ways to form a single cycle involving both
+back-edges
+
+The code below calculates (2) as
+
+$\texttt{prod_deg}\cdot \texttt{get_path_1}(e_{start}[0],e_{end}[0])$
+
+, (3) as
+
+$\texttt{prod_deg}\cdot \texttt{get_path_1}(e_{start}[1],e_{end}[1])$
+
+, and (4) -
+(5) as
+
+$$\texttt{prod_deg}\cdot \texttt{get_path_1}(e_{start}[0],e_{end}[0])\cdot \texttt{prod_deg}\cdot \texttt{get_path_1}(e_{start}[1],e_{end}[1])$$
+
+$$-\texttt{prod_deg}\cdot \texttt{get_path_1}(e_{start}[1],e_{end}[0])\cdot \texttt{prod_deg}\cdot \texttt{get_path_1}(e_{start}[0],e_{end}[1]).$$
+
+The intuition for this last expression is that if a proposed scheme results in a
+vertex being part of more than one cycle or part of the same cycle more than
+once, then it is added in (4) and subtracted in (5), so the net contribution is
+0. Proof of correctness is left to the reader.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+const int MOD = 1e9+7;
+ 
+using ll = long long;
+
+struct mi {
+ 	int v; explicit operator int() const { return v; } 
+	mi() { v = 0; }
+	mi(ll _v):v(_v%MOD) { v += (v<0)*MOD; }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+mi pow(mi a, ll p) { assert(p >= 0); // asserts are important! 
+	return p==0?1:pow(a*a,p/2)*(p&1?a:1); }
+mi inv(mi a) { assert(a.v != 0); return pow(a,MOD-2); }
+mi operator/(mi a, mi b) { return a*inv(b); }
+ 
+vector<mi> factorial;
+ 
+void solve() {
+	bool send[101]{}, recei[101]{};
+	bool adj[101][101]{};
+	int in_deg[101]{}, out_deg[101]{}, deg[101]{};
+ 
+	int N,K; cin >> N >> K;
+	for (int i = 1; i <= N; ++i) {
+		char c; cin >> c;
+		if (c == 'S') send[i] = 1;
+		if (c == 'R') recei[i] = 1;
+	}
+ 
+ 	vector<int> e_start, e_end;
+	for (int i = 1; i <= N; ++i)
+		for (int j = 1; j <= N; ++j) {
+			char c; cin >> c;
+			if (c == '1') {
+				adj[i][j] = 1;
+				++out_deg[i], ++in_deg[j];
+				if (i > j) {
+					e_start.push_back(i);
+					e_end.push_back(j);
+				}
+			}
+		}
+	while (e_start.size() < 2) {
+		e_start.push_back(0);
+		e_end.push_back(0);
+	}
+	for (int i = 1; i <= N; ++i) {
+		assert(in_deg[i]+send[i] == out_deg[i]+recei[i]);
+		deg[i] = in_deg[i]+send[i];
+	}
+	factorial.resize(N+1); factorial[0] = 1;
+	for (int i = 1; i <= N; ++i) factorial[i] = i*factorial[i-1];
+ 
+ 	mi prod_deg = 1;
+	for (int i = 1; i <= N; ++i) prod_deg *= factorial[deg[i]];
+	auto get_path_1 = [&](int st, int en) -> mi {
+		if (st == 0 || en == 0 || en > st) return 0;
+		vector<mi> dp(N+1);
+		dp[en] = 1;
+		for (int i = en; i <= st; i++) {
+			dp[i] = dp[i]/max(deg[i],1);
+			for (int j = i+1; j <= st; j++) {
+				if (adj[i][j]) {
+					dp[j] += dp[i];
+				}
+			}
+		}
+		return dp[st];
+	};
+	auto get_path_2 = [&](int st1, int en1, int st2, int en2) -> mi {
+		return get_path_1(st1, en1) * get_path_1(st2, en2);
+	};
+	mi ans =1;
+	ans -= get_path_1(e_start[0],e_end[0]);
+	ans -= get_path_1(e_start[1],e_end[1]);
+	ans += get_path_2(e_start[0],e_end[0],e_start[1],e_end[1]);
+	ans -= get_path_2(e_start[0],e_end[1],e_start[1],e_end[0]);
+	ans *= prod_deg;
+	cout << ans.v << "\n";
+}
+
+int main() {
+	int T; cin >> T;
+	while (T--) solve();
+}
+
+What About Arbitrary
+
+$K$
+
+?
+
+Regarding the
+
+$\mathcal{O}(N^2)$
+
+solution for
+
+$K=2$
+
+above, note that the answer 
+is actually the product of
+
+$\texttt{prod_deg}$
+
+and a determinant:
+
+$$\texttt{prod_deg}\cdot \det\begin{bmatrix}
+1-\texttt{get_path_1}(e_{start}[0],e_{end}[0]) & -\texttt{get_path_1}(e_{start}[0],e_{end}[1]) \\
+-\texttt{get_path_1}(e_{start}[1],e_{end}[0]) & 1-\texttt{get_path_1}(e_{start}[1],e_{end}[1]) \\
+\end{bmatrix}.$$
+
+In general, we need to compute
+
+$K^2$
+
+values of
+
+$\texttt{get_path_1}$
+
+and take
+the determinant of a
+
+$K\times K$
+
+matrix, which can be done in
+
+$\mathcal{O}(N^2K+K^3)$
+
+time.
+
+Alternatively, suppose that we combine the start and end nodes into a single
+node
+
+$n_{special}$
+
+. Now every node in the graph has equal in-degree as
+out-degree, and the number of routing schemes is equal to  the number of
+
+Eulerian circuits
+
+in this
+graph divided by
+
+$(\text{deg}(n_{special})-1)!$
+
+. The number of Eulerian circuits
+in this graph is given by the
+
+BEST theorem
+
+, which involves
+multiplying the determinant of an
+
+$N\times N$
+
+matrix by some factorials. This
+can be done in
+
+$\mathcal{O}(\min(N^3,KN^2))$
+
+, where the
+
+$KN^2$
+
+term comes from
+the observation that the matrix we are taking the determinant of has nonzero
+entries along its main diagonal and is almost upper triangular, with the
+exception of
+
+$K$
+
+entries below the main diagonal.

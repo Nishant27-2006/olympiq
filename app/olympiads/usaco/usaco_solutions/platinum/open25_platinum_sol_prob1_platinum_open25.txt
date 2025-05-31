@@ -1,0 +1,468 @@
+Solution ID: sol_prob1_platinum_open25
+Contest: OPEN25
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob1_platinum_open25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi, Austin Geng)
+
+Partial Credit: Quadratic Time
+
+When
+
+$N\le 1000$
+
+, we can afford to iterate over all pairs of boxes.
+
+A box
+
+$i$
+
+is blocked by another box
+
+$j$
+
+(
+
+$j\neq i$
+
+) if
+
+$(x_{j1}, y_{j1})$
+
+is to
+the lower-left of
+
+$(x_{i2},y_{i2})$
+
+. Consider a graph with directed edges
+
+$i\to j$
+
+for all such pairs of boxes.
+
+$M=2$
+
+: For each
+
+$i$
+
+, check if there is an edge to some
+
+$j>i$
+
+. If so, output
+
+$\texttt{0}$
+
+. Otherwise, output
+
+$\texttt{1}$
+
+.
+
+$M=1$
+
+: Construct a
+
+topological
+ordering
+
+of the graph, and then output its reversal. The fact that a valid
+order exists is equivalent to the graph being acyclic.
+
+Both
+
+$M=1$
+
+and
+
+$M=2$
+
+run in
+
+$O(N^2)$
+
+time (and
+
+$O(N)$
+
+memory, if you don't
+explicitly store the edges).
+
+Full Credit: Segment Tree
+
+Note that there are some solutions for
+
+$M=1$
+
+only, but because they do not
+generalize to
+
+$M=2$
+
+, they are described after this section.
+
+The graph described above has too many edges, so we want to optimize the key
+operations we perform on it. At its core, we would like a data structure
+supporting the following operations efficiently:
+
+Update: Deactivate a box.
+
+Query: Given an active box, output another active box it is blocked by, or
+determine that no such box exists.
+
+We can support these operations in
+
+$O(\log N)$
+
+time each using a
+
+segment tree
+
+(see:
+
+abstract
+description
+
+) storing the lower-left corners of each active box, supporting
+range minimum queries. Specifically, define an integer array
+
+$a$
+
+with all
+entries initially set to
+
+$\infty$
+
+, and then for each active box
+
+$i$
+
+set
+
+$a[x_{i1}]=y_{i1}$
+
+. An Update corresponds to updating
+
+$a[x_{i1}] = \infty$
+
+. For
+a Query, an active box
+
+$i$
+
+is blocked if after
+
+$i$
+
+is deactivated,
+
+$\min(a[0\dots x_{i2}-1])<y_{i2}$
+
+. (Note we can easily re-activate box
+
+$i$
+
+by
+updating
+
+$a[x_{i1}]=y_{i1}$
+
+.)
+
+$M=2$
+
+: For each box in order, make a Query and then an Update. Output
+
+$\texttt{1}$
+
+if the Query returns non-blocked, and
+
+$\texttt{0}$
+
+otherwise.
+
+$M=1$
+
+: We can use the DFS-based recursive implementation of topological sort
+(example implementation
+
+here
+
+),
+except that instead of looping over all
+
+$u$
+
+out of
+
+$v$
+
+, we can use a Query to
+directly find a
+
+$u$
+
+that has not yet been pushed to the answer list. This also
+means we should Update a box when it gets pushed, to remove it from
+consideration. Since the graph is acyclic, we will never iterate over the same
+vertex more than once, meaning that the total number of vertices iterated over
+is at most
+
+$N$
+
+.
+
+Both
+
+$M=1$
+
+and
+
+$M=2$
+
+run in
+
+$O(N\log N)$
+
+time and
+
+$O(N)$
+
+memory.
+
+Benjamin Qi's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+
+struct S {  // y-coordinate and the box associated with it
+    int y;
+    int label;
+};
+
+S op(S a, S b) {  // combiner function: return the lower y-coordinate
+    if (a.y < b.y) return a;
+    return b;
+}
+
+S e() { return {(int)1e9, -1}; }  // identity
+
+
+struct Segtree {  // simplified version of AtCoder's segment tree implementation
+    int n = 1;
+    V<S> d;
+    Segtree(int n_) {
+        while (n < n_) n *= 2;
+        d = V<S>(2 * n, e());
+    }
+    void set(int p, S x) {
+        d.at(p += n) = x;
+        while (p > 1) p /= 2, d.at(p) = op(d.at(2 * p), d.at(2 * p + 1));
+    }
+    S prod(int l, int r) {
+        assert(0 <= l && l <= r && r <= n);
+        S vl = e(), vr = e();
+        for (l += n, r += n; l < r; l /= 2, r /= 2) {
+            if (l & 1) vl = op(vl, d.at(l++));
+            if (r & 1) vr = op(d.at(--r), vr);
+        }
+        return op(vl, vr);
+    }
+};
+
+int M;
+
+void solve() {
+    int N;
+    cin >> N;
+    V<array<array<int, 2>, 2>> boxes(N);
+    for (auto &a : boxes)  // read and zero-index
+        for (auto &b : a)
+            for (auto &c : b) {
+                cin >> c;
+                --c;
+            }
+    Segtree seg(2 * N);
+    auto rem = [&](int x) {  // deactivate op
+        seg.set(boxes.at(x).at(0).at(0), e());
+    };
+    auto add = [&](int x) {  // activate op
+        seg.set(boxes.at(x).at(0).at(0), S{boxes.at(x).at(0).at(1), x});
+    };
+    auto edge_out = [&](int i) {  // query op: returns -1 if not blocked, or
+                                  // some blocking box
+        rem(i);
+        S s = seg.prod(0, boxes.at(i).at(1).at(0));
+        int ret = (s.y < boxes.at(i).at(1).at(1)) ? s.label : -1;
+        add(i);
+        return ret;
+    };
+    for (int i = 0; i < N; ++i) add(i);
+    if (M == 1) {
+        V<bool> active(N, true);
+        V<int> ans;
+        function<void(int)> dfs = [&](int x) -> void {
+            assert(active.at(x));
+            while (true) {
+                int y = edge_out(x);
+                if (y == -1) {
+                    active.at(x) = false;
+                    rem(x);
+                    ans.push_back(x);
+                    return;
+                }
+                dfs(y);
+            }
+        };
+        for (int i = 0; i < N; ++i)
+            if (active.at(i)) dfs(i);
+        assert(ans.size() == N);
+        for (int i = 0; i < N; ++i) {
+            if (i) cout << " ";
+            cout << ans[i] + 1;
+        }
+        cout << "\n";
+    } else {
+        string ans;
+        for (int i = 0; i < N; ++i) {
+            int x = edge_out(i);
+            ans += (x == -1 ? '1' : '0');
+            rem(i);
+        }
+        cout << ans << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin >> T >> M;
+    while (T--) solve();
+}
+
+Alternative solutions for M=1
+
+We would like some more lightweight version of the graph described above, by
+excluding unnecessary edges. The key insight is that while it is hard to
+construct a sparse graph where every topological sort forms a valid removal
+order, we can instead construct a sparse graph that stores only some information
+about how boxes block each other and use a specific toposort that accounts for
+the nature of the remaining blocking constraints.
+
+One method is: From left to right, at every box's right side, add an edge to the
+nearest box directly below this right side (or an abstract "root" node if no
+boxes are below). This can be done with a sweep line. This forms a tree, and its
+pre-order traversal is a valid removal order.
+
+Another method is: At every box's left side, add an edge to the nearest
+rectangles above and below this left side, if they exist. This can also be done
+with a sweep line. Toposort using Kahn's algorithm (keeping track of indegree),
+always removing the leftmost available box (by either
+
+$x$
+
+-coordinate).
+
+To prove correctness, it suffices to show that if a box blocks another box, it
+will come earlier in the outputted order.
+
+Unfortunately, these methods do not generalize to
+
+$M=2$
+
+, since they rely on
+specific ways to construct a valid ordering that are, in a sense, more
+restrictive than what is allowed. Notice that, in both methods above, only one
+
+$y$
+
+-coordinate of each box needs to be known!
+
+Austin Geng's code for the latter method:
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+template<typename T>
+using PQ = priority_queue<T, vector<T>, greater<T>>;
+ 
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+ 
+    int t; int m; cin>>t>>m;
+    if (m != 1) {
+        assert(false);
+    }
+    for (int ti = 0; ti < t; ++ti) {
+        int n; cin>>n;
+        vector<tuple<int,int,int>> events;
+        vector<int> xs(n);
+        for (int i = 0; i < n; ++i) {
+            int x1,y1,x2,y2; cin>>x1>>y1>>x2>>y2;
+            xs[i] = x1;
+            events.emplace_back(x1,y1,i);
+            events.emplace_back(x2,y1,-1);
+        }
+        sort(events.begin(),events.end());
+        map<int,int> sweep;
+        vector<vector<int>> out(n);
+        vector<int> deps(n,0);
+        for (auto [_,y,i] : events) {
+            if (i == -1) {    
+                sweep.erase(y);
+                continue;
+            }
+            auto it = sweep.lower_bound(y);
+            if (it != sweep.begin()) {
+                auto j = prev(it)->second;
+                out[j].push_back(i);
+                ++deps[i];
+            }
+            if (it != sweep.end()) {
+                auto j = it->second;
+                out[i].push_back(j);
+                ++deps[j];
+            }
+            sweep[y] = i;
+        }
+        PQ<pair<int,int>> next;
+        for (int i = 0; i < n; ++i) {
+            if (deps[i] != 0) continue;
+            next.push({xs[i],i});
+        }
+        while (!next.empty()) {
+            auto [_,a] = next.top(); next.pop();
+            cout << a+1 << " ";
+            for (auto b : out[a]) {
+                --deps[b];
+                if (deps[b] != 0) continue;
+                next.push({xs[b],b});
+            }
+        }
+        cout << "\n";
+    }
+}
+
+Existence of a valid removal order
+
+Although not part of the problem, one might wonder why a valid removal order
+always exists. Here is a simple informal proof (idea by Benjamin Chen).
+
+It suffices to show that there always exists a box that can be removed, since
+this fact can be repeatedly applied to produce a removal order. Imagine that
+"gravity" drags boxes down to a "floor" at
+
+$y=0$
+
+. Observe that if a box was
+blocked by another box, it will remain blocked. The leftmost box on the ground
+is, and thus was, removable.

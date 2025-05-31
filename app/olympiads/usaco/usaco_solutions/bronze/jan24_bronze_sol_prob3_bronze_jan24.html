@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Rohin Garg)
+<p>There are multiple solutions to this problem, each with different thought
+processes but the same end result. Two are presented below. An operation of type
+<span class='math'>$1$</span> refers to a single walk with pesticide of type <span class='math'>$1$</span>, while an operation of
+type <span class='math'>$2$</span> refers to a single walk with pesticide of type <span class='math'>$2$</span>.
+<p><strong>Solution 1:</strong> Difference Arrays
+<p>Let <span class='math'>$\text{diff}(a)$</span> be the difference array of <span class='math'>$a$</span>. In particular,
+<span class='math'>$\text{diff}(a) = [a_1, a_2 - a_1, \ldots, a_n - a_{n-1}]$</span>. Let&apos;s examine how
+each type of operation affects <span class='math'>$\text{diff}(a)$</span>.
+<p>Assume we do an operation of type 1. The value at indices less than <span class='math'>$h$</span> remain
+unchanged, so the corresponding values of <span class='math'>$\text{diff}(a)$</span> stay the same as
+well. Because <span class='math'>$a_h$</span> increases by <span class='math'>$1$</span> and <span class='math'>$a_{h-1}$</span> remains unchanged,
+<span class='math'>$\text{diff}(a)_h$</span> is the first value that changes, and it increases by <span class='math'>$1$</span>.
+Similarly, because <span class='math'>$a_{h+1}$</span> increases by <span class='math'>$2$</span> and <span class='math'>$a_h$</span> increases by <span class='math'>$1$</span>,
+<span class='math'>$\text{diff}(a)_{h+1}$</span> increases by <span class='math'>$1$</span>. Extending this argument, an operation
+of type <span class='math'>$1$</span> simply increments a suffix of <span class='math'>$\text{diff}(a)$</span>, while and operation
+of type <span class='math'>$2$</span> decrements a suffix.
+<p>This transformation can be done one more time. Let&apos;s examine how
+<span class='math'>$\text{diff}(\text{diff}(a))$</span> changes after each operation. By doing a similar
+analysis as before, we can see that the only index that changes is
+<span class='math'>$\text{diff}(\text{diff}(a))_h$</span>, and it either increases or decreases by <span class='math'>$1$</span>
+depending on the operation type. Finding the minimum operations to make
+<span class='math'>$\text{diff}(\text{diff}(a))$</span> all <span class='math'>$0$</span>&apos;s is now straightforward, as it is equal
+to <span class='math'>$\sum_{i=1}^n
+|\text{diff}(\text{diff}(a))_i|$</span>, because all of the indices
+are independent. 
+<p>Rohin Garg&apos;s code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+using ll = long long;
+ 
+vector&lt;ll&gt; diff(vector&lt;ll&gt; a) {
+    vector&lt;ll&gt; b(a.size());
+    for (int i = 0; i &lt; (int) b.size(); i++) {
+        b[i] = a[i];
+        if (i &gt; 0)
+            b[i] -= a[i-1];
+    }
+    return b;
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0);
+   
+    int n; cin &gt;&gt; n;
+    vector&lt;ll&gt; a(n);
+    for (int i = 0; i &lt; n; i++) {
+        cin &gt;&gt; a[i];
+    }
+    
+    a = diff(diff(a));
+    ll ans = 0;
+    for (int i = 0; i &lt; n; i++)
+        ans += abs(a[i]);
+        
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p><strong>Solution 2:</strong> Optimized Simulation
+<p>The only way to alter the number of bacteria on patch <span class='math'>$1$</span> would be for Farmer
+John to use <span class='math'>$h = 1$</span>. This motivates the idea of first calculating the operations
+that must be done to make <span class='math'>$a_1 = 0$</span>, then <span class='math'>$a_2 = 0$</span>, and so on.
+<p>Note that you&apos;ll never do both types of operations with the same <span class='math'>$h$</span> value, as
+they would just undo each other, and doing neither instead of both would get you
+the same final configuration in a smaller number of operations. 
+<p>This means that we know exactly what set of operations we&apos;ll do with <span class='math'>$h = 1$</span>: If
+<span class='math'>$a_i$</span> is positive, we&apos;ll do <span class='math'>$a_i$</span> operations of type <span class='math'>$2$</span>, otherwise we&apos;ll do
+<span class='math'>$-a_i$</span> operations of type <span class='math'>$1$</span>. Then, we can ignore <span class='math'>$a_1$</span>, as it can no longer be
+changed by any future operation, and continue this process (making sure to
+update all array elements when doing an operation). This immediately lends an
+<span class='math'>$\mathcal{O}(n^2)$</span> solution, as at each index you have to update
+<span class='math'>$\mathcal{O}(n)$</span> other indices. 
+<p>What remains is to optimize the simulation of each operation. Let&apos;s start by
+considering a simpler version of the problem, where an operation adds <span class='math'>$1$</span> to the
+indices after it, instead of <span class='math'>$1, 2, \ldots$</span> In this version, notice that the
+value of an index is only changed by the operations that occurred at another
+index before it, and all that matters is the difference between the number of
+operations of type <span class='math'>$1$</span> and operations of type <span class='math'>$2$</span>. Because of this, instead of
+directly updating the values, you can just keep track of the number of
+operations that have occurred, and update the value when it is iterated over.
+<p>In this version, you can do something similar, except you have to keep track of
+two things: the difference between the number of operations of type <span class='math'>$1$</span> and the
+number of operations of type <span class='math'>$2$</span>, as well as the total amount the operations
+add. As an example, let&apos;s say that there were <span class='math'>$3$</span> more operations of type <span class='math'>$1$</span>
+than <span class='math'>$2$</span> at indices <span class='math'>$\leq 5$</span>, and those operations increased the value of <span class='math'>$a_5$</span>
+by <span class='math'>$4$</span>. Then, because the contribution of each operation of type <span class='math'>$1$</span> increases
+by <span class='math'>$1$</span>, and the contribution of each element of type <span class='math'>$2$</span> decreases by <span class='math'>$1$</span>, the
+contribution of all of the operations increases by exactly <span class='math'>$3$</span>. Therefore, the
+value of <span class='math'>$a_6$</span> will increase by exactly <span class='math'>$4 + 3 = 7$</span> due to the operations. In
+this way, we can calculate the contribution of the operations without having to
+directly simulate them, lending us an <span class='math'>$\mathcal{O}(n)$</span> solution.
+<p>Rohin Garg&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+using ll = long long;
+ 
+int main() {
+    ios::sync_with_stdio(false); cin.tie(0);
+   
+    int n; cin &gt;&gt; n;
+    vector&lt;ll&gt; a(n);
+    for (int i = 0; i &lt; n; i++) {
+        cin &gt;&gt; a[i];
+    }
+   
+    ll ans = 0;
+    ll contribution = 0;
+    ll cnt_ops = 0;
+    for (int i = 0; i &lt; n; i++) {
+        contribution += cnt_ops;
+        a[i] += contribution;
+        
+        ll cur_ops = -a[i];
+        ans += abs(cur_ops);
+        cnt_ops += cur_ops;
+        contribution += cur_ops;
+    }
+    
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

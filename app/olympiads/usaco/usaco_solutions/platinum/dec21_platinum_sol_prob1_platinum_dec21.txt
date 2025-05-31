@@ -1,0 +1,473 @@
+Solution ID: sol_prob1_platinum_dec21
+Contest: DEC21
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob1_platinum_dec21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Timothy Qian)
+
+Consider each ticket and each checkpoint as a node in a graph. We draw the
+following edges: An edge from checkpoint
+
+$i$
+
+of weight
+
+$p_j$
+
+to ticket
+
+$j$
+
+if
+
+$i = c_j$
+
+, an edge from ticket
+
+$i$
+
+to checkpoint
+
+$j$
+
+of weight
+
+$0$
+
+if
+
+$a_i\leq j \leq b_i$
+
+. Each time we go to ticket
+
+$j$
+
+, it can be seen as
+activating an edge to ticket
+
+$j$
+
+for a price
+
+$p_j$
+
+. Then the goal is for each
+
+$i$
+
+to pay the minimum to activate some edges such that starting from checkpoint
+
+$i$
+
+, we can visit checkpoint
+
+$1$
+
+and checkpoint
+
+$N$
+
+.
+
+Now consider the optimal set of edges that we pick. Say we start at checkpoint
+
+$s$
+
+. The edges we picked must form a path from
+
+$s$
+
+to
+
+$1$
+
+and
+
+$s$
+
+to
+
+$N$
+
+.
+Consider the nodes we visit in the path from checkpoint
+
+$s$
+
+to checkpoint
+
+$1$
+
+in
+that order and call this list
+
+$L$
+
+, and similarly for the nodes we visited on the
+path from
+
+$s$
+
+to checkpoint
+
+$N$
+
+and call this
+
+$R$
+
+. Consider indices
+
+$i, j$
+
+such
+that
+
+$L[i] = R[j]$
+
+, but for any
+
+$x > i, y > j$
+
+, we have
+
+$L[x] \neq R[y]$
+
+. This
+can be viewed as the "last common node" of
+
+$L, R$
+
+. This exists as long as
+
+$L, R$
+
+have at least one node in common, which they do, namely checkpoint
+
+$s$
+
+. Note
+that
+
+$i, j$
+
+need not be unique, but this does not matter. Let
+
+$z = L[i] = R[j]$
+
+.
+Then the rest of list
+
+$L$
+
+after index
+
+$i$
+
+consists of a path from
+
+$z$
+
+to
+
+$1$
+
+.
+Similarly, the rest of list
+
+$R$
+
+consists of a path from
+
+$z$
+
+to
+
+$N$
+
+. The first
+part of list
+
+$L$
+
+consists of a path from
+
+$s$
+
+to
+
+$z$
+
+, and similarly for the first
+part of list
+
+$R$
+
+. Note that the paths from
+
+$z$
+
+to
+
+$1$
+
+and
+
+$z$
+
+to
+
+$N$
+
+do not
+contain any tickets in common. So for every optimal set of edges that we pick,
+we can decompose that edges into three parts: a path from our starting
+checkpoint to a node
+
+$z$
+
+, and two disjoint paths from
+
+$z$
+
+to checkpoint
+
+$1$
+
+and
+to checkpoint
+
+$N$
+
+.
+
+We first compute the shortest paths from any node to checkpoint
+
+$1$
+
+. The same
+can be analogously done for computing the shortest paths from any node to
+checkpoint
+
+$N$
+
+. We instead reverse the edges, and compute the minimum distance
+from checkpoint
+
+$1$
+
+to any other node. The main idea is we use a multi-source
+Dijkstra's algorithm on a Segment Tree. We first initialize checkpoint
+
+$1$
+
+at a
+distance of
+
+$0$
+
+, and every other node at a distance of infinity. We put all
+checkpoints in a minimum priority queue based on their distance. After popping
+the top checkpoint, let it be
+
+$i$
+
+, we must find all tickets that have not yet
+been visited yet that contain
+
+$i$
+
+. To do this, we put the tickets in a Segment
+Tree based on their index after sorting the tickets by
+
+$a_j$
+
+, their left
+interval value. Then in each node of the Segment Tree, we store the maximum
+
+$b_j$
+
+, or the right interval value, of all tickets in the contained interval.
+Now we can descend down the Segment Tree to remove all the intervals that
+contain
+
+$c_i$
+
+. When we remove an interval from the Segment Tree, we can 
+set its right coordinate to
+
+$-1$
+
+. Note that we don't actually need to add this
+ticket to the priority queue. This is because this ticket's distance must be the
+same as the distance to the checkpoint that is currently being processed. Thus,
+we can just process these removed tickets immediately. Overall, these Segment
+Tree operations will take
+
+$\mathcal O(N \log N)$
+
+time, because each interval
+gets removed exactly once. Running this Dijkstra's algorithm thus takes
+
+$\mathcal O(N \log N)$
+
+time.
+
+Finally, let
+
+$D_L[i], D_R[i]$
+
+be the distances for going to checkpoint
+
+$1$
+
+and a
+ticket with checkpoint
+
+$N$
+
+starting from node
+
+$i$
+
+as computed above. Then we
+initialize each node
+
+$i$
+
+at a distance of
+
+$D_L[i] + D_R[i]$
+
+. Then we once again
+run the same Dijkstra's algorithm as above to compute the distance to each node.
+The final distances to each checkpoint stores the desired answers.
+
+Benjamin + Timothy Qian's Code:
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+struct Ticket {
+	int c, p, a, b;
+};
+ 
+struct SegmentTree {
+	int n, sz;
+	vector<int> mx;
+	vector<Ticket> tickets;
+ 
+	SegmentTree(vector<Ticket> tickets) : tickets(tickets) {
+		n = 1;
+		sz = (int)tickets.size();
+		while (n < sz) {
+			n <<= 1;
+		}
+		mx.assign(2 * n, 0);
+		for (int i = 0; i < n; ++i) {
+			if (i < sz) {
+				mx[i + n] = tickets[i].b;
+			} else {
+				mx[i + n] = -1;				
+			}
+		}
+		for (int i = n - 1; i >= 1; --i) {
+			pull(i);
+		}
+	}
+ 
+	void pull(int i) {
+		mx[i] = max(mx[2 * i], mx[2 * i + 1]);
+	}
+ 
+	void remove(vector<int>& v, int p, int i = 1, int l = 0, int r = -1) {
+		if (r == -1) {
+			r += n;
+		}
+		if (l >= sz || tickets[l].a > p || mx[i] < p) {
+			return;
+		} else if (l == r) {
+			mx[i] = -1;
+			v.push_back(l);
+		} else {
+			int m = (l + r) >> 1;
+			remove(v, p, 2 * i, l, m);
+			remove(v, p, 2 * i + 1, m + 1, r);
+			pull(i);
+		}
+	}
+};	
+ 
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	const long long INF = 1e18;
+	int n, k;
+	cin >> n >> k;
+	vector<Ticket> tickets(k);
+	for (auto& t : tickets) {
+		cin >> t.c >> t.p >> t.a >> t.b;
+		--t.c, --t.a, --t.b;
+	}
+	sort(tickets.begin(), tickets.end(), [](const auto& l, const auto& r) {
+		return l.a < r.a;
+	});
+	auto dijkstra = [&](vector<long long> dist) {
+		priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+		for (int i = n; i < n + k; ++i) {
+			dist[tickets[i - n].c] = min(dist[tickets[i - n].c], dist[i] + tickets[i - n].p);
+		}
+		for (int i = 0; i < n; ++i) {
+			if (dist[i] < INF) {
+				pq.push({dist[i], i});
+			}
+		}
+		SegmentTree seg(tickets);
+		while (!pq.empty()) {
+			auto x = pq.top();
+			pq.pop();
+			if (x.first > dist[x.second]) {
+				continue;
+			}
+			vector<int> removed;
+			seg.remove(removed, x.second);
+			for (int r : removed) {
+				if (dist[r + n] > x.first) {
+					dist[r + n] = x.first;
+					if (dist[tickets[r].c] > x.first + tickets[r].p) {
+						dist[tickets[r].c] = x.first + tickets[r].p;
+						pq.push({dist[tickets[r].c], tickets[r].c});
+					}
+				}
+			}
+		}
+		return dist;
+	};
+	vector<long long> start_left(n + k, INF);
+	start_left[0] = 0;
+	vector<long long> dist_left = dijkstra(start_left);
+	vector<long long> start_right(n + k, INF);
+	start_right[n - 1] = 0;
+	vector<long long> dist_right = dijkstra(start_right);
+	vector<long long> dist(n + k);
+	for (int i = 0; i < n + k; ++i) {
+		dist[i] = dist_left[i] + dist_right[i];
+	}
+	dist = dijkstra(dist);
+	for (int i = 0; i < n; ++i) {
+		if (dist[i] < INF) {
+			cout << dist[i] << '\n';
+		} else {
+			cout << -1 << '\n';
+		}
+	}
+}
+
+Author's note: This was created at the same time as (and is vaguely related to)
+
+EGOI 2021 Lanterns.

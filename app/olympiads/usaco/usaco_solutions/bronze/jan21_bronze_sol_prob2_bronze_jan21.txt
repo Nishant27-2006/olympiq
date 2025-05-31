@@ -1,0 +1,89 @@
+Solution ID: sol_prob2_bronze_jan21
+Contest: JAN21
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_jan21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In the best case, each cow is in its own group, and the answer is
+
+$N$
+
+. When is
+this allowed to happen?
+
+Let
+
+$O$
+
+be the number of odd cows and
+
+$E$
+
+be the number of even cows initially
+in the list. For each cow to be in its own group, either
+
+$E = O$
+
+or
+
+$E = O+1$
+
+.
+
+If this is not the case, then we must have groups with more than one cow. There
+are two cases.
+
+If
+
+$E > O+1$
+
+, then the problem is that we have too many even cows. However, note
+that two even numbers added together is an even number. Therefore, we can do the
+assignment as follows - take one even cow, then one odd cow, and repeat this
+
+$O$
+
+times. The remaining cows are all even, and we can put them all in the same
+group. In this case, the answer is
+
+$2O+1$
+
+.
+
+The other case is when
+
+$E < O$
+
+, so we have too many odd cows. Note that two odd
+numbers added together is an even number. To deal with having too many odd cows,
+we have to take two odd cows and pair them, which is equivalent to having two
+fewer odd cows and one more even cow. We can repeat this process of pairing two
+odd cows until
+
+$E \ge O$
+
+, and then we can use the above logic to compute the
+answer.
+
+Here is Brian Dean's code.
+
+#include <iostream>
+using namespace std;
+ 
+int main(void)
+{
+  int O=0, E=0, N, x;
+  cin >> N;
+  for (int i=0; i<N; i++) {
+    cin >> x;
+    if (x % 2 == 0) E++; else O++;
+  }
+  while (O > E) { O=O-2; E++; }
+  if (E > O+1) E = O+1;
+  cout << E + O << "\n";
+}

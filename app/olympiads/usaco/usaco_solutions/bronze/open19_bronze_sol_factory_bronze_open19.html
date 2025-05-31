@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>This is a nice problem where the coding is straightforward once you have 
+figured out the right structure to search for as an answer.
+<p>The abstract structure we are dealing with here is a tree --- a set of <span class='math'>$n$</span> nodes
+connected by <span class='math'>$n-1$</span> edges, where every node is reachable from  every other node
+and there is no cycle.  Trees are everywhere in computer science and you can
+expect to see them often in higher divisions.
+<p>Let&apos;s call a node with only incoming directed edges a &quot;sink&quot;, since  things can
+flow into it but not out.  The short answer to the problem is that we need to
+see if our tree has a single unique sink, in which case this is the answer. 
+Let&apos;s see if we can argue this:
+<p>1. If all nodes in the tree can reach node <span class='math'>$x$</span>, then we claim node <span class='math'>$x$</span> must be
+the unique sink.  All nodes aside from <span class='math'>$x$</span> need at least one outgoing directed
+edge to be able to escape from them, so they aren&apos;t sinks.  Further, node <span class='math'>$x$</span>
+cannot have any outgoing edges, since if there was an edge  <span class='math'>$x \rightarrow y$</span>
+then <span class='math'>$y$</span> couldn&apos;t reach <span class='math'>$x$</span>.
+<p>2. If <span class='math'>$x$</span> is the unique sink, then all nodes in the tree can reach <span class='math'>$x$</span>.  Suppose
+some node <span class='math'>$y$</span> cannot reach <span class='math'>$x$</span>.  We know <span class='math'>$y$</span> has an outgoing edge since it isn&apos;t
+a sink, so let&apos;s follow such an edge.   This lands us on another node (say, <span class='math'>$z$</span>)
+which if not a sink must also have an outgoing edge, so let&apos;s  follow such an
+edge.  If we keep following outgoing edges until we no longer can, we inevitably
+must get stuck at a sink, since this is the only node with no outgoing edges
+(and we can&apos;t go around in cycles since a tree has no cycles).  This means we
+have reached <span class='math'>$x$</span>, since <span class='math'>$x$</span> is the only sink.
+<p>My code for solving this problem is below.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+ 
+int N, incoming[101], outgoing[101];
+ 
+int main(void)
+{
+  ifstream fin (&quot;factory.in&quot;);
+  fin &gt;&gt; N;
+  for (int i=0; i&lt;N-1; i++) {
+    int a, b;
+    fin &gt;&gt; a &gt;&gt; b;
+    outgoing[a]++;
+    incoming[b]++; 
+  }
+ 
+  ofstream fout (&quot;factory.out&quot;);
+  int answer = -1;
+  for (int i=1; i&lt;=N; i++) {
+    if (outgoing[i]==0 &amp;&amp; answer != -1 ) { answer = -1; break; } // found two sinks -- bad!
+    if (outgoing[i]==0) answer = i;  // found first sink; remember it
+  }
+  fout &lt;&lt; answer &lt;&lt; &quot;\n&quot;;
+  return 0;
+}  
+</pre>
+</body></html>

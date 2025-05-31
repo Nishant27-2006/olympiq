@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Claire Zhang) 
+<p>Consider stamping wherever possible - that is, for each position and rotation of
+the stamp, if stamping here would only paint on black grid cells, stamp here. If
+there is a sequence of stampings <span class='math'>$S$</span> that produces the grid, then stamping
+wherever would also produce the grid because it would contain each individual
+stamping in <span class='math'>$S$</span> and it will never &quot;overstamp&quot;. Therefore, it suffices to check
+at each of <span class='math'>$(N-K+1)^2$</span> positions and under each of <span class='math'>$4$</span> rotations whether the
+<span class='math'>$K\times K$</span> region has paint in every cell the stamp has paint. 
+<p>To try each position, we can use a nested for loop - one over x and one over y.
+To account for rotations, we can nest another loop that runs <span class='math'>$4$</span> times - after
+each iteration, we rotate our stamp. We can rotate our stamp array by setting
+<span class='math'>$stamp[i][j]$</span> to <span class='math'>$stamp[j][K-1-i]$</span> (0-indexed). See code for implementation
+details.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+T = int(input())
+for _ in range(T):
+    input()
+    N = int(input())
+    grid = [list(input()) for _ in range(N)]
+    K = int(input())
+    stamp = [input() for _ in range(K)]
+    ans = [[&apos;.&apos; for _ in range(N)] for _ in range(N)]
+    for rot in range(4):
+        for i in range(N-K+1):
+            for j in range(N-K+1):
+                if all(grid[i+a][j+b] == &apos;*&apos; or stamp[a][b] == &apos;.&apos; for a in range(K) for b in range(K)):
+                    for a in range(K):
+                        for b in range(K):
+                            if stamp[a][b] == &apos;*&apos;:
+                                ans[i+a][j+b] = &apos;*&apos;
+        stamp = [[stamp[j][K-1-i] for j in range(K)] for i in range(K)]
+    print(&quot;YES&quot; if grid == ans else &quot;NO&quot;)
+</pre>
+<p></body></html>

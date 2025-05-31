@@ -1,0 +1,2212 @@
+Solution ID: sol_prob1_platinum_jan24
+Contest: JAN24
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob1_platinum_jan24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Rain Jiang, Benjamin Qi)
+
+Restating the problem:
+
+You are given an undirected graph, such that each edge belongs to at most one
+simple cycle. Such a graph is called a
+
+cactus
+
+.
+
+You start walking at vertex
+
+$1$
+
+. Every time you are at any vertex
+
+$i$
+
+, do the
+following:
+
+With a probability of
+
+$p_i$
+
+, end the walk.
+
+Otherwise, if there are no untraversed edges adjacent to
+
+$i$
+
+, end the
+walk.
+
+Otherwise, choose an untraversed edge adjacent to
+
+$i$
+
+uniformly randomly,
+and traverse it.
+
+For all vertices
+
+$i$
+
+, you want to find the probability that you end your walk at
+
+$i$
+
+. Let's call this probability
+
+$ans_i$
+
+.
+
+Let
+
+$d_i$
+
+be
+
+$\deg(i)$
+
+if
+
+$i=1$
+
+, and
+
+$\deg(i)-1$
+
+otherwise.
+
+Let
+
+$K$
+
+be the maximum number of cycles that any vertex belongs to.
+
+Subtask 1:
+
+$N \le 11$
+
+.
+
+From
+
+$N \le 11$
+
+, we can see that
+
+$M \le \frac{3}{2} (N - 1) \le \frac{3}{2} \cdot 10 = 15$
+
+.
+With these bounds, an
+
+$O(2^M \cdot M)$
+
+DP is sufficient.
+
+Let
+
+$dp_{i, E}$
+
+be the probability that you reach a state where you're at vertex
+
+$i$
+
+, and the set of untraversed edges is
+
+$E$
+
+.
+
+Let's see how to transition from
+
+$dp_{i, E}$
+
+to other states.
+
+Let
+
+$E'$
+
+be the set of edges in
+
+$E$
+
+adjacent to
+
+$i$
+
+.
+
+If
+
+$E'$
+
+is empty, we add
+
+$dp_{i, E}$
+
+to
+
+$ans_i$
+
+.
+
+Otherwise, we add
+
+$dp_{i, E} \cdot p_i$
+
+to
+
+$ans_i$
+
+. Also, for each edge
+
+$e = \{i, j\} \in E'$
+
+adjacent to
+
+$i$
+
+, we add
+
+$dp_{i, E} \cdot (1 - p_i) \cdot \frac{1}{|E'|}$
+
+to
+
+$dp_{j, E \setminus \{e\}}$
+
+,
+
+Because the time spent on transitions from any
+
+$dp_{i, E}$
+
+is
+
+$O(\deg(i))$
+
+, and
+the sum of
+
+$\deg(i)$
+
+is
+
+$O(M)$
+
+, the total time taken for this DP is
+
+$O(2^M \cdot M)$
+
+.
+
+Rain's code:
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+ 
+#define N	11
+#define M	((N - 1) * 3 / 2)
+#define MD	1000000007
+ 
+int vv[N + 1];
+ 
+void init() {
+	int i;
+ 
+	vv[1] = 1;
+	for (i = 2; i <= N; i++)
+		vv[i] = (long long) vv[i - MD % i] * (MD / i + 1) % MD;
+}
+ 
+int ii[M], jj[M], m;
+int *eh[N], eo[N], n;
+ 
+void append(int i, int h) {
+	int o = eo[i]++;
+ 
+	if (o >= 2 && (o & o - 1) == 0)
+		eh[i] = (int *) realloc(eh[i], o * 2 * sizeof *eh[i]);
+	eh[i][o] = h;
+}
+ 
+int main() {
+	int t;
+ 
+	init();
+	scanf("%d", &t);
+	while (t--) {
+		static int xx[N], ans[N], dp[1 << M][M];
+		int h, i, j, b, b_, o, d, x;
+ 
+		scanf("%d%d", &n, &m);
+		if (n > N)
+			return 0;
+		for (i = 0; i < n; i++)
+			scanf("%d", &xx[i]);
+		for (i = 0; i < n; i++)
+			eh[i] = (int *) malloc(2 * sizeof *eh[i]), eo[i] = 0;
+		for (h = 0; h < m; h++) {
+			scanf("%d%d", &i, &j), i--, j--;
+			ii[h] = i, jj[h] = j;
+			append(i, h), append(j, h);
+		}
+		for (b = 0; b < 1 << m; b++)
+			memset(dp[b], 0, n * sizeof *dp[b]);
+		memset(ans, 0, n * sizeof *ans);
+		dp[(1 << m) - 1][0] = 1;
+		for (b = (1 << m) - 1; b >= 0; b--)
+			for (i = 0; i < n; i++) {
+				x = dp[b][i];
+				if (x == 0)
+					continue;
+				d = 0;
+				for (o = eo[i]; o--; ) {
+					h = eh[i][o];
+					if ((b & 1 << h) != 0)
+						d++;
+				}
+				if (d == 0)
+					ans[i] = (ans[i] + x) % MD;
+				else {
+					ans[i] = (ans[i] + (long long) x * xx[i]) % MD;
+					x = (long long) x * (1 - xx[i] + MD) % MD * vv[d] % MD;
+					if (x == 0)
+						continue;
+					for (o = eo[i]; o--; ) {
+						h = eh[i][o];
+						if ((b & 1 << h) != 0) {
+							b_ = b ^ 1 << h, j = i ^ ii[h] ^ jj[h];
+							dp[b_][j] = (dp[b_][j] + x) % MD;
+						}
+					}
+				}
+			}
+		for (i = 0; i < n; i++)
+			printf("%d%c", ans[i], i + 1 < n ? ' ' : '\n');
+		for (i = 0; i < n; i++)
+			free(eh[i]);
+	}
+	return 0;
+}
+
+Subtask 2:
+
+$K = 0$
+
+.
+
+The graph is a tree. Let's root the tree at vertex
+
+$1$
+
+.
+
+Notice that you travel along a path from the root, and only move deeper and
+deeper. Let
+
+$pVisit_i$
+
+be the probability that you reach
+
+$i$
+
+from the root. Then
+
+$ans_i$
+
+is equal to
+
+$pVisit_i \cdot p_i$
+
+(or just
+
+$pVisit_i$
+
+if
+
+$i$
+
+is a leaf.)
+
+For each child
+
+$j$
+
+of
+
+$i$
+
+,
+
+$pVisit_j = pVisit_i \cdot (1 - p_i) \cdot \frac{1}{d_i}$
+
+. We can compute
+
+$pVisit$
+
+using a DFS from vertex
+
+$1$
+
+.
+
+Time complexity:
+
+$O(M)$
+
+.
+
+Rain's code:
+
+#include <stdio.h>
+#include <stdlib.h>
+ 
+#define N	10000
+#define MD	1000000007
+ 
+int vv[N + 1];
+ 
+void init() {
+	int i;
+ 
+	vv[1] = 1;
+	for (i = 2; i <= N; i++)
+		vv[i] = (long long) vv[i - MD % i] * (MD / i + 1) % MD;
+}
+ 
+int *ej[N], eo[N], n;
+ 
+void append(int i, int j) {
+	int o = eo[i]++;
+ 
+	if (o >= 2 && (o & o - 1) == 0)
+		ej[i] = (int *) realloc(ej[i], o * 2 * sizeof *ej[i]);
+	ej[i][o] = j;
+}
+ 
+void detach(int i, int j) {
+	int o;
+ 
+	for (o = eo[i]; o--; )
+		if (ej[i][o] == j) {
+			eo[i]--;
+			while (o < eo[i])
+				ej[i][o] = ej[i][o + 1], o++;
+			return;
+		}
+}
+ 
+int xx[N], ans[N];
+ 
+void dfs(int p, int i, int w) {
+	int o;
+ 
+	if (p != -1)
+		detach(i, p);
+	if (eo[i] == 0)
+		ans[i] = w;
+	else {
+		ans[i] = (long long) w * xx[i] % MD;
+		w = (long long) w * (1 - xx[i] + MD) % MD * vv[eo[i]] % MD;
+		for (o = eo[i]; o--; ) {
+			int j = ej[i][o];
+ 
+			dfs(i, j, w);
+		}
+	}
+}
+ 
+int main() {
+	int t;
+ 
+	init();
+	scanf("%d", &t);
+	while (t--) {
+		int m, h, i, j;
+ 
+		scanf("%d%d", &n, &m);
+		for (i = 0; i < n; i++)
+			scanf("%d", &xx[i]);
+		for (i = 0; i < n; i++)
+			ej[i] = (int *) malloc(2 * sizeof *ej[i]), eo[i] = 0;
+		for (h = 0; h < m; h++) {
+			scanf("%d%d", &i, &j), i--, j--;
+			append(i, j), append(j, i);
+		}
+		dfs(-1, 0, 1);
+		for (i = 0; i < n; i++)
+			printf("%d%c", ans[i], i + 1 < n ? ' ' : '\n');
+		for (i = 0; i < n; i++)
+			free(ej[i]);
+	}
+	return 0;
+}
+
+Note:
+
+The first and second subtasks can also be solved by enumerating all
+of Bessie's possible walks. The number of walks is bounded above by
+
+$N\cdot 3^{(\#\text{ simple cycles})}\cdot \prod_{1\le i\le N}(\#\text{ simple cycles adjacent to }i)!$
+
+because if we:
+
+Fix Bessie's ending vertex (choices:
+
+$N$
+
+)
+
+For each simple cycle, decide which direction to traverse it in, or not
+traverse it at all (choices:
+
+$3^{(\#\text{ simple cycles})}$
+
+)
+
+For each vertex, decide in what order we will traverse the simple cycles
+adjacent to it (choices:
+
+$\prod_{1\le i\le N}(\#\text{ simple cycles adjacent to }i)!$
+
+).
+
+then Bessie's walk is uniquely determined. For
+
+$N\le 11$
+
+, the number of simple
+cycles is at most
+
+$(N-1)/2\le 5$
+
+, so the total number of walks cannot be very
+large.
+
+Subtask 3:
+
+$K \le 1$
+
+.
+
+The graph is a vertex-disjoint cactus. We need to modify the algorithm from
+Subtask 2 to handle cycles.
+
+Again, root the cactus at vertex
+
+$1$
+
+, and consider the
+
+DFS tree
+
+of this cactus. Since we
+did DFS, each cycle can be represented as path from a vertex to one of its
+descendants, plus the corresponding back edge. Let's call this highest vertex
+the
+
+top vertex
+
+of the cycle.
+
+You can see that the path generally moves downward, with occasional roundabouts
+along cycles.
+
+Similar to Subtask 2, let
+
+$pVisit_i$
+
+be the probability that you reach vertex
+
+$i$
+
+from the root.
+
+The transitions using a non-cycle edge can be handled similar to Subtask 2.
+Let's see how to transition using cycle edges. Let
+
+$i$
+
+be the top vertex of
+cycle
+
+$C$
+
+.
+
+We describe how to transition from
+
+$i$
+
+to another vertex
+
+$j$
+
+on cycle
+
+$C$
+
+. We
+can see that
+
+$pVisit_j$
+
+is the sum of the two probabilities of going from
+
+$i$
+
+to
+
+$j$
+
+, by choosing one of two paths going from
+
+$i$
+
+to
+
+$j$
+
+along
+
+$C$
+
+. The
+probability of traversing one such path is the product of
+
+$pVisit_i$
+
+and
+
+$(1 - p_u) \cdot \frac{1}{d_u}$
+
+for all vertices
+
+$u$
+
+along that path.
+
+You should also handle the special case of traversing the whole cycle
+
+$C$
+
+and
+visiting
+
+$i$
+
+a second time. The probability of this occurring is similar to the
+above. After we traverse
+
+$C$
+
+, there are no more cycle edges adjacent to
+
+$i$
+
+, so
+we are forced to either stop at
+
+$i$
+
+or traverse an adjacent non-cycle edge.
+
+We can do this using a DFS from vertex
+
+$1$
+
+. We process each cycle
+
+$C$
+
+by going
+through it twice, once in each direction, taking
+
+$O(|C|)$
+
+time.
+
+Time complexity:
+
+$O(M)$
+
+.
+
+Rain's code:
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+ 
+#define N	10000
+#define MD	1000000007
+ 
+int vv[N + 1];
+ 
+void init() {
+	int i;
+ 
+	vv[1] = 1;
+	for (i = 2; i <= N; i++)
+		vv[i] = (long long) vv[i - MD % i] * (MD / i + 1) % MD;
+}
+ 
+int xx[N], *ej[N], eo[N], n;
+ 
+void append(int i, int j) {
+	int o = eo[i]++;
+ 
+	if (o >= 2 && (o & o - 1) == 0)
+		ej[i] = (int *) realloc(ej[i], o * 2 * sizeof *ej[i]);
+	ej[i][o] = j;
+}
+ 
+void detach(int i, int j) {
+	int o;
+ 
+	for (o = eo[i]; o--; )
+		if (ej[i][o] == j) {
+			eo[i]--;
+			while (o < eo[i])
+				ej[i][o] = ej[i][o + 1], o++;
+			return;
+		}
+}
+ 
+int dd[N], pp[N], qq[N]; char marked[N];
+ 
+void dfs1(int p, int i, int d) {
+	int o, o_;
+ 
+	pp[i] = p, dd[i] = d;
+	if (p != -1)
+		detach(i, p);
+	for (o = eo[i]; o--; ) {
+		int j = ej[i][o], k;
+ 
+		if (!dd[j])
+			dfs1(i, j, d + 1);
+		else if (dd[j] > dd[i]) {
+			detach(j, i);
+			for (k = j; pp[k] != i; k = pp[k])
+				detach(pp[k], k), qq[pp[k]] = k;
+			marked[k] = 1, qq[j] = k;
+		}
+	}
+	o_ = 0;
+	for (o = 0; o < eo[i]; o++) {
+		int j = ej[i][o];
+
+		if (!marked[j])
+			ej[i][o_++] = j;
+		else
+			marked[j] = 0;
+	}
+	eo[i] = o_;
+}
+ 
+int ww[N], ans[N];
+ 
+void dfs2(int i, int cycle) {
+	int o, d, j, j_, k, w, w_;
+ 
+	j_ = -1;
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (pp[j] != i) {
+			j_ = j, cycle = 1;
+			break;
+		}
+	}
+	d = eo[i] + (cycle ? 1 : 0);
+	if (d == 0) {
+		ans[i] = ww[i];
+		return;
+	}
+	ans[i] = (long long) ww[i] * xx[i] % MD;
+	w = (long long) ww[i] * (1 - xx[i] + MD) % MD * vv[d] % MD;
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (j != j_)
+			ww[j] = (ww[j] + w) % MD;
+	}
+	if (j_ != -1) {
+		w_ = w;
+		for (k = j_; k != i; k = pp[k]) {
+			ww[k] = (ww[k] + w_) % MD;
+			w_ = (long long) w_ * (1 - xx[k] + MD) % MD * vv[eo[k] + 1] % MD;
+		}
+		w_ = w, k = j_;
+		do {
+			k = qq[k];
+			ww[k] = (ww[k] + w_) % MD;
+			w_ = (long long) w_ * (1 - xx[k] + MD) % MD * vv[eo[k] + 1] % MD;
+		} while (k != j_);
+		w = w_ * 2 % MD, d -= 2;
+		if (d == 0)
+			ans[i] = (ans[i] + w) % MD;
+		else {
+			ans[i] = (ans[i] + (long long) w * xx[i]) % MD;
+			w = (long long) w * (1 - xx[i] + MD) % MD * vv[d] % MD;
+			for (o = eo[i]; o--; ) {
+				j = ej[i][o];
+				if (j != j_)
+					ww[j] = (ww[j] + w) % MD;
+			}
+		}
+		for (k = j_; k != i; k = pp[k])
+			dfs2(k, 1);
+	}
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (j != j_)
+			dfs2(j, 0);
+	}
+}
+ 
+int main() {
+	int t;
+ 
+	init();
+	scanf("%d", &t);
+	while (t--) {
+		int m, h, i, j;
+ 
+		scanf("%d%d", &n, &m);
+		for (i = 0; i < n; i++)
+			scanf("%d", &xx[i]);
+		for (i = 0; i < n; i++)
+			ej[i] = (int *) malloc(2 * sizeof *ej[i]), eo[i] = 0;
+		for (h = 0; h < m; h++) {
+			scanf("%d%d", &i, &j), i--, j--;
+			append(i, j), append(j, i);
+		}
+		memset(dd, 0, n * sizeof *dd), memset(marked, 0, n * sizeof *marked);
+		dfs1(-1, 0, 1);
+		memset(ww, 0, n * sizeof *ww);
+		ww[0] = 1, dfs2(0, 0);
+		for (i = 0; i < n; i++)
+			printf("%d%c", ans[i], i + 1 < n ? ' ' : '\n');
+		for (i = 0; i < n; i++)
+			free(ej[i]);
+	}
+	return 0;
+}
+
+Subtasks 4, 5, 6
+
+As in earlier subtasks, root the cactus at vertex
+
+$1$
+
+and consider the DFS tree
+of it.
+
+However, the path is more complex: it can go down the tree for quite a while,
+but eventually retrace and traverse another path.
+
+Let's define a few terms. Fix vertex
+
+$i$
+
+. Consider the edge
+
+$f$
+
+from
+
+$i$
+
+to its
+parent. By the assumption that the graph is a cactus,
+
+$f$
+
+must either be a
+
+bridge
+
+or is
+contained in a (unique) cycle
+
+$C$
+
+. (From now on, when we say "bridge", we mean
+it in the graph theory sense.) If
+
+$f$
+
+is a bridge, then call
+
+$pb_i=f$
+
+the
+
+parent bridge
+
+of
+
+$i$
+
+. Otherwise, call
+
+$pc_i=C$
+
+the
+
+parent cycle
+
+of
+
+$i$
+
+.
+
+In any case, let the
+
+predecessor
+
+of vertex
+
+$i$
+
+be either its parent (if
+
+$f$
+
+is a bridge) or the top vertex of
+
+$pc_i$
+
+(if
+
+$f$
+
+isn't a bridge.)
+Symmetrically,
+
+$i$
+
+is a
+
+successor
+
+of its predecessor.
+
+Also, let the
+
+subcactus
+
+of
+
+$i$
+
+be the connected subgraph containing
+
+$i$
+
+obtained by deleting
+
+$pb_i$
+
+or all edges of
+
+$pc_i$
+
+. Let
+
+$T_i$
+
+be the subcactus
+of
+
+$i$
+
+.
+
+Let's observe what edges adjacent to vertex
+
+$i$
+
+are untraversed when we visit
+
+$i$
+
+for the first time. Consider two cases (recall that
+
+$f$
+
+is the edge from
+
+$i$
+
+to its parent):
+
+$f$
+
+is a bridge.
+
+If
+
+$i \neq 1$
+
+, the only way to visit
+
+$i$
+
+is through
+
+$pb_i$
+
+. We cannot use
+
+$pb_i$
+
+twice, so we must stay in
+
+$T_i$
+
+from now on.
+
+$f$
+
+is not a bridge.
+
+We must enter
+
+$i$
+
+via one of two adjacent edges in
+
+$pc_i$
+
+. In either case, all untraversed edges from
+
+$i$
+
+are in
+
+$T_i$
+
+, except the
+other cycle edge. Indeed, this edge is the only edge that can be used to escape
+
+$T_i$
+
+, and once we use it, we can never go back to any vertex in
+
+$T_i$
+
+. We refer
+to this edge as the "escape edge" of
+
+$i$
+
+.
+
+This motivates us to compute the following two DPs:
+
+$pEscape_i$
+
+-- the probability that, starting from
+
+$i$
+
+, we eventually use the
+"escape edge" from
+
+$i$
+
+(For convenience later, let
+
+$pEscape_i = 0$
+
+if there is
+no such "escape edge".)
+
+$qVisit_{i, j}$
+
+-- the probability that, starting from
+
+$i$
+
+, we visit one of its
+successors
+
+$j$
+
+.
+
+If we have these two DPs, we can compute the answer using a DFS from vertex
+
+$1$
+
+as follows.
+
+Suppose the DFS reaches
+
+$i$
+
+. Let
+
+$pVisit_i$
+
+be defined similar to Subtasks 2 and
+3.
+
+For a successor
+
+$j$
+
+of
+
+$i$
+
+, set
+
+$pVisit_j = pVisit_i \cdot qVisit_{i, j}$
+
+, and
+recurse on
+
+$j$
+
+.
+
+Finally, let's compute
+
+$ans_i$
+
+. You end up at vertex
+
+$i$
+
+if you visit vertex
+
+$i$
+
+, and you don't do either of the following:
+
+Use the "escape edge" from
+
+$i$
+
+.
+
+Eventually reach a successor
+
+$j$
+
+, and never escape from its subcactus.
+
+Since all bad cases above are mutually exclusive, we have
+
+$$
+ans_i = pVisit_i \cdot \left(1 - pEscape_i - \sum_{j\:\textrm{is a successor of}\:i} qVisit_{i, j} \left(1 - pEscape_j\right)\right)
+$$
+
+Since each vertex has a unique predecessor, the time to compute
+
+$ans_i$
+
+from
+
+$pEscape$
+
+and
+
+$qVisit$
+
+is
+
+$O(M)$
+
+.
+
+Let's compute
+
+$pEscape$
+
+and
+
+$qVisit$
+
+in a bottom-up fashion. Suppose we want to
+compute them for
+
+$i$
+
+.
+
+Let
+
+$qEscape_C$
+
+for a cycle
+
+$C$
+
+with top vertex
+
+$i$
+
+be equal to the product of
+
+$pEscape_j$
+
+for all vertices
+
+$j \in C$
+
+excluding
+
+$i$
+
+. In other words, this is
+the probability that you can complete one traversal of
+
+$C$
+
+from
+
+$i$
+
+and end up
+back at
+
+$i$
+
+.
+
+Let
+
+$CC$
+
+be the set of cycles that
+
+$i$
+
+is the top vertex of.
+
+There are two things we need to calculate:
+
+$pChoose_{bridge}$
+
+-- The probability of eventually choosing a certain bridge
+adjacent to
+
+$i$
+
+(or the "escape edge" of
+
+$i$
+
+).
+
+$pChoose_C$
+
+-- The probability of eventually choosing one of two edges adjacent
+to
+
+$i$
+
+on a cycle
+
+$C \in CC$
+
+.
+
+Using these, we can compute
+
+$pEscape_i$
+
+and
+
+$qVisit_{i, j}$
+
+as follows:
+
+$qVisit_{i, j}$
+
+on bridges
+
+$\{i, j\}$
+
+(and
+
+$pEscape_i$
+
+, if there is an "escape
+edge") are equal to
+
+$pChoose_{bridge}$
+
+.
+
+We are left with computing
+
+$qVisit_{i, j}$
+
+for all
+
+$j$
+
+on a cycle
+
+$C \in CC$
+
+.
+Any corresponding path must eventually select one of two edges adjacent to
+
+$i$
+
+on
+
+$C$
+
+, and traverse the path from
+
+$i$
+
+to
+
+$j$
+
+along that edge. The probability
+of this happening is the product of
+
+$pChoose_C$
+
+and
+
+$pEscape_{u}$
+
+for all
+
+$u$
+
+along this path. So
+
+$qVisit_{i, j}$
+
+can be computed in a similar way as in
+Subtask 3.
+
+The next few paragraphs describe how to compute
+
+$pChoose_{bridge}$
+
+and
+
+$pChoose_C$
+
+for
+
+$C \in CC$
+
+fast.
+
+Let's consider
+
+$pChoose_{bridge}$
+
+. Any corresponding path can be described as a
+traversal of some subset of cycles
+
+$C_0, C_1, ..., C_{k-1}$
+
+, in this order, plus
+the extra edge.
+
+So
+
+$pChoose_{bridge}$
+
+is the sum of the following over all ordered subsets
+
+$C_0, C_1, ..., C_{k-1}$
+
+:
+
+$$
+\left(\prod_{h=0}^{k-1} \left(1 - p_i\right) \cdot \frac{2}{d_i-2h} \cdot qEscape_{C_h}\right) \cdot \left(1 - p_i\right) \cdot \frac{1}{d_i-2k}
+$$
+
+Also, the above term doesn't change if we permute
+
+$C_0, C_1, ..., C_{k-1}$
+
+, so
+let's instead sum over all subsets
+
+$S \subseteq CC$
+
+:
+
+$$
+pChoose_{bridge} = \sum_{S \subseteq CC} \left(k! \cdot \left(1 - p_i\right)^{k+1} \cdot 2^k \cdot \left(\prod_{h=0}^{k} \frac{1}{d_i-2h}\right) \cdot \prod_{C \in S} qEscape_{C}\right)
+$$
+
+$pChoose_C$
+
+for
+
+$C \in CC$
+
+can be calculated in the same way, except that in the
+above formula we use
+
+$CC \setminus \{C\}$
+
+instead of
+
+$CC$
+
+.
+
+Calculating the above sums straightforwardly takes
+
+$O(2^K \cdot K^2)$
+
+time, and
+this passes Subtask 4 where
+
+$K \le 5$
+
+.
+
+Let's make it faster. Note that the terms with the same
+
+$k$
+
+in the above formula
+have a common factor, namely
+
+$w_k = k! \cdot (1 - p_i)^{k+1} \cdot 2^k \cdot (\prod_{h=0}^{k} \frac{1}{d_i-2h})$
+
+.
+Factoring this out, it suffices to compute the sum of
+
+$\prod_{C \in S} qEscape_{C}$
+
+for all subsets
+
+$S \in CC$
+
+of size
+
+$k$
+
+.
+
+We can do this using generating functions. Consider the generating function
+
+$$
+F(x) = \prod_{C \in CC} \left(1 + qEscape_C x\right)
+$$
+
+Once we get this generating function, we add
+
+$w_k \cdot F(x) [x^k]$
+
+for all
+
+$k$
+
+to get
+
+$pChoose_{bridge}$
+
+. We can calculate
+
+$pChoose_C$
+
+for
+
+$C \in CC$
+
+similarly, except that we use
+
+$CC \setminus \{C\}$
+
+instead of
+
+$CC$
+
+.
+
+The generating function has degree
+
+$K$
+
+, so multiplying
+
+$(1 + qEscape_C x)$
+
+takes
+
+$O(K)$
+
+time. Thus it takes
+
+$O(K^2)$
+
+time to calculate
+
+$F(x)$
+
+, and doing this for
+all
+
+$O(K)$
+
+probabilities takes
+
+$O(K^3)$
+
+.
+
+The sum of
+
+$K$
+
+is
+
+$O(N)$
+
+, so the sum of
+
+$K^3$
+
+for the above solution is
+
+$O(N \cdot K^2)$
+
+. This is enough to pass subtask 5, where
+
+$K \le 50$
+
+.
+
+Rain's code for Subtask 5:
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+ 
+#define N	10000
+#define MD	1000000007
+ 
+int vv[N + 1];
+ 
+void init() {
+	int i;
+ 
+	vv[1] = 1;
+	for (i = 2; i <= N; i++)
+		vv[i] = (long long) vv[i - MD % i] * (MD / i + 1) % MD;
+}
+ 
+int xx[N], *ej[N], eo[N];
+ 
+void append(int i, int j) {
+	int o = eo[i]++;
+ 
+	if (o >= 2 && (o & o - 1) == 0)
+		ej[i] = (int *) realloc(ej[i], o * 2 * sizeof *ej[i]);
+	ej[i][o] = j;
+}
+ 
+void detach(int i, int j) {
+	int o;
+ 
+	for (o = eo[i]; o--; )
+		if (ej[i][o] == j) {
+			eo[i]--;
+			while (o < eo[i])
+				ej[i][o] = ej[i][o + 1], o++;
+			return;
+		}
+}
+ 
+int dd[N], pp[N], qq[N]; char marked[N];
+
+void dfs1(int p, int i, int d) {
+	int o, o_;
+
+	pp[i] = p, dd[i] = d;
+	if (p != -1)
+		detach(i, p);
+	for (o = eo[i]; o--; ) {
+		int j = ej[i][o], k;
+
+		if (!dd[j])
+			dfs1(i, j, d + 1);
+		else if (dd[j] > dd[i]) {
+			detach(j, i);
+			for (k = j; pp[k] != i; k = pp[k])
+				detach(pp[k], k), qq[pp[k]] = k;
+			marked[k] = 1, qq[j] = k;
+		}
+	}
+	o_ = 0;
+	for (o = 0; o < eo[i]; o++) {
+		int j = ej[i][o];
+
+		if (!marked[j])
+			ej[i][o_++] = j;
+		else
+			marked[j] = 0;
+	}
+	eo[i] = o_;
+}
+
+int yy[N], zz[N], jj[N], zz_[N], ww[N], dp[N];
+ 
+void dfs2(int i, int escape) {
+	int h, h_, j, k, o, cntb, cntc, c, d, y, y_, z;
+ 
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (pp[j] == i)
+			dfs2(j, 0);
+		else
+			for (k = j; k != i; k = pp[k])
+				dfs2(k, 1);
+	}
+	cntb = cntc = 0;
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (pp[j] == i)
+			cntb++;
+		else {
+			z = 1;
+			for (k = j; k != i; k = pp[k])
+				z = (long long) z * zz[k] % MD;
+			jj[cntc] = j, zz_[cntc] = z, cntc++;
+		}
+	}
+	d = cntb + cntc * 2 + (escape ? 1 : 0);
+	ww[0] = (long long) xx[i] * vv[d] % MD;
+	for (c = 1; c <= cntc; c++)
+		ww[c] = (long long) ww[c - 1] * 2 % MD * c % MD * xx[i] % MD * vv[d - c * 2] % MD;
+	memset(dp, 0, (cntc + 1) * sizeof *dp), dp[0] = 1;
+	for (h = 0; h < cntc; h++) {
+		z = zz_[h];
+		for (c = h + 1; c > 0; c--)
+			dp[c] = (dp[c] + (long long) dp[c - 1] * z) % MD;
+	}
+	y = 0;
+	for (c = 0; c <= cntc; c++)
+		y = (y + (long long) dp[c] * ww[c]) % MD;
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (pp[j] == i)
+			yy[j] = y;
+	}
+	if (escape)
+		zz[i] = y;
+	for (h_ = 0; h_ < cntc; h_++) {
+		memset(dp, 0, (cntc + 1) * sizeof *dp), dp[0] = 1;
+		for (h = 0; h < cntc; h++)
+			if (h != h_) {
+				z = zz_[h];
+				for (c = h + 1; c > 0; c--)
+					dp[c] = (dp[c] + (long long) dp[c - 1] * z) % MD;
+			}
+		y = 0;
+		for (c = 0; c <= cntc; c++)
+			y = (y + (long long) dp[c] * ww[c]) % MD;
+		j = jj[h_];
+		y_ = y;
+		for (k = j; k != i; k = pp[k])
+			yy[k] = (yy[k] + y_) % MD, y_ = (long long) y_ * zz[k] % MD;
+		k = j, y_ = y;
+		do {
+			k = qq[k];
+			yy[k] = (yy[k] + y_) % MD, y_ = (long long) y_ * zz[k] % MD;
+		} while (k != j);
+	}
+}
+ 
+int ans[N];
+ 
+void dfs3(int i, int w) {
+	int j, k, o, x;
+ 
+	x = (1 - zz[i] + MD) % MD;
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (pp[j] == i) {
+			dfs3(j, (long long) w * yy[j] % MD);
+			x = (x - yy[j] + MD) % MD;
+		} else
+			for (k = j; k != i; k = pp[k]) {
+				dfs3(k, (long long) w * yy[k] % MD);
+				x = (x - (long long) yy[k] * (1 - zz[k] + MD) % MD + MD) % MD;
+			}
+	}
+	ans[i] = (long long) w * x % MD;
+}
+ 
+int main() {
+	int t;
+ 
+	init();
+	scanf("%d", &t);
+	while (t--) {
+		int n, m, h, i, j;
+ 
+		scanf("%d%d", &n, &m);
+		for (i = 0; i < n; i++)
+			ej[i] = (int *) malloc(2 * sizeof *ej[i]), eo[i] = 0;
+		for (i = 0; i < n; i++)
+			scanf("%d", &xx[i]), xx[i] = (1 - xx[i] + MD) % MD;
+		for (h = 0; h < m; h++) {
+			scanf("%d%d", &i, &j), i--, j--;
+			append(i, j), append(j, i);
+		}
+		memset(dd, 0, n * sizeof *dd), memset(marked, 0, n * sizeof *marked);
+		dfs1(-1, 0, 1);
+		memset(yy, 0, n * sizeof *yy), memset(zz, 0, n * sizeof *zz);
+		dfs2(0, 0);
+		dfs3(0, 1);
+		for (i = 0; i < n; i++)
+			printf("%d%c", ans[i], i + 1 < n ? ' ' : '\n');
+		for (i = 0; i < n; i++)
+			free(ej[i]);
+	}
+	return 0;
+}
+
+For full credit, we need to compute
+
+$pChoose_{bridge}$
+
+and
+
+$pChoose_C$
+
+in
+
+$O(K^2)$
+
+time.
+
+Notice that the generating function we calculate for
+
+$pChoose_C$
+
+is almost the
+same as the one for
+
+$pChoose_{bridge}$
+
+, but is missing a factor of
+
+$(1 + qEscape_C x)$
+
+. This factor can be removed in
+
+$O(K)$
+
+time (To divide such a
+polynomial, we perform steps backward as when we multiply.)
+
+In summary, we spend
+
+$O(K)$
+
+divisions and multiplications,
+
+$O(K)$
+
+time for
+computing
+
+$O(K)$
+
+probabilities from the generating function, so in total we
+spend
+
+$O(K^2)$
+
+time to compute
+
+$pChoose_{bridge}$
+
+and
+
+$pChoose_C$
+
+.
+
+Summing
+
+$K^2$
+
+over all vertices
+
+$i$
+
+, we get a time of
+
+$O(N^2)$
+
+, which gets full
+credit.
+
+A full solution by Rain:
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+ 
+#define N	10000
+#define MD	1000000007
+ 
+int vv[N + 1];
+ 
+void init() {
+	int i;
+ 
+	vv[1] = 1;
+	for (i = 2; i <= N; i++)
+		vv[i] = (long long) vv[i - MD % i] * (MD / i + 1) % MD;
+}
+ 
+int xx[N], *ej[N], eo[N];
+ 
+void append(int i, int j) {
+	int o = eo[i]++;
+ 
+	if (o >= 2 && (o & o - 1) == 0)
+		ej[i] = (int *) realloc(ej[i], o * 2 * sizeof *ej[i]);
+	ej[i][o] = j;
+}
+ 
+void detach(int i, int j) {
+	int o;
+ 
+	for (o = eo[i]; o--; )
+		if (ej[i][o] == j) {
+			eo[i]--;
+			while (o < eo[i])
+				ej[i][o] = ej[i][o + 1], o++;
+			return;
+		}
+}
+ 
+int dd[N], pp[N], qq[N]; char marked[N];
+
+void dfs1(int p, int i, int d) {
+	int o, o_;
+
+	pp[i] = p, dd[i] = d;
+	if (p != -1)
+		detach(i, p);
+	for (o = eo[i]; o--; ) {
+		int j = ej[i][o], k;
+
+		if (!dd[j])
+			dfs1(i, j, d + 1);
+		else if (dd[j] > dd[i]) {
+			detach(j, i);
+			for (k = j; pp[k] != i; k = pp[k])
+				detach(pp[k], k), qq[pp[k]] = k;
+			marked[k] = 1, qq[j] = k;
+		}
+	}
+	o_ = 0;
+	for (o = 0; o < eo[i]; o++) {
+		int j = ej[i][o];
+
+		if (!marked[j])
+			ej[i][o_++] = j;
+		else
+			marked[j] = 0;
+	}
+	eo[i] = o_;
+}
+
+int yy[N], zz[N], jj[N], zz_[N], ww[N], dp[N];
+ 
+void dfs2(int i, int escape) {
+	int h, j, k, o, cntb, cntc, c, d, y, y_, z;
+ 
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (pp[j] == i)
+			dfs2(j, 0);
+		else
+			for (k = j; k != i; k = pp[k])
+				dfs2(k, 1);
+	}
+	cntb = cntc = 0;
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (pp[j] == i)
+			cntb++;
+		else {
+			z = 1;
+			for (k = j; k != i; k = pp[k])
+				z = (long long) z * zz[k] % MD;
+			jj[cntc] = j, zz_[cntc] = z, cntc++;
+		}
+	}
+	d = cntb + cntc * 2 + (escape ? 1 : 0);
+	ww[0] = (long long) xx[i] * vv[d] % MD;
+	for (c = 1; c <= cntc; c++)
+		ww[c] = (long long) ww[c - 1] * 2 % MD * c % MD * xx[i] % MD * vv[d - c * 2] % MD;
+	memset(dp, 0, (cntc + 1) * sizeof *dp), dp[0] = 1;
+	for (h = 0; h < cntc; h++) {
+		z = zz_[h];
+		for (c = h + 1; c > 0; c--)
+			dp[c] = (dp[c] + (long long) dp[c - 1] * z) % MD;
+	}
+	y = 0;
+	for (c = 0; c <= cntc; c++)
+		y = (y + (long long) dp[c] * ww[c]) % MD;
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (pp[j] == i)
+			yy[j] = y;
+	}
+	if (escape)
+		zz[i] = y;
+	for (h = 0; h < cntc; h++) {
+		z = zz_[h];
+		for (c = 1; c <= cntc; c++)
+			dp[c] = (dp[c] - (long long) dp[c - 1] * z % MD + MD) % MD;
+		y = 0;
+		for (c = 0; c <= cntc; c++)
+			y = (y + (long long) dp[c] * ww[c]) % MD;
+		for (c = cntc; c > 0; c--)
+			dp[c] = (dp[c] + (long long) dp[c - 1] * z) % MD;
+		j = jj[h];
+		y_ = y;
+		for (k = j; k != i; k = pp[k])
+			yy[k] = (yy[k] + y_) % MD, y_ = (long long) y_ * zz[k] % MD;
+		k = j, y_ = y;
+		do {
+			k = qq[k];
+			yy[k] = (yy[k] + y_) % MD, y_ = (long long) y_ * zz[k] % MD;
+		} while (k != j);
+	}
+}
+ 
+int ans[N];
+ 
+void dfs3(int i, int w) {
+	int j, k, o, x;
+ 
+	x = (1 - zz[i] + MD) % MD;
+	for (o = eo[i]; o--; ) {
+		j = ej[i][o];
+		if (pp[j] == i) {
+			dfs3(j, (long long) w * yy[j] % MD);
+			x = (x - yy[j] + MD) % MD;
+		} else
+			for (k = j; k != i; k = pp[k]) {
+				dfs3(k, (long long) w * yy[k] % MD);
+				x = (x - (long long) yy[k] * (1 - zz[k] + MD) % MD + MD) % MD;
+			}
+	}
+	ans[i] = (long long) w * x % MD;
+}
+ 
+int main() {
+	int t;
+ 
+	init();
+	scanf("%d", &t);
+	while (t--) {
+		int n, m, h, i, j;
+ 
+		scanf("%d%d", &n, &m);
+		for (i = 0; i < n; i++)
+			ej[i] = (int *) malloc(2 * sizeof *ej[i]), eo[i] = 0;
+		for (i = 0; i < n; i++)
+			scanf("%d", &xx[i]), xx[i] = (1 - xx[i] + MD) % MD;
+		for (h = 0; h < m; h++) {
+			scanf("%d%d", &i, &j), i--, j--;
+			append(i, j), append(j, i);
+		}
+		memset(dd, 0, n * sizeof *dd), memset(marked, 0, n * sizeof *marked);
+		dfs1(-1, 0, 1);
+		memset(yy, 0, n * sizeof *yy), memset(zz, 0, n * sizeof *zz);
+		dfs2(0, 0);
+		dfs3(0, 1);
+		for (i = 0; i < n; i++)
+			printf("%d%c", ans[i], i + 1 < n ? ' ' : '\n');
+		for (i = 0; i < n; i++)
+			free(ej[i]);
+	}
+	return 0;
+}
+
+Another full solution by Danny Mittal:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class IslandVacationBufferedReader {
+    public static final long MOD = 1000000007;
+    public static final long MYRIAD_FACTORIAL_INVERSE = 556156297;
+ 
+    public static void main(String[] args) throws IOException {
+        long[] factorial = new long[10001];
+        factorial[0] = 1;
+        for (int k = 1; k <= 10000; k++) {
+            factorial[k] = (((long) k) * factorial[k - 1]) % MOD;
+        }
+        long[] invFact = new long[10001];
+        invFact[10000] = MYRIAD_FACTORIAL_INVERSE;
+        for (int k = 10000; k > 0; k--) {
+            invFact[k - 1] = (((long) k) * invFact[k]) % MOD;
+        }
+        long[] inv = new long[10001];
+        for (int k = 1; k <= 10000; k++) {
+            inv[k] = (factorial[k - 1] * invFact[k]) % MOD;
+        }
+ 
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int t = Integer.parseInt(in.readLine()); t > 0; t--) {
+            in.readLine();
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int n = Integer.parseInt(tokenizer.nextToken());
+            int m = Integer.parseInt(tokenizer.nextToken());
+            long[] continueProbability = new long[n + 1];
+            List<Integer>[] adj = new List[n + 1];
+            tokenizer = new StringTokenizer(in.readLine());
+            for (int a = 1; a <= n; a++) {
+                continueProbability[a] = 1L - Long.parseLong(tokenizer.nextToken());
+                adj[a] = new ArrayList<>();
+            }
+            for (int j = 0; j < m; j++) {
+                tokenizer = new StringTokenizer(in.readLine());
+                int a = Integer.parseInt(tokenizer.nextToken());
+                int b = Integer.parseInt(tokenizer.nextToken());
+                adj[a].add(b);
+                adj[b].add(a);
+            }
+ 
+            boolean[] parentIsCycle = new boolean[n + 1];
+            List<Integer>[] children = new List[n + 1];
+            List<Integer>[] childrenCycles = new List[n + 1];
+            for (int a = 1; a <= n; a++) {
+                children[a] = new ArrayList<>();
+                childrenCycles[a] = new ArrayList<>();
+            }
+            int[] cycleLeader = new int[(m / 3) + 1];
+            List<Integer>[] cycles = new List[(m / 3) + 1];
+            new Object() {
+                int[] seen = new int[n + 1];
+                int lastCycleLabel = 0;
+ 
+                int dfs(int a, int from) {
+                    seen[a] = 1;
+                    int result = 0;
+                    for (int b : adj[a]) {
+                        if (b != from && seen[b] != 2) {
+                            //System.out.println(a + " -> " + b);
+                            if (seen[b] == 1) {
+                                //System.out.println("seen, making cycle");
+                                parentIsCycle[a] = true;
+                                result = ++lastCycleLabel;
+                                cycles[result] = new ArrayList<>();
+                                cycleLeader[result] = b;
+                                cycles[result].add(a);
+                            } else {
+                                int sub = dfs(b, a);
+                                if (sub == 0) {
+                                    children[a].add(b);
+                                } else {
+                                    if (cycleLeader[sub] == a) {
+                                        childrenCycles[a].add(sub);
+                                    } else {
+                                        parentIsCycle[a] = true;
+                                        result = sub;
+                                        cycles[result].add(a);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    seen[a] = 2;
+                    return result;
+                }
+            }.dfs(1, 0);
+ 
+            long[] leaveIfEnterNode = new long[n + 1];
+            long[] leaveIfEnterCycle = new long[(m / 3) + 1];
+            long[][] subsetProducts = new long[n + 1][];
+ 
+            new Object() {
+ 
+                void calcNode(int a) {
+                    for (int k : childrenCycles[a]) {
+                        calcCycle(k);
+                    }
+                    for (int b : children[a]) {
+                        calcNode(b);
+                    }
+ 
+                    int amtBridges = children[a].size() + (parentIsCycle[a] ? 1 : 0);
+                    int amtChildCycles = childrenCycles[a].size();
+                    subsetProducts[a] = new long[amtChildCycles + 1];
+                    subsetProducts[a][0] = 1;
+                    int j = 0;
+                    for (int k : childrenCycles[a]) {
+                        j++;
+                        for (int l = j; l > 0; l--) {
+                            subsetProducts[a][l] += leaveIfEnterCycle[k] * subsetProducts[a][l - 1];
+                            subsetProducts[a][l] %= MOD;
+                        }
+                    }
+ 
+                    long base = 1;
+                    for (int x = 0; x <= amtChildCycles; x++) {
+                        base *= continueProbability[a];
+                        base %= MOD;
+                        base *= inv[amtBridges + (2 * (amtChildCycles - x))];
+                        base %= MOD;
+                        if (x > 0) {
+                            base *= (long) x;
+                            base %= MOD;
+                        }
+                        leaveIfEnterNode[a] += base * subsetProducts[a][x];
+                        leaveIfEnterNode[a] %= MOD;
+                        base *= 2L;
+                    }
+                }
+ 
+                void calcCycle(int k) {
+                    leaveIfEnterCycle[k] = 1;
+                    for (int a : cycles[k]) {
+                        calcNode(a);
+                        leaveIfEnterCycle[k] *= leaveIfEnterNode[a];
+                        leaveIfEnterCycle[k] %= MOD;
+                    }
+                }
+            }.calcNode(1);
+ 
+            long[] enterNode = new long[n + 1];
+            long[] enterCycle = new long[(m / 3) + 1];
+ 
+            enterNode[1] = 1;
+            new Object() {
+                long[] local = new long[(m / 3) + 1];
+ 
+                void calcNode(int a) {
+                    for (int b : children[a]) {
+                        enterNode[b] = (enterNode[a] * leaveIfEnterNode[a]) % MOD;
+                        calcNode(b);
+                    }
+ 
+                    int amtBridges = children[a].size() + (parentIsCycle[a] ? 1 : 0);
+                    int amtChildCycles = childrenCycles[a].size();
+                    for (int k : childrenCycles[a]) {
+                        local[0] = 1;
+                        long base = enterNode[a];
+                        for (int x = 0; x < amtChildCycles; x++) {
+                            base *= continueProbability[a];
+                            base %= MOD;
+                            base *= 2L * inv[amtBridges + (2 * (amtChildCycles - x))];
+                            base %= MOD;
+                            if (x > 0) {
+                                base *= (long) x;
+                                base %= MOD;
+                            }
+ 
+                            enterCycle[k] += base * local[x];
+                            enterCycle[k] %= MOD;
+ 
+                            local[x + 1] = subsetProducts[a][x + 1] - (local[x] * leaveIfEnterCycle[k]);
+                            local[x + 1] %= MOD;
+                        }
+                        calcCycle(k);
+                    }
+                }
+ 
+                void calcCycle(int k) {
+                    long prob = (inv[2] * enterCycle[k]) % MOD;
+                    for (int a : cycles[k]) {
+                        enterNode[a] += prob;
+                        prob *= leaveIfEnterNode[a];
+                        prob %= MOD;
+                    }
+ 
+                    prob = (inv[2] * enterCycle[k]) % MOD;
+                    for (int j = cycles[k].size() - 1; j >= 0; j--) {
+                        int a = cycles[k].get(j);
+                        enterNode[a] += prob;
+                        prob *= leaveIfEnterNode[a];
+                        prob %= MOD;
+                    }
+ 
+                    for (int a : cycles[k]) {
+                        enterNode[a] %= MOD;
+                        calcNode(a);
+                    }
+                }
+            }.calcNode(1);
+ 
+            long[] endInSubtreeNode = new long[n + 1];
+            long[] endInSubtreeCycle = new long[(m / 3) + 1];
+            long[] answers = new long[n + 1];
+ 
+            new Object() {
+ 
+                void calcNode(int a) {
+                    endInSubtreeNode[a] = enterNode[a] * (1L - (parentIsCycle[a] ? leaveIfEnterNode[a] : 0L));
+                    endInSubtreeNode[a] %= MOD;
+ 
+                    answers[a] = endInSubtreeNode[a];
+                    for (int b : children[a]) {
+                        calcNode(b);
+                        answers[a] -= endInSubtreeNode[b];
+                    }
+                    for (int k : childrenCycles[a]) {
+                        calcCycle(k);
+                        answers[a] -= endInSubtreeCycle[k];
+                    }
+                    answers[a] %= MOD;
+                    answers[a] += MOD;
+                    answers[a] %= MOD;
+                }
+ 
+                void calcCycle(int k) {
+                    endInSubtreeCycle[k] = enterCycle[k] * (1L - leaveIfEnterCycle[k]);
+                    endInSubtreeCycle[k] %= MOD;
+ 
+                    for (int a : cycles[k]) {
+                        calcNode(a);
+                    }
+                }
+            }.calcNode(1);
+ 
+            for (int a = 1; a <= n; a++) {
+                out.append(answers[a]).append(' ');
+            }
+            out.append('\n');
+        }
+        System.out.print(out);
+    }
+}
+
+Bonus: Solve this problem in
+
+$O(N\log^2N)$
+
+time using FFT.

@@ -1,0 +1,298 @@
+Solution ID: sol_train_platinum_open18
+Contest: OPEN18
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_train_platinum_open18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+In this problem, we are asked to find all sliding-window minima in an array, for
+some fixed-length window. We are given two passes through the array. The catch
+is that we are given only
+
+$O(\sqrt{N})$
+
+memory.
+
+Let
+
+$f(i)$
+
+be the location of the smallest element in the range
+
+$[i, i+K)$
+
+,
+breaking ties by smallest index. Observe that
+
+$f(i) \leq f(i+1)$
+
+for each
+
+$i$
+
+.
+So if we compute
+
+$f(0), f(B), f(2B), \dots, f(N)$
+
+for some block size
+
+$B$
+
+in the
+first pass, this gives us some information which we may be able to use in the
+second pass to compute the remaining
+
+$f(i)$
+
+s.
+
+Let's ignore the constraint on calls to set/get for now. If we let
+
+$B = \sqrt{N}$
+
+, then we can compute
+
+$f(0), f(\sqrt{N}), \dots, f(N)$
+
+in our
+first pass using only
+
+$O(\sqrt{N})$
+
+memory and
+
+$O(N\sqrt{N})$
+
+time. Now, in the
+second pass, observe that for any fixed array element
+
+$i$
+
+, there are only
+
+$O(\sqrt{N})$
+
+windows for which the minimum could possibly be at position
+
+$i$
+
+.
+
+This suggests the following algorithm for the second pass: read and ignore all
+elements with index less than
+
+$f(0)$
+
+. Now maintain running minima for
+
+$f(0), f(1), f(2), \dots, f(\sqrt{N})$
+
+. Once we've read in the element with
+index
+
+$f(\sqrt{N})$
+
+, we know that we have computed the correct minima for the
+first
+
+$\sqrt{N}$
+
+windows. Output these, start maintaining minima for the next
+
+$\sqrt{N}$
+
+windows, and continue in the same fashion.
+
+The memory usage of the second pass is also
+
+$\sqrt{N}$
+
+, as desired.
+Unfortunately, the time complexity of each pass is
+
+$O(N \sqrt{N})$
+
+. In
+particular, the above algorithm would use
+
+$O(N \sqrt{N})$
+
+calls to set and get,
+which would exceed the given bound. To improve the time complexity, we can use a
+monotonic queue in each pass. In the first pass, for instance, the boundaries of
+the
+
+$\sqrt{N}$
+
+windows define
+
+$2\sqrt{N}$
+
+subarrays, and for each subarray we
+can simply compute the minimum of the subarray and put that into the monotonic
+queue. The length of the monotonic queue therefore never exceeds
+
+$O(\sqrt{N})$
+
+,
+and we can compute the
+
+$\sqrt{N}$
+
+minima-locations in
+
+$O(N)$
+
+time. For the
+second pass, it suffices to observe that in each segment of the array (say,
+between
+
+$f(i\sqrt{N})$
+
+and
+
+$f((i+1)\sqrt{N})$
+
+) all but
+
+$O(\sqrt{N})$
+
+of the
+array elements are in all
+
+$\sqrt{N}$
+
+windows of interest. This once again allows
+us to improve the pass to
+
+$O(N)$
+
+time will not exceeding
+
+$O(\sqrt{N})$
+
+memory.
+
+Below is an implementation of the above algorithm.
+
+#include "grader.h"
+#define BLOCK 1000
+#define DIF 4050
+
+// VARIABLE - LOCATION IN BESSIE'S NOTEBOOK
+// back index - 0
+// top index - 1
+// queue (2,3) (4,5) ...
+//       (index, value)
+// current block's endpoint index (divided by BLOCK) - DIF-1
+// current block's global low - DIF-2
+// number of minima output - DIF-3
+
+void helpBessie(int v)
+{
+	int N = getTrainLength();
+	int K = getWindowLength();
+	int i = getCurrentCarIndex();
+	int p = getCurrentPassIndex();
+	if(p==0)
+	{
+		if(i==0)
+		{
+			set(0,0);
+			set(1,-1);
+		}
+		int top = get(1);
+		int back = get(0);
+		if(i%BLOCK == 0 || (i>=K && (i-K)%BLOCK == 0))  // reached boundary of some window
+		{						// need to make new entry in monotonic queue
+			while(top >= back && get(2*top+3) >= v)
+				top--;
+			top++;
+			set(2*top+2,i);
+			set(2*top+3,v);
+		}
+		else	//still part of same subarray; just update the top entry of monotonic queue
+		{
+			int curTopValue = get(2*top+3);
+			if(v <= curTopValue)
+			{
+				top--;
+				while(top >= back && get(2*top+3) >= v)
+					top--;
+				top++;
+				set(2*top+2,i);
+				set(2*top+3,v);
+			}
+		}
+		if(i >= K-1 && (i+1-K)%BLOCK == 0)	// at endpoint of some window; need to store location of minimum
+		{
+			while(top >= back && get(2*back+2) <= i-K)	// pop from back end up queue until queue contains only
+				back++;					// elements in desired window
+			set(DIF + (i+1-K)/BLOCK, get(2*back+2));	// store location of minimum
+		}
+		set(0,back);
+		set(1,top);
+	}
+	else
+	{
+		if(i < get(DIF))
+			return;
+		if(i == get(DIF))
+		{
+			set(0,0);
+			set(1,-1);
+			set(DIF-1, 1);
+			set(DIF-2,1000000000);
+			set(DIF-3, 0);
+		}
+		int bc = get(DIF-1);
+		int top = get(1);
+		int back = get(0);
+		int outputs = get(DIF-3);
+		if(i - get(DIF+bc-1) <= BLOCK)  // element may not be contained in all relevant windows
+		{				// so add to monotonic queue
+			while(top >= back && get(2*top+3) >= v)
+				top--;
+			top++;
+			set(2*top+2,i);
+			set(2*top+3,v);
+		}
+		else 	// element is contained in all relevant windows
+		{	// so we can update a global minimum
+			int globalLow = get(DIF-2);
+			if(v < globalLow)
+				set(DIF-2,v);
+		}
+		if(outputs + K - 1 == i)	//need to output a minimum
+		{
+			while(top >= back && get(2*back+2) < outputs)
+				back++;
+			shoutMinimum(min(get(DIF-2),get(2*back+3)));
+			outputs++;
+		}
+		while(BLOCK*bc + K-1 < N && get(DIF+bc) == i) // reached boundary of current subarray
+		{
+			while(outputs <= BLOCK*bc) // output minimums for all remaining windows in current block
+			{
+				while(top >= back && get(2*back+2) < outputs)
+					back++;
+				shoutMinimum(min(get(DIF-2),get(2*back+3)));
+				outputs++;
+			}
+			bc++;
+			set(DIF-2,1000000000);
+			top = back = 0;
+			set(2*top+2,i);
+			set(2*top+3,v);
+		}
+		set(DIF-3,outputs);
+		set(DIF-1,bc);
+		set(1,top);
+		set(0,back);
+	}
+}

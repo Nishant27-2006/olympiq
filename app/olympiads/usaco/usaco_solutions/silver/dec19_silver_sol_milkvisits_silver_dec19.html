@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Say that two cows are in the same connected component if all cows on the path
+between them are of the same type. We can generate these components with a DFS.
+<p>For each friend&apos;s path, if the endpoints of the path are in different components
+then he is clearly satisfied since both types of cows must appear on the path.
+Otherwise, all cows in the path have the same type, so it suffices to check
+whether the cow at the starting point of the path is of the type which the
+friend prefers.
+<p>It follows that this problem is solvable in <span class='math'>$O(N+M)$</span> time. My code is below:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef vector&lt;int&gt; vi; 
+ 
+#define FOR(i,a,b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i,a) FOR(i,0,a)
+#define ROF(i,a,b) for (int i = (b)-1; i &gt;= (a); --i)
+#define R0F(i,a) ROF(i,0,a)
+#define trav(a,x) for (auto&amp; a: x)
+ 
+#define pb push_back
+ 
+void setIO(string name) {
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	freopen((name+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((name+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+const int MX = 100005;
+
+int N,M,comp[MX],num;
+char col[MX];
+vi adj[MX];
+ 
+void dfs(int x) {
+	if (comp[x]) return;
+	comp[x] = num;
+	trav(t,adj[x]) if (col[t] == col[x]) dfs(t);
+}
+ 
+int main() {
+	setIO(&quot;milkvisits&quot;); cin &gt;&gt; N &gt;&gt; M;
+	string s; cin &gt;&gt; s;
+	FOR(i,1,N+1) col[i] = s[i-1];
+	F0R(i,N-1) {
+		int A,B; cin &gt;&gt; A &gt;&gt; B;
+		adj[A].pb(B), adj[B].pb(A);
+	}
+	FOR(i,1,N+1) if (!comp[i]) {
+		num ++;
+		dfs(i);
+	}
+	F0R(i,M) {
+		int A,B; char C; cin &gt;&gt; A &gt;&gt; B &gt;&gt; C;
+		if (col[A] == C || comp[A] != comp[B]) cout &lt;&lt; 1;
+		else cout &lt;&lt; 0;
+	}
+	cout &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

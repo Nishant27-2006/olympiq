@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi and Nick Wu)
+<p>We&apos;ll start by defining <span class='math'>$d_i=p_i-t_i$</span> for all <span class='math'>$i$</span> in <span class='math'>$1\ldots N$</span>. Note that
+<span class='math'>$d_i$</span> is therefore  the amount the temperature needs to change for cow <span class='math'>$i$</span> to be
+happy. Now, instead of making <span class='math'>$p_i = t_i$</span>, we can focus on making <span class='math'>$d_i$</span> zero.
+Note that, just as we can increase or decrease all values in some subsegment of
+<span class='math'>$t$</span> by 1, we can increase or decrease all values in some subsegment of <span class='math'>$d$</span> by
+<span class='math'>$1$</span>.
+<p>How do we make <span class='math'>$d$</span> zero everywhere making as few changes as possible?
+Intuitively, we want to avoid increasing values of <span class='math'>$d$</span> that are already positive
+or decreasing values of <span class='math'>$d$</span> that are already negative. We also don&apos;t want to
+touch values of <span class='math'>$d$</span> that are zero.
+<p>One strategy that we might try therefore is as follows - assuming that <span class='math'>$d_N$</span> is
+positive, find the smallest <span class='math'>$j$</span> such that <span class='math'>$d_j$</span> through <span class='math'>$d_N$</span> are all positive,
+and then decrease all those numbers by one. If <span class='math'>$d_N$</span> is negative, we apply
+similar logic except we increase as many negative numbers as possible by one. In
+other words, find the longest suffix where all numbers are positive or all
+numbers are negative, and then adjust all of them towards zero.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
+public class Solution {
+	public static void main(String[] args) throws IOException {
+		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		ArrayList&lt;Integer&gt; d = new ArrayList&lt;&gt;();
+		{
+			int n = Integer.parseInt(in.readLine());
+			int[] p = new int[n];
+			StringTokenizer st = new StringTokenizer(in.readLine());
+			for(int i = 0; i &lt; n; i++) p[i] = Integer.parseInt(st.nextToken());
+			int[] t = new int[n];
+			st = new StringTokenizer(in.readLine());
+			for(int i = 0; i &lt; n; i++) t[i] = Integer.parseInt(st.nextToken());
+			for(int i = 0; i &lt; n; i++) d.add(p[i] - t[i]);
+		}
+		int ans = 0;
+		while(!d.isEmpty()) {
+			if(d.get(d.size()-1) == 0) {
+				d.remove(d.size()-1);
+				continue;
+			}
+			boolean positive = d.get(d.size()-1) &gt; 0;
+			int amtChange = 1;
+			while(amtChange &lt; d.size()) {
+				if(d.get(d.size()-1-amtChange) == 0) break;
+				if((d.get(d.size()-1-amtChange) &gt; 0) != positive) break;
+				amtChange++;
+			}
+			ans++;
+			for(int i = 0; i &lt; amtChange; i++) {
+				if(d.get(d.size()-1-i) &gt; 0) {
+					d.set(d.size()-1-i, d.get(d.size()-1-i) - 1);
+				}
+				else {
+					d.set(d.size()-1-i, d.get(d.size()-1-i) + 1);	
+				}
+			}
+		}
+		System.out.println(ans);
+	}
+}
+</pre>
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+	int N;
+	cin &gt;&gt; N;
+	vector&lt;int&gt; p(N), t(N), d(N);
+	for (int i = 0; i &lt; N; ++i)
+		cin &gt;&gt; p[i];
+	for (int i = 0; i &lt; N; ++i)
+		cin &gt;&gt; t[i];
+	for (int i = 0; i &lt; N; ++i)
+		d[i] = p[i] - t[i];
+	int first_nonzero = 0, ans = 0;
+	while (true) {
+		while (first_nonzero &lt; N &amp;&amp; d[first_nonzero] == 0)
+			++first_nonzero;
+		if (first_nonzero == N)
+			break;
+		int r = first_nonzero;
+		auto sgn = [&amp;](int x) {
+			if (x &lt; 0)
+				return -1;
+			if (x &gt; 0)
+				return 1;
+			return 0;
+		};
+		while (r + 1 &lt; N &amp;&amp; sgn(d[r + 1]) == sgn(d[first_nonzero]))
+			++r;
+		for (int i = first_nonzero; i &lt;= r; ++i) {
+			if (d[i] &lt; 0)
+				++d[i];
+			else
+				--d[i];
+		}
+		++ans;
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>These two solutions are <span class='math'>$\mathcal{O}(N \cdot V)$</span>, where <span class='math'>$V$</span> is the maximum possible
+value in <span class='math'>$d$</span>. Under the given bounds though, the answer can be as large as one billion, so we
+need to do better than simulating this step by step.
+<p>One thing worth trying that does pass all test cases is, instead of just
+incrementing or decrementing by one, doing as many increments/decrements as
+possible until some element becomes zero.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
+public class Solution {
+	public static void main(String[] args) throws IOException {
+		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		ArrayList&lt;Integer&gt; d = new ArrayList&lt;&gt;();
+		{
+			int n = Integer.parseInt(in.readLine());
+			int[] p = new int[n];
+			StringTokenizer st = new StringTokenizer(in.readLine());
+			for(int i = 0; i &lt; n; i++) p[i] = Integer.parseInt(st.nextToken());
+			int[] t = new int[n];
+			st = new StringTokenizer(in.readLine());
+			for(int i = 0; i &lt; n; i++) t[i] = Integer.parseInt(st.nextToken());
+			for(int i = 0; i &lt; n; i++) d.add(p[i] - t[i]);
+		}
+		int ans = 0;
+		while(!d.isEmpty()) {
+			if(d.get(d.size()-1) == 0) {
+				d.remove(d.size()-1);
+				continue;
+			}
+			boolean positive = d.get(d.size()-1) &gt; 0;
+			int amtChange = 1;
+			int delta = Math.abs(d.get(d.size()-1));
+			while(amtChange &lt; d.size()) {
+				if(d.get(d.size()-1-amtChange) == 0) break;
+				if((d.get(d.size()-1-amtChange) &gt; 0) != positive) break;
+				delta = Math.min(delta, Math.abs(d.get(d.size()-1-amtChange)));
+				amtChange++;
+			}
+			ans += delta;
+			for(int i = 0; i &lt; amtChange; i++) {
+				if(d.get(d.size()-1-i) &gt; 0) {
+					d.set(d.size()-1-i, d.get(d.size()-1-i) - delta);
+				}
+				else {
+					d.set(d.size()-1-i, d.get(d.size()-1-i) + delta);	
+				}
+			}
+		}
+		System.out.println(ans);
+	}
+}
+</pre>
+<p>This code also runs in <span class='math'>$\mathcal{O}(N \cdot V)$</span>, but it does significantly better
+on test cases where the answer is large compared to the first two solutions.
+<p>We can do provably better though - in particular, we can solve this problem
+in <span class='math'>$\mathcal{O}(N)$</span>.
+<p>We&apos;ll add a zero to the beginning and end of <span class='math'>$d$</span> - specifically, we&apos;ll define
+<span class='math'>$d_0 = d_{N+1} = 0$</span>. This does not change the answer, as we never need to change
+any zeroes.  We&apos;ll also define <span class='math'>$e_i = |d_{i+1} - d_i|$</span> - that is, the difference
+between adjacent values of <span class='math'>$d_i$</span>. Why is <span class='math'>$e_i$</span> important? If <span class='math'>$e_i$</span> is zero, then
+<span class='math'>$d_i$</span> and <span class='math'>$d_{i+1}$</span> are the same and any operation we do to <span class='math'>$d_i$</span> should also be
+done to <span class='math'>$d_{i+1}$</span>. However, if <span class='math'>$e_i$</span> is large, then the two values are very
+different, and there must be at least <span class='math'>$e_i$</span> operations that take place on one of
+<span class='math'>$d_i$</span> and <span class='math'>$d_{i+1}$</span> but not the other.
+<p>More specifically, when we increase the range of values <span class='math'>$d_i$</span> through <span class='math'>$d_j$</span>,
+note that  <span class='math'>$e_{i-1}$</span> and <span class='math'>$e_j$</span> change by one each, and all other values in <span class='math'>$e$</span>
+remain unchanged. This motivates the following claim.
+<p><strong>Claim:</strong> The answer is <span class='math'>$\frac{\sum_{i=0}^N e_i}{2}$</span>, or half the sum of all
+the values in <span class='math'>$e$</span>.
+<p><strong>Proof:</strong> The sum of all values of <span class='math'>$e$</span> equals zero if and only if all <span class='math'>$d_i$</span>
+are zero. Furthermore, every command changes this quantity by at most <span class='math'>$2$</span>. This
+shows that the answer is at least
+<span class='math'>$\frac{\sum_{i=0}^N e_i}{2}$</span>.
+<p>To show that this answer is attainable, any number of greedy strategies suffice.
+One valid strategy is the one we had above - find the longest suffix of all
+positive or all negative integers, and adjust them towards zero by one.
+<p>We can evaluate the formula mentioned above in <span class='math'>$\mathcal O(N)$</span> time. Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+	int N;
+	cin &gt;&gt; N;
+	vector&lt;int&gt; p(N + 1), t(N + 1), d(N + 2);
+	for (int i = 1; i &lt;= N; ++i)
+		cin &gt;&gt; p[i];
+	for (int i = 1; i &lt;= N; ++i)
+		cin &gt;&gt; t[i];
+	for (int i = 1; i &lt;= N; ++i)
+		d[i] = p[i] - t[i];
+	int ans = 0;
+	for (int i = 0; i &lt;= N; ++i)
+		ans += abs(d[i] - d[i + 1]);
+	cout &lt;&lt; ans / 2;
+}
+
+</pre>
+<p>In Python:
+<p><pre class='prettyprint'>
+N = int(input())
+P = list(map(int,input().split()))
+T = list(map(int,input().split()))
+ 
+difs = [x-y for x,y in zip(P,T)]
+print(sum(abs(x-y) for x,y in zip(difs+[0],[0]+difs))//2)
+</pre>
+<p></body></html>

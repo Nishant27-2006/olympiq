@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>If both cows <span class='math'>$b$</span> and <span class='math'>$c$</span> admire cow <span class='math'>$a$</span> then both <span class='math'>$b$</span> and <span class='math'>$c$</span> must have the same
+color. From now on, we can treat both <span class='math'>$b$</span> and <span class='math'>$c$</span> as the same cow; change all
+occurrences of <span class='math'>$c$</span>  to <span class='math'>$b$</span> and merge the adjacency list of <span class='math'>$c$</span> into that of <span class='math'>$b$</span>.
+Repeat this process while at least two distinct cows admire the same cow. 
+<p>Once we reach a configuration in which a cow is admired by at most one cow this
+process terminates; we can just assign every cow a distinct color. If we always merge the smaller adjacency list of the two
+cows into the larger one then our solution runs in <span class='math'>$O((N+M)\log N)$</span> time. We
+ensured that a few slow solutions did not pass but it is likely that many (not
+necessarily provable) heuristics passed anyways.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+ 
+const int MX = 2e5+5;
+ 
+int N,M;
+ 
+int par[MX],cnt[MX];
+vector&lt;int&gt; adj[MX], rpar[MX];
+queue&lt;int&gt; q; 
+ 
+void merge(int a, int b) {
+	a = par[a], b = par[b]; 
+	if (rpar[a].size() &lt; rpar[b].size()) swap(a,b);
+	for (int t: rpar[b]) { par[t] = a; rpar[a].push_back(t); }
+	adj[a].insert(end(adj[a]),begin(adj[b]),end(adj[b])); 
+	adj[b].clear();
+	if (adj[a].size() &gt; 1) q.push(a);
+}
+ 
+int main() { 
+	setIO(&quot;fcolor&quot;);
+	cin &gt;&gt; N &gt;&gt; M;
+	for (int i = 0; i &lt; M; ++i) {
+		int a,b; cin &gt;&gt; a &gt;&gt; b;
+		adj[a].push_back(b);
+	}
+	for (int i = 1; i &lt;= N; ++i) {
+		par[i] = i; rpar[i].push_back(i);
+		if (adj[i].size() &gt; 1) q.push(i);
+	}
+	while (q.size()) {
+		int x = q.front(); if (adj[x].size() &lt;= 1) { q.pop(); continue; }
+		int a = adj[x].back(); adj[x].pop_back();
+		if (par[a] == par[adj[x].back()]) continue;
+		merge(a,adj[x].back());
+	}
+	int co = 0;
+	for (int i = 1; i &lt;= N; ++i) {
+		if (!cnt[par[i]]) cnt[par[i]] = ++co;
+		cout &lt;&lt; cnt[par[i]] &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+</body></html>

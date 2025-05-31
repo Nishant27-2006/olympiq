@@ -1,0 +1,122 @@
+Solution ID: sol_prob2_bronze_dec20
+Contest: DEC20
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_dec20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+The most direct solution involves taking each photo and then checking every 
+flower in that photo for an average flower.
+
+There are
+
+$\mathcal{O}(N^2)$
+
+photos, and checking each flower in the photo takes
+
+$\mathcal{O}(N)$
+
+, so this solution runs in
+
+$\mathcal{O}(N^3)$
+
+time.
+
+Code is as follows.
+
+import java.io.*;
+import java.util.*;
+public class Main {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    int n = Integer.parseInt(br.readLine());
+    int[] petals = new int[n];
+    StringTokenizer st = new StringTokenizer(br.readLine());
+    for(int i = 0; i < n; i++) {
+      petals[i] = Integer.parseInt(st.nextToken());
+    }
+    int photos = 0;
+    for(int i = 0; i < n; i++) {
+      for(int j = i; j < n; j++) {
+        int totalPetals = 0;
+        for(int k = i; k <= j; k++) {
+          totalPetals += petals[k];
+        }
+        boolean present = false;
+        for(int k = i; k <= j; k++) {
+          if(petals[k] * (j-i+1) == totalPetals) {
+            present = true;
+          }
+        }
+        if(present) {
+          photos++;
+        }
+      }
+    }
+    pw.println(photos);
+    pw.close();
+  }
+}
+
+It's possible (but not necessary) to optimize this down to
+
+$\mathcal{O}(N^2)$
+
+.
+One observation we can make is that all photos with more than one flower 
+consist of taking a smaller photo and then including the next rightmost flower.
+
+Let us consider processing all photos that use flower
+
+$i$
+
+as the leftmost
+flower, starting by using the photo that contains only flower
+
+$i$
+
+and then
+adding flowers one by one to the right. We can maintain a collection of all the
+flowers we have seen so far. As we do this, we also need to keep track of the
+total sum of petals we have seen so far so we know what the average petal count
+is, and then we can check whether we have seen that petal count before. Because
+the number of petals is bounded above by
+
+$10^3$
+
+, we can use a boolean array to
+track which petal counts we have seen. Alternatively, we can use a set.
+
+import java.io.*;
+import java.util.*;
+public class Main {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    int n = Integer.parseInt(br.readLine());
+    int[] petals = new int[n];
+    StringTokenizer st = new StringTokenizer(br.readLine());
+    for(int i = 0; i < n; i++) {
+      petals[i] = Integer.parseInt(st.nextToken());
+    }
+    int photos = 0;
+    for(int i = 0; i < n; i++) {
+      boolean[] present = new boolean[1001];
+      int petalsSeen = 0;
+      for(int j = i; j < n; j++) {
+        petalsSeen += petals[j];
+        present[petals[j]] = true;
+        if(petalsSeen % (j-i+1) == 0 && present[petalsSeen / (j-i+1)]) {
+          photos++;
+        }
+      }
+    }
+    pw.println(photos);
+    pw.close();
+  }
+}

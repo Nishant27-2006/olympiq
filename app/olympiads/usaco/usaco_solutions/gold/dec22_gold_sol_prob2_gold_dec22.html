@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Joe Li, Larry Xing, Benjamin Qi)
+<p>We first present a naive solution.
+<p>Let&apos;s fix the mountain <span class='math'>$i$</span> that Bessie is standing on, and consider which
+mountains she can see. If she can see mountain <span class='math'>$j &gt; i$</span>, that means that for all
+<span class='math'>$i &lt; k &lt; j$</span>, <span class='math'>$\frac{h_k-h_i}{k-i} \leq \frac{h_j-h_i}{j-i}$</span>. Thus, for each <span class='math'>$i$</span>,
+we can calculate how many <span class='math'>$j$</span> satisfy this property by sweeping from left to
+right. We repeat this process after every update, yielding a time complexity of
+<span class='math'>$O(QN^2)$</span>.
+<p>Joe&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+void fastIO() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+}
+
+typedef long long ll;
+
+int N;
+ll h[5100];
+
+int main() {
+    fastIO();
+    cin &gt;&gt; N;
+    for (int i = 1; i &lt;= N; i++) { cin &gt;&gt; h[i]; }
+    int Q;
+    cin &gt;&gt; Q;
+    for (int i = 1; i &lt;= QN; i++) {
+        int x, y;
+        cin &gt;&gt; x &gt;&gt; y;
+        h[x] += y;
+        int ans = 0;
+        for (int j = 1; j &lt;= N; j++) {
+            ll bh = 0, bd = -1;
+            for (int k = j + 1; k &lt;= N; k++) {
+                if (bd == -1) {
+                    ans++;
+                    bd = 1, bh = h[k] - h[j];
+                } else if ((ll)(h[k] - h[j]) * bd &gt;= (ll)bh * (k - j)) {
+                    ans++;
+                    bd = k - j, bh = h[k] - h[j];
+                }
+            }
+        }
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p>To speed this up, we can maintain a &quot;monotonic set&quot; for each index <span class='math'>$i$</span>. In the
+<span class='math'>$i$</span>th set, we store in sorted order all indices <span class='math'>$j$</span> such that for all
+<span class='math'>$i &lt; k &lt; j$</span>, <span class='math'>$\frac{h_k-h_i}{k-i} \leq \frac{h_j-h_i}{j-i}$</span>. When we perform an
+update at an index <span class='math'>$x$</span>, we do the following:
+<p><ul><li>For <span class='math'>$i &lt; x$</span>, because the updates always increase the height of a mountain,
+the value of <span class='math'>$\frac{h_x-h_i}{x-i}$</span> increases. So we may need to insert <span class='math'>$x$</span> into
+the monotonic set for <span class='math'>$i$</span> if it is now visible from <span class='math'>$i$</span>, and delete any indices
+greater than <span class='math'>$x$</span> no longer visible from <span class='math'>$i$</span>.  For each <span class='math'>$i$</span>, this may be done in
+<span class='math'>$O(\log N)$</span> <a href='https://en.wikipedia.org/wiki/Amortized_analysis'>amortized</a>
+time, for a total of <span class='math'>$O(N\log N)$</span> amortized time. </li><li>For <span class='math'>$i = x$</span>, we can naively reupdate the entire monotonic set for <span class='math'>$i$</span>, which
+takes <span class='math'>$O(N)$</span> or <span class='math'>$O(N\log N)$</span> time.</li><li>For <span class='math'>$i &gt; x$</span>, the update does not affect the monotonic sets. </li></ul>
+<p>Thus, we can perform each update in <span class='math'>$O(N\log N)$</span>. Initially, we perform the
+process described in the naive solution once to initialize the monotonic sets in
+<span class='math'>$O(N^2\log N)$</span> amortized time. Therefore, the total time complexity is
+<span class='math'>$O(N^2\log N+QN\log N)$</span> or <span class='math'>$O(N^2 + QN\log N)$</span> depending on whether the set you
+are using supports removing a range of <span class='math'>$c$</span> consecutive elements in <span class='math'>$O(c+\log N)$</span>
+time. 
+<p>Note: to avoid using doubles to compare two fractions <span class='math'>$\frac{a}{b}$</span> and
+<span class='math'>$\frac{c}{d}$</span>, we can instead compare <span class='math'>$a\cdot d$</span> and <span class='math'>$b \cdot c$</span>.
+<p>Joe&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+void fastIO() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+}
+
+typedef long long ll;
+#define ff first
+#define ss second
+int N, Q;
+ll h[5100];
+set&lt;int&gt; rig[5100]; // monotonic sets
+
+bool comp(int ind, int i1, int i2) {
+    // does index i2 to ind have a greater slope than index i1 to ind
+    int d1 = abs(ind - i1), d2 = abs(ind - i2);
+    ll h1 = h[i1] - h[ind], h2 = h[i2] - h[ind];
+    return h2 * d1 &gt;= h1 * d2;
+}
+
+int main() {
+    fastIO();
+    cin &gt;&gt; N;
+    for (int i = 1; i &lt;= N; i++) { cin &gt;&gt; h[i]; }
+    for (int i = 1; i &lt;= N; i++) {
+        for (int j = i + 1; j &lt;= N; j++) {
+            if (rig[i].empty()) {
+                rig[i].insert(j);
+            } else {
+                if (comp(i, *rig[i].rbegin(), j)) { rig[i].insert(j); }
+            }
+        }
+    }
+    int ans = 0;
+    for (int i = 1; i &lt;= N; i++) ans += (int)rig[i].size();
+    cin &gt;&gt; Q;
+    for (int i = 1; i &lt;= Q; i++) {
+        int x, y;
+        cin &gt;&gt; x &gt;&gt; y; // update mountain x by incrementing it by height y
+        h[x] += y;
+        // update the sets to the left of x
+        for (int j = 1; j &lt;= x - 1; j++) {
+            auto it = rig[j].lower_bound(x);
+            bool add = false;
+            if ((*it) == x) {
+                add = true;
+                it++;
+            } else {
+                --it;
+                if (comp(j, (*it), x)) {
+                    rig[j].insert(x);
+                    ans++;
+                    add = true;
+                    it++;
+                    it++;
+                }
+            }
+            if (add) {
+                while (it != rig[j].end() &amp;&amp; !comp(j, x, (*it))) {
+                    it = rig[j].erase(it);
+                    ans--;
+                }
+            }
+        }
+        // update the set for x
+        ans -= (int)rig[x].size();
+        rig[x].clear();
+        for (int j = x + 1; j &lt;= N; j++) {
+            if (rig[x].empty()) {
+                rig[x].insert(j);
+                ans++;
+            } else {
+                if (comp(x, *rig[x].rbegin(), j)) {
+                    rig[x].insert(j);
+                    ans++;
+                }
+            }
+        }
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p><strong>Note:</strong> The above solution takes nearly 3s to run on some test cases.
+Depending on your language and implementation, you may have trouble passing all
+test cases even with the intended time complexity. In particular, a Java analog
+of the solution above using TreeSets took over 13s on some test cases (slower
+than the naive solution). 
+<p>There are several ways to pass this problem without coming too close to the 
+time limit:
+<p><ul><li>Use vectors instead of sets (or ArrayLists instead of TreeSets in Java). 
+The time complexity becomes <span class='math'>$O(N^3+QN^2)$</span> or <span class='math'>$O(QN^2)$</span> depending on your
+implementation,  which is worse than the set solution, but we were unable to
+construct a test case where this solution took more than 2s to run, presumably
+because erasing from a vector has a good constant factor.</li><li>Use a segment tree instead of a set. The time complexity is the same as the
+set solution, but the constant factor is better. Our implementation runs in
+0.8s.</li><li>Use a bitset instead of a set. The time complexity is <span class='math'>$O(N^2+QN^2/B)$</span>,
+where we assume standard operations on <span class='math'>$B=64$</span>-bit integers (for such an integer,
+checking whether it is nonzero, finding its first set bit, and finding its last set
+bit) take <span class='math'>$O(1)$</span> time. The implementation below runs in 0.1s.</li></ul>
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using ll = long long;
+
+// Source: https://nyaannyaan.github.io/library/misc/bitset-find-prev.hpp.html
+template &lt;size_t Nb&gt; struct Bitset : bitset&lt;Nb&gt; {
+    template &lt;typename... Args&gt; Bitset(Args... args) : bitset&lt;Nb&gt;(args...) {}
+
+    static constexpr int N = Nb;
+    static constexpr int array_size = (Nb + 63) / 64;
+
+    union raw_cast {
+        array&lt;uint64_t, array_size&gt; a;
+        Bitset b;
+    };
+
+    int _Find_prev(size_t i) const {
+        if (i == 0) return -1;
+        if ((*this)[--i] == true) return i;
+        size_t M = i / 64;
+        const auto &amp;a = ((raw_cast *)(this))-&gt;a;
+        uint64_t buf = a[M] &amp; ((1ull &lt;&lt; (i &amp; 63)) - 1);
+        if (buf != 0) return M * 64 + 63 - __builtin_clzll(buf);
+        while (M--) {
+            if (a[M] != 0) return M * 64 + 63 - __builtin_clzll(a[M]);
+        }
+        return -1;
+    }
+
+    inline int _Find_last() const { return _Find_prev(N); }
+};
+
+vector&lt;ll&gt; h;
+bool comp(int ind, int i1, int i2) {
+    return (i1 - ind) * (h[i2] - h[ind]) &gt;= (i2 - ind) * (h[i1] - h[ind]);
+}
+
+Bitset&lt;2000&gt; segs[2000];
+int N;
+
+void build(Bitset&lt;2000&gt; &amp;b, int st) {
+    int lst = st;
+    b.reset();
+    for (int i = st + 1; i &lt; N; ++i) {
+        if (comp(st, lst, i)) {
+            lst = i;
+            b[i] = 1;
+        }
+    }
+}
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin &gt;&gt; N;
+    h.resize(N);
+    for (auto &amp;t : h) cin &gt;&gt; t;
+    int ans = 0;
+    for (int i = 0; i &lt; N; ++i) {
+        build(segs[i], i);
+        ans += segs[i].count();
+    }
+    int Q;
+    cin &gt;&gt; Q;
+    while (Q--) {
+        int x, y;
+        cin &gt;&gt; x &gt;&gt; y;
+        --x;
+        h[x] += y;
+        for (int j = 0; j &lt; x; ++j) {
+            int it = segs[j]._Find_next(x);
+            int it_minus_one = segs[j]._Find_prev(it);
+            assert(it_minus_one != -1);
+            if (!comp(j, it_minus_one, x)) { continue; }
+            if (!segs[j][x]) {
+                segs[j][x] = 1;
+                ++ans;
+            }
+            while (it &lt; N) {
+                if (comp(j, x, it)) break;
+                int next_it = segs[j]._Find_next(it);
+                segs[j][it] = 0;
+                --ans;
+                it = next_it;
+            }
+        }
+        ans -= segs[x].count();
+        build(segs[x], x);
+        ans += segs[x].count();
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p></body></html>

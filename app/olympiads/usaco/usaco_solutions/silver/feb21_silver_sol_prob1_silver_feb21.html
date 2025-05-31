@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Whenever there exists a cow horizontally or vertically adjacent to three other
+cows,  Farmer Nhoj is forced to place a cow at the fourth spot.
+<p><pre>
+...    .C.
+CCC -&gt; CCC
+.C.    .C.
+</pre>
+<p>So this is essentially a flood fill problem; while there exists a location that
+should contain a cow but does not, add a cow at that location.
+<p>My solution maintains a 2D boolean array of which locations currently contain
+cows, as well as a queue of locations in the pasture where a cow needs to be
+added. While the queue is nonempty, pop the top element <span class='math'>$(x,y)$</span> of the queue and
+check whether a cow has already been added at <span class='math'>$(x,y)$</span>. If not, add the cow at
+<span class='math'>$(x,y)$</span>, and check whether any of the locations
+<span class='math'>$(x,y),(x,y-1),(x,y+1),(x-1,y),(x+1,y)$</span> contain cows and are adjacent to exactly
+three cows. If so, add all such locations to the queue and repeat.
+<p>Additional notes:
+<p><ul><li>The cows that will eventually be present on the pasture after the first <span class='math'>$i$</span>
+cows are added is a superset of the cows that will eventually be present on the
+pasture after the first <span class='math'>$i-1$</span> cows are added. 
+<p><ul><li>This means that we don&apos;t need to reset the array between the addition of
+each cow.</li></ul></li><li>If all cells in <span class='math'>$[0,1000]\times [0,1000]$</span> are initially occupied, Farmer
+Nhoj will need to add cows at all locations <span class='math'>$(x,y)$</span> satisfying 
+<span class='math'>$x+y\ge 0,x+y\le 2000,x-y\le 1000,x-y\ge -1000$</span> (in other words, a diamond with
+vertices at <span class='math'>$(-500,500), (500,-500), (1500,500),$</span> and <span class='math'>$(500,1500)$</span>). So if we
+increase the <span class='math'>$x$</span> and <span class='math'>$y$</span> cow locations by <span class='math'>$500$</span>, then all of these locations
+will lie in the range <span class='math'>$[0,2000]\times [0,2000]$</span>. 
+<ul><li>In my solution, I use <span class='math'>$1000$</span> instead of
+<span class='math'>$500$</span>.</li></ul></li></ul>
+<p><strong>Time Complexity:</strong> <span class='math'>$\mathcal{O}(N+(\text{grid size})^2)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#define f first
+#define s second
+
+const int dx[4] = {1,0,-1,0}, dy[4] = {0,1,0,-1};
+
+bool present[3000][3000]; // which locations contain cows
+ 
+int main() {
+	int N; cin &gt;&gt; N;
+	queue&lt;pair&lt;int,int&gt;&gt; cows_to_place;
+	int total_cows = 0;
+	for (int initial_cows = 1; initial_cows &lt;= N; ++initial_cows) {
+		pair&lt;int,int&gt; p; cin &gt;&gt; p.f &gt;&gt; p.s;
+		p.f += 1000, p.s += 1000;
+		cows_to_place.push(p);
+		auto re_evaluate = [&amp;](int x, int y) { 
+			// if cow adjacent to exactly three others
+			// add fourth location to queue
+			if (!present[x][y]) return;
+			int num_adj = 0;
+			for (int d = 0; d &lt; 4; ++d) 
+				num_adj += present[x+dx[d]][y+dy[d]];
+			if (num_adj == 3)
+				for (int d = 0; d &lt; 4; ++d) {
+					pair&lt;int,int&gt; nex{x+dx[d],y+dy[d]};
+					if (!present[nex.f][nex.s])
+						cows_to_place.push(nex);
+				}
+		};
+		while (!cows_to_place.empty()) {
+			pair&lt;int,int&gt; loc = cows_to_place.front(); 
+			cows_to_place.pop();
+			if (present[loc.f][loc.s]) continue;
+			++ total_cows; present[loc.f][loc.s] = 1;
+			re_evaluate(loc.f,loc.s);
+			for (int d = 0; d &lt; 4; ++d) 
+				re_evaluate(loc.f+dx[d],loc.s+dy[d]);
+		}
+		cout &lt;&lt; total_cows-initial_cows &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p>Here is an alternative solution by Danny Mittal that does not use a queue:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class LonelyPastureSilver {
+    static final boolean[][] cows = new boolean[3000][3000];
+    static final int[][] adj = new int[3000][3000];
+    static int answer = 0;
+ 
+    static void add(int x, int y) {
+        if (!cows[x][y]) {
+            cows[x][y] = true;
+            answer++;
+            if (cows[x][y] &amp;&amp; adj[x][y] == 3) {
+                for (int[] another : new int[][]{{x - 1, y}, {x + 1, y}, {x, y - 1}, {x, y + 1}}) {
+                    int w = another[0];
+                    int z = another[1];
+                    add(w, z);
+                }
+            }
+            for (int[] other : new int[][]{{x - 1, y}, {x + 1, y}, {x, y - 1}, {x, y + 1}}) {
+                int u = other[0];
+                int v = other[1];
+                adj[u][v]++;
+                if (cows[u][v] &amp;&amp; adj[u][v] == 3) {
+                    for (int[] another : new int[][]{{u - 1, v}, {u + 1, v}, {u, v - 1}, {u, v + 1}}) {
+                        int w = another[0];
+                        int z = another[1];
+                        add(w, z);
+                    }
+                }
+            }
+        }
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        int n = Integer.parseInt(in.readLine());
+        for (int j = 0; j &lt; n; j++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int x = Integer.parseInt(tokenizer.nextToken()) + 1000;
+            int y = Integer.parseInt(tokenizer.nextToken()) + 1000;
+            answer--;
+            add(x, y);
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p></body></html>

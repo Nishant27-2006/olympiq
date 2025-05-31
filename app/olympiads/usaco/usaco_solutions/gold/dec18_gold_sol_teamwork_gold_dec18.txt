@@ -1,0 +1,118 @@
+Solution ID: sol_teamwork_gold_dec18
+Contest: DEC18
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_teamwork_gold_dec18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+This problem can be solved by dynamic programming. Let
+
+$dp[i]$
+
+be the optimal
+sum of skill levels achievable by the first
+
+$i$
+
+cows, assuming that the last
+team ends at cow
+
+$i$
+
+. If we knew that
+
+$k$
+
+was the size of the last team (among
+the first
+
+$i$
+
+cows), then the optimal sum of skill levels would be
+
+$$dp[i-k] + \max_{0 \leq j < k} s_{i-j}.$$
+
+But the size of the last team could be anywhere from
+
+$1$
+
+to
+
+$K$
+
+. So we must try
+all possible sizes, and set
+
+$dp[i]$
+
+to the best sum of skills achieved.
+
+This immediately yields an
+
+$O(NK^2)$
+
+algorithm, since there are
+
+$N$
+
+states,
+
+$K$
+
+transitions, and each transition takes
+
+$O(K)$
+
+time to compute. However, we can
+speed up the transitions by maintaining
+
+$$\max_{0 \leq j < k} s_{i-j}$$
+
+as
+
+$k$
+
+is increased. Updating the maximum takes
+
+$O(1)$
+
+time, so each transition is now
+
+$O(1)$
+
+, for an overall time complexity of
+
+$O(NK)$
+
+. This is fast enough.
+
+#include <iostream>
+#include <algorithm>
+using namespace std;
+ 
+int N,K;
+int A[10000];
+int dp[10000];
+ 
+int main()
+{
+	cin >> N >> K;
+	for(int i=0;i<N;i++)
+		cin >> A[i];
+	dp[0] = A[0];
+	for(int i=1;i<N;i++)
+	{
+		int mx = A[i];
+		for(int j=i;j>=0 && i+1-j <= K; j--)
+		{
+			mx = max(mx, A[j]);
+			if(j==0) dp[i] = max(dp[i],mx*(i+1-j));
+			else dp[i] = max(dp[i],dp[j-1] + mx*(i+1-j));
+		}
+	}
+	cout << dp[N-1] << '\n';
+}

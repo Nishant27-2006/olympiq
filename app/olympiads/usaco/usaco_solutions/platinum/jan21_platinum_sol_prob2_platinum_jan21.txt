@@ -1,0 +1,171 @@
+Solution ID: sol_prob2_platinum_jan21
+Contest: JAN21
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_jan21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Let
+
+$ans_y(x)$
+
+denote the minimum cost to go from
+
+$(1,1)$
+
+to
+
+$(x,y)$
+
+. The key
+observation is that for a fixed
+
+$y$
+
+, the function
+
+$ans_y$
+
+is concave up.
+Specifically,
+
+$ans_y[x]-ans_y[x-1]\le ans_y[x+1]-ans_y[x]$
+
+.
+
+To get
+
+$ans_{y+1}$
+
+from
+
+$ans_y$
+
+, we must
+
+Set
+
+$ans_{y+1}(x)=ans_y(x)+x^2$
+
+for all
+
+$x$
+
+.
+
+Set
+
+$ans_{y+1}(x)=\min(ans_{y+1}(x),ans_{y+1}(x-1)+c_x)$
+
+for all
+
+$x$
+
+.
+
+The latter operation is equivalent to replacing a suffix of
+
+$ans_{y+1}$
+
+with a 
+straight line.
+
+We can maintain the piecewise quadratic function
+
+$ans_y$
+
+with a stack (similarly
+to
+
+convex hull trick
+
+). Whenever we perform the second operation, we pop some
+elements off the top of the stack and add a new element. To answer a query
+
+$(x,y)$
+
+, binary search on the stack corresponding to
+
+$ans_y$
+
+to find the piece
+of the function that corresponds to
+
+$x$
+
+and evaluate it.
+
+#include <bits/stdc++.h>
+
+using ll = long long;
+using namespace std;
+
+#define f first 
+#define s second
+
+template<class T, class U> T fstTrue(T lo, T hi, U f) { 
+	hi ++; assert(lo <= hi); // assuming f is increasing
+	while (lo < hi) { // find first index such that f is true 
+		T mid = lo+(hi-lo)/2;
+		f(mid) ? hi = mid : lo = mid+1; 
+	} 
+	return lo;
+}
+
+ll sq(ll x) { return x*x; }
+
+int N,M;
+vector<pair<int,int>> todo[200005];
+ 
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	cin >> N >> M;
+	vector<ll> C(M); for (ll& t: C) cin >> t;
+	int Q; cin >> Q;
+	vector<ll> ans(Q);
+	for (int i = 0; i < Q; ++i) {
+		int x,y; cin >> x >> y; --y;
+		todo[y].push_back({x,i});
+	}
+	vector<pair<int,pair<int,ll>>> stk;
+	for (int col = 0; col < M; ++col) {
+		auto eval_pair = [&](const pair<int,ll>& a, ll x) {
+			int pre_col = a.f;
+			return sq(x)*(col-pre_col)+x*C[pre_col]+a.s;
+		};
+		auto eval = [&](int x) -> ll { // binary search to find corresponding stack element
+			int fst_ind = fstTrue(0,(int)stk.size()-1,[&](int ind) {
+				return stk[ind].f >= x; });
+			return eval_pair(stk[fst_ind].s,x); // evaluate stack element at x
+		};
+		if (col) {
+			while (stk.size() > 1) { // pop off stack
+				int x = end(stk)[-2].f;
+				pair<int,ll> lst = stk.back().s;
+				ll val_at_x =          eval_pair(lst,x);
+				ll val_at_x_plus_one = eval_pair(lst,x+1);
+				if (val_at_x+C[col] < val_at_x_plus_one) {
+					stk.pop_back();
+					continue;
+				}
+				stk.back().f = fstTrue(x+1,stk.back().f-1,[&](int mid) {
+					return eval_pair(lst,mid)+C[col] < eval_pair(lst,mid+1); });
+				break;
+			}
+			if (stk.back().f < N) { // add to stack
+				int x = stk.back().f;
+				stk.push_back({N,{col,eval_pair(stk.back().s,x)-x*C[col]}});
+			}
+		} else { // initialize stack
+			stk.push_back({1,{0,-C[0]}});
+			stk.push_back({N,{0,-C[0]}});
+		}
+		for (pair<int,int> t: todo[col]) // answer all queries with y=col+1
+			ans[t.s] = eval(t.f);
+	}
+	for (ll t: ans) cout << t << "\n";
+}

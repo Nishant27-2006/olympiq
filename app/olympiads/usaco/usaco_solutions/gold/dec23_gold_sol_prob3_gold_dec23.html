@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by David Hu, Benjamin Qi)
+<p>Sort all of the <span class='math'>$x_i$</span> (zero-indexed) in increasing order. Consider some fixed
+individual query <span class='math'>$(a_i, b_i) = (a, b)$</span>.
+<p>Suppose that Farmer John delivers the haybales to some point
+<span class='math'>$x_{i-1} &lt; y &lt; x_{i}$</span>. Consider what happens if Farmer John instead delivers the
+haybales to some point <span class='math'>$x_{i-1} &lt; y + d &lt; x_{i}$</span>. The total cost Farmer John
+pays changes by <span class='math'>$a \cdot d$</span> for each of the <span class='math'>$i$</span> haybales to the left of the
+starting point and <span class='math'>$-b \cdot d$</span> for each of the <span class='math'>$N - i$</span> haybales to the right of
+the starting point, making an overall change of
+<span class='math'>$a \cdot i \cdot d - b \cdot (N-i) \cdot d$</span>. Since this is linear in <span class='math'>$d$</span>, the
+cost to start at point <span class='math'>$y$</span> is linear in the range <span class='math'>$y \in [x_{i-1}, x_i]$</span>. Thus
+it is always optimal for the haybales to be delivered to one of the <span class='math'>$x_i$</span>.
+<p><strong>Full Solution 1:</strong> <span class='math'>$O(1)$</span> time per query
+<p>Suppose Farmer John is deciding whether to deliver the haybales to <span class='math'>$x_{i-1}$</span> or
+<span class='math'>$x_{i}$</span>.  Let the distance between <span class='math'>$x_{i-1}$</span> and <span class='math'>$x_i$</span> be <span class='math'>$d&gt;0$</span>.
+<p>If he delivers the haybales to <span class='math'>$x_{i-1}$</span>, then the total cost for delivering
+each of the <span class='math'>$i$</span> haybales <span class='math'>$x_0, \dots x_{i-1}$</span> is <span class='math'>$d \cdot
+a$</span> less, but the total
+cost for delivering each of the <span class='math'>$N-i$</span> haybales <span class='math'>$x_i, \dots
+x_{N-1}$</span> is
+<span class='math'>$d \cdot b$</span> more. Thus in order for <span class='math'>$x_{i-1}$</span> to be a strictly better place to
+deliver the haybales than <span class='math'>$x_i$</span>,
+<span class='math'>$d \cdot a \cdot i &gt; d \cdot b \cdot (N-i) \implies \frac{N-i}{i} &lt; \frac{a}{b} \implies \frac{N}{i} &lt; \frac{a + b}{b}
+\implies i &gt; \frac{Nb}{a + b}$</span>.
+We conclude that the following statements hold (even when <span class='math'>$d=0$</span>):
+<p><ol><li>If <span class='math'>$i &gt; \left\lfloor\frac{Nb}{a + b}\right\rfloor$</span>, it is at least as good
+to deliver the haybales to <span class='math'>$x_{i-1}$</span> rather than <span class='math'>$x_i$</span>.</li><li>If
+<span class='math'>$i &lt; \left\lfloor\frac{Nb}{a + b}\right\rfloor$</span>, it is at least as good to
+deliver the haybales to <span class='math'>$x_{i+1}$</span> rather than <span class='math'>$x_i$</span>.</li></ol>
+<p>So in fact we know the exact optimal location for Farmer John to deliver the
+haybales to: it is <span class='math'>$x_i$</span>, where
+<span class='math'>$i = \left\lfloor \frac{Nb}{a+b} \right\rfloor$</span>.
+<p>To answer queries in <span class='math'>$O(1)$</span>, we can precompute the sum of distances to all
+haybales to the left of and to the right of each haybale.
+<p>David&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 2e5 + 13;
+int N, Q;
+int arr[MAXN];
+ll lt[MAXN], rt[MAXN];
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cin &gt;&gt; N;
+    for (int i = 0; i &lt; N; i++) {
+        cin &gt;&gt; arr[i];
+    }
+    sort(arr, arr + N);
+    for (int i = 1; i &lt; N; i++) {
+        int d = arr[i] - arr[i - 1];
+        lt[i] = lt[i - 1] + (ll) d * i;
+    }
+    for (int i = N - 2; i &gt;= 0; i--) {
+        int d = arr[i + 1] - arr[i];
+        rt[i] = rt[i + 1] + (ll) d * (N - 1 - i);
+    }
+    cin &gt;&gt; Q;
+    while(Q--) {
+        int a, b;
+        cin &gt;&gt; a &gt;&gt; b;
+        int idx = (ll) N * b / (a + b);
+        ll ans = lt[idx] * a + rt[idx] * b;
+        cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+    }
+    return 0;
+}
+</pre>
+<p><strong>Full Solution 2:</strong> <span class='math'>$O(\log N)$</span> time per query
+<p>For a single <span class='math'>$x$</span>, the function in the problem statement is a 
+<a href='https://probgate.org/viewproblem.php?pid=1699'>convex</a> function of <span class='math'>$y$</span>. 
+The total number of haybales wasted across all <span class='math'>$x$</span> is given by a sum of a convex
+functions, which is also convex. Any convex function is unimodal (specifically,
+it strictly decreases until the minimum is reached, then strictly increases),
+and thus can be minimized using binary or
+<a href='https://cp-algorithms.com/num_methods/ternary_search.html'>ternary search.</a>
+As in the first full solution, we precompute prefix sums so that evaluating the
+number of wasted haybales when <span class='math'>$y$</span> equals some <span class='math'>$x_i$</span> takes <span class='math'>$O(1)$</span> time.
+<p>Note: Make sure to search only on distinct values of <span class='math'>$x$</span>, or you might end up
+with the wrong answer.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	vector&lt;int&gt; X(N);
+	for (int &amp;x : X) cin &gt;&gt; x;
+	sort(begin(X), end(X));
+	int Q;
+	cin &gt;&gt; Q;
+	vector&lt;int64_t&gt; cum{0};
+	for (int x : X) cum.push_back(cum.back() + x);
+	auto cumsum = [&amp;](int l, int r) { return cum.at(r + 1) - cum.at(l); };
+	vector&lt;int&gt; distinct_X{0};  // keep only distinct X[i]
+	for (int i = 1; i &lt; N; ++i)
+		if (X[i] &gt; X[i - 1]) distinct_X.push_back(i);
+	while (Q--) {
+		int A, B;
+		cin &gt;&gt; A &gt;&gt; B;
+		auto eval = [&amp;](int idx) {
+			int i = distinct_X.at(idx);
+			int64_t ans = B * (cumsum(i, N - 1) - (int64_t)(N - i) * X[i]);
+			ans += A * ((int64_t)i * X[i] - cumsum(0, i - 1));
+			return ans;
+		};
+		int lo = 0, hi = size(distinct_X) - 1;
+		while (lo &lt; hi) {
+			int mid = (lo + hi) / 2;
+			if (eval(mid) &lt; eval(mid + 1)) hi = mid;
+			else lo = mid + 1;
+		}
+		cout &lt;&lt; eval(lo) &lt;&lt; &quot;\n&quot;;
+	}
+}
+
+</pre>
+<p></body></html>

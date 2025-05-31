@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Mark Gordon)
+<p>The most basic approach to this problem would loop over tuples of three pieces
+and try all offsets and orientations of the pieces to try and make the figurine.
+Obviously, this approach would be too slow with <span class='math'>$k^3$</span> tuples and <span class='math'>$(8N^2)^3$</span>
+ways to arrange them.
+<p>However,  The need to try all offsets can be eliminated by simply trying the
+offset such that the bottom most (breaking ties by rightmost) uncovered cell is
+covered by the new piece.  We can do this because this cell must eventually be
+covered and there is at most one way to do it for a given piece and orientation.
+<p>This observation alone can bring us down to a <span class='math'>$O(8k^3N^2)$</span> solution.  The next
+piece of the puzzle is to use
+<a href='https://www.reddit.com/r/usaco/comments/39qrta/string_hashing/'>polynomial
+hashing</a> to eliminate a <span class='math'>$O(k)$</span> factor on the critical path.  After placing
+the first two pieces we can calculate the appropriate offset of the final piece
+and quickly test if its hash is one of the input pieces.
+<p>The final bit of the puzzle is how to calculate offsets quickly.  This amounts
+to being able to quickly calculate the position of the bottom most, right most
+uncovered cell.  This can be done in <span class='math'>$O(log N)$</span> time by precomputing the suffix sums in 
+<a href='https://en.wikipedia.org/wiki/Row-major_order'>Row Major Order</a> and binary searching to
+find the last non-zero suffix sum when subtracting out the suffix sums of already placed pieces.0
+<p>Here&apos;s my solution to this problem annotated with what each section of code aims
+to accomplish.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;unordered_map&gt;
+#include &lt;map&gt;
+#include &lt;set&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstring&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+typedef vector&lt;string&gt; pat;
+
+int POLYMOD[2] = {
+  975919579,
+  975979579,
+};
+
+int POLYMUL[2] = {
+  382737283,
+  382878283,
+};
+
+#define MAXCOL 1010
+#define MAXROW 510
+
+#define HASHES 2
+#define MAXPOW (MAXROW * MAXCOL)
+
+int POWTAB[HASHES][MAXPOW];
+
+void init_tab() {
+  if (POWTAB[0][0]) {
+    return;
+  }
+  for (int i = 0; i &lt; HASHES; i++) {
+    for (int j = POWTAB[i][0] = 1; j &lt; MAXPOW; j++) {
+      POWTAB[i][j] = (1ll * POWTAB[i][j - 1] * POLYMUL[i]) % POLYMOD[i];
+    }
+  }
+}
+
+/* Tracks a polynomial hash over a 2D array. */
+struct xhash {
+  xhash() {
+    init_tab();
+    memset(H, 0, sizeof(H));
+  }
+
+  xhash(const pat&amp; p) {
+    init_tab();
+    memset(H, 0, sizeof(H));
+
+    /* Calculate the hash of the given input matrix. We linearize the array by
+     * setting a[r * MAXCOL + c] = p[i][j] and then apply a standard polynomial
+     * hash. */
+    for (int i = 0; i &lt; p.size(); i++) {
+      for (int j = 0; j &lt; p[0].size(); j++) {
+        if (p[i][j] == &apos;.&apos;) {
+          continue;
+        }
+
+        /* We set v this way to ensure that v_1 - v_2 could never represent a
+         * valid character.  This is important for ensuring the integrity of
+         * subtracting two hashes. */
+        int v = 26 + (p[i][j] - &apos;a&apos;);
+        for (int k = 0; k &lt; HASHES; k++) {
+          H[k] = (H[k] + 1ll * POWTAB[k][i * MAXCOL + j] * v) %
+                      POLYMOD[k];
+        }
+      }
+    }
+  }
+
+  void offset(int r, int c) {
+    /* Offsetting the matrix by (r, c) translates into offsetting the
+     * linearized array by r * MAXCOL + c.  Therefore we multiply each hash
+     * by x^(r * MAXCOL + c). */
+    for (int i = 0; i &lt; HASHES; i++) {
+      H[i] = (1ll * H[i] * POWTAB[i][r * MAXCOL + c]) % POLYMOD[i];
+    }
+  }
+
+  /* Compute the difference of hashes.  This gives you a hash of what would
+   * remain in *this if you got rid of everything present in x.  In the case
+   * that x isn&apos;t actually a subset of *this the hash should just represent
+   * garbage and won&apos;t get matched. */
+  xhash operator-(const xhash&amp; x) const {
+    xhash nh;
+    for (int i = 0; i &lt; HASHES; i++) {
+      nh.H[i] = H[i] - x.H[i];
+      if (nh.H[i] &lt; 0) {
+        nh.H[i] += POLYMOD[i];
+      }
+    }
+    return nh;
+  }
+
+  bool operator==(const xhash&amp; x) const {
+    return !memcmp(H, x.H, sizeof(H));
+  }
+
+  bool operator&lt;(const xhash&amp; x) const {
+    return memcmp(H, x.H, sizeof(H)) &lt; 0;
+  }
+
+  int H[HASHES];
+};
+
+/* For use in C++&apos;s unordered_map. */
+struct xhash_downhash {
+  int operator()(const xhash&amp; h) const {
+    return h.H[0];
+  }
+};
+
+/* Vertically flips the pattern. */
+void vflip(pat&amp; p) {
+  int R = p.size();
+  for (int i = 0; i &lt; R - i - 1; i++) {
+    p[i].swap(p[R - i - 1]);
+  }
+}
+
+/* Rotates the pattern 90 degrees. */
+void rotate(pat&amp; p) {
+  int R = p.size();
+  int C = p[0].size();
+  pat op(C, string(R, &apos;.&apos;));
+  for (int i = 0; i &lt; R; i++) {
+    for (int j = 0; j &lt; C; j++) {
+      op[C - j - 1][i] = p[i][j];
+    }
+  }
+  p = op;
+}
+
+/* Read in a pattern and canonicalize it. */
+pat read_pat() {
+  int R, C;
+  cin &gt;&gt; R &gt;&gt; C;
+
+  pat res(R);
+  for (int i = 0; i &lt; R; i++) {
+    cin &gt;&gt; res[i];
+  }
+
+  /* Remove unneeded padding from the sides. */
+  int mnr = R, mxr = 0;
+  int mnc = C, mxc = 0; 
+  for (int i = 0; i &lt; R; i++) {
+    for (int j = 0; j &lt; C; j++) {
+      if (res[i][j] != &apos;.&apos;) {
+        mnr = min(mnr, i);
+        mxr = max(mxr, i + 1);
+        mnc = min(mnc, j);
+        mxc = max(mxc, j + 1);
+      }
+    }
+  }
+
+  pat nres;
+  for (int i = mnr; i &lt; mxr; i++) {
+    nres.push_back(res[i].substr(mnc, mxc - mnc));
+  }
+
+  /* Try all orientations and take the lexicographically least one.  This
+   * ensures that all equivalant piece representations are actually equal. */
+  res = nres;
+  for (int i = 0; i &lt; 2; i++) {
+    for (int j = 0; j &lt; 4; j++) {
+      if (nres &lt; res) {
+        res = nres;
+      }
+      rotate(nres);
+    }
+    vflip(nres);
+  }
+  return res;
+}
+
+
+typedef vector&lt;vector&lt;int&gt; &gt; sum_table;
+
+sum_table target_sums;
+vector&lt;sum_table&gt; piece_sums;
+
+/* Calculate the number of non-empty entries after every position in the
+ * linearized array.  This gets used in find_offset later. */
+sum_table calc_sums(const pat&amp; p) {
+  int N = p.size();
+  int M = p[0].size();
+  sum_table sums(N, vector&lt;int&gt;(M));
+
+  int lst = 0;
+  for (int i = N - 1; i &gt;= 0; i--) {
+    for (int j = M - 1; j &gt;= 0; j--) {
+      if (p[i][j] != &apos;.&apos;) {
+        lst++;
+      }
+      sums[i][j] = lst;
+    }
+  }
+  return sums;
+}
+
+/* Efficiently find the last non-zero position in base after subtracting
+ * (possibly) several other matricies. */
+pair&lt;int, int&gt; find_offset(const sum_table&amp; base,
+                           const vector&lt;int&gt;&amp; subtract_inds = {},
+                           const vector&lt;pair&lt;int, int&gt; &gt;&amp; offsets = {}) {
+  /* Binary search over the linearized array. */
+  int N = base.size();
+  int M = base[0].size();
+  int lo = 0;
+  int hi = N * M - 1;
+  while (lo &lt; hi) {
+    int md = (lo + hi + 1) / 2;
+    int r = md / M;
+    int c = md % M;
+
+    /* Calculate how many non-zero entries there are after (r, c) in the
+     * linearized array. */
+    int val = base[r][c];
+    for (int i = 0; i &lt; subtract_inds.size(); i++) {
+      int j = subtract_inds[i];
+      int er = r - offsets[i].first;
+      int ec = c - offsets[i].second;
+      int PN = piece_sums[j].size();
+      int PM = piece_sums[j][0].size();
+      if (ec &gt;= PM) {
+        er++;
+        ec = 0;
+      }
+      if (er &gt;= PN) {
+        /* Do nothing. */
+      } else if (er &lt; 0) {
+        val -= piece_sums[j][0][0];
+      } else {
+        val -= piece_sums[j][er][max(0, ec)];
+      }
+    }
+
+    /* Search right if there are more non-zero entries, otherwise search left.
+     */
+    if (val) {
+      lo = md;
+    } else {
+      hi = md - 1;
+    }
+  }
+
+  return make_pair(lo / M, lo % M);
+}
+
+int main() {
+  freopen(&quot;bcs.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;bcs.out&quot;, &quot;w&quot;, stdout);
+  int K; cin &gt;&gt; K;
+  pat target = read_pat();
+
+  int R = target.size();
+  int C = target[0].size();
+  xhash target_hash = target;
+  target_sums = calc_sums(target);
+
+  /* Read in the pieces into a map after canonicalization.  Keep track of
+   * how many times an equivalant piece occurs and deduplicate. */
+  map&lt;pat, int&gt; piece_map;
+  for (int i = 0; i &lt; K; i++) {
+    piece_map[read_pat()]++;
+  }
+
+  /* Build data structures based on the deduplicated pieces in each of
+   * their orientations. */
+  vector&lt;int&gt; piece_counts;
+  vector&lt;pair&lt;int, int&gt; &gt; piece_offsets;
+  vector&lt;int&gt; piece_index;
+  vector&lt;xhash&gt; piece_hashes;
+
+  unordered_map&lt;xhash, int, xhash_downhash&gt; the_hash;
+  for (auto it : piece_map) {
+    pat p = it.first;
+    int index = piece_counts.size();
+    piece_counts.push_back(it.second);
+    for (int j = 0; j &lt; 2; j++) {
+      for (int k = 0; k &lt; 4; k++) {
+        if (p.size() &gt; R || p[0].size() &gt; C) {
+          rotate(p);
+          continue;
+        }
+
+        xhash h(p);
+        piece_sums.push_back(calc_sums(p));
+        piece_offsets.push_back(find_offset(piece_sums.back()));
+        piece_hashes.push_back(h);
+        piece_index.push_back(index);
+
+        h.offset(R - piece_offsets.back().first,
+                 C - piece_offsets.back().second);
+
+        /* Deduplication ensures that no two pieces should have the same hash.
+         */
+        the_hash[h] = index;
+        rotate(p);
+      }
+      vflip(p);
+    }
+  }
+
+  set&lt;tuple&lt;int, int, int&gt; &gt; sols;
+  pair&lt;int, int&gt; base_1 = find_offset(target_sums);
+  for (int i = 0; i &lt; piece_hashes.size(); i++) {
+    /* Find the offset so that the last item in piece_hashes[i] covers the last
+     * item in the target. */
+    pair&lt;int, int&gt; off_1 = base_1;
+    off_1.first -= piece_offsets[i].first;
+    off_1.second -= piece_offsets[i].second;
+    if (off_1.first &lt; 0 || off_1.second &lt; 0) {
+      continue;
+    }
+
+    xhash hash_1 = piece_hashes[i];
+    hash_1.offset(off_1.first, off_1.second);
+
+    pair&lt;int, int&gt; base_2 = find_offset(target_sums, {i}, {off_1});
+    for (int j = 0; j &lt; piece_hashes.size(); j++) {
+      /* Find the offset so that the last uncovered item in * piece_hashes[j]
+       * covers the last still uncovered item in the target. */
+      pair&lt;int, int&gt; off_2 = base_2;
+      off_2.first -= piece_offsets[j].first;
+      off_2.second -= piece_offsets[j].second;
+      if (off_2.first &lt; 0 || off_2.second &lt; 0) {
+        continue;
+      }
+
+      xhash hash_2 = piece_hashes[j];
+      hash_2.offset(off_2.first, off_2.second);
+
+      /* Canonicalize the position of the last still uncovered item of the
+       * target so we can look up if we have a matching hash. */
+      pair&lt;int, int&gt; off_3 = find_offset(target_sums, {i, j}, {off_1, off_2});
+      if (off_3.first &lt; 0 || off_3.second &lt; 0) {
+        continue;
+      }
+      xhash hash_remains = target_hash - hash_1 - hash_2;
+      hash_remains.offset(R - off_3.first, C - off_3.second);
+
+      /* Check if we have a match, if we do insert it into the solutions list.
+       */
+      auto it = the_hash.find(hash_remains);
+      if (it != the_hash.end()) {
+        int L[3];
+        L[0] = piece_index[i];
+        L[1] = piece_index[j];
+        L[2] = it-&gt;second;
+        sort(L, L + 3);
+        sols.insert(make_tuple(L[0], L[1], L[2]));
+      }
+    }
+  }
+
+  /* Convert the solutions list into an actual result on the input array.  This
+   * takes into account the pieces that were deduplicated in the beginning. */
+  int result = 0;
+  for (auto sol : sols) {
+    int c0 = piece_counts[get&lt;0&gt;(sol)];
+    int c1 = piece_counts[get&lt;1&gt;(sol)];
+    int c2 = piece_counts[get&lt;2&gt;(sol)];
+    if (get&lt;0&gt;(sol) == get&lt;2&gt;(sol)) {
+      result += c0 * (c0 - 1) * (c0 - 2) / 6;
+    } else if (get&lt;0&gt;(sol) == get&lt;1&gt;(sol)) {
+      result += c0 * (c0 - 1) / 2 * c2;
+    } else if (get&lt;1&gt;(sol) == get&lt;2&gt;(sol)) {
+      result += c0 * c1 * (c1 - 1) / 2;
+    } else {
+      result += c0 * c1 * c2;
+    }
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+<p></body></html>

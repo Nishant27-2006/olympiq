@@ -1,0 +1,664 @@
+Solution ID: sol_prob1_gold_open24
+Contest: OPEN24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob1_gold_open24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Let
+
+$s$
+
+and
+
+$t$
+
+denote the two strings. Define
+
+$a_1,\dots,a_m$
+
+to be the
+positions of the
+
+$1$
+
+s in
+
+$s$
+
+, and
+
+$b_1,\dots,b_m$
+
+similarly for
+
+$t$
+
+.
+
+In this problem, we only care about dance moves involving both types of cows.
+These dance moves are equivalent to moving a
+
+$1$
+
+(i.e., a Holstein) to a
+position not containing a
+
+$1$
+
+(i.e., a position containing a Guernsey).
+
+Claim 1:
+
+The answer is at least the minimum value of
+
+$\sum_{i=1}^m\left\lceil\frac{|a_i-c_i|}{K}\right\rceil$
+
+over all permutations
+
+$c$
+
+of
+
+$b$
+
+. This summation represents the minimum cost to match
+
+$1$
+
+s in
+
+$s$
+
+with
+
+$1$
+
+s in
+
+$t$
+
+. The cost to pair up two
+
+$1$
+
+s equals the ceiling of the distance
+between them divided by
+
+$K$
+
+.
+
+Proof:
+
+Every
+
+$1$
+
+in
+
+$s$
+
+must pair up with (i.e., end at the same location
+as) some
+
+$1$
+
+in
+
+$t$
+
+. To move a
+
+$1$
+
+a distance of
+
+$d$
+
+, at least
+
+$\lceil d/K\rceil$
+
+dance moves are required, as each dance move moves a
+
+$1$
+
+by a
+distance of at most
+
+$K$
+
+.
+
+In fact, we will later show that claim 1 holds with equality.
+
+SUBTASK 1:
+
+$K=1$
+
+Claim 1.5:
+
+The answer is
+
+$\sum_{i=1}^m|a_i-b_i|$
+
+.
+
+Proof:
+
+Using an exchange argument, it can be shown that
+
+$\sum_{i=1}^m|a_i-c_i|$
+
+is minimized when
+
+$b=c$
+
+. So the answer is at least
+
+$\sum_{i=1}^m|a_i-b_i|$
+
+. Furthermore, we can construct a sequence of swaps with
+exactly this length:
+
+While
+
+$a\neq b$
+
+, take the smallest
+
+$i$
+
+such that
+
+$a_i\neq b_i$
+
+:
+
+If
+
+$a_i>b_i$
+
+, move the
+
+$1$
+
+at
+
+$a_i$
+
+one position to the left.
+
+Otherwise, move the
+
+$1$
+
+in
+
+$b_i$
+
+one position to the left.
+
+This operation decreases
+
+$\sum_{i=1}^m|a_i-b_i|$
+
+by one
+
+Repeat until
+
+$a=b$
+
+.
+
+Implementation 1 in Python:
+
+from collections import deque
+
+N, K = map(int, input().split())
+s = input()
+t = input()
+
+a = [i for i in range(N) if s[i] == "1"]
+b = [i for i in range(N) if t[i] == "1"]
+
+print(sum(abs(x - y) for x, y in zip(a, b)))
+
+Another summation that gives the same answer is:
+
+$$\sum_{i=1}^N|(\text{# ones in }s\text{ with position }\le i)-(\text{# ones in }t\text{ with position }\le i)|$$
+
+We can compute this summation by sweeping
+
+$i$
+
+from left to right.
+
+Implementation 2 in Python:
+
+from collections import deque
+ 
+N, K = map(int, input().split())
+s = input()
+t = input()
+ 
+ans = 0
+ 
+dif = 0
+for i in range(N):
+    dif += s[i] == "1"
+    dif -= t[i] == "1"
+    ans += abs(dif)
+ 
+print(ans)
+
+As we will see later on, the full solution will look quite similar to
+implementation 2.
+
+SUBTASK 2:
+
+$m \leq 8$
+
+Assuming Claim 1 holds with equality, we can iterate over all permutations
+
+$c$
+
+of
+
+$b$
+
+and compute the expression from claim 1 in
+
+$O(m!\cdot m)$
+
+time.
+
+FULL SOLUTION
+
+Suppose we draw an arrow
+
+$a_i\to c_i$
+
+for each
+
+$i$
+
+. We say that the arrow has
+length
+
+$|a_i-c_i|$
+
+, and points
+
+rightward
+
+if
+
+$a_i<c_i$
+
+, and
+
+leftward
+
+otherwise. Two arrows point
+
+in opposite directions
+
+if one
+points leftward and the other rightward. The
+
+$i$
+
+-th arrow spans the interval
+
+$[\min(a_i,c_i),\max(a_i,c_i)]$
+
+, and we say that two arrows
+
+cross
+
+if
+their intervals intersect.
+
+Claim 2:
+
+There is a permutation
+
+$c$
+
+of
+
+$b$
+
+minimizing
+
+$\sum_{i=1}^m\left\lceil\frac{|a_i-c_i|}{K}\right\rceil$
+
+such that no two
+opposite-direction arrows cross each other.
+
+Proof:
+
+If two opposite-direction arrows cross, we can swap two entries of
+
+$c$
+
+to uncross them without increasing the summation:
+
+If one arrow completely covers the other, we need to verify that
+
+$\lceil (x+y)/K\rceil + 1\ge \lceil x/K\rceil+\lceil y/K\rceil$
+
+. Indeed, this
+inequality is true for all
+
+$x,y\ge 0$
+
+Otherwise, uncrossing them
+decreases the lengths of both arrows, so the summation does not increase.
+
+We can repeatedly uncross opposite-direction arrow pairs until no such pairs exist.
+Because the sum of lengths of all arrows strictly decreases each time we uncross
+two arrows, this process must eventually terminate.
+
+Claim 3:
+
+Claim 1 holds with equality.
+
+Proof:
+
+Take
+
+$c$
+
+satisfying claim 2 and partition the positions into
+independent substrings where no two arrows point in
+opposite directions within each substring.
+Now consider one of those substrings. Without loss of generality, assume all
+arrows point rightward within the substring (i.e.,
+
+$a_i\le c_i$
+
+for all
+
+$i$
+
+).
+
+We use induction. Take any such
+
+$c$
+
+minimizing the number of
+
+$i$
+
+such that
+
+$a_i=c_i$
+
+, and consider the maximum
+
+$i$
+
+satisfying
+
+$a_i<c_i$
+
+. We
+can move
+
+$a_i$
+
+to the right in such a way that
+
+$\sum_i\left\lceil\frac{|a_i-c_i|}{K}\right\rceil$
+
+decreases by one:
+
+If
+
+$a_i$
+
+and
+
+$c_i$
+
+are within
+
+$K$
+
+of each other, then
+
+$c_i$
+
+must contain a zero, and we
+can move a one from
+
+$a_i$
+
+to
+
+$c_i$
+
+in one move.
+
+Otherwise, move
+
+$a_i$
+
+to
+
+$c_i+K$
+
+, which must contain a zero. (If it doesn't, then there is a permutation
+of
+
+$c$
+
+with fewer
+
+$i$
+
+such that
+
+$a_i=c_i$
+
+, which is a contradiction.)
+Then, apply the
+inductive hypothesis.
+
+It remains to describe how to compute the expression from claim 1 efficiently.
+One (overpowered) way to pass subtask 3 is to use the
+
+Hungarian algorithm
+
+for
+minimum-cost matching, which runs in
+
+$O(N^3)$
+
+time.  However, there is a much
+simpler way using a greedy algorithm.
+
+Firstly, there is a minimum-cost matching pairing all
+
+$a_i$
+
+and
+
+$b_j$
+
+such that
+
+$a_i=b_j$
+
+. It remains to pair two types of positions:
+
+Type 1 positions
+
+, where
+
+$s_i = 1$
+
+and
+
+$t_i = 0$
+
+.
+
+Type 2 positions
+
+, where
+
+$s_i = 0$
+
+and
+
+$t_i = 1$
+
+.
+
+In the case where all arrows point rightward, every type 1
+position is paired with a type 2 position to the right of it, and we can use the
+following greedy strategy that sweeps from left to right:
+
+Maintain a list of type 1 positions not yet paired.
+
+Iterate over all
+
+$i$
+
+from
+
+$1$
+
+to
+
+$N$
+
+.
+
+For each position in the list, if it is less than
+
+$i$
+
+, add
+
+$K$
+
+to it and
+increase the answer by one, because it must be moved rightward at least once
+more.
+
+If
+
+$i$
+
+is type 1, add it to the list of type 1 positions to be matched.
+
+If
+
+$i$
+
+is type 2, we can pair it with any type 1 position from the list. To
+minimize the cost, we should pair it with the minimum element from the list.
+(This statement can be proven formally using an exchange argument.)
+
+The time complexity is
+
+$O(N^2/K)$
+
+if step 2.1 is implemented naively, or
+
+$O(N)$
+
+if the list is maintained as a queue consisting of pairs of the form {value,
+count} in strictly increasing order of value. When all arrows point leftward,
+the solution is the same except types 1 and 2 are swapped.
+
+The
+
+$O(N)$
+
+implementation follows. Note that it is written in such a way such
+that it handles both leftward and rightward arrows symmetrically.
+
+My Python code:
+
+from collections import deque
+
+N, K = map(int, input().split())
+s = input()
+t = input()
+
+d = deque()
+
+ans = 0
+for i in range(N):
+    if len(d) > 0 and d[0][0] < i:  # step 2.1
+        ans += abs(d[0][1])
+        d.append((d[0][0] + K, d[0][1]))
+        d.popleft()
+    if s[i] != t[i]:
+        dif = 1 if s[i] == "1" else -1
+        if len(d) == 0 or abs(d[0][1] + dif) > abs(d[0][1]):  # 2.2
+            if not (len(d) > 0 and d[0][0] == i):
+                d.appendleft((i, 0))
+            d[0] = d[0][0], d[0][1] + dif
+        else:  # 2.3
+            d[0] = d[0][0], d[0][1] + dif
+            if d[0][1] == 0:
+                d.popleft()
+
+print(ans)
+
+$O(N\log N)$
+
+solutions using a sorted map rather than a deque were also fast
+enough to pass.
+
+Andi Qu's C++ code:
+
+#include <iostream>
+#include <map>
+typedef long long ll;
+using namespace std;
+ 
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int n, k;
+    cin >> n >> k;
+    string s1, s2;
+    cin >> s1 >> s2;
+ 
+    ll ans = 0;
+    map<int, int> mismatches;
+    for (int i = 0; i < n; i++) {
+        int d = s1[i] - s2[i];  // d = 0 if match; +1 if 0|1; -1 if 1|0
+ 
+        // First, move any mismatches *before* the sweep-line forward
+        // and increment the answer accordingly
+        while (mismatches.size() && mismatches.begin()->first < i) {
+            pair<int, int> curr = *mismatches.begin();
+            mismatches[curr.first + k] += curr.second;
+            ans += abs(curr.second);
+            mismatches.erase(curr.first);
+        }
+        // Next, resolve any reachable mismatches from the current position
+        if (mismatches.size() && mismatches.begin()->second * d < 0) {
+            mismatches.begin()->second += d;
+            if (mismatches.begin()->second == 0)
+                mismatches.erase(mismatches.begin());
+        } else if (d)
+            mismatches[i] += d;
+    }
+ 
+    cout << ans << '\n';
+    return 0;
+}

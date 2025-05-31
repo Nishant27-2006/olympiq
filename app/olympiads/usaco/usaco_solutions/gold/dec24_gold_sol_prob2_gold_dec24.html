@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Alex Liang)
+<p><strong>Subtasks 1 and 2 (<span class='math'>$N \le 10^4$</span>):</strong>
+<p>We can have <span class='math'>$dp[i]$</span> be the number of ways to paint the first <span class='math'>$i$</span> points. To
+transition, we can iterate over the interval that ends at <span class='math'>$i$</span>. For some <span class='math'>$x$</span>, we
+check if <span class='math'>$[i-2x+1,i-x]$</span> can be painted red and <span class='math'>$[i-x+1,i]$</span> can be painted blue.
+If so, we can paint the interval <span class='math'>$[i-2x+1,i]$</span>. So we have
+<span class='math'>$dp[i]=\sum_x dp[i-2x]$</span> over all such valid <span class='math'>$x$</span>. Checking some <span class='math'>$x$</span> can be done
+in <span class='math'>$\mathcal{O}(1)$</span> time with prefix sums.
+<p>We can also choose to not paint the <span class='math'>$i$</span>-th point. Specifically, if <span class='math'>$s_i$</span> is <span class='math'>$X$</span>,
+then we add <span class='math'>$dp[i-1]$</span> to <span class='math'>$dp[i]$</span>. In all, this solution runs in
+<span class='math'>$\mathcal{O}(N^2)$</span> time.
+<p>Sample Implementation:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define ll long long
+ 
+const int MAX = 5e5 + 5, MOD = 1e9 + 7;
+ 
+int n, R[MAX], B[MAX]; ll dp[MAX];
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin &gt;&gt; n;
+ 
+    dp[0] = 1;
+ 
+    for (int i = 1; i &lt;= n; i++){
+        char c;
+        cin &gt;&gt; c;
+ 
+        R[i] = (c == &apos;R&apos;) + R[i - 1];
+        B[i] = (c == &apos;B&apos;) + B[i - 1];
+ 
+        if (c != &apos;R&apos; and c != &apos;B&apos;)
+            dp[i] = dp[i - 1];
+        
+        for (int x = 1; i - 2 * x + 1 &gt;= 1; x++)
+            if (B[i - x] - B[i - 2 * x] == 0 and R[i] - R[i - x] == 0)
+                dp[i] = (dp[i] + dp[i - 2 * x]) % MOD;
+    }
+    cout &lt;&lt; dp[n] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<strong>Subtask 3 (All but at most <span class='math'>$100$</span> characters in <span class='math'>$s$</span> are
+<span class='math'>$X$</span>):</strong>
+<p>Consider the transitions for some <span class='math'>$dp[i]$</span>. In the naive transition we would
+iterate over each <span class='math'>$x$</span> and look at whether interval <span class='math'>$[i-2x+1,i]$</span> is paintable.
+Let&apos;s view this from a different perspective. For each <span class='math'>$s_j \neq X$</span>, we look at
+the ranges of <span class='math'>$x$</span> in which the interval  <span class='math'>$[i-2x+1,i]$</span> becomes <strong>unpaintable</strong>
+(let&apos;s call such <span class='math'>$x$</span> <strong>bad</strong>) due to the constraint at <span class='math'>$j$</span>.
+<p>If some <span class='math'>$s_j=R$</span> then we know that the right half (i.e. the portion painted blue:
+<span class='math'>$[i-x+1,i]$</span> must not contain <span class='math'>$j$</span>). In other words, <span class='math'>$x$</span> is bad if <span class='math'>$j \ge i-x+1$</span>
+which is equivalent to <span class='math'>$x \ge i - j + 1$</span>.  
+<p>If some <span class='math'>$s_j=B$</span> then we know that the left half (i.e. the portion painted blue:
+<span class='math'>$[i-2x+1,i-x]$</span> must not contain <span class='math'>$j$</span>). So <span class='math'>$x$</span> is bad if
+<span class='math'>$i - 2x + 1 \le j \le i - x$</span>. The inequality <span class='math'>$i - 2x + 1 \le j$</span> is true when
+<span class='math'>$x \ge \lceil \frac{i-j+1}{2} \rceil$</span>. The inequality <span class='math'>$j \le i - x$</span> is true when
+<span class='math'>$x \le i - j$</span>. So <span class='math'>$x$</span> is bad if 
+<span class='math'>$\lceil \frac{i-j+1}{2} \rceil \le x \le i - j$</span>.
+<p>Let&apos;s put these cases together. For some <span class='math'>$x$</span> we transition off <span class='math'>$dp[i-2x]$</span> so let
+<span class='math'>$t=i-2x$</span>. Then for some <span class='math'>$s_j=R$</span>, we know that <span class='math'>$x$</span> is bad if <span class='math'>$x \ge i - j + 1$</span>
+which means we can not transition off <span class='math'>$t$</span> if <span class='math'>$t \le i - 2(i-j+1)$</span>. And for
+<span class='math'>$s_j=B$</span>, we know that <span class='math'>$x$</span> is bad if 
+<span class='math'>$\lceil \frac{i-j+1}{2} \rceil \le x \le i - j$</span> which means we can <strong>not</strong>
+transition off <span class='math'>$t$</span> if <span class='math'>$2j - i \le t \le j - 1$</span>. 
+<p>Let the number of <span class='math'>$s_i$</span> that are <span class='math'>$R$</span> or <span class='math'>$B$</span> be <span class='math'>$c$</span>. We know that there are
+<span class='math'>$\mathcal{O}(c)$</span> intervals we can transition off. Note that another condition
+for transitioning off <span class='math'>$t$</span> at some <span class='math'>$i$</span> is that they are the same parity so we
+need to make sure to only transition off same parity indices in the interval.
+Getting these intervals and using prefix sums to quickly transition leads to a 
+<span class='math'>$\mathcal{O}(Nc)$</span> solution which runs in time since <span class='math'>$c \le 100$</span> in this subtask.
+<p>Sample Implementation:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define ll long long
+ 
+const int MAX = 5e5 + 5, MOD = 1e9 + 7;
+ 
+int n, recR; vector&lt;int&gt; locB; ll dp[MAX], psm[MAX][2];
+ 
+ll sumRange(int l, int r, int i){
+    // Gets sum of dp values for l...r that are the same parity as i
+    l += (l % 2 != i % 2);
+    r -= (r % 2 != i % 2);
+ 
+    if (l &gt; r)
+        return 0;
+    return (psm[r][i % 2] - (l - 1 &gt;= 0 ? psm[l - 1][i % 2] : 0) + MOD) % MOD;
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin &gt;&gt; n;
+    dp[0] = psm[0][0] = 1;
+ 
+    for (int i = 1; i &lt;= n; i++){
+        char c;
+        cin &gt;&gt; c;
+ 
+        if (c == &apos;R&apos;)
+            recR = i;
+        else if (c == &apos;B&apos;)
+            locB.push_back(i);
+ 
+        // Choose to not paint
+        else
+            dp[i] = dp[i - 1];
+        
+        // Gather bad intervals for B (don&apos;t transition from &lt;= cut to satisfy R)
+        int curPt = -1;
+        int cut = i - 2 * (i - recR + 1);
+        int st = lower_bound(locB.begin(), locB.end(), cut + 2) - locB.begin();
+ 
+        dp[i] = (dp[i] + sumRange(cut + 1, i - 1, i)) % MOD;
+        
+        for (int j = st; j &lt; locB.size(); j++){
+            // Start a new one
+            int badL = max({2 * locB[j] - i, cut + 1, 0});
+            int badR = locB[j] - 1;
+            
+            if (badL &gt; curPt)
+                curPt = badL - 1;
+            if (badR &gt;= curPt){
+                dp[i] = (dp[i] - sumRange(curPt + 1, badR, i) + MOD) % MOD;
+                curPt = badR;
+            }
+        }
+        for (int p : {0, 1})
+            psm[i][p] = (psm[i - 1][p] + (p == i % 2 ? dp[i] : 0)) % MOD;
+    }
+    cout &lt;&lt; dp[n] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Full credit <span class='math'>$1$</span>:</strong>
+<p>We can speed up the subtask <span class='math'>$3$</span> solution. We know that each <span class='math'>$s_j=B$</span> corresponds
+to interval of <span class='math'>$t$</span> (the index we transition off) <span class='math'>$2j - i \le t \le j - 1$</span> being
+bad. Notice that as <span class='math'>$i$</span> increases, the right endpoint of the interval stays the
+same while the left endpoint shifts by <span class='math'>$1$</span>.
+<p>Define a point as active if we might be able to transition off it in the future
+(i.e. points <span class='math'>$t$</span> that are not contained in any <span class='math'>$[2j-i, j-1]$</span> interval). Let&apos;s
+keep track of all  left points of bad intervals <span class='math'>$[2j-i, j-1]$</span>. When we move to
+the next index, we shift  all left points by <span class='math'>$1$</span> and deactivate all the new
+points that are still active. Keeping track of only the necessary points leads
+to this part taking <span class='math'>$\mathcal{O}(N)$</span> time in total since each point can only be
+deactivated once.
+<p>For some <span class='math'>$S_j=R$</span>, we know that <span class='math'>$t$</span> is bad if <span class='math'>$t \le i - 2(i-j+1)$</span>. Let <span class='math'>$j_r$</span>
+represent the index of the closest <span class='math'>$R$</span> on the left. Then we can only transition
+off indices <span class='math'>$t$</span> if <span class='math'>$t \ge i - 2(i-j_r+1)$</span>. So we want to transition off active
+<span class='math'>$t$</span> that are in the range <span class='math'>$[i - 2(i-j_r+1), i]$</span>. We store the sums of active
+points in <span class='math'>$[i - 2(i-j_r+1), i]$</span> and keep a pointer at <span class='math'>$i - 2(i-j_r+1)$</span> and
+adjust the pointer at each <span class='math'>$i$</span>. This solution runs in <span class='math'>$\mathcal{O}(N)$</span> time.
+<p>Sample Implementation:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define ll long long
+ 
+const int MAX = 5e5 + 5, MOD = 1e9 + 7;
+ 
+int n, lp, recR, good[MAX]; char A[MAX]; ll sum[2], dp[MAX]; vector&lt;int&gt; pts;
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin &gt;&gt; n;
+    dp[0] = sum[0] = good[0] = 1;
+
+    for (int i = 1; i &lt;= n; i++){
+        cin &gt;&gt; A[i];
+        good[i] = true;
+
+        // Insert [i - 2, i - 2]
+        if (i - 1 &gt;= 1 and A[i - 1] == &apos;B&apos;)
+            pts.push_back(i - 1);
+
+        // Update bad positions to transition from
+        vector&lt;int&gt; npts;
+
+        for (int p : pts){
+            if (p - 1 &gt;= 0 and good[p - 1]){
+                good[p - 1] = false;
+                if (p - 1 &gt;= lp)
+                    sum[(p - 1) % 2] = (sum[(p - 1) % 2] - dp[p - 1] + MOD) % MOD;
+                npts.push_back(p - 1);
+            }
+        }
+        pts = npts;
+
+        // Update for nearest R
+        if (A[i] == &apos;R&apos;)
+            recR = i;
+
+        // Only consider bound...i
+        int bound = max(i - 2 * (i - recR + 1) + 1, 0); 
+
+        while (lp &lt; bound){
+            sum[lp % 2] = (sum[lp % 2] - dp[lp] * good[lp] + MOD) % MOD;
+            lp++;
+        }
+        while (lp &gt; bound){
+            lp--;
+            sum[lp % 2] = (sum[lp % 2] + dp[lp] * good[lp]) % MOD;
+        }
+
+        // Choose to not paint
+        dp[i] = (dp[i - 1] * (A[i] == &apos;X&apos;) + sum[i % 2]) % MOD;
+        sum[i % 2] = (sum[i % 2] + dp[i]) % MOD;
+    }
+    cout &lt;&lt; dp[n] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Full credit <span class='math'>$2$</span>:</strong> 
+<p>Consider an improved version of subtask <span class='math'>$3$</span> where we maintain and merge
+adjacent/overlapping bad intervals so the bad intervals in our list will all be
+at least <span class='math'>$1$</span> apart. Let <span class='math'>$L_i$</span> be the list of bad intervals when we are at <span class='math'>$i$</span>.
+Then, we know that <span class='math'>$\sum_{1 \le i \le N}{|L_i|}=\mathcal{O}(N)$</span> by the full
+credit <span class='math'>$1$</span> solution. Specifically, let an index contribute <span class='math'>$1$</span> to the number of
+bad intervals if it is the start of a bad interval. Aside from the first index,
+each index will only contribute exactly once as all bad intervals extend left
+every time we move to the next element (described in full credit <span class='math'>$1$</span> solution).
+Thus, this solution works in <span class='math'>$\mathcal{O}(N)$</span> time.
+<p>Sample Implementation:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define ll long long
+ 
+const int MAX = 5e5 + 5, MOD = 1e9 + 7;
+ 
+int n, recR; char A[MAX]; vector&lt;pair&lt;int, int&gt;&gt; bad; ll dp[MAX], psm[MAX][2];
+ 
+ll sumRange(int l, int r, int i){
+    // Gets sum of dp values for l...r that are the same parity as i
+    l += (l % 2 != i % 2);
+    r -= (r % 2 != i % 2);
+ 
+    if (l &gt; r)
+        return 0;
+    return (psm[r][i % 2] - (l - 1 &gt;= 0 ? psm[l - 1][i % 2] : 0) + MOD) % MOD;
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin &gt;&gt; n;
+    dp[0] = psm[0][0] = 1;
+
+    for (int i = 1; i &lt;= n; i++){
+        cin &gt;&gt; A[i];
+ 
+        if (A[i] == &apos;R&apos;)
+            recR = i;
+        
+        // Choose to not paint
+        else if (A[i] == &apos;X&apos;)
+            dp[i] = dp[i - 1];
+        
+        // Include everything in the dp
+        int cut = i - 2 * (i - recR + 1); 
+        dp[i] = (dp[i] + sumRange(max(cut + 1, 0), i - 1, i)) % MOD;
+
+        // Modify bad
+        for (auto &amp;[l, r] : bad)
+            l = max(l - 1, 0);
+
+        // Insert interval
+        if (i - 1 &gt;= 1 and A[i - 1] == &apos;B&apos;)
+            bad.push_back(make_pair(i - 2, i - 2));
+        
+        // Merge intervals in bad
+        int curL = 1e9;
+        int curR = -1e9;
+        vector&lt;pair&lt;int, int&gt;&gt; newBad;
+
+        for (int j = 0; j &lt; bad.size(); j++){
+            curL = min(curL, bad[j].first);
+            curR = max(curR, bad[j].second);
+
+            // End the current interval
+            if (j == (int)bad.size() - 1 or bad[j + 1].first &gt; curR){
+                newBad.push_back({curL, curR});
+                // Proccess the interval
+                dp[i] = (dp[i] - sumRange(max({curL, cut + 1, 0}), curR, i) + MOD) % MOD;
+                curL = 1e9;
+                curR = -1e9;
+            }
+        }
+        bad = newBad;
+
+        for (int p : {0, 1})
+            psm[i][p] = (psm[i - 1][p] + (p == i % 2 ? dp[i] : 0)) % MOD;
+    }
+    cout &lt;&lt; dp[n] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Full credit <span class='math'>$3$</span>:</strong> 
+<p>Suppose some <span class='math'>$x$</span> is good but <span class='math'>$x+1$</span> is bad. Then we know one of the following is
+true.
+<ol><li><span class='math'>$s_{i-x}=R$</span></li><li><span class='math'>$i-2x-1 \le 0$</span></li><li>At least  one of <span class='math'>$s_{i-2x}$</span> and <span class='math'>$s_{i-2x-1}$</span> must be <span class='math'>$B$</span></li></ol>
+In the first two cases, no larger <span class='math'>$x$</span> will work. In the third case, the next
+good interval must have the <span class='math'>$B$</span> in <span class='math'>$s_{i-2x}$</span> and/or <span class='math'>$s_{i-2x-1}$</span> be in the
+right half which means <span class='math'>$x$</span> will at least double. Thus, every time we switch from
+<span class='math'>$x$</span> being good to bad to good, <span class='math'>$x$</span> doubles so the number of possible intervals
+we need to transition off is <span class='math'>$\mathcal{O}(\log N)$</span>. This motivates the following
+solution.
+<p>We start out at some <span class='math'>$x$</span>. Let&apos;s repeatedly expand our interval <strong>until</strong> the
+right half (i.e. <span class='math'>$[i-x+1,i]$</span>) contains a <span class='math'>$R$</span> meaning <span class='math'>$x$</span> will now <strong>always</strong>
+be bad.
+<p>Suppose <span class='math'>$x$</span> is good. We can find the next bad <span class='math'>$x$</span> by looking at the first <span class='math'>$B$</span>
+with index  <span class='math'>$\le i-2x$</span>. If some <span class='math'>$x$</span> is bad and the condition in the previous
+paragraph is satisfied, then we stop expanding our interval.
+<p>Suppose we are at some bad <span class='math'>$x$</span> and want to find the next good <span class='math'>$x$</span>. Since <span class='math'>$x$</span> is
+bad, we know that there is a <span class='math'>$B$</span> in <span class='math'>$[i-2x+1,i-x]$</span>. Let the leftmost such <span class='math'>$B$</span> be
+at index <span class='math'>$j$</span>. The first <span class='math'>$x$</span> that can be potentially good is the <span class='math'>$x$</span> where the
+right half of the interval includes <span class='math'>$j$</span>. So we set <span class='math'>$x=j$</span> and continue expanding.
+Clearly, every two times we do this, <span class='math'>$x$</span> will double.
+<p>This technique gets the <span class='math'>$\mathcal{O}(\log N)$</span> good intervals (and considers each
+good interval exactly once). And it also spends <span class='math'>$\mathcal{O}(\log N)$</span> time on
+bad intervals due to the doubling argument above. Thus, transitioning takes
+<span class='math'>$\mathcal{O}(\log N)$</span> time and this solution runs in <span class='math'>$\mathcal{O}(N \log N)$</span>
+time.
+<p>Sample Implementation:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define ll long long
+ 
+const int MAX = 5e5 + 5, MOD = 1e9 + 7;
+ 
+int n, leftB[MAX], leftR[MAX], rightB[MAX]; char A[MAX]; ll dp[MAX], psm[MAX][2];
+ 
+ll sumRange(int l, int r, int i){
+    // Gets sum of dp values for l...r that are the same parity as i
+    l += (l % 2 != i % 2);
+    r -= (r % 2 != i % 2);
+ 
+    if (l &gt; r)
+        return 0;
+    return (psm[r][i % 2] - (l - 1 &gt;= 0 ? psm[l - 1][i % 2] : 0) + MOD) % MOD;
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin &gt;&gt; n;
+ 
+    for (int i = 1; i &lt;= n; i++){
+        cin &gt;&gt; A[i];
+        leftB[i] = (A[i] == &apos;B&apos;) ? i : leftB[i - 1];
+        leftR[i] = (A[i] == &apos;R&apos;) ? i : leftR[i - 1];
+    }
+    for (int i = n; i &gt;= 1; i--){
+        rightB[i] = (A[i] == &apos;B&apos;) ? i : rightB[i + 1];
+    }
+ 
+    dp[0] = psm[0][0] = 1;
+ 
+    for (int i = 1; i &lt;= n; i++){
+        // Choose to not paint
+        if (A[i] != &apos;R&apos; and A[i] != &apos;B&apos;)
+            dp[i] = dp[i - 1];
+        
+        // Biggest X that won&apos;t cause right half to be bad
+        int cutoffX = i - leftR[i];
+        int x = 1;
+ 
+        while (i - 2 * x + 1 &gt;= 1 and x &lt;= cutoffX){
+            int lRed = i - 2 * x + 1;
+            int rRed = i - x;
+ 
+            // Bad
+            if (rightB[lRed] and rightB[lRed] &lt;= rRed){
+                x = i - rightB[lRed] + 1;
+            }
+            // Good
+            else{
+                dp[i] = (dp[i] + sumRange(max(leftB[lRed - 1], i - 2 * cutoffX), i - 2 * x, i)) % MOD;
+                x = (i - leftB[lRed - 1]) / 2 + 1;
+            }
+        }
+        for (int p : {0, 1})
+            psm[i][p] = (psm[i - 1][p] + (p == i % 2 ? dp[i] : 0)) % MOD;
+    }
+    cout &lt;&lt; dp[n] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

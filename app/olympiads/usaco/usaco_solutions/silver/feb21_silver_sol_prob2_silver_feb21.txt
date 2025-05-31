@@ -1,0 +1,106 @@
+Solution ID: sol_prob2_silver_feb21
+Contest: FEB21
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_feb21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Spencer Compton)
+
+We start by thinking about the structure of Bessie's journey through time. Since
+there are only time portals on years that are multiples of 12, and none of
+Bessie's relatives are born in such a year, to visit some relative Bessie must
+also visit the preceding year of the Ox and wait 12 years. For example, if
+Bessie has a relative from 15 years ago, Bessie must visit the year of the Ox 24
+years ago and must wait until at least the year of the Ox 12 years ago. In other
+words, we can think of each year
+
+$x$
+
+as belonging to a 12-year cycle
+
+$\lfloor \frac{x+11}{12} \rfloor$
+
+, so
+
+$0$
+
+belongs to cycle
+
+$0$
+
+,
+
+$[1, \dots, 12]$
+
+to cycle
+
+$1$
+
+,
+
+$[13, \dots, 24]$
+
+to cycle
+
+$2$
+
+, and so on.
+Meaning, if Bessie has a relative in cycle
+
+$x$
+
+then Bessie must spend all 12
+years in that cycle.
+
+We must use a jump to go back to the earliest cycle, then with the remaining
+
+$K-1$
+
+jumps Bessie can skip over contiguous ranges of unnecessary cycles. It is
+then optimal to skip over the
+
+$K-1$
+
+largest contiguous ranges of unused cycles.
+One way we can accomplish this is by identifying all the cycles Bessie has
+relatives in, sorting them, identifying the gaps between adjacent cycles in the
+sorted list, and sorting those gaps to find the
+
+$K-1$
+
+largest. In total, this
+takes
+
+$O(n \log (n) ) $
+
+time.
+
+Brian Dean's code:
+
+#include <iostream>
+#include <set>
+#include <vector>
+#include <algorithm>
+using namespace std;
+ 
+set<int> blocks;
+vector<int> gaps;
+ 
+int main(void)
+{
+  int N, K, years_ago, answer, last = 0;
+  cin >> N >> K;
+  for (int i=0; i<N; i++) { cin >> years_ago; blocks.insert ((years_ago+11)/12); }
+  answer = *blocks.rbegin();
+  while (!blocks.empty()) {
+    gaps.push_back(*blocks.begin() - last - 1);
+    last = *blocks.begin();
+    blocks.erase(*blocks.begin());
+  }
+  sort (gaps.rbegin(), gaps.rend());
+  for (int i=0; i<K-1 && i<gaps.size(); i++) answer -= gaps[i];
+  cout << answer * 12 << "\n";
+}

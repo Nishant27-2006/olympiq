@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Bing-Dong Liu)
+<p>Note: let <span class='math'>$\texttt{sum}(l, r)$</span> denote <span class='math'>$s_l + s_{l+1} + \dots + s_{r-1} + s_r$</span>.
+<p><strong>Subtask 1 (<span class='math'>$N\leq 8$</span>)</strong>
+<p>It suffices to brute force all <span class='math'>$(N-1)!$</span> permutations of merges.
+<p><strong>Subtask 2 (<span class='math'>$N\leq 100$</span>)</strong>
+<p>Let&apos;s try to calculate the answer for a given cell <span class='math'>$c$</span>. At any step, <span class='math'>$c$</span> must be
+the label of a cell that represents the sum of a range <span class='math'>$[l, r]$</span> in the original
+array. Let <span class='math'>$\texttt{dp}[l][r]$</span> represent the probability that <span class='math'>$c$</span> becomes the
+final label if we only consider the cells in the range <span class='math'>$[l, r]$</span>. For
+transitions, we can consider enumerating the last merge while making sure that
+the <span class='math'>$c$</span> remains as the label. Also, note that each of the <span class='math'>$r-l$</span> possible merges
+has an equal probability of being the last merge.
+<p>The base case is <span class='math'>$\texttt{dp}[c][c] = 1$</span>. Otherwise, we have the following:
+<p><div class='math'>$$
+\texttt{dp}[l][r] =
+\sum_{\substack{m\in (l, c] \\ \texttt{sum}(l, m-1)\leq \texttt{sum}(m, r)}}{\frac{1}{r-l}\cdot\texttt{dp}[m][r]} +
+\sum_{\substack{m\in [c, r] \\ \texttt{sum}(l, m) &gt; \texttt{sum}(m+1, r)}}{\frac{1}{r-l}\cdot\texttt{dp}[l][m]}
+
+$$</div>
+<p>This runs in <span class='math'>$\mathcal O(N^3)$</span> for a single cell <span class='math'>$c$</span>, resulting in a
+<span class='math'>$\mathcal O(N^4)$</span> solution.
+<p>My code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main() {
+    int N; cin &gt;&gt; N;
+    vector S(N + 1, 0);
+    for (int i = 0; i &lt; N; i++) {
+        int x; cin &gt;&gt; x;
+        S[i + 1] = S[i] + x;
+    }
+    auto sum = [&amp;](int l, int r) {
+        return S.at(r + 1) - S.at(l);
+    };
+    vector inv(N, 0);
+    inv[1] = 1;
+    for (int i = 2; i &lt;= N; i++)
+        inv[i] = (long long) inv[MOD % i] * (MOD - MOD / i) % MOD;
+    for (int c = 0; c &lt; N; c++) {
+        vector dp(N, vector(N, 0));
+        dp[c][c] = 1;
+        for (int l = c; l &gt;= 0; l--) for (int r = c; r &lt; N; r++) {
+            if (l == c &amp;&amp; r == c) continue;
+            long long x = 0;
+            for (int m = l + 1; m &lt;= c; m++) // last merge was leftwards
+                if (sum(m, r) &gt;= sum(l, m - 1)) x += dp[m][r];
+            for (int m = c; m &lt; r; m++) // last merge was rightwards
+                if (sum(l, m) &gt; sum(m + 1, r)) x += dp[l][m]; 
+            dp[l][r] = x % MOD * inv[r - l] % MOD; // probability of fixed last merge
+        }
+        cout &lt;&lt; dp[0][N - 1] &lt;&lt; &apos;\n&apos;;
+    }
+}
+</pre>
+<p><strong>Subtask 3 (<span class='math'>$N\leq 500$</span>)</strong>
+<p>It is possible to optimize the solution from subtask 2 to <span class='math'>$\mathcal O(N^3)$</span>
+using prefix sums and two pointers (described more in detail in subtask 4&apos;s
+notes).
+<p>However, I will discuss another approach that is closer to the full solution.
+Notice that recalculating the DP for each <span class='math'>$c$</span> can be suboptimal in many ways;
+for example, regardless of which label a cell <span class='math'>$(l, r)$</span> contains, it has the same
+contribution to <span class='math'>$\texttt{dp}[1][N]$</span>. Therefore, let&apos;s consider calculating the
+DP backwards.
+<p>Let <span class='math'>$\texttt{dp}[l][r]$</span> represent the probability that the label of the cell
+representing the range <span class='math'>$[l, r]$</span> becomes the label of the final cell after all
+merges. The base case is <span class='math'>$\texttt{dp}[1][N] = 1$</span>. Otherwise, transitions are
+similar to the ones described in the subtask 2 solution:
+<p><div class='math'>$$
+\texttt{dp}[l][r] =
+\sum_{\substack{p\in [1, l) \\ \texttt{sum}(l, r)\geq \texttt{sum}(p, l-1)}}{\frac{1}{r-p}\cdot \texttt{dp}[p][r]} +
+\sum_{\substack{p\in (r, N] \\ \texttt{sum}(l, r) &gt; \texttt{sum}(r+1, p)}}{\frac{1}{p-l}\cdot \texttt{dp}[l][p]}
+
+$$</div>
+<p>The answer for a cell <span class='math'>$c$</span> is <span class='math'>$\texttt{dp}[c][c]$</span>. This runs in
+<span class='math'>$\mathcal O(N^3)$</span>.
+<p>My code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main() {
+    int N; cin &gt;&gt; N;
+    vector S(N + 1, 0);
+    for (int i = 0; i &lt; N; i++) {
+        int x; cin &gt;&gt; x;
+        S[i + 1] = S[i] + x;
+    }
+    auto sum = [&amp;](int l, int r) {
+        return S.at(r + 1) - S.at(l);
+    };
+    vector inv(N, 0);
+    inv[1] = 1;
+    for (int i = 2; i &lt;= N; i++)
+        inv[i] = (long long) inv[MOD % i] * (MOD - MOD / i) % MOD;
+    vector dp(N, vector(N, 0));
+    dp[0][N - 1] = inv[N - 1];
+    for (int l = 0; l &lt; N; l++) for (int r = N - 1; r &gt;= l; r--) {
+        if (l == 0 &amp;&amp; r == N - 1) continue;
+        long long x = 0;
+        for (int p = 0; p &lt; l; p++) // last merge was leftwards
+            if (sum(l, r) &gt;= sum(p, l - 1)) x += dp[p][r];
+        for (int p = r + 1; p &lt; N; p++) // last merge was rightwards
+            if (sum(l, r) &gt; sum(r + 1, p)) x += dp[l][p];
+        dp[l][r] = x % MOD;
+        if (l &lt; r) // probability of fixed last merge
+            dp[l][r] = (long long) dp[l][r] * inv[r - l] % MOD;
+    }
+    for (int c = 0; c &lt; N; c++) cout &lt;&lt; dp[c][c] &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p><strong>Subtask 4 <span class='math'>$(N\leq 5000$</span>)</strong>
+<p>Let&apos;s try to accelerate the solution from subtask 3. For example, say the last
+merge is leftwards. We query the sum of <span class='math'>$\frac{\texttt{dp}[p][r]}{r-p}$</span> over a fixed <span class='math'>$r$</span> and
+a range of <span class='math'>$p$</span>. The range of <span class='math'>$p$</span> is determined by the leftmost position such
+that <span class='math'>$\texttt{sum}(l, r)\geq \texttt{sum}(p, l-1)$</span> holds. Let this bound be
+denoted as <span class='math'>$\texttt{pL}[l][r]$</span>. It can be proven that
+<span class='math'>$\texttt{pL}[l][r]\leq \texttt{pL}[l+1][r]$</span>, which allows us to compute all
+<span class='math'>$\texttt{pL}[l][r]$</span> in <span class='math'>$\mathcal O(N^2)$</span> time using two pointers. Next, to
+calculate the sum, we need a data-structure that can support adding
+<span class='math'>$\frac{\texttt{dp}[l][r]}{r-l}$</span> and querying the sum over
+<span class='math'>$p\in [\texttt{pL}[l][r], l)$</span>. Since we enumerate ranges in decreasing order of
+size, for a fixed <span class='math'>$r$</span>, <span class='math'>$\frac{\texttt{dp}[l][r]}{r-l}$</span> is added in increasing order of <span class='math'>$l$</span>.
+This allows us to maintain prefix sums and answer range sum queries in constant
+time.
+<p>This runs in <span class='math'>$\mathcal O(N^2)$</span>. My code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#define sz(v) int(std::size(v))
+const int MOD = 1e9 + 7;
+
+int add(int a, int b) { return a + b &gt;= MOD ? a + b - MOD : a + b; }
+int sub(int a, int b) { return add(a, MOD - b); }
+int mul(int a, int b) { return (long long) a * b % MOD; }
+void add_self(int &amp;a, int b) { a = add(a, b); }
+
+struct sumL { // fixed l =&gt; updates (r) in decreasing order
+    vector&lt;int&gt; t; sumL(int N) : t(N) {}
+    void set(int i, int x) { t.at(i) = add(x, i + 1 &lt; sz(t) ? t.at(i + 1) : 0); }
+    int sum(int l, int r) { return l &gt; r ? 0 : sub(t.at(l), r + 1 &lt; sz(t) ? t.at(r + 1) : 0); }
+};
+struct sumR { // fixed r =&gt; updates (l) in increasing order
+    vector&lt;int&gt; t; sumR(int N) : t(N) {}
+    void set(int i, int x) { t.at(i) = add(x, i ? t.at(i - 1) : 0); }
+    int sum(int l, int r) { return l &gt; r ? 0 : sub(t.at(r), l ? t.at(l - 1) : 0); }
+};
+
+int main() {
+    int N; cin &gt;&gt; N;
+    vector&lt;int&gt; S(N + 1);
+    for (int i = 0; i &lt; N; i++) {
+        int x; cin &gt;&gt; x;
+        S[i + 1] = S[i] + x;
+    }
+    auto sum = [&amp;](int l, int r) {
+        return S.at(r + 1) - S.at(l);
+    };
+    vector&lt;int&gt; inv(N);
+    inv[1] = 1;
+    for (int i = 2; i &lt; N; i++) inv[i] = mul(inv[MOD % i], MOD - MOD / i);
+    vector dp(N, vector&lt;int&gt;(N));
+    vector sL(N, sumL(N)); vector sR(N, sumR(N));
+    // pL[l][r] = farthest we can merge leftwards such that sum(l, r) &gt;= sum(p, l-1)
+    // pR[l][r] = farthest we can merge rightwards such that sum(l, r) &gt; sum(r+1, p)
+    vector pL(N, vector&lt;int&gt;(N)), pR(N, vector&lt;int&gt;(N));
+    for (int l = 0; l &lt; N; l++) for (int r = l, p = l; r &lt; N; r++) {
+        while (p &gt; 0 &amp;&amp; sum(l, r) &gt;= sum(p - 1, l - 1)) p--;
+        pL[l][r] = p;
+    }
+    for (int r = 0; r &lt; N; r++) for (int l = r, p = r; l &gt;= 0; l--) {
+        while (p + 1 &lt; N &amp;&amp; sum(l, r) &gt; sum(r + 1, p + 1)) p++;
+        pR[l][r] = p;
+    }
+    dp[0][N - 1] = inv.at(N - 1);
+    sL[0].set(N - 1, dp[0][N - 1]), sR[N - 1].set(0, dp[0][N - 1]);
+    for (int l = 0; l &lt; N; l++) for (int r = N - 1; r &gt;= l; r--) {
+        if (l == 0 &amp;&amp; r == N - 1) continue;
+        add_self(dp[l][r], sR[r].sum(pL[l][r], l - 1)); // last merge was leftwards
+        add_self(dp[l][r], sL[l].sum(r + 1, pR[l][r])); // last merge was rightwards
+        if (l &lt; r) dp[l][r] = mul(dp[l][r], inv.at(r - l)); // probability of fixed last merge
+        sL[l].set(r, dp[l][r]), sR[r].set(l, dp[l][r]);
+    }
+    for (int c = 0; c &lt; N; c++) cout &lt;&lt; dp[c][c] &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p>The code above uses around <span class='math'>$5N^2$</span> memory. It&apos;s possible to optimize this to
+<span class='math'>$N^2$</span> by just storing the DP array while maintaining <span class='math'>$\texttt{pL}[l][r]$</span>,
+<span class='math'>$\texttt{pR}[l][r]$</span>, and the range sums in 1D arrays. 
+<p>Benjamin Qi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int MOD = 1e9 + 7;
+ 
+int main() {
+    int N; cin &gt;&gt; N;
+    vector&lt;int&gt; S(N);
+    for (auto &amp;x : S) cin &gt;&gt; x;
+    vector&lt;int&gt; cum_S{0};
+    for (auto t : S) cum_S.push_back(cum_S.back() + t);
+    vector win_prob(N + 1, vector&lt;int&gt;(N + 1));
+    vector&lt;int&gt; invs(N);
+    invs[1] = 1;
+    for (int i = 2; i &lt; N; i++) invs[i] = (long long) invs[MOD % i] * (MOD - MOD / i) % MOD;
+    win_prob.at(0).at(N) = 1;
+    vector&lt;int&gt; l_sum(N + 1), r_sum(N + 1), l_ptr(N + 1), r_ptr(N + 1, N);
+    for (int l = 0; l &lt;= N; l++) for (int r = N; r &gt; l; r--) {
+        while (!(cum_S.at(l) - cum_S.at(l_ptr[r]) &lt;= cum_S.at(r) - cum_S.at(l))) {
+            l_sum[r] -= win_prob.at(l_ptr[r]).at(r);
+            if (l_sum[r] &lt; 0) l_sum[r] += MOD;
+            ++l_ptr[r];
+        }
+        while (!(cum_S.at(r) - cum_S.at(l) &gt; cum_S.at(r_ptr[l]) - cum_S.at(r))) {
+            r_sum.at(l) -= win_prob.at(l).at(r_ptr[l]);
+            if (r_sum[l] &lt; 0) r_sum[l] += MOD;
+            --r_ptr[l];
+        }
+        win_prob.at(l).at(r) += l_sum.at(r);
+        win_prob.at(l).at(r) += r_sum.at(l);
+        if (win_prob[l][r] &gt;= MOD) win_prob[l][r] -= MOD;
+        if (r &gt; l + 1) win_prob.at(l).at(r) = (long long) win_prob[l][r] * invs.at(r - l - 1) % MOD;
+        l_sum[r] += win_prob.at(l).at(r);
+        if (l_sum[r] &gt;= MOD) l_sum[r] -= MOD;
+        r_sum[l] += win_prob.at(l).at(r);
+        if (r_sum[l] &gt;= MOD) r_sum[l] -= MOD;
+    }
+    for (int i = 0; i &lt; N; i++) cout &lt;&lt; win_prob.at(i).at(i + 1) &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

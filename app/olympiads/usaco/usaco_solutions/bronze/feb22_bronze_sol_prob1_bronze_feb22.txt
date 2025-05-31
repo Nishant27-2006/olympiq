@@ -1,0 +1,143 @@
+Solution ID: sol_prob1_bronze_feb22
+Contest: FEB22
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_feb22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Jesse Choe, Benjamin Qi)
+
+Key Observation:
+
+After any modification, the quantity
+
+$\text{sum}(a)=a_1+a_2+\cdots+a_N$
+
+stays the same.
+
+Solution:
+
+Rather than figuring out the minimum number of operations to make the array equal, let's figure out the maximum number of elements
+
+$r$
+
+that could remain in the array after all modifications. Then the minimum number of modifications will equal
+
+$N-r$
+
+.
+
+For a certain
+
+$r$
+
+to be achievable,
+
+$\frac{\text{sum}(a)}{r}$
+
+must be an integer and it must be possible to partition the array into
+
+$r$
+
+ranges such that each range sums to exactly
+
+$\frac{\text{sum}(a)}{r}$
+
+. For example, in the first test case of the sample input, we can partition the array into
+
+$r=3$
+
+ranges each with sum
+
+$\frac{\text{sum}(a)}{r}=3$
+
+:
+
+[1 2] [3] [1 1 1]
+
+For a single
+
+$r$
+
+, checking whether this is possible can be done in
+
+$O(N)$
+
+time by iterating over the elements of
+
+$a$
+
+from left to right. For each element, we can either choose to extend the current range or start a new one; see the code for details.
+
+Time Complexity:
+
+$O(N\cdot (\#\text{ divisors of }\text{sum}(a)))$
+
+This allows us to solve the problem under the time constraints because the sum of the array is at most
+
+$10^6$
+
+, and the maximum number of divisors for any number
+
+$\leq 10^6$
+
+is
+
+$240$
+
+.
+
+Jesseâs code:
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+void solve() {
+	int n;
+	cin >> n;
+	vector<int> a(n);
+	int sum_a = 0;
+	for (int i = 0; i < n; i++) {
+		cin >> a[i];
+		sum_a += a[i];
+	}
+	for (int r = n; r >= 1; r--) {
+		if (sum_a % r == 0) {
+			int targetSum = sum_a / r; // the desired sum for each range
+			int curSum = 0;			   // the sum of the current range
+			bool ok = true;
+			for (int i = 0; i < n; i++) {
+				curSum += a[i];
+				if (curSum > targetSum) {
+					/*
+					 * Can't split the array into
+					 * r equal elements.
+					 */
+					ok = false;
+					break;
+				}
+				if (curSum == targetSum) {
+					/*
+					 * Start a new range
+					 */
+					curSum = 0;
+				}
+			}
+			if (ok) {
+				cout << n - r << endl;
+				return;
+			}
+		}
+	}
+}
+
+int main() {
+	int t;
+	cin >> t;
+	for (int i = 0; i < t; i++) {
+		solve();
+	}
+}

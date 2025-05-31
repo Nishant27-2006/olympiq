@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Tina Wang, reviewed by Benjamin Qi)
+<p><strong>Subtask 1: <span class='math'>$N, K \leq 16$</span></strong>
+<p>We can simulate the removal of all combinations of trees and check if it
+satisfies all constraints in <span class='math'>$O(2^N\cdot K)$</span> time.
+<p><strong>Subtask 3: <span class='math'>$t_i = 1$</span> for all <span class='math'>$i = 1, \dots, N$</span></strong>
+<p>We solve the problem by considering the reverse case: start with all trees
+removed and selectively choose trees to grow until all constraints are
+satisfied. A constraint interval is considered processed if the number of trees
+in it is at least <span class='math'>$t_i$</span>.
+<p>We sort the intervals by their right endpoint and process them in this order.
+<p><ol><li>If an interval already has enough trees (<span class='math'>$\geq t_i$</span>), we skip it. </li><li>Otherwise, we add the rightmost tree in the interval.</li></ol>
+<p>Adding the rightmost tree is correct because any unprocessed intervals that
+overlap with the current interval must extend beyond its right endpoint. By
+adding the rightmost tree, we ensure it helps satisfy all such intervals, as any
+shared trees are guaranteed to include this rightmost one.
+<p>Therefore, we add the rightmost tree for each interval if it has not been
+satisfied already. This takes <span class='math'>$O((N+K)\log(N+K))$</span> time.
+<p>Jiahe&apos;s code:
+<pre class='prettyprint'>
+import bisect
+ 
+T = int(input())
+for _ in range(T):
+    n, k = map(int, input().split())
+    x = sorted(list(map(int, input().split())))
+    restr = []
+    for i in range(k):
+        l, r, t = map(int, input().split())
+        restr.append((r, l, t))
+    restr.sort()
+    trees = []
+    for (r, l, t) in restr:
+        if len(trees) == 0 or trees[-1] &lt; l:
+            trees.append(x[bisect.bisect_right(x, r) - 1])
+    print(n - len(trees))
+</pre>
+<p><strong>Subtask 2: <span class='math'>$N, K \leq 1000$</span></strong>
+<p>We note that even when <span class='math'>$t_i \geq 1$</span>, the observation still holds; choosing the
+<span class='math'>$t_i$</span> rightmost trees to keep in an interval maximizes the number of potential
+intervals satisfied. 
+<p>Therefore, we can loop through a sorted list of the constraints and greedily add
+trees from right to left until the constraint is satisfied. This can be done in
+<span class='math'>$O(NK)$</span> time.
+<p>Jiahe&apos;s code:
+<p><pre class='prettyprint'>
+import bisect
+ 
+T = int(input())
+for _ in range(T):
+    n, k = map(int, input().split())
+    x = sorted(list(map(int, input().split())))
+    restr = []
+    for i in range(k):
+        l, r, t = map(int, input().split())
+        restr.append((r, l, t))
+    restr.sort()
+    planted = [False for i in x]
+    for (r, l, t) in restr:
+        cnt = 0
+        for i in range(len(x)):
+            if x[i] &gt;= l and x[i] &lt;= r and planted[i]:
+                cnt = cnt + 1
+        for i in range(len(x) - 1, -1, -1):
+            if cnt &lt; t and x[i] &gt;= l and x[i] &lt;= r and not planted[i]:
+                planted[i] = True
+                cnt = cnt + 1
+    ans = 0
+    for i in planted:
+        if not i:
+            ans = ans + 1
+    print(ans)
+</pre>
+<p><strong>Full Solution</strong>
+<p>To pass all test cases, we consider processing both trees and intervals at the
+same time, in sorted order of tree coordinate and the restriction&apos;s left
+coordinate. Each time we encounter a tree, we consider all intervals which
+currently contain it; if the tree can be cut (i.e., if the number of cut trees
+in the interval is less than the total number of trees minus <span class='math'>$t_i$</span>), we cut the
+tree and increment the answer. Otherwise, we continue. 
+<p>However, the above solution runs in <span class='math'>$O(NK)$</span> time as for each tree <span class='math'>$O(K)$</span>
+intervals are checked.
+<p>To speed up this solution, we consider a case where we encounter a new interval
+while checking both trees and intervals. Clearly, the current number of trees
+cut down is the best answer for the entire range to the left endpoint of the
+interval. The new constraint tells us that there can be at most
+<span class='math'>$cut = existing - t_i$</span> number of trees cut down in the interval, as otherwise
+the constraint is not satisfied. Therefore, before passing the right endpoint of
+this new interval, no more than <span class='math'>$ans + cut$</span> trees can be cut down. To
+efficiently manage this, we use a priority queue to keep track of the most
+restrictive constraints for the trees. The priority queue is sorted so that the
+smallest allowed number of trees to cut is always at the top; when considering
+each tree, we simply check if the maximum number of trees allowed has been cut
+already. If not, we greedily cut the current tree as well.
+<p>This speeds the solution up to <span class='math'>$O((N+K)\log(N+K))$</span>, which is sufficient to pass.
+<p>Andi&apos;s code:
+<p><pre class='prettyprint'>
+import bisect
+import heapq
+ 
+T = int(input())
+for _ in range(T):
+    n, k = map(int, input().split())
+    x = sorted(list(map(int, input().split())))
+    events = [(i, 0, 0, 0) for i in x]
+    for i in range(k):
+        l, r, t = map(int, input().split())
+        existing = bisect.bisect_right(x, r) - bisect.bisect_left(x, l)
+        events.append((l, -1, r, existing - t))
+    events.sort()
+    pq = []
+    ans = 0
+    for l, tp, r, cut in events:
+        if tp == -1:
+            heapq.heappush(pq, (ans + cut, r))
+        else:
+            while len(pq) != 0 and pq[0][1] &lt; l:
+                heapq.heappop(pq)
+            if len(pq) == 0 or pq[0][0] != ans:
+                ans += 1
+    print(ans)
+</pre>
+<p><strong>Alternative Full Solution (requires a Gold-level data structure):</strong>
+<p>We take the solution to subtask 2 and speed it up. The part of the solution
+which is hardest to optimize is the calculation of the number of planted trees
+in the current interval, which takes <span class='math'>$O(N)$</span> time naively:
+<p><pre class='prettyprint'>
+cnt = 0
+for i in range(len(x)):
+    if x[i] &gt;= l and x[i] &lt;= r and planted[i]:
+        cnt = cnt + 1
+</pre>
+<p>If we insert all planted trees into an
+<a href='https://usaco.guide/gold/PURS?lang=cpp#order-statistic-tree'>order statistics
+tree</a>, then,  querying the number of planted trees in an interval takes
+<span class='math'>$O(\log N)$</span> time. The overall time complexity is reduced to <span class='math'>$O((N+K)\log(N+K))$</span>.
+<p>Benjamin Qi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+#include &lt;ext/pb_ds/assoc_container.hpp&gt;
+using namespace __gnu_pbds;
+template &lt;class T&gt;
+using Tree =
+    tree&lt;T, null_type, less&lt;T&gt;, rb_tree_tag, tree_order_statistics_node_update&gt;;
+#define ook order_of_key
+
+const int big = 1e9;
+
+void solve() {
+    int N, K;
+    cin &gt;&gt; N &gt;&gt; K;
+    V&lt;int&gt; X(N);
+    for (int &amp;x : X) cin &gt;&gt; x;
+    V&lt;tuple&lt;int, int, int&gt;&gt; ivals;
+    for (int k = 0; k &lt; K; ++k) {
+        int l, r, t;
+        cin &gt;&gt; l &gt;&gt; r &gt;&gt; t;
+        ivals.push_back({r, l, t});
+    }
+    sort(all(X));
+    sort(all(ivals));
+    int iX = 0;
+    vector&lt;pair&lt;int, int&gt;&gt; stk;  // trees to potentially plant
+    Tree&lt;pair&lt;int, int&gt;&gt; t;      // OST with planted trees
+    for (auto [r, l, t_low] : ivals) {
+        while (iX &lt; X.size() &amp;&amp; X.at(iX) &lt;= r) {
+            // add to potentially plantable trees
+            stk.push_back({X.at(iX), iX});
+            ++iX;
+        }
+        int t_current = t.ook({r, big}) - t.ook({l, 0});
+        // count num planted trees in current interval
+        while (t_current &lt; t_low) {
+            // plant rightmost potential tree until current interval satisfied
+            assert(!stk.empty());
+            t.insert(stk.back());
+            stk.pop_back();
+            ++t_current;
+        }
+    }
+    cout &lt;&lt; N - size(t) &lt;&lt; &quot;\n&quot;;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int TC;
+    cin &gt;&gt; TC;
+    while (TC--) solve();
+}
+</pre>
+<p></body></html>

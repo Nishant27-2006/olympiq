@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+
+</head>
+<p>(Analysis by Jonathan Paulson - <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7a1015141b0e121b140a1b0f160915143a1d171b131654191517">[email&#160;protected]</a>)</p><p>
+
+We can go along the squares in top-to-bottom, left-to-right order. For each square, we want to see if it starts a clue. It can start either a horizontal or vertical clue. For it to start a horizontal clue, the cell to the left must be blocked or off the board, and the two cells to the right must be clear and on the board. Similarly, to start a vertical clue, the cell above must be blocked or off the board, and the two cells below must be on the board and clear.</p><p>
+
+As we find cells that start a clue, we can add them to a list. Then at the end, we need to print the size of the list and its contents. Here&apos;s my C++ code:
+</p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;vector&gt;
+
+#define MP make_pair
+#define PB push_back
+#define X first
+#define Y second
+
+using namespace std;
+
+typedef long long ll;
+typedef pair&lt;ll, ll&gt; pll;
+
+int main() {
+  ll R, C;
+  scanf(&quot;%lld %lld\n&quot;, &amp;R, &amp;C);
+  vector&lt;vector&lt;char&gt; &gt; G(R, vector&lt;char&gt;(C, &apos; &apos;));
+  for(ll r=0; r&lt;R; r++) {
+    char buf[100];
+    scanf(&quot;%s&quot;, buf);
+    for(ll c=0; c&lt;C; c++) {
+      G[r][c] = buf[c];
+    }
+  }
+  vector&lt;pll&gt; A;
+
+  for(ll r=0; r&lt;R; r++) {
+    for(ll c=0; c&lt;C; c++) {
+      bool horizontal = (c+2&lt;C &amp;&amp; G[r][c]==&apos;.&apos; &amp;&amp; G[r][c+1]==&apos;.&apos; &amp;&amp; G[r][c+2]==&apos;.&apos; &amp;&amp;
+                         (c==0 || G[r][c-1]==&apos;#&apos;));
+      bool vertical = (r+2&lt;R &amp;&amp; G[r][c]==&apos;.&apos; &amp;&amp; G[r+1][c]==&apos;.&apos; &amp;&amp; G[r+2][c]==&apos;.&apos; &amp;&amp;
+                       (r==0 || G[r-1][c]==&apos;#&apos;));
+      if(horizontal || vertical) {
+        A.PB(MP(r+1, c+1));
+      }
+    }
+  }
+  printf(&quot;%lu\n&quot;, A.size());
+  for(pll clue : A) {
+    printf(&quot;%lld %lld\n&quot;, clue.X, clue.Y);
+  }
+}
+</pre><p>
+</p>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></html>

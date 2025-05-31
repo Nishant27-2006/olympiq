@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>We&apos;ll use linearity of expectation. The complexity of a subset is equal to the
+number of integers <span class='math'>$i$</span> such that the interval <span class='math'>$(i,i+1)$</span> is contained within one
+of the segments in the subset but <span class='math'>$(i-1,i)$</span> isn&apos;t (informally, the number of
+&quot;start&quot; points). In other words, the segment with left endpoint <span class='math'>$i$</span> contributes
+one to the complexity as long as it is part of the subset and no other segment
+in the subset contains <span class='math'>$(i-1,i)$</span>. 
+<p>This is true for exactly <span class='math'>$2^{N-1-(\#\text{ of intervals that contain}(i,i+1))}$</span>
+subsets. The sum of this quantity over all intervals can be computed in <span class='math'>$O(N)$</span>
+time with prefix sums and precalculation of powers of 2.
+<p><pre class='prettyprint'>
+#include &quot;bits/stdc++.h&quot;
+
+using namespace std;
+
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+#define f first
+#define s second
+
+const int MOD = 1e9+7;
+
+int N;
+ 
+int main() {
+	setIO(&quot;help&quot;);
+	cin &gt;&gt; N; vector&lt;pair&lt;int,int&gt;&gt; v(N);
+	for (auto&amp; a: v) cin &gt;&gt; a.f &gt;&gt; a.s;
+	vector&lt;int&gt; over(2*N+1), po2(N);
+	po2[0] = 1; for (int i = 1; i &lt; N; ++i) po2[i] = 2*po2[i-1]%MOD;
+	for (auto&amp; t: v) over[t.f] ++, over[t.s] --; 
+	for (int i = 1; i &lt;= 2*N; ++i) over[i] += over[i-1];
+	int ans = 0; for (auto&amp; t: v) ans = (ans+po2[N-1-over[t.f-1]])%MOD;
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

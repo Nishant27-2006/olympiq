@@ -1,0 +1,134 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: DEC20 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+After sequencing the genomes of his cows, Farmer John has moved onto genomic
+editing! As we know, a genome can be represented by a string consisting of As,
+Cs, Gs, and Ts.  The maximum length of a genome under consideration by Farmer
+John is $10^5$. 
+
+Farmer John starts with a single genome and edits it by performing the following
+steps:
+
+Split the genome between every two consecutive equal characters.Reverse each of the resulting substrings.Concatenate the reversed substrings together in the same order.
+For example, if FJ started with the genome AGGCTTT then he would perform the
+following steps:
+
+Split between the consecutive Gs and Ts to get AG | GCT | T | T.Reverse each substring to get GA | TCG | T | T.Concatenate the substrings together to get GATCGTT.
+Unfortunately, after editing the genome, Farmer John's computer crashed and he
+lost the sequence of the genome he originally started with. Furthermore, some 
+parts of the edited genome have been damaged, meaning that they have been 
+replaced by question marks.
+
+Given the sequence of the edited genome, help FJ determine the number of 
+possibilities for the original genome, modulo $10^9+7$.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+A non-empty string where each character is one of A, G, C, T, or ?.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+The number of possible original genomes modulo $10^9+7$.
+
+SAMPLE INPUT:
+?
+SAMPLE OUTPUT: 
+4
+
+The question mark can be any of A, G, C, or T.
+
+SAMPLE INPUT:
+GAT?GTT
+SAMPLE OUTPUT: 
+3
+
+There are two possible original genomes aside from AGGCTTT, which was described
+above.
+
+
+AGGATTT -> AG | GAT | T | T -> GA | TAG | T | T -> GATAGTT
+
+TAGGTTT -> TAG | GT | T | T -> GAT | TG | T | T -> GATTGTT
+
+SCORING:
+In test cases 1-4, the genome has length at most $10$.In test cases 5-11, the genome has length at most $10^2$.In test cases 12-20, there are no additional constraints.
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (print output to the terminal / stdout):The number of possible original genomes modulo $10^9+7$.SAMPLE INPUT:?SAMPLE OUTPUT:4The question mark can be any of A, G, C, or T.SAMPLE INPUT:GAT?GTTSAMPLE OUTPUT:3There are two possible original genomes aside from AGGCTTT, which was described
+above.AGGATTT -> AG | GAT | T | T -> GA | TAG | T | T -> GATAGTT
+
+TAGGTTT -> TAG | GT | T | T -> GAT | TG | T | T -> GATTGTTSCORING:In test cases 1-4, the genome has length at most $10$.In test cases 5-11, the genome has length at most $10^2$.In test cases 12-20, there are no additional constraints.Problem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:?SAMPLE OUTPUT:4The question mark can be any of A, G, C, or T.SAMPLE INPUT:GAT?GTTSAMPLE OUTPUT:3There are two possible original genomes aside from AGGCTTT, which was described
+above.AGGATTT -> AG | GAT | T | T -> GA | TAG | T | T -> GATAGTT
+
+TAGGTTT -> TAG | GT | T | T -> GAT | TG | T | T -> GATTGTTSCORING:In test cases 1-4, the genome has length at most $10$.In test cases 5-11, the genome has length at most $10^2$.In test cases 12-20, there are no additional constraints.Problem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+?
+
+GAT?GTT
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+4
+
+The question mark can be any of A, G, C, or T.SAMPLE INPUT:GAT?GTTSAMPLE OUTPUT:3There are two possible original genomes aside from AGGCTTT, which was described
+above.AGGATTT -> AG | GAT | T | T -> GA | TAG | T | T -> GATAGTT
+
+TAGGTTT -> TAG | GT | T | T -> GAT | TG | T | T -> GATTGTTSCORING:In test cases 1-4, the genome has length at most $10$.In test cases 5-11, the genome has length at most $10^2$.In test cases 12-20, there are no additional constraints.Problem credits: Benjamin Qi
+
+SAMPLE INPUT:GAT?GTTSAMPLE OUTPUT:3There are two possible original genomes aside from AGGCTTT, which was described
+above.AGGATTT -> AG | GAT | T | T -> GA | TAG | T | T -> GATAGTT
+
+TAGGTTT -> TAG | GT | T | T -> GAT | TG | T | T -> GATTGTTSCORING:In test cases 1-4, the genome has length at most $10$.In test cases 5-11, the genome has length at most $10^2$.In test cases 12-20, there are no additional constraints.Problem credits: Benjamin Qi
+
+3
+
+There are two possible original genomes aside from AGGCTTT, which was described
+above.AGGATTT -> AG | GAT | T | T -> GA | TAG | T | T -> GATAGTT
+
+TAGGTTT -> TAG | GT | T | T -> GAT | TG | T | T -> GATTGTTSCORING:In test cases 1-4, the genome has length at most $10$.In test cases 5-11, the genome has length at most $10^2$.In test cases 12-20, there are no additional constraints.Problem credits: Benjamin Qi
+
+AGGATTT -> AG | GAT | T | T -> GA | TAG | T | T -> GATAGTT
+
+TAGGTTT -> TAG | GT | T | T -> GAT | TG | T | T -> GATTGTTSCORING:In test cases 1-4, the genome has length at most $10$.In test cases 5-11, the genome has length at most $10^2$.In test cases 12-20, there are no additional constraints.Problem credits: Benjamin Qi
+
+AGGATTT -> AG | GAT | T | T -> GA | TAG | T | T -> GATAGTT
+
+TAGGTTT -> TAG | GT | T | T -> GAT | TG | T | T -> GATTGTT
+
+SCORING:In test cases 1-4, the genome has length at most $10$.In test cases 5-11, the genome has length at most $10^2$.In test cases 12-20, there are no additional constraints.Problem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1066
+
+\section*{Source}
+USACO DEC20 Contest, Gold Division, Problem ID: 1066
+
+\end{document}

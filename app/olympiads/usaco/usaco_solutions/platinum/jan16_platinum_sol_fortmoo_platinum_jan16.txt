@@ -1,0 +1,102 @@
+Solution ID: sol_fortmoo_platinum_jan16
+Contest: JAN16
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_fortmoo_platinum_jan16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nathan Pinsker)
+
+This problem suggests a DP approach, and the bounds suggest that
+
+$O(n^3)$
+
+is a
+comfortable target to aim for.  There are several ways to approach this problem,
+but all of these focus on fixing some property of the rectangle, iterating over
+all possible values of that property, and finding the best rectangle for each
+iteration. One of the simpler ways is to fix an edge of the rectangle, and
+calculate the maximum possible rectangle with that edge.
+
+For simplicity, we will fix the left edge of the rectangle. There are
+
+$O(n^2 \cdot n)
+= O(n^3)$
+
+possible left edges, so we will reach our desired
+runtime if we can compute the best possible rectangle with this edge in
+
+$O(1)$
+
+time. Luckily, we can use a sliding window to do so: if we process the left
+edges in order from left to right, we can note that the right edge of the
+rectangle must also move to the right over time. This is because a candidate
+rectangle will never become invalid as we move its left edge more to the right.
+We can use a simple data structure to query subrectangles of our given array in
+
+$O(1)$
+
+time (see the code below if you're not quite sure how).
+
+If you're interested, another approach is described in the analysis of a
+previous problem,
+
+Figure
+Eight
+
+. (The problems are very similar, and that approach can be readily
+adapted to this problem as well.)
+
+Below is Nick Wu's code:
+
+import java.io.*;
+import java.util.*;
+public class fortmoo {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("fortmoo.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("fortmoo.out")));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int m = Integer.parseInt(st.nextToken());
+		int[][] grid = new int[n+1][m+1];
+		for(int i = 0; i < n; i++) {
+			String s = br.readLine();
+			for(int j = 0; j < m; j++) {
+				grid[i+1][j+1] = grid[i][j+1] + grid[i+1][j] - grid[i][j];
+				if(s.charAt(j) == 'X') {
+					grid[i+1][j+1]++;
+				}
+			}
+		}
+		long ret = 0;
+		for(int j = 0; j < m; j++) {
+			for(int k = j; k < m; k++) {
+				int lastRow = -1;
+				for(int i = 0; i < n; i++) {
+					boolean validRow = num(grid, i, j, i, k) == 0;
+					if(validRow) {
+						ret = Math.max(ret, k-j+1);
+					}
+					if(validRow && lastRow >= 0) {
+						ret = Math.max(ret, (i - lastRow+1) * (k-j + 1));
+					}
+					if(num(grid, i, k, i, k) > 0 || num(grid, i, j, i, j) > 0) {
+						lastRow = -1;
+					}
+					if(validRow && lastRow == -1) {
+						lastRow = i;
+					}
+				}
+			}
+		}
+		pw.println(ret);
+		pw.close();
+	}
+	
+	public static int num(int[][] grid, int a, int b, int c, int d) {
+		return grid[c+1][d+1] - grid[a][d+1] - grid[c+1][b] + grid[a][b];
+	}
+	
+}

@@ -1,0 +1,170 @@
+Solution ID: sol_prob2_bronze_jan25
+Contest: JAN25
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_jan25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Michelle Wei and Nick Wu)
+
+Subtask 1:
+
+We can loop through every pair of numbers from
+
+$1$
+
+to
+
+$N$
+
+and perform a linear
+scan to check whether a moo with those numbers appears in the contest. This
+takes
+
+$\mathcal{O}(N^3)$
+
+time, which is fast enough for
+
+$N \leq 10^2$
+
+.
+
+Nick's Python code:
+
+n = int(input())
+l = [int(x) for x in input().split()]
+ans = 0
+for m in range(1, n+1):
+  for o in range(1, n+1):
+    if m == o: continue
+    stage = 0
+    for val in l:
+      if stage == 0 and val == m: stage += 1
+      elif 1 <= stage <= 2 and val == o: stage += 1
+    if stage == 3: ans += 1
+print(ans)
+
+Subtask 2:
+
+Imagine that some integer
+
+$o$
+
+appears more than two times. Any moo of the form
+
+$[m, o, o]$
+
+that exists can always be constructed using the rightmost two
+occurrences of
+
+$o$
+
+in the original array.
+
+This motivates the following
+
+$\mathcal{O}(N^2)$
+
+solution - scan over the array
+from right to left and keep track of how many times each integer has been seen.
+When we see an integer for the second time, count the number of distinct
+different integers to the left of that one. The sum of these counts is therefore
+the answer.
+
+Nick's Python code:
+
+n = int(input())
+l = [int(x) for x in input().split()]
+ans = 0
+seen = [-1] * n
+freq = [0] * (n+1)
+for i in range(n-1, -1, -1):
+  freq[l[i]] += 1
+  if freq[l[i]] == 2:
+    for j in range(i-1, -1, -1):
+      if l[j] == l[i]: continue
+      if seen[l[j]] != l[i]:
+        ans += 1
+        seen[l[j]] = l[i]
+print(ans)
+
+Full credit:
+
+Looking at the solution for subtask 2, we see that we want to count the number
+of distinct integers for various prefixes of the array.
+
+We can precompute all of these in
+
+$\mathcal{O}(N)$
+
+time by looping over the 
+array from left to right and tracking the first time we see each integer. By
+precomputing all of these, we can optimize the previous solution down to
+
+$\mathcal{O}(N)$
+
+.
+
+There is an overcounting problem to handle though since we need to track, for a
+given integer
+
+$o$
+
+, if it also appears in the prefix. To handle this, we subtract
+by the number of integers that appear at least 3 times.
+
+Michelle's C++ code:
+
+#include "bits/stdc++.h"
+#define MAXN 1000005
+using namespace std;
+int a[MAXN], pref[MAXN], cnt[MAXN];
+long long ans = 0;
+ 
+int main() {
+    int n; cin >> n;
+    for (int i = 1; i <= n; i++)
+        cin >> a[i];
+    for (int i = 1; i <= n; i++) {
+        pref[i] = pref[i-1];
+        cnt[a[i]]++;
+        if (cnt[a[i]] == 1)
+            pref[i]++;
+    }
+    memset(cnt, 0, sizeof cnt);
+    for (int i = n; i >= 1; i--) {
+        cnt[a[i]]++;
+        if (cnt[a[i]] == 2) {
+            ans += pref[i-1];
+        }
+    }
+    for (int i = 1; i <= n; i++) {
+        if (cnt[i] >= 3)
+            ans--;
+    }
+    cout << ans;
+}
+
+Benjamin Qi's Python code (which uses a slightly different approach):
+
+N = int(input())
+A = list(map(int, input().split()))
+ 
+cnt_left = [0] * (N + 1)
+cnt_right = [0] * (N + 1)
+for x in A:
+	cnt_right[x] += 1
+ 
+ans = 0
+distinct_left = 0
+ 
+for i in range(N):
+	if cnt_right[A[i]] == 2:
+		ans += distinct_left - (cnt_left[A[i]] > 0)
+	cnt_right[A[i]] -= 1
+	distinct_left += cnt_left[A[i]] == 0
+	cnt_left[A[i]] += 1
+ 
+print(ans)

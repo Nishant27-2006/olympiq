@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Steven Hao)
+<p>We first present a naive algorithm that recursively iterates through all nodes.
+<p>Below is Python code implementing this naive algorithm, which we will soon
+optimize.
+<pre class='prettyprint'>
+import sys
+
+def ask(cur):
+  print cur
+  sys.stdout.flush()
+  return [int(_) for _ in raw_input().split()]
+
+def count(cur): # count size of subtree at cur
+  if cur == 0:
+    return 0
+  a, b = ask(cur)
+  rgt = count(b)
+  lft = count(a)
+  return 1 + lft + rgt
+
+ans = count(1)
+print &apos;Answer %d&apos; % ans
+</pre>
+<p>Of course, with <span class='math'>$N \le 10^{100}$</span>, this code is too slow!
+<p>We will make an optimization that makes use of the fact
+<span class='math'>$lft - rgt \in \{0, 1\}$</span>, where <span class='math'>$lft$</span> and <span class='math'>$rgt$</span> are the size of the left and
+right subtree of <span class='math'>$cur$</span> (as used in the above code).
+<p>We do not need to compute <span class='math'>$lft$</span> from scratch; we merely need to compute it given
+that it is either <span class='math'>$rgt$</span> or <span class='math'>$rgt + 1$</span>.
+<p>In other words, we evaluate <span class='math'>$lft = countGiven(a, rgt)$</span>.
+<p>When computing <span class='math'>$countGiven(cur, x)$</span>, we use the same approach as before: compute
+the size of the left subtree of <span class='math'>$cur$</span> and the right subtree of <span class='math'>$cur$</span> (which we
+shall again name <span class='math'>$lft$</span> and <span class='math'>$rgt$</span>), then evaluate <span class='math'>$1 + lft + rgt$</span> to find the
+size of the subtree at <span class='math'>$cur$</span>.
+<p>In general, if <span class='math'>$lft + rgt = z$</span>, then <span class='math'>$lft = \lceil \frac{z}{2}\rceil$</span> and
+<span class='math'>$rgt = \lfloor\frac{z}{2}\rfloor$</span>. This is very useful, as we know <span class='math'>$z + 1$</span> is
+either <span class='math'>$x$</span> or <span class='math'>$x + 1$</span>.
+<p>If <span class='math'>$x$</span> is even, then
+<span class='math'>$lft \in \{\lceil \frac{x - 1}{2}\rceil, \lceil \frac{x}{2}\rceil\} \implies lft = \frac{x}{2}$</span>.
+<p>If <span class='math'>$x$</span> is odd, then
+<span class='math'>$rgt \in \{\lfloor\frac{x - 1}{2}\rfloor,  \lfloor\frac{x}{2}\rfloor\}\implies rgt = \frac{x-1}{2}$</span>.
+<p>Knowing <span class='math'>$lft$</span> lets us recursively find <span class='math'>$rgt = countGiven(b, lft - 1)$</span>, and vice
+versa -- <span class='math'>$lft = countGiven(a, rgt)$</span>. Overall, this means we only need to recurse
+once to count the size of a tree given that its size is one of two options.
+<p>Below is code implementing this optimization.
+<pre class='prettyprint'>
+def countGiven(cur, x): # given ret = x or ret = x + 1, find ret
+  if cur == 0:
+    return 0
+
+  a, b = ask(cur)
+  # lft + rgt = x - 1 or lft + rgt = x
+  if x % 2 == 1:
+    rgt = (x - 1) / 2
+    lft = countGiven(a, rgt)
+    return 1 + lft + rgt
+  else:
+    lft = x / 2
+    rgt = countGiven(b, lft - 1)
+    return 1 + lft + rgt
+
+def count(cur): # count size of subtree at cur
+  if cur == 0:
+    return 0
+  a, b = ask(cur)
+  rgt = count(b)
+  lft = countGiven(a, rgt)
+  return 1 + lft + rgt
+</pre>
+<p>We can analyze the number of queries this code makes -- we want it to be less
+than the allowed <span class='math'>$70,000$</span>.
+<p>In the maximum case, <span class='math'>$N = 10^{100}$</span>. Then the height
+<span class='math'>$H \approx \lg_2 N = 100 \lg_2 10 &lt; 100 \cdot \frac{10}{3} \approx 333$</span>
+<p>The procedure <span class='math'>$count$</span> is called once for each level. At a height <span class='math'>$h$</span>, <span class='math'>$count$</span>
+spawns a <span class='math'>$countGiven$</span> which makes <span class='math'>$h$</span> queries, so overall, there are
+<span class='math'>$1 + 2 + \ldots + 333 \approx 10^6/18 &lt; 70000$</span> queries.
+<p>[Note from problem author: Trees of this sort are sometimes called &quot;Braun trees&quot; in the computing
+literature; they have a number of nice uses particularly in &quot;functional&quot; programming languages,
+since they are easy to manipulate in a recursive context.  For example, to insert a new element in
+<span class='math'>$O(\log n)$</span> time while maintaining the balancing condition, we can just insert it recursively into our left 
+subtree and then swap the left and right children of the root.]
+</body></html>

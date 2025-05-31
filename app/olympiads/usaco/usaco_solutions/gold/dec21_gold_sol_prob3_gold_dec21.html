@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Andi Qu)
+<p>For each sub-case, we need to check 4 conditions:
+<p><strong>Condition 1:</strong> Every color appears in a contiguous range of <span class='math'>$x$</span>&apos;s.
+<p>We can check this condition by maintaining an array that describes at which <span class='math'>$x$</span>
+a color last appeared. If the last <span class='math'>$x$</span> is always 1 less than the current <span class='math'>$x$</span>,
+then this condition holds.
+<p>Sub-case 2 in the example does not satisfy this condition.
+<p><strong>Condition 2:</strong> For each <span class='math'>$x$</span>, if one appearance of color <span class='math'>$a$</span> is after the
+first appearance and before the second appearance of color <span class='math'>$b$</span>, then the other
+appearance of color <span class='math'>$a$</span> must do the same.
+<p>Let&apos;s say that a color becomes &quot;activated&quot; when it appears for the first time,
+and then &quot;deactivated&quot; when it appears the second time. We can then check this
+condition by maintaining a stack of active colors. When a color becomes
+deactivated, it must be at the top of the stack. If this is always true, then
+this condition holds.
+<p>Sub-case 3 in the example does not satisfy this condition.
+<p>If the 2 appearances of color <span class='math'>$a$</span> are between the 2 appearances of color <span class='math'>$b$</span>,
+then we know that bracelet <span class='math'>$a$</span> must be contained inside bracelet <span class='math'>$b$</span>. This
+hierarchical relationship allows us to transform the bracelets into a tree
+structure, where:
+<ul><li>The nodes are the bracelets.</li><li>If a bracelet is contained by another
+bracelet, then its parent is the innermost bracelet that contains it.</li><li>Otherwise, its parent is a placeholder node (e.g. node <span class='math'>$0$</span>).</li></ul>
+<p><strong>Condition 3:</strong> Each node&apos;s parent in the tree must be consistent for every
+<span class='math'>$x$</span> it appears in.
+<p>This is because if some color appears, then its parent must also appear. We can
+check this condition by maintaining an array describing the parents of colors
+we&apos;ve seen before. We can then check this array against the input for each <span class='math'>$x$</span>.
+<p><strong>Condition 4:</strong> The ordering of colors in the input must be consistent for
+every <span class='math'>$x$</span> it appears in.
+<p>We can check this condition by maintaining 2 lists â one for the current <span class='math'>$x$</span>&apos;s
+color order and the other for all previous <span class='math'>$x$</span>&apos;s&apos; color order. To check the
+ordering, we can compare the ordering of these two lists&apos; intersection, and then
+merge the lists after processing <span class='math'>$x$</span> by using 2 pointers. Since the constraints
+are so small, straightforward list insertion is fast enough for this.
+<p>Sub-case 5 in the example does not satisfy this condition.
+<p>Andi&apos;s code (which runs in <span class='math'>$\mathcal{O}(N^2M)$</span> time).
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;stack&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int t, last_appeared[51], parent[51];
+    cin &gt;&gt; t;
+    while (t--) {
+        int n, m;
+        bool good = true;
+        vector&lt;int&gt; glob_order;
+        cin &gt;&gt; n &gt;&gt; m;
+        for (int i = 0; i &lt;= n; i++) last_appeared[i] = parent[i] = -1;
+
+        while (m--) {
+            int k, curr = 0;
+            cin &gt;&gt; k;
+            stack&lt;int&gt; stck;
+            vector&lt;int&gt; curr_order;
+
+            while (k--) {
+                int c;
+                cin &gt;&gt; c;
+                if (!good) continue;
+                if (last_appeared[c] == m &amp;&amp; stck.top() == c) {
+                    stck.pop();
+                    curr = parent[curr];
+                } else {
+                    if ((~last_appeared[c] &amp;&amp; last_appeared[c] != m + 1) ||
+                        last_appeared[c] == m ||
+                        (~last_appeared[c] &amp;&amp; parent[c] != curr)) {
+                        // Conditions 1, 2, and 3
+                        good = false;
+                        continue;
+                    }
+                    // Condition 4 part A
+                    curr_order.push_back(c);
+
+                    parent[c] = curr;
+                    last_appeared[c] = m;
+                    stck.push(c);
+                    curr = c;
+                }
+            }
+            // Condition 4 part B
+            if (!good) continue;
+            int ptr = 0;
+            for (int i : curr_order) {
+                while (ptr != glob_order.size() &amp;&amp;
+                       !count(curr_order.begin(), curr_order.end(), glob_order[ptr]))
+                    ptr++;
+                if (!count(glob_order.begin(), glob_order.end(), i))
+                    glob_order.insert(glob_order.begin() + ptr, i);
+                else if (ptr == glob_order.size() || glob_order[ptr] != i) {
+                    good = false;
+                    break;
+                }
+                ptr++;
+            }
+        }
+        cout &lt;&lt; (good ? &quot;YES\n&quot; : &quot;NO\n&quot;);
+    }
+    return 0;
+}
+</pre>
+<p>Of course, it is possible to solve this problem in <span class='math'>$\mathcal{O}(NM)$</span> time,  but
+it was not necessary to do so due to the low constraints.
+<p></body></html>

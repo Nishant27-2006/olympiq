@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by David Hu)
+<p>Note that it is optimal for Farmer John to milk his cows such that the cow with
+<span class='math'>$i$</span>th smallest milk production value spends <span class='math'>$i$</span> minutes on the milking machine.
+Indeed, if there are two cows <span class='math'>$i$</span> and <span class='math'>$j$</span> such that <span class='math'>$a_i &gt; a_j$</span> but cow <span class='math'>$i$</span>
+spends less minutes than cow <span class='math'>$j$</span> on the milking machine, the total amount of
+milk Farmer John produces could be increased by swapping the amount of time cows
+<span class='math'>$i$</span> and <span class='math'>$j$</span> spend on the milking machine.
+<p>So the maximum amount of milk Farmer John can produce is
+<span class='math'>$G(a) = \sum_{i=1}^{n} i \cdot a&apos;_i$</span>, where <span class='math'>$a&apos;$</span> is the array that results upon
+sorting <span class='math'>$a$</span>.
+<p>Let&apos;s first suppose that <span class='math'>$a$</span> is originally sorted, and let the value of <span class='math'>$G(a)$</span>
+initially be <span class='math'>$S$</span>.
+<p>Now let&apos;s see what happens when we replace some <span class='math'>$a_i$</span> with some other value <span class='math'>$v$</span>.
+First suppose <span class='math'>$v \geq a_i$</span>. Then, in the sorted version of <span class='math'>$a$</span>, <span class='math'>$v$</span> will belong
+in some position <span class='math'>$p \geq i$</span>, which we can find by binary search. Furthermore.
+all numbers originally in positions <span class='math'>$i+1, i+2, \dots, p$</span> will shift over down to
+one position to positions <span class='math'>$i, i+1, \dots, p-1$</span>. As a result, <span class='math'>$G(a)$</span> will now
+become <span class='math'>$S - i \cdot a_i - \sum_{j=i+1}^{p} a_j + p \cdot v$</span>. We can use prefix
+sums to compute <span class='math'>$\sum_{j=i+1}^{p} a_j$</span> in <span class='math'>$O(1)$</span> per query.
+<p>The case when <span class='math'>$v &lt; a_i$</span> is similar.
+<p>Now we must handle what happens when <span class='math'>$a$</span> is not originally sorted. If we figure
+out, for all <span class='math'>$i$</span>, the position <span class='math'>$p_i$</span> such that <span class='math'>$a_i$</span> would be in the sorted
+version of <span class='math'>$a$</span>, then we can simply sort <span class='math'>$a$</span> (getting an array <span class='math'>$a&apos;$</span>) and view
+every query changing <span class='math'>$a_i$</span> to <span class='math'>$j$</span> as a query changing <span class='math'>$a&apos;_{p_i}$</span>. There are a
+number of ways to find <span class='math'>$p$</span>: one way is to sort a list <span class='math'>$c$</span> of the numbers from
+<span class='math'>$1$</span> to <span class='math'>$N$</span> by the value <span class='math'>$a_i$</span>; then if <span class='math'>$c_j$</span> is the <span class='math'>$j$</span>th number in the list,
+the <span class='math'>$p_{c_j} = j$</span>.
+<p>We must also remember to compute <span class='math'>$S$</span> and the prefix sums using <span class='math'>$a&apos;$</span>.
+<p>Overall time complexity is <span class='math'>$O((N + Q) \log N)$</span> due to sorting and binary search.
+<p>My C++ Code is below. The usage of the built in C++ lower_bound function can
+greatly simplify our implementation.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+ 
+using namespace std;
+ 
+const int MAXN = 1.5e5 + 13;
+typedef long long ll;
+ 
+int N, Q;
+int ord[MAXN], pos[MAXN];
+ll arr[MAXN], pref[MAXN];
+ll tot;
+ 
+int main()
+{
+    ios_base::sync_with_stdio(false); cin.tie(0);
+    cin &gt;&gt; N;
+    for (int i = 0; i &lt; N; i++)
+    {
+        cin &gt;&gt; arr[i];
+    }
+    iota(ord, ord + N, 0);
+    sort(ord, ord + N, [&amp;](int i, int j)
+    {
+        return arr[i] &lt; arr[j];
+    });
+    for (int i = 0; i &lt; N; i++)
+    {
+        pos[ord[i]] = i;
+    }
+    sort(arr, arr + N);
+    for (int i = 0; i &lt; N; i++)
+    {
+        pref[i + 1] = pref[i] + arr[i];
+        tot += (i + 1) * arr[i];
+    }
+    cin &gt;&gt; Q;
+    while(Q--)
+    {
+        int idx; ll val;
+        cin &gt;&gt; idx &gt;&gt; val; idx--;
+        idx = pos[idx];
+        ll ans = tot;
+        //index that val would be at in the new array
+        int newidx = lower_bound(arr, arr + N, val) - arr - (bool) (val &gt; arr[idx]);
+        ans -= (idx + 1) * arr[idx];
+        if (newidx &gt;= idx) 
+        {
+            ans -= (pref[newidx + 1] - pref[idx + 1]);
+        }
+        else 
+        {
+            ans += (pref[idx] - pref[newidx]);
+        }
+        ans += (newidx + 1) * val;
+        cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+    }
+    return 0;
+}
+</pre>
+<p>My Python Code: 
+<p><pre class='prettyprint'>
+N = int(input())
+arr = list(map(int, input().split()))
+ord = [i for i in range(N)]
+ord.sort(key = lambda x: arr[x])
+pos = [0 for i in range(N)]
+for i in range(N):
+    pos[ord[i]] = i
+arr.sort()
+
+def binary_search(x): #counts number of #s &lt;x, or min index i st a[i] &gt;= x
+    lo = 0
+    hi = N
+    while(hi &gt; lo):
+        mid = (hi + lo) // 2
+        if (arr[mid] &gt;= x):
+            hi = mid
+        else:
+            lo = mid + 1
+    return lo
+
+pref = [0 for i in range(N + 1)]
+tot = 0
+for i in range(N):
+    pref[i + 1] = pref[i] + arr[i]
+    tot += (i + 1) * arr[i]
+Q = int(input())
+for i in range(Q):
+    idx, val = map(int, input().split())
+    idx -= 1
+    idx = pos[idx]
+    newidx = binary_search(val)
+    if (val &gt; arr[idx]):
+        newidx -= 1
+    ans = tot
+    ans -= (idx + 1) * arr[idx]
+    if (newidx &gt;= idx):
+        ans -= (pref[newidx + 1] - pref[idx + 1])
+    else:
+        ans += (pref[idx] - pref[newidx])
+    ans += (newidx + 1) * val
+    print(ans)
+</pre>
+<p>Slightly shorter if bisect is used:
+<p><pre class='prettyprint'>
+import bisect
+ 
+N = int(input())
+arr = list(map(int, input().split()))
+ord = [i for i in range(N)]
+ord.sort(key = lambda x: arr[x])
+pos = [0 for i in range(N)]
+for i in range(N):
+    pos[ord[i]] = i
+arr.sort()
+
+pref = [0 for i in range(N + 1)]
+tot = 0
+for i in range(N):
+    pref[i + 1] = pref[i] + arr[i]
+    tot += (i + 1) * arr[i]
+Q = int(input())
+for i in range(Q):
+    idx, val = map(int, input().split())
+    idx -= 1
+    idx = pos[idx]
+    newidx = bisect.bisect_left(arr, val)
+    if (val &gt; arr[idx]):
+        newidx -= 1
+    ans = tot
+    ans -= (idx + 1) * arr[idx]
+    if (newidx &gt;= idx):
+        ans -= (pref[newidx + 1] - pref[idx + 1])
+    else:
+        ans += (pref[idx] - pref[newidx])
+    ans += (newidx + 1) * val
+    print(ans)
+</pre>
+<p>Danny Mittal&apos;s Java code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
+ 
+public class ArrayQueriesSilver {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        Long[] xs = Arrays.stream(in.readLine().split(&quot; &quot;)).map(Long::parseLong).toArray(Long[]::new);
+        Long[] sorted = xs.clone();
+        Arrays.sort(sorted);
+        long base = 0;
+        long[] sums = new long[n + 1];
+        TreeMap&lt;Long, Integer&gt; treeMap = new TreeMap&lt;&gt;();
+        for (int j = 0; j &lt; n; j++) {
+            sums[j + 1] = sums[j] + sorted[j];
+            base += ((long) (j + 1)) * sorted[j];
+            treeMap.put(sorted[j], j);
+        }
+        treeMap.put(Long.MIN_VALUE, -1);
+        StringBuilder out = new StringBuilder();
+        for (int q =  Integer.parseInt(in.readLine()); q &gt; 0; q--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int j = Integer.parseInt(tokenizer.nextToken()) - 1;
+            long prev = xs[j];
+            long next = Long.parseLong(tokenizer.nextToken());
+            int prevIndex = treeMap.get(prev);
+            int nextIndex = treeMap.lowerEntry(next).getValue() + 1;
+            long answer = base
+                    - (((long) (prevIndex + 1)) * prev)
+                    + (((long) (nextIndex + (nextIndex &gt; prevIndex ? 0 : 1))) * next)
+                    - (sums[nextIndex] - sums[prevIndex + (nextIndex &gt; prevIndex ? 1 : 0)]);
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p></body></html>

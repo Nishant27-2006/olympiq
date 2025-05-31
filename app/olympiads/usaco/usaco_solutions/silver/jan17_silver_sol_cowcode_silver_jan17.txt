@@ -1,0 +1,106 @@
+Solution ID: sol_cowcode_silver_jan17
+Contest: JAN17
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_cowcode_silver_jan17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Even though the provided string is infinite, the string has a very particular
+structure. Let's analyze the example, specifically
+
+$\text{COWWCO}$
+
+to
+
+$\text{COWWCOOCOWWC}$
+
+. In particular, note that the index 7 maps to index 6, but
+indices 8 through 12 map to indices 1 through 5.
+
+For notational convenience, let
+
+$F^k(s) = F(F^{k-1}(s))$
+
+, and define
+
+$F^0(s) = s$
+
+.
+
+We can compute the smallest
+
+$k$
+
+such that
+
+$F^k(s)$
+
+contains the given index.
+If
+
+$k=0$
+
+, then we are looking at the original string and can therefore return
+the character directly. Otherwise, take
+
+$F^k(s)$
+
+and split it into two halves.
+The desired index must be in the second half of
+
+$F^k(s)$
+
+. If it is the first character
+in the second half, then we want to return the last character in
+
+$F^{k-1}(s)$
+
+. Otherwise,
+due to the rotation, we decrease the index by 1 and return that character in
+
+$F^{k-1}(s)$
+
+.
+
+Applying that approach directly gives us an
+
+$O(\log^2 N)$
+
+algorithm, which is fast enough
+for our purposes. It can also be improved to
+
+$O(\log N)$
+
+.
+
+import java.io.*;
+import java.util.*;
+public class cowcode {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("cowcode.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("cowcode.out")));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		String s = st.nextToken();
+		long index = Long.parseLong(st.nextToken());
+		pw.println(parse(s, index-1));
+		pw.close();
+	}
+
+	public static char parse(String s, long index) {
+		if(index < s.length()) {
+			return s.charAt((int)index);
+		}
+		long length = s.length();
+		while(2*length <= index) {
+			length *= 2;
+		}
+		if(length == index) {
+			return parse(s, length-1);
+		}
+		return parse(s, index - length - 1);
+	}
+}

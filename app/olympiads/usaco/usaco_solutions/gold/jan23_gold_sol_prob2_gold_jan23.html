@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Timothy Qian)
+<p>We first show that you can turn all the lights off in <span class='math'>$O(N)$</span> moves. First, turn
+off all the switches. Next, for every light that is on after you have turned off
+that switch, turn on the corresponding switch, then turn off the rotated switch
+on the next move. This in total takes at most <span class='math'>$3N$</span> moves. 
+<p>Now we solve the following sub-problem using bitmask dynamic programming. Say we
+start with all the switches off. Let <span class='math'>$dp[i][mask]$</span> be a boolean denoting whether
+after <span class='math'>$i$</span> moves, you can turn on the lights corresponding to the bitmask <span class='math'>$mask$</span>
+in exactly <span class='math'>$i$</span> moves. The base case of <span class='math'>$dp[0][mask]$</span> is true if and only if
+<span class='math'>$mask = 0$</span>. Now let&apos;s say we&apos;ve computed <span class='math'>$dp[i - 1][mask]$</span> for some <span class='math'>$i \geq 1$</span>.
+Then to compute <span class='math'>$dp[i][mask]$</span>, we can do casework on the first move. The effects
+of the first move after exactly <span class='math'>$i$</span> moves will be effectively turning on <span class='math'>$i$</span>
+consecutive lights. Thus, there are <span class='math'>$N$</span> possible first moves, and we can use
+<span class='math'>$dp[i - 1][mask]$</span> to compute transitions for using exactly <span class='math'>$i$</span> moves. This is
+done in <span class='math'>$O(N^2 \cdot 2^N)$</span> time. We can remove a factor of <span class='math'>$O(N)$</span> by computing
+an array <span class='math'>$rep$</span> (standing for representative), such that we have 
+<span class='math'>$rep[mask1] = rep[mask2]$</span> if and only if <span class='math'>$mask1, mask2$</span> that are cyclic
+rotations of each other. Then, we only need to check the first moves up to
+cyclic rotation, which means there is only one possible first move with <span class='math'>$i$</span>
+consecutive lights on. See my code for further details. This will take
+<span class='math'>$O(N\cdot 2^N)$</span> time. 
+<p>Now we go back to the full problem, say that we have two bitmasks <span class='math'>$lights$</span>,
+<span class='math'>$switches$</span> corresponding to the lights and switches respectively. Then let us
+check whether we can turn all lights off in exactly <span class='math'>$k$</span> moves. We can pretend
+all the switches are off by computing the effect of the switches after <span class='math'>$k$</span> moves
+if we didn&apos;t toggle any lights. Let the bitmask representing the lights after
+<span class='math'>$k$</span> moves be <span class='math'>$mask$</span>. Then <span class='math'>$dp[k][mask]$</span> will denote whether we can do this in
+<span class='math'>$k$</span> moves. Thus, we simply need to check this for <span class='math'>$k$</span> from <span class='math'>$0$</span> to <span class='math'>$3N$</span>. For each
+test case, this takes <span class='math'>$O(N)$</span> time. This overall will take <span class='math'>$O(N\cdot 2^N + TN)$</span>
+time. We also note that an algorithm running in <span class='math'>$O(N^2 \cdot 2^N + TN)$</span> time was
+sufficient for full credit.
+<p><span class='math'>$O(N \cdot 2^N + TN)$</span> time C++ code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+ 
+using namespace std;
+ 
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int t, n;
+  cin &gt;&gt; t &gt;&gt; n;
+  auto cyc_right = [&amp;n](int x) -&gt; int {
+    x &lt;&lt;= 1;
+    if (x &amp; (1 &lt;&lt; n)) {
+      x ^= (1 &lt;&lt; n) ^ 1;
+    }
+    return x;
+  };
+  auto str_to_bin = [&amp;n](string s) -&gt; int {
+    int res = 0;
+    for (int i = 0; i &lt; n; ++i) {
+      if (s[i] == &apos;1&apos;) {
+        res ^= (1 &lt;&lt; i);
+      }
+    }
+    return res;
+  };
+  vector&lt;int&gt; rep(1 &lt;&lt; n, -1);
+  for (int i = 0; i &lt; 1 &lt;&lt; n; ++i) {
+    if (rep[i] == -1) {
+      int j = i;
+      while (rep[j] == -1) {
+        rep[j] = i;
+        j = cyc_right(j);
+      }
+    }
+  }
+  vector&lt;vector&lt;bool&gt;&gt; can(3*n + 1, vector&lt;bool&gt;(1 &lt;&lt; n));
+  can[0][rep[0]] = true;
+  int cur_pad = 0;
+  for (int i = 1; i &lt;= 3*n; ++i) {
+    cur_pad ^= 1&lt;&lt;((i-1)%n);
+    for (int mask = 0; mask &lt; 1 &lt;&lt; n; ++mask) {
+      if (can[i - 1][rep[mask]]) {
+        can[i][rep[cur_pad ^ mask]] = true;
+      }
+    }
+  }
+  while (t--) {
+    string x, y;
+    cin &gt;&gt; x &gt;&gt; y;
+    int pad = str_to_bin(y);
+    int fin = str_to_bin(x);
+    int cur = 0;
+    for (int i = 0; i &lt;= 3*n; ++i) {
+      if (can[i][rep[cur ^ fin]]) {
+        cout &lt;&lt; i &lt;&lt; &apos;\n&apos;;
+        break;
+      }
+      cur ^= pad;
+      pad = cyc_right(pad);
+    }
+  }
+  return 0;
+}
+</pre>
+<p>Danny Mittal&apos;s <span class='math'>$O(N^2 \cdot 2^N + TN)$</span> time Java code:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class LightsOffOptimized {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int t = Integer.parseInt(tokenizer.nextToken());
+        int n = Integer.parseInt(tokenizer.nextToken());
+ 
+        int[][] pads = new int[3*n + 1][n];
+        for (int l = 1; l &lt;= 3*n; l++) {
+            for (int d = 0; d &lt; n; d++) {
+                pads[l][d] = (1 &lt;&lt; d) ^ pads[l - 1][(d + 1) % n];
+            }
+        }
+ 
+        boolean[][] dp = new boolean[3*n + 1][1 &lt;&lt; n];
+        dp[0][0] = true;
+        for (int turns = 1; turns &lt;= 3*n; turns++) {
+            for (int mask = 0; mask &lt; (1 &lt;&lt; n); mask++) {
+                for (int d = 0; d &lt; n; d++) {
+                    if (dp[turns - 1][mask ^ pads[turns][d]]) {
+                        dp[turns][mask] = true;
+                        break;
+                    }
+                }
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (; t &gt; 0; t--) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int lights = stringToMask(tokenizer.nextToken());
+            int switches = stringToMask(tokenizer.nextToken());
+ 
+            int pad = 0;
+            int answer = -1;
+            for (int turns = 0; turns &lt;= 3*n; turns++) {
+                int padded = lights ^ pad;
+                if (dp[turns][padded]) {
+                    answer = turns;
+                    break;
+                }
+                pad &lt;&lt;= 1;
+                pad ^= switches;
+                if (pad &gt;= 1 &lt;&lt; n) {
+                    pad ^= 1 &lt;&lt; n;
+                    pad ^= 1;
+                }
+            }
+ 
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+ 
+    public static int stringToMask(String string) {
+        char[] backwards = new char[string.length()];
+        for (int j = 0; j &lt; string.length(); j++) {
+            backwards[j] = string.charAt(string.length() - 1 - j);
+        }
+        return Integer.parseInt(new String(backwards), 2);
+    }
+}
+</pre>
+<p></body></html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Chris Zhang)
+<p>For the first subtask, we can just simulate. At most <span class='math'>$NK$</span> minutes will suffice
+because the sequence of positions of an individual cow will start repeating
+within that time. For the second subtask, see the silver analysis.
+<p>For full credit, let&apos;s again construct <span class='math'>$s_i$</span> and <span class='math'>$p_i$</span> as described in the 
+Silver analysis, and consider the contribution of each disjoint cycle
+independently.
+<p>Let <span class='math'>$D={\lfloor}{M/K}{\rfloor}$</span> and <span class='math'>$R$</span> be the remainder when <span class='math'>$M$</span> is divided by
+<span class='math'>$K$</span>. There will first occur <span class='math'>$D$</span> full iterations of <span class='math'>$K$</span> swaps, followed by <span class='math'>$R$</span>
+extra swaps. For simplicity, letâs ignore <span class='math'>$R$</span> for now. To solve for the answer
+of cow <span class='math'>$i$</span>, which is in some cycle of length <span class='math'>$L$</span>: if <span class='math'>$D$</span> is at least <span class='math'>$L$</span>, the
+answer is the size of the union of all sets <span class='math'>$s_i$</span> in this cycle (as in the
+silver analysis). But if <span class='math'>$D$</span> is less than <span class='math'>$L$</span>, it will be the size of the union
+of the <span class='math'>$D$</span> sets <span class='math'>$s_i, s_{p_i}, s_{p^2_i}, \cdots, s_{p^{D-1}_i}$</span>. To compute the
+answers for all cows in a cycle, we maintain a âsliding windowâ of length
+<span class='math'>$D$</span> and keep track of the number of unique positions in an array. Specifically,
+to get the window for <span class='math'>$p_i$</span> from the window for <span class='math'>$i$</span>, we remove the set <span class='math'>$s_i$</span> and
+add the set <span class='math'>$s_{p^D_i}$</span>.
+<p>Now, returning back to <span class='math'>$R$</span>. We can actually iterate across each set <span class='math'>$s_i$</span> to
+account for the <span class='math'>$R$</span> extra swaps. This is fast enough because we only iterate
+across each set at most once, the sum of the sizes of all sets <span class='math'>$s_i$</span> is bounded
+by <span class='math'>$2K+N$</span>. To implement this, let the sets <span class='math'>$s_i$</span> store pairs which include both
+the positions and the times at which the positions are reached.
+<p>The complexity of this solution is <span class='math'>$\mathcal{O}(N+K)$</span>.
+<p>Chrisâ code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+typedef long long ll;
+
+int N,K;
+ll M;
+int A[200001],B[200001]; //input
+int P[100001]; //as described in analysis
+int from[100001]; //from[i] = where the cow in position i originated from
+vector&lt;pair&lt;int,int&gt;&gt;S[100001]; //as described in analysis, stores {pos, time}
+int cnt[100001]; //array to keep track of uniquePos
+int uniquePos; //# of unique reachable positions
+
+//adds in all reachable positions from S_node where time&lt;=bar
+void add(int node, int bar){
+  for (auto x:S[node]){
+    if (x.second&gt;bar) return;
+    if (cnt[x.first]==0)
+      uniquePos++;
+    cnt[x.first]++;
+  }
+}
+
+//removes all reachable positions from S_node where time&lt;=bar
+void remove(int node, int bar){
+  for (auto x:S[node]){
+    if (x.second&gt;bar) return;
+    if (cnt[x.first]==1)
+      uniquePos--;
+    cnt[x.first]--;
+  }
+}
+
+vector&lt;int&gt;nodes; //stores nodes currently in cycle
+bool vis[100001];
+
+void dfs(int node){
+  vis[node]=true;
+  nodes.push_back(node);
+  if (!vis[P[node]])
+    dfs(P[node]);
+}
+
+int main(){
+  cin&gt;&gt;N&gt;&gt;K&gt;&gt;M;
+  for (int i=0;i&lt;K;i++)
+    cin&gt;&gt;A[i]&gt;&gt;B[i];
+  //initialize from and S
+  for (int i=1;i&lt;=N;i++){
+    from[i]=i;
+    S[i].push_back({i,0});
+  }
+  //simulate the first K swaps, keeping track of where each position can reach
+  for (int i=0;i&lt;K;i++){
+    S[from[A[i]]].push_back({B[i],i+1});
+    S[from[B[i]]].push_back({A[i],i+1});
+    swap(from[A[i]],from[B[i]]);
+  }
+  //compute array P after first K swaps
+  for (int i=1;i&lt;=N;i++)
+    P[from[i]]=i;
+  int ans[100001];
+  //run a DFS on each cycle
+  for (int i=1;i&lt;=N;i++)
+    if (!vis[i]){
+      dfs(i);
+      ll D=M/K; //as described in the analysis
+      int R=M%K; //as described in the analysis
+      //&quot;special case&quot; if the whole cycle is included
+      if (D&gt;=(int)nodes.size()){ 
+	D=nodes.size();
+	R=0;
+      }
+      int j=D-1;
+      //initialize our sliding window [0,j]
+      for (int k=0;k&lt;=j;k++)
+	add(nodes[k],K);
+      //we slide our window [i,j], adding and removing as we go
+      for (int i=0;i&lt;nodes.size();i++){
+	int newJ=(j+1)%(int)nodes.size();
+	//account for the extra R swaps
+	add(nodes[newJ],R);
+	//store answer for current sliding window
+	ans[nodes[i]]=uniquePos;
+	//undo the extra R swaps
+	remove(nodes[newJ],R);
+	//undo the left endpoint of sliding window
+	remove(nodes[i],K);
+	//add new right endpoint of sliding window
+	add(nodes[newJ],K);
+	j=newJ;
+      }
+      //reset everything from this cycle
+      for (int k=0;k&lt;=D-1;k++)
+	remove(nodes[k],K);
+      nodes.clear();
+    }
+  for (int i=1;i&lt;=N;i++)
+    cout&lt;&lt;ans[i]&lt;&lt;endl;
+  return 0;
+}
+</pre>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class DanceMooves {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        long k = Integer.parseInt(tokenizer.nextToken());
+        long m = Long.parseLong(tokenizer.nextToken());
+        int[] cows = new int[n + 1];
+        List&lt;View&gt;[] views = new List[n + 1];
+        for (int j = 1; j &lt;= n; j++) {
+            cows[j] = j;
+            views[j] = new ArrayList&lt;&gt;();
+            views[j].add(new View(j, 0));
+        }
+        for (long t = 1; t &lt;= k; t++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            int c = cows[a];
+            int d = cows[b];
+            cows[a] = d;
+            cows[b] = c;
+            views[cows[a]].add(new View(a, t));
+            views[cows[b]].add(new View(b, t));
+        }
+        int[] answer = new int[n + 1];
+        for (int r = 1; r &lt;= n; r++) {
+            if (cows[r] != 0) {
+                List&lt;Integer&gt; cycle = new ArrayList&lt;&gt;();
+                int j = r;
+                while (cows[j] != 0) {
+                    cycle.add(j);
+                    j = cows[j];
+                    cows[cycle.get(cycle.size() - 1)] = 0;
+                }
+                Map&lt;Integer, List&lt;Interval&gt;&gt; intervalMap = new HashMap&lt;&gt;();
+                for (j = 0; j &lt; cycle.size(); j++) {
+                    for (View view : views[cycle.get(j)]) {
+                        if (m &gt;= view.time) {
+                            int covered = (int) Math.min((long) cycle.size(), ((m - view.time) / k) + 1L);
+                            if (!intervalMap.containsKey(view.position)) {
+                                intervalMap.put(view.position, new ArrayList&lt;&gt;());
+                            }
+                            intervalMap.get(view.position).add(new Interval(j, Math.min(cycle.size(), j + covered)));
+                            if (j + covered &gt; cycle.size()) {
+                                intervalMap.get(view.position).add(new Interval(0, (j + covered) % cycle.size()));
+                            }
+                        }
+                    }
+                }
+                int[] amts = new int[cycle.size() + 1];
+                for (List&lt;Interval&gt; intervals : intervalMap.values()) {
+                    intervals.sort(Comparator.comparingInt(interval -&gt; interval.from));
+                    int prev = 0;
+                    for (Interval interval : intervals) {
+                        amts[Math.max(prev, interval.from)]++;
+                        prev = Math.max(prev, interval.until);
+                        amts[prev]--;
+                    }
+                }
+                for (j = 0; j &lt; cycle.size(); j++) {
+                    answer[cycle.get(j)] = amts[j];
+                    amts[j + 1] += amts[j];
+                }
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int j = 1; j &lt;= n; j++) {
+            out.append(answer[j]).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+ 
+    static class View {
+        final int position;
+        final long time;
+ 
+        View(int position, long time) {
+            this.position = position;
+            this.time = time;
+        }
+    }
+ 
+    static class Interval {
+        final int from;
+        final int until;
+ 
+        Interval(int from, int until) {
+            this.from = from;
+            this.until = until;
+        }
+    }
+}
+</pre>
+<p></body></html>

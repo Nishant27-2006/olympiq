@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Chongtian Ma, Alex Liang, and Patrick Deng)
+<p><strong>Subtask 1:</strong> <span class='math'>$N \le 2000$</span>.
+<p>We can directly simulate the process according to the problem statement. We can
+keep track of the amount of milk that each cow has and update in
+<span class='math'>$\mathcal{O}(N)$</span> each minute leading to an <span class='math'>$\mathcal{O}(N^2)$</span> solution.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin &gt;&gt; n;
+
+    vector&lt;int&gt; cap(n), cur(n); 
+    
+    for (int i = 0; i &lt; n; i++){
+        cin &gt;&gt; cap[i];
+        cur[i] = cap[i];
+    }
+    
+    for (int minute = 1; minute &lt;= n; minute++){
+        rotate(cur.begin(), cur.begin() + n - 1, cur.end());
+
+        for (int i = 0; i &lt; n; i++)
+            cur[i] = min(cur[i], cap[i]);
+
+        cout&lt;&lt;accumulate(cur.begin(), cur.end(), 0LL)&lt;&lt;&quot;\n&quot;;
+    }
+}
+</pre>
+<p><strong>Subtask 2:</strong> <span class='math'>$a_i \le 2$</span>.
+<p>Each bucket has capacity of either <span class='math'>$1$</span> or <span class='math'>$2$</span> in this subtask. Consider a cow
+that starts off with <span class='math'>$2$</span> unit of milk. That specific <span class='math'>$2$</span> units of milk will keep
+getting passed until  it reaches a bucket with capacity <span class='math'>$1$</span> where it will be
+reduced to <span class='math'>$1$</span> unit of milk.
+<p>For each <span class='math'>$a_i=2$</span> we want to find the time <span class='math'>$t$</span> in which it will reach a bucket
+with capacity <span class='math'>$1$</span>. Then we know that <span class='math'>$1$</span> milk is lost at time <span class='math'>$t$</span>. We can find
+<span class='math'>$t$</span> by finding the first <span class='math'>$a_j=1$</span> on the right of <span class='math'>$i$</span>.
+<p>We can rotate the array such that the minimum element appears at the end.
+Iterating over the array backwards and keeping track of the most recent <span class='math'>$1$</span>
+leads to an <span class='math'>$\mathcal{O}(N)$</span> solution.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin &gt;&gt; n;
+
+    vector&lt;int&gt; A(n); 
+    vector&lt;int&gt; reduce(n + 5, 0);
+
+    int sum = 0;
+
+    for (int &amp;i : A){
+        cin &gt;&gt; i;
+        sum += i;
+    }
+    rotate(A.begin(), next(min_element(A.begin(), A.end())), A.end());
+    
+    for (int i = n - 1, lst = -1; i &gt;= 0; i--){
+        if (A[i] == 1)
+            lst = i;
+        if (A[i] == 2 and lst != -1){
+            // At time lst - i the 2 will get reduced to a 1
+            reduce[lst - i]++;
+        }
+    }
+    
+    for (int i = 1; i &lt;= n; i++){
+        sum -= reduce[i];
+        cout&lt;&lt;sum&lt;&lt;&quot;\n&quot;;
+    }
+}
+</pre>
+<p><strong>Subtask 3:</strong> All <span class='math'>$a_i$</span> are generated uniformly at random in the range
+<span class='math'>$[1,10^9]$</span>.
+<p>Let&apos;s rotate the array such that the minimum element appears at the end.
+<p>In the previous subtask, for each <span class='math'>$a_i=2$</span>, we wanted to find when that specific
+<span class='math'>$2$</span> units of milk will reach a bucket with capacity <span class='math'>$1$</span>. We can extend this
+reasoning. For some <span class='math'>$a_i$</span>, we want to find all times in which that milk will get
+reduced. 
+<p><ul><li>The first time the milk is reduced is when it reaches the first
+<span class='math'>$a_{j_1}&lt;a_i$</span> on the right of <span class='math'>$i$</span>. It will be reduced by <span class='math'>$a_i-a_{j_1}$</span> at time
+<span class='math'>$j_1-i$</span>.</li><li>The second time the milk is reduced is when it reaches the
+first <span class='math'>$a_{j_2}&lt;a_{j_1}$</span> on the right of <span class='math'>$j_1$</span>. It will be reduced by
+<span class='math'>$a_{j_1}-a_{j_2}$</span> at time
+<span class='math'>$j_2-i$</span>.</li><li>The third time the milk is reduced is when it reaches the first
+<span class='math'>$a_{j_3}&lt;a_{j_2}$</span> on the right of <span class='math'>$j_2$</span>. It will be reduced by <span class='math'>$a_{j_2}-a_{j_3}$</span>
+at time <span class='math'>$j_3-i$</span>.</li><li>...</li><li>The <span class='math'>$k$</span>-th time the milk is reduced is when it reaches the first
+<span class='math'>$a_{j_k}&lt;a_{j_{k-1}}$</span> on the right of <span class='math'>$j_{k-1}$</span>. It will be reduced by
+<span class='math'>$a_{j_{k-1}}-a_{j_k}$</span> at time <span class='math'>$j_k-i$</span>.</li></ul>
+<p>To find these values, we can iterate over the array backwards and keep a
+monotonic stack. At each element, we can iterate over the entire stack and
+update our answer.
+<p>Because all <span class='math'>$a_i$</span> are generated uniformly at random, the expected size of the
+monotonic stack at each <span class='math'>$i$</span> is <span class='math'>$\mathcal{O}(\log N)$</span>. This is since the
+probability of  <span class='math'>$j$</span> (<span class='math'>$i \le j &lt; i+N$</span>) being in the stack is at most
+<span class='math'>$\frac{1}{j-i+1}$</span> since <span class='math'>$a_j$</span> must be smaller than <span class='math'>$[a_i,a_{i+1},...,a_{j-1}]$</span>.
+By the linearity of expectation, the expected size of the stack is
+<span class='math'>$\frac{1}{1}+\frac{1}{2}+ \dots +\frac{1}{N}=\mathcal{O}(\log N)$</span> by the
+harmonic series. Thus, the solution runs in <span class='math'>$\mathcal{O}(N\log N)$</span> time.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#define ll long long
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin &gt;&gt; n;
+
+    vector&lt;int&gt; A(n); 
+    ll sum = 0;
+
+    for (int &amp;i : A){
+        cin &gt;&gt; i;
+        sum += i;
+    }
+    rotate(A.begin(), next(min_element(A.begin(), A.end())), A.end());
+
+    vector&lt;int&gt; stk;
+    vector&lt;ll&gt; reduce(n + 5, 0);
+
+    auto procStack = [&amp;](int pos){
+        for (int i = 1; i &lt; stk.size(); i++){
+            int delta = A[stk[i]] - A[stk[i - 1]];
+            reduce[stk[i - 1] - pos] += delta; 
+        }
+    };
+
+    for (int i = n - 1; i &gt;= 0; i--){
+        while (stk.size() and A[stk.back()] &gt;= A[i]){
+            stk.pop_back();
+        }
+        stk.push_back(i);
+        procStack(i);
+    }
+
+    for (int i = 1; i &lt;= n; i++){
+        sum -= reduce[i];
+        cout&lt;&lt;sum&lt;&lt;&quot;\n&quot;;
+    }
+}
+</pre>
+<p><strong>Full Solution 1:</strong>
+<p>Let&apos;s look at what is redundant in our subtask <span class='math'>$3$</span> solution. Suppose the bottom
+<span class='math'>$2$</span> elements of the stack remain there for a long time. Then we will be
+iterating over them each time we process the stack.
+<p>Let&apos;s speed up our subtask <span class='math'>$3$</span> solution. Consider some adjacent pair of elements
+(<span class='math'>$j_{p-1},j_p$</span>) in the stack. We know that <span class='math'>$d=a_{j_{p-1}}-a_{j_p}$</span> milk is lost
+by going from <span class='math'>$j_{p-1}$</span> to <span class='math'>$j_p$</span>. Let&apos;s look at all <span class='math'>$i$</span> (<span class='math'>$1 \le i \le N$</span>) where 
+(<span class='math'>$j_{p-1},j_p$</span>) is in the stack at <span class='math'>$i$</span> (meaning the milk originating from <span class='math'>$i$</span>
+will be reduced by <span class='math'>$d$</span> at time <span class='math'>$j_p-i$</span>). Clearly, all such <span class='math'>$i$</span> will form an
+interval.
+<p><ul><li>When <span class='math'>$i=j_{p-1}$</span>, <span class='math'>$d$</span> milk is lost at time <span class='math'>$j_p-j_{p-1}$</span>.</li><li>When
+<span class='math'>$i=j_{p-1}-1$</span>, <span class='math'>$d$</span> milk is lost at time <span class='math'>$j_p-j_{p-1}+1$</span>.</li><li>When
+<span class='math'>$i=j_{p-1}-2$</span>, <span class='math'>$d$</span> milk is lost at time <span class='math'>$j_p-j_{p-1}+2$</span>.</li><li>And so on
+until we remove <span class='math'>$j_{p-1}$</span> from the stack.</li></ul>
+<p>When we remove an element from the top of the stack, we can get the interval it
+was active for and perform a range add to keep track of how much milk is lost at
+what time. This leads to an <span class='math'>$\mathcal{O}(N)$</span> solution.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#define ll long long
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin &gt;&gt; n;
+
+    vector&lt;int&gt; A(n); 
+    ll sum = 0;
+
+    for (int &amp;i : A){
+        cin &gt;&gt; i;
+        sum += i;
+    }
+    rotate(A.begin(), next(min_element(A.begin(), A.end())), A.end());
+
+    vector&lt;int&gt; stk;
+    vector&lt;ll&gt; reduce(n + 5, 0);
+
+    for (int i = n - 1; i &gt;= 0; i--){
+        while (stk.size() and A[stk.back()] &gt;= A[i]){
+            if (stk.size() &gt; 1){
+                // i &lt; t1 &lt; t2
+                int t1 = stk.back();
+                int t2 = stk[stk.size() - 2];
+
+                // Milk lost from going from t1 to t2
+                int delta = A[t1] - A[t2];
+                
+                // When does the pair begin applying delta
+                int st = t2 - t1;
+
+                // For how long does the pair apply delta
+                int sz = t1 - i;
+
+                reduce[st] += delta;
+                reduce[st + sz] -= delta;
+            }
+            stk.pop_back();
+        }
+        stk.push_back(i);
+    }
+
+    // Finish proccessing rest of stack
+    while (stk.size() &gt; 1){
+        int t1 = stk.back();
+        int t2 = stk[stk.size() - 2];
+
+        int delta = A[t1] - A[t2];
+        int st = t2 - t1;
+        int sz = t1 + 1;
+
+        reduce[st] += delta;
+        reduce[st + sz] -= delta;
+
+        stk.pop_back();
+    }
+
+    // Get answer
+    for (int i = 1; i &lt;= n; i++){
+        reduce[i] += reduce[i - 1];
+        sum -= reduce[i];
+
+        cout&lt;&lt;sum&lt;&lt;&quot;\n&quot;;
+    }
+}
+</pre>
+<p><strong>Full Solution 2:</strong>
+<p>For each <span class='math'>$i$</span>, we want to find the number of buckets with milk <span class='math'>$a_i$</span> at each
+minute. To deal with the case where there are multiple same <span class='math'>$a_i$</span>, we only
+consider the number of buckets equal to <span class='math'>$a_i$</span> whose milk was specifically 
+reduced (by a non-zero amount) to <span class='math'>$a_i$</span> by the bucket at  <span class='math'>$i$</span> (we also count the
+milk starting at <span class='math'>$i$</span>).
+<p>Let <span class='math'>$l_i$</span> be the index of the first element less than or equal to <span class='math'>$a_i$</span> on the
+left of <span class='math'>$i$</span>. Consider all elements strictly between <span class='math'>$l_i$</span> and <span class='math'>$i$</span>.
+All these elements will be greater than <span class='math'>$a_i$</span>
+and thus will be reduced to <span class='math'>$a_i$</span> when they reach <span class='math'>$i$</span>. Suppose there are <span class='math'>$s$</span>
+such elements including <span class='math'>$a_i$</span>. Then we will gain one additional element equal to <span class='math'>$a_i$</span> at times
+<span class='math'>$0,1,...,s-1$</span> (if we suppose we start off with <span class='math'>$0$</span> elements equal to <span class='math'>$a_i$</span>). 
+<p>Let <span class='math'>$w_i$</span> store the total amount of milk at time <span class='math'>$i$</span>. We should perform the
+following update: 
+<p><ul><li><span class='math'>$w_0 = w_0 + a_i$</span></li><li><span class='math'>$w_1 = w_1 + 2a_i$</span></li><li>...</li><li><span class='math'>$w_{s-1} = w_{s-1} + sa_i$</span></li></ul>
+<p><ul><li><span class='math'>$w_{s} = w_{s} + sa_i$</span></li><li><span class='math'>$w_{s+1} = w_{s+1} + sa_i$</span></li><li>...</li><li><span class='math'>$w_{N} = w_{N} + sa_i$</span></li></ul>
+<p>We also know that buckets with <span class='math'>$a_i$</span> milk can be reduced to a smaller value.  
+Let <span class='math'>$r_i$</span> be the index of the first element strictly less than <span class='math'>$a_i$</span> on the
+right of <span class='math'>$i$</span>. Let time <span class='math'>$t$</span> be the time for the milk originating at <span class='math'>$i$</span> to reach
+<span class='math'>$r_i$</span>. Then we will lose one element equal to <span class='math'>$a_i$</span> at times <span class='math'>$t,t+1,...,t+s-1$</span>.
+A similar update to the one above should be performed.
+<p>We can use a monotonic stack to find <span class='math'>$l_i$</span> and <span class='math'>$r_i$</span>. Implementation can be made
+easier by prepending and appending the array to itself. We can use prefix sums
+of prefix sums to perform the updates on <span class='math'>$w$</span> efficiently. See the following
+example:
+<p><ul><li>Original: <span class='math'>$[0,1,0,0,0,0,-1,0]$</span></li><li>Prefix sum: <span class='math'>$[0,1,1,1,1,1,0,0]$</span></li><li>Prefix sum of prefix sum: <span class='math'>$[0,1,2,3,4,5,5,5]$</span></li></ul>
+<p>Thus, this solution runs in <span class='math'>$\mathcal{O}(N)$</span> time.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std; 
+ 
+#define ll long long
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n;
+    cin &gt;&gt; n;
+
+    vector&lt;int&gt; A(n);
+
+    for (int &amp;i : A)
+        cin &gt;&gt; i;
+    
+    for (int i = 0; i &lt; 2 * n; i++)
+        A.push_back(A[i]);
+    
+    // L is first &lt;= on left and R is first &lt; on right
+    vector&lt;int&gt; L(A.size()), R(A.size());
+    {
+        stack&lt;int&gt; stk;
+        for (int i = 0; i &lt; A.size(); i++){
+            while (stk.size() and A[i] &lt; A[stk.top()])
+                stk.pop();
+
+            L[i] = stk.empty() ? -1 : stk.top();
+            stk.push(i);
+        }
+    }
+    {
+        stack&lt;int&gt; stk;
+        for (int i = (int)A.size() - 1; i &gt;= 0; i--){
+            while (stk.size() and A[i] &lt;= A[stk.top()])
+                stk.pop();
+            
+            R[i] = stk.empty() ? -1 : stk.top();
+            stk.push(i);
+        }
+    }
+
+    vector&lt;ll&gt; psm(n + 5, 0);
+
+    for (int i = n; i &lt; 2 * n; i++){
+        // Gain A[i] during minutes [0, sz - 1]
+        int sz = i - L[i];
+        psm[0] += A[i];
+        psm[sz] -= A[i];
+
+        // Lose A[i] during minutes [R[i] - i, R[i] - i + sz - 1]
+        if (R[i] != -1){
+            psm[R[i] - i] -= A[i];
+            psm[R[i] - i + sz] += A[i];
+        }
+    }
+
+    for (int i = 1; i &lt;= n; i++)
+        psm[i] += psm[i - 1];
+
+    for (int i = 1; i &lt;= n; i++){
+        psm[i] += psm[i - 1];
+        cout&lt;&lt;psm[i]&lt;&lt;&quot;\n&quot;;
+    }
+}
+</pre>
+<p></body></html>

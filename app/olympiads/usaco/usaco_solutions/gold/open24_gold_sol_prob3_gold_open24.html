@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Alex Liang)
+<p><strong>Subtask 1 (<span class='math'>$N \le 10$</span>):</strong>
+<p>We can directly enumerate all <span class='math'>$2^{2N-2}$</span> ways to split the two arrays and check
+if each way satisfies the constraints.
+<p><strong>Subtask 2 (<span class='math'>$N \le 80$</span>):</strong>
+<p>Let <span class='math'>$dp[i][j]$</span> be the number of ways to split the first <span class='math'>$i$</span> elements of the
+first array and the first <span class='math'>$j$</span> elements of the second array such that the constraints
+are satisfied.  
+<p>In order to facilitate finding the average of ranges quickly we can use prefix
+sums (we can also keep a running sum when we transition but prefix sums will be
+useful for the full solution). Let  <span class='math'>$P_a[i]$</span> denote the prefix sum of the first
+array and <span class='math'>$P_b[i]$</span> denote the prefix sum of the second array. Then at some
+<span class='math'>$dp[i][j]$</span>, we can transition from <span class='math'>$dp[i&apos;][j&apos;]$</span> (<span class='math'>$0 \le i&apos; &lt; i$</span>, <span class='math'>$0 \le j&apos; &lt; j$</span>)
+if <span class='math'>$\frac{P_a[i]-P_a[i&apos;]}{i-i&apos;} \le \frac{P_b[j]-P_b[j&apos;]}{j-j&apos;}$</span> since the
+average of the last subarray of the first array must be less than or equal  to
+the average of the last subarray of the second array. Formally, our transitions
+will look like:
+<p><div class='math'>$$
+dp[i][j] = \sum_{\substack{0 \le i&apos; &lt; i \\ 0 \le j&apos; &lt; j \\\frac{P_a[i]-P_a[i&apos;]}{i-i&apos;} \le \frac{P_b[j]-P_b[j&apos;]}{j-j&apos;}}}{dp[i&apos;][j&apos;]}
+$$</div>
+<p>Calculating the value for any <span class='math'>$dp[i][j]$</span> takes <span class='math'>$\mathcal{O}(N^2)$</span> time so this
+approach runs in <span class='math'>$\mathcal{O}(N^4)$</span> time overall.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin &gt;&gt; n;
+
+    int pA[n + 1] = {}, pB[n + 1] = {};
+
+    for (int i = 1; i &lt;= n; i++){
+        cin &gt;&gt; pA[i];
+        pA[i] += pA[i - 1];
+    }
+    for (int i = 1; i &lt;= n; i++){
+        cin &gt;&gt; pB[i];
+        pB[i] += pB[i - 1];
+    }
+    
+    int dp[n + 1][n + 1] = {};
+    dp[0][0] = 1;
+
+    for (int i = 1; i &lt;= n; i++){
+        for (int j = 1; j &lt;= n; j++){
+            for (int r = 0; r &lt; i; r++){
+                for (int c = 0; c &lt; j; c++){
+                    // (pA[i] - pA[r]) / (i - r) &lt;= (pB[j] - pB[c]) / (j - c)
+                    if (1LL * (pA[i] - pA[r]) * (j - c) &lt;= 1LL * (pB[j] - pB[c]) * (i - r)){
+                        dp[i][j] = (dp[i][j] + dp[r][c]) % MOD;
+                    }
+                }
+            }
+        }
+    }
+    cout&lt;&lt;dp[n][n]&lt;&lt;&quot;\n&quot;;
+}
+</pre>
+<p><strong>Subtask 3 (<span class='math'>$N \le 300$</span>):</strong>
+<p>It is helpful to view our dynamic programming from the perspective of a grid.
+Consider the transition for some <span class='math'>$dp[i][j]$</span>. At each <span class='math'>$j&apos;$</span>, we are transitioning
+from all <span class='math'>$i&apos;$</span> such that
+<span class='math'>$\frac{P_a[i]-P_a[i&apos;]}{i-i&apos;} \le \frac{P_b[j]-P_b[j&apos;]}{j-j&apos;}$</span>. In other words we
+are transitioning from the set of <span class='math'>$i&apos;$</span> corresponding to some <span class='math'>$k$</span> <strong>smallest</strong>
+<span class='math'>$\frac{P_a[i]-P_a[i&apos;]}{i-i&apos;}$</span>.
+<p>At each <span class='math'>$i$</span>, suppose we sort all rows <span class='math'>$i&apos;$</span> above it in increasing order of
+<span class='math'>$\frac{P_a[i]-P_a[i&apos;]}{i-i&apos;}$</span>. Recall that at each <span class='math'>$j&apos;$</span> we are transitioning
+from the set of <span class='math'>$i&apos;$</span> corresponding to some <span class='math'>$k$</span> smallest
+<span class='math'>$\frac{P_a[i]-P_a[i&apos;]}{i-i&apos;}$</span>. These elements now correspond to the length <span class='math'>$k$</span>
+<strong>prefix</strong> of column <span class='math'>$j&apos;$</span> (since we sorted the rows).
+<p>These ideas lead us to the following solution. Every time we enter a <strong>new
+row</strong>, we sort all rows <span class='math'>$i&apos;$</span> above it in increasing order of
+<span class='math'>$\frac{P_a[i]-P_a[i&apos;]}{i-i&apos;}$</span>. Then we construct column prefix sums over these
+sorted rows. To transition, we iterate over <span class='math'>$j&apos;$</span>. At each <span class='math'>$j&apos;$</span>, we binary search
+for <span class='math'>$k$</span> and add the length <span class='math'>$k$</span> prefix sum of column <span class='math'>$j&apos;$</span>. Since sorting will be
+<span class='math'>$\mathcal{O}(N^2 \log N)$</span> in total and transitioning at each state takes
+<span class='math'>$\mathcal{O}(N \log N)$</span> time, this solution runs in <span class='math'>$\mathcal{O}(N^3 \log N)$</span>
+time.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin &gt;&gt; n;
+
+    int pA[n + 1] = {}, pB[n + 1] = {};
+
+    for (int i = 1; i &lt;= n; i++){
+        cin &gt;&gt; pA[i];
+        pA[i] += pA[i - 1];
+    }
+    for (int i = 1; i &lt;= n; i++){
+        cin &gt;&gt; pB[i];
+        pB[i] += pB[i - 1];
+    }
+    
+    int dp[n + 1][n + 1] = {};
+    dp[0][0] = 1;
+    
+    for (int i = 1; i &lt;= n; i++){
+        int psm[i][n + 1] = {};
+
+        int R[i];
+        iota(R, R + i, 0);
+
+        sort(R, R + i, [&amp;](int x, int y){
+            // (pA[i] - pA[x]) / (i - x) &lt; (pA[i] - pA[y]) / (i - y)
+            return 1LL * (pA[i] - pA[x]) * (i - y) &lt; 1LL * (pA[i] - pA[y]) * (i - x);
+        });
+
+        // Sort rows in increasing order of averages and construct column prefix sums
+        for (int r = 0; r &lt; i; r++)
+            for (int j = 0; j &lt;= n; j++)
+                psm[r][j] = ((!r ? 0 : psm[r - 1][j]) + dp[R[r]][j]) % MOD;
+        
+        for (int j = 1; j &lt;= n; j++){
+            for (int c = 0; c &lt; j; c++){
+                auto chk = [&amp;](int r){
+                    // (pA[i] - pA[R[r]]) / (i - R[r]) &lt;= (pB[j] - pB[c]) / (j - c)
+                    return 1LL * (pA[i] - pA[R[r]]) * (j - c) &lt;= 1LL * (pB[j] - pB[c]) * (i - R[r]);
+                };
+                if (!chk(0))
+                    continue;
+                
+                int L = 0, H = i - 1;
+
+                while (L &lt; H){
+                    int M = (L + H + 1) / 2;
+                    chk(M) ? L = M : H = M - 1;
+                }
+                dp[i][j] = (dp[i][j] + psm[L][c]) % MOD;
+            }
+        }
+    }
+    cout&lt;&lt;dp[n][n]&lt;&lt;&quot;\n&quot;;
+}
+</pre>
+<p><strong>Full Credit (<span class='math'>$N \le 500$</span>):</strong>
+<p>Let us speed up the subtask <span class='math'>$3$</span> solution. If we are able to process all <span class='math'>$j&apos;$</span> in
+increasing order of <span class='math'>$\frac{P_b[j]-P_b[j&apos;]}{j-j&apos;}$</span>, then <span class='math'>$k$</span> will be
+non-decreasing which removes the need for binary search. Instead, we can just
+store <span class='math'>$k$</span> and repeatedly increase it (note that it can only be increased at most
+<span class='math'>$i$</span> times).
+<p>At each <span class='math'>$j$</span> we can sort all <span class='math'>$j&apos;$</span> in increasing order of
+<span class='math'>$\frac{P_b[j]-P_b[j&apos;]}{j-j&apos;}$</span>. If we cache our results or pre-calculate them,
+then we only have to do this sort <span class='math'>$N$</span> times in total. Since sorting will be
+<span class='math'>$\mathcal{O}(N^2 \log N)$</span> in total and transitioning at each state takes
+<span class='math'>$\mathcal{O}(N)$</span> time, this solution runs in <span class='math'>$\mathcal{O}(N^3)$</span> time.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin &gt;&gt; n;
+
+    int pA[n + 1] = {}, pB[n + 1] = {};
+
+    for (int i = 1; i &lt;= n; i++){
+        cin &gt;&gt; pA[i];
+        pA[i] += pA[i - 1];
+    }
+    for (int i = 1; i &lt;= n; i++){
+        cin &gt;&gt; pB[i];
+        pB[i] += pB[i - 1];
+    }
+    
+    vector&lt;int&gt; ordRow[n + 1], ordCol[n + 1];
+
+    for (int i = 1; i &lt;= n; i++){
+        // Sort in increasing order of averages
+        vector&lt;int&gt; &amp;R = ordRow[i];
+        vector&lt;int&gt; &amp;C = ordCol[i];
+
+        for (int v = 0; v &lt; i; v++){
+            R.push_back(v);
+            C.push_back(v);
+        }
+        sort(R.begin(), R.end(), [&amp;](int x, int y){
+            // (pA[i] - pA[x]) / (i - x) &lt; (pA[i] - pA[y]) / (i - y)
+            return 1LL * (pA[i] - pA[x]) * (i - y) &lt; 1LL * (pA[i] - pA[y]) * (i - x);
+        });
+        sort(C.begin(), C.end(), [&amp;](int x, int y){
+            // (pB[i] - pB[x]) / (i - x) &lt; (pB[i] - pB[y]) / (i - y)
+            return 1LL * (pB[i] - pB[x]) * (i - y) &lt; 1LL * (pB[i] - pB[y]) * (i - x);
+        });
+    }
+
+    int dp[n + 1][n + 1] = {};
+    dp[0][0] = 1;
+    
+    for (int i = 1; i &lt;= n; i++){
+        int psm[i][n + 1] = {};
+        vector&lt;int&gt; &amp;R = ordRow[i];
+
+        // Sort rows in increasing order of averages and construct column prefix sums
+        for (int r = 0; r &lt; R.size(); r++)
+            for (int j = 0; j &lt;= n; j++)
+                psm[r][j] = ((!r ? 0 : psm[r - 1][j]) + dp[R[r]][j]) % MOD;
+        
+        for (int j = 1; j &lt;= n; j++){
+            vector&lt;int&gt; &amp;C = ordCol[j];
+            int r = 0;
+
+            // 2 pointers over columns in sorted order
+            for (int c : C){
+                // (pA[i] - pA[R[r]]) / (i - R[r]) &lt;= (pB[j] - pB[c]) / (j - c)
+                while (r &lt; i and 1LL * (pA[i] - pA[R[r]]) * (j - c) &lt;= 1LL * (pB[j] - pB[c]) * (i - R[r]))
+                    r++;
+                
+                dp[i][j] = (dp[i][j] + (!r ? 0 : psm[r - 1][c])) % MOD;
+            }
+        }
+    }
+    cout&lt;&lt;dp[n][n]&lt;&lt;&quot;\n&quot;;
+}
+</pre>
+<p></body></html>

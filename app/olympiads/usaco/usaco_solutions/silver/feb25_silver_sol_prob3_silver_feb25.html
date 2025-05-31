@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Tina Wang)
+<p>Let us define our current state <span class='math'>$(x, y)$</span> as having <span class='math'>$x$</span> bales in the first pile
+and <span class='math'>$y$</span> bales in the second pile.
+<p>Subtask 1: <span class='math'>$\max(c, d) \le 20 \cdot\min(a, b)$</span> 
+<p>We can recurse on our current state <span class='math'>$(x, y)$</span>: at each step, we can choose to add
+<span class='math'>$y$</span> bales to the first pile or <span class='math'>$x$</span> bales to the second pile. Thus, our recursion
+is as follows:
+<p>Starting state: <span class='math'>$(a, b)$</span>
+<p>Transition: <span class='math'>$(a, b) \rightarrow (a + b, b), (a, a + b)$</span> 
+<p>Final state: <span class='math'>$(c, d)$</span>
+<p>Notice that once we exceed <span class='math'>$c$</span> for the first pile or <span class='math'>$d$</span> for the second pile, we
+can never go back, so recursion can stop immediately after.
+<p>Time Complexity: <span class='math'>$O( (\frac{\max(c, d)}{\min(a, b)})^2)$</span> per test
+<p>Subtask 2: <span class='math'>$T \leq 10$</span> and <span class='math'>$a, b, c, d \leq 10^6$</span>
+<p>We notice that a given state <span class='math'>$(x, y)$</span> is either the base case <span class='math'>$(a, b)$</span> or came
+from <span class='math'>$(x - y, y)$</span>, <span class='math'>$(x, y - x)$</span>. Only one of these is feasible as only one of
+<span class='math'>$x - y, y - x$</span> can be positive. 
+<p>More specifically,
+<ul><li>If <span class='math'>$x &gt; y$</span>, then <span class='math'>$(x - y, y) \rightarrow (x, y)$</span></li><li>If <span class='math'>$x &lt; y$</span>, then
+<span class='math'>$(x, y - x) \rightarrow (x, y)$</span></li></ul>
+<p>This motivates a greedy solution where we start at <span class='math'>$(c, d)$</span> and take any
+feasible subtraction to reach <span class='math'>$(a, b)$</span>.
+<p>Time Complexity: <span class='math'>$O(\frac{\max(c, d)}{\min(a, b)})$</span> per test
+<p>Full Solution:
+<p>We observe that instead of doing each transition <span class='math'>$(x - y, y) \rightarrow (x, y)$</span>
+one by one, we can batch the same type of transition together. 
+<p>More specifically, note that is <span class='math'>$x - y &gt; y$</span> as well, then
+<span class='math'>$(x - 2y, y) \rightarrow (x - y, y) \rightarrow (x, y)$</span>.
+<p>The number of operations we can batch is then
+<p><ul><li> <span class='math'>$\lfloor\frac{x - a}{y}\rfloor$</span> if <span class='math'>$x &gt; y$</span> </li><li>
+<span class='math'>$\lfloor\frac{y - b}{x}\rfloor$</span> if <span class='math'>$x \leq y$</span> </li></ul>
+<p>If <span class='math'>$x &lt; a$</span> or <span class='math'>$y &lt; b$</span>, it is impossible as described above.
+<p>My C++ code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+     
+ll solve() {
+    ll a, b, c, d;
+    cin &gt;&gt; a &gt;&gt; b &gt;&gt; c &gt;&gt; d;
+    if(a == c &amp;&amp; b == d) return 0;
+    
+    ll ans = 0;
+    while(a != c || b != d) {
+        if(c &lt; a || d &lt; b) return -1;
+        if(c &gt; d) {
+            ans += max(1LL, (c - a) / d);
+            c -= max(1LL, (c - a) / d) * d;
+        } else if (d &gt; c) {
+            ans += max(1LL, (d - b) / c);
+            d -= max(1LL, (d - b) / c) * c;
+        } else return -1;
+    }
+    return ans;
+}
+     
+int main() {
+    setIO();
+     
+    int T;
+    cin &gt;&gt; T;
+    while(T--) {
+        cout &lt;&lt; solve() &lt;&lt; &quot;\n&quot;;
+    }
+ 
+    return 0;
+}
+</pre>
+<p>Benjamin Qi&apos;s Python code:
+<p><pre class='prettyprint'>
+def solve():
+    a, b, c, d = map(int, input().split())
+    ops = 0
+    while True:
+        if a == c and b == d:
+            return ops
+        if c &lt; d:
+            a, b = b, a
+            c, d = d, c
+        if a &gt; c or b &gt; d or d == 0:
+            return -1
+        if b == d and (c - a) % d == 0:
+            ops += (c - a) // d
+            return ops
+        ops += c // d
+        c %= d
+    return ops
+
+
+T = int(input())
+for _ in range(T):
+    print(solve())
+</pre>
+<p>Time Complexity: <span class='math'>$O(\log\frac{\max(c, d)}{\min(a, b)})$</span> per test, since after
+every batch transition either <span class='math'>$c$</span> or <span class='math'>$d$</span> is reduced by at least a factor of 2.
+<p>Note: The operations we perform on <span class='math'>$c$</span> and <span class='math'>$d$</span> are equivalent to those in the 
+<a href='https://en.wikipedia.org/wiki/Euclidean_algorithm'>Euclidean algorithm</a>
+for computing GCD.
+<p></body></html>

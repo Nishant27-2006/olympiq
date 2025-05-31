@@ -1,0 +1,217 @@
+Solution ID: sol_dirtraverse_gold_feb18
+Contest: FEB18
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_dirtraverse_gold_feb18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+We are given a collection of directories and files, and asked to find the
+directory from which the sum of relative paths to files is minimized.
+Abstractly, this is a graph problem: the collection of directories forms a tree,
+where the files are special leaves of the tree, and there are two weights on
+each edge. For instance, if the weight from node
+
+$u$
+
+to node
+
+$v$
+
+is
+
+$w_{uv}$
+
+,
+this means that any relative path ending at
+
+$u$
+
+(but not passing through
+
+$v$
+
+)
+must be extended by
+
+$w$
+
+characters to obtain a relative path for
+
+$v$
+
+. There is a
+corresponding weight
+
+$w_{vu}$
+
+, which may not be equal to
+
+$w_{uv}$
+
+.
+
+So we want to find, for each node in the tree, the sum of path lengths from the
+node to special leaves. Our answer will essentially be the minimum sum, although
+depending on how exactly the weights are chosen, some care should be taken with
+counting backslash characters correctly.
+
+Now the question is how to compute the sums. For each node, split the sum into
+an up-sum and a down-sum, where the down-sum counts paths to special leaves in
+the node's subtree, and the up-sum counts paths to all other special leaves.
+Then the down-sum of a node is almost equal to the sum over all its children of
+their down-sums: every special leaf in the node's subtree is counted by exactly
+one of the children. So we must simply account for how much each path increased.
+For a particular child, all paths in its subtree increased by the weight of the
+(directed) edge from the node to the child. This means that given the number of
+special leaves in each child's subtree, and the down-sum of each child, we can
+compute the down-sum of the parent node. Therefore we can compute all down-sums
+in a single depth-first search.
+
+We can compute the up-sums in a second depth-first search, as follows. Fix some
+node
+
+$u$
+
+with parent
+
+$p$
+
+. Every special leaf not in the subtree of
+
+$u$
+
+is either
+not in the subtree of
+
+$p$
+
+, or in the subtree of a different child of
+
+$u$
+
+. So the
+up-sum of
+
+$u$
+
+can be computed from the up-sum of
+
+$p$
+
+(for the first case), the
+down-sum of
+
+$p$
+
+minus the contribution of
+
+$u$
+
+to this down-sum (for the second
+case), and the weight of the (directed) edge from
+
+$u$
+
+to
+
+$p$
+
+(since all paths
+increase by this length when extended from
+
+$p$
+
+to
+
+$u$
+
+), and the number of special leaves not in the subtree of
+
+$p$
+
+(since this is the number of paths whose lengths increase by that weight).
+
+#include <cstdio>
+#include <cassert>
+#include <cstring>
+#include <vector>
+using namespace std;
+ 
+#define NMAX 100000
+ 
+struct Node {
+  bool isFile;
+  vector<Node*> children;
+  int namelen;
+ 
+  int numLeaves;
+  long long totalSubtreeLen;
+ 
+  long long total;
+};
+ 
+Node nodes[NMAX];
+ 
+int n;
+int nleaves;
+ 
+void dfs1(Node* node) {
+  node->numLeaves = (node->isFile ? 1 : 0);
+  node->totalSubtreeLen = 0;
+  for (Node* child : node->children) {
+    dfs1(child);
+    node->numLeaves += child->numLeaves;
+    node->totalSubtreeLen += child->totalSubtreeLen + child->numLeaves * (child->namelen + (child->isFile ? 0 : 1));
+  }
+}
+ 
+void dfs2(Node* node, long long parentlen) {
+  node->total = parentlen + node->totalSubtreeLen;
+ 
+  long long plenadd = 0;
+  for (Node* child : node->children) {
+    plenadd += child->totalSubtreeLen + child->numLeaves * (child->namelen + (child->isFile ? 0 : 1));
+  }
+  for (Node* child : node->children) {
+    dfs2(child, parentlen + plenadd -
+      (child->totalSubtreeLen + child->numLeaves * (child->namelen + (child->isFile ? 0 : 1)))
+      + 3 * (nleaves - child->numLeaves));
+  }
+}
+ 
+int main() {
+  scanf("%d", &n);
+  char name[40];
+  nleaves = 0;
+  for (int i = 0; i < n; i++) {
+    scanf("%s", name);
+    nodes[i].namelen = strlen(name);
+    int numChildren;
+    scanf("%d", &numChildren);
+    nodes[i].isFile = (numChildren == 0);
+    if (nodes[i].isFile) {
+      nleaves++;
+    }
+    for (int j = 0; j < numChildren; j++) {
+      int id;
+      scanf("%d", &id);
+      nodes[i].children.push_back(&nodes[id-1]);
+    }
+  }
+ 
+  assert(!nodes[0].isFile);
+ 
+  dfs1(&nodes[0]);
+  dfs2(&nodes[0], 0);
+  long long ans = nodes[0].total;
+  for (int i = 0; i < n; i++) {
+    if (!nodes[i].isFile) {
+      ans = (ans < nodes[i].total ? ans : nodes[i].total);
+    }
+  }
+  printf("%lld\n", ans);
+}

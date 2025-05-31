@@ -1,0 +1,138 @@
+Solution ID: sol_dishes_gold_feb19
+Contest: FEB19
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_dishes_gold_feb19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Avichal Goel)
+
+Let's say the plates have labels
+
+$L_1, L_2, \ldots, L_n$
+
+.
+
+Bessie's first move is to take the top plate from the dirty stack and make a new soapy stack. If
+
+$L_2 < L_1$
+
+, then it makes sense for Bessie to place it on top of the first plate. On the other hand, if
+
+$L_2 > L_1$
+
+, then Bessie should instead make a new stack to the right of the first one. (Take a moment to draw it out on paper to convince yourself that this would result in Elsie receiving the plates in the correct order.)
+
+From here, we can make some generalizations. Specifically, we should place a given
+
+$L_i$
+
+on the stack with the smallest
+
+$L_j$
+
+such that
+
+$L_j > L_i$
+
+, which ensures that all plates on stacks to the left have a smaller label.
+
+|1|
+|2|  |*|  |7|
+|4|  |6|  |9|  |10|  |15|
+
+For example, if
+
+$L_i = 5$
+
+, it should be placed at the location marked by the asterisk in the example above, allowing Elsie to process the plates in the order
+
+$1 \rightarrow 2 \rightarrow 4 \rightarrow 5 \rightarrow 6 \rightarrow 7 \rightarrow 9 \rightarrow 10 \rightarrow 15$
+
+as desired.
+
+So far so good, but there might be a plate with a smaller label that is already on our stack. Consider the following modification of the above example, where we are still trying to place
+
+$L_i = 5$
+
+.
+
+|?|
+|1|  |4|  |7|
+|2|  |6|  |9|  |10|  |15|
+
+In this case, we cannot simply add
+
+$5$
+
+to the stack with
+
+$6$
+
+, because it would get picked up by Elsie before
+
+$4$
+
+, which we don't want. In fact, there's no way to place
+
+$5$
+
+in the current configuration while still maintaining the correct order. So, from here, the only way to continue is by letting Elsie clear out
+
+$1, 2, \text{ and } 4$
+
+, and then placing
+
+$5$
+
+on top of
+
+$6$
+
+.
+
+These observations give us our final algorithm: place each plate on the leftmost stack that would preserve the correct order, but only after removing smaller labels already on that stack. We should keep track of the maximum label that we've removed so far because any future plates with smaller labels cannot be processed.
+
+Check out my code below, which runs in
+
+$\mathcal{O}(n)$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e5 + 5;
+int n, base[N];
+vector<int> items[N];
+
+int main() {
+
+    cin >> n;
+
+    int placed = 0, ans = n;
+    for (int i = 0; i < n; i++) {
+        int x; cin >> x;
+        // impossible to add this plate
+        if (x < placed) {
+            ans = i;
+            break;
+        }
+        // plates that go on this stack
+        for (int j = x; j > 0 && !base[j]; j--) {
+            base[j] = x;
+        }
+        // remove plates with smaller labels
+        while (!items[base[x]].empty() && items[base[x]].back() < x) {
+            placed = items[base[x]].back();
+            items[base[x]].pop_back();
+        }
+        // add this plate to the stack
+        items[base[x]].push_back(x);
+    }
+
+    cout << ans << endl;
+
+}

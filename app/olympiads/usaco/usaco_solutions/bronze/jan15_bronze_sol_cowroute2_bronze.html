@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<html>
+<p>(Analysis by Mark Gordon)</p><p>
+
+This problem is a harder version of the Cow Routing problem that appeared earlier in the bronze contest.  In this problem Bessie may use up to two tickets instead of just a single ticket.</p><p>
+
+One way to solve this problem is to try each intermediate city and use
+the same strategy as in the original problem to see which routes can
+take us from $A$ to $u$ and which can take us from $u$ to $B$ and take
+the cheapest pair of tickets.  However the naive approach takes
+$O(CNM)$ time (where $C$ is the number of cities and $M$ is the
+maximum length of each route) which is a bit too slow to pass all of
+the test cases.</p><p>
+
+To amend this we can simply do most of the work for intermediate city
+simultaneously.  We&apos;ll keep an array $\textit{ca2u}$ to represent
+the minimum route cost to go from city $A$ to city $u$ and similarly
+$\textit{cu2b}$ to give the minimum route cost to go from city $u$ to
+city $B$.  If we can successfully calculate these two arrays then the
+final answer is just the minimum cost of $\mathit{ca2u}[u] +
+\mathit{cu2b}[u]$ over each candidate city $u$.</p><p>
+
+We can calculate this array in $O(NM)$ time by just updating
+$\mathit{ca2u}[u]$ for any city $u$ that appears after city $A$ in a
+route.  Similarly, we do the same for $\mathit{cu2b}[u]$ for any city
+$u$ that appears before city $B$ in a route.  This yields a solution
+like below.</p><p>
+
+</p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+int main() {
+  freopen(&quot;cowroute.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;cowroute.out&quot;, &quot;w&quot;, stdout);
+
+  int A, B, N;
+  cin &gt;&gt; A &gt;&gt; B &gt;&gt; N;
+
+  /* Read the costs and routes. */
+  vector&lt;int&gt; costs(N);
+  vector&lt;vector&lt;int&gt; &gt; routes(N);
+  for (int i = 0; i &lt; N; i++) {
+    int ln;
+    cin &gt;&gt; costs[i] &gt;&gt; ln;
+    routes[i].resize(ln);
+    for (int j = 0; j &lt; ln; j++) {
+      cin &gt;&gt; routes[i][j];
+    }
+  }
+
+  /* ca2u[u] gives the cheapest route cost from A to u. */
+  vector&lt;int&gt; ca2u(10001, 100000);
+  ca2u[A] = 0;
+
+  /* D2[u] gives the cheapest route cost form u to B. */
+  vector&lt;int&gt; cu2b(10001, 100000);
+  cu2b[B] = 0;
+
+  /* Update D1 and D2 based on each route. */
+  for (int i = 0; i &lt; N; i++) {
+    int cost = costs[i];
+    vector&lt;int&gt;&amp; route = routes[i];
+
+    /* Determine the position of A and B in the route, if present. */
+    int pos_a = route.size();
+    int pos_b = -1;
+    for (int j = 0; j &lt; route.size(); j++) {
+      if (route[j] == A) {
+        pos_a = j;
+      } else if (route[j] == B) {
+        pos_b = j;
+      }
+    }
+
+    /* For each city u after A update D1[u].  Similarly update D2[u] for each
+     * city u before B. */
+    for (int j = 0; j &lt; route.size(); j++) {
+      if (pos_a &lt;= j) {
+        ca2u[route[j]] = min(ca2u[route[j]], cost);
+      }
+      if (j &lt;= pos_b) {
+        cu2b[route[j]] = min(cu2b[route[j]], cost);
+      }
+    }
+  }
+
+  /* Calculate the minimum cost for each possible intermediate node. */
+  int result = 100000;
+  for (int i = 1; i &lt;= 10000; i++) {
+    result = min(result, ca2u[i] + cu2b[i]);
+  }
+
+  /* Output the minimum cost pair (or single) ticket, if possible. */
+  if (result == 100000) {
+    cout &lt;&lt; -1 &lt;&lt; endl;
+  } else {
+    cout &lt;&lt; result &lt;&lt; endl;
+  }
+
+  return 0;
+}
+</pre><p></p>
+</html>

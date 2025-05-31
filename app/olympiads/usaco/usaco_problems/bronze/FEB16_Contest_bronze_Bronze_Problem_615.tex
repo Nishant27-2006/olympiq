@@ -1,0 +1,88 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB16 Contest - Bronze Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Farmer John has received an order for exactly $M$ units of milk
+($1 \leq M \leq 1,000$) that he needs to fill right away.  Unfortunately, his
+fancy milking machine has just become broken, and all he has are three milk
+pails of integer sizes $X$, $Y$, and $M$ ($1 \leq X < Y < M$). All three pails
+are initially empty.  Using these three pails, he can perform any number of the
+following two types of operations:
+
+- He can fill the smallest pail (of size $X$) completely to the top with $X$
+units of milk and pour it into the size-$M$ pail, as long as this will not cause
+the size-$M$ pail to overflow.
+
+- He can fill the medium-sized pail (of size $Y$) completely to the top with $Y$
+units of milk and pour it into the size-$M$ pail, as long as this will not cause
+the size-$M$ pail to overflow.
+
+Although FJ realizes he may not be able to completely fill the size-$M$ pail,
+please help him determine the maximum amount of milk he can possibly add to this
+pail.
+
+INPUT FORMAT (file pails.in):
+The first, and only line of input, contains $X$, $Y$, and $M$, separated by spaces.
+
+OUTPUT FORMAT (file pails.out):
+Output the maximum amount of milk FJ can possibly add to the size-$M$ pail.
+
+SAMPLE INPUT:
+17 25 77
+SAMPLE OUTPUT: 
+76
+
+In this example, FJ fills the pail of size 17 three times and the pail of size
+25 once, accumulating a total of 76 units of milk.
+
+Problem credits: Brian Dean
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (file pails.out):Output the maximum amount of milk FJ can possibly add to the size-$M$ pail.SAMPLE INPUT:17 25 77SAMPLE OUTPUT:76In this example, FJ fills the pail of size 17 three times and the pail of size
+25 once, accumulating a total of 76 units of milk.Problem credits: Brian Dean
+
+\section*{Output Format}
+SAMPLE INPUT:17 25 77SAMPLE OUTPUT:76In this example, FJ fills the pail of size 17 three times and the pail of size
+25 once, accumulating a total of 76 units of milk.Problem credits: Brian Dean
+
+\section*{Sample Input}
+\begin{verbatim}
+17 25 77
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+76
+
+In this example, FJ fills the pail of size 17 three times and the pail of size
+25 once, accumulating a total of 76 units of milk.Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=615
+
+\section*{Source}
+USACO FEB16 Contest, Bronze Division, Problem ID: 615
+
+\end{document}

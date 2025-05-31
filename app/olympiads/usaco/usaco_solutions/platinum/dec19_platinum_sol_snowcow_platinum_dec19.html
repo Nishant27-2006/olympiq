@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>We will use ânodeâ interchangeably with âsnowball.â Letâs start by
+representing the tree as an array. First, we can run a preorder traversal in
+<span class='math'>$O(N)$</span> time.  Let <span class='math'>$st[x]$</span> denote the index (starting from one) of node <span class='math'>$x$</span> in
+the traversal and let <span class='math'>$en[x]$</span> denote the maximum index of any node in the
+subtree of <span class='math'>$v$</span>. Then the subtree of <span class='math'>$x$</span> corresponds exactly with all nodes with
+indices in the range <span class='math'>$[st[x],en[x]].$</span>
+<p>For a fixed color <span class='math'>$c,$</span> call a node ``special&quot; if it is colored <span class='math'>$c$</span> and its
+parent is not colored <span class='math'>$c$</span>. For any node <span class='math'>$x,$</span> let <span class='math'>$sub[x]$</span> denote the number of
+nodes in the subtree of <span class='math'>$x.$</span> Then the number of nodes in its subtree that are
+colored <span class='math'>$c$</span> is given by one of the following:
+<p><ul><li>Case 1: If <span class='math'>$x$</span> or one of its parents is special, then return <span class='math'>$sub[x]$</span>.</li><li>Case 2: Otherwise, return the sum of the subtree sizes of all special nodes 
+in the subtree of <span class='math'>$x.$</span></li></ul>
+<p>We can rewrite the answer for a query for the subtree of <span class='math'>$x$</span> as the sum of two
+separate parts.
+<div class='math'>$$sub[x]\cdot (\#\text{ of special nodes above or equal to }x)+\sum (\text{subtree sizes of special nodes below }x),$$</div>
+over special nodes of all colors. Whenever a previously uncolored node is
+colored, we add it to the set of special nodes for that color and possibly
+remove some of the nodes in that set.
+<p><strong>Part 1:</strong> getting <span class='math'>$(\#\text{ of special nodes above or equal to }x)$</span>
+<p>Whenever we add a special node, use a binary indexed tree (BIT) to add 1 to all
+nodes in the range <span class='math'>$[st[x],en[x]].$</span> Then evaluating this quantity is equivalent
+to making a point query at <span class='math'>$st[x]$</span>.
+<p><strong>Part 2:</strong> getting <span class='math'>$\sum (\text{subtree sizes of special nodes below }x)$</span>
+<p>Whenever we add a special node <span class='math'>$y$</span>, use a BIT to add <span class='math'>$sub[y]$</span> to the index
+<span class='math'>$st[y].$</span> Then we simply need to query the sum of all values in the BIT in the
+range
+<span class='math'>$[st[x]+1,en[x]].$</span>
+<p>Since we make <span class='math'>$O(Q)$</span> updates to the sets and the two BIT&apos;s, our solution runs in
+<span class='math'>$O(N+Q\log N).$</span> My code follows.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+typedef vector&lt;int&gt; vi; 
+ 
+#define FOR(i,a,b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i,a) FOR(i,0,a)
+#define ROF(i,a,b) for (int i = (b)-1; i &gt;= (a); --i)
+#define R0F(i,a) ROF(i,0,a)
+#define trav(a,x) for (auto&amp; a: x)
+ 
+#define pb push_back
+#define ub upper_bound
+#define s second
+ 
+void setIO(string name) {
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	freopen((name+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((name+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+const int MX = 100005;
+
+template&lt;class T, int SZ&gt; struct BIT {
+	T bit[SZ+1];
+	void upd(int pos, T x) {
+		for (; pos &lt;= SZ; pos += (pos&amp;-pos)) 
+		bit[pos] += x;
+	}
+	T sum(int r) {
+		T res = 0; for (; r; r -= (r&amp;-r)) 
+			res += bit[r];
+		return res;
+	}
+	T query(int l, int r) { 
+		return sum(r)-sum(l-1); 
+	}	
+};
+ 
+BIT&lt;ll,MX&gt; A,B;
+map&lt;int,int&gt; col[MX];
+int st[MX], en[MX],sub[MX];
+int N,Q;
+vi adj[MX];
+int co;
+ 
+void dfs(int x, int y) {
+	st[x] = ++co;
+	trav(t,adj[x]) if (t != y) dfs(t,x);
+	en[x] = co;
+	sub[x] = en[x]-st[x]+1;
+}
+ 
+void upd(int x, int y) {
+	A.upd(st[x],y); A.upd(en[x]+1,-y);
+	B.upd(st[x],y*sub[x]);
+}
+ 
+int main() {
+	setIO(&quot;snowcow&quot;);
+	cin &gt;&gt; N &gt;&gt; Q;
+	F0R(i,N-1) {
+		int a,b; cin &gt;&gt; a &gt;&gt; b;
+		adj[a].pb(b), adj[b].pb(a);
+	}
+	dfs(1,0);
+	F0R(i,Q) {
+		int t; cin &gt;&gt; t;
+		if (t == 1) {
+			int x,c; cin &gt;&gt; x &gt;&gt; c;
+			auto it = col[c].ub(st[x]);
+			if (it != begin(col[c]) &amp;&amp; en[prev(it)-&gt;s] &gt;= en[x]) continue;
+			while (it != end(col[c]) &amp;&amp; en[it-&gt;s] &lt;= en[x]) {
+				upd(it-&gt;s,-1);
+				col[c].erase(it++);
+			}
+			col[c][st[x]] = x; upd(x,1);
+		} else {
+			int x; cin &gt;&gt; x;
+			cout &lt;&lt; sub[x]*A.sum(st[x])+B.query(st[x]+1,en[x]) &lt;&lt; &quot;\n&quot;;
+		}
+	}
+}
+</pre>
+<p></body></html>

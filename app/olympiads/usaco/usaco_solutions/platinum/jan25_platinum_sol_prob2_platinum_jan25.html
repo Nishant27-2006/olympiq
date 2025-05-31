@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Suhas Nagar, Benjamin Qi)
+<p>Claim 1: The optimal distribution for the positions of <span class='math'>$K$</span> punches will have at
+most one position not equal to <span class='math'>$0$</span> or <span class='math'>$N-1$</span>. Suppose this were not true, then in
+the optimal solution, we have two positions  <span class='math'>$0 &lt; p_1 \leq p_2 &lt; N-1$</span>. However,
+we can always set <span class='math'>$p_1 = p_1-1$</span> and <span class='math'>$p_2 = p_2+1$</span> to form an equivalent (or
+better) solution since all the elements between <span class='math'>$p_1$</span> and <span class='math'>$p_2$</span> will increase
+and all positions outside maintain the same value. We can repeat this operation
+until one (or both) of <span class='math'>$p_1,p_2$</span> is at <span class='math'>$0$</span> or <span class='math'>$N-1$</span>.
+<p><div class='prob-section'><h4>Subtask 1:</h4>
+For this subtask, we can observe that if we ever have to punch twice, these
+punches should be placed on either end of the array in order to maximize the
+minimum value in the array. We also know that we must punch an even amount of
+times. If we punched an odd number of times and <span class='math'>$i$</span> was the last position we
+punched, then we can remove this punch and the power at position <span class='math'>$i$</span> will remain
+unchanged. If we met the power threshold at <span class='math'>$i$</span> before, it  will still be
+satisfied after the removal.  In two punches, we can always increase a value in
+the array by <span class='math'>$N-1$</span>. This means we can just print out
+<span class='math'>$2 \cdot \lceil \frac{p_1}{N-1} \rceil$</span>.
+</div>
+<p><div class='prob-section'><h4>Subtask 2:</h4>
+<p>Let <span class='math'>$K$</span> be the number of times that Bessie punches the array. Clearly, if <span class='math'>$K$</span>
+punches can break all the targets, then <span class='math'>$K+1$</span> punches can break all the targets.
+Consequently, if we can  determine whether <span class='math'>$K$</span> punches can break all the tiles
+for some given value of <span class='math'>$K$</span>, then we can binary search on <span class='math'>$K$</span> to find the
+minimum number of punches necessary.
+<p>Suppose we are trying to determine feasibility for some value of <span class='math'>$K$</span>.  
+<p>Let <span class='math'>$(A,B)$</span> represent distributing <span class='math'>$A$</span> punches to position <span class='math'>$0$</span> and <span class='math'>$B$</span> punches
+to position  <span class='math'>$N-1$</span> where <span class='math'>$A+B = K$</span> or <span class='math'>$A+B = K-1$</span> with an extra punch being used
+somewhere in the middle. We can let <span class='math'>$a_i$</span> represent the amount of power applied
+at position <span class='math'>$i$</span> and say that a  position <span class='math'>$i$</span> is &quot;satisfied&quot; if <span class='math'>$a_i \geq p_i$</span>.
+<p>Let&apos;s first determine how to deal with <span class='math'>$A+B=K$</span> in <span class='math'>$O(N)$</span> time for a single <span class='math'>$K$</span>;
+to deal with <span class='math'>$A+B=K-1$</span> we can iterate over all middle positions, remove the
+effect of punching at that position, and then solve assuming we only punch at
+the ends. This would give us the answer for a single <span class='math'>$K$</span> in <span class='math'>$O(N^2)$</span> time, for
+an overall runtime of <span class='math'>$O(N^2\log \text{MAX})$</span> per test case.
+<p>To solve <span class='math'>$A+B=K$</span> in <span class='math'>$O(N)$</span> time, observe that each  <span class='math'>$p_i$</span> determines each an
+lower bound (if <span class='math'>$i\le (N-1)/2$</span>) or upper bound  (if <span class='math'>$i\ge (N-1)/2$</span>) on the
+number of times we choose <span class='math'>$N-1$</span>. We can compute these bounds  in <span class='math'>$O(N)$</span> time
+independently for each position; then a solution will exist  if there is some
+position for which the lower bound is at most the upper bound.
+<p>Optional: we can speed up the solution <span class='math'>$O(N\log \text{MAX} + N^2)$</span> time since
+checking the <span class='math'>$A+B=K$</span> case is sufficient to get within distance 1 of the answer,
+and then we only need to apply the <span class='math'>$O(N^2)$</span> check to a single candidate value of
+<span class='math'>$K$</span>.
+</div>
+<p><div class='prob-section'><h4>Full Solution 1:</h4>
+Instead of solving for each middle position in <span class='math'>$O(N)$</span> separately, we need to
+somehow deal with them all at once.
+<p>One possible approach is to first determine how to apportion the punches  at the
+end positions, and then determine the middle position (if any).
+<p><em>Apportioning punches at ends: </em>
+<p>Claim 2: Suppose that the answer is at most <span class='math'>$K$</span>; then a solution <span class='math'>$(A,B)$</span> with
+<span class='math'>$A+B = K$</span> exists where <span class='math'>$A$</span> and <span class='math'>$B$</span> are not necessarily integers. This is true
+because if there is a solution with integral <span class='math'>$(A,B)$</span> plus an additional punch at
+<span class='math'>$i$</span> satisfying <span class='math'>$A+B=K-1$</span>, then <span class='math'>$(A+\frac{N-1-i}{N-1}, B+\frac{i}{N-1})$</span> is a
+non-integral solution.
+<p>Suppose we want to find some <span class='math'>$A$</span> such that <span class='math'>$(A,K-A)$</span> satisfies our array. The
+power at some index <span class='math'>$i$</span> can be computed to be
+<span class='math'>$q_i = A\times i + (K-A) \times (N-1-i)$</span>. Since <span class='math'>$q_i \geq p_i$</span> in order for the
+position to be satisfied, we know <div class='math'>$$(2i+1-N)A \geq 
+p_i-K\times(N-1-i).$$</div> Since
+the coefficient of <span class='math'>$A$</span> switches signs halfway through the array, we can rewrite
+this as two different inequalities.
+<div class='math'>$$A \geq 
+\frac{p_i-K\times(N-1-i)}{2i+1-N} \text{ subject to } 2i+1-N &gt; 0$$</div>
+<div class='math'>$$A \leq 
+\frac{p_i-K\times(N-1-i)}{2i+1-N} \text{ subject to } 2i+1-N &lt; 0$$</div> We
+can determine this inequality across all positions  <span class='math'>$i$</span> to determine that
+<span class='math'>$a_1 \leq A \leq a_2$</span> where <span class='math'>$a_1$</span> is the maximum of the right-hand side across
+the first inequality and <span class='math'>$a_2$</span> is the minimum of the right-hand side across the
+second inequality.
+<p>If <span class='math'>$N$</span> is odd, then this inequalities will end up dividing by <span class='math'>$0$</span> at the
+midpoint. We can guard this case specifically by ensuring that
+<span class='math'>$K\times \lfloor N/2 \rfloor \geq p_{\lfloor N/2\rfloor }$</span> if <span class='math'>$N$</span> is odd and
+failing if this is false.
+<p>From here, we have three cases we need to consider.
+<ol><li>The range <span class='math'>$[a_1,a_2]$</span> contains an integer: In this case, there exists some
+integer value of <span class='math'>$A$</span>  and <span class='math'>$B$</span> where <span class='math'>$A+B = K$</span>, so we know this makes <span class='math'>$K$</span>
+feasible.</li><li><span class='math'>$a_1 &gt; a_2$</span>: In this case, we cannot construct any <span class='math'>$(A,B)$</span>
+where <span class='math'>$A+B = K$</span> so we determine that <span class='math'>$K$</span> is not feasible.</li><li><span class='math'>$[a_1,a_2]$</span>
+is nonempty and no integers lie between: By claim 2, if there is an integral
+solution <span class='math'>$(A,B)$</span> with <span class='math'>$A+B=K-1$</span>, then <span class='math'>$A+\epsilon$</span> must lie in the range
+<span class='math'>$[a_1,a_2]$</span> for some <span class='math'>$\epsilon\in (0, 1)$</span>. So the only possible value of <span class='math'>$A$</span> is
+<span class='math'>$\lfloor a_1 \rfloor$</span>.</li></ol>
+<p><em>Determining middle position (case 3 only):</em>
+<p>In the third case, we have a single candidate pair <span class='math'>$(A,B)$</span> satisfying
+<span class='math'>$A+B = K-1$</span>, and we need to check if we can place the last punch somewhere in
+the array to satisfy all conditions. Suppose that position <span class='math'>$i$</span>  is not satisfied
+and it needs <span class='math'>$d = p_i-a_i$</span> more power. This means we can place our last punch at
+any position <span class='math'>$p$</span> where <span class='math'>$p \leq i-d$</span> or <span class='math'>$p \geq i+d$</span>. We need to determine if
+there is any position that satisfies all of these inequalities, which we can do
+using a monotonic stack of the indices.
+<p>We can maintain a stack of valid indices and process the indices from left to
+right. If our current <span class='math'>$i$</span> is unsatisfied, we pop any indices in our stack
+greater than <span class='math'>$i-d$</span> and we maintain that our upper bound is the max of the
+previous upper bound and <span class='math'>$i+d$</span>. If our current index is satisfied and greater
+than the upper bound, we add it to our stack. At the end of this process, if our
+stack contains any indices, then there is a valid spot for our last punch and
+<span class='math'>$K$</span> is feasible.
+<p>This solution runs in <span class='math'>$O(N\log \text{MAX})$</span> time.
+<p>Suhas&apos; C++ Code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;stack&gt;
+#include &lt;cmath&gt;
+ 
+using namespace std;
+typedef long long ll;
+ 
+bool isKFeasible(ll n, ll k, const vector&lt;ll&gt;&amp; arr) {
+ 
+    // 2*i+1-n = 0 case
+    if (n%2 &amp;&amp; arr[n/2] &gt; k*(n/2)) {
+        return false;
+    }
+    ll lower_bound = 0;
+    ll upper_bound = k;
+    for (int i = 0; i &lt; n; i++){
+        ll num = (arr[i]-k*(n-1-i));
+        ll den = (2*i+1-n);
+        if (den &lt; 0) upper_bound = min(upper_bound,num/den);
+        if (den &gt; 0) lower_bound = max(lower_bound,(num+den-1)/den);
+    }
+    if (lower_bound &lt; upper_bound) return true;
+    if (lower_bound-upper_bound &gt; 1) return false;
+    ll A = upper_bound;
+    ll B = k-1-A;
+    vector&lt;ll&gt; a(n);
+    for (int i = 0; i &lt; n; i++){
+        a[i] += A*i+B*(n-1-i);
+    }
+    stack&lt;ll&gt; valid_ind;
+    ll ub = -1;
+    for (int i = 0; i &lt; n; i++) {
+        if (i &gt; ub) valid_ind.push(i);
+        ll diff = max(0LL, arr[i] - a[i]);
+        if (diff &lt;= 0) continue;
+ 
+        ll lowpos = max(-1LL, i - diff);
+        ll highpos = min(n, i + diff);
+        ub = max(ub, highpos - 1);
+ 
+        while (!valid_ind.empty() &amp;&amp; valid_ind.top() &gt; lowpos) {
+            valid_ind.pop();
+        }
+    }
+    return !valid_ind.empty();
+}
+ 
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin &gt;&gt; t;
+    while (t-- &gt; 0) {
+        int n;
+        cin &gt;&gt; n;
+        vector&lt;ll&gt; arr(n);
+        ll high = 0;
+        for (int i = 0; i &lt; n; i++) {
+            cin &gt;&gt; arr[i];
+            high = max(high, 2 * (arr[i] + n - 2) / (n - 1));
+        }
+        ll low = 0;
+        while (low &lt; high) {
+            ll mid = (low + high) / 2;
+            if (isKFeasible(n, mid, arr)) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        cout &lt;&lt; high &lt;&lt; endl;
+    }
+    return 0;
+}
+</pre>
+</div>
+<p><div class='prob-section'><h4>Full Solution 2:</h4>
+Let&apos;s revisit the lower and upper bounds for each middle position mentioned in
+the subtask 2 solution. In particular, suppose the middle position is <span class='math'>$x$</span> and we
+are considering the constraint imposed by <span class='math'>$p_i$</span>. When <span class='math'>$N-1-2i&gt;0$</span>, the number of
+times  <span class='math'>$B$</span> that <span class='math'>$N-1$</span> is chosen can be bounded as follows:
+<p><div class='math'>$$B(N-1-i) + (K-1-B)i \ge p_i - |i - x|$$</div>
+<div class='math'>$$B(N-1-2i) \ge p_i - (K-1)i - |i - x|$$</div>
+<div class='math'>$$B\ge \left\lceil\frac{p_i - (K-1)i - |i - x|}{N-1-2i}\right\rceil.$$</div>
+<p>The case <span class='math'>$N-1-2i&lt;0$</span> is similar, with the direction of the inequality reversed
+and floor instead of ceiling. <span class='math'>$N-1-2i=0$</span> can be handled separately.
+<p>For a fixed <span class='math'>$i$</span>, the numerator of the right-hand side  changes by at most <span class='math'>$N$</span> as
+<span class='math'>$x$</span> varies; thus, the right-hand side can take on  at most
+<span class='math'>$\lceil\frac{N}{|N-1-2i|}\rceil$</span> distinct values. More specifically, we can
+decompose the range of <span class='math'>$x$</span> into <span class='math'>$O(N/|N-1-2i|)$</span> pieces where the  right-hand
+side is equal on each piece. The total number of pieces over all <span class='math'>$i$</span> will be
+<span class='math'>$O(N\log N)$</span>. 
+<p>Now, for each <span class='math'>$x$</span> we would like to compute the strictest upper and lower bounds
+imposed by any <span class='math'>$i$</span>. It suffices to implement a data structure supporting the
+following operations on an integer array <span class='math'>$L_0, L_1, \dots, L_{N-1}$</span>:
+<p><ul><li><span class='math'>$\texttt{update}(l,r,v)$</span>; set <span class='math'>$L_i=\max(L_i,v)$</span> for all <span class='math'>$i\in [l,r]$</span> (called
+<span class='math'>$O(N\log N)$</span> times, once per piece)</li><li>Query all: Output <span class='math'>$L_0,L_1,\dots,L_{N-1}$</span> (called once).</li></ul>
+<p>If we use a
+<a href='https://cp-algorithms.com/data_structures/sparse-table.html'>sparse table</a>,
+then updates run in <span class='math'>$O(1)$</span> time each and query all takes <span class='math'>$O(N\log N)$</span> time (like
+<span class='math'>$O(1)$</span> time query RMQ but in reverse).
+<p>From the optional note in the subtask 2 solution, we can apply the <span class='math'>$O(N)$</span> time
+check for <span class='math'>$A+B=K$</span> to get within 1 of the answer in <span class='math'>$O(N\log \text{MAX})$</span> time,
+and then apply the <span class='math'>$O(N\log N)$</span> time check to only a single <span class='math'>$K$</span>. This results in
+having only one log factor in the time complexity, not two. An <span class='math'>$O(N\log^2N)$</span>
+time check can also be fast enough for full credit, depending on the constant factor.
+<p>Benjamin Qi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using ll = long long;
+
+#define FOR(i, a, b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+#define ROF(i, a, b) for (int i = (b)-1; i &gt;= (a); --i)
+#define R0F(i, a) ROF(i, 0, a)
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define sz(x) int(size(x))
+
+template &lt;class T&gt; bool ckmin(T &amp;a, const T &amp;b) {
+    return b &lt; a ? a = b, 1 : 0;
+}  // set a = min(a,b)
+template &lt;class T&gt; bool ckmax(T &amp;a, const T &amp;b) {
+    return a &lt; b ? a = b, 1 : 0;
+}  // set a = max(a,b)
+
+template &lt;class T, class U&gt; T fstTrue(T lo, T hi, U f) {
+    ++hi;
+    assert(lo &lt;= hi);  // assuming f is increasing
+    while (lo &lt; hi) {  // find first index such that f is true
+        T mid = lo + (hi - lo) / 2;
+        f(mid) ? hi = mid : lo = mid + 1;
+    }
+    return lo;
+}
+
+ll cdiv(ll a, ll b) {
+    return a / b + ((a ^ b) &gt; 0 &amp;&amp; a % b);
+}  // divide a by b rounded up
+ll fdiv(ll a, ll b) {
+    return a / b - ((a ^ b) &lt; 0 &amp;&amp; a % b);
+}  // divide a by b rounded down
+
+bool possible_trivial(int N, ll K, V&lt;ll&gt; v) {
+    ll lo_0 = 0, hi_0 = K;
+    F0R(i, N) {
+        ll dif = v.at(i) - (ll)(N - 1 - i) * K;
+        // + k * (2*i-(N-1))
+        if (2 * i &lt;= N - 1) {
+            if (dif &gt; 0) return 0;
+            if (2 * i &lt; N - 1) {
+                // dif + k * (2*i-(N-1)) &gt;= 0
+                ckmin(hi_0, fdiv(-dif, N - 1 - 2 * i));
+            }
+        } else {
+            ckmax(lo_0, cdiv(dif, 2 * i - (N - 1)));
+        }
+    }
+    return lo_0 &lt;= hi_0;
+}
+
+int level(int x) { return 31 - __builtin_clz(x); }
+
+struct RangeMaxer {
+    int N;
+    V&lt;V&lt;ll&gt;&gt; table;
+    RangeMaxer(int N_, ll v) : N(N_), table(level(N) + 1, V&lt;ll&gt;(N, v)) {}
+    void upd(ll l, ll r, ll v) {
+        ckmax(l, 0LL);
+        ckmin(r, N - 1LL);
+        if (l &gt; r) return;
+        int p = level(r - l + 1);
+        ckmax(table[p][l], v);
+        ckmax(table[p][r - (1 &lt;&lt; p) + 1], v);
+    }
+    void upd_around(ll val, int i, int den) {
+        assert(den &gt; 0);
+        ll rem = val - den * fdiv(val, den);
+        assert(0 &lt;= rem &amp;&amp; rem &lt; den);
+        upd(i - rem + 1, i + rem - 1, fdiv(val, den) + 1);
+        {
+            int x = i - rem;
+            ll v = fdiv(val, den);
+            while (x &gt;= 0) {
+                upd(x - den + 1, x, v);
+                --v;
+                x -= den;
+            }
+        }
+        {
+            int x = i + rem;
+            ll v = fdiv(val, den);
+            while (x &lt; N) {
+                upd(x, x + den - 1, v);
+                --v;
+                x += den;
+            }
+        }
+    }
+    V&lt;ll&gt; extract() {
+        ROF(i, 1, sz(table)) F0R(j, sz(table[i]) - (1 &lt;&lt; i) + 1) {
+            ckmax(table[i - 1][j], table[i][j]);
+            ckmax(table[i - 1][j + (1 &lt;&lt; (i - 1))], table[i][j]);
+        }
+        return table.front();
+    }
+};
+
+bool possible(int N, ll K, V&lt;ll&gt; v) {
+    RangeMaxer rmax(N, 0), rmin(N, -K + 1);
+    F0R(i, N) {
+        // ll val = v.at(i) - abs(src - i);
+        // b * (N - 1 - 2*i) + (K - 1) * i &gt;= val
+        ll dif = v.at(i) - (K - 1) * i;
+        int den = N - 1 - 2 * i;
+        if (N - 1 - 2 * i &gt; 0) {
+            rmax.upd_around(dif, i, den);  // max with lower bound
+        } else if (N - 1 - 2 * i == 0) {
+            rmax.upd(i - dif + 1, i + dif - 1, K);
+        } else {
+            rmin.upd_around(dif, i, -den);  // min with upper bound
+        }
+    }
+    V&lt;ll&gt; rmax_v = rmax.extract(), rmin_v = rmin.extract();
+    F0R(i, N) if (rmax_v.at(i) &lt;= -rmin_v.at(i)) return true;
+    return false;
+}
+
+ll solve(int N, V&lt;ll&gt; v) {
+    ll max_K = 2 * cdiv(*max_element(begin(v), end(v)), N - 1);
+    assert(possible_trivial(N, max_K, v));
+    ll ans =
+        fstTrue(0LL, max_K, [&amp;](ll x) { return possible_trivial(N, x, v); });
+    if (ans &gt; 1 &amp;&amp; possible(N, ans - 1, v)) --ans;
+    return ans;
+}
+
+void solve(int i) {
+    int N;
+    cin &gt;&gt; N;
+    V&lt;ll&gt; v(N);
+    for (auto &amp;t : v) cin &gt;&gt; t;
+    cout &lt;&lt; solve(N, v) &lt;&lt; &quot;\n&quot;;
+}
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int TC;
+    cin &gt;&gt; TC;
+    FOR(i, 1, TC + 1) solve(i);
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Note:</h4>
+We can also replace binary search with convex hull to remove the factor of
+<span class='math'>$\log MAX$</span>.  Since each position contributes one constraint on the space of
+valid trivial solutions (using the inequalities derived from Full Solution 1), 
+we just need to intersect them to determine the optimal value of <span class='math'>$K$</span> with some
+construction <span class='math'>$(A,B)$</span> where <span class='math'>$A$</span> and <span class='math'>$B$</span> are not necessarily integral. We can then
+apply the middle position test from the first full solution to determine if <span class='math'>$K$</span>
+is sufficient, and otherwise output <span class='math'>$K+1$</span>. The implementation details are left
+as an exercise to the reader.
+</div>
+<p></body></html>

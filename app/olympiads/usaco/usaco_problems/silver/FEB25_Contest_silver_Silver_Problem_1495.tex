@@ -1,0 +1,296 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB25 Contest - Silver Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Bessie is helping Elsie with her upcoming vocabulary quiz. The words to be
+tested will be drawn from a bank of $M$ distinct words, where no word in the
+bank is a prefix of another word in the bank.
+
+While the bank is nonempty, Bessie will select a word from the bank, remove it
+from the bank, and read it to Elsie one character at a time from left to right.
+Elsie's task is to tell Bessie once she can uniquely identify it, after which
+Bessie will stop reading. 
+
+Bessie has already decided to read the words from the word bank in the order 
+$w_1,w_2,\dots,w_M$. If Elsie answers as quickly as possible, how  many
+characters of each word will Bessie read?
+
+The words are given in a compressed format. We will first define $N+1$
+($1\le N\le 10^6$) distinct words, and then the word bank will consist of all
+those words that are not a prefix of another word. The words are defined as
+follows:
+
+Initially, the $0$th word will be the empty string. Then for each $1\le i\le N$,  the $i$th word will be equal to the $p_i$th
+word plus an additional character at the end ($0\le p_i<i$). The characters are
+chosen such that all $N+1$ words are distinct.
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$, where $N+1$ is the number of words given in the
+compressed format.
+
+The next line contains $p_1,p_2,\dots,p_N$ where $p_i$ represents that the
+$i$-th word is formed by taking the $p_i$-th word and adding a single character
+to the end.
+
+Let $M$ be the number of words that are not a prefix of some other word. The
+next $M$ lines will contain $w_1,w_2,\dots,w_M$, meaning that the $w_i$th word
+will be the $i$th to be read. It is guaranteed that the  words to be read form a
+permutation of the words in the word bank.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Output $M$ lines, where the $i$th line contains the number of characters of the 
+$i$th word that Bessie reads.
+
+SAMPLE INPUT:
+5
+0 1 2 3 4
+5
+SAMPLE OUTPUT: 
+0
+
+There are $6$ words labeled $0\dots 5$. Word $5$ is the only one that is not  a
+prefix of another word, so it is the only one in the bank. In general, once only
+one word is left in the bank, Elsie won't need any characters to identify it.
+
+SAMPLE INPUT:
+4
+0 0 1 1
+4
+3
+2
+SAMPLE OUTPUT: 
+2
+1
+0
+
+The bank consists of words $2$, $3$, and $4$.
+
+Elsie needs two characters to identify word $4$ since words $3$ and $4$ share
+their first character in common.
+
+Once Bessie reads the first character of word $3$, Elsie has enough characters
+to uniquely identify it, since word $4$ was already read.
+
+SAMPLE INPUT:
+4
+0 0 1 1
+2
+3
+4
+SAMPLE OUTPUT: 
+1
+2
+0
+
+SCORING:
+Inputs 4-5: No word has length greater than $20$.Inputs 6-10: The sum of the lengths of all words in the word bank does not
+exceed
+$10^7$.Inputs 11-18: No additional constraints.
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+The next line contains $p_1,p_2,\dots,p_N$ where $p_i$ represents that the
+$i$-th word is formed by taking the $p_i$-th word and adding a single character
+to the end.Let $M$ be the number of words that are not a prefix of some other word. The
+next $M$ lines will contain $w_1,w_2,\dots,w_M$, meaning that the $w_i$th word
+will be the $i$th to be read. It is guaranteed that the  words to be read form a
+permutation of the words in the word bank.
+
+Let $M$ be the number of words that are not a prefix of some other word. The
+next $M$ lines will contain $w_1,w_2,\dots,w_M$, meaning that the $w_i$th word
+will be the $i$th to be read. It is guaranteed that the  words to be read form a
+permutation of the words in the word bank.
+
+OUTPUT FORMAT (print output to the terminal / stdout):Output $M$ lines, where the $i$th line contains the number of characters of the 
+$i$th word that Bessie reads.SAMPLE INPUT:5
+0 1 2 3 4
+5SAMPLE OUTPUT:0There are $6$ words labeled $0\dots 5$. Word $5$ is the only one that is not  a
+prefix of another word, so it is the only one in the bank. In general, once only
+one word is left in the bank, Elsie won't need any characters to identify it.SAMPLE INPUT:4
+0 0 1 1
+4
+3
+2SAMPLE OUTPUT:2
+1
+0The bank consists of words $2$, $3$, and $4$.Elsie needs two characters to identify word $4$ since words $3$ and $4$ share
+their first character in common.Once Bessie reads the first character of word $3$, Elsie has enough characters
+to uniquely identify it, since word $4$ was already read.SAMPLE INPUT:4
+0 0 1 1
+2
+3
+4SAMPLE OUTPUT:1
+2
+0SCORING:Inputs 4-5: No word has length greater than $20$.Inputs 6-10: The sum of the lengths of all words in the word bank does not
+exceed
+$10^7$.Inputs 11-18: No additional constraints.Problem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:5
+0 1 2 3 4
+5SAMPLE OUTPUT:0There are $6$ words labeled $0\dots 5$. Word $5$ is the only one that is not  a
+prefix of another word, so it is the only one in the bank. In general, once only
+one word is left in the bank, Elsie won't need any characters to identify it.SAMPLE INPUT:4
+0 0 1 1
+4
+3
+2SAMPLE OUTPUT:2
+1
+0The bank consists of words $2$, $3$, and $4$.Elsie needs two characters to identify word $4$ since words $3$ and $4$ share
+their first character in common.Once Bessie reads the first character of word $3$, Elsie has enough characters
+to uniquely identify it, since word $4$ was already read.SAMPLE INPUT:4
+0 0 1 1
+2
+3
+4SAMPLE OUTPUT:1
+2
+0SCORING:Inputs 4-5: No word has length greater than $20$.Inputs 6-10: The sum of the lengths of all words in the word bank does not
+exceed
+$10^7$.Inputs 11-18: No additional constraints.Problem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+5
+0 1 2 3 4
+5
+
+4
+0 0 1 1
+4
+3
+2
+
+4
+0 0 1 1
+2
+3
+4
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+0
+
+There are $6$ words labeled $0\dots 5$. Word $5$ is the only one that is not  a
+prefix of another word, so it is the only one in the bank. In general, once only
+one word is left in the bank, Elsie won't need any characters to identify it.SAMPLE INPUT:4
+0 0 1 1
+4
+3
+2SAMPLE OUTPUT:2
+1
+0The bank consists of words $2$, $3$, and $4$.Elsie needs two characters to identify word $4$ since words $3$ and $4$ share
+their first character in common.Once Bessie reads the first character of word $3$, Elsie has enough characters
+to uniquely identify it, since word $4$ was already read.SAMPLE INPUT:4
+0 0 1 1
+2
+3
+4SAMPLE OUTPUT:1
+2
+0SCORING:Inputs 4-5: No word has length greater than $20$.Inputs 6-10: The sum of the lengths of all words in the word bank does not
+exceed
+$10^7$.Inputs 11-18: No additional constraints.Problem credits: Benjamin Qi
+
+SAMPLE INPUT:4
+0 0 1 1
+4
+3
+2SAMPLE OUTPUT:2
+1
+0The bank consists of words $2$, $3$, and $4$.Elsie needs two characters to identify word $4$ since words $3$ and $4$ share
+their first character in common.Once Bessie reads the first character of word $3$, Elsie has enough characters
+to uniquely identify it, since word $4$ was already read.SAMPLE INPUT:4
+0 0 1 1
+2
+3
+4SAMPLE OUTPUT:1
+2
+0SCORING:Inputs 4-5: No word has length greater than $20$.Inputs 6-10: The sum of the lengths of all words in the word bank does not
+exceed
+$10^7$.Inputs 11-18: No additional constraints.Problem credits: Benjamin Qi
+
+2
+1
+0
+
+The bank consists of words $2$, $3$, and $4$.Elsie needs two characters to identify word $4$ since words $3$ and $4$ share
+their first character in common.Once Bessie reads the first character of word $3$, Elsie has enough characters
+to uniquely identify it, since word $4$ was already read.SAMPLE INPUT:4
+0 0 1 1
+2
+3
+4SAMPLE OUTPUT:1
+2
+0SCORING:Inputs 4-5: No word has length greater than $20$.Inputs 6-10: The sum of the lengths of all words in the word bank does not
+exceed
+$10^7$.Inputs 11-18: No additional constraints.Problem credits: Benjamin Qi
+
+Elsie needs two characters to identify word $4$ since words $3$ and $4$ share
+their first character in common.Once Bessie reads the first character of word $3$, Elsie has enough characters
+to uniquely identify it, since word $4$ was already read.SAMPLE INPUT:4
+0 0 1 1
+2
+3
+4SAMPLE OUTPUT:1
+2
+0SCORING:Inputs 4-5: No word has length greater than $20$.Inputs 6-10: The sum of the lengths of all words in the word bank does not
+exceed
+$10^7$.Inputs 11-18: No additional constraints.Problem credits: Benjamin Qi
+
+Once Bessie reads the first character of word $3$, Elsie has enough characters
+to uniquely identify it, since word $4$ was already read.SAMPLE INPUT:4
+0 0 1 1
+2
+3
+4SAMPLE OUTPUT:1
+2
+0SCORING:Inputs 4-5: No word has length greater than $20$.Inputs 6-10: The sum of the lengths of all words in the word bank does not
+exceed
+$10^7$.Inputs 11-18: No additional constraints.Problem credits: Benjamin Qi
+
+SAMPLE INPUT:4
+0 0 1 1
+2
+3
+4SAMPLE OUTPUT:1
+2
+0SCORING:Inputs 4-5: No word has length greater than $20$.Inputs 6-10: The sum of the lengths of all words in the word bank does not
+exceed
+$10^7$.Inputs 11-18: No additional constraints.Problem credits: Benjamin Qi
+
+1
+2
+0
+
+SCORING:Inputs 4-5: No word has length greater than $20$.Inputs 6-10: The sum of the lengths of all words in the word bank does not
+exceed
+$10^7$.Inputs 11-18: No additional constraints.Problem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1495
+
+\section*{Source}
+USACO FEB25 Contest, Silver Division, Problem ID: 1495
+
+\end{document}

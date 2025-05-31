@@ -1,0 +1,464 @@
+Solution ID: sol_prob3_gold_feb23
+Contest: FEB23
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_feb23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi, Jesse Choe)
+
+Suppose that we can compute the answers for all prefixes of the input array in
+
+$T$
+
+time. Then computing the answer for all contiguous subarrays of  the input
+array can be done in
+
+$O(NT)$
+
+time, and answering the queries takes
+
+$O(Q)$
+
+additional time.
+
+For all subtasks, we use dynamic programming.
+
+Subtask 1:
+
+$T=O(NB)$
+
+For each
+
+$i\in [0,N]$
+
+and
+
+$x\in [0,B]$
+
+, let
+
+$dp[i][x]$
+
+denote the number of ways
+to form
+
+$x$
+
+after moving over papers
+
+$1\dots i$
+
+. The answer for the prefix
+
+$1\dots i$
+
+is
+
+$\sum_{j=A}^Bdp[i][j]$
+
+.
+
+Next, we describe how to compute all of these DP states. We initialize
+
+$dp[0][0]=1$
+
+and use the following reasoning to generate
+
+$dp[i]$
+
+from
+
+$dp[i-1]$
+
+.
+Suppose our pile currently has size
+
+$s$
+
+, has value
+
+$k$
+
+when read from top to
+bottom, and that the cows are considering adding digit
+
+$a_i$
+
+to the pile.
+
+Adding
+
+$a_i$
+
+to the top of the pile is equivalent to adding
+
+$a_i \cdot 10^{s}$
+
+to
+
+$k$
+
+. This corresponds to the DP transition
+
+$dp[i][a_i \cdot 10^s+k] \mathrel{+}= dp[i-1][k]$
+
+.
+
+Adding
+
+$a_i$
+
+to the bottom of the pile is equivalent to changing
+
+$k$
+
+to
+
+$10\cdot k + a_i$
+
+, corresponding to
+
+$dp[i][10 \cdot k + a_i]\mathrel{+}= dp[i-1][k]$
+
+.
+
+Not adding
+
+$a_i$
+
+to the pile corresponds to
+
+$dp[i][k] \mathrel{+}= dp[i-1][k]$
+
+.
+
+Since each DP transition runs in constant time, computing all these DP states
+takes time proportional to the number of DP states, which is
+
+$O(NB)$
+
+.
+
+Jesse Choe's code:
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int countDigits(int x) {
+	int ans = 0;
+	while (x) { ans++, x /= 10; }
+	return ans;
+}
+
+int main() {
+	int n;
+	long long a, b;
+	cin >> n >> a >> b;
+	int dp[n][n + 1][b + 1]{};
+	vector<int> d(n);
+	for (int i = 0; i < n; i++) cin >> d[i];
+	for (int i = 0; i < n; i++) { dp[i][i][0] = 1; }
+	for (int i = 0; i < n; i++) {
+		for (int j = i; j < n; j++) {
+			for (int k = 0; k <= b; k++) {
+				dp[i][j + 1][k] += dp[i][j][k], dp[i][j + 1][k] %= MOD;
+				int addRight = 10 * k + d[j];
+				if (addRight <= b) {
+					dp[i][j + 1][addRight] += dp[i][j][k];
+					dp[i][j + 1][addRight] %= MOD;
+				}
+				int addLeft = pow(10, countDigits(k)) * d[j] + k;
+				if (addLeft <= b) {
+					dp[i][j + 1][addLeft] += dp[i][j][k];
+					dp[i][j + 1][addLeft] %= MOD;
+				}
+			}
+		}
+	}
+	for (int i = 0; i < n; i++) {
+		for (int j = i + 1; j <= n; j++) {
+			for (int k = 1; k <= b; k++) dp[i][j][k] += dp[i][j][k - 1];
+		}
+	}
+	int q;
+	cin >> q;
+	for (int i = 0; i < q; i++) {
+		int l, r;
+		cin >> l >> r;
+		--l;
+		cout << (dp[l][r][b] - dp[l][r][a - 1] + MOD) % MOD << endl;
+	}
+}
+
+Subtask 2:
+
+$A=B$
+
+,
+
+$T=O(N(\log_{10}B)^2)$
+
+Let
+
+$d$
+
+be the number of digits in
+
+$B$
+
+. For each
+
+$i\in [1,N]$
+
+and
+
+$1\le l\le r\le d$
+
+,  let
+
+$dp[i][l][r]$
+
+denote the number of ways to form
+
+$B_{l\dots r}$
+
+(the integer formed by concatenating the
+
+$l$
+
+th through
+
+$r$
+
+th
+digits of
+
+$B$
+
+) after moving over papers
+
+$1\dots i$
+
+. There are
+
+$O(Nd^2)$
+
+such 
+states, each of which can be computed in
+
+$O(1)$
+
+time from
+
+$dp[i-1][l][r]$
+
+,
+
+$dp[i-1][l+1][r]$
+
+, and
+
+$dp[i][l][r-1]$
+
+. The answer for prefix
+
+$1\dots i$
+
+is
+
+$dp[i][1][d]$
+
+.
+
+Full credit:
+
+$T=O(N(\log_{10}B)^2)$
+
+We subtract the number of ways to form an integer at most
+
+$A-1$
+
+from the number
+of ways to form an integer at most
+
+$B$
+
+. To count the number of ways to form an
+integer at most
+
+$B$
+
+, we augment our DP states from the previous subtask with an
+additional flag that is equal to
+
+$0$
+
+,
+
+$1$
+
+, or
+
+$2$
+
+. Then
+
+$dp[i][l][r][0]$
+
+,
+
+$dp[i][l][r][1]$
+
+, and
+
+$dp[i][l][r][2]$
+
+denote  the number of ways to form an
+
+$r-l+1$
+
+-digit integer less than, equal  to, or greater than
+
+$B_{l\dots r}$
+
+after
+moving over papers
+
+$1\dots i$
+
+, respectively. The DP transitions are similar to
+the previous subtask. The answer for prefix
+
+$1\dots i$
+
+is
+
+$dp[i][1][d][1]+dp[i][1][d][0]+\sum_{j=2}^d\sum_{k=0}^2dp[i][j][d][k]$
+
+. Here,
+
+$dp[i][1][d][1]$
+
+is the number of ways to make a
+
+$d$
+
+-digit number equal to
+
+$B$
+
+,
+
+$dp[i][1][d][0]$
+
+is the number of ways to make a
+
+$d$
+
+-digit number less than
+
+$B$
+
+,
+and
+
+$\sum_{k=0}^2dp[i][j][d][k]$
+
+is the number of ways to make a
+
+$(d-j+1)$
+
+-digit
+number.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class Milkshake {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        long a = Long.parseLong(tokenizer.nextToken());
+        long b = Long.parseLong(tokenizer.nextToken());
+        char[] digits = in.readLine().replace(" ", "").toCharArray();
+ 
+        long[][] answersLeft = solve(("" + (a - 1L)).toCharArray(), digits);
+        long[][] answersRight = solve(("" + b).toCharArray(), digits);
+ 
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q > 0; q--) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int l = Integer.parseInt(tokenizer.nextToken()) - 1;
+            int r = Integer.parseInt(tokenizer.nextToken()) - 1;
+            long answer = answersRight[l][r] - answersLeft[l][r];
+            answer += MOD;
+            answer %= MOD;
+            out.append(answer).append('\n');
+        }
+        System.out.print(out);
+    }
+ 
+    static long[][] solve(char[] limit, char[] digits) {
+        long[][] answers = new long[digits.length][digits.length];
+        for (int j = 0; j < digits.length; j++) {
+            long[][][] dp = new long[limit.length][limit.length][3];
+            for (int k = j; k < digits.length; k++) {
+                for (int x = 0; x < limit.length; x++) {
+                    for (int y = limit.length - 1; y > x; y--) {
+                        if (digits[k] > limit[x]) {
+                            for (int c = 0; c <= 2; c++) {
+                                dp[x][y][2] += dp[x + 1][y][c];
+                            }
+                        } else if (digits[k] == limit[x]) {
+                            for (int c = 0; c <= 2; c++) {
+                                dp[x][y][c] += dp[x + 1][y][c];
+                            }
+                        } else {
+                            for (int c = 0; c <= 2; c++) {
+                                dp[x][y][0] += dp[x + 1][y][c];
+                            }
+                        }
+ 
+                        dp[x][y][2] += dp[x][y - 1][2];
+                        dp[x][y][compare(digits[k], limit[y])] += dp[x][y - 1][1];
+                        dp[x][y][0] += dp[x][y - 1][0];
+ 
+                        for (int c = 0; c <= 2; c++) {
+                            dp[x][y][c] %= MOD;
+                        }
+                    }
+                }
+                for (int x = 0; x < limit.length; x++) {
+                    dp[x][x][compare(digits[k], limit[x])] += 2;
+                }
+ 
+                for (int x = 0; x < limit.length; x++) {
+                    answers[j][k] += dp[x][limit.length - 1][0];
+                    answers[j][k] += dp[x][limit.length - 1][1];
+                    if (x != 0) {
+                        answers[j][k] += dp[x][limit.length - 1][2];
+                    }
+                    answers[j][k] %= MOD;
+                }
+            }
+        }
+        return answers;
+    }
+ 
+    static int compare(char a, char b) {
+        return Integer.signum(a - b) + 1;
+    }
+}

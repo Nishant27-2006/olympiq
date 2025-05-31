@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><div class='prob-section'><h4>All T Equal</h4>
+<p>We can sort the tasks by start time and then attempt to complete them in that
+order.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+#include &lt;climits&gt;
+using namespace std;
+
+using ll = long long;
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	int T;
+	cin &gt;&gt; T;
+	for (int t = 0; t &lt; T; ++t) {
+		int N;
+		cin &gt;&gt; N;
+		vector&lt;pair&lt;ll, ll&gt;&gt; tasks;
+		for (int n = 0; n &lt; N; ++n) {
+			ll s, t;
+			cin &gt;&gt; s &gt;&gt; t;
+			tasks.push_back({s, t});
+		}
+		sort(begin(tasks), end(tasks));
+		ll time_so_far = 0;
+		int ans = 0;
+		for (auto [s, t] : tasks) {
+			if (time_so_far &lt;= s) {
+				++ans;
+				time_so_far += t;
+			}
+		}
+		cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Checking Problem:</h4>
+<p>Here we no longer assume all <span class='math'>$t_i$</span> are equal. Let&apos;s first consider the problem of checking whether the answer is <span class='math'>$N$</span> or not;
+that is, whether all the jobs can be completed. 
+<p>We need to decide what order to complete the jobs in. One possibility is to
+complete the jobs in increasing order of <span class='math'>$s_i$</span>, but this turns out to be
+incorrect when the <span class='math'>$t_i$</span> are not all equal. Instead, it turns out that if all
+the jobs can be completed, they can be completed in increasing order of
+<span class='math'>$s_i+t_i$</span>.
+<p><strong>Claim:</strong> Suppose we complete job <span class='math'>$a$</span> and then job <span class='math'>$b$</span> immediately afterward
+where <span class='math'>$s_a+t_a\ge s_b+t_b$</span>. Then we can swap the order of jobs <span class='math'>$a$</span> and <span class='math'>$b$</span> while
+still satisfying both of their start times.
+<p><strong>Proof:</strong> Suppose job <span class='math'>$a$</span> is started at time <span class='math'>$T$</span>. Then <span class='math'>$T\le s_b-t_a$</span>. If we
+swap the order of jobs <span class='math'>$a$</span> and <span class='math'>$b$</span> then we need <span class='math'>$T\le s_b$</span> and <span class='math'>$T\le s_a-t_b$</span>.
+We have both <span class='math'>$T\le s_b-t_a\le s_b$</span> and <span class='math'>$T\le s_b-t_a\le s_a-t_b$</span> by the
+assumption, done.
+<p>Define <span class='math'>$d_a=s_a+t_a$</span> and suppose we relabel the jobs such that
+<span class='math'>$d_1\le d_2\le \dots \le d_N$</span>. Suppose there exists some order allowing all jobs
+to be completed. Then we can repeatedly apply the claim to transform this order
+into <span class='math'>$1\dots N$</span>. Thus, all jobs can be completed if and only if
+<span class='math'>$\sum_{j=1}^{i}t_j\le d_i$</span> for all <span class='math'>$i$</span>.
+<p></div>
+<p><div class='prob-section'><h4>Original Problem, Partial Credit:</h4>
+<p>As in the checking problem, let&apos;s relabel such that
+<span class='math'>$d_1\le d_2\le \dots \le d_N$</span> and assume we always complete jobs in increasing
+order of label. To solve it in <span class='math'>$O(N^2)$</span> time, we can use dynamic programming;
+let <span class='math'>$dp[i][j]$</span> be the minimum total time to complete <span class='math'>$j$</span> of the first <span class='math'>$i$</span> jobs,
+or <span class='math'>$\infty$</span> if impossible. To transition from <span class='math'>$i$</span> to <span class='math'>$i+1$</span> we can choose either
+to add the <span class='math'>$i+1$</span>&apos;st job or not; if so, we need to check that the total time does
+not exceed <span class='math'>$d_{i+1}$</span>. The answer is the maximum <span class='math'>$j$</span> such that
+<span class='math'>$dp[N][j]\neq \infty$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+#include &lt;climits&gt;
+using namespace std;
+
+using ll = long long;
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	int T;
+	cin &gt;&gt; T;
+	for (int t = 0; t &lt; T; ++t) {
+		int N;
+		cin &gt;&gt; N;
+		vector&lt;pair&lt;ll, ll&gt;&gt; tasks;
+		for (int n = 0; n &lt; N; ++n) {
+			ll s, t;
+			cin &gt;&gt; s &gt;&gt; t;
+			ll d = s + t;
+			tasks.push_back({d, t});
+		}
+		sort(begin(tasks), end(tasks));
+		vector&lt;ll&gt; dp{0};
+		for (auto [d, t] : tasks) {
+			dp.push_back(LLONG_MAX);
+			for (int i = size(dp) - 2; i &gt;= 0; --i)
+				dp.at(i + 1) = min(dp.at(i + 1), dp.at(i) + t);
+			while (dp.back() &gt; d) dp.pop_back();
+		}
+		cout &lt;&lt; size(dp) - 1 &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Full Credit:</h4> 
+<p>To solve the original problem in <span class='math'>$O(N\log N)$</span>, we can use a greedy strategy.
+Maintain a set <span class='math'>$S_i\subseteq [1,i]$</span> such that all of <span class='math'>$S_i$</span> can be completed and
+the final jobs we select will be a subset of <span class='math'>$S_i\cup \{i+1\dots i+N\}$</span>. The
+base case is <span class='math'>$S_0=\emptyset$</span>. Then for each <span class='math'>$i\in [1,N]$</span>, initialize <span class='math'>$S_i$</span> as
+<span class='math'>$S_{i-1}\cup \{i\}$</span>. However, if <span class='math'>$\sum_{j\in S_i}t_j&gt;d_i$</span>, then not all of <span class='math'>$S_i$</span>
+can be completed, and we need to remove at least one job from <span class='math'>$S_i$</span>. We should
+greedily remove the job <span class='math'>$j$</span> with the maximum <span class='math'>$t_j$</span> from <span class='math'>$S_i$</span>. Since the <span class='math'>$d_i$</span>
+are in increasing order and removing the last job is always an option, we will
+have  <span class='math'>$\sum_{j\in S_i}t_j\le d_i$</span> after the removal, so no additional removals
+are required. <span class='math'>$S_i$</span> can be maintained with a priority queue, and the final
+answer will be <span class='math'>$|S_N|$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using ll = long long;
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	int T;
+	cin &gt;&gt; T;
+	for (int t = 0; t &lt; T; ++t) {
+		int N;
+		cin &gt;&gt; N;
+		vector&lt;pair&lt;ll, ll&gt;&gt; tasks;
+		for (int n = 0; n &lt; N; ++n) {
+			ll s, t;
+			cin &gt;&gt; s &gt;&gt; t;
+			ll d = s + t;
+			tasks.push_back({d, t});
+		}
+		sort(begin(tasks), end(tasks));
+		ll sum = 0;
+		priority_queue&lt;ll&gt; pq;
+		for (auto [d, t] : tasks) {
+			pq.push(t);
+			sum += t;
+			if (sum &gt; d) {
+				sum -= pq.top();
+				pq.pop();
+			}
+		}
+		cout &lt;&lt; size(pq) &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p>Why is it okay to remove job <span class='math'>$j$</span>? If it turns out that there is an optimal
+solution <span class='math'>$s\subset S_{i-1}\cup \{i, i+1,\dots, N\}$</span> that uses <span class='math'>$j$</span>, then there is
+some job in <span class='math'>$S_i$</span> that is not part of <span class='math'>$s$</span>. In this case, we can remove <span class='math'>$j$</span> from
+<span class='math'>$s$</span> and add some job from <span class='math'>$S_i$</span> to <span class='math'>$s$</span>, while preserving the size of <span class='math'>$s$</span>. All
+jobs in <span class='math'>$s$</span> with index at most <span class='math'>$i$</span> can be completed since they will be a subset
+of  <span class='math'>$S_i$</span>, and the start times of jobs in <span class='math'>$s$</span> with index greater than <span class='math'>$i$</span> will
+stay the same or go down, so they also can be completed. So the size of the
+optimal solution remains the same after removing job <span class='math'>$j$</span>.
+<p>Note: The greedy strategy can alternatively be interpreted as an acceleration of
+the DP solution, since the times in <span class='math'>$S_i$</span> sorted in increasing order will match
+with the consecutive differences
+<span class='math'>$dp[i][1]-dp[i][0], dp[i][2]-dp[i][1],\dots,dp[i][|S_i|]-dp[i][|S_i|-1]$</span>.
+<p></div>
+<p></body></html>

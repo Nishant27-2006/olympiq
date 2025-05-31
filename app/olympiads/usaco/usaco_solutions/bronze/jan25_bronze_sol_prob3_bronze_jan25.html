@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Chongtian Ma)
+<p><strong> Partial Credit: </strong> <span class='math'>$N \leq 100$</span>.
+<p>It suffices to loop through the endpoints of every subarray, manually reverse
+it, then count the number of indices such that <span class='math'>$a_i = b_i$</span>. This runs in
+<span class='math'>$\mathcal{O}(N^3)$</span> time.
+<p><strong> Full Credit: </strong>
+<p>First, let&apos;s calculate the number of indices <span class='math'>$i$</span> where <span class='math'>$a_i$</span> is already equal to
+<span class='math'>$b_i$</span>. Let&apos;s denote this number as <span class='math'>$S$</span>. Note that if we are not reversing a
+subarray that contains <span class='math'>$i$</span>, this index will always contribute to the number of
+total checkups. 
+<p>We can visualize reversing an array as a series of swaps. Suppose we want to
+reverse an array <span class='math'>$b$</span> of length <span class='math'>$M$</span>, then it is equivalent to swapping <span class='math'>$b_i$</span> with
+<span class='math'>$b_{M-i+1}$</span> over all <span class='math'>$1 \leq i \leq \lfloor \frac{M}{2} \rfloor$</span>.
+<p>Suppose we reverse an odd length subarray of length <span class='math'>$M$</span>. Let <span class='math'>$K$</span> represent the
+index of the middle element of the subarray. We are essentially swapping the
+<span class='math'>$(K - 1)$</span>&apos;th element with the <span class='math'>$(K + 1)$</span>&apos;th element, <span class='math'>$(K - 2)$</span>&apos;th element with
+the <span class='math'>$(K + 2)$</span>&apos;th element, <span class='math'>$\ldots$</span>, <span class='math'>$(K - \frac{M-1}{2})$</span>&apos;th element with the
+<span class='math'>$(K + \frac{M-1}{2})$</span>&apos;th element. 
+<p>This motivates a solution where we enumerate over <span class='math'>$K$</span>, enumerate over <span class='math'>$i$</span> where
+we swap the <span class='math'>$(K-i)$</span>&apos;th element with the <span class='math'>$(K+i)$</span>&apos;th element of <span class='math'>$a$</span>, then
+determine whether <span class='math'>$a_{K-i} = b_{K-i}$</span> or <span class='math'>$a_{K+i} = b_{K+i}$</span>. However, it may be
+the case that the elements that we swapped are already equal to their
+corresponding elements in <span class='math'>$b$</span>, and after the swap, they are no longer equal. Let
+<span class='math'>$x$</span> denote the number of integers <span class='math'>$j$</span> among <span class='math'>$\{K - i, K + i\}$</span> that such that
+<span class='math'>$a_j = b_j$</span> after the swap, and <span class='math'>$y$</span> denote the number of integers <span class='math'>$j$</span> among the
+set such that <span class='math'>$a_j = b_j$</span>  before the swap. We must add <span class='math'>$x$</span> to <span class='math'>$S$</span> to account
+for the new cows that can be checked up, and subtract <span class='math'>$y$</span> from <span class='math'>$S$</span> to account
+for the old cows that cannot be checked up. This way, we are always able to keep
+track of the total number of cows that can be checked up when enumerating.
+<p>Even-length subarrays can be enumerated similarly. The only difference is that
+the middle element is technically between the <span class='math'>$\frac{M}{2}$</span>&apos;th and the
+<span class='math'>$(\frac{M}{2}+1)$</span>&apos;th element. Let <span class='math'>$K$</span> represent the index to the left of the
+middle of the subarray, then we are swapping the <span class='math'>$(K-i+1)$</span>&apos;th element with the
+<span class='math'>$(K+i)$</span>&apos;th element for each <span class='math'>$i$</span>. We can track the total number of checked cows
+in the same way as odd-length subarrays.
+<p>Enumerating over all <span class='math'>$K$</span> and <span class='math'>$i$</span> over all subarrays requires
+<span class='math'>$\mathcal{O}{(N^2)}$</span> time.  
+<p>Alex Liang&apos;s C++ Code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n;
+    cin &gt;&gt; n;
+ 
+    vector&lt;int&gt; A(n), B(n);
+ 
+    for (int &amp;i : A)
+        cin &gt;&gt; i;
+    for (int &amp;i : B)
+        cin &gt;&gt; i;
+    
+    int alreadySame = 0;
+    vector&lt;int&gt; ans(n + 1, 0);
+ 
+    for (int i = 0; i &lt; n; i++)
+        alreadySame += (A[i] == B[i]);
+ 
+    auto expand = [&amp;](int l, int r){
+        int match = alreadySame;
+ 
+        for (; l &gt;= 0 and r &lt; n; l--, r++){
+            match += ((A[l] == B[r]) + (A[r] == B[l])) - ((A[l] == B[l]) + (A[r] == B[r]));
+            ans[match]++;
+        }
+    };
+    for (int mid = 0; mid &lt; n; mid++){
+        expand(mid, mid);
+        expand(mid, mid + 1);
+    }
+    for (int i : ans)
+        cout &lt;&lt; i &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

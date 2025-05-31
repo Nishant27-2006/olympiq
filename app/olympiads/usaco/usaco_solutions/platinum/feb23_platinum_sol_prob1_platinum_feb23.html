@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p><strong>Subtask 1: <span class='math'>$U \leq 5000$</span></strong>
+<p>We will compute the answer to each query in <span class='math'>$\mathcal O(U\lg U)$</span>, achieving an
+overall <span class='math'>$\mathcal O(U^2\lg U)$</span> solution.
+<p>For each query, first compute how many haybales Bessie actually receives on each
+day. After that, we will compute the set of days on which Bessie eats a haybales
+as a set of intervals of said days. First, sort the days. Then, maintain a stack
+of intervals, going through the days in increasing order.
+<p>For each day <span class='math'>$d$</span>, let <span class='math'>$b$</span> be the number of haybales Bessie receives. If day <span class='math'>$d$</span>
+falls within the interval on the top of the stack, then extend that interval by
+<span class='math'>$b$</span>. Otherwise, push a new interval <span class='math'>$[d, d + b - 1]$</span> onto the stack representing
+the days on which Bessie eats the haybales she received on day <span class='math'>$d$</span>.
+<p>At the end, simply go through the stack and sum the sum of integers in each
+interval.
+<p><strong>Subtask 2: Updates only increase the number of haybales arriving on <span class='math'>$d$</span>
+day</strong>
+<p>The simplest solution for this subtask is to maintain a sorted version of the
+set of ranges described in the subtask 1 solution. Whenever an update is made,
+we add a new interval, then as long as it overlaps with some other interval,
+merge them into a single interval with the same length, maintaining the sum of
+days. This is <span class='math'>$\mathcal O(U\lg U)$</span>.
+<p>However, we will also describe the following solution which is more complicated
+but sets up the full solution.
+<p>We will answer the queries offline. Sort the days in order so that <span class='math'>$d_k$</span> is the
+<span class='math'>$k$</span>-th day in sorted order, and construct a segment tree such that the <span class='math'>$k$</span>th
+leaf represents the interval <span class='math'>$[d_k, d_{k + 1})$</span>. We will use the segment tree to
+represent the set of intervals of days when Bessie eats. Because the queries are
+to the given days, we know that all such intervals will begin on a given day and
+therefore, when divided among the leaves of the segment tree, take up a prefix
+of each leaf.
+<p>Each node of the segment tree will store the total sum of days on which Bessie
+eats in the interval represented by that node, as well as the number of days in
+that interval on which Bessie currently does not eat. We can handle updates
+lazily: when we receive an update for a given node, if the day <span class='math'>$d$</span> falls within
+the node&apos;s interval but after the starting day of that interval, we simply query
+both of its children, but if the starting day is less than or equal to the
+node&apos;s starting day, we first check if the amount <span class='math'>$b$</span> of added haybales will
+saturate the left child, in which case we can trivially update the left child&apos;s
+data and then query the right child, and in the other case we simply only query
+the left child. This allows queries to be <span class='math'>$\mathcal O(\lg U)$</span> as usual.
+<p>We now simply go through the queries, making updates to our segment tree with
+how much each query increases the number of haybales by on that day, and
+outputting the segment tree&apos;s root&apos;s value for the sum of days. The total
+runtime is again <span class='math'>$\mathcal O(U\lg U)$</span>.
+<p><strong>No further constraints</strong>
+<p>The previously described segment tree cannot handle updates that remove
+haybales. We can handle this by making our segment tree strongly persistent and
+then applying divide and conquer.
+<p>A strongly persistent data structure is one in which when we make updates, the
+old version of the data structure is maintained and can even have updates
+applied to that same old version. This is easily achieved for any segment tree
+by making it so that when we update a node, instead of mutating that node&apos;s
+data, we receive a new node that is updated. Whenever a node&apos;s update involves
+updating its children, it can simply have its new version point to the new
+versions of its children.
+<p>Given our strongly persistent segment tree, we will perform divide and conquer
+on the queries. When we recursively solve for a given subsegment of queries, we
+will assume that we are also given a version of our segment tree in which the
+maximal updates have been made that could apply to the situation of any queries
+in the subsegment. That is, if our subsegment is <span class='math'>$[l, r]$</span>, and the amount of
+haybales Farmer John is delivering on day <span class='math'>$d$</span> as of the <span class='math'>$k$</span>-th query is
+<span class='math'>$b(d, k)$</span>, we assume that we are given a segment tree where for each day <span class='math'>$d$</span>,
+the segment tree has been updated to include <span class='math'>$\min_{k \in [l, r]} b(d, k)$</span>
+haybales arriving on day <span class='math'>$d$</span>.
+<p>This means that when we recurse down to a single query, the segment tree will be
+in exactly the right state to answer that query. Furthermore, we can update the
+given segment tree for the left and right halves of <span class='math'>$[l, r]$</span> in an amount of
+updates to the segment tree linear in the length of <span class='math'>$[l, r]$</span>. To update for the
+left half, we note that days that do not occur in <span class='math'>$[l, r]$</span> are already updated
+maximally, and then simply compute for each day in <span class='math'>$[l, r]$</span> its amount of
+haybales before <span class='math'>$l$</span> (which we can maintain in a global map), the minimum amount
+of haybales it ever has during the left half of <span class='math'>$[l, r]$</span>, and the minimum amount
+of haybales it ever has during the right half of <span class='math'>$[l, r]$</span>, then see if the third
+amount was less than the first and second amounts, in which case we need to make
+up the difference. The right half is similar.
+<p>Because the amount of segment tree updates is linear in the total lengths of all
+subsegments considered, and the union of all subsegments counts each position in
+the list of queries <span class='math'>$\mathcal O(\lg U)$</span> times, we make <span class='math'>$\mathcal O(U\lg U)$</span>
+segment tree updates, yielding an <span class='math'>$\mathcal O(U\lg^2 U)$</span> time solution.
+<p>Danny Mittal&apos;s Java code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+import java.util.stream.Collectors;
+ 
+public class HungryCow {
+    public static final long MOD = 1_000_000_007L;
+    public static final long HALF = (MOD + 1L) / 2L;
+    public static final long LAST_DAY = 200_000_000_000_000L;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int q = Integer.parseInt(in.readLine());
+        long[] days = new long[q];
+        long[] amts = new long[q];
+        for (int j = 0; j &lt; q; j++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            days[j] = Long.parseLong(tokenizer.nextToken());
+            amts[j] = Long.parseLong(tokenizer.nextToken());
+        }
+        SegmentTree root = SegmentTree.create(Arrays.stream(days).boxed().collect(Collectors.toList()));
+ 
+        StringBuilder out = new StringBuilder();
+        new Object() {
+            Map&lt;Long, Long&gt; curr = new HashMap&lt;&gt;();
+ 
+            void divideAndConquer(int from, int to, SegmentTree root) {
+                if (from == to) {
+                    long inCurr = curr.getOrDefault(days[from], 0L);
+                    if (amts[from] &gt; inCurr) {
+                        root = root.update(days[from], amts[from] - inCurr);
+                    }
+                    out.append((HALF * root.sum) % MOD).append(&apos;\n&apos;);
+                    curr.put(days[from], amts[from]);
+                } else {
+                    int mid = (from + to) / 2;
+                    Map&lt;Long, Long&gt; minLeft = new HashMap&lt;&gt;();
+                    Map&lt;Long, Long&gt; finalLeft = new HashMap&lt;&gt;();
+                    for (int j = from; j &lt;= mid; j++) {
+                        long amt = amts[j];
+                        minLeft.compute(days[j], (__, v) -&gt; v == null ? amt : Math.min(v, amt));
+                        finalLeft.put(days[j], amt);
+                    }
+                    Map&lt;Long, Long&gt; minRight = new HashMap&lt;&gt;();
+                    for (int j = mid + 1; j &lt;= to; j++) {
+                        long amt = amts[j];
+                        minRight.compute(days[j], (__, v) -&gt; v == null ? amt : Math.min(v, amt));
+                    }
+                    SegmentTree leftRoot = root;
+                    for (Map.Entry&lt;Long, Long&gt; entry : minRight.entrySet()) {
+                        long day = entry.getKey();
+                        long amt = entry.getValue();
+                        long base = curr.getOrDefault(day, 0L);
+                        long next = Math.min(base, minLeft.getOrDefault(day, Long.MAX_VALUE));
+                        if (next &gt; amt) {
+                            leftRoot = leftRoot.update(day, next - amt);
+                        }
+                    }
+                    SegmentTree rightRoot = root;
+                    for (Map.Entry&lt;Long, Long&gt; entry : minLeft.entrySet()) {
+                        long day = entry.getKey();
+                        long amt = entry.getValue();
+                        long oldBase = curr.getOrDefault(day, 0L);
+                        long prevHad = Math.min(amt, oldBase);
+                        long base = finalLeft.getOrDefault(day, oldBase);
+                        long next = Math.min(base, minRight.getOrDefault(day, Long.MAX_VALUE));
+                        if (next &gt; prevHad) {
+                            rightRoot = rightRoot.update(day, next - prevHad);
+                        }
+                    }
+                    divideAndConquer(from, mid, leftRoot);
+                    divideAndConquer(mid + 1, to, rightRoot);
+                }
+            }
+        }.divideAndConquer(0, q - 1, root);
+        System.out.print(out);
+    }
+ 
+    static class SegmentTree {
+        final long from;
+        final long to;
+        final long sum;
+        final long rem;
+        final SegmentTree left;
+        final SegmentTree right;
+ 
+        public SegmentTree(long from, long to, long sum, long rem, SegmentTree left, SegmentTree right) {
+            this.from = from;
+            this.to = to;
+            this.sum = sum;
+            this.rem = rem;
+            this.left = left;
+            this.right = right;
+        }
+ 
+        static SegmentTree leaf(long from, long to, long rem) {
+            long usedUpTo = to - rem;
+            return new SegmentTree(from, to, (((usedUpTo - from + 1L) % MOD) * ((from + usedUpTo) % MOD)) % MOD, rem, null, null);
+        }
+ 
+        static SegmentTree emptyLeaf(long from, long to) {
+            return leaf(from, to, to - from + 1L);
+        }
+ 
+        static SegmentTree fullLeaf(long from, long to) {
+            return leaf(from, to, 0);
+        }
+ 
+        static SegmentTree combine(SegmentTree left, SegmentTree right) {
+            return new SegmentTree(left.from, right.to, (left.sum + right.sum) % MOD, left.rem + right.rem, left, right);
+        }
+ 
+        static SegmentTree create(List&lt;Long&gt; importantDays) {
+            Collections.sort(importantDays);
+            LinkedList&lt;SegmentTree&gt; queue = new LinkedList&lt;&gt;();
+            for (int j = 0; j &lt; importantDays.size() - 1; j++) {
+                long a = importantDays.get(j);
+                long b = importantDays.get(j + 1);
+                if (a &lt; b) {
+                    queue.add(emptyLeaf(a, b - 1L));
+                }
+            }
+            queue.add(emptyLeaf(importantDays.get(importantDays.size() - 1), LAST_DAY));
+            while (queue.size() &gt; 1) {
+                int rem = queue.size();
+                while (rem &gt; 0) {
+                    if (rem &gt;= 2) {
+                        SegmentTree left = queue.remove();
+                        SegmentTree right = queue.remove();
+                        queue.add(combine(left, right));
+                        rem -= 2;
+                    } else {
+                        queue.add(queue.remove());
+                        rem--;
+                    }
+                }
+            }
+            return queue.remove();
+        }
+ 
+        SegmentTree update(long startingFrom, long amt) {
+            if (startingFrom &gt; to || amt == 0L) {
+                return this;
+            } else if (startingFrom &lt;= from &amp;&amp; amt &gt;= rem) {
+                return fullLeaf(from, to);
+            } else if (left == null) {
+                return leaf(from, to, Math.max(0L, rem - amt));
+            } else {
+                SegmentTree newLeft = left.update(startingFrom, amt);
+                long stillAMT = amt - (left.rem - newLeft.rem);
+                SegmentTree newRight = right.update(startingFrom, stillAMT);
+                return combine(newLeft, newRight);
+            }
+        }
+    }
+}
+</pre>
+<p>Translated into C++:
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;climits&gt;
+#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;queue&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+const long MOD = 1000000007LL;
+const long HALF = (MOD + 1LL) / 2LL;
+const long LAST_DAY = 200000000000000LL;
+
+struct SegmentTree {
+    // https://github.com/kth-competitive-programming/kactl/blob/main/content/various/BumpAllocator.h
+    inline static char buf[450 &lt;&lt; 20] = {};
+    inline static size_t i = sizeof buf;
+
+    long from, to, sum, rem;
+    SegmentTree *left, *right;
+
+    SegmentTree(long from, long to, long sum, long rem, SegmentTree *left,
+                SegmentTree *right) {
+        this-&gt;from = from;
+        this-&gt;to = to;
+        this-&gt;sum = sum;
+        this-&gt;rem = rem;
+        this-&gt;left = left;
+        this-&gt;right = right;
+    }
+
+    static SegmentTree *leaf(long from, long to, long rem) {
+        long usedUpTo = to - rem;
+        i -= sizeof(SegmentTree);
+        return new (&amp;buf[i]) SegmentTree(
+            from, to,
+            (((usedUpTo - from + 1LL) % MOD) * ((from + usedUpTo) % MOD)) % MOD,
+            rem, nullptr, nullptr);
+    }
+
+    static SegmentTree *emptyLeaf(long from, long to) {
+        return leaf(from, to, to - from + 1LL);
+    }
+
+    static SegmentTree *fullLeaf(long from, long to) {
+        return leaf(from, to, 0);
+    }
+
+    static SegmentTree *combine(SegmentTree *left, SegmentTree *right) {
+        i -= sizeof(SegmentTree);
+        return new (&amp;buf[i])
+            SegmentTree(left-&gt;from, right-&gt;to, (left-&gt;sum + right-&gt;sum) % MOD,
+                        left-&gt;rem + right-&gt;rem, left, right);
+    }
+
+    static SegmentTree *create(vector&lt;long&gt; importantDays) {
+        sort(importantDays.begin(), importantDays.end());
+        queue&lt;SegmentTree *&gt; queue;
+        for (int j = 0; j &lt; importantDays.size() - 1; j++) {
+            long a = importantDays[j];
+            long b = importantDays[j + 1];
+            if (a &lt; b) { queue.push(emptyLeaf(a, b - 1LL)); }
+        }
+        queue.push(
+            emptyLeaf(importantDays[importantDays.size() - 1], LAST_DAY));
+        while (queue.size() &gt; 1) {
+            int rem = queue.size();
+            while (rem &gt; 0) {
+                if (rem &gt;= 2) {
+                    SegmentTree *left = queue.front();
+                    queue.pop();
+                    SegmentTree *right = queue.front();
+                    queue.pop();
+                    queue.push(combine(left, right));
+                    rem -= 2;
+                } else {
+                    SegmentTree *left = queue.front();
+                    queue.pop();
+                    queue.push(left);
+                    rem--;
+                }
+            }
+        }
+        return queue.front();
+    }
+
+    SegmentTree *update(long startingFrom, long amt) {
+        if (startingFrom &gt; to || amt == 0L) {
+            return this;
+        } else if (startingFrom &lt;= from &amp;&amp; amt &gt;= rem) {
+            return fullLeaf(from, to);
+        } else if (left == nullptr) {
+            return leaf(from, to, max(0L, rem - amt));
+        } else {
+            SegmentTree *newLeft = left-&gt;update(startingFrom, amt);
+            long stillAMT = amt - (left-&gt;rem - newLeft-&gt;rem);
+            SegmentTree *newRight = right-&gt;update(startingFrom, stillAMT);
+            return combine(newLeft, newRight);
+        }
+    }
+};
+
+namespace std {
+
+// https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0200r0.html
+
+template &lt;class Fun&gt; class y_combinator_result {
+    Fun fun_;
+
+  public:
+    template &lt;class T&gt;
+    explicit y_combinator_result(T &amp;&amp;fun) : fun_(std::forward&lt;T&gt;(fun)) {}
+
+    template &lt;class... Args&gt; decltype(auto) operator()(Args &amp;&amp;...args) {
+        return fun_(std::ref(*this), std::forward&lt;Args&gt;(args)...);
+    }
+};
+
+template &lt;class Fun&gt; decltype(auto) y_combinator(Fun &amp;&amp;fun) {
+    return y_combinator_result&lt;std::decay_t&lt;Fun&gt;&gt;(std::forward&lt;Fun&gt;(fun));
+}
+
+}  // namespace std
+
+long getOrDefault(map&lt;long, long&gt; &amp;t, long x, long val) {
+    return t.count(x) ? t.at(x) : val;
+}
+template &lt;class T&gt; void ckmin(T &amp;a, const T &amp;b) {
+    if (a &gt; b) a = b;
+}  // set a = min(a,b)
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int q;
+    cin &gt;&gt; q;
+    vector&lt;long&gt; days(q);
+    vector&lt;long&gt; amts(q);
+    for (int j = 0; j &lt; q; j++) { cin &gt;&gt; days[j] &gt;&gt; amts[j]; }
+    SegmentTree *root = SegmentTree::create(days);
+    map&lt;long, long&gt; curr;
+    y_combinator([&amp;](auto divideAndConquer, int from, int to,
+                     SegmentTree *root) -&gt; void {
+        size_t stored_i = SegmentTree::i;
+        if (from == to) {
+            long inCurr = getOrDefault(curr, days.at(from), 0L);
+            if (amts.at(from) &gt; inCurr) {
+                root = root-&gt;update(days[from], amts[from] - inCurr);
+            }
+            cout &lt;&lt; ((HALF * root-&gt;sum) % MOD) &lt;&lt; &quot;\n&quot;;
+            curr[days[from]] = amts[from];
+        } else {
+            int mid = (from + to) / 2;
+            map&lt;long, long&gt; minLeft;
+            map&lt;long, long&gt; finalLeft;
+            for (int j = from; j &lt;= mid; j++) {
+                long amt = amts[j];
+                if (minLeft.count(days[j])) ckmin(minLeft[days[j]], amt);
+                else minLeft[days[j]] = amt;
+                finalLeft[days[j]] = amt;
+            }
+            map&lt;long, long&gt; minRight;
+            for (int j = mid + 1; j &lt;= to; j++) {
+                long amt = amts[j];
+                if (minRight.count(days[j])) ckmin(minRight[days[j]], amt);
+                else minRight[days[j]] = amt;
+            }
+            SegmentTree *leftRoot = root;
+            for (auto [day, amt] : minRight) {
+                long base = getOrDefault(curr, day, 0);
+                long next = min(base, getOrDefault(minLeft, day, LLONG_MAX));
+                if (next &gt; amt) {
+                    leftRoot = leftRoot-&gt;update(day, next - amt);
+                }
+            }
+            SegmentTree *rightRoot = root;
+            for (auto [day, amt] : minLeft) {
+                long oldBase = getOrDefault(curr, day, 0);
+                long prevHad = min(amt, oldBase);
+                long base = getOrDefault(finalLeft, day, oldBase);
+                long next = min(base, getOrDefault(minRight, day, LLONG_MAX));
+                if (next &gt; prevHad) {
+                    rightRoot = rightRoot-&gt;update(day, next - prevHad);
+                }
+            }
+            divideAndConquer(from, mid, leftRoot);
+            divideAndConquer(mid + 1, to, rightRoot);
+        }
+        SegmentTree::i = stored_i;  // rollback
+    })(0, q - 1, root);
+}
+</pre>
+<p><em>Note:</em> It was also possible to fully solve this problem in
+<span class='math'>$O(U\sqrt{U\lg U})$</span> time  by processing every <span class='math'>$\sqrt{U/\lg U}$</span> consecutive
+queries in <span class='math'>$O(U)$</span> time.
+<p></body></html>

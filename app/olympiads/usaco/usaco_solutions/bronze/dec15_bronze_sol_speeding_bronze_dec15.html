@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>This problem gives us the speed limit along a 100 mile segment of road and the speed
+that Bessie traveled through each section.  Our job is to figure out the
+maximum amount that Bessie was over the speed limit at any point during her journey.
+<p>One simple approach is to break up the road into 100
+sections, each one mile long. We can then &quot;unroll&quot; the input to
+determine the speed limit of each 1 mile section of road and Bessie&apos;s speed over that section.
+After we do that, we can loop
+over the 100 sections and compute the maximum over the speed limit Bessie is for any section.
+<p>Here is my code demonstrating this solution.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class speeding {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader(&quot;speeding.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;speeding.out&quot;)));
+		
+		// read in the first line, store n and m
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int m = Integer.parseInt(st.nextToken());
+		
+		// speedLimits[K] will store the speed limit of the section of road
+		// starting at mile K and ending at mile K+1.
+		int[] speedLimits = new int[100];
+		int currentMile = 0;
+		
+		for(int i = 0; i &lt; n; i++) {
+			// read in length and speed limit of segment i of the road
+			st = new StringTokenizer(br.readLine());
+			int lengthOfSegment = Integer.parseInt(st.nextToken());
+			int speedLimit = Integer.parseInt(st.nextToken());
+			// update the speed limit for the given segment
+			for(int j = 0; j &lt; lengthOfSegment; j++) {
+				speedLimits[currentMile] = speedLimit;
+				currentMile++;
+			}
+		}
+		
+		// travelSpeed[K] will store the speed that Bessie traveled at for
+		// the section of road starting at mile K and ending at mile K+1. 
+		int[] travelSpeed = new int[100];
+		currentMile = 0;
+		for(int i = 0; i &lt; m; i++) {
+			// read in length and speed that Bessie drove
+			st = new StringTokenizer(br.readLine());
+			int lengthOfSegment = Integer.parseInt(st.nextToken());
+			int speedLimit = Integer.parseInt(st.nextToken());
+			// update the speed traveled for the given segment
+			for(int j = 0; j &lt; lengthOfSegment; j++) {
+				travelSpeed[currentMile] = speedLimit;
+				currentMile++;
+			}
+		}
+		
+		// maxOver will store the maximum amount over the speed limit that Bessie traveled.
+		int maxOver = 0;
+		for(int i = 0; i &lt; 100; i++) {
+			// compute the amount over the speed limit Bessie traveled
+			int amountExceeded = travelSpeed[i] - speedLimits[i];
+			// update maxOver if we have exceeded it
+			if(amountExceeded &gt; maxOver) {
+				maxOver = amountExceeded;
+			}
+		}
+		
+		// print the answer!
+		pw.println(maxOver);
+		
+		// close output stream
+		pw.close();
+	}
+}
+</pre>
+<p></body></html>

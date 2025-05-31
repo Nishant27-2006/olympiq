@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>There are a few ways to approach this problem.  Probably the most
+straightforward is a  binary search on the answer (say, <span class='math'>$x$</span>), where in each step
+we preserve only the edges of cost <span class='math'>$&lt;x$</span> in our graph and count the number of
+connected components.  If the number is less than <span class='math'>$K$</span>, then our guess for <span class='math'>$x$</span>
+was too high.  Unfortunately, the running time here is <span class='math'>$O(N^2)$</span> to find
+connected components, times the number of steps in the  binary search, which is
+the log of 2019201997 --- about 33.  This will likely time  out on large input
+cases.
+<p>The key structural insight is that the answer to this problem comes from a
+minimum spanning tree (MST) of our graph.  If you want to split into <span class='math'>$K=2$</span>
+clusters, you can do this by finding an MST and removing its highest-weight
+edge, thereby splitting it into two pieces that  represent two sides of our
+partition.  More generally, to split into <span class='math'>$K$</span> clusters, you just remove the
+<span class='math'>$K-1$</span> highest-weight edges from the MST.  This makes sense if you think of the
+operation of Kruskal&apos;s MST algorithm: consider the state of the algorithm when
+it  has built up <span class='math'>$K$</span> connected components and is about to add an edge of weight
+<span class='math'>$x$</span> to join the next pair of components together --- at this point, each
+component is internally connected by a  spanning tree containing edges of weight
+at most <span class='math'>$x$</span>, and running between these components are only edges of weight at
+least <span class='math'>$x$</span> (otherwise components would have been joined earlier in the process).
+<p>So we see that we can answer this question by taking the <span class='math'>$(K-1)$</span>th largest edge
+weight in an MST, which means all we need to do is compute an MST.  There are
+many MST algorithms out there, but unfortunately many of them (e.g., Kruskal,
+Boruvka) run in <span class='math'>$O(N^2 \log N)$</span> time  for this problem since it involves a dense
+graph.  Kruskal&apos;s algorithm can be modified to run in a dense graph in <span class='math'>$O(N^2)$</span>
+time (left as an exercise to the reader), or we can note that the sorting step
+is really the bottleneck with Kruskal, so we can sort the edges quickly (e.g.,
+with something like a two-pass radix sort in linear time), after which Kruskal&apos;s
+algorithm runs in nearly linear time.  Probably even better, however, would be 
+to instead use Jarnik&apos;s algorithm (perhaps more commonly known as Prim&apos;s
+algorithm, which is also pretty much equivalent to Dijkstra&apos;s shortest path
+algorithm --- in the MST context, I prefer to call it Jarnik&apos;s algorithm since Jarnik&apos;s publication
+pre-dated Prim&apos;s by a substantial amount).  This gives a simple way to build the
+MST in just <span class='math'>$O(N^2)$</span> time.
+<p>Some mathematically enterprising students even managed to reverse-engineer our
+&quot;random&quot; edge weight function to solve the problem without using algorithmic
+methods --- although this was not the intent of the problem (and indeed, such
+solutions would break if a different edge weight function was used), these
+solutions were still awarded full marks.
+<p>Here is my C++ code.  It basically runs Jarnik&apos;s algorithm to find an MST, then 
+sorts the MST edges to find the right one.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MAX_N 7500
+
+int N, K, visited[MAX_N+1];
+long long D[MAX_N+1];
+
+// Prim/Jarnik MST algorithm
+void jarnik(int source)
+{
+   for (int i=1; i&lt;=N; i++) D[i] = 2019201997;
+   for (int iter=0; iter&lt;N; iter++) {
+      int min_i = 0;
+      for (int i=1; i&lt;=N; i++) 
+         if (!visited[i] &amp;&amp; (min_i==0 || D[i] &lt; D[min_i])) min_i = i;
+      visited[min_i] = 1;
+      for (int j=1; j&lt;=N; j++)
+         if (!visited[j]) 
+            D[j] = min(D[j], (2019201913LL*min(min_i,j)+2019201949LL*max(min_i,j)) % 2019201997LL);
+   }
+}
+
+int main(void)
+{
+   ifstream fin (&quot;walk.in&quot;);
+   fin &gt;&gt; N &gt;&gt; K;
+   ofstream fout (&quot;walk.out&quot;);
+   jarnik(1);
+   sort (D+1,D+N+1);
+   fout &lt;&lt; D[N+1-K] &lt;&lt; &quot;\n&quot;;
+   return 0;
+}
+</pre>
+<p></body></html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi) 
+<p>Root the tree at <span class='math'>$1$</span>. We will do DP on subtrees. 
+<p>First, observe that the answer is &quot;no&quot; if <span class='math'>$N-1$</span> is not divisible by <span class='math'>$K.$</span>
+Otherwise, we wish to write a function <span class='math'>$dfs(x)$</span> which will check whether it is
+possible to partition the subtree corresponding to vertex <span class='math'>$x$</span> into paths of
+length <span class='math'>$K$</span> and possibly an extra one of length less than <span class='math'>$K$</span> with one endpoint
+at <span class='math'>$x$</span>. If possible, this function will return the length of the extra path.
+Otherwise, the function will return <span class='math'>$-1$</span>.
+<p>First, we should call <span class='math'>$dfs(t)$</span> for all children <span class='math'>$t$</span> of <span class='math'>$x.$</span> If any of these
+return <span class='math'>$-1,$</span>  then <span class='math'>$dfs(x)$</span> should also return <span class='math'>$-1.$</span> Otherwise, we have a path
+of length <span class='math'>$dfs(t)+1$</span> with one endpoint at <span class='math'>$x.$</span> After doing this, we should pair
+up as many of the paths whose lengths are in <span class='math'>$(0,K)$</span> as possible. If there is
+more than one unpaired path remaining after this process, return <span class='math'>$-1$</span>.
+<p>Otherwise, return the length of the unpaired path, or zero if none exists. Note
+that if <span class='math'>$dfs(x)\neq -1,$</span> then its return value is equal to the remainder when
+the number of edges in the subtree corresponding to <span class='math'>$x$</span> is divided by <span class='math'>$K,$</span> which
+is invariant regardless of how exactly we choose the paths of length <span class='math'>$K$</span>. 
+<p>For a fixed <span class='math'>$K,$</span> we can check whether it is possible to split the tree into
+paths of length <span class='math'>$K$</span> in <span class='math'>$O(N)$</span> time, allowing us to solve the problem in 
+<span class='math'>$O(N\cdot (\#\text{ of divisors of }N)).$</span> However, several solutions with this 
+complexity ended up receiving TLE on test case <span class='math'>$3$</span>, where <span class='math'>$N=83161$</span> and <span class='math'>$N-1$</span> 
+has <span class='math'>$128$</span> divisors. One option is to deal with the star case separately. Another
+is to write a checker that does not use recursion and is a constant factor
+faster, demonstrated below.
+<p><pre class='prettyprint'>
+#include &quot;bits/stdc++.h&quot;
+
+using namespace std;
+
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+#define f first
+#define s second
+
+const int MOD = 1e9+7;
+const int MX = 1e5+5;
+
+int N,sub[MX];
+vector&lt;int&gt; adj[MX], num[MX];
+bool bad = 0;
+ 
+void dfs(int a, int b) {
+	sub[a] = 1;
+	for(auto&amp; t: adj[a]) if (t != b) {
+		dfs(t,a);
+		sub[a] += sub[t];
+		num[a].push_back(sub[t]);
+	}
+	if (sub[a] != N) num[a].push_back(N-sub[a]);
+}
+ 
+int cur[MX]; // basically unordered map
+bool ok(int K) {
+	if ((N-1)%K != 0) return 0;
+	for (int i = 0; i &lt; K; ++i) cur[i] = 0;
+	for (int i = 1; i &lt;= N; ++i) {
+		int cnt = 0;
+		for (auto&amp; t: num[i]) {
+			int z = t%K; if (z == 0) continue;
+			if (cur[K-z]) cur[K-z] --, cnt --;
+			else cur[z] ++, cnt ++;
+		}
+		if (cnt) return 0; // paths don&apos;t pair up
+	}
+	return 1;
+}
+ 
+int main() {
+	setIO(&quot;deleg&quot;); 
+	cin &gt;&gt; N;
+	for (int i = 1; i &lt; N; ++i) {
+		int a,b; cin &gt;&gt; a &gt;&gt; b;
+		adj[a].push_back(b), adj[b].push_back(a);
+	}
+	dfs(1,0);
+	for (int i = 1; i &lt; N; ++i) {
+		if (ok(i)) cout &lt;&lt; 1;
+		else cout &lt;&lt; 0;
+	}
+	cout &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

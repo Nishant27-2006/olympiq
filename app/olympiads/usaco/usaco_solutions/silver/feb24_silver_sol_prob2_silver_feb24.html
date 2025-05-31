@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Subtask 1: <span class='math'>$P=1$</span></strong>
+<p>Let&apos;s start by computing the following quantity <span class='math'>$Q$</span>: the minimum number of moves
+to move all of liquid <span class='math'>$1$</span> to tube <span class='math'>$1$</span> and all of liquid <span class='math'>$2$</span> to tube <span class='math'>$2$</span>. Once we
+know how to compute this quantity, we can compute <span class='math'>$Q&apos;$</span>, the minimum number of
+moves to move all of liquid <span class='math'>$1$</span> to tube <span class='math'>$2$</span> and all of liquid <span class='math'>$2$</span> to tube <span class='math'>$1$</span>,
+in a similar way. The answer for this subtask will then be <span class='math'>$\min(Q,Q&apos;)$</span>.
+<p>The current state of liquid in the tubes and beakers can be represented by three
+binary strings <span class='math'>$f$</span>, <span class='math'>$s$</span>, and <span class='math'>$b$</span>, with <span class='math'>$f$</span> and <span class='math'>$s$</span> defined the same way as the
+problem statement, and <span class='math'>$b$</span> denoting the state of the beaker from bottom to top.
+<p>First, observe that <span class='math'>$Q$</span> does not change if we make the following
+simplifications:
+<p><ol><li>Compress runs of equal characters in all three strings. For example, 1221
+becomes 121 and 2211 becomes 21.</li><li>Remove the first character of <span class='math'>$f$</span> if it is <span class='math'>$1$</span>, since this liquid never
+needs to leave tube <span class='math'>$1$</span></li><li>Similarly, remove the first character of <span class='math'>$s$</span> if it is <span class='math'>$2$</span>.</li></ol>
+<p>Next, observe that <span class='math'>$Q$</span> must be at least the number of characters after
+simplifying, because after performing any move and simplifying again, the number
+of characters will have stayed the same or gone down by one. The final state
+corresponds to all of <span class='math'>$f$</span>, <span class='math'>$s$</span>, and <span class='math'>$b$</span> simplifying to empty strings.
+<p>Is <span class='math'>$Q$</span> exactly equal to the number of characters after simplifying? It is when
+we don&apos;t need to utilize the beaker. For example, consider the following input:
+<p><pre>
+f = &quot;111112&quot;
+s = &quot;222222&quot;
+</pre>
+<p>After simplifying,
+<p><pre>
+f = &quot;2&quot;
+s = &quot;&quot;
+</pre>
+<p>So the number of characters after simplifying is one, and <span class='math'>$Q=1$</span> because we only
+need one pour to separate the liquid (tube 1 into tube 2). However, when the
+number of characters after simplifying is greater than one, we need to utilize
+the beaker, and when we first pour liquid into the beaker the number of
+characters after simplifying does not change. In such cases, <span class='math'>$Q$</span> is at least the
+number of characters after simplifying plus one. For example, the first test
+case of the sample input after simplifying becomes:
+<p><pre>
+f = &quot;21&quot;
+s = &quot;1&quot;
+</pre>
+<p>There are three characters after simplifying, and <span class='math'>$Q=4$</span>.
+<p>Is it true that <span class='math'>$Q$</span> is always at most the number of characters after simplifying
+plus one? Assuming this allows you to solve the first subtask.   At this point,
+it&apos;s not obvious why this assumption is correct, but we will prove that it works
+later by providing a construction using exactly this number of moves.
+<p>Implementation (which computes <span class='math'>$\min(Q,Q&apos;)$</span> directly rather than <span class='math'>$Q$</span> and <span class='math'>$Q&apos;$</span> separately):
+<p><pre class='prettyprint'>
+def to_reduced_list(s):
+    &quot;&quot;&quot;Compress runs of equal chars in a string s
+    &gt;&gt;&gt; to_reduced_list(&apos;2211&apos;)
+    [&apos;2&apos;, &apos;1&apos;]
+    &quot;&quot;&quot;
+    l = []
+    for c in s:
+        if len(l) &gt; 0 and l[-1] == c:
+            continue
+        l.append(c)
+    return l
+
+
+def solve():
+    N, P = map(int, input().split())
+    assert P == 1
+    tubes = [to_reduced_list(input()) for _ in range(2)]
+    tubes.append([])
+    ans = len(tubes[0]) + len(tubes[1]) - 2
+    # ^ num chars after simplifying, if tubes[0] and tubes[1] start with different chars and we choose the better of Q and Q&apos;
+    if tubes[0][0] == tubes[1][0]:
+        ans += 1
+    if ans &gt; 1:  # require extra pour into beaker
+        ans += 1
+    print(ans)
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+</pre>
+<p><strong>Subtask 2: <span class='math'>$P=2$</span></strong>
+<p>Here we provide a construction that moves all of liquid <span class='math'>$i$</span> into tube <span class='math'>$i$</span> and 
+achieves a number of moves at most the number of characters after compressing
+runs plus two. From the previous subtask, we know that the answer must be at
+least the number of characters after compressing runs minus two. Therefore, our
+solution is at most four away from optimal.
+<p><ol><li>While tube <span class='math'>$2$</span> is nonempty, pour it into tube <span class='math'>$1$</span> if tube <span class='math'>$2$</span> has liquid <span class='math'>$2$</span>
+on top, or to the beaker otherwise.</li><li>While tube <span class='math'>$1$</span> is nonempty, pour it into tube <span class='math'>$2$</span> if tube <span class='math'>$1$</span> has liquid <span class='math'>$2$</span>
+on top, or to the beaker otherwise.</li><li>Now, tube <span class='math'>$2$</span> contains all of liquid <span class='math'>$2$</span> and the beaker contains all of
+liquid <span class='math'>$1$</span>. The final step is to pour from the beaker into tube
+<span class='math'>$1$</span>.</li></ol>
+<p>Implementation of the strategy described above (using 0- instead of 1-indexing):
+<p><pre class='prettyprint'>
+def to_reduced_list(s):
+    &quot;&quot;&quot;Compress runs of equal chars in a string s
+    &gt;&gt;&gt; to_reduced_list(&apos;2211&apos;)
+    [&apos;2&apos;, &apos;1&apos;]
+    &quot;&quot;&quot;
+    l = []
+    for c in s:
+        if len(l) &gt; 0 and l[-1] == c:
+            continue
+        l.append(c)
+    return l
+
+
+def solve():
+    N, P = map(int, input().split())
+    assert P == 2
+    tubes = [to_reduced_list(input()) for _ in range(2)]
+    tubes.append([])
+
+    moves = []
+
+    def move(src, dst):
+        moves.append((src, dst))
+        if len(tubes[dst]) == 0 or tubes[dst][-1] != tubes[src][-1]:
+            tubes[dst].append(tubes[src][-1])
+        tubes[src].pop()
+
+    while len(tubes[1]) &gt; 0:
+        if tubes[1][-1] == &quot;2&quot;:
+            move(1, 0)
+        else:
+            move(1, 2)
+    while len(tubes[0]) &gt; 0:
+        if tubes[0][-1] == &quot;2&quot;:
+            move(0, 1)
+        else:
+            move(0, 2)
+    move(2, 0)
+
+    print(len(moves))
+    for a, b in moves:
+        print(1 + a, 1 + b)
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+</pre>
+<p><strong>Subtask 3: <span class='math'>$P=3$</span></strong>
+<p>Our construction achieving the optimal number of moves is similar to the one for
+the previous subtask in the sense that we first empty out most of one tube, then
+most of the other, and finally the beaker.
+<p>Before describing the strategy we use the following trick to ensure that we
+never need to deal with a tube being empty, which makes the implementation
+simpler. Suppose we choose to move all of liquid <span class='math'>$1$</span> to tube <span class='math'>$1$</span> and liquid <span class='math'>$2$</span> 
+to tube <span class='math'>$2$</span>; then let&apos;s insert an extra <span class='math'>$1$</span> in front of <span class='math'>$f$</span> and an extra <span class='math'>$2$</span> in
+front of <span class='math'>$s$</span> before compressing runs (or the other way around if we choose to
+move liquid <span class='math'>$1$</span> to tube <span class='math'>$2$</span> and liquid <span class='math'>$2$</span> to tube <span class='math'>$1$</span>).
+<p>Our strategy is as follows. We assume that before every move we perform step <span class='math'>$1$</span>
+only of the simplification process described in subtask 1 (compressing runs of
+equal characters).
+<p><ol><li>If the last characters of <span class='math'>$f$</span> and <span class='math'>$s$</span> are equal, choose any tube with a
+string of length greater than one and pour it into the other tube.</li><li>If both <span class='math'>$f$</span> and <span class='math'>$s$</span> now have length one, we&apos;re done. Otherwise, we&apos;re in a
+case where the beaker must be used. Choose any tube with a string of length
+greater than one and pour it into the beaker. The last characters of both tube
+strings are now equal.</li><li>Suppose the beaker now contains liquid <span class='math'>$i$</span>. Choose the tube whose string has
+first character <em>not</em> equal to <span class='math'>$i$</span>, and repeatedly pour from it until its
+string has length equal to one. We should pour it into either the beaker or the
+other tube depending on which pour reduces the number of characters after
+compressing by one.</li><li>Next, pour from the other tube until its string has length one.</li><li>Finally, pour from the beaker into one of the tubes.</li></ol>
+<p>Example:
+<p><pre>
+Initial:
+f = 12121
+s = 2121
+
+After step 1:
+f = 1212
+s = 2121
+
+After step 2:
+f = 1212
+s = 212
+b = 1
+
+After step 3:
+f = 1212
+s = 2
+b = 1
+
+After step 4:
+f = 1
+s = 2
+b = 1
+
+After step 5:
+f = 1
+s = 2
+</pre>
+<p>Every move besides the first move into the beaker reduces the number of
+characters after compressing by one, so this construction matches the lower
+bound we described in subtask 1.
+<p>Implementation:
+<p><pre class='prettyprint'>
+def to_reduced_list(s):
+    &quot;&quot;&quot;Compress runs of equal chars in a string s, and converts to int
+    &gt;&gt;&gt; to_reduced_list(&apos;2211&apos;)
+    [2, 1]
+    &quot;&quot;&quot;
+    l = []
+    for c in s:
+        c = int(c)
+        if len(l) &gt; 0 and l[-1] == c:
+            continue
+        l.append(c)
+    return l
+
+
+def solve():
+    N, P = map(int, input().split())
+    tubes = [to_reduced_list(input()) for _ in range(2)]
+    tubes.append([])
+    if tubes[0][0] == tubes[1][0]:  # ensure f and s start with different chars
+        tubes[0].insert(0, tubes[0][0] ^ 3)
+
+    ans = len(tubes[0]) + len(tubes[1]) - 2
+    if ans &gt; 1:
+        ans += 1
+
+    print(ans)
+    if P == 1:
+        return
+
+    moves = []
+
+    def move(src, dst):
+        moves.append((src, dst))
+        if len(tubes[dst]) == 0 or tubes[dst][-1] != tubes[src][-1]:
+            tubes[dst].append(tubes[src][-1])
+        tubes[src].pop()
+
+    if tubes[0][-1] == tubes[1][-1]:  # step 1: if equal last chars
+        if len(tubes[0]) &gt; len(tubes[1]):
+            move(0, 1)
+        else:
+            move(1, 0)
+
+    for i in range(2):
+        if len(tubes[i]) &gt; 1:
+            move(i, 2)  # step 2: move from any tube with string length &gt; 1 to beaker
+            idx_to_empty = 0  # step 3: choose a tube to (almost) empty first
+            if tubes[idx_to_empty][0] == tubes[2][0]:
+                idx_to_empty ^= 1
+            while len(tubes[idx_to_empty]) &gt; 1:
+                if tubes[idx_to_empty][-1] == tubes[2][0]:
+                    move(idx_to_empty, 2)
+                else:
+                    move(idx_to_empty, idx_to_empty ^ 1)
+            idx_to_empty ^= 1  # step 4: next, (almost) empty the other tube
+            while len(tubes[idx_to_empty]) &gt; 1:
+                if tubes[idx_to_empty][-1] == tubes[2][0]:
+                    move(idx_to_empty, 2)
+                else:
+                    move(idx_to_empty, idx_to_empty ^ 1)
+            move(2, idx_to_empty)  # step 5: finish
+            break
+
+    assert len(moves) == ans
+    for a, b in moves:
+        print(1 + a, 1 + b)
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+</pre>
+<p></body></html>

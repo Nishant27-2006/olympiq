@@ -1,0 +1,261 @@
+Solution ID: sol_prob2_silver_dec22
+Contest: DEC22
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_dec22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+We'll start by focusing on the subtask where
+
+$N = 1$
+
+. Analyzing some small
+cases, we see that Farmer John appears to win if and only if
+
+$a_1$
+
+is not
+divisible by
+
+$4$
+
+. To prove this, we note that if
+
+$a_1$
+
+is divisible by
+
+$4$
+
+, then
+Farmer John must change the value of
+
+$a_1$
+
+by some value that is not divisible
+by
+
+$4$
+
+. Farmer Nhoj can then decrease it by either
+
+$1$
+
+,
+
+$2$
+
+, or
+
+$3$
+
+to return it
+to a smaller value that is divisible by
+
+$4$
+
+. Eventually, Farmer Nhoj will
+decrease
+
+$a_1$
+
+to zero with this strategy.
+
+This therefore defines the winning strategy for both players - pick some valid
+value that is equivalent to
+
+$a_1 \pmod{4}$
+
+and decrease
+
+$a_1$
+
+accordingly. If
+
+$a_1$
+
+is divisible by
+
+$4$
+
+, you have lost.
+
+Before moving on to the case where
+
+$N > 1$
+
+, we ask the following question - in
+how many turns will the game end if
+
+$N = 1$
+
+, the loser wishes to maximize the
+number of turns the game takes, while the winner wishes to minimize the number
+of turns the game takes? When
+
+$a_1$
+
+is even, we can show that the answer is
+exactly
+
+$\frac{a_1}{2}$
+
+by induction. Otherwise, the winning player wants to
+pick the largest prime that is equivalent to
+
+$a_1 \pmod{4}$
+
+. If that prime is
+
+$p$
+
+, then it will take
+
+$1 + \frac{a_1 - p}{2}$
+
+turns.
+
+We are now prepared to solve the problem in full. We start by precomputing all
+primes less than
+
+$5 \cdot 10^6$
+
+using the sieve of Eratosthenes. For each value,
+we keep track of how many turns it would take for the value to get to zero. Per
+the formula in the previous paragraph, we track how many turns it would take to
+get a given room to become empty. Among all rooms that share the minimum number
+of turns to become empty divided by two, the first one determines which farmer wins.
+
+Yuval Vaknin's C++ code:
+
+#include <iostream>
+using namespace std;
+ 
+const int mx = 5000005;
+int min_turns[mx] = {0, 1};
+bool composite[mx] = {false};
+int max_mod4[4] = {2, 1, 2, 3};
+ 
+int main() {
+	for(int i = 2; i < mx; i++) {
+		if(!composite[i]) {
+			for(int j = i; j < mx; j += i) {
+				composite[j] = true;
+			}
+			max_mod4[i % 4] = i;
+		}
+		min_turns[i] = (i - max_mod4[i % 4]) / 2 + 1;
+	}
+ 
+	int t; cin >> t;
+	while(t--) {
+		int n; cin >> n;
+		int ans = mx;
+		for(int i = 0; i < n; i++) {
+			int a_i; cin >> a_i;
+			if(min_turns[a_i] / 2 < ans / 2) ans = min_turns[a_i];
+		}
+		if(ans & 1) cout << "Farmer John" << endl;
+		else cout << "Farmer Nhoj" << endl;
+	}
+}
+
+Danny Mittal's Java code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class CircularBarn {
+    public static final int MAXVAL = 5000000;
+ 
+    public static void main(String[] args) throws IOException {
+        boolean[] isPrime = new boolean[MAXVAL + 1];
+        for (int p = 1; p <= MAXVAL; p++) {
+            isPrime[p] = true;
+        }
+        for (int p = 2; p <= MAXVAL; p++) {
+            if (isPrime[p]) {
+                for (int k = 2 * p; k <= MAXVAL; k += p) {
+                    isPrime[k] = false;
+                }
+            }
+        }
+        int[] lastPrimes = new int[4];
+        int[] steps = new int[MAXVAL + 1];
+        for (int k = 1; k <= MAXVAL; k++) {
+            if (k % 2 == 0) {
+                steps[k] = k / 2;
+            } else {
+                if (isPrime[k]) {
+                    lastPrimes[k % 4] = k;
+                }
+                steps[k] = 1 + steps[k - lastPrimes[k % 4]];
+            }
+        }
+ 
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int t = Integer.parseInt(in.readLine()); t > 0; t--) {
+            int n = Integer.parseInt(in.readLine());
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int[] rooms = new int[n];
+            for (int j = 0; j < n; j++) {
+                rooms[j] = Integer.parseInt(tokenizer.nextToken());
+            }
+ 
+            boolean johnWins = true;
+            int minSteps = MAXVAL + 1;
+            for (int j = 0; j < n; j++) {
+                int stepsHere = steps[rooms[j]] / 2;
+                if (stepsHere < minSteps) {
+                    minSteps = stepsHere;
+                    johnWins = steps[rooms[j]] % 2 == 1;
+                }
+            }
+            out.append("Farmer ").append(johnWins ? "John" : "Nhoj").append('\n');
+        }
+        System.out.print(out);
+    }
+}
+
+My Python 3 code:
+
+MAXV = 5000000
+sieve = [False] * (MAXV + 1)
+i = 2
+while i * i < len(sieve):
+    if not sieve[i]:
+        for j in range(i*i, len(sieve), i):
+            sieve[j] = True
+    i += 1
+ 
+def solve():
+    n = int(input())
+    l = [int(x) for x in input().split()]
+    moves = 1e9
+    for i, x in enumerate(l):
+        if x % 2 == 0:
+            numMoves = x // 2
+        else:
+            cand = x
+            while sieve[cand]:
+                cand -= 4
+            numMoves = (x - cand) // 2 + 1
+        if numMoves // 2 < moves // 2:
+            moves = numMoves
+            if moves == 1:
+                break
+    if moves%2:
+        print("Farmer John")    
+    else:
+        print("Farmer Nhoj")
+ 
+t = int(input())
+for _ in range(t):
+    solve()

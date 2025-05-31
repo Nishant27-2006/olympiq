@@ -1,0 +1,115 @@
+Solution ID: sol_prob3_bronze_open21
+Contest: OPEN21
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_open21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+There's a simple greedy strategy. Iterate over each grass square.
+
+If it is adjacent to at most one cow, then nothing happens.
+
+If it is adjacent to greater than two cows, then it is adjacent to two cows
+on opposite sides. Increment the answer by one.
+
+Otherwise if exactly 2 adjacent cows we pair those up. That is, insert this
+pair of cows into a set.
+
+At the end, we add the number of distinct pairs in the set to the answer.
+
+My code:
+
+#include<bits/stdc++.h>
+using namespace std;
+
+int main() {
+	int N,M; cin >> N >> M;
+	vector<string> G(N); for (string& row: G) cin >> row;
+	auto exists_cow = [&](int i, int j) { 
+		return 0 <= i && i < N && 0 <= j && j < M && G[i][j] == 'C';
+	};
+	set<vector<pair<int,int>>> pairs;
+	int ans = 0;
+	for (int i = 0; i < N; ++i) 
+		for (int j = 0; j < M; ++j) if (G[i][j] == 'G') {
+			vector<pair<int,int>> v;
+			int dx[]{1,0,-1,0};
+			int dy[]{0,1,0,-1};
+			for (int d = 0; d < 4; ++d) {
+				int ii = i+dx[d], jj = j+dy[d];
+				if (exists_cow(ii,jj)) v.emplace_back(ii,jj);
+			}
+			if (v.size() > 2) {
+				++ans;
+				continue;
+			}
+			if (v.size() == 2) {
+				sort(begin(v),end(v));
+				pairs.insert(v);
+			}
+		}
+	cout << pairs.size()+ans << "\n";
+}
+
+Danny Mittal's code (similar greedy strategy, but doesn't use a set):
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+ 
+public class AcowdemiaIII {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        char[][] pasture = new char[n + 2][];
+        pasture[0] = new char[m + 2];
+        Arrays.fill(pasture[0], '.');
+        pasture[n + 1] = pasture[0];
+        for (int y = 1; y <= n; y++) {
+            pasture[y] = ('.' + in.readLine() + '.').toCharArray();
+        }
+        int answer = 0;
+        for (int y = 1; y <= n; y++) {
+            for (int x = 1; x <= m; x++) {
+                if (pasture[y][x] == 'G' && ((pasture[y][x - 1] == 'C' && pasture[y][x + 1] == 'C') || (pasture[y - 1][x] == 'C' && pasture[y + 1][x] == 'C'))) {
+                    pasture[y][x] = '.';
+                    answer++;
+                }
+            }
+        }
+        for (int y = 1; y <= n; y++) {
+            for (int x = 1; x <= m; x++) {
+                if (pasture[y][x] == 'C') {
+                    if (pasture[y + 1][x - 1] == 'C') {
+                        if (pasture[y][x - 1] == 'G') {
+                            pasture[y][x - 1] = '.';
+                            answer++;
+                        } else if (pasture[y + 1][x] == 'G') {
+                            pasture[y + 1][x] = '.';
+                            answer++;
+                        }
+                    }
+                    if (pasture[y + 1][x + 1] == 'C') {
+                        if (pasture[y][x + 1] == 'G') {
+                            pasture[y][x + 1] = '.';
+                            answer++;
+                        } else if (pasture[y + 1][x] == 'G') {
+                            pasture[y + 1][x] = '.';
+                            answer++;
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println(answer);
+    }
+}

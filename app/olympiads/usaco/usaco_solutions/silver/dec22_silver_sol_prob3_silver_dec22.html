@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Solution 1:</strong>
+<p>First set <span class='math'>$a_N=0$</span>. Next, we determine <span class='math'>$a_i$</span> for <span class='math'>$i=N-1,N-2,\dots,1$</span> in that
+order.  We know that <span class='math'>$a_i=a_{i+1}\pm r_{i,i+1}$</span>. We can first try setting
+<span class='math'>$a_i=a_{i+1}+r_{i,i+1}$</span>; if this is incompatible with some <span class='math'>$r_{i,j}$</span> then set
+<span class='math'>$a_i=a_{i+1}-r_{i,i+1}$</span> instead. Using induction, it may be proven that this 
+recovers the original array up to a negation and a translation.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+N = int(input())
+ 
+difs = [list(map(int, input().split())) for _ in range(N)]
+ 
+ans = [0]*N
+for i in reversed(range(N-1)):
+	def ok():
+		mx = -float(&apos;inf&apos;)
+		mn = float(&apos;inf&apos;)
+		for j in range(i,N):
+			mx = max(mx, ans[j])
+			mn = min(mn, ans[j])
+			if mx-mn != difs[i][j-i]:
+				return False
+		return True
+	ans[i] = ans[i+1] + difs[i][1]
+	if not ok():
+		ans[i] = ans[i+1] - difs[i][1]
+		assert ok()
+ 
+print(&quot; &quot;.join(map(str, ans)))
+</pre>
+<p><strong>Solution 2:</strong>
+<p>Consider the case where every two consecutive elements of <span class='math'>$a$</span> are distinct (that
+is, <span class='math'>$r_{i,i+1}\neq 0$</span> for all <span class='math'>$1\le i&lt;N$</span>). Then given <span class='math'>$a_i$</span>, <span class='math'>$a_{i+1}$</span>,
+<span class='math'>$r_{i+1,i+2}$</span> and <span class='math'>$r_{i,i+2}$</span>, we can uniquely determine <span class='math'>$a_{i,i+2}$</span>. This gives
+us a solution that runs in linear time after reading in the input: set <span class='math'>$a_1=0$</span>,
+<span class='math'>$a_2=r_{1,2}$</span>, and then use the observation above to uniquely determine
+<span class='math'>$a_3,\dots,a_N$</span>. Handling the case  where consecutive elements of <span class='math'>$a$</span> can be
+equal requires a bit more care.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringJoiner;
+import java.util.StringTokenizer;
+ 
+public class ArrayDifferences {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        int[][] differences = new int[n][n];
+        for (int j = 0; j &lt; n; j++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            for (int k = j; k &lt; n; k++) {
+                differences[j][k] = Integer.parseInt(tokenizer.nextToken());
+            }
+        }
+        List&lt;Integer&gt; distinct = new ArrayList&lt;&gt;();
+        distinct.add(0);
+        for (int j = 1; j &lt; n; j++) {
+            if (differences[j - 1][j] != 0) {
+                distinct.add(j);
+            }
+        }
+        int[] answer = new int[n];
+        if (distinct.size() &gt; 1) {
+            answer[distinct.get(1)] = differences[0][distinct.get(1)];
+            for (int j = 2; j &lt; distinct.size(); j++) {
+                int a = distinct.get(j - 2);
+                int b = distinct.get(j - 1);
+                int c = distinct.get(j);
+                int sign = differences[a][c] == differences[a][b] + differences[b][c] ? 1 : -1;
+                answer[c] = answer[b] + (sign * Integer.signum(answer[b] - answer[a]) * differences[b][c]);
+            }
+            for (int j = 1; j &lt; n; j++) {
+                if (differences[j - 1][j] == 0) {
+                    answer[j] = answer[j - 1];
+                }
+            }
+        }
+        StringJoiner joiner = new StringJoiner(&quot; &quot;);
+        for (int j = 0; j &lt; n; j++) {
+            joiner.add(&quot;&quot; + answer[j]);
+        }
+        System.out.println(joiner);
+    }
+}
+</pre>
+<p></body></html>

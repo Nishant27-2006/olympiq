@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>We can simulate the pours one by one, keeping track of the amount of milk in
+each bucket. For example, if we pour from bucket <span class='math'>$1$</span> into bucket <span class='math'>$2$</span>, and bucket
+<span class='math'>$1$</span> has size <span class='math'>$c_1$</span> and bucket <span class='math'>$2$</span> has size <span class='math'>$c_2$</span>, and before the pour, bucket
+<span class='math'>$1$</span> has <span class='math'>$m_1$</span> units of milk and bucket <span class='math'>$2$</span> has <span class='math'>$m_2$</span> units, then the amount of
+milk poured is <span class='math'>$\min(m_1, c_2 - m_2)$</span>. Therefore after the pour, the amount of
+milk in bucket <span class='math'>$1$</span> is <span class='math'>$m_1 - \min(m_1, c_2 - m_2)$</span>. And the amount of milk in
+bucket <span class='math'>$2$</span> is <span class='math'>$m_2 + \min(m_1, c_2 - m_2)$</span>. The formulas for pouring bucket <span class='math'>$2$</span>
+into bucket <span class='math'>$3$</span>, or bucket <span class='math'>$3$</span> into bucket <span class='math'>$1$</span>, are analogous.
+<p>Since there are only <span class='math'>$100$</span> pours, and each pour takes only a constant number of
+arithmetic operations to simulate, this algorithm will run very fast.
+<p>Here is Travis Hance&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+void pour(int&amp; c1, int&amp; m1, int&amp; c2, int&amp; m2) {
+  int amt = min(m1, c2 - m2);
+  m1 -= amt;
+  m2 += amt;
+}
+ 
+int main() {
+  int c1, c2, c3;
+  int m1, m2, m3;
+  scanf(&quot;%d %d&quot;, &amp;c1, &amp;m1);
+  scanf(&quot;%d %d&quot;, &amp;c2, &amp;m2);
+  scanf(&quot;%d %d&quot;, &amp;c3, &amp;m3);
+ 
+  for (int i = 0; i &lt; 33; i++) {
+    pour(c1, m1, c2, m2);
+    pour(c2, m2, c3, m3);
+    pour(c3, m3, c1, m1);
+  }
+  pour(c1, m1, c2, m2);
+ 
+  printf(&quot;%d\n%d\n%d\n&quot;, m1, m2, m3);
+}
+</pre>
+<p></body></html>

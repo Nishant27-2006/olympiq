@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Spencer Compton)
+<p>As our goal is to determine when Bessie should be subscribing to Mooloo, we
+begin by thinking about what optimal time periods for subscribing might look
+like. Our solution  must involve Bessie subscribing for contiguous segments of
+days, as well as ranges where Bessie is unsubscribed in between these
+subscription segments.
+<p>Let us consider the gap between any two days <span class='math'>$d_i$</span> and <span class='math'>$d_{i+1}$</span> where Bessie
+must watch Mooloo. Bessie essentially has two choices:
+<p><ul><li> Bessie continues her subscription from <span class='math'>$d_i$</span> to <span class='math'>$d_{i+1}$</span>. This means she
+will additionally pay <span class='math'>$d_{i+1}-d_i-1$</span> moonies for the days in between.</li><li> Bessie will cancel her subscription after <span class='math'>$d_i$</span> and restart on day
+<span class='math'>$d_{i+1}$</span>. The cost of restarting a new subscription will be an additional <span class='math'>$K$</span>
+moonies for Bessie.</li></ul>
+<p>Accordingly, Bessie can compare these two costs and choose the smaller one.
+Meaning, if the cost of the first option is smaller, she will continue her
+subscription between <span class='math'>$d_i$</span> and <span class='math'>$d_{i+1}$</span>. Otherwise, she will cancel her
+subscription after day <span class='math'>$d_i$</span> and restart on day <span class='math'>$d_{i+1}$</span>.
+<p>Given this strategy, we can iterate through the days and determine the total
+cost for Bessie  in <span class='math'>$O(n)$</span> time.
+<p>Spencer Compton&apos;s C++ code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+typedef long long ll;
+ 
+int main(){
+    int N, K;
+    cin &gt;&gt; N &gt;&gt; K;
+    ll ans = 0LL;
+    ll day[N];
+    for(int i = 0; i&lt;N; i++){
+        cin &gt;&gt; day[i];
+        if(i == 0){
+            // It is the first day, I must start a new subscription
+            ans += K + 1LL;
+        }
+        else{
+            // Decide whether to extend a subscription, or end it and start a new one
+            ll extendCost = day[i] - day[i-1];
+            ll newCost = K + 1LL;
+            ans += min(extendCost, newCost);
+        }
+    }
+    cout &lt;&lt; ans &lt;&lt; endl;
+}
+</pre>
+<p>Brandon Wang&apos;s Java code:
+<pre class='prettyprint'>
+import java.util.*;
+import java.io.*;
+ 
+public class MoolooBronze {
+	public static void main(String args[]) throws IOException {
+		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+	
+		StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+		int N = Integer.parseInt(tokenizer.nextToken());
+		long K = Long.parseLong(tokenizer.nextToken());
+ 
+		long[] days = new long[N];
+		tokenizer = new StringTokenizer(in.readLine());
+ 
+		for (int i = 0; i &lt; N; i++) {
+			days[i] = Long.parseLong(tokenizer.nextToken());
+		}
+ 
+		long ans = K+1;
+ 
+		for (int i = 1; i &lt; N; i++) {
+			ans += Math.min(K+1, days[i] - days[i-1]);
+		}
+ 
+		System.out.println(ans);
+	}
+}
+</pre>
+<p>Benjamin Qi&apos;s Python code:
+<p><pre class='prettyprint'>
+N, K = map(int, input().split())
+days = [int(x) for x in input().split()]
+print(K + days[-1] - days[0] + 1 + sum(min(K - (d1 - d0 - 1), 0) for d0, d1 in zip(days, days[1:])))
+</pre>
+<p>Spencer Compton&apos;s Python code:
+<p><pre class='prettyprint'>
+N, K = map(int, input().split())
+days = [int(x) for x in input().split()]
+ans = 0
+for i in range(N):
+    if i == 0:
+        # It is the first day, I must start a new subscription
+        ans += K + 1
+    else:
+        # Decide whether to extend a subscription, or end it and start a new one
+        extendCost = days[i] - days[i-1]
+        newCost = K + 1
+        ans += min(extendCost, newCost)
+print(ans)
+</pre>
+<p></body></html>

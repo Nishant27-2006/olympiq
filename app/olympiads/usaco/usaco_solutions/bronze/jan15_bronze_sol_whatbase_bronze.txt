@@ -1,0 +1,58 @@
+Solution ID: sol_whatbase_bronze
+Contest: JAN15
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_whatbase_bronze.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Mark Gordon)
+
+This problem gives us two three digit strings and asks us to determine the bases X and Y such that those strings evaluate to the same integer.  We are also guaranteed that there is a unique result where X, Y <= 15,000.
+
+There are a number of ways to approach this.  However, the naive approach of simply testing each pair of bases X, Y <= 15,000 is too slow and will time out.
+
+A better approach is to compute all integers each input number could evaluate to and find the overlap.  An even better approach, shown below, is to observe that a positive number interpreted in base X is larger when interpreted instead in base X+1.  This means that what we're really trying to do is find an equal element in two sorted arrays.  We can do this simply by incrementing the base that produces the smaller corresponding evaluation until they are equal.
+
+#include <iostream>
+#include <cstdio>
+
+using namespace std;
+
+#define MAXB 15000
+
+int evaluate(const string& num, int base) {
+  return (num[0] - '0') * base * base +
+         (num[1] - '0') * base +
+         (num[2] - '0');
+}
+
+int main() {
+  freopen("whatbase.in", "r", stdin);
+  freopen("whatbase.out", "w", stdout);
+
+  int T; cin >> T;
+  for (int t = 1; t <= T; t++) {
+    string num_in_x, num_in_y;
+    cin >> num_in_x >> num_in_y;
+
+    /* Initialize both bases at 10.  Increment the base that produces the
+     * smaller evaluated result until they yield an equal result. */
+    int X = 10;
+    int Y = 10;
+    while (X <= MAXB && Y <= MAXB) {
+      int num_x = evaluate(num_in_x, X);
+      int num_y = evaluate(num_in_y, Y);
+      if (num_x < num_y) {
+        X++;
+      } else if (num_y < num_x) {
+        Y++;
+      } else {
+        cout << X << ' ' << Y << '\n';
+        break;
+      }
+    }
+  }
+  return 0;
+}

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>We will refer to the string of Us and Ds as <span class='math'>$s$</span>.
+<p><strong>Subtask 1: <span class='math'>$N \leq 500$</span></strong>
+<p>We can do DP. For each triple <span class='math'>$(j, k, u)$</span>, our DP says whether there exists a
+subsequence of <span class='math'>$p_1, \ldots, p_k$</span> consistent with <span class='math'>$s_1\ldots s_j$</span> that ends in
+the number <span class='math'>$u$</span>. Transitions are constant time, so the runtime is
+<span class='math'>$\mathcal O(N^3)$</span>.
+<p><strong>Subtask 2: <span class='math'>$N \leq 5000$</span></strong>
+<p>We can improve the DP from the previous subtask by noting that depending on
+whether <span class='math'>$s_{j + 1}$</span> is U or D, it&apos;s optimal for the previous number in the
+subsequence to be as small or as large as possible. Therefore, our DP should
+find for each pair <span class='math'>$(j, k)$</span> both the smallest and the largest numbers such that
+there exists a subsequence of <span class='math'>$p_1, \ldots, p_k$</span> consistent with <span class='math'>$s_1\ldots s_j$</span>
+that ends in that number. Transitions are again constant time, so the runtime is
+<span class='math'>$\mathcal O(N^2)$</span>.
+<p><strong>Subtask 3: <span class='math'>$s$</span> is Us followed by Ds</strong>
+<p>Apply a standard LIS algorithm to find for each number the longest LIS ending in
+that number, as well as the longest LIS ending in that number that goes in
+reverse (starting from the end of <span class='math'>$p$</span>). Now let the number of Us in <span class='math'>$s$</span> be <span class='math'>$j$</span>.
+If there is no LIS of <span class='math'>$p$</span> with <span class='math'>$j + 1$</span>, then we simply use the longest LIS that
+we found. Otherwise, find the first position in <span class='math'>$p$</span> where we have an LIS of
+length <span class='math'>$j + 1$</span>, then use the longest reverse LIS that ends at or after that
+position to compute the answer.
+<p>The runtime is <span class='math'>$O(N\lg N)$</span> using an appropriate LIS algorithm.
+<p><strong>Subtask 4: No additional constraints</strong>
+<p>Intuitively, it makes sense for us to try to find the fastest (ending the
+earliest) subsequence of <span class='math'>$p$</span> consistent with each prefix of <span class='math'>$s$</span>, and build on
+that subsequence to find the fastest subsequence for the next prefix of <span class='math'>$s$</span>.
+Unfortunately, this idea doesn&apos;t even work for normal LIS (longest increasing
+subsequence), i. e. the case where <span class='math'>$s$</span> is UUUU..., because we can have a case
+like
+<p><span class='math'>$p = [5, 6, 7, 1, 2, 3, 4]$</span>
+<p>where the fastest increasing subsequence of length <span class='math'>$3$</span> is <span class='math'>$[5, 6, 7]$</span>, but the
+fastest one of length <span class='math'>$4$</span> is <span class='math'>$[1, 2, 3, 4]$</span> which doesn&apos;t build on <span class='math'>$[5, 6, 7]$</span>
+at all.
+<p>However, it turns out that we can actually apply this idea when switching from
+contiguous segments of U to contiguous segments of D and vice versa.
+Specifically, suppose that <span class='math'>$s_j$</span> is D, and the next <span class='math'>$x$</span> letters in <span class='math'>$s$</span> are U. If
+the fastest subsequence <span class='math'>$a$</span> of <span class='math'>$p$</span> consistent with <span class='math'>$s_1\ldots s_j$</span> ends at index
+<span class='math'>$k$</span>, then consider finding the fastest LIS <span class='math'>$b$</span> of length <span class='math'>$x + 1$</span> in <span class='math'>$p$</span>
+considering only positions from <span class='math'>$k$</span> onwards. Say that <span class='math'>$b$</span> ends at position
+<span class='math'>$k&apos;$</span>.
+<p>It&apos;s clear that the fastest subsequence of <span class='math'>$p$</span> consistent with
+<span class='math'>$s_1\ldots s_{j + x}$</span> must end at or after position <span class='math'>$k&apos;$</span>, because clearly it&apos;s
+not possible to find a subsequence consistent with <span class='math'>$s_1\ldots s_j$</span> then an LIS
+of length <span class='math'>$x + 1$</span> that starts with the previous subsequence prior to <span class='math'>$k&apos;$</span>.
+<p>However, we can actually use <span class='math'>$a$</span> and <span class='math'>$b$</span> to create a subsequence consistent with
+<span class='math'>$s_1\ldots s_{j + x}$</span> that ends at position <span class='math'>$k&apos;$</span>. If the last number <span class='math'>$a_{j}$</span> in
+<span class='math'>$a$</span> and the first number <span class='math'>$b_0$</span> in <span class='math'>$b$</span> are the same, then we&apos;re done, because we
+can simply attach them at that number. Otherwise, note that it can&apos;t be that
+<span class='math'>$a_{j} &lt; b_0$</span>, because otherwise we could add <span class='math'>$a_{j}$</span> to the beginning of <span class='math'>$b$</span>
+and remove <span class='math'>$b$</span>&apos;s last element to get an LIS of length <span class='math'>$x + 1$</span> that ends earlier.
+Therefore, it must be that <span class='math'>$a_{j} &gt; b_0$</span>. However, since <span class='math'>$s_j$</span> is D, we can
+actually take <span class='math'>$a$</span>, remove <span class='math'>$a_{j}$</span>, then add on <span class='math'>$b_0$</span>, which is valid because
+<span class='math'>$a_{j-1} &gt; a_{j} &gt; b_1$</span> so the D is still satisfied, and now use <span class='math'>$b_0$</span> to glue
+together <span class='math'>$a$</span> and <span class='math'>$b$</span>.
+<p>Therefore, the end position of the fastest subsequence of <span class='math'>$p$</span> consistent with
+<span class='math'>$s_1\ldots s_{j + x}$</span> is simply the end position of the fastest LIS of <span class='math'>$p$</span>
+considering only positions starting from the end position of the fastest
+subsequence consistent with <span class='math'>$s_1\ldots s_j$</span>. All of this also applies when U and
+D are switched.
+<p>This means that our algorithm can work as follows. We divide <span class='math'>$s$</span> into its
+contiguous segments of U and D, and for each segment find the fastest LIS or LDS
+of the length of the segment <span class='math'>$ + 1$</span> that only considers the part of <span class='math'>$p$</span> starting
+(inclusive) from the end of the previous LDS or LIS. We finish when we are
+unable to find an LIS or LDS of the appropriate length for some segment and
+simply use the longest one we were able to find for that last segment to compute
+the answer.
+<p>To find LISs and LDSs, we can simply apply one of the standard algorithms for
+finding LIS, but we have to be careful that the algorithm we use runs in time a
+function of the number of elements we consider, not a function of <span class='math'>$N$</span>, as there
+can potentially be many segments in <span class='math'>$s$</span>. An elegant choice given this constraint
+is the binary search tree algorithm for LIS, which is used in the Java code
+below.
+<p>Assuming our LIS algorithm runs in <span class='math'>$\mathcal O(x\lg x)$</span> where <span class='math'>$x$</span> is the number
+of elements we consider, the runtime of our overall algorithm is
+<span class='math'>$\mathcal O(N\lg N)$</span>.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Comparator;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+ 
+public class UpDownSubsequence {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        char[] directions = in.readLine().toCharArray();
+        int k = 0;
+        int last = Integer.parseInt(tokenizer.nextToken());
+        while (tokenizer.hasMoreTokens() &amp;&amp; k &lt; directions.length) {
+            char direction = directions[k];
+            TreeSet&lt;Integer&gt; treeSet = new TreeSet&lt;Integer&gt;(direction == &apos;U&apos; ? Comparator.naturalOrder() : Comparator.reverseOrder());
+            treeSet.add(last);
+            while (tokenizer.hasMoreTokens() &amp;&amp; k &lt; directions.length &amp;&amp; directions[k] == direction) {
+                last = Integer.parseInt(tokenizer.nextToken());
+                Integer displaced = treeSet.higher(last);
+                if (displaced == null) {
+                    k++;
+                } else {
+                    treeSet.remove(displaced);
+                }
+                treeSet.add(last);
+            }
+        }
+        System.out.println(k);
+    }
+}
+</pre>
+<p></body></html>

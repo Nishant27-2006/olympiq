@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Based off <a href='https://www.usaco.org/index.php?page=viewproblem2&amp;cpid=743'>Modern
+Art 2</a>, although the solution is completely different.
+<p><strong>Subtask 2:</strong> 
+<p>We can split the painting into groups of <span class='math'>$M=12$</span> and run
+<span class='math'>$\mathcal{O}(2^Mpoly(M))$</span> BFS on each group independently. A state consists of a
+bitmask of length <span class='math'>$M$</span> where the <span class='math'>$i$</span>-th bit of the bitmask is equal to one if the
+<span class='math'>$i$</span>-th cell is colored the way that it should be in the final painting, as well
+as the minimum number of strokes required to reach that bitmask (denoted by 
+<span class='math'>$\texttt{dist}$</span> in the solution below).
+<p>To transition from a state, we go through each of the <span class='math'>$\mathcal{O}(M^2)$</span>
+possible ranges that a stroke can paint over and through each of the
+<span class='math'>$\mathcal{O}(M)$</span> possible colors for the stroke.
+<p>Code (courtesy of Andrew Wang):
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int MAX = 1e9;
+vector&lt;int&gt; dist;
+queue&lt;int&gt; q;
+
+void add(int mask, int distance) { //add new mask to the queue + update distance
+	if(dist[mask] != MAX)
+		return;
+	dist[mask] = distance;
+	q.push(mask);
+}
+
+int solve(vector&lt;int&gt; v, int lowest_color) {
+	int N = v.size();
+	dist.assign(1&lt;&lt;N, MAX);
+	add(0, 0);
+	while (q.size()) {
+		int x = q.front(); q.pop();
+		for(int color = lowest_color; color &lt; lowest_color+12; color++) {
+			//loop through intervals with same beginning + ending color
+			for(int i = 0; i &lt; N; i++) {
+				if(v[i] == color) {
+					for(int j = i; j &lt; N; j++) {
+						if(v[j] == color) {
+							int cur_mask = x; 
+							for(int k = i; k &lt;= j; k++) {
+								//if same color, then update the mask as correctly painted
+								if (v[k] == color) 
+									cur_mask |= 1 &lt;&lt; k;
+								//if already painted correctly, update it as painted over incorrectly
+								else if (cur_mask &amp; (1&lt;&lt;k)) 
+									cur_mask ^= 1 &lt;&lt; k;
+							}
+							add(cur_mask, dist[x]+1);
+						}
+					}
+				}
+			}
+		}
+	}
+	return dist[(1&lt;&lt;N)-1];
+}
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0); 
+	int N; cin &gt;&gt; N;
+	vector&lt;int&gt; cur_batch;
+	int ans = 0;
+	for(int i = 0; 12*i &lt; N; i++) { //breaking it up in batches of size &lt;= 12
+		for(int j = 12*i; j &lt; 12*(i+1) &amp;&amp; j &lt; N; j++) {
+			int a; cin &gt;&gt; a;
+			cur_batch.push_back(a);
+		}
+		ans += solve(cur_batch, 12*i+1);
+		cur_batch.clear();
+	}
+	cout &lt;&lt; ans &lt;&lt; endl;
+}
+</pre>
+<p><strong>Full Solution:</strong> 
+<p>Given an optimal way to paint, draw a segment between two distinct cells if they
+were last painted by the same stroke <span class='math'>$x$</span> and none of the cells in between them
+were last painted by stroke <span class='math'>$x$</span>. The number of strokes required is equal to <span class='math'>$N$</span>
+minus the number of such segments. For example, we can draw at most five
+segments for the following test case,
+<p><pre>
+11
+1 2 3 4 1 4 3 2 1 1 6
+</pre>
+<p>so the number of strokes required is <span class='math'>$11-5=6$</span>.
+<p><pre>
+        1
+      4---4
+    3-------3
+  2-----------2
+1---------------1-1 6
+</pre>
+<p>So we&apos;ve reduced the problem to computing the maximum size of a set of segments
+satisfying all three of the following properties:
+<p><ul><li>The endpoint cells of a segment must share the same color.</li><li>If two segments share an endpoint cell, that cell is the only cell they
+share.</li><li>Otherwise, the range spanned by one segment is strictly contained within the
+range spanned by the other.</li></ul>
+<p>It suffices to do dynamic programming on ranges to compute the maximum possible 
+number of segments. Define <span class='math'>$dp[i][j]$</span> to be the maximum possible number of
+segments if we only consider the range from cell <span class='math'>$i$</span> to cell <span class='math'>$j$</span> (<span class='math'>$0\le i&lt;j&lt;N$</span>).
+<p><ul><li>If we draw a segment from cell <span class='math'>$i$</span> to cell <span class='math'>$j$</span> (only possible when these
+cells have the same color),  then all remaining segments must be contained
+within the interval from cell <span class='math'>$i+1$</span> to cell <span class='math'>$j-1$</span>. This gives the transition
+<span class='math'>$dp[i][j]=\max(dp[i][j],1+dp[i+1][j-1])$</span>.</li><li>Otherwise, there must exist some <span class='math'>$i&lt;k&lt;j$</span> such that no segment crosses over
+cell <span class='math'>$k$</span>. This gives the transition
+<span class='math'>$dp[i][j]=\max_{i&lt;k&lt;j}(dp[i][j],dp[i][k]+dp[k][j])$</span>.</li></ul>
+<p><strong>Time Complexity:</strong> <span class='math'>$\mathcal{O}(N^3)$</span>
+<p>My code follows:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int N, dp[305][305];
+ 
+int main() {
+	cin &gt;&gt; N;
+	vector&lt;int&gt; a(N); 
+	for (int&amp; t: a) cin &gt;&gt; t;
+	for (int i = N-1; i &gt;= 0; --i) 
+		for (int j = i+1; j &lt; N; ++j) {
+			if (a[i] == a[j]) // draw segment from i to j
+				dp[i][j] = max(dp[i][j],1+dp[i+1][j-1]);
+			for (int k = i+1; k &lt; j; ++k) // split at k
+				dp[i][j] = max(dp[i][j],dp[i][k]+dp[k][j]);
+		}
+	cout &lt;&lt; N-dp[0][N-1] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

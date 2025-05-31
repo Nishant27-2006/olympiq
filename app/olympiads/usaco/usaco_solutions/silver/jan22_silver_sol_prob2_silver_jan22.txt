@@ -1,0 +1,298 @@
+Solution ID: sol_prob2_silver_jan22
+Contest: JAN22
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_jan22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+For partial credit, we can iterate over all pairs
+
+$(i,j)$
+
+and check whether they
+satisfy the given condition. Naively this would take
+
+$O(N^3)$
+
+time (there are
+
+$O(N^2)$
+
+time and each one takes
+
+$O(N)$
+
+time to check), but it is easy to speed
+this up by checking all pairs
+
+$(i,j)$
+
+for a fixed
+
+$i$
+
+in
+
+$O(N)$
+
+time.
+
+My code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N; cin >> N;
+	vector<int> h(N); for (int& i: h) cin >> i;
+	int64_t ans = 0;
+	for (int i = 0; i < N; ++i) {
+		int mx = -1;
+		for (int j = i+1; j < N; ++j) {
+			if (mx < min(h[i],h[j])) ans += j-i+1; // (i,j) should be counted
+			mx = max(mx,h[j]);
+		}
+	}
+	cout << ans << "\n";
+}
+
+For full credit, we use the observation that if the cows at positions
+
+$(i,j)$
+
+can throw to each other, then
+
+$(i,j)$
+
+must be of one of the following two types:
+
+If
+
+$h_j>h_i$
+
+, then cow
+
+$j$
+
+is the closest cow to the right of cow
+
+$i$
+
+that
+is taller than cow
+
+$i$
+
+. Note that if there is a closer cow than cow
+
+$j$
+
+to the right of cow
+
+$i$
+
+that is taller than cow
+
+$i$
+
+, then this would contradict the
+assumption that all cows in the range
+
+$(i,j)$
+
+have heights smaller than
+
+$\min(h_i,h_j)=h_i$
+
+.
+
+If
+
+$h_i>h_j$
+
+, then cow
+
+$i$
+
+is the closest cow to the left of
+
+$j$
+
+that is
+taller than cow
+
+$j$
+
+.
+
+Note that as the heights are all unique, we do not consider the case
+
+$h_i=h_j$
+
+.
+
+Define the
+
+contribution
+
+of a pair
+
+$(i,j)$
+
+to be
+
+$j-i+1$
+
+. To sum the
+contributions over all pairs of both types, it suffices to sum  the contribution
+over pairs of the first type, then reverse the line of cows and sum the
+contribution over pairs of the first type again.
+
+There are several ways to sum the contribution over pairs of the first type.
+
+Solution 1:
+
+Use a set that maintains the cows in sorted order of position
+(ex.
+
+$\texttt{std::set}$
+
+in C++). Consider inserting cows into this set in
+decreasing order of height. When cow
+
+$i$
+
+is inserted into the set, the next cow
+after
+
+$i$
+
+in the set (if it exists) is precisely the closest cow to the right of
+cow
+
+$i$
+
+that is taller than cow
+
+$i$
+
+. This solution runs in
+
+$O(N\log N)$
+
+time.
+
+The following two solutions sum the contribution in
+
+$O(N)$
+
+time.
+
+Solution 2:
+
+Start with a linked list containing all of the cows in order
+of position, then iterate over the cows in increasing order of height and remove
+them from the linked list in that order. Just before cow
+
+$i$
+
+is removed from the
+linked list, the cow succeeding
+
+$i$
+
+in the linked list (if it exists) is the
+closest cow to the right of cow
+
+$i$
+
+that is taller than cow
+
+$i$
+
+. A similar idea
+was used in
+
+Snow
+Boots.
+
+Solution 3:
+
+Iterate over the cows from right to left and use a
+
+monotonic
+stack
+
+.
+
+All of these solutions are included in my code below.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int64_t ans = 0;
+int N;
+
+// using a sorted set
+void add_contribution(const vector<int>& h) {
+	vector<int> with_h(N+1);
+	for (int i = 0; i < N; ++i) with_h[h[i]] = i;
+	set<int> present;
+	for (int cur_h = N; cur_h; --cur_h) {
+		auto it = present.insert(with_h[cur_h]).first;
+		if (next(it) != end(present)) ans += *next(it)-*it+1;
+	} // the cow at position with_h[cur_h] can throw to the next cow after it
+}
+
+// either of the next two functions may be substituted in place of the first function
+
+// using a linked list
+void add_contribution_ll(const vector<int>& h) {
+	vector<int> with_h(N+1);
+	for (int i = 0; i < N; ++i) with_h[h[i]] = i;
+	vector<int> pre(N), nex(N);
+	for (int i = 0; i < N; ++i) {
+		pre[i] = i-1;
+		nex[i] = i+1;
+	}
+	for (int cur_h = 1; cur_h <= N; ++cur_h) {
+		int pos = with_h[cur_h];
+		int p = pre[pos], n = nex[pos];
+		if (n != N) ans += n-pos+1, pre[n] = p;
+		if (p != -1) nex[p] = n;
+	}
+}
+
+// using a monotonic stack
+void add_contribution_alt(const vector<int>& h) {
+	stack<int> stk;
+	for (int i = N-1; i >= 0; --i) {
+		while (!stk.empty() && h[stk.top()] < h[i]) stk.pop();
+		if (!stk.empty()) ans += stk.top()-i+1;
+		stk.push(i);
+	}
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	cin >> N;
+	vector<int> h(N); for (int& i: h) cin >> i;
+	add_contribution(h);
+	reverse(begin(h), end(h));
+	add_contribution(h);
+	cout << ans << "\n";
+}
+
+Note: All three of these solutions can also be applied to
+
+HILO Gold
+
+from
+last contest, although that problem is much less straightforward.

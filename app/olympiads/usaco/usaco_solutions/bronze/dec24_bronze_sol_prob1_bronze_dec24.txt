@@ -1,0 +1,360 @@
+Solution ID: sol_prob1_bronze_dec24
+Contest: DEC24
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_dec24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Weiming Zhou)
+
+For a given number
+
+$x$
+
+, we can check whether it is valid or not (i.e. whether
+chain rounding gives a different result than directly rounding) by directly
+simulating the chain rounding process. This can be done in
+
+$\mathcal{O}(\log N)$
+
+time.
+
+//round u to the nearest d
+int round (int u, int d) {
+    if (u % d < d/2) {
+        return u - u % d;
+    }
+    return u + d - u % d;
+}
+
+//chain round u to the nearest target
+int chain_round(int u, int target){
+    for(int ten = 10; ten<=target; ten *= 10){
+        u = round(u, ten);
+    }
+    return u;
+}
+
+For the
+
+$N \leq 1000$
+
+subtask, we can check each
+
+$x$
+
+from
+
+$2$
+
+to
+
+$N$
+
+using brute
+force. We will loop over each number and check if it chain rounds to a different
+number than directly rounding. The total complexity is
+
+$\mathcal{O}(N \log N)$
+
+per test case.
+
+For the
+
+$N \leq 10^6$
+
+subtask, we note that if there are
+
+$V$
+
+valid
+
+$x$
+
+from
+
+$2$
+
+to
+
+$N-1$
+
+, there are either
+
+$V$
+
+or
+
+$V+1$
+
+valid numbers from
+
+$2$
+
+to
+
+$N$
+
+,
+depending on whether
+
+$N$
+
+itself is valid. This motivates us to precompute for
+each
+
+$N$
+
+the number of valid
+
+$x$
+
+before processing any of the test cases and
+storing it into an array. This lowers our time complexity to
+
+$\mathcal{O}(1)$
+
+per test case! We still need
+
+$\mathcal{O}(N \log N)$
+
+time to precompute all
+possible answers, so our final time complexity is
+
+$\mathcal{O}(N \log N + T)$
+
+where
+
+$T$
+
+is the number of test cases.
+
+#include <iostream>
+#include <vector>
+ 
+// round u to the nearest d
+int round (int u, int d) {
+    if (u % d < d/2) {
+        return u - u % d;
+    }
+    return u + d - u % d;
+}
+ 
+//chain round u to the nearest target
+int chain_round(int u, int target){
+    for(int ten = 10; ten<=target; ten *= 10){
+        u = round(u, ten);
+    }
+    return u;
+}
+ 
+int main () {
+    const int maxN = 1'000'000;
+    std::vector<int> ans(maxN+1);
+    ans[1] = 0;
+    for(int N = 2; N <= maxN; N++){
+        int V = ans[N-1];
+        int target = 1;
+        while(target < N){
+            target *= 10;
+        }
+        if(chain_round(N, target) != round(N, target)){
+            V++;
+        }
+        ans[N] = V;
+    }
+    int T; std::cin >> T;
+    while (T--) {
+        int N; std::cin >> N;
+        std::cout << ans[N] << "\n";
+    }
+}
+
+For
+
+$N \leq 10^9$
+
+, it is now too slow to check for each
+
+$x$
+
+whether or not it is
+valid, so we have to make some observations about chain rounding.
+
+With some experimentation, we can observe that all valid
+
+$x$
+
+have a
+prefix of at least one
+
+$4$
+
+(prefix starting from the
+left), and the first digit not equal to a
+
+$4$
+
+must be
+
+$5$
+
+,
+
+$6$
+
+,
+
+$7$
+
+,
+
+$8$
+
+, or
+
+$9$
+
+.
+
+For instance,
+
+$4451$
+
+,
+
+$450$
+
+, and
+
+$45$
+
+will be valid but
+
+$4$
+
+,
+
+$50$
+
+, and
+
+$7455$
+
+are not.
+
+If we fix the length of
+
+$x$
+
+to be
+
+$L$
+
+, then
+
+$x$
+
+must be in the range
+
+$[\overbrace{44\dots 4}^{L-1}5, 4\overbrace{99\dots 9}^{L-1}]$
+
+. We can loop over
+all possible
+
+$L$
+
+(as
+
+$N \leq 10^{9}$
+
+, the maximum
+
+$L$
+
+is at most
+
+$9$
+
+) and check
+for each one, how many valid
+
+$x$
+
+of length
+
+$L$
+
+are less than or equal to
+
+$N$
+
+.
+
+Complexity
+
+$\mathcal{O}(\log N)$
+
+per test case.
+
+Anand John's Python code follows. Note that the time complexity is worse than
+
+$\mathcal{O}(\log N)$
+
+due to conversions from strings to integers, but it is
+still fast enough to pass.
+
+def alg(N):
+    digits = 0
+    while 10**digits < N:
+        digits += 1
+    
+    answer = 0
+    for curdigits in range(1, digits+1):
+        upper = int('5'+'0'*(curdigits-1))-1
+        upper = min(N, upper)  
+        lower = int('4'*curdigits)
+        answer += max(0, upper - lower)
+    return answer
+ 
+T = int(input().strip())
+for _ in range(T):
+    N = int(input().strip())
+    print(alg(N))
+
+Brandon Wang's C++ code:
+
+#include <iostream>
+#include <vector>
+
+//determines the length of the intersection of [a, b] with [c, d]
+int isect(int a, int b, int c, int d) {
+    int lb = std::max(a, c);
+    int ub = std::min(b, d);
+    return std::max(0, ub - lb + 1);
+}
+
+int solve(int n) {
+    int is = 5, ie = 49;
+    int tp = 1;
+    int ans = 0;
+    while (tp < 100000000) {
+        tp *= 10;
+        is += 4 * tp;
+        ie = 5 * tp - 1;
+        ans += isect(is, ie, 2, n);
+    }
+    return ans;
+}
+
+int main() {
+    int T;
+    std::cin >> T;
+    while (T--) {
+        int n;
+        std::cin >> n;
+        std::cout << solve(n) << "\n";
+    }
+}

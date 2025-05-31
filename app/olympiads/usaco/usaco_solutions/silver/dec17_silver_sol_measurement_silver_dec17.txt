@@ -1,0 +1,88 @@
+Solution ID: sol_measurement_silver_dec17
+Contest: DEC17
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_measurement_silver_dec17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Due to the large number of measurements, we need to sort them in order of day.
+
+When we process a measurement, we need to track the cow whose output is changing
+and the old and new outputs. After that, we need to see if the cows with maximum output
+have changed.
+
+To check this, there are a few conditions we need to check. If, for example,
+the number of cows with the maximum output have changed, then clearly the display
+will need to be updated. However, the number of cows could stay the same and the display
+could need to still be updated. To check this, we need to investigate if the cow currently
+under consideration was originally up there and if they are up there after the measurement
+changed.
+
+Here is Mark Gordon's code.
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstdio>
+#include <set>
+#include <map>
+ 
+using namespace std;
+ 
+struct measurement {
+  int day;
+  int cow;
+  int delta;
+};
+ 
+int main() {
+  ios_base::sync_with_stdio(false);
+  freopen("measurement.in", "r", stdin);
+  freopen("measurement.out", "w", stdout);
+ 
+  int N;
+  int G;
+  cin >> N >> G;
+ 
+  vector<measurement> A(N);
+  for (auto& m : A) {
+    cin >> m.day >> m.cow >> m.delta;
+  }
+  sort(A.begin(), A.end(), [](const measurement& a, const measurement& b) {
+    return a.day < b.day;
+  });
+ 
+  map<int, int, greater<int> > cnts;
+  cnts[0] = N + 1;
+ 
+  int result = 0;
+  map<int, int> mp;
+  for (auto& m : A) {
+    int& ref = mp[m.cow];
+ 
+    bool wastop = ref == cnts.begin()->first;
+    int wascnt = cnts[ref]--;
+    if (wascnt == 1) {
+      cnts.erase(ref);
+    }
+ 
+    ref += m.delta;
+ 
+    int iscnt = ++cnts[ref];
+    bool istop = ref == cnts.begin()->first;
+    if (wastop) {
+      if (!istop || wascnt != 1 || iscnt != 1) {
+        ++result;
+      }
+    } else if (istop) {
+      ++result;
+    }
+  }
+  cout << result << endl;
+ 
+  return 0;
+}

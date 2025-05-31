@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>The problem can be rephrased as follows: removing leaves from a tree one by one
+while respecting order constraints, determine the possible final nodes. Let&apos;s
+start with an easier variant: determine whether there exists a feasible
+ordering, and if so, find a possible final node. This can be solved by greedily
+removing &quot;free&quot; leaves: that is, leaves which are not constrained to be removed
+after nodes which still remain in the tree. 
+<p>To prove that this works, note that if there is no feasible ordering, than this
+greedy process cannot possibly succeed. Conversely, if the process does not
+succeed, then there is some contiguous subtree in which every leaf of the
+subtree is constrained to be removed after some other node in the subtree. Any
+ordering has to break at least one of these constraints, since out of all the
+nodes in the subtree, some leaf is removed first. So there is no feasible
+ordering.
+<p>Now we want to find all possible final nodes. If the above greedy algorithm
+fails, then we&apos;re done: there are no possible final nodes. Otherwise, we&apos;ve
+found one final node <span class='math'>$r$</span> and want to find all others. Intuitively, the possible
+final nodes should form a contiguous subtree. This intuition is correct. 
+<p>Let <span class='math'>$s$</span> be any neighbor of <span class='math'>$r$</span>. If there is some constraint that <span class='math'>$s$</span> must be
+removed before some other node, then <span class='math'>$s$</span> is clearly not a possible final node.
+It turns out this is sufficient: fix a feasible ordering in which <span class='math'>$r$</span> is the
+final node, and find the location where <span class='math'>$s$</span> is removed. Swapping <span class='math'>$s$</span> with the
+next node in the ordering does not break any constraints, so <span class='math'>$s$</span> can be
+iteratively swapped towards the end of the ordering. Hence, <span class='math'>$s$</span> is a possible
+final node.
+<p>This means that if we consider the induced subgraph of all nodes <span class='math'>$a$</span> with no
+constraints of the form &quot;remove <span class='math'>$a$</span> before <span class='math'>$b$</span>&quot;, then every node in the
+connected component of <span class='math'>$r$</span> is a possible final node.
+<p>In fact, such nodes are the only possible final nodes. Fix some node <span class='math'>$s$</span> such
+that there is some node <span class='math'>$a$</span> along the path from <span class='math'>$s$</span> to <span class='math'>$r$</span>, and some constraint
+&quot;remove <span class='math'>$a$</span> before <span class='math'>$b$</span>&quot;. Root the tree at <span class='math'>$a$</span>. Then <span class='math'>$r$</span> and <span class='math'>$s$</span> are in different
+subtrees. If <span class='math'>$b$</span> is not in the subtree of <span class='math'>$r$</span>, then <span class='math'>$a$</span> is on the path from <span class='math'>$r$</span>
+to <span class='math'>$b$</span>, so <span class='math'>$r$</span> must be removed before <span class='math'>$a$</span>, so <span class='math'>$r$</span> is not a possible final node.
+Contradiction, so <span class='math'>$b$</span> is in the subtree of <span class='math'>$r$</span>. But then it&apos;s not in the subtree
+of <span class='math'>$s$</span>, so by the same reasoning, <span class='math'>$s$</span> is not a possible final node.
+<p>This yields our final algorithm: run the greedy process to find <span class='math'>$r$</span>, and run DFS
+from <span class='math'>$r$</span>, avoiding nodes <span class='math'>$a$</span> which have constraints &quot;remove <span class='math'>$a$</span> before <span class='math'>$b$</span>&quot;. The
+set of visited nodes is the set of possible final nodes.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+using namespace std;
+#define MAXN 100000
+ 
+int N,M;
+vector&lt;int&gt; edges[MAXN];
+vector&lt;int&gt; inConstraints[MAXN];	//i: must remove j before i
+vector&lt;int&gt; outConstraints[MAXN];	//i: must remove i before j
+int numInConstraints[MAXN];
+int numEdges[MAXN];
+bool isfree[MAXN];
+bool isroot[MAXN];
+ 
+void dfs(int i,int par)
+{
+	if(outConstraints[i].size() &gt; 0)
+		return;
+	isroot[i] = 1;
+	for(int j=0;j&lt;edges[i].size();j++)
+		if(edges[i][j] != par)
+			dfs(edges[i][j], i);
+}
+ 
+ 
+int main()
+{
+	cin &gt;&gt; N &gt;&gt; M;
+	int a,b;
+	for(int i=1;i&lt;N;i++)
+	{
+		cin &gt;&gt; a &gt;&gt; b;
+		a--,b--;
+		edges[a].push_back(b);
+		edges[b].push_back(a);
+		numEdges[a]++, numEdges[b]++;
+	}
+	for(int i=0;i&lt;M;i++)
+	{
+		cin &gt;&gt; a &gt;&gt; b;
+		a--,b--;
+		inConstraints[b].push_back(a);
+		outConstraints[a].push_back(b);
+		numInConstraints[b]++;
+	}
+	vector&lt;int&gt; freeNodes;
+	for(int i=0;i&lt;N;i++)
+		if(numEdges[i]&lt;=1 &amp;&amp; numInConstraints[i]==0)
+		{
+			freeNodes.push_back(i);
+			isfree[i] = 1;
+		}
+	for(int i=0;i&lt;N-1;i++)
+	{
+		if(i == freeNodes.size())
+		{
+			for(int j=0;j&lt;N;j++)
+				cout &lt;&lt; 0 &lt;&lt; &apos;\n&apos;;
+			return 0;
+		}
+		int cur = freeNodes[i];
+		for(int j=0;j&lt;edges[cur].size();j++)
+		{
+			int e = edges[cur][j];
+			numEdges[e]--;
+			if(numEdges[e]&lt;=1 &amp;&amp; numInConstraints[e]==0 &amp;&amp; !isfree[e])
+			{
+				freeNodes.push_back(e);
+				isfree[e] = 1;
+			}
+		}
+		for(int j=0;j&lt;outConstraints[cur].size();j++)
+		{
+			int e = outConstraints[cur][j];
+			numInConstraints[e]--;
+			if(numEdges[e]&lt;=1 &amp;&amp; numInConstraints[e]==0 &amp;&amp; !isfree[e])
+			{
+				freeNodes.push_back(e);
+				isfree[e] = 1;
+			}
+		}
+	}
+	int root = freeNodes[N-1];
+	dfs(root, -1);
+	int num = 0;
+	for(int i=0;i&lt;N;i++)
+		num += isroot[i];
+	for(int i=0;i&lt;N;i++)
+		cout &lt;&lt; isroot[i] &lt;&lt; &apos;\n&apos;;
+}
+</pre></body></html>

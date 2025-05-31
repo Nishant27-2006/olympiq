@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In a pure brute-force solution, we would try every possible combination of
+assignments of variables to values. There are 7 variables, with at most 20
+values per variable, for a total of <span class='math'>$20^7$</span> combinations. This is over one
+billion combinations to check, which is too many to check.
+<p>One approach you can try is to count the number of ways you can force the
+expression to be odd. When checking if a combination is odd, you can immediately
+note a couple things - for example, M must be odd. Also, if you recursively
+assign values to variables and you see that one of the three terms in the
+product is even, you can stop all combinations for variables that you haven&apos;t
+yet inspected.
+<p>There is a much faster approach though that removes the dependency on checking
+different combinations. Since you want to check if the product is even or odd,
+the important thing to know for each variable is how many even values that
+variable can take on, and how many odd values that variable can take on. Once
+you&apos;ve done that, you can assign to each variable a parity and see if with those
+parities, the product is even. If so, you can count how many combinations there
+are with those parities, and then sum the parities.
+<p>With this approach, there are only <span class='math'>$2^7=128$</span> combinations of parities to check,
+which is guaranteed to work quickly enough.
+<p>Here is Mark Gordon&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+int num[256][2];
+
+bool is_even(int x) {
+  return x % 2 == 0;
+}
+
+int main() {
+  freopen(&quot;geteven.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;geteven.out&quot;, &quot;w&quot;, stdout);
+
+  int N;
+  cin &gt;&gt; N;
+
+  for (int i = 0; i &lt; N; i++) {
+    char letter;
+    int val;
+    cin &gt;&gt; letter &gt;&gt; val;
+
+    if (is_even(val)) {
+      num[letter][0]++;
+    } else {
+      num[letter][1]++;
+    }
+  }
+
+  int result = 0;
+
+  /* Try every possible way that the variables could be even or odd. */
+  for(int B = 0; B &lt; 2; B++)
+  for(int E = 0; E &lt; 2; E++)
+  for(int S = 0; S &lt; 2; S++)
+  for(int I = 0; I &lt; 2; I++)
+  for(int G = 0; G &lt; 2; G++)
+  for(int O = 0; O &lt; 2; O++)
+  for(int M = 0; M &lt; 2; M++) {
+    if (is_even((B + E + S + S + I + E) * (G + O + E + S) * (M + O + O))) {
+      /* If the expression is even then add the number of variable assignments
+       * that have the variables odd/even.
+       */
+      result += num[&apos;B&apos;][B] * num[&apos;E&apos;][E] * num[&apos;S&apos;][S] * num[&apos;I&apos;][I] *
+                num[&apos;G&apos;][G] * num[&apos;O&apos;][O] * num[&apos;M&apos;][M];
+    }
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+<p></body></html>

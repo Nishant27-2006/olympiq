@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html>
+	<head>
+				
+<script>AoPS = {
+	start_time : new Date().getTime()
+};</script>
+
+<script>
+	AoPS.bootstrap_data = [];
+	AoPS.bd = AoPS.bootstrap_data; // Alias!
+	AoPS.session = {"user_id":1,"platform_user_id":"","username":"Anonymous","avatar":"\/\/avatar.artofproblemsolving.com\/avatar_1.png?t=1","email":"","role":"","logged_in":false,"initialized":false,"needs_coppa_approval":false,"admin":false,"national_staff":false,"wikiname":""};
+	AoPS.bd.assetVersion = 1;
+	AoPS.bd.environment = 'production';
+	AoPS.protected_url = 'https://artofproblemsolving.com/';
+	AoPS.aops_url = 'https://artofproblemsolving.com/';
+	AoPS.academy_url = 'https://aopsacademy.org/';
+</script>
+		<!-- GA plugin and Enhanced Ecommerce -->
+		<script>
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+		ga('create', 'UA-1905305-1', 'auto', {allowLinker: true}); // GA Property ID
+		ga('send', 'pageview');
+		</script>
+		<!-- End GA plugin and Enhanced Ecommerce -->
+		<!-- Google Tag Manager -->
+		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+		new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+		j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+		'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer', 'GTM-59JWRGZ')</script>
+		<!-- End Google Tag Manager -->
+
+		<link rel="apple-touch-icon" href="https://artofproblemsolving.com/apple-touch-icon.png">
+
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="initial-scale=1">
+		<meta name="referrer" content="origin">
+
+		<meta name="facebook-domain-verification" content="zmmwg7oqqsqvf8ihckwvzoo85b08gx" />
+
+		
+		<link rel="apple-touch-icon" href="https://assets.artofproblemsolving.com/images/apple-touch-icon.png">
+		<title>Art of Problem Solving</title>
+
+		
+		<link href="https://artofproblemsolving.com/assets/fonts/font-awesome/css/all.css" rel="stylesheet">
+
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/sharedsite.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/navheader.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/footer.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/main-head.css">
+
+					<link rel="icon" href="https://artofproblemsolving.com/online-favicon.ico?v=2">
+		
+		
+		<script>
+  if (!window.console) console = {log: function() {}, dir: function() {}};
+  $$ = function( selector ) { return document.getElementById( selector ); }
+</script>
+
+							<script src="//assets.artofproblemsolving.com/js/jquery360.min.js"></script>
+							<script src="//artofproblemsolving.com/assets/vendor/jquery/3.6.0/jquery-migrate.min.js"></script>
+					<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          // customised options
+          // • auto-render specific keys, e.g.:
+          delimiters: [
+              {left: '[katex]', right: '[/katex]', display: false},
+			  {left: '[katex display=true]', right: '[/katex]', display: true} 
+          ],
+          // • rendering keys, e.g.:
+          throwOnError : false
+        });
+    });
+</script>
+
+<script>
+MathJax = {
+  tex: {
+	inlineMath: [['[mathjax]', '[/mathjax]'], ['\\(', '\\)']],
+	displayMath: [['[mathjax display=true]', '[/mathjax]']]
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"> </script>
+
+				<meta charset="UTF-8"/>
+<title>2008 USAMO Problems - AoPS Wiki</title>
+<script>document.documentElement.className = document.documentElement.className.replace( /(^|\s)client-nojs(\s|$)/, "$1client-js$2" );</script>
+<script>(window.RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"2008_USAMO_Problems","wgTitle":"2008 USAMO Problems","wgCurRevisionId":62949,"wgRevisionId":62949,"wgArticleId":6863,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"2008_USAMO_Problems","wgRelevantArticleId":6863,"wgRequestId":"b250dce909c020dae38e7cc1","wgIsProbablyEditable":false,"wgRelevantPageIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});mw.loader.state({"site.styles":"ready","noscript":"ready","user.styles":"ready","user":"ready","site":"ready","user.options":"ready","user.tokens":"loading","mediawiki.legacy.shared":"ready","mediawiki.legacy.commonPrint":"ready","mediawiki.sectionAnchor":"ready","skins.aopsp":"ready"});mw.loader.implement("user.tokens@09avpoe",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
+});mw.loader.load(["mediawiki.page.startup","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.toc","mediawiki.searchSuggest","skins.aopsp.js"]);});</script>
+<link rel="stylesheet" href="/wiki/load.php?debug=false&amp;lang=en&amp;modules=mediawiki.legacy.commonPrint%2Cshared%7Cmediawiki.sectionAnchor%7Cskins.aopsp&amp;only=styles&amp;printable=1&amp;skin=aopsp"/>
+<script async="" src="/wiki/load.php?debug=false&amp;lang=en&amp;modules=startup&amp;only=scripts&amp;printable=1&amp;skin=aopsp"></script>
+<meta name="ResourceLoaderDynamicStyles" content=""/>
+<link rel="stylesheet" href="/wiki/load.php?debug=false&amp;lang=en&amp;modules=site.styles&amp;only=styles&amp;printable=1&amp;skin=aopsp"/>
+<meta name="generator" content="MediaWiki 1.31.1"/>
+<meta name="robots" content="noindex,follow"/>
+<link rel="shortcut icon" href="/favicon.ico"/>
+<link rel="search" type="application/opensearchdescription+xml" href="/wiki/opensearch_desc.php" title="AoPS Wiki (en)"/>
+<link rel="EditURI" type="application/rsd+xml" href="https://artofproblemsolving.com/wiki/api.php?action=rsd"/>
+<link rel="alternate" type="application/atom+xml" title="AoPS Wiki Atom feed" href="/wiki/index.php?title=Special:RecentChanges&amp;feed=atom"/>
+<!--[if lt IE 9]><script src="/wiki/load.php?debug=false&amp;lang=en&amp;modules=html5shiv&amp;only=scripts&amp;skin=aopsp&amp;sync=1"></script><![endif]-->
+			</head>
+		
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Print to PDF</title>
+                <style>
+                    .print-note {
+                        background-color: #f0f0f0;
+                        padding: 10px;
+                        border: 1px solid #ccc;
+                        margin-bottom: 20px;
+                        font-family: Arial, sans-serif;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-note">
+                    <strong>Note:</strong> This HTML file should be printed to PDF. 
+                    Please use your browser's print function (Ctrl+P) and select "Save as PDF".
+                </div>
+            <body class="production mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-2008_USAMO_Problems rootpage-2008_USAMO_Problems skin-aopsp action-view resources">
+
+					<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59JWRGZ"
+			height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		
+		<div id="page-wrapper">
+
+			<!-- search:off -->
+			
+			<!-- The gray bar at top -->
+			<!-- see shared-site.css -->
+			<div id="top-bar" class="sharedsite-wrapper no-select">
+				<div class="sharedsitebar">
+					<a href="https://artofproblemsolving.com" class="mobile-title"></a>
+					<div class="sharedsite-links">
+											<a class="site-link main" href="https://artofproblemsolving.com/company">
+												Art of Problem Solving
+						</a>
+						<div class="site">
+													<a class="site-link selected" href="https://artofproblemsolving.com">
+														<img src="https://artofproblemsolving.com/assets/images/logos/icon-online.svg" class="site-icon">
+								<span class="site-name">AoPS Online</span>
+							</a>
+							<!-- Rich dropdown -->
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-online.svg"/>
+										</div>
+										<div class="site-snippet">
+											Math texts, online classes, and more
+											<br/>for students in grades 5-12.
+										</div>
+										<a target="_blank" class="site-visit aops-primary" href="https://artofproblemsolving.com">
+											Visit AoPS Online <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://artofproblemsolving.com/store" class="btn btn-primary aops-btn">
+											Books for Grades 5-12
+										</a>
+										<a target="_blank" href="https://artofproblemsolving.com/school" class="btn btn-primary aops-btn">
+											Online Courses
+										</a>
+									</div>
+								</div>
+							</div>
+							<!-- End rich dropdown -->
+						</div>
+						<div class="site">
+							<a class="site-link" href="https://beastacademy.com">
+								<img src="https://artofproblemsolving.com/assets/images/logos/icon-ba.svg" class="site-icon">
+								<span class="site-name">Beast Academy</span>
+							</a>
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-ba.svg"/>
+										</div>
+										<div class="site-snippet">
+											Engaging math books and online learning
+											<br/>for students ages 6-13.
+										</div>
+										<a target="_blank" class="site-visit ba-primary" href="https://beastacademy.com">
+											Visit Beast Academy <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://beastacademy.com/books" class="btn btn-primary ba-btn">
+											Books for Ages 6-13
+										</a>
+										<a target="_blank" href="https://beastacademy.com/online" class="btn btn-primary ba-btn">
+											Beast Academy Online
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="site">
+							<a class="site-link" href="https://aopsacademy.org">
+								<img src="https://artofproblemsolving.com/assets/images/logos/icon-academy.svg" class="site-icon">
+								<span class="site-name">AoPS Academy</span>
+							</a>
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-academy.svg"/>
+										</div>
+										<div class="site-snippet">
+											Small live classes for advanced math
+											<br/>and language arts learners in grades 2-12.
+										</div>
+										<a target="_blank" class="site-visit academy-primary" href="https://aopsacademy.org">
+											Visit AoPS Academy <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://aopsacademy.org/campuses" class="btn btn-primary academy-btn">
+											Find a Physical Campus
+										</a>
+										<a target="_blank" href="https://virtual.aopsacademy.org" class="btn btn-primary academy-btn">
+											Visit the Virtual Campus
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div id="header-wrapper" class="no-select">
+				<div class="header-underlay">
+					<div id="header">
+
+						<!-- The white area where main menu options appear -->
+
+						<!-- The menu links -->
+													<div id="main-menubar">
+								<div class="menubar-content">
+									<div class="menubar-logo online">
+										<img class="menubar-hamburger" src="https://artofproblemsolving.com/assets/images/hamburger.svg"/>
+										<a class="logo-img-link" href="https://artofproblemsolving.com/online">
+											<img class="logo-img" src="https://artofproblemsolving.com/assets/images/logos/aops-online.svg"/>
+											<img class="logo-img-mobile" src="https://artofproblemsolving.com/assets/images/logos/aops-online-mobile.svg"/>
+											<img class="logo-img-small" src="https://artofproblemsolving.com/assets/images/logos/aops-online-mobile.svg"/>
+										</a>
+									</div>
+									<div class="menubar-links-outer">
+										<!-- The login links -->
+										<div class="menu-login-wrapper online">
+											
+											<div class="menu-login-item">
+															<div 
+		    id="header-login"
+			class="no-select not-signed-in"
+			style="display:flex">
+
+			<div class="online-login-button solid-rounded-button">Sign&nbsp;In</div><div class="online-register-button">Register</div>
+		</div>
+												</div>
+
+											
+										</div>
+										<div class="menubar-labels online">
+											<div class="menubar-label school">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/school">
+														online school
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+														<!-- These have IDs for A/B testing purposes. T27691 -->
+																												<a id="online-school-menu-schedule" href="https://artofproblemsolving.com/school/schedule"> Class Schedule </a>
+														<a id="online-school-menu-recommmendations" href="https://artofproblemsolving.com/school/recommendations"> Recommendations </a>
+														<a id="online-school-menu-woot-courses" href="https://artofproblemsolving.com/school/woot?gtmlist=School_Nav"> Olympiad Courses </a>
+														<a id="online-school-menu-mathjams" href="https://artofproblemsolving.com/school/mathjams"> Free Sessions </a>
+																																									</div>
+												</div>
+											</div>
+											<div class="menubar-label store">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/store">
+														books<span class="menubar-link-ext">tore </span>
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+																																																								<a href="https://artofproblemsolving.com/store/list/aops-curriculum">AoPS Curriculum</a>
+														<a href="https://artofproblemsolving.com/store/list/beast-academy">Beast Academy</a>
+														<a href="https://artofproblemsolving.com/store/online">Online Books</a>
+														<a href="https://artofproblemsolving.com/store/recommendations">Recommendations</a>
+														<a href="https://artofproblemsolving.com/store/list/other-products">Other Books &amp; Gear</a>
+														<a href="https://artofproblemsolving.com/store/list/all-products">All Products</a>
+														<a href="https://artofproblemsolving.com/store/gift-certificates?gtmlist=Bookstore_Nav">Gift Certificates</a>
+																											</div>
+												</div>
+											</div>
+											<div class="menubar-label community">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/community">
+														community
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+																												<a data-cmty href="https://artofproblemsolving.com/community">Forums</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/c13_contests">Contests</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/search">Search</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/faq">Help</a>
+																																									</div>
+												</div>
+											</div>
+											<div class="menubar-label resources">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/resources">
+														resources
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+														<div class="dropdown-columns">
+															<div class="dropdown-category">
+																<span class="dropdown-category-label">math training & tools</span>
+																<a href="https://artofproblemsolving.com/alcumus">Alcumus</a>
+																<a href="https://artofproblemsolving.com/videos">Videos</a>
+																<a href="https://artofproblemsolving.com/ftw">For the Win!</a>
+																<a href="https://artofproblemsolving.com/mathcounts_trainer">MATHCOUNTS Trainer</a>
+																<a href="https://artofproblemsolving.com/contests/practice">AoPS Practice Contests</a>
+																<a href="https://artofproblemsolving.com/wiki/index.php?title=Main_Page">AoPS Wiki</a>
+																<a href="https://artofproblemsolving.com/texer">LaTeX TeXeR</a>
+																<a href="https://artofproblemsolving.com/polymath">MIT PRIMES/CrowdMath</a>
+																<a href="https://artofproblemsolving.com/keeplearning">Keep Learning</a>
+																<a href="https://beastacademy.com/all-ten">All Ten</a>
+																															</div>
+															<div class="dropdown-column">
+																																<div class="dropdown-category category-in-column">
+																	<span class="dropdown-category-label">contests on aops</span>
+																	<a href="https://artofproblemsolving.com/contests/practice">Practice Math Contests</a>
+																	<a href="https://artofproblemsolving.com/contests/usabo">USABO</a>
+																</div>
+																<div class="dropdown-category category-in-column">
+                                                                                                                                        <span class="dropdown-category-label">news</span>
+                                                                                                                                        <a href="https://artofproblemsolving.com/blog">AoPS Blog</a>
+                                                                                                                                        <a href="https://artofproblemsolving.com/blog/webinars/aopswebinars">Webinars</a>
+                                                                                                                                </div>
+															</div>
+														</div>
+														<div class="dropdown-view-more-link-container">
+															<a href="https://artofproblemsolving.com/resources" class="dropdown-view-more-link">view all <span class="aops-icon">0</span></a>
+														</div>
+													</div>
+												</div>
+											</div>
+																						<div class="menubar-label menu-login-item">
+															<div 
+		    id="header-login"
+			class="no-select not-signed-in"
+			style="display:flex">
+
+			<div class="online-login-button solid-rounded-button">Sign&nbsp;In</div><div class="online-register-button">Register</div>
+		</div>
+												</div>
+																					</div>
+									</div>
+								</div>
+							</div>
+											</div>
+				</div>
+
+								<noscript>
+					<div class="infobar">JavaScript is not enabled. JavaScript is required to fully utilize the site.</div>
+				</noscript>
+
+
+									<div id="breadcrumbs-wrapper">
+						<div id="submenu-icon"></div>
+						<div id="breadcrumbs">
+														<!-- ignore-security-checks -->
+							<div class="title-wrapper"><div class="title"><a href="/wiki">AoPS Wiki</a></div></div>
+														<div class="crumb-wrapper">
+																										<span class="crumb crumb-1">
+																			<!-- ignore-security-checks -->
+										<a href="https://artofproblemsolving.com/resources">Resources</a>
+																		</span>
+																											<i class="aops-font aops-angle-double-right"></i>
+																		<span class="crumb crumb-2">
+																			<!-- ignore-security-checks -->
+										<a href="/wiki">Aops Wiki</a>
+																		</span>
+																											<i class="aops-font aops-angle-double-right"></i>
+																		<span class="crumb crumb-3">
+																			2008 USAMO Problems																		</span>
+															</div>
+						</div>
+					</div>
+							</div>
+
+			<!-- search icon script lives in footer.phtml-->
+
+			<!-- /search:off -->
+
+<div id="main-content" class="left-navigation wiki">
+	<div id="side-column-wrapper">
+		<div id="side-column">
+						<div id="content-actions" class="menu open">
+				<div class="submenu">
+					<h1>Page</h1>
+					<div class="submenu-wrapper">
+						<span id="ca-nstab-main" class="selected"><a href="/wiki/index.php/2008_USAMO_Problems" title="View the content page " accesskey="c">Article</a></span><span id="ca-talk" class="new"><a href="/wiki/index.php?title=Talk:2008_USAMO_Problems&amp;action=edit&amp;redlink=1" rel="discussion" title="Discussion about the content page (page does not exist) " accesskey="t">Discussion</a></span><span id="ca-viewsource"><a href="/wiki/index.php?title=2008_USAMO_Problems&amp;action=edit" title="This page is protected.&#10;You can view its source " accesskey="e">View source</a></span><span id="ca-history"><a href="/wiki/index.php?title=2008_USAMO_Problems&amp;action=history" title="Past revisions of this page " accesskey="h">History</a></span>					</div>
+				</div>
+			</div>
+			<div id="toolbox" class="menu open">
+				<div class="submenu">
+					<h1>Toolbox</h1>
+					<div class="submenu-wrapper">
+						<span id="n-recentchanges"><a href="/wiki/index.php/Special:RecentChanges" title="A list of recent changes in the wiki " accesskey="r">Recent changes</a></span><span id="n-randompage"><a href="/wiki/index.php/Special:Random" title="Load a random page " accesskey="x">Random page</a></span><span id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></span><span id="t-whatlinkshere"><a href="/wiki/index.php/Special:WhatLinksHere/2008_USAMO_Problems" title="A list of all wiki pages that link here " accesskey="j">What links here</a></span><span id="t-specialpages"><a href="/wiki/index.php/Special:SpecialPages" title="A list of all special pages " accesskey="q">Special pages</a></span>					</div>
+				</div>
+			</div>
+			
+			<div id="search" class="menu open">
+				<h1>Search</h1>
+				<div class="submenu-wrapper" style="margin-bottom:5px;">
+					<form action="/wiki/index.php" id="searchform" class="mw-search">
+						<input type="hidden" name="title" value="Special:Search">
+						<input type="search" name="search" placeholder="Search" value="" accesskey="f" id="searchInput">
+						<div style="margin:0 5px 5px 5px;text-align:right;"><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="btn btn-primary searchButton"/></div>
+					</form>
+				</div>
+			</div>
+
+			<!--
+			<div class="menu open">
+				<h1>Note</h1>
+				<div class="submenu-wrapper" style="padding:10px;color:#444;">
+					Please do not discuss the 2015 AMC 8 Competition on any website until November 25th.
+				</div>
+			</div>
+			-->
+		</div>
+	</div>
+
+	<div id="main-column" style="margin-top:10px">
+				<div class="page-wrapper">
+						<div id="mw-js-message" style="display:none;"></div>
+			<h1 id="firstHeading" class="firstHeading">2008 USAMO Problems</h1>
+
+						
+			<div class="mw-body">
+												
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div class="mw-parser-output"><div id="toc" class="toc"><div class="toctitle" lang="en" dir="ltr"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Day_1"><span class="tocnumber">1</span> <span class="toctext">Day 1</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Problem_1"><span class="tocnumber">1.1</span> <span class="toctext">Problem 1</span></a></li>
+<li class="toclevel-2 tocsection-3"><a href="#Problem_2"><span class="tocnumber">1.2</span> <span class="toctext">Problem 2</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#Problem_3"><span class="tocnumber">1.3</span> <span class="toctext">Problem 3</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-5"><a href="#Day_2"><span class="tocnumber">2</span> <span class="toctext">Day 2</span></a>
+<ul>
+<li class="toclevel-2 tocsection-6"><a href="#Problem_4"><span class="tocnumber">2.1</span> <span class="toctext">Problem 4</span></a></li>
+<li class="toclevel-2 tocsection-7"><a href="#Problem_5"><span class="tocnumber">2.2</span> <span class="toctext">Problem 5</span></a></li>
+<li class="toclevel-2 tocsection-8"><a href="#Problem_6"><span class="tocnumber">2.3</span> <span class="toctext">Problem 6</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-9"><a href="#See_Also"><span class="tocnumber">3</span> <span class="toctext">See Also</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Day_1">Day 1</span></h2>
+<h3><span class="mw-headline" id="Problem_1">Problem 1</span></h3>
+<p>(<i>Titu Andreescu</i>) Prove that for each positive integer <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" />, there are pairwise relatively prime integers <img src="//latex.artofproblemsolving.com/a/8/a/a8ad257b081f78dbc74b817d07df48fe229c2d18.png" class="latex" alt="$k_0,k_1\ldots,k_n$" style="vertical-align: -4px" width="98" height="18" />, all strictly greater than 1, such that <img src="//latex.artofproblemsolving.com/3/0/6/30625dc359ee61d9d5d4464f0d76513feb652629.png" class="latex" alt="$k_0k_1\cdots k_n-1$" style="vertical-align: -2px" width="110" height="15" /> is the product of two consecutive integers.
+</p><p><a href="/wiki/index.php/2008_USAMO_Problems/Problem_1" title="2008 USAMO Problems/Problem 1">Solution</a>
+</p>
+<h3><span class="mw-headline" id="Problem_2">Problem 2</span></h3>
+<p>(<i>Zuming Feng</i>) Let <img src="//latex.artofproblemsolving.com/e/2/a/e2a559986ed5a0ffc5654bd367c29dfc92913c36.png" class="latex" alt="$ABC$" width="42" height="13" /> be an acute, <a href="/wiki/index.php/Scalene" class="mw-redirect" title="Scalene">scalene</a> triangle, and let <img src="//latex.artofproblemsolving.com/5/d/1/5d1e4485dc90c450e8c76826516c1b2ccb8fce16.png" class="latex" alt="$M$" width="19" height="12" />, <img src="//latex.artofproblemsolving.com/f/c/9/fc97ef67268cd4e91bacdf12b8901d7036c9a056.png" class="latex" alt="$N$" width="16" height="12" />, and <img src="//latex.artofproblemsolving.com/4/b/4/4b4cade9ca8a2c8311fafcf040bc5b15ca507f52.png" class="latex" alt="$P$" width="14" height="12" /> be the midpoints of <img src="//latex.artofproblemsolving.com/e/3/3/e33fe7d65facd8868f58b6e94ddc7f153a5a3f9f.png" class="latex" alt="$\overline{BC}$" width="29" height="15" />, <img src="//latex.artofproblemsolving.com/f/b/b/fbb0f1d8a43539dbc3355734bafb2bfd855b5f87.png" class="latex" alt="$\overline{CA}$" width="28" height="15" />, and <img src="//latex.artofproblemsolving.com/8/4/0/840e2b592390eb6ec918fa6f3292716ce170de66.png" class="latex" alt="$\overline{AB}$" style="vertical-align: -1px" width="30" height="18" />, respectively. Let the <a href="/wiki/index.php/Perpendicular" title="Perpendicular">perpendicular</a> <a href="/wiki/index.php/Bisect" title="Bisect">bisectors</a> of <img src="//latex.artofproblemsolving.com/8/4/0/840e2b592390eb6ec918fa6f3292716ce170de66.png" class="latex" alt="$\overline{AB}$" style="vertical-align: -1px" width="30" height="18" /> and <img src="//latex.artofproblemsolving.com/1/2/5/12517bbc31cb9026c71299b7a0d232d07e60f284.png" class="latex" alt="$\overline{AC}$" style="vertical-align: -1px" width="30" height="18" /> intersect ray <img src="//latex.artofproblemsolving.com/e/7/3/e73bc78b745edf7fe1e55dbfc3d914190faf5015.png" class="latex" alt="$AM$" width="32" height="13" /> in points <img src="//latex.artofproblemsolving.com/9/f/f/9ffb448918db29f2a72f8f87f421b3b3cad18f95.png" class="latex" alt="$D$" style="vertical-align: -1px" width="17" height="14" /> and <img src="//latex.artofproblemsolving.com/f/a/2/fa2fa899f0afb05d6837885523503a2d4df434f9.png" class="latex" alt="$E$" style="vertical-align: -1px" width="16" height="14" /> respectively, and let lines <img src="//latex.artofproblemsolving.com/8/9/f/89fff82bb65d0215e49c8c91cb7c553da52205e2.png" class="latex" alt="$BD$" width="29" height="12" /> and <img src="//latex.artofproblemsolving.com/1/3/c/13c970cbf5e2e7029089517d5e8efbb8cade6d8a.png" class="latex" alt="$CE$" width="28" height="12" /> intersect in point <img src="//latex.artofproblemsolving.com/a/0/5/a055f405829e64a3b70253ab67cb45ed6ed5bb29.png" class="latex" alt="$F$" style="vertical-align: -1px" width="16" height="14" />, inside of triangle <img src="//latex.artofproblemsolving.com/e/2/a/e2a559986ed5a0ffc5654bd367c29dfc92913c36.png" class="latex" alt="$ABC$" width="42" height="13" />. Prove that points <img src="//latex.artofproblemsolving.com/0/1/9/019e9892786e493964e145e7c5cf7b700314e53b.png" class="latex" alt="$A$" width="13" height="13" />, <img src="//latex.artofproblemsolving.com/f/c/9/fc97ef67268cd4e91bacdf12b8901d7036c9a056.png" class="latex" alt="$N$" width="16" height="12" />, <img src="//latex.artofproblemsolving.com/a/0/5/a055f405829e64a3b70253ab67cb45ed6ed5bb29.png" class="latex" alt="$F$" style="vertical-align: -1px" width="16" height="14" />, and <img src="//latex.artofproblemsolving.com/4/b/4/4b4cade9ca8a2c8311fafcf040bc5b15ca507f52.png" class="latex" alt="$P$" width="14" height="12" /> all lie on one circle.
+</p><p><a href="/wiki/index.php/2008_USAMO_Problems/Problem_2" title="2008 USAMO Problems/Problem 2">Solution</a>
+</p>
+<h3><span class="mw-headline" id="Problem_3">Problem 3</span></h3>
+<p>(<i>Gabriel Carroll</i>) Let <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> be a positive integer. Denote by <img src="//latex.artofproblemsolving.com/c/7/4/c74a070eea97d9363f58a257e05e75fc69efa753.png" class="latex" alt="$S_n$" style="vertical-align: -2px" width="19" height="15" /> the set of points <img src="//latex.artofproblemsolving.com/a/d/f/adfd9ae8a3fac031d3b8b470a52a709a23d4d6d2.png" class="latex" alt="$(x, y)$" style="vertical-align: -5px" width="44" height="20" /> with integer coordinates such that
+<img src="//latex.artofproblemsolving.com/1/b/5/1b55d5c3c60152005c8738486992c282eb9786b2.png" class="latexcenter" alt="\[\left|x\right|+\left|y+\frac{1}{2}\right|&lt;n\]" width="132" height="43" />
+A path is a sequence of distinct points <img src="//latex.artofproblemsolving.com/9/1/4/9141bc6dcd027b34a03e9aae9ae5ddf3aceec2d8.png" class="latex" alt="$(x_1,y_1),(x_2,y_2),\ldots,(x_\ell,y_\ell)$" style="vertical-align: -4px" width="214" height="18" /> in <img src="//latex.artofproblemsolving.com/c/7/4/c74a070eea97d9363f58a257e05e75fc69efa753.png" class="latex" alt="$S_n$" style="vertical-align: -2px" width="19" height="15" /> such that, for <img src="//latex.artofproblemsolving.com/2/8/2/2828cc0ac6cbe30c8031634e53dee517e60aa639.png" class="latex" alt="$i=2,\ldots,\ell$" style="vertical-align: -3px" width="87" height="16" />, the distance between <img src="//latex.artofproblemsolving.com/d/e/d/ded1e264df9171a5ff55a79ec8a58b4f1adb53ec.png" class="latex" alt="$(x_i,y_i)$" style="vertical-align: -4px" width="51" height="18" /> and <img src="//latex.artofproblemsolving.com/2/4/0/240b77586f760151dc948a7dc3f23f4b26f6f54d.png" class="latex" alt="$(x_{i-1},y_{i-1})$" style="vertical-align: -4px" width="85" height="18" /> is <img src="//latex.artofproblemsolving.com/d/c/e/dce34f4dfb2406144304ad0d6106c5382ddd1446.png" class="latex" alt="$1$" style="vertical-align: -1px" width="11" height="14" /> (in other words, the points <img src="//latex.artofproblemsolving.com/d/e/d/ded1e264df9171a5ff55a79ec8a58b4f1adb53ec.png" class="latex" alt="$(x_i,y_i)$" style="vertical-align: -4px" width="51" height="18" /> and <img src="//latex.artofproblemsolving.com/2/4/0/240b77586f760151dc948a7dc3f23f4b26f6f54d.png" class="latex" alt="$(x_{i-1},y_{i-1})$" style="vertical-align: -4px" width="85" height="18" /> are neighbors in the lattice of points with integer coordinates). Prove that the points in <img src="//latex.artofproblemsolving.com/c/7/4/c74a070eea97d9363f58a257e05e75fc69efa753.png" class="latex" alt="$S_n$" style="vertical-align: -2px" width="19" height="15" /> cannot be partitioned into fewer than <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> paths (a partition of <img src="//latex.artofproblemsolving.com/c/7/4/c74a070eea97d9363f58a257e05e75fc69efa753.png" class="latex" alt="$S_n$" style="vertical-align: -2px" width="19" height="15" /> into <img src="//latex.artofproblemsolving.com/f/5/0/f5047d1e0cbb50ec208923a22cd517c55100fa7b.png" class="latex" alt="$m$" width="15" height="8" /> paths is a set <img src="//latex.artofproblemsolving.com/7/4/f/74f4008768812f46db4b252c9e69cf98c5faaa4b.png" class="latex" alt="$\mathcal{P}$" style="vertical-align: -1px" width="13" height="14" /> of <img src="//latex.artofproblemsolving.com/f/5/0/f5047d1e0cbb50ec208923a22cd517c55100fa7b.png" class="latex" alt="$m$" width="15" height="8" /> nonempty paths such that each point in <img src="//latex.artofproblemsolving.com/c/7/4/c74a070eea97d9363f58a257e05e75fc69efa753.png" class="latex" alt="$S_n$" style="vertical-align: -2px" width="19" height="15" /> appears in exactly one of the <img src="//latex.artofproblemsolving.com/f/5/0/f5047d1e0cbb50ec208923a22cd517c55100fa7b.png" class="latex" alt="$m$" width="15" height="8" /> paths in <img src="//latex.artofproblemsolving.com/7/4/f/74f4008768812f46db4b252c9e69cf98c5faaa4b.png" class="latex" alt="$\mathcal{P}$" style="vertical-align: -1px" width="13" height="14" />).
+</p><p><a href="/wiki/index.php/2008_USAMO_Problems/Problem_3" title="2008 USAMO Problems/Problem 3">Solution</a>
+</p>
+<h2><span class="mw-headline" id="Day_2">Day 2</span></h2>
+<h3><span class="mw-headline" id="Problem_4">Problem 4</span></h3>
+<p>(<i>Gregory Galparin</i>) Let <img src="//latex.artofproblemsolving.com/7/4/f/74f4008768812f46db4b252c9e69cf98c5faaa4b.png" class="latex" alt="$\mathcal{P}$" style="vertical-align: -1px" width="13" height="14" /> be a <a href="/wiki/index.php/Convex_polygon" title="Convex polygon">convex polygon</a> with <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> sides, <img src="//latex.artofproblemsolving.com/8/b/2/8b21b36bfc3bad4b81f5aed2c6f5613bc98403ac.png" class="latex" alt="$n\ge3$" style="vertical-align: -2px" width="43" height="15" />. Any set of <img src="//latex.artofproblemsolving.com/3/1/5/31503c8c86ff405ea9ae2dd6285eecb04550cb97.png" class="latex" alt="$n-3$" style="vertical-align: -2px" width="44" height="15" /> diagonals of <img src="//latex.artofproblemsolving.com/7/4/f/74f4008768812f46db4b252c9e69cf98c5faaa4b.png" class="latex" alt="$\mathcal{P}$" style="vertical-align: -1px" width="13" height="14" /> that do not intersect in the interior of the polygon determine a <i>triangulation</i> of <img src="//latex.artofproblemsolving.com/7/4/f/74f4008768812f46db4b252c9e69cf98c5faaa4b.png" class="latex" alt="$\mathcal{P}$" style="vertical-align: -1px" width="13" height="14" /> into <img src="//latex.artofproblemsolving.com/4/3/8/438ca8cfe4ef1f8af9be1b9ba6670a87cced8f11.png" class="latex" alt="$n - 2$" width="41" height="12" /> triangles. If <img src="//latex.artofproblemsolving.com/7/4/f/74f4008768812f46db4b252c9e69cf98c5faaa4b.png" class="latex" alt="$\mathcal{P}$" style="vertical-align: -1px" width="13" height="14" /> is regular and there is a triangulation of <img src="//latex.artofproblemsolving.com/7/4/f/74f4008768812f46db4b252c9e69cf98c5faaa4b.png" class="latex" alt="$\mathcal{P}$" style="vertical-align: -1px" width="13" height="14" /> consisting of only isosceles triangles, find all the possible values of <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" />.
+</p><p><a href="/wiki/index.php/2008_USAMO_Problems/Problem_4" title="2008 USAMO Problems/Problem 4">Solution</a>
+</p>
+<h3><span class="mw-headline" id="Problem_5">Problem 5</span></h3>
+<p>(<i>Kiran Kedlaya</i>) Three nonnegative real numbers <img src="//latex.artofproblemsolving.com/a/d/c/adc143c3f887fa7e92fd80d91bb22af51b4abd77.png" class="latex" alt="$r_1$" style="vertical-align: -4px" width="17" height="13" />, <img src="//latex.artofproblemsolving.com/0/b/4/0b4f3f4b698ce35667432041e168f7653533fa7b.png" class="latex" alt="$r_2$" style="vertical-align: -2px" width="14" height="10" />, <img src="//latex.artofproblemsolving.com/5/a/e/5ae5f496b8ddda88b5cbbc06ccb02bee0580fd0b.png" class="latex" alt="$r_3$" style="vertical-align: -2px" width="14" height="10" /> are written on a blackboard. These numbers have the property that there exist integers <img src="//latex.artofproblemsolving.com/1/a/b/1ab39d761413804680d26d972381f028001562f5.png" class="latex" alt="$a_1$" style="vertical-align: -2px" width="15" height="10" />, <img src="//latex.artofproblemsolving.com/5/e/9/5e97a8af68fbc8e357d3ee0eba452022b06c1875.png" class="latex" alt="$a_2$" style="vertical-align: -2px" width="15" height="10" />, <img src="//latex.artofproblemsolving.com/5/7/2/572b65ebc3f438b176b4ca4a890799f2f72564af.png" class="latex" alt="$a_3$" style="vertical-align: -2px" width="15" height="10" />, not all zero, satisfying <img src="//latex.artofproblemsolving.com/4/e/c/4ec1b4744493b34519970854f62630c054ad2856.png" class="latex" alt="$a_1r_1+a_2r_2+a_3r_3=0$" style="vertical-align: -2px" width="175" height="15" />. We are permitted to perform the following operation: find two numbers <img src="//latex.artofproblemsolving.com/2/6/e/26eeb5258ca5099acf8fe96b2a1049c48c89a5e6.png" class="latex" alt="$x$" style="vertical-align: -1px" width="12" height="10" />, <img src="//latex.artofproblemsolving.com/0/9/2/092e364e1d9d19ad5fffb0b46ef4cc7f2da02c1c.png" class="latex" alt="$y$" style="vertical-align: -4px" width="11" height="13" /> on the blackboard with <img src="//latex.artofproblemsolving.com/2/8/3/28309f71c1128877b8dc886e384472f718bbe70a.png" class="latex" alt="$x\le y$" style="vertical-align: -3px" width="43" height="15" />, then erase <img src="//latex.artofproblemsolving.com/0/9/2/092e364e1d9d19ad5fffb0b46ef4cc7f2da02c1c.png" class="latex" alt="$y$" style="vertical-align: -4px" width="11" height="13" /> and write <img src="//latex.artofproblemsolving.com/1/5/2/1528b38e29e999e114af339c40ba2596e89c8182.png" class="latex" alt="$y-x$" style="vertical-align: -3px" width="42" height="11" /> in its place. Prove that after a finite number of such operations, we can end up with at least one <img src="//latex.artofproblemsolving.com/b/c/1/bc1f9d9bf8a1b606a4188b5ce9a2af1809e27a89.png" class="latex" alt="$0$" width="8" height="12" /> on the blackboard.
+</p><p><a href="/wiki/index.php/2008_USAMO_Problems/Problem_5" title="2008 USAMO Problems/Problem 5">Solution</a>
+</p>
+<h3><span class="mw-headline" id="Problem_6">Problem 6</span></h3>
+<p>(<i><a href="/wiki/index.php/Sam_Vandervelde" title="Sam Vandervelde">Sam Vandervelde</a></i>) At a certain mathematical conference, every pair of mathematicians are either friends or strangers. At mealtime, every participant eats in one of two large dining rooms. Each mathematician insists upon eating in a room which contains an even number of his or her friends. Prove that the number of ways that the mathematicians may be split between the two rooms is a power of two (i.e., is of the form <img src="//latex.artofproblemsolving.com/7/6/7/767b7dc4a8df95a9f8a0faa3bb155e7b49943407.png" class="latex" alt="$2^k$" width="16" height="15" /> for some positive integer <img src="//latex.artofproblemsolving.com/8/c/3/8c325612684d41304b9751c175df7bcc0f61f64f.png" class="latex" alt="$k$" width="9" height="12" />).
+</p><p><a href="/wiki/index.php/2008_USAMO_Problems/Problem_6" title="2008 USAMO Problems/Problem 6">Solution</a>
+</p>
+<h2><span class="mw-headline" id="See_Also">See Also</span></h2>
+<table class="wikitable" style="margin:0.5em auto; font-size:95%; border:1px solid black; width:40%;">
+<tbody><tr>
+<td style="background:#ccf;text-align:center;" colspan="3"><b><a href="/wiki/index.php/2008_USAMO" title="2008 USAMO">2008 USAMO</a></b> (<b><a class="mw-selflink selflink">Problems</a></b> • <a rel="nofollow" class="external text" href="http://www.artofproblemsolving.com/Forum/resources.php?c=182&amp;cid=27&amp;year=2008">Resources</a>)
+</td></tr>
+<tr>
+<td width="50%" align="center" rowspan="1">Preceded&#160;by<br /><b><a href="/wiki/index.php/2007_USAMO_Problems" title="2007 USAMO Problems">2007 USAMO</a></b>
+</td>
+<td width="50%" align="center" rowspan="1">Followed&#160;by<br /><b><a href="/wiki/index.php/2009_USAMO_Problems" title="2009 USAMO Problems">2009 USAMO</a></b>
+</td></tr>
+<tr>
+<td colspan="3" style="text-align:center;"><a href="/wiki/index.php/2008_USAMO_Problems/Problem_1" title="2008 USAMO Problems/Problem 1">1</a> <b>•</b> <a href="/wiki/index.php/2008_USAMO_Problems/Problem_2" title="2008 USAMO Problems/Problem 2">2</a> <b>•</b> <a href="/wiki/index.php/2008_USAMO_Problems/Problem_3" title="2008 USAMO Problems/Problem 3">3</a> <b>•</b> <a href="/wiki/index.php/2008_USAMO_Problems/Problem_4" title="2008 USAMO Problems/Problem 4">4</a> <b>•</b> <a href="/wiki/index.php/2008_USAMO_Problems/Problem_5" title="2008 USAMO Problems/Problem 5">5</a> <b>•</b> <a href="/wiki/index.php/2008_USAMO_Problems/Problem_6" title="2008 USAMO Problems/Problem 6">6</a>
+</td></tr>
+<tr>
+<td colspan="3" style="text-align:center;"><b><a href="/wiki/index.php/USAMO_Problems_and_Solutions" title="USAMO Problems and Solutions"> All USAMO Problems and Solutions</a></b>
+</td></tr></tbody></table>
+<p>These problems are copyrighted &#169; by the <a rel="nofollow" class="external text" href="https://www.maa.org">Mathematical Association of America</a>, as part of the <a rel="nofollow" class="external text" href="https://maa.org/student-programs/amc/">American Mathematics Competitions</a>. <a href="/wiki/index.php/File:AMC_logo.png" class="image"><img alt="AMC logo.png" src="https://wiki-images.artofproblemsolving.com//thumb/8/8b/AMC_logo.png/50px-AMC_logo.png" width="50" height="43" style="vertical-align: middle" srcset="https://wiki-images.artofproblemsolving.com//thumb/8/8b/AMC_logo.png/75px-AMC_logo.png 1.5x, https://wiki-images.artofproblemsolving.com//8/8b/AMC_logo.png 2x" /></a>
+</p>
+<div style="clear:both;"></div>
+
+<!-- 
+NewPP limit report
+Cached time: 20250527233604
+Cache expiry: 86400
+Dynamic content: false
+CPU time usage: 0.068 seconds
+Real time usage: 4.615 seconds
+Preprocessor visited node count: 681/1000000
+Preprocessor generated node count: 1600/1000000
+Post‐expand include size: 1219/2097152 bytes
+Template argument size: 104/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+Unstrip recursion depth: 0/20
+Unstrip post‐expand size: 11458/5000000 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  335.037      1 -total
+ 65.13%  218.205      1 Template:USAMO_newbox
+ 34.83%  116.689      1 Template:MAA_Notice
+-->
+</div>
+<!-- Saved in parser cache with key wiki-wiki_:pcache:idhash:6863-0!canonical and timestamp 20250527233559 and revision id 62949
+ -->
+</div><div class="printfooter">
+Retrieved from "<a dir="ltr" href="https://artofproblemsolving.com/wiki/index.php?title=2008_USAMO_Problems&amp;oldid=62949">https://artofproblemsolving.com/wiki/index.php?title=2008_USAMO_Problems&amp;oldid=62949</a>"</div>
+
+
+									<div class="catlinks"><div id="catlinks" class="catlinks catlinks-allhidden" data-mw="interface"></div></div>
+				
+
+							</div>
+		</div>
+	</div>
+</div>
+
+<!-- search:off -->
+	<div class="clearfix"></div>
+
+	
+	<div id="main-footer" class="no-print">
+		<div class="footer-container">
+			<div class="footer-topRow">
+											<a href="https://artofproblemsolving.com/online">
+							<img class="footer-mainLogo"
+							src="https://artofproblemsolving.com/assets/images/logos/aops-online-footer.svg"/>
+						</a>
+										<div class="footer-wasc">
+						<span>
+							Art of Problem Solving is an
+							<br class="wasc-break"/>
+							<span class="footer-accredited">ACS WASC Accredited School</span>
+						</span>
+						<img class="footer-wascLogo"
+						src="https://artofproblemsolving.com/assets/images/logos/wasc.png"/>
+					</div>
+			</div>
+			<div class="footer-links">
+				<div class="footer-col">
+					<div class="footer-colHeader">aops programs</div>
+					<div><a class="link" href="https://artofproblemsolving.comonline">AoPS Online</a></div>
+					<div><a class="link" href="https://beastacademy.com">Beast Academy</a></div>
+					<div><a class="link" href="https://aopsacademy.org">AoPS Academy</a></div>
+				</div>
+
+				<div class="footer-col">
+					<div class="footer-colHeader">About</div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/about">About AoPS</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/staff">Our Team</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/history">Our History</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/careers">Jobs</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/blog">AoPS Blog</a></div>
+				</div>
+
+				<div class="footer-col">
+					<div class="footer-colHeader" style="left:-1px;">Site Info</div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/tos">Terms</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/privacy">Privacy</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/contact">Contact Us</a></div>
+				</div>
+
+				<div class="footer-col social">
+					<div class="footer-colHeader">follow us</div>
+					<div class="footer-social">
+													<a class="link" target="_blank" href="https://www.facebook.com/artofproblemsolving">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/facebook.svg" class="sm-icon"/>
+							</a>
+							<a class="link" target="_blank" href="http://twitter.com/AoPSNews">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/twitter.svg" class="sm-icon"/>
+							</a>
+							<a class="link" target="_blank" href="https://www.pinterest.com/artofproblemsolving/pins/">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/pinterest.svg" class="sm-icon"/>
+							</a>
+											</div>
+				</div>
+									<div class="footer-col subscribe">
+						<div class="footer-colHeader">
+							Subscribe for news and updates
+						</div>
+						<form method="post" action="/mailinglist">
+							<input type="email" class="footer-email" placeholder="Enter e-mail" name="subscribe-email">
+							<input type="hidden" name="new-books" value="on">
+							<input type="hidden" name="classes" value="on">
+							<input type="hidden" name="mathjams" value="on">
+							<input type="submit" class="footer-submit" value="">
+							<div class="footer-submit-arrow">
+								<svg x="0px" y="0px" viewBox="0 0 289 289" enable-background="new 0 0 289 289">
+									<g>
+										<path class="arrow-fill" d="M121.5,220.5c-2.6,0-5.1-1-7.1-2.9c-3.9-3.9-3.9-10.2,0-14.1l58.9-58.9l-58.9-58.9c-3.9-3.9-3.9-10.2,0-14.1c3.9-3.9,10.2-3.9,14.1,0l66,66c3.9,3.9,3.9,10.2,0,14.1l-66,66C126.6,219.5,124.1,220.5,121.5,220.5z"/>
+									</g>
+								</svg>
+							</div>
+						</form>
+					</div>
+							</div>
+			<div class="copyright">
+				<span>&copy; 2025 AoPS Incorporated
+				</span>
+			</div>
+		</div>
+	</div>
+
+	<div id="small-footer-wrapper">
+		<div class="footer-container">
+							<a href="https://artofproblemsolving.com/online">
+					<img class="footer-mainLogo"
+					src="https://artofproblemsolving.com/assets/images/logos/aops-online-footer.svg"/>
+				</a>
+						<div class="copyright">
+				&copy; 2025 Art of Problem Solving
+				<div class="copyright-links">
+					<a href="https://artofproblemsolving.com/company">About Us</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/contact">Contact Us</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/company/tos">Terms</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/company/privacy">Privacy</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<form id="registration-form" method="post" action="/user/register.php">
+	<input type="hidden" name="username" value="">
+	<input type="hidden" name="password" value="">
+	<input type="hidden" name="from-login" value="true">
+	</form>
+<div id="print-footer" class="printer">Copyright &copy; 2025 Art of Problem Solving</div>
+
+
+
+<div id="epicfail" class="aops-html-modal-epic-fail" style="display: none">
+	<div class="aops-html-modal-inner-epic-fail">
+		<div class="aops-html-modal-main-epic-fail">
+			<p>Something appears to not have loaded correctly.</p>
+		</div>
+		<div class="aops-html-modal-bottom-epic-fail">
+			<p><a onclick="location.reload(true);return false">Click to refresh</a>.</p>
+		</div>
+	</div>
+</div>
+<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/epic-fail.css">
+
+
+
+
+
+<!-- /search:off -->
+
+
+<!-- copied from contact page index, with edits -->
+<script id="footer-tpl-email-dialog" type="text/x-handlebars-template">
+	<div id="mail-dialog">
+		<h1>Email Art of Problem Solving</h1>
+		<p>
+			<input type="text" id="email" name="email" placeholder="Your email address">
+			<input type="text" id="subject" name="subject" placeholder="Subject of message">
+			<textarea id="message" name="message" placeholder="Enter your message"></textarea>
+			<div style="padding:5px 30px">
+				<input type="checkbox" id="email-copy" name="email_copy">
+				<label for="email-copy" id="email-copy-label">Send a copy to my email address.</label>
+			</div>
+			<div style="padding:5px 30px 20px">
+				<input id="footer-submit-btn" type="submit" class="btn btn-primary" value="Send">
+				<input id="footer-cancel-btn" type="submit" class="btn btn-default" value="Cancel">
+			</div>
+		</p>
+		<p id="email-error"></p>
+	</div>
+</script>
+
+
+<script id="footer-tpl-email-confirm" type="text/x-handlebars-template">
+	<div id="mail-dialog-confirm">
+		<h2>Email Sent</h2>
+		<p>Thank you for your email. We will respond to it soon.</p>
+	</div>
+</script>
+
+<!-- bing -->
+<script>(function(w,d,t,r,u){var f,n,i;w[u]=w[u]||[],f=function(){var o={ti:"5105596"};o.q=w[u],w[u]=new UET(o),w[u].push("pageLoad")},n=d.createElement(t),n.src=r,n.async=1,n.onload=n.onreadystatechange=function(){var s=this.readyState;s&&s!=="loaded"&&s!=="complete"||(f(),n.onload=n.onreadystatechange=null)},i=d.getElementsByTagName(t)[0],i.parentNode.insertBefore(n,i)})(window,document,"script","//bat.bing.com/bat.js","uetq");</script><noscript><img src="//bat.bing.com/action/0?ti=5105596&Ver=2" height="0" width="0" style="display:none; visibility: hidden;" /></noscript>
+
+</body>
+</html>
+

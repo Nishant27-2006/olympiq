@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Franklyn Wang)
+<p>First, we note that there exists an <span class='math'>$O(NK)$</span> dynamic-programming solution.  Let
+<span class='math'>$dp[v]$</span> represent the answer to the problem on the prefix
+<span class='math'>$s[0, 1, \ldots, v - 1]$</span>.  Let <span class='math'>$c_{ij} = 1$</span> if the range
+<span class='math'>$s[i, i + 1, \ldots j - 1]$</span> is at least half Guernseys, and <span class='math'>$0$</span> otherwise. Then,
+observe that 
+<div class='math'>$$ dp[j] = \min_{\max(0, j - K) \le i \le j - 1}(dp[i] + c_{ij})  $$</div> 
+<p>Observe that if we let <span class='math'>$p[i]$</span> equal the difference between the number of
+Holsteins and Guernseys in the  range <span class='math'>$s[0, 1, \ldots i - 1]$</span>, then
+<span class='math'>$c_{ij} = \begin{cases} 1, \text{ if } p[i] \le p[j] \\ 0, \text{ if } p[i] &gt; p[j]   \end{cases}$</span>
+which allows us to compute <span class='math'>$c_{ij}$</span> in <span class='math'>$O(1)$</span> time by precomputing
+<span class='math'>$p[0], p[1], \ldots p[n]$</span>. 
+<p>Implemented naively, this solution is <span class='math'>$O(NK)$</span>. However, observe that
+<span class='math'>$0 \le c_{ij} \le 1$</span> for all <span class='math'>$i, j$</span>. Thus, notice that 
+<div class='math'>$$\min_{\max(0, j - K) \le i \le j - 1}(dp[i]) + 1\ge dp[j] \ge \min_{\max(0, j - K) \le i \le j - 1}(dp[i]) $$</div>
+<p>Define here <span class='math'>$m = \min_{\max(0, j - K) \le i \le j - 1}(dp[i])$</span> It therefore
+suffices to check whether there exists an <span class='math'>$i$</span> such that <div class='math'>$$dp[i] + c_{ij} = m$$</div>
+To do this, we maintain two auxillary data structures: 
+<p>1. A multiset storing all the values of <span class='math'>$dp[i]$</span>.
+<p>2. A map from each value of <span class='math'>$dp[i]$</span> to the multiset of corresponding possible
+<span class='math'>$pre[i]$</span>&apos;s. 
+<p>Then, to check whether there exists an <span class='math'>$i$</span> satisfying the requirement, it
+suffices to first compute <span class='math'>$m$</span>, and then find the lowest possible value of <span class='math'>$p[i]$</span>
+among all <span class='math'>$i$</span> with <span class='math'>$dp[i] = m$</span>, and check whether that is lower than <span class='math'>$p[j]$</span>,
+which suffices to solve  the problem. My code is below: 
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int DP[300001];
+int pref[300001];
+int main() {
+    int N, K; cin &gt;&gt; N &gt;&gt; K;
+    string s; cin &gt;&gt; s;
+    DP[0] = 0;
+    pref[0] = 0;
+    for (int i = 0; i &lt; (int) s.size(); i++){
+      if (s[i] == &apos;H&apos;){
+        pref[i + 1] = pref[i] + 1;
+      }
+      else{
+        pref[i + 1] = pref[i] - 1;
+      }
+    }
+    //contains all values of dp[i] that are active
+    multiset&lt;int&gt; dpvals;
+    dpvals.insert(0);
+    //contains the values of pre[i] given dp[i]
+    multiset&lt;int&gt; elements[300001]; 
+    elements[0].insert(0);
+    for (int i = 1; i &lt;= N; i++){
+      //query
+      int mnval = *(dpvals.begin());
+      if (*elements[mnval].begin() &lt; pref[i]){
+        DP[i] = mnval;
+      }
+      else{
+        DP[i] = mnval + 1;
+      }
+      dpvals.insert(DP[i]);
+      elements[DP[i]].insert(pref[i]);
+      //update
+      if (i &gt;= K){
+        dpvals.erase(dpvals.find(DP[i - K]));
+        elements[DP[i - K]].erase(elements[DP[i - K]].find(pref[i - K]));
+      }
+    }
+    cout &lt;&lt; DP[N] &lt;&lt; endl;
+}
+</pre>
+<p></body></html>

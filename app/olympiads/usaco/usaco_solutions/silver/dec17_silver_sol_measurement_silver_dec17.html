@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>Due to the large number of measurements, we need to sort them in order of day.
+<p>When we process a measurement, we need to track the cow whose output is changing
+and the old and new outputs. After that, we need to see if the cows with maximum output
+have changed.
+<p>To check this, there are a few conditions we need to check. If, for example,
+the number of cows with the maximum output have changed, then clearly the display
+will need to be updated. However, the number of cows could stay the same and the display
+could need to still be updated. To check this, we need to investigate if the cow currently
+under consideration was originally up there and if they are up there after the measurement
+changed.
+<p>Here is Mark Gordon&apos;s code.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+#include &lt;set&gt;
+#include &lt;map&gt;
+ 
+using namespace std;
+ 
+struct measurement {
+  int day;
+  int cow;
+  int delta;
+};
+ 
+int main() {
+  ios_base::sync_with_stdio(false);
+  freopen(&quot;measurement.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;measurement.out&quot;, &quot;w&quot;, stdout);
+ 
+  int N;
+  int G;
+  cin &gt;&gt; N &gt;&gt; G;
+ 
+  vector&lt;measurement&gt; A(N);
+  for (auto&amp; m : A) {
+    cin &gt;&gt; m.day &gt;&gt; m.cow &gt;&gt; m.delta;
+  }
+  sort(A.begin(), A.end(), [](const measurement&amp; a, const measurement&amp; b) {
+    return a.day &lt; b.day;
+  });
+ 
+  map&lt;int, int, greater&lt;int&gt; &gt; cnts;
+  cnts[0] = N + 1;
+ 
+  int result = 0;
+  map&lt;int, int&gt; mp;
+  for (auto&amp; m : A) {
+    int&amp; ref = mp[m.cow];
+ 
+    bool wastop = ref == cnts.begin()-&gt;first;
+    int wascnt = cnts[ref]--;
+    if (wascnt == 1) {
+      cnts.erase(ref);
+    }
+ 
+    ref += m.delta;
+ 
+    int iscnt = ++cnts[ref];
+    bool istop = ref == cnts.begin()-&gt;first;
+    if (wastop) {
+      if (!istop || wascnt != 1 || iscnt != 1) {
+        ++result;
+      }
+    } else if (istop) {
+      ++result;
+    }
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+ 
+  return 0;
+}
+</pre></body></html>

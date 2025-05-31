@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>We&apos;ll start by focusing on the subtask where <span class='math'>$N = 1$</span>. Analyzing some small
+cases, we see that Farmer John appears to win if and only if <span class='math'>$a_1$</span> is not
+divisible by <span class='math'>$4$</span>. To prove this, we note that if <span class='math'>$a_1$</span> is divisible by <span class='math'>$4$</span>, then
+Farmer John must change the value of <span class='math'>$a_1$</span> by some value that is not divisible
+by <span class='math'>$4$</span>. Farmer Nhoj can then decrease it by either <span class='math'>$1$</span>, <span class='math'>$2$</span>, or <span class='math'>$3$</span> to return it
+to a smaller value that is divisible by <span class='math'>$4$</span>. Eventually, Farmer Nhoj will
+decrease <span class='math'>$a_1$</span> to zero with this strategy.
+<p>This therefore defines the winning strategy for both players - pick some valid
+value that is equivalent to <span class='math'>$a_1 \pmod{4}$</span> and decrease <span class='math'>$a_1$</span> accordingly. If
+<span class='math'>$a_1$</span> is divisible by <span class='math'>$4$</span>, you have lost.
+<p>Before moving on to the case where <span class='math'>$N &gt; 1$</span>, we ask the following question - in
+how many turns will the game end if <span class='math'>$N = 1$</span>, the loser wishes to maximize the
+number of turns the game takes, while the winner wishes to minimize the number
+of turns the game takes? When <span class='math'>$a_1$</span> is even, we can show that the answer is
+exactly <span class='math'>$\frac{a_1}{2}$</span> by induction. Otherwise, the winning player wants to
+pick the largest prime that is equivalent to <span class='math'>$a_1 \pmod{4}$</span>. If that prime is
+<span class='math'>$p$</span>, then it will take <span class='math'>$1 + \frac{a_1 - p}{2}$</span> turns.
+<p>We are now prepared to solve the problem in full. We start by precomputing all
+primes less than <span class='math'>$5 \cdot 10^6$</span> using the sieve of Eratosthenes. For each value,
+we keep track of how many turns it would take for the value to get to zero. Per
+the formula in the previous paragraph, we track how many turns it would take to
+get a given room to become empty. Among all rooms that share the minimum number
+of turns to become empty divided by two, the first one determines which farmer wins.
+<p>Yuval Vaknin&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+using namespace std;
+ 
+const int mx = 5000005;
+int min_turns[mx] = {0, 1};
+bool composite[mx] = {false};
+int max_mod4[4] = {2, 1, 2, 3};
+ 
+int main() {
+	for(int i = 2; i &lt; mx; i++) {
+		if(!composite[i]) {
+			for(int j = i; j &lt; mx; j += i) {
+				composite[j] = true;
+			}
+			max_mod4[i % 4] = i;
+		}
+		min_turns[i] = (i - max_mod4[i % 4]) / 2 + 1;
+	}
+ 
+	int t; cin &gt;&gt; t;
+	while(t--) {
+		int n; cin &gt;&gt; n;
+		int ans = mx;
+		for(int i = 0; i &lt; n; i++) {
+			int a_i; cin &gt;&gt; a_i;
+			if(min_turns[a_i] / 2 &lt; ans / 2) ans = min_turns[a_i];
+		}
+		if(ans &amp; 1) cout &lt;&lt; &quot;Farmer John&quot; &lt;&lt; endl;
+		else cout &lt;&lt; &quot;Farmer Nhoj&quot; &lt;&lt; endl;
+	}
+}
+</pre>
+<p>Danny Mittal&apos;s Java code:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class CircularBarn {
+    public static final int MAXVAL = 5000000;
+ 
+    public static void main(String[] args) throws IOException {
+        boolean[] isPrime = new boolean[MAXVAL + 1];
+        for (int p = 1; p &lt;= MAXVAL; p++) {
+            isPrime[p] = true;
+        }
+        for (int p = 2; p &lt;= MAXVAL; p++) {
+            if (isPrime[p]) {
+                for (int k = 2 * p; k &lt;= MAXVAL; k += p) {
+                    isPrime[k] = false;
+                }
+            }
+        }
+        int[] lastPrimes = new int[4];
+        int[] steps = new int[MAXVAL + 1];
+        for (int k = 1; k &lt;= MAXVAL; k++) {
+            if (k % 2 == 0) {
+                steps[k] = k / 2;
+            } else {
+                if (isPrime[k]) {
+                    lastPrimes[k % 4] = k;
+                }
+                steps[k] = 1 + steps[k - lastPrimes[k % 4]];
+            }
+        }
+ 
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int t = Integer.parseInt(in.readLine()); t &gt; 0; t--) {
+            int n = Integer.parseInt(in.readLine());
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int[] rooms = new int[n];
+            for (int j = 0; j &lt; n; j++) {
+                rooms[j] = Integer.parseInt(tokenizer.nextToken());
+            }
+ 
+            boolean johnWins = true;
+            int minSteps = MAXVAL + 1;
+            for (int j = 0; j &lt; n; j++) {
+                int stepsHere = steps[rooms[j]] / 2;
+                if (stepsHere &lt; minSteps) {
+                    minSteps = stepsHere;
+                    johnWins = steps[rooms[j]] % 2 == 1;
+                }
+            }
+            out.append(&quot;Farmer &quot;).append(johnWins ? &quot;John&quot; : &quot;Nhoj&quot;).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p>My Python 3 code:
+<pre class='prettyprint'>
+MAXV = 5000000
+sieve = [False] * (MAXV + 1)
+i = 2
+while i * i &lt; len(sieve):
+    if not sieve[i]:
+        for j in range(i*i, len(sieve), i):
+            sieve[j] = True
+    i += 1
+ 
+def solve():
+    n = int(input())
+    l = [int(x) for x in input().split()]
+    moves = 1e9
+    for i, x in enumerate(l):
+        if x % 2 == 0:
+            numMoves = x // 2
+        else:
+            cand = x
+            while sieve[cand]:
+                cand -= 4
+            numMoves = (x - cand) // 2 + 1
+        if numMoves // 2 &lt; moves // 2:
+            moves = numMoves
+            if moves == 1:
+                break
+    if moves%2:
+        print(&quot;Farmer John&quot;)    
+    else:
+        print(&quot;Farmer Nhoj&quot;)
+ 
+t = int(input())
+for _ in range(t):
+    solve()
+</pre>
+<p></body></html>

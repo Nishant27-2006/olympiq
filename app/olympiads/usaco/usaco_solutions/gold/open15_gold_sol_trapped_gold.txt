@@ -1,0 +1,157 @@
+Solution ID: sol_trapped_gold
+Contest: OPEN15
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_trapped_gold.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Sort the haybales by location. Consider two haybales
+
+$i$
+
+and
+
+$j$
+
+such that
+Bessie can start somewhere between those haybales and break through all the
+haybales from
+
+$i+1$
+
+to
+
+$j-1$
+
+, but she can't break haybale
+
+$i$
+
+or
+haybale
+
+$j$
+
+.
+
+It must be the case then that no haybale between
+
+$i$
+
+and
+
+$j$
+
+is strictly taller
+than those two. That motivates the following
+
+$O(N \log N)$
+
+solution:
+
+Sort the haybales in decreasing order of size. Consider having an empty road,
+and place the haybales in that order. When placing a haybale, look immediately
+to its left and to its right and see if you can break through either one of
+those haybales if you were inside that interval. Mark that interval as "trapped"
+if so.
+
+This will be
+
+$O(N \log N)$
+
+as long as you check to make sure that the interval
+isn't already marked as trapped.
+
+Here is my code illustrating this process.
+
+import java.io.*;
+import java.util.*;
+public class trappedG {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader("trapped.in"));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("trapped.out")));
+    int n = Integer.parseInt(br.readLine());
+    Haybale[] bales = new Haybale[n];
+    for(int i = 0; i < n; i++) {
+      StringTokenizer st = new StringTokenizer(br.readLine());
+      int size = Integer.parseInt(st.nextToken());
+      int position = Integer.parseInt(st.nextToken());
+      bales[i] = new Haybale(size, position);
+    }
+    Arrays.sort(bales, new PosComp());
+    int[] locations = new int[n];
+    Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> locToSize = new HashMap<Integer, Integer>();
+    for(int i = 0; i < n; i++) {
+      locations[i] = bales[i].position;
+      map.put(locations[i], i);
+      locToSize.put(bales[i].position, bales[i].size);
+    }
+    Arrays.sort(bales, new SizeComp());
+    TreeSet<Integer> seen = new TreeSet<Integer>();
+    int ans = 0;
+    boolean[] covered = new boolean[n-1];
+    for(Haybale out: bales) {
+      int index = map.get(out.position);
+      if(seen.size() > 0 && seen.last() > index) {
+        int higherIndex = seen.higher(index);
+        int distance = locations[higherIndex] - locations[index];
+        if(distance <= locToSize.get(locations[higherIndex]) && distance <= out.size) {
+          int l = index;
+          int r = higherIndex;
+          if(!covered[l]) {
+            for(int i = l; i < r; i++) {
+              covered[i] = true;
+            }
+          }
+        }
+      }
+      if(seen.size() > 0 && seen.first() < index) {
+        int lowerIndex = seen.lower(index);
+        int distance = locations[index] - locations[lowerIndex];
+        if(distance <= locToSize.get(locations[lowerIndex]) && distance <= out.size) {
+          int l = lowerIndex;
+          int r = index;
+          if(!covered[l]) {
+            for(int i = l; i < r; i++) {
+              covered[i] = true;
+            }
+          }
+        }
+      }
+      seen.add(index);
+    }
+    for(int i = 0; i < covered.length; i++) {
+      if(covered[i]) {
+        ans += locations[i+1] - locations[i];
+      }
+    }
+    pw.println(ans);
+    pw.close();
+  }
+    
+  static class Haybale {
+    public int position, size;
+    public Haybale(int sizeIn, int positionIn) {
+      size = sizeIn;
+      position = positionIn;
+    }
+  }
+
+  static class PosComp implements Comparator<Haybale> {
+    public int compare(Haybale a, Haybale b) {
+      return a.position - b.position;
+    }
+  }
+  
+  static class SizeComp implements Comparator<Haybale> {
+    public int compare(Haybale a, Haybale b) {
+      return b.size - a.size;
+    }
+  }
+  
+}

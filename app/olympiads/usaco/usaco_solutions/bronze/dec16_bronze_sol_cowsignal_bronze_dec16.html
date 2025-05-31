@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we are given a grid of characters and want to expand it by a
+factor of K in both the horizontal and vertical dimensions.
+<p>It&apos;s worth noting to begin with that the first K rows that we print can be
+generated from the first row of the grid, the next K rows will be generated from
+the second row, and so on. Therefore, we focus our attention only on expanding a
+single row.
+<p>Note that expanding a single row will generate K copies of the same row, so we
+only need to figure out how to generate a copy of a row that is stretched
+horizontally by a factor of K.
+<p>We can do this though just by printing each character K times.
+<p>Here is my Java code.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class cowsignal {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader(&quot;cowsignal.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;cowsignal.out&quot;)));
+
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int r = Integer.parseInt(st.nextToken());
+		int c = Integer.parseInt(st.nextToken());
+		int k = Integer.parseInt(st.nextToken());
+		
+		for(int i = 0; i &lt; r; i++) {
+			// get the next row to generate k copies of
+			String currRow = br.readLine();
+			
+			// we will generate the same row K times
+			for(int internalRow = 0; internalRow &lt; k; internalRow++) {
+				// loop over each character...
+				for(int j = 0; j &lt; c; j++) {
+					// and print it k times
+					for(int a = 0; a &lt; k; a++) {
+						pw.print(currRow.charAt(j));
+					}
+				}
+				// we need to print a new line to indicate that we need to go to the next row
+				pw.println();
+			}
+		}
+		
+		pw.close();
+	}
+}
+</pre>
+<p></body></html>

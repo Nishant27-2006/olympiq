@@ -1,0 +1,175 @@
+Solution ID: sol_backforth_bronze_dec18
+Contest: DEC18
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_backforth_bronze_dec18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Nathan Pinsker )
+
+One general tip is to always do quick, back-of-the-envelope calculations about
+whether you can calculate something or not. For example, we might naturally
+wonder whether we can just simulate all possible scenarios Farmer John can
+actually create. To figure out whether we can, we need to know how many
+different scenarios are possible.
+
+On Monday, FJ can choose from 10 different buckets. On Tuesday, he will be able
+to choose from 11 (no matter which bucket he brings); on Wednesday, Thursday,
+and Friday, he will also have 11 choices. Thus, a rough upper bound for the
+number of different things Farmer John can do is
+
+$10 * 11^4 = 146410$
+
+operations, which means we can just simulate them. (A good rule of thumb is that
+if the number is under 20,000,000, it will probably run in time. This is *far*
+below that number!)
+
+To do this, we can keep two arrays "B1" and "B2" representing the buckets in
+barns B1 and B2, respectively. We first call a function called "tuesday" which
+tries all possible values in B1, then passes the new values of B1 and B2 to a
+function called "wednesday". We repeat with functions "wednesday", "thursday",
+and "friday", keeping track of the milk at the first barn.
+
+Since the possible ending values of milk are all between
+
+$0$
+
+and
+
+$2,000$
+
+(a very
+conservative estimate), we can keep an array of size
+
+$2,000$
+
+and flip its values from false to true depending
+on whether we can. At the end, we count all the "true" values of the array to
+get our final answer.
+
+Here is Brian's solution, written in a way that deliberately tries to match
+the problem structure as much as possible:
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+using namespace std;
+ 
+int possible_answers[2000];
+ 
+void friday(int b1milk, vector<int> B1, vector<int> B2)
+{
+  for (int i=0; i<B2.size(); i++) {
+    int x = B2[i];
+    possible_answers[b1milk + x] = 1; // record this value as possible
+  }
+}
+ 
+void thursday(int b1milk, vector<int> B1, vector<int> B2)
+{
+  for (int i=0; i<B1.size(); i++) {
+    int x = B1[i];
+    vector<int> new_B2 = B2; new_B2.push_back(x);
+    vector<int> new_B1 = B1; new_B1.erase(new_B1.begin() + i);
+    friday(b1milk - x, new_B1, new_B2);
+  }
+}
+ 
+void wednesday(int b1milk, vector<int> B1, vector<int> B2)
+{
+  for (int i=0; i<B2.size(); i++) {
+    int x = B2[i];
+    vector<int> new_B1 = B1; new_B1.push_back(x);
+    vector<int> new_B2 = B2; new_B2.erase(new_B2.begin() + i);
+    thursday(b1milk + x, new_B1, new_B2);
+  }
+}
+ 
+void tuesday(int b1milk, vector<int> B1, vector<int> B2)
+{
+  for (int i=0; i<B1.size(); i++) {
+    int x = B1[i];
+    vector<int> new_B2 = B2; new_B2.push_back(x);
+    vector<int> new_B1 = B1; new_B1.erase(new_B1.begin() + i);
+    wednesday(b1milk - x, new_B1, new_B2);
+  }
+}
+ 
+int main(void)
+{
+  int n, answer = 0;
+  vector<int> B1, B2;
+  ifstream fin ("backforth.in");
+  for (int i=0; i<10; i++) { fin >> n; B1.push_back(n); }
+  for (int i=0; i<10; i++) { fin >> n; B2.push_back(n); }
+ 
+  tuesday(1000, B1, B2);
+  
+  ofstream fout ("backforth.out");
+  for (int i=0; i<2000; i++) 
+    answer += possible_answers[i];
+  fout << answer << "\n";
+  return 0;
+}
+
+For brownie points, you can even try combining the four functions into one
+function, and recursively calling that function. Here is a fancier solution
+by Dhruv which does this:
+
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <set>
+using namespace std;
+ 
+multiset<int> S[2];  // S[0] is barn 1, S[1] is barn 2
+int pos[2001];
+int numOutcomes;
+ 
+void dfs(int day,int amount)
+{
+        // 'amount' represents the amount of milk in barn 1.
+        // We know the amount of milk in barn 2 is 2000 - amount.
+	if(day == 6)
+	{
+		numOutcomes += 1 - pos[amount];
+		pos[amount] = 1;
+		return;
+	}
+	vector<int> vals;
+	int p = (day%2);  // 0 if 'day' is even, 1 otherwise.
+                          // This controls which element of S we use.
+	multiset<int>::iterator it = S[p].begin();
+	while(it != S[p].end())
+	{
+		vals.push_back(*it);
+		it++;
+	}
+	for(int i=0;i<vals.size();i++)
+	{
+		S[p].erase(S[p].find(vals[i]));
+		S[1-p].insert(vals[i]);
+                if (p == 0) {
+			dfs(day+1, amount - vals[i]);
+                } else {
+			dfs(day+1, amount + vals[i]);
+                }
+		S[1-p].erase(S[1-p].find(vals[i]));
+		S[p].insert(vals[i]);
+	}
+}
+ 
+int main()
+{
+	int val;
+	for(int p=0;p<2;p++)
+		for(int i=0;i<10;i++)
+		{
+			cin >> val;
+			S[p].insert(val);
+		}
+	dfs(2, 1000);
+	cout << numOutcomes << '\n';
+}

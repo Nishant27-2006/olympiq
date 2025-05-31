@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Let&apos;s start by constructing a
+<a href='https://en.wikipedia.org/wiki/Directed_graph'>directed graph</a> <span class='math'>$G$</span> with
+vertices labeled <span class='math'>$1\ldots N$</span> that contains an edge <span class='math'>$i\to j$</span>  if <span class='math'>$i=j$</span> or cow <span class='math'>$i$</span>
+prefers gift <span class='math'>$j$</span> to gift <span class='math'>$i$</span>. For the sample case, <span class='math'>$G$</span> would contain the
+following edges:
+<p><pre>
+1 -&gt; 1
+2 -&gt; 1
+2 -&gt; 3
+2 -&gt; 2
+3 -&gt; 1
+3 -&gt; 2
+3 -&gt; 3
+4 -&gt; 1
+4 -&gt; 2
+4 -&gt; 3
+4 -&gt; 4
+</pre>
+<p>There is a one-to-one correspondence between valid distributions and partitions 
+of the vertices of <span class='math'>$G$</span> into simple cycles. For example, assigning gift 1 to cow
+1, gift 3 to cow 2, gift 2 to cow 3, and gift 4 to cow 4 would correspond to the
+following subset of <span class='math'>$G$</span>&apos;s edges: <span class='math'>$\{1\to 1, 2\to 3, 3\to 2, 4\to 4\}$</span>. This
+subset of edges partitions the vertices of <span class='math'>$G$</span> into three cycles: a self-loop
+involving <span class='math'>$1$</span>, a loop involving <span class='math'>$2$</span> and <span class='math'>$3$</span>, and another self-loop involving
+<span class='math'>$4$</span>.
+<p><strong>Observation 1:</strong> There is a distribution where cow <span class='math'>$i$</span> receives gift <span class='math'>$j$</span> if
+and only if <span class='math'>$G$</span> has a simple cycle containing edge <span class='math'>$i\to j$</span>.
+<p><strong>Proof:</strong> 
+<p>Only If: A distribution where cow <span class='math'>$i$</span> receives cow <span class='math'>$j$</span> corresponds to  a
+partition of the vertices of <span class='math'>$G$</span> into some number of simple cycles containing
+the edge <span class='math'>$i\to j$</span>. It follows that one of those simple cycles contains the edge
+<span class='math'>$i\to j$</span>.
+<p>If: Suppose there exists a simple cycle <span class='math'>$C$</span> containing <span class='math'>$i\to j$</span>. Then we can
+assign each cow along <span class='math'>$C$</span> the gift originally given to the next cow along the
+cycle, and every cow along <span class='math'>$C$</span> will end up strictly better off. Let all cows not
+along <span class='math'>$C$</span> receive their original gifts. This corresponds to a valid
+distribution. <span class='math'>$\blacksquare$</span>
+<p><strong>Observation 2:</strong> Using the first observation, <span class='math'>$G$</span> has a simple cycle 
+containing edge <span class='math'>$i\to j$</span> if and only if there exists a path from <span class='math'>$j$</span> to <span class='math'>$i$</span>. 
+<p><strong>Solution:</strong> In <span class='math'>$\mathcal{O}(N^3)$</span> time, compute all pairs of vertices
+<span class='math'>$(i,j)$</span> such that there exists a path from <span class='math'>$i$</span> to <span class='math'>$j$</span>. In the code below, we set
+<span class='math'>$\texttt{reachable}[i][j]=1$</span> if such a path exists. The most straightforward way
+to do this is to start a depth-first search from each <span class='math'>$i$</span>. Alternatively, we can
+use
+<a href='https://usaco.guide/gold/shortest-paths/#floyd-warshall'>Floyd-Warshall</a>
+with bitsets to shave a constant factor off the runtime.
+<p>After that, for each cow <span class='math'>$i$</span>, it remains to iterate over her preference list and
+output the first gift <span class='math'>$g$</span> such that there exists a path from <span class='math'>$g$</span> to <span class='math'>$i$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int N;
+bitset&lt;501&gt; reachable[501];
+vector&lt;int&gt; gifts[501];
+
+void dfs(int src, int cur) {
+	if (reachable[src][cur])
+		return;
+	reachable[src][cur] = true;
+	for (int g : gifts[cur])
+		dfs(src, g);
+}
+
+void calc_reachable_dfs() {
+	for (int i = 1; i &lt;= N; ++i)
+		dfs(i, i);
+}
+
+void calc_reachable_floyd() {
+	for (int i = 1; i &lt;= N; ++i)
+		for (int g : gifts[i])
+			reachable[i][g] = true;
+	for (int k = 1; k &lt;= N; ++k) // run floyd-warshall
+		for (int i = 1; i &lt;= N; ++i)
+			if (reachable[i][k])
+				reachable[i] |= reachable[k];
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	cin &gt;&gt; N;
+	assert(N &lt;= 500);
+	for (int i = 1; i &lt;= N; ++i) {
+		gifts[i].resize(N);
+		for (int &amp;g : gifts[i])
+			cin &gt;&gt; g;
+		while (gifts[i].back() != i)
+			gifts[i].pop_back();
+	}
+
+	// either of these work
+	calc_reachable_dfs();
+	// calc_reachable_floyd();
+
+	for (int i = 1; i &lt;= N; ++i)
+		for (int g : gifts[i])
+			if (reachable[g][i]) {
+				cout &lt;&lt; g &lt;&lt; &quot;\n&quot;;
+				break;
+			}
+}
+</pre>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringJoiner;
+import java.util.StringTokenizer;
+ 
+public class RedistributingGifts {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        int[][] rankings = new int[n + 1][n + 1];
+        for (int cow = 1; cow &lt;= n; cow++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            for (int rank = n; rank &gt; 0; rank--) {
+                rankings[cow][Integer.parseInt(tokenizer.nextToken())] = rank;
+            }
+        }
+        boolean[][] reachable = new boolean[n + 1][n + 1];
+        for (int cow1 = 1; cow1 &lt;= n; cow1++) {
+            for (int cow2 = 1; cow2 &lt;= n; cow2++) {
+                if (rankings[cow1][cow2] &gt;= rankings[cow1][cow1]) {
+                    reachable[cow2][cow1] = true;
+                }
+            }
+        }
+        for (int cow2 = 1; cow2 &lt;= n; cow2++) {
+            for (int cow1 = 1; cow1 &lt;= n; cow1++) {
+                for (int cow3 = 1; cow3 &lt;= n; cow3++) {
+                    reachable[cow1][cow3] = reachable[cow1][cow3] || (reachable[cow1][cow2] &amp;&amp; reachable[cow2][cow3]);
+                }
+            }
+        }
+        StringJoiner joiner = new StringJoiner(&quot;\n&quot;);
+        for (int cow = 1; cow &lt;= n; cow++) {
+            int bestGift = 0;
+            for (int gift = 1; gift &lt;= n; gift++) {
+                if (rankings[cow][gift] &gt; rankings[cow][bestGift] &amp;&amp; reachable[cow][gift]) {
+                    bestGift = gift;
+                }
+            }
+            joiner.add(bestGift + &quot;&quot;);
+        }
+        System.out.println(joiner);
+    }
+}
+</pre>
+<p>Additional Notes:
+<p><ul><li>This problem was inspired by the
+<a href='https://en.wikipedia.org/wiki/Top_trading_cycle'>Top trading cycle</a>
+algorithm.</li><li>It is actually possible to solve this problem in <span class='math'>$O(M)$</span> time, where <span class='math'>$M$</span> is
+the number of edges in <span class='math'>$G$</span>, by computing the
+<a href='https://usaco.guide/adv/SCC'>strongly connected components</a> of
+<span class='math'>$G$</span>.</li><li>Alternatively, this problem can be phrased as finding all edges that may be
+part of a perfect matching in a bipartite graph, given an initial perfect
+matching.</li></ul>
+<p></body></html>

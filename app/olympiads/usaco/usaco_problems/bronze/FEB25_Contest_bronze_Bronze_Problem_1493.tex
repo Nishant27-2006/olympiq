@@ -1,0 +1,513 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB25 Contest - Bronze Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Bessie is learning to code using a simple programming language. She first
+defines a valid program, then executes it to produce some output sequence. 
+
+Defining:
+A program is a nonempty sequence of statements.A
+statement is either of the form "PRINT $c$" where $c$ is an integer, or "REP
+$o$",  followed by a program, followed by "END," where $o$ is an integer that is
+at least 1.
+Executing:
+Executing a program executes its statements in sequence.Executing
+the statement "PRINT $c$" appends $c$ to the output sequence.Executing
+a statement starting with "REP $o$" executes the inner program a total of $o$
+times in sequence.
+An example of a program that Bessie knows how to write is as follows.
+
+
+REP 3
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+END
+
+The program outputs the sequence $[1,2,2,1,2,2,1,2,2]$.
+
+Bessie wants to output a sequence of $N$ ($1 \le N \le 100$) positive integers.
+Elsie challenges her to use no more than $K$ ($1 \le K \le 3$) "PRINT"
+statements. Note that Bessie can use as many "REP" statements as she wants. Also
+note that each positive integer in the sequence is no greater than $K$.
+
+For each of $T$ ($1 \le T \le 100$) independent test cases, determine whether
+Bessie can write a program that outputs some given sequence using at most $K$
+"PRINT" statements.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $T$.
+
+The first line of each test case contains two space-separated integers, $N$ and
+$K$.
+
+The second line of each test case contains a sequence of $N$ space-separated
+positive integers,  each at most $K$, which is the sequence that Bessie wants to
+produce.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+For each test case, output "YES" or "NO" (case sensitive) on a separate line.
+
+SAMPLE INPUT:
+2
+1 1
+1
+4 1
+1 1 1 1
+SAMPLE OUTPUT: 
+YES
+YES
+
+For the second test case, the following code outputs the sequence $[1,1,1,1]$
+with $1$ "PRINT" statement.
+
+
+REP 4
+    PRINT 1
+END
+
+SAMPLE INPUT:
+11
+4 2
+1 2 2 2
+4 2
+1 1 2 1
+4 2
+1 1 2 2
+6 2
+1 1 2 2 1 1
+10 2
+1 1 1 2 2 1 1 1 2 2
+8 3
+3 3 1 2 2 1 2 2
+9 3
+1 1 2 2 2 3 3 3 3
+16 3
+2 2 3 2 2 3 1 1 2 2 3 2 2 3 1 1
+24 3
+1 1 2 2 3 3 3 2 2 3 3 3 1 1 2 2 3 3 3 2 2 3 3 3
+9 3
+1 2 2 1 3 3 1 2 2
+6 3
+1 2 1 2 2 3
+SAMPLE OUTPUT: 
+YES
+NO
+YES
+NO
+YES
+YES
+YES
+YES
+YES
+NO
+NO
+
+For the first test case, the following code outputs the sequence $[1,2,2,2]$
+with $2$ "PRINT" statements.
+
+
+PRINT 1
+REP 3
+    PRINT 2
+END
+
+For the second test case, the answer is "NO" because it is impossible to output
+the sequence $[1,1,2,1]$ using at most $2$ "PRINT" statements.
+
+For the sixth test case, the following code outputs the sequence
+$[3,3,1,2,2,1,2,2]$ with $3$ "PRINT" statements.
+
+
+REP 2
+    PRINT 3
+END
+REP 2
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+END
+
+SCORING:
+Input 3: $K=1$Inputs 4-7: $K \le 2$Inputs 8-13: No
+additional constraints.
+
+
+Problem credits: Alex Liang
+
+
+
+\section*{Input Format}
+The first line of each test case contains two space-separated integers, $N$ and
+$K$.The second line of each test case contains a sequence of $N$ space-separated
+positive integers,  each at most $K$, which is the sequence that Bessie wants to
+produce.
+
+The second line of each test case contains a sequence of $N$ space-separated
+positive integers,  each at most $K$, which is the sequence that Bessie wants to
+produce.
+
+OUTPUT FORMAT (print output to the terminal / stdout):For each test case, output "YES" or "NO" (case sensitive) on a separate line.SAMPLE INPUT:2
+1 1
+1
+4 1
+1 1 1 1SAMPLE OUTPUT:YES
+YESFor the second test case, the following code outputs the sequence $[1,1,1,1]$
+with $1$ "PRINT" statement.REP 4
+    PRINT 1
+ENDSAMPLE INPUT:11
+4 2
+1 2 2 2
+4 2
+1 1 2 1
+4 2
+1 1 2 2
+6 2
+1 1 2 2 1 1
+10 2
+1 1 1 2 2 1 1 1 2 2
+8 3
+3 3 1 2 2 1 2 2
+9 3
+1 1 2 2 2 3 3 3 3
+16 3
+2 2 3 2 2 3 1 1 2 2 3 2 2 3 1 1
+24 3
+1 1 2 2 3 3 3 2 2 3 3 3 1 1 2 2 3 3 3 2 2 3 3 3
+9 3
+1 2 2 1 3 3 1 2 2
+6 3
+1 2 1 2 2 3SAMPLE OUTPUT:YES
+NO
+YES
+NO
+YES
+YES
+YES
+YES
+YES
+NO
+NOFor the first test case, the following code outputs the sequence $[1,2,2,2]$
+with $2$ "PRINT" statements.PRINT 1
+REP 3
+    PRINT 2
+ENDFor the second test case, the answer is "NO" because it is impossible to output
+the sequence $[1,1,2,1]$ using at most $2$ "PRINT" statements.For the sixth test case, the following code outputs the sequence
+$[3,3,1,2,2,1,2,2]$ with $3$ "PRINT" statements.REP 2
+    PRINT 3
+END
+REP 2
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+ENDSCORING:Input 3: $K=1$Inputs 4-7: $K \le 2$Inputs 8-13: No
+additional constraints.Problem credits: Alex Liang
+
+\section*{Output Format}
+SAMPLE INPUT:2
+1 1
+1
+4 1
+1 1 1 1SAMPLE OUTPUT:YES
+YESFor the second test case, the following code outputs the sequence $[1,1,1,1]$
+with $1$ "PRINT" statement.REP 4
+    PRINT 1
+ENDSAMPLE INPUT:11
+4 2
+1 2 2 2
+4 2
+1 1 2 1
+4 2
+1 1 2 2
+6 2
+1 1 2 2 1 1
+10 2
+1 1 1 2 2 1 1 1 2 2
+8 3
+3 3 1 2 2 1 2 2
+9 3
+1 1 2 2 2 3 3 3 3
+16 3
+2 2 3 2 2 3 1 1 2 2 3 2 2 3 1 1
+24 3
+1 1 2 2 3 3 3 2 2 3 3 3 1 1 2 2 3 3 3 2 2 3 3 3
+9 3
+1 2 2 1 3 3 1 2 2
+6 3
+1 2 1 2 2 3SAMPLE OUTPUT:YES
+NO
+YES
+NO
+YES
+YES
+YES
+YES
+YES
+NO
+NOFor the first test case, the following code outputs the sequence $[1,2,2,2]$
+with $2$ "PRINT" statements.PRINT 1
+REP 3
+    PRINT 2
+ENDFor the second test case, the answer is "NO" because it is impossible to output
+the sequence $[1,1,2,1]$ using at most $2$ "PRINT" statements.For the sixth test case, the following code outputs the sequence
+$[3,3,1,2,2,1,2,2]$ with $3$ "PRINT" statements.REP 2
+    PRINT 3
+END
+REP 2
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+ENDSCORING:Input 3: $K=1$Inputs 4-7: $K \le 2$Inputs 8-13: No
+additional constraints.Problem credits: Alex Liang
+
+\section*{Sample Input}
+\begin{verbatim}
+2
+1 1
+1
+4 1
+1 1 1 1
+
+11
+4 2
+1 2 2 2
+4 2
+1 1 2 1
+4 2
+1 1 2 2
+6 2
+1 1 2 2 1 1
+10 2
+1 1 1 2 2 1 1 1 2 2
+8 3
+3 3 1 2 2 1 2 2
+9 3
+1 1 2 2 2 3 3 3 3
+16 3
+2 2 3 2 2 3 1 1 2 2 3 2 2 3 1 1
+24 3
+1 1 2 2 3 3 3 2 2 3 3 3 1 1 2 2 3 3 3 2 2 3 3 3
+9 3
+1 2 2 1 3 3 1 2 2
+6 3
+1 2 1 2 2 3
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+YES
+YES
+
+REP 4
+    PRINT 1
+ENDSAMPLE INPUT:11
+4 2
+1 2 2 2
+4 2
+1 1 2 1
+4 2
+1 1 2 2
+6 2
+1 1 2 2 1 1
+10 2
+1 1 1 2 2 1 1 1 2 2
+8 3
+3 3 1 2 2 1 2 2
+9 3
+1 1 2 2 2 3 3 3 3
+16 3
+2 2 3 2 2 3 1 1 2 2 3 2 2 3 1 1
+24 3
+1 1 2 2 3 3 3 2 2 3 3 3 1 1 2 2 3 3 3 2 2 3 3 3
+9 3
+1 2 2 1 3 3 1 2 2
+6 3
+1 2 1 2 2 3SAMPLE OUTPUT:YES
+NO
+YES
+NO
+YES
+YES
+YES
+YES
+YES
+NO
+NOFor the first test case, the following code outputs the sequence $[1,2,2,2]$
+with $2$ "PRINT" statements.PRINT 1
+REP 3
+    PRINT 2
+ENDFor the second test case, the answer is "NO" because it is impossible to output
+the sequence $[1,1,2,1]$ using at most $2$ "PRINT" statements.For the sixth test case, the following code outputs the sequence
+$[3,3,1,2,2,1,2,2]$ with $3$ "PRINT" statements.REP 2
+    PRINT 3
+END
+REP 2
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+ENDSCORING:Input 3: $K=1$Inputs 4-7: $K \le 2$Inputs 8-13: No
+additional constraints.Problem credits: Alex Liang
+
+REP 4
+    PRINT 1
+END
+
+SAMPLE INPUT:11
+4 2
+1 2 2 2
+4 2
+1 1 2 1
+4 2
+1 1 2 2
+6 2
+1 1 2 2 1 1
+10 2
+1 1 1 2 2 1 1 1 2 2
+8 3
+3 3 1 2 2 1 2 2
+9 3
+1 1 2 2 2 3 3 3 3
+16 3
+2 2 3 2 2 3 1 1 2 2 3 2 2 3 1 1
+24 3
+1 1 2 2 3 3 3 2 2 3 3 3 1 1 2 2 3 3 3 2 2 3 3 3
+9 3
+1 2 2 1 3 3 1 2 2
+6 3
+1 2 1 2 2 3SAMPLE OUTPUT:YES
+NO
+YES
+NO
+YES
+YES
+YES
+YES
+YES
+NO
+NOFor the first test case, the following code outputs the sequence $[1,2,2,2]$
+with $2$ "PRINT" statements.PRINT 1
+REP 3
+    PRINT 2
+ENDFor the second test case, the answer is "NO" because it is impossible to output
+the sequence $[1,1,2,1]$ using at most $2$ "PRINT" statements.For the sixth test case, the following code outputs the sequence
+$[3,3,1,2,2,1,2,2]$ with $3$ "PRINT" statements.REP 2
+    PRINT 3
+END
+REP 2
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+ENDSCORING:Input 3: $K=1$Inputs 4-7: $K \le 2$Inputs 8-13: No
+additional constraints.Problem credits: Alex Liang
+
+YES
+NO
+YES
+NO
+YES
+YES
+YES
+YES
+YES
+NO
+NO
+
+PRINT 1
+REP 3
+    PRINT 2
+ENDFor the second test case, the answer is "NO" because it is impossible to output
+the sequence $[1,1,2,1]$ using at most $2$ "PRINT" statements.For the sixth test case, the following code outputs the sequence
+$[3,3,1,2,2,1,2,2]$ with $3$ "PRINT" statements.REP 2
+    PRINT 3
+END
+REP 2
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+ENDSCORING:Input 3: $K=1$Inputs 4-7: $K \le 2$Inputs 8-13: No
+additional constraints.Problem credits: Alex Liang
+
+PRINT 1
+REP 3
+    PRINT 2
+END
+
+For the second test case, the answer is "NO" because it is impossible to output
+the sequence $[1,1,2,1]$ using at most $2$ "PRINT" statements.For the sixth test case, the following code outputs the sequence
+$[3,3,1,2,2,1,2,2]$ with $3$ "PRINT" statements.REP 2
+    PRINT 3
+END
+REP 2
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+ENDSCORING:Input 3: $K=1$Inputs 4-7: $K \le 2$Inputs 8-13: No
+additional constraints.Problem credits: Alex Liang
+
+For the sixth test case, the following code outputs the sequence
+$[3,3,1,2,2,1,2,2]$ with $3$ "PRINT" statements.REP 2
+    PRINT 3
+END
+REP 2
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+ENDSCORING:Input 3: $K=1$Inputs 4-7: $K \le 2$Inputs 8-13: No
+additional constraints.Problem credits: Alex Liang
+
+REP 2
+    PRINT 3
+END
+REP 2
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+ENDSCORING:Input 3: $K=1$Inputs 4-7: $K \le 2$Inputs 8-13: No
+additional constraints.Problem credits: Alex Liang
+
+REP 2
+    PRINT 3
+END
+REP 2
+    PRINT 1
+    REP 2
+        PRINT 2
+    END
+END
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1493
+
+\section*{Source}
+USACO FEB25 Contest, Bronze Division, Problem ID: 1493
+
+\end{document}

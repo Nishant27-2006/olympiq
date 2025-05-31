@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Let <span class='math'>$time_t[x]$</span> denote the reading on the clock at room <span class='math'>$x$</span> after Bessie
+traverses <span class='math'>$t$</span> corridors. 
+<p>First consider the sample case. The quantity
+<div class='math'>$$q_t\equiv time_t[2]-time_t[1]-time_t[3]-time_t[4]\pmod{12}$$</div>  only takes on the
+values zero or one, regardless of what moves Bessie makes.
+<p>Step 0:
+<p><pre>
+    11
+     |
+     |
+11--10--11
+</pre>
+<p><span class='math'>$q_0\equiv 10-11-11-11\equiv 1\pmod{12}$</span>
+<p>Step 1:
+<p><pre>
+    12
+     |
+     |
+11--10--11
+</pre>
+<p><span class='math'>$q_1\equiv 10-12-11-11\equiv 0\pmod{12}$</span>
+<p>Step 2:
+<p><pre>
+    12
+     |
+     |
+11--11--11
+</pre>
+<p><span class='math'>$q_2\equiv 11-12-11-11\equiv 1\pmod{12}$</span>
+<p>Step 3:
+<p><pre>
+    12
+     |
+     | 
+12--11--11
+</pre>
+<p><span class='math'>$q_3\equiv 11-12-12-11\equiv 0\pmod{12}$</span>
+<p>Step 4:
+<p><pre>
+    12
+     |
+     | 
+12--12--11
+</pre>
+<p><span class='math'>$q_4\equiv 12-12-12-11\equiv 1\pmod{12}$</span>
+<p>Step 5:
+<p><pre>
+    12
+     |
+     |
+12--12--12
+</pre>
+<p><span class='math'>$q_5\equiv 12-12-12-12\equiv 0\pmod{12}$</span>.
+<p>This can be generalized to trees of any form. Let <span class='math'>$dist[x]$</span> denote the number of
+edges on the path from <span class='math'>$x$</span> to the start vertex. So for the sample case,
+<span class='math'>$dist[2]=0$</span> and <span class='math'>$dist[1]=dist[3]=dist[4]=1$</span>. Define
+<div class='math'>$$q_t=\sum_{x=1}^N(-1)^{dist[x]}\cdot time_t[x] \pmod{12}.$$</div>
+Then
+<div class='math'>$$q_0=q_1+1=q_2=q_3+1=q_4=\cdots .$$</div>
+If all clocks point to twelve after traversing <span class='math'>$t$</span> corridors, <span class='math'>$q_t$</span> must equal
+zero. This implies that <span class='math'>$q_0$</span> must equal either zero or one. 
+<p>Conversely, when <span class='math'>$q_0$</span> is equal to zero or one a solution can always be
+constructed. This can be  proven with induction. 
+<ul><li>The conclusion is true when <span class='math'>$N=2$</span>.</li><li>Otherwise, let <span class='math'>$r$</span> be a room other than <span class='math'>$1$</span> that is adjacent to only one
+other. Repeatedly traverse the cycle <span class='math'>$1\to r\to 1$</span> until the clock at <span class='math'>$r$</span> points
+to <span class='math'>$12$</span>. Then never visit <span class='math'>$r$</span> again, effectively removing it from the tree and
+decreasing <span class='math'>$N$</span> by one.</li></ul>
+<p>This solution runs in <span class='math'>$O(N)$</span> time because if starting from room <span class='math'>$1$</span> is okay,
+then starting from any room that is an even distance from room <span class='math'>$1$</span> is also okay.
+Of course, the bounds were low enough that <span class='math'>$O(N^2)$</span> solutions received full
+credit as well.
+<p>Dhruv Rohatgi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+using namespace std;
+ 
+int N;
+vector&lt;int&gt; edges[100000];
+int d[100000];
+int A[100000];
+int s0,s1,n0,n1;
+ 
+void dfs(int i,int depth,int par)
+{
+	d[i] = depth;
+	for(int j=0;j&lt;edges[i].size();j++)
+		if(edges[i][j]!=par)
+			dfs(edges[i][j],depth+1,i);
+}
+ 
+int main()
+{
+	freopen(&quot;clocktree.in&quot;,&quot;r&quot;,stdin);
+	freopen(&quot;clocktree.out&quot;,&quot;w&quot;,stdout);
+	int a,b;
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;N;i++)
+		cin &gt;&gt; A[i];
+	for(int i=1;i&lt;N;i++)
+	{
+		cin &gt;&gt; a &gt;&gt; b;
+		a--,b--;
+		edges[a].push_back(b);
+		edges[b].push_back(a);
+	}
+	dfs(0,0,-1);
+	for(int i=0;i&lt;N;i++)
+	{
+		if(d[i]%2) s1 += A[i], n1++;
+		else s0 += A[i], n0++;
+	}
+	if((s0%12) == (s1%12))
+		cout &lt;&lt; N &lt;&lt; &apos;\n&apos;;
+	else if((s0+1)%12 == (s1%12))
+		cout &lt;&lt; n1 &lt;&lt; &apos;\n&apos;;
+	else if((s0%12) == ((s1+1)%12))
+		cout &lt;&lt; n0 &lt;&lt; &apos;\n&apos;;
+	else
+		cout &lt;&lt; 0 &lt;&lt; &apos;\n&apos;;
+	return 0;
+}
+</pre>
+<p></body></html>

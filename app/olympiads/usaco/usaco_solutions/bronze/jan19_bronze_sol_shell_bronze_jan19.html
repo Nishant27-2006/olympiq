@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>Solving this problem entails simulating the movement of the pebble based
+on each of its three possible starting points, taking whichever yields
+the most right answers.  My code for doing this in C++ is below; it is
+hopefully straightforward enough that those of you who write in other 
+languages can follow.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+ 
+int N, A[100], B[100], G[100];
+ 
+int num_correct(int starting_shell)
+{
+  int current_shell = starting_shell, correct = 0;
+  for (int i=0; i&lt;N; i++) {
+    if (A[i] == current_shell) current_shell = B[i];
+    else if (B[i] == current_shell) current_shell = A[i];
+    if (current_shell == G[i]) correct++;
+  }
+  return correct;
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;shell.in&quot;);
+  fin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++)
+    fin &gt;&gt; A[i] &gt;&gt; B[i] &gt;&gt; G[i];
+ 
+  int best = 0;
+  for (int i=1; i&lt;=3; i++) 
+    best = max(best, num_correct(i));
+ 
+  ofstream fout (&quot;shell.out&quot;);
+  fout &lt;&lt; best &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre></body></html>

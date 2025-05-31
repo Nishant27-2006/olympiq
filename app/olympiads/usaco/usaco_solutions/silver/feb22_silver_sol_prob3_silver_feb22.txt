@@ -1,0 +1,230 @@
+Solution ID: sol_prob3_silver_feb22
+Contest: FEB22
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_feb22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Because we cannot scroll up on the folders, we have some constraints on how far
+down we must scroll in the emails before we can scroll down on the list of
+folders. Specifically, we must always scroll down to at least email
+
+$E$
+
+if the
+topmost folder currently being looked at will need to have email
+
+$E$
+
+filed to
+it.
+
+Therefore, as long as we do some bookkeeping, we can simulate this process
+carefully. We'll maintain a collection of emails that have not yet been filed
+and are currently being scrolled through, as well as the collection of emails
+that have been skipped so far. We'll also keep track of the earliest point of
+time when an email can be filed.
+
+We'll loop through the folders in order, keeping track of the topmost folder.
+We'll also loop through the emails in order until we get to the last email that
+needs to be filed for the given topmost folder. If having that email on screen
+would cause the window to overflow, we have to mark the topmost email as
+skipped. Afterwards, if we can file the email, we should do so immediately.
+Otherwise, it sits in the window.
+
+In the event we have looped through all the emails, we also have to simulate the
+behavior of scrolling up through the emails that we previously skipped.
+
+My C++ code:
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+void rsolve() {
+  int nfolder, nemail, windowsz;
+  cin >> nfolder >> nemail >> windowsz;
+  vector<int> emailtofolder(nemail);
+  vector<vector<int>> foldertoemail(nfolder);
+  vector<vector<int>> filetiming(nfolder);
+  vector<bool> filed(nemail);
+  vector<bool> skipped(nemail);
+  vector<bool> inwindow(nemail);
+  for(int i = 0; i < nemail; i++) {
+    cin >> emailtofolder[i];
+    filetiming[max(0, --emailtofolder[i] - windowsz + 1)].push_back(i);
+    foldertoemail[emailtofolder[i]].push_back(i);
+  }
+  int currentemail = 0;
+  int lhsemail = 0;
+  int numinwindow = 0;
+  int rhsemail = nemail-1;
+  auto fileemail = [&](int id) -> void {
+    if(inwindow[id]) {
+      inwindow[id] = false;
+      numinwindow--;
+    }
+    assert(!filed[id]);
+    filed[id] = true;
+  };
+  int bottom = 0;
+  for(int i = 0; i < nfolder; i++) {
+    // file anything that can be newly filed
+    if(i > bottom && i + windowsz <= nfolder) bottom++;
+    for(int out: filetiming[i]) if(inwindow[out]) fileemail(out);
+    while(foldertoemail[i].size() && currentemail <= foldertoemail[i].back()) {
+      // the window is full so in order to consider this email, we must scroll past the current one
+      if(numinwindow == windowsz) {
+        while(!inwindow[lhsemail]) lhsemail++;
+        skipped[lhsemail] = true;
+        inwindow[lhsemail] = false;
+        numinwindow--;
+      }
+      if(emailtofolder[currentemail] >= i && emailtofolder[currentemail] <= i + windowsz - 1) {
+        // can file
+        filed[currentemail++] = true;
+        continue;
+      }
+      inwindow[currentemail++] = true; numinwindow++;
+    }
+    // scroll through emails that would be implicitly loaded
+    while(currentemail < nemail && numinwindow < windowsz) {
+      if(emailtofolder[currentemail] >= i && emailtofolder[currentemail] <= i + windowsz - 1) {
+        // can file
+        filed[currentemail++] = true;
+        continue;
+      }
+      inwindow[currentemail++] = true; numinwindow++;
+    }
+    // scroll up emails since we've hit the end
+    if(currentemail == nemail) {
+      while(numinwindow < windowsz) {
+        if(rhsemail < 0) break;
+        if(!skipped[rhsemail]) {
+          rhsemail--;
+          continue;
+        }
+        if(emailtofolder[rhsemail] < bottom) {
+          cout << "NO\n";
+          return;
+        }
+        if(emailtofolder[rhsemail] <= bottom + windowsz - 1) {
+          filed[rhsemail--] = true;
+          continue;
+        }
+        inwindow[rhsemail--] = true; numinwindow++;
+      }
+    }
+  }
+  for(auto out: filed) {
+    if(!out) {
+      cout << "NO\n";
+      return;
+    }
+  }
+  cout << "YES\n";
+}
+ 
+void solve() {
+  int t;
+  cin >> t;
+  while(t--) rsolve();
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(NULL);
+  solve();
+}
+
+Danny Mittal's Java code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.PriorityQueue;
+import java.util.StringTokenizer;
+ 
+public class EmailFiling {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int t = Integer.parseInt(in.readLine()); t > 0; t--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int m = Integer.parseInt(tokenizer.nextToken());
+            int n = Integer.parseInt(tokenizer.nextToken());
+            int k = Integer.parseInt(tokenizer.nextToken());
+            tokenizer = new StringTokenizer(in.readLine());
+            int[] folder = new int[n];
+            int[] rem = new int[m];
+            for (int j = 0; j < n; j++) {
+                folder[j] = Integer.parseInt(tokenizer.nextToken()) - 1;
+                rem[folder[j]]++;
+            }
+            int firstFolder = 0;
+            int firstEmail = 0;
+            int lastEmail = k - 1;
+            boolean[] filed = new boolean[n];
+            PriorityQueue<Integer> pq = new PriorityQueue<>(Comparator.comparingInt(j -> folder[j]));
+            for (int j = 0; j < k; j++) {
+                pq.add(j);
+            }
+            while (lastEmail < n - 1 && firstFolder < m) {
+                if (rem[firstFolder] == 0) {
+                    firstFolder++;
+                } else if (!pq.isEmpty() && folder[pq.peek()] < firstFolder + k) {
+                    int j = pq.remove();
+                    if (j >= firstEmail) {
+                        filed[j] = true;
+                        rem[folder[j]]--;
+                        lastEmail++;
+                        pq.add(lastEmail);
+                    }
+                } else {
+                    while (firstEmail < n && filed[firstEmail]) {
+                        firstEmail++;
+                    }
+                    firstEmail++;
+                    lastEmail++;
+                    pq.add(lastEmail);
+                }
+            }
+            String answer = "YES";
+            while (firstFolder < m) {
+                if (rem[firstFolder] == 0) {
+                    firstFolder++;
+                } else {
+                    if (pq.isEmpty()) {
+                        answer = "NO";
+                        break;
+                    }
+                    int j = pq.remove();
+                    if (j >= firstEmail && !filed[j]) {
+                        if (folder[j] >= firstFolder + k) {
+                            answer = "NO";
+                            break;
+                        }
+                        filed[j] = true;
+                        rem[folder[j]]--;
+                        while (firstEmail > 0) {
+                            firstEmail--;
+                            if (!filed[firstEmail]) {
+                                pq.add(firstEmail);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            out.append(answer).append('\n');
+        }
+        System.out.print(out);
+    }
+}

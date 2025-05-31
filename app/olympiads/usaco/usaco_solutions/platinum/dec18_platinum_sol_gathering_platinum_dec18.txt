@@ -1,0 +1,306 @@
+Solution ID: sol_gathering_platinum_dec18
+Contest: DEC18
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_gathering_platinum_dec18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+The problem can be rephrased as follows: removing leaves from a tree one by one
+while respecting order constraints, determine the possible final nodes. Let's
+start with an easier variant: determine whether there exists a feasible
+ordering, and if so, find a possible final node. This can be solved by greedily
+removing "free" leaves: that is, leaves which are not constrained to be removed
+after nodes which still remain in the tree.
+
+To prove that this works, note that if there is no feasible ordering, than this
+greedy process cannot possibly succeed. Conversely, if the process does not
+succeed, then there is some contiguous subtree in which every leaf of the
+subtree is constrained to be removed after some other node in the subtree. Any
+ordering has to break at least one of these constraints, since out of all the
+nodes in the subtree, some leaf is removed first. So there is no feasible
+ordering.
+
+Now we want to find all possible final nodes. If the above greedy algorithm
+fails, then we're done: there are no possible final nodes. Otherwise, we've
+found one final node
+
+$r$
+
+and want to find all others. Intuitively, the possible
+final nodes should form a contiguous subtree. This intuition is correct.
+
+Let
+
+$s$
+
+be any neighbor of
+
+$r$
+
+. If there is some constraint that
+
+$s$
+
+must be
+removed before some other node, then
+
+$s$
+
+is clearly not a possible final node.
+It turns out this is sufficient: fix a feasible ordering in which
+
+$r$
+
+is the
+final node, and find the location where
+
+$s$
+
+is removed. Swapping
+
+$s$
+
+with the
+next node in the ordering does not break any constraints, so
+
+$s$
+
+can be
+iteratively swapped towards the end of the ordering. Hence,
+
+$s$
+
+is a possible
+final node.
+
+This means that if we consider the induced subgraph of all nodes
+
+$a$
+
+with no
+constraints of the form "remove
+
+$a$
+
+before
+
+$b$
+
+", then every node in the
+connected component of
+
+$r$
+
+is a possible final node.
+
+In fact, such nodes are the only possible final nodes. Fix some node
+
+$s$
+
+such
+that there is some node
+
+$a$
+
+along the path from
+
+$s$
+
+to
+
+$r$
+
+, and some constraint
+"remove
+
+$a$
+
+before
+
+$b$
+
+". Root the tree at
+
+$a$
+
+. Then
+
+$r$
+
+and
+
+$s$
+
+are in different
+subtrees. If
+
+$b$
+
+is not in the subtree of
+
+$r$
+
+, then
+
+$a$
+
+is on the path from
+
+$r$
+
+to
+
+$b$
+
+, so
+
+$r$
+
+must be removed before
+
+$a$
+
+, so
+
+$r$
+
+is not a possible final node.
+Contradiction, so
+
+$b$
+
+is in the subtree of
+
+$r$
+
+. But then it's not in the subtree
+of
+
+$s$
+
+, so by the same reasoning,
+
+$s$
+
+is not a possible final node.
+
+This yields our final algorithm: run the greedy process to find
+
+$r$
+
+, and run DFS
+from
+
+$r$
+
+, avoiding nodes
+
+$a$
+
+which have constraints "remove
+
+$a$
+
+before
+
+$b$
+
+". The
+set of visited nodes is the set of possible final nodes.
+
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define MAXN 100000
+ 
+int N,M;
+vector<int> edges[MAXN];
+vector<int> inConstraints[MAXN];	//i: must remove j before i
+vector<int> outConstraints[MAXN];	//i: must remove i before j
+int numInConstraints[MAXN];
+int numEdges[MAXN];
+bool isfree[MAXN];
+bool isroot[MAXN];
+ 
+void dfs(int i,int par)
+{
+	if(outConstraints[i].size() > 0)
+		return;
+	isroot[i] = 1;
+	for(int j=0;j<edges[i].size();j++)
+		if(edges[i][j] != par)
+			dfs(edges[i][j], i);
+}
+ 
+ 
+int main()
+{
+	cin >> N >> M;
+	int a,b;
+	for(int i=1;i<N;i++)
+	{
+		cin >> a >> b;
+		a--,b--;
+		edges[a].push_back(b);
+		edges[b].push_back(a);
+		numEdges[a]++, numEdges[b]++;
+	}
+	for(int i=0;i<M;i++)
+	{
+		cin >> a >> b;
+		a--,b--;
+		inConstraints[b].push_back(a);
+		outConstraints[a].push_back(b);
+		numInConstraints[b]++;
+	}
+	vector<int> freeNodes;
+	for(int i=0;i<N;i++)
+		if(numEdges[i]<=1 && numInConstraints[i]==0)
+		{
+			freeNodes.push_back(i);
+			isfree[i] = 1;
+		}
+	for(int i=0;i<N-1;i++)
+	{
+		if(i == freeNodes.size())
+		{
+			for(int j=0;j<N;j++)
+				cout << 0 << '\n';
+			return 0;
+		}
+		int cur = freeNodes[i];
+		for(int j=0;j<edges[cur].size();j++)
+		{
+			int e = edges[cur][j];
+			numEdges[e]--;
+			if(numEdges[e]<=1 && numInConstraints[e]==0 && !isfree[e])
+			{
+				freeNodes.push_back(e);
+				isfree[e] = 1;
+			}
+		}
+		for(int j=0;j<outConstraints[cur].size();j++)
+		{
+			int e = outConstraints[cur][j];
+			numInConstraints[e]--;
+			if(numEdges[e]<=1 && numInConstraints[e]==0 && !isfree[e])
+			{
+				freeNodes.push_back(e);
+				isfree[e] = 1;
+			}
+		}
+	}
+	int root = freeNodes[N-1];
+	dfs(root, -1);
+	int num = 0;
+	for(int i=0;i<N;i++)
+		num += isroot[i];
+	for(int i=0;i<N;i++)
+		cout << isroot[i] << '\n';
+}

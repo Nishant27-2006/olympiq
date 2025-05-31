@@ -1,0 +1,361 @@
+Solution ID: sol_prob3_platinum_open21
+Contest: OPEN21
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_open21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Spencer Compton)
+
+A key aspect in approaching this problem is more humanly characterizing what
+makes a 4-connected subset valid. For each row with at least one cell in the
+subset, the subset's cells in this row must make up a contiguous range. This is
+necessary and sufficient to satisfy the third constraint in the problem
+statement.
+
+However, we must characterize when the fourth constraint is also satisfied.
+First, the rows which have any subset cells must be a contiguous range of rows
+(otherwise it would not be 4-connected). Thus, let us characterize these rows.
+We can denote the column of the leftmost cell in the
+
+$i$
+
+-th row (among those
+with  cells in the subset) as
+
+$L_i$
+
+and the column of the rightmost cell in the
+
+$i$
+
+-th row as
+
+$R_i$
+
+. To maintain 4-connectedness, each pair of consecutive rows
+must have some overlap (a  necessary and sufficient requirement for this is that
+
+$L_{i+1} \le R_{i}$
+
+and
+
+$R_{i+1} \ge L_{i}$
+
+). Finally,
+
+$L$
+
+must be
+non-increasing for some prefix and then non-decreasing for the remaining 
+(likewise
+
+$R$
+
+must be non-decreasing and then non-increasing). If this condition
+is not met, then there will be a violation of the fourth condition. If this
+condition is met, there will be no such violation. Thus, we finalize our
+characterization by saying this property must hold for
+
+$L$
+
+and
+
+$R$
+
+.
+
+Now, we must calculate the number of subsets that satisfy this characterization
+and contain only grass. Our main intuition is that we would like to use dynamic
+programming, where our state is the current row we are looking at, the starting
+and ending column of a contiguous range within this row, and flags that indicate
+whether our
+
+$L$
+
+should be non-increasing or non-decreasing (and likewise for
+
+$R$
+
+). There would be
+
+$O(N^3)$
+
+such states, and we could use this to ask how many
+valid subsets there are such that the bottom row of the subset is exactly this
+contiguous range of the row with these flags.
+
+To be more concrete, one such method is supposing
+
+$dp(a,b,h,L,R)$
+
+corresponds to
+the number of valid subsets with bottom row
+
+$h$
+
+, cells from column
+
+$L$
+
+to
+
+$R$
+
+within
+
+$h$
+
+, and flags
+
+$a$
+
+and
+
+$b$
+
+at the end of this process. The flag in
+
+$a$
+
+corresponds to
+
+$0$
+
+if
+
+$L$
+
+is in  the non-increasing stage and
+
+$1$
+
+if it is in
+the non-decreasing stage. Likewise with the
+
+$b$
+
+flag for
+
+$R$
+
+, it is
+
+$0$
+
+for
+non-decreasing and
+
+$1$
+
+for non-increasing.
+
+If we have computed the DP values for row
+
+$h-1$
+
+, we can compute the values for
+row
+
+$h$
+
+.
+
+For example,
+
+$dp(0,0,h,L,R)$
+
+(denoting row
+
+$h$
+
+, leftmost column
+
+$L$
+
+, rightmost
+column
+
+$R$
+
+,
+
+$L$
+
+is in the non-increasing prefix, and
+
+$R$
+
+is in the
+non-decreasing prefix) is equal to
+
+$0$
+
+if there is a non-grass cell between
+columns
+
+$L$
+
+and
+
+$R$
+
+at row
+
+$h$
+
+, and otherwise equal to:
+
+$1 + \sum_{l=L}^{R} \sum_{r=l}^{R} dp(0,0,h-1,l,r)$
+
+If we assume DP values are 0 when
+
+$l > r$
+
+, then we can also use the following
+sum such that the sum is over a rectangle:
+
+$1 + \sum_{l=L}^{R} \sum_{r=L}^{R} dp(0,0,h-1,l,r)$
+
+Note that there are more summands with different cases of flags. A naive
+transition given
+
+$L_i$
+
+and
+
+$R_i$
+
+is to loop over
+
+$O(N^2)$
+
+possible
+
+$L_{i-1}$
+
+and
+
+$R_{i-1}$
+
+,  which would result in an
+
+$O(N^5)$
+
+running time solution which
+is sufficient for the first two subtasks.
+
+To speed up this solution, we can observe that the logic of this
+
+$O(N^2)$
+
+transition can instead be replaced with operations using prefix sums with DP
+values.
+
+We maintain the required values in
+
+$O(N^2)$
+
+time for each row, enabling a
+solution with
+
+$O(N^3)$
+
+runtime.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+ 
+public class BeautifulSubsets {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        boolean[][] grid = new boolean[n][n];
+        for (int y = 0; y < n; y++) {
+            String line = in.readLine();
+            for (int x = 0; x < n; x++) {
+                grid[y][x] = line.charAt(x) == 'G';
+            }
+        }
+        long answer = 0;
+        long[][][][] dpPrev = new long[2][2][n][n];
+        for (int y = 0; y < n; y++) {
+            long[][][][] sums1 = new long[2][2][n][n];
+            for (int x2 = 0; x2 < n; x2++) {
+                for (int x1 = x2; x1 >= 0; x1--) {
+                    for (int b = 0; b < 2; b++) {
+                        sums1[0][b][x1][x2] = dpPrev[0][b][x1][x2];
+                        if (x1 < x2) {
+                            sums1[0][b][x1][x2] += sums1[0][b][x1 + 1][x2];
+                            sums1[0][b][x1][x2] %= MOD;
+                        }
+                    }
+                }
+                for (int x1 = 0; x1 <= x2; x1++) {
+                    for (int b = 0; b < 2; b++) {
+                        sums1[1][b][x1][x2] = dpPrev[1][b][x1][x2];
+                        if (x1 > 0) {
+                            sums1[1][b][x1][x2] += sums1[1][b][x1 - 1][x2] + dpPrev[0][b][x1 - 1][x2];
+                            sums1[1][b][x1][x2] %= MOD;
+                        }
+                    }
+                }
+            }
+            long[][][][] sums2 = new long[2][2][n][n];
+            for (int x1 = 0; x1 < n; x1++) {
+                for (int x2 = x1; x2 < n; x2++) {
+                    for (int a = 0; a < 2; a++) {
+                        sums2[a][0][x1][x2] = sums1[a][0][x1][x2];
+                        if (x2 > x1) {
+                            sums2[a][0][x1][x2] += sums2[a][0][x1][x2 - 1];
+                            sums2[a][0][x1][x2] %= MOD;
+                        }
+                    }
+                }
+                for (int x2 = n - 1; x2 >= x1; x2--) {
+                    for (int a = 0; a < 2; a++) {
+                        sums2[a][1][x1][x2] = sums1[a][1][x1][x2];
+                        if (x2 < n - 1) {
+                            sums2[a][1][x1][x2] += sums2[a][1][x1][x2 + 1] + sums1[a][0][x1][x2 + 1];
+                            sums2[a][1][x1][x2] %= MOD;
+                        }
+                    }
+                }
+            }
+            long[][][][] dpNext = new long[2][2][n][n];
+            for (int x1 = 0; x1 < n; x1++) {
+                boolean valid = true;
+                for (int x2 = x1; x2 < n; x2++) {
+                    valid = valid && grid[y][x2];
+                    if (valid) {
+                        dpNext[0][0][x1][x2] = (sums2[0][0][x1][x2] + 1L) % MOD;
+                        dpNext[0][1][x1][x2] = (sums2[0][1][x1][x2] - (x2 == n - 1 ? 0L : (sums2[0][1][x2 + 1][x2 + 1] + dpPrev[0][0][x2 + 1][x2 + 1])) + (2L * MOD)) % MOD;
+                        dpNext[1][0][x1][x2] = sums2[1][0][x1][x2];
+                        dpNext[1][1][x1][x2] = sums2[1][1][x1][x2];
+                    } else {
+                        for (int a = 0; a < 2; a++) {
+                            for (int b = 0; b < 2; b++) {
+                                dpNext[a][b][x1][x2] = 0;
+                            }
+                        }
+                    }
+                    for (int a = 0; a < 2; a++) {
+                        for (int b = 0; b < 2; b++) {
+                            answer += dpNext[a][b][x1][x2];
+                            answer %= MOD;
+                        }
+                    }
+                }
+            }
+            dpPrev = dpNext;
+        }
+        System.out.println(answer);
+    }
+}

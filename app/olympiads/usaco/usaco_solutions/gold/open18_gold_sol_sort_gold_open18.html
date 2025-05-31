@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>Look at the input array lined up against itself sorted, and imagine that we draw
+a line between position i and i+1:
+<p><pre>
+Input array A:  1   8   5  |  3   2
+Sorted version: 1   2   3  |  5   8
+                        i    i+1
+</pre>
+<p>Let <span class='math'>$M_i$</span> be the number of elements that appear left of this line in <span class='math'>$A$</span> but
+right of the line in sort(<span class='math'>$A$</span>); equivalently, this is the same as the number of
+elements right of the line in <span class='math'>$A$</span> but left of the line in sort(<span class='math'>$A$</span>).  In some
+sense, <span class='math'>$M_i$</span> tells the amount of &quot;flow&quot; that needs to cross the line in either
+direction in order to sort <span class='math'>$A$</span>.  
+<p>We claim that each <span class='math'>$M_i$</span> is a lower bound on the answer, and that moreover the
+the maximum of the <span class='math'>$M_i$</span>&apos;s is the answer (or 1 pass, as a special case, if all 
+<span class='math'>$M_i$</span>&apos;s are zero due to the array already being sorted). In short, this is
+because each iteration  of the bi-directed bubble sort &quot;corrects&quot; one of the <span class='math'>$M_i$</span>
+units of imbalance for the line between positions <span class='math'>$i$</span> and <span class='math'>$i+1$</span> by dragging one element that needs to go from left
+to right and then dragging one element that needs to go from right to left. 
+After <span class='math'>$M_i$</span> iterations, the elements up to position <span class='math'>$i$</span> will therefore all be no
+more than the elements in positions <span class='math'>$i+1$</span> onward.  If we run a number of
+iterations equal to the maximum of the <span class='math'>$M_i$</span>&apos;s, the array will be correctly
+&quot;partitioned&quot; this way at every single possible location, which implies it must
+be sorted (if it weren&apos;t sorted, there would be some location <span class='math'>$i$</span> where
+<span class='math'>$A[i] &gt; A[i+1]$</span>, contradicting the fact that the array is correctly partitioned
+between positions <span class='math'>$i$</span> and <span class='math'>$i+1$</span>).
+<p>We can compute all the <span class='math'>$M_i$</span>&apos;s using a binary indexed tree.  In my code below,
+we scan through sort(<span class='math'>$A$</span>) and at each position <span class='math'>$i$</span> we count the number of
+elements up to position <span class='math'>$i$</span> in the original array that have not yet been seen --
+this gives the value of <span class='math'>$M_i$</span>.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+int N, B[100001];
+pair&lt;int,int&gt; A[100001];
+
+// Concise implementation of a binary indexed tree
+void modify(int j) { for (; j&lt;=N; j+=(j&amp;-j)) B[j]++; }
+int prefix_sum(int j) { int sum = 0; for (; j&gt;0; j-=(j&amp;-j)) sum += B[j]; return sum; }
+
+int main(void)
+{
+  int answer = 1;
+  cin &gt;&gt; N;
+  for (int i=1; i&lt;=N; i++) {
+    int x; 
+    cin &gt;&gt; x;
+    A[i] = make_pair(x, i);
+  }
+  sort (A+1, A+N+1);
+  for (int i=1; i&lt;=N-1; i++) {
+    modify(A[i].second);
+    answer = max(answer, i - prefix_sum(i));
+  }
+  cout &lt;&lt; answer &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+<p></body></html>

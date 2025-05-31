@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+
+</head>
+<p>(Analysis by Allen Chen)</p><p>
+
+Seeing that we have to update point coordinates and query the minimum
+travel time for a sub-route, we immediately see that this problem
+involves range queries and updates. A well known data structure that
+can be used to solve this problem is the segment tree, which allows us
+to handle such operations in logarithmic time.</p><p>
+
+First, let us take care of querying the minimum travel time, ignoring
+the fact that the cows can skip a checkpoint along the way. To do
+this, we treat each 2 consecutive checkpoints as one single node in a
+segment tree (let&apos;s call this tree &quot;dist&quot;). Then we
+just simply store the distance between each 2 consecutive points in
+each node.</p><p>
+
+Next, we need to handle the fact that cows can skip exactly one
+checkpoint along the way. Let&apos;s say we need to find the minimum
+travel time between checkpoints $C_i$ and $C_j$ and let&apos;s also
+say we skip a checkpoint $C_k$, where $i < k < j$. Let&apos;s also
+define $G(a, b)$, as the distance between checkpoint $a$ and
+$b$. Therefore, the time taken without skipping a checkpoint is equal
+to:</p><p>
+
+$$
+D_1 = G(C_i, C_{i+1}) + G(C_{i+1}, C_{i+2}) + \ldots + G(C_{j-1}, C_j).
+$$
+
+while the time taken by skipping a checkpoint is equal to:</p><p>
+
+$$
+D_2 = G(C_i, C_{i+1}) + G(C_{i+1}, C_{i+2}) + \ldots + G(C_{k-2}, C_{k-1}) + G(C_{k-1}, C_{k+1}) + \ldots + G(C_{j-1}, C_j).
+$$
+
+If we take the difference:</p><p>
+
+$$
+D_1 - D_2 = G(C_{k-1}, C_k) + G(C_k, C_{k+1}) - G(C_{k-1}, C_{k+1})
+$$
+
+Notice that if we maximize the value $D_1 - D_2$, then we will obtain
+a minimum $D_2$, since $D_1$ is a fixed value regardless of any
+checkpoint we skip. Thus we can use a second segment tree (call it
+$\Delta$) and treat each 3 consecutive checkpoints as one node.  In
+each node of $\Delta$, we only need to store $D_1 - D_2$, because we
+can obtain $D_2$ by taking: $D_1$ minus the best $\Delta$ value.</p><p>
+
+Thus, we can perform range maximum query on delta and a range sum
+query on dist to obtain our final answer while performing updates as
+necessary.</p><p>
+
+</p><pre class='prettyprint'>
+#include&lt;iostream&gt;
+#include&lt;cstdio&gt;
+#include&lt;algorithm&gt;
+#include&lt;utility&gt;
+
+using namespace std;
+
+typedef pair&lt;int, int&gt; pii;
+
+const int maxn = 1 &lt;&lt; 17;
+int n, q;
+pii mat[maxn];
+int delta[2 * maxn];
+int dist[2 * maxn];
+
+int qa, qb;
+int getd(int a, int b) {
+	return abs(mat[a].first - mat[b].first) + abs(mat[a].second - mat[b].second);
+}
+
+void build(int rt, int a, int b) {
+	if (a &gt; b) return;
+	if (a == b) {
+		if (a &lt; n - 1) delta[rt] = getd(a, a + 1) + getd(a + 1, a + 2) - getd(a, a + 2);
+		else delta[rt] = 0;
+		if (a &lt; n) dist[rt] = getd(a, a + 1);
+		else dist[rt] = 0;
+		return;
+	}
+	int mid = (a + b) / 2;
+	build(rt * 2, a, mid);
+	build(rt * 2 + 1, mid + 1, b);
+	delta[rt] = max(delta[rt * 2], delta[rt * 2 + 1]);
+	dist[rt] = dist[rt * 2] + dist[rt * 2 + 1];
+}
+
+int query_dist(int rt, int a, int b) {
+	if (a &gt; qb || b &lt; qa) return 0;
+	if (qa &lt;= a &amp;&amp; b &lt;= qb) return dist[rt];
+	int mid = (a + b) / 2;
+	return query_dist(rt * 2, a, mid) + query_dist(rt * 2 + 1, mid + 1, b);
+}
+
+int query_delta(int rt, int a, int b) {
+	if (a &gt; qb || b &lt; qa) return 0;
+	if (qa &lt;= a &amp;&amp; b &lt;= qb) return delta[rt];
+	int mid = (a + b) / 2;
+	return max(query_delta(rt * 2, a, mid), query_delta(rt * 2 + 1, mid + 1, b));
+}
+
+void update_dist(int rt, int a, int b) {
+	if (a &gt; qb || b &lt; qa) return;
+	if (qa &lt;= a &amp;&amp; b &lt;= qb) {
+		if (a &gt;= 1 &amp;&amp; a &lt; n) dist[rt] = getd(a, a + 1);
+		else dist[rt] = 0;
+		return;
+	}
+	int mid = (a + b) / 2;
+	update_dist(rt * 2, a, mid);
+	update_dist(rt * 2 + 1, mid + 1, b);
+	dist[rt] = dist[rt * 2] + dist[rt * 2 + 1];
+}
+
+void update_delta(int rt, int a, int b) {
+	if (a &gt; qb || b &lt; qa) return;
+	if (qa &lt;= a &amp;&amp; b &lt;= qb) {
+		if (a &gt;= 1 &amp;&amp; a &lt; n - 1) delta[rt] = getd(a, a + 1) + getd(a + 1, a + 2) - getd(a, a + 2);
+		else delta[rt] = 0;
+		return;
+	}
+	int mid = (a + b) / 2;
+	update_delta(rt * 2, a, mid);
+	update_delta(rt * 2 + 1, mid + 1, b);
+	delta[rt] = max(delta[rt * 2], delta[rt * 2 + 1]);
+}
+
+int main() {
+	freopen(&quot;marathon.in&quot;, &quot;r&quot;, stdin);
+	freopen(&quot;marathon.out&quot;, &quot;w&quot;, stdout);
+	scanf(&quot;%d%d&quot;, &amp;n, &amp;q);
+	for (int i = 1; i &lt;= n; i++) {
+		scanf(&quot;%d%d&quot;, &amp;mat[i].first, &amp;mat[i].second);
+	}
+	build(1, 1, n);
+	for (int i = 0; i &lt; q; i++) {
+		char c[2];
+		scanf(&quot;%s&quot;, c);
+		if (c[0] == &apos;Q&apos;) {
+			scanf(&quot;%d%d&quot;, &amp;qa, &amp;qb);
+			qb--;
+			int tot = query_dist(1, 1, n);
+			qb--;
+			int del = query_delta(1, 1, n);
+			printf(&quot;%d\n&quot;, tot - del);
+		}
+		else {
+			int ix, pa, pb;
+			scanf(&quot;%d%d%d&quot;, &amp;ix, &amp;pa, &amp;pb);
+			mat[ix].first = pa;
+			mat[ix].second = pb;
+			for (int j = ix - 1; j &lt;= ix; j++) {
+				qa = j; qb = j;
+				update_dist(1, 1, n);
+			}
+			for (int j = ix - 2; j &lt;= ix; j++) {
+				qa = j; qb = j;
+				update_delta(1, 1, n);
+			}
+		}
+	}
+}
+</pre><p></p>
+</html>

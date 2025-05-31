@@ -1,0 +1,213 @@
+Solution ID: sol_cbarn_platinum_feb16
+Contest: FEB16
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_cbarn_platinum_feb16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nathan Pinsker)
+
+Although
+
+$k$
+
+is rather small, trying all possible positions for the doors is
+
+$O(\binom n k)$
+
+and is still way too slow.
+
+Sometimes it's helpful in solving a problem to think about simpler cases of the
+problem first. When you're given an optimization problem on a circular array,
+one easy simplification is to think about it in a linear setting instead. So, if
+Farmer John's barn was linear, then how could we solve it? For starters, we
+clearly need to put a barn at the left-most position. It's more apparent now
+that we can do dynamic programming, since if we iterate from left to right, the
+only state that we need to keep track of is the number of exterior doors used so
+far, and the position of the last exterior door. This algorithm would have a
+running time of
+
+$O(n^2k)$
+
+, which is somewhat fast, but we can make it faster.
+Let's say we want to find the best way to allocate
+
+$k$
+
+doors from spot
+
+$1$
+
+to
+spot
+
+$i$
+
+. If we find this number and then want to allocate the
+
+$k$
+
+doors between
+spot
+
+$1$
+
+and spot
+
+$i+1$
+
+, then it follows that the last door that we allocate
+will have an equal or higher index than the last door in the problem that we've
+just solved. In other words, the index of the last door in the first problem is
+less than or equal to the index of the last door in the second problem. This can
+be shown by assuming the opposite; if we could obtain a better solution by
+moving a door to a spot with a lower index, then we could just do that in our
+first problem as well.
+
+We can compute the best solution using
+
+$k$
+
+doors via dynamic programming,
+iterating on
+
+$k$
+
+and adding one door at a time. We can use a divide-and-conquer
+algorithm to solve the linear version of  this problem. The idea is that we can compute the middle values of
+the dynamic program first: if we compute the position to put our
+
+$k$
+
+-th door in
+
+$dp[k][n/2]$
+
+, then
+
+$dp[k][i]$
+
+for
+
+$i < n/2$
+
+must be to the left of that and
+
+$dp[k][i]$
+
+for
+
+$i > n/2$
+
+must be to the right of that.
+In this way, we can on average halve the search space at each level of the recursion, so we don't have to
+do
+
+$O(n)$
+
+work to compute each value of the dynamic program.
+At each level of the recursion, we do
+
+$O(nk)$
+
+work, meaning the
+total runtime of this algorithm ends up being
+
+$O(nk \log n)$
+
+for the linear
+version of this problem.
+
+Since we have a lot of running time to spare, we can simply iterate over all
+possible locations of the first interior door. This turns the problem into
+effectively a linear one, although a bit of care is needed when processing the
+last door. We obtain an
+
+$O(n^2k \log n)$
+
+algorithm, which is fast enough to
+receive full credit.
+
+(Note from problem author: a running time of $O(n^2k)$ is also possible by further 
+exploiting the monotonic structure of the underlying DP formulation.)
+
+Here's Mark Gordon's solution:
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+
+using namespace std;
+
+#define MAXN 1010
+#define MAXK 10
+#define INF 0x3FFFFFFFFFFFFFFFLL
+
+int rot;
+int N, K;
+long long A[MAXN];
+long long DP[MAXK][MAXN];
+long long WSUM[MAXN][MAXN];
+
+int madd(int x, int y) {
+  x += y;
+  if (x >= N) {
+    x -= N;
+  }
+  return x;
+}
+
+long long wsum(int a, int b) {
+  return WSUM[madd(a, rot)][madd(b, N - a)];
+}
+
+void solve(int k, int ia, int ib, int ja, int jb) {
+  if (ia == ib) {
+    return;
+  }
+
+  int i = (ia + ib) / 2;
+  int arg_j = -1;
+
+  DP[k][i] = INF;
+  for (int j = max(i + 1, ja); j < jb; j++) {
+    long long v = wsum(i, j) + DP[k - 1][j];
+    if (v < DP[k][i]) {
+      arg_j = j;
+      DP[k][i] = v;
+    }
+  }
+
+  solve(k, ia, i, ja, arg_j + 1);
+  solve(k, i + 1, ib, arg_j, jb);
+}
+
+int main() {
+  cin >> N >> K;
+  for (int i = 0; i < N; i++) {
+    cin >> A[i];
+  }
+  reverse(A, A + N);
+
+  for (int i = 0; i < N; i++) {
+    long long sm = 0;
+    for (int j = 1; j <= N; j++) {
+      WSUM[i][j] = WSUM[i][j - 1] + sm;
+      sm += A[madd(i, j - 1)];
+    }
+  }
+
+  long long result = INF;
+  memset(DP, 0x3F, sizeof(DP));
+  DP[0][N] = 0;
+  for (rot = 0; rot < N; rot++) {
+    for (int i = 1; i <= K; i++) {
+      solve(i, 0, N, 1, N + 1);
+    }
+    result = min(result, DP[K][0]);
+  }
+  cout << result << endl;
+}

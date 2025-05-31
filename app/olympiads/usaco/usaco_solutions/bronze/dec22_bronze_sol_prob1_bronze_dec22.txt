@@ -1,0 +1,135 @@
+Solution ID: sol_prob1_bronze_dec22
+Contest: DEC22
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_dec22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Freddie Tang and Nick Wu)
+
+It can be proven that the optimal tuition Bessie should charge will always be
+one of the
+
+$c_i$
+
+values (for if not, you could always increase tuition slightly without changing
+the set of cows who pay). So all we have to do is iterate over these values and
+see how much money each one makes. To do this, we must first sort these
+
+$c_i$
+
+values to determine how many cows will be willing to pay, and then iterate from
+the lowest to the highest, keeping a count of the number of cows willing to pay,
+(after a
+
+$c_i$
+
+value is visited, the cow with this value will no longer be able
+to pay the tuition so the count will be decremented). Remember to use
+
+$\texttt{long long}$
+
+'s because the answer could be up to
+
+$10^5\cdot 10^6=10^{11}$
+
+.
+
+Freddie Tang's C++ code:
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+int main() {
+  int n; cin >> n;
+  long long maxTuition[n];
+  for (int i = 0; i < n; i++) {
+    cin >> maxTuition[i];
+  }
+  
+  sort(maxTuition, maxTuition + n);
+  
+  long long maxMoney = 0, bestTuition = 0;
+  int numberOfCowsWillingToAttend = n;
+  for (int i = 0; i < n; i++) {
+    long long setTuitionToIthCow = maxTuition[i]*numberOfCowsWillingToAttend;
+    if (setTuitionToIthCow > maxMoney) {
+      maxMoney = setTuitionToIthCow;
+      bestTuition = maxTuition[i];
+    }
+    
+    numberOfCowsWillingToAttend--; // The ith cow isn't willing to pay any more tuition
+  }
+  
+  cout << maxMoney << " " << bestTuition << endl;
+  
+  return 0;
+}
+
+Spencer Compton's Java code:
+
+import java.util.Arrays;
+import java.util.Scanner;
+ 
+public class cowschool {
+	public static void main(String[] args) {
+		Scanner in = new Scanner(System.in);
+		int n = in.nextInt();
+		int[] a = new int[n];
+		for(int i = 0; i<n; i++) {
+			a[i] = in.nextInt();
+		}
+		long best = -1L;
+		int tuit = 0;
+		Arrays.sort(a);
+		for(int i = n-1; i>=0; i--) {
+			long cur = (long)(n-i)*(long)a[i];
+			if (cur >= best) {
+				best = cur;
+				tuit = a[i];
+			}
+		}
+		System.out.println(best+" "+tuit);
+	}
+}
+
+There is an alternate solution that does not involve sorting the cows. For each
+
+$p_i$
+
+, we can maintain the number of cows that are willing to pay up to
+
+$p_i$
+
+.
+If we loop over tuition values going from
+
+$10^6$
+
+down to
+
+$1$
+
+, we can maintain a
+running total of how many cows are willing to pay that much tuition and track
+the maximum amount of money that Bessie can make.
+
+Nick Wu's Python code:
+
+MAX_TUITION = 1000000
+n = int(input())
+tuitionToCow = [0] * (MAX_TUITION + 1)
+for x in input().split():
+    tuitionToCow[int(x)] += 1
+maxMoney = 0
+bestTuition = 0
+currentCows = 0
+for tuition in range(MAX_TUITION, 0, -1):
+    currentCows += tuitionToCow[tuition]
+    if tuition * currentCows >= maxMoney:
+        maxMoney = tuition * currentCows
+        bestTuition = tuition
+print(maxMoney, bestTuition)

@@ -1,0 +1,85 @@
+Solution ID: sol_prob2_bronze_jan24
+Contest: JAN24
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_jan24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Ben Chen)
+
+First consider the case where all jump pads have a positive
+
+$v$
+
+. We may directly
+simulate Bessie's process. At a given power
+
+$p$
+
+, Bessie will jump at most
+
+$\frac n p$
+
+times before she exits the number line or she hits a jump pad, in which
+her power increases. Therefore the number of bounces is bounded by
+
+$\sum_{i=1}^n \frac n i = O(n\lg(n))$
+
+.
+
+When there are jump pads with with value
+
+$0$
+
+, then there's a possibility Bessie
+can get stuck in an infinite loop. This happens only when Bessie hits a jump pad
+of value
+
+$0$
+
+, switches direction, and after some bounces, the next jump pad she
+hits is also value
+
+$0$
+
+. It is possible to check for this infinite loop cycle,
+but it's easier to implement just simulating Bessie's bounces for enough
+iterations (about
+
+$O(n\lg(n))$
+
+) since Bessie won't break additional targets
+while stuck in a loop.
+
+Sample implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+int main() {
+	ios::sync_with_stdio(0);
+	cin.tie(0);
+	int n, x;
+	cin >> n >> x;
+	vector<pair<int, int>> pad(n + 1);
+	vector<bool> vis(n + 1);
+	for (int i = 1; i <= n; ++i)
+		cin >> pad[i].first >> pad[i].second;
+	int dir = 1, power = 1, ans = 0;
+	for (int reps = 0; reps < 5000000 && 1 <= x && x <= n; ++reps) {
+		// Bessie breaks a target she hasn't broken before
+		if (pad[x].first == 1 && power >= pad[x].second && !vis[x]) {
+			vis[x] = true;
+			++ans;
+		}
+		if (pad[x].first == 0) { // jump pad
+			dir *= -1;
+			power += pad[x].second;
+		}
+		x += dir * power;
+	}
+	cout << ans << "\n";
+	return 0;
+}

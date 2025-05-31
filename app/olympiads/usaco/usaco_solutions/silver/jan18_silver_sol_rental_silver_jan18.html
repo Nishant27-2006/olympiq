@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>Intuitively, we make a few observations about where to sell milk and how to give away
+cows for rent.
+<p>Firstly, we want to sell to shops that pay more per gallon of milk over shops
+that pay less per gallon of milk.
+<p>Secondly, we want to rent cows that produce less milk over cows that produce more milk.
+<p>Let <span class='math'>$f(i)$</span> be the maximum amount of money we can make just by using the milk from the
+<span class='math'>$i$</span> cows that produce the most milk, and let <span class='math'>$g(j)$</span> be the maximum amount of money
+we can make just by renting the <span class='math'>$j$</span> cows that produce the least milk. We want to compute
+the maximum possible value of <span class='math'>$f(i) + g(N-i)$</span>.
+<p><span class='math'>$g(j)$</span> is easy to compute in general, we just sort the rental prices in decreasing order and
+sum the <span class='math'>$j$</span> highest values. We can compute all <span class='math'>$g(j)$</span> in linear time by maintaining a
+prefix sum.
+<p>To compute <span class='math'>$f(i)$</span>, we have to scan both the cows and the shops. For a cow, we greedily process
+the shops in decreasing price order and sell as much milk to them as possible, until either
+the cow runs out of milk to sell or the shop no longer wants to buy milk.
+<p>This algorithm runs in <span class='math'>$O(N \log N + M \log M + R \log R)$</span>.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class rental {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;rental.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;rental.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int m = Integer.parseInt(st.nextToken());
+		int r = Integer.parseInt(st.nextToken());
+		int[] milkProduced = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			milkProduced[i] = Integer.parseInt(br.readLine());
+		}
+		sort(milkProduced);
+		Shop[] shops = new Shop[m];
+		for(int i = 0; i &lt; m; i++) {
+			st = new StringTokenizer(br.readLine());
+			shops[i] = new Shop(Integer.parseInt(st.nextToken()), Integer.parseInt(st.nextToken()));
+		}
+		Arrays.sort(shops);
+		long[] maxProfit = new long[n+1];
+		{
+			int index = 0;
+			for(int i = 0; i &lt; n; i++) {
+				maxProfit[i+1] = maxProfit[i];
+				while(index &lt; m &amp;&amp; milkProduced[i] &gt; 0) {
+					int use = Math.min(milkProduced[i], shops[index].quantity);
+					maxProfit[i+1] += use * (long)shops[index].price;
+					milkProduced[i] -= use;
+					shops[index].quantity -= use;
+					if(shops[index].quantity == 0) {
+						index++;
+					}
+				}
+			}
+		}
+		int[] rental = new int[r];
+		for(int i = 0; i &lt; r; i++) {
+			rental[i] = Integer.parseInt(br.readLine());
+		}
+		sort(rental);
+		{
+			int a = n-1;
+			int rI = 0;
+			long rentalSoFar = 0;
+			while(a &gt;= 0 &amp;&amp; rI &lt; r) {
+				rentalSoFar += rental[rI];
+				maxProfit[a] += rentalSoFar;
+				rI++;
+				a--;
+			}
+		}
+		long ret = 0;
+		for(long out: maxProfit) {
+			ret = Math.max(ret, out);
+		}
+		pw.println(ret);
+		pw.close();
+	}
+
+	public static void sort(int[] l) {
+		Arrays.sort(l);
+		for(int i = 0; i &lt; l.length-1-i; i++) {
+			l[i] ^= l[l.length-1-i];
+			l[l.length-1-i] ^= l[i];
+			l[i] ^= l[l.length-1-i];
+		}
+	}
+
+	static class Shop implements Comparable&lt;Shop&gt; {
+		public int quantity, price;
+		public Shop(int a, int b) {
+			quantity=a;
+			price=b;
+		}
+		public int compareTo(Shop s) {
+			return s.price - price;
+		}
+	}
+
+}
+</pre></body></html>

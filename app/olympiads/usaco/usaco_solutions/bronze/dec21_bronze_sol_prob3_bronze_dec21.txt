@@ -1,0 +1,152 @@
+Solution ID: sol_prob3_bronze_dec21
+Contest: DEC21
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_dec21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+The subtasks in this problem motivate starting by solving the problem when
+
+$K=1$
+
+and then going from there to solving the problem when
+
+$K=2$
+
+and then
+
+$K=3$
+
+. As a
+result, this editorial will go through solving each of these in order.
+
+$K = 1$
+
+: If Bessie can only turn once, she must turn at either the top-right
+corner or the bottom-left corner. Therefore, it suffices to check that the top
+row and right column are empty and that the bottom row and left column are
+empty.
+
+$K = 2$
+
+: If Bessie is to make exactly two turns, then either she walks along the
+top row, turns right and walks all the way to the bottom and then turns left, or
+she walks along the left column, turns left, and walks all the way to the right
+and then turns right. In the former case, we can brute force all columns Bessie
+would select. In the latter case, we can brute force all rows Bessie would
+select.
+
+$K = 3$
+
+: If Bessie is to make exactly three turns, then Bessie ends up turning
+in the middle of the grid in some square that is not in the top row, bottom row,
+left column, or right column. We can brute force all inner squares that Bessie
+would select.
+
+The runtime for a single test case is
+
+$\mathcal{O}(N^3)$
+
+- there are
+
+$\mathcal{O}(N^2)$
+
+paths that Bessie can consider, and there are
+
+$\mathcal{O}(N)$
+
+squares on each path to validate as being empty.
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+void solve() {
+  int n, k;
+  cin >> n >> k;
+  vector<string> g(n);
+  for(int i = 0; i < n; i++) cin >> g[i];
+  int ret = 0;
+  if(k >= 1) {
+    bool urcorner = true;
+    bool dlcorner = true;
+    for(int i = 0; i < n; i++) {
+      if(g[0][i] == 'H' || g[i][n-1] == 'H') urcorner = false;
+      if(g[i][0] == 'H' || g[n-1][i] == 'H') dlcorner = false;
+    }
+    ret += urcorner;
+    ret += dlcorner;
+  }
+  if(k >= 2) {
+    // use column j
+    for(int j = 1; j < n-1; j++) {
+      bool valid = true;
+      for(int i = 0; i < n; i++) {
+        if(g[i][j] == 'H') valid = false;
+        if(i < j && g[0][i] == 'H') valid = false;
+        if(i > j && g[n-1][i] == 'H') valid = false;
+      }
+      ret += valid;
+    }
+    // use row i
+    for(int i = 1; i < n-1; i++) {
+      bool valid = true;
+      for(int j = 0; j < n; j++) {
+        if(g[i][j] == 'H') valid = false;
+        if(j < i && g[j][0] == 'H') valid = false;
+        if(j > i && g[j][n-1] == 'H') valid = false;
+      }
+      ret += valid;
+    }
+  }
+  if(k >= 3) {
+    for(int i = 1; i < n-1; i++) {
+      for(int j = 1; j < n-1; j++) {
+        // RDRD
+        bool valid = g[i][j] == '.';
+        for(int a = 0; a < n; a++) {
+          if(a <= i && g[a][j] == 'H') valid = false;
+          if(a >= i && g[a][n-1] == 'H') valid = false;
+          if(a <= j && g[0][a] == 'H') valid = false;
+          if(a >= j && g[i][a] == 'H') valid = false;
+        }
+        ret += valid;
+        valid = g[i][j] == '.';
+        // DRDR
+        for(int a = 0; a < n; a++) {
+          if(a <= i && g[a][0] == 'H') valid = false;
+          if(a >= i && g[a][j] == 'H') valid = false;
+          if(a <= j && g[i][a] == 'H') valid = false;
+          if(a >= j && g[n-1][a] == 'H') valid = false;
+        }
+        ret += valid;
+      }
+    }
+  }
+  cout << ret << "\n";
+}
+int main() {
+  int t;
+  cin >> t;
+  while(t--) solve();
+}
+
+We can also solve this problem in
+
+$\mathcal{O}(N^2K)$
+
+time by storing for each square,
+each possible number of turns (up to
+
+$K$
+
+), and each of the directions D and R, the number 
+of ways for  Bessie to reach that square using exactly that number of turns such that
+the last direction in which she walked was that direction. However, this is outside of the
+scope of both Bronze and Silver.

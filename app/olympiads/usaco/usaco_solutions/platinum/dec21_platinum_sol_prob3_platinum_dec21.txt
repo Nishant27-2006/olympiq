@@ -1,0 +1,1208 @@
+Solution ID: sol_prob3_platinum_dec21
+Contest: DEC21
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_dec21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Richard Qi, Benjamin Qi)
+
+There are two ways to approach this problem. One uses dynamic programming, while
+the other uses linearity of expectation.
+
+1. DP Solution
+
+Suppose that we have already constructed some prefix of the permutation, and
+there are
+
+$j$
+
+remaining non-redundant values below Bessie's number and
+
+$k$
+
+remaining non-redundant values above Bessie's number (we define non-redundant
+numbers as numbers that Elsie could guess that would give her more information).
+Also, consider the two cases where Bessie has most recently said either "HI" or
+"LO". Let
+
+$b=0$
+
+be the case where Bessie has most recently said  "LO" and let
+
+$b=1$
+
+be the case where Bessie has most recently said "HI". Then, the expected
+number of "HILO"s for the original problem is just the case where
+
+$j=x, k=N-x, b = 0$
+
+.
+
+Thus, it is sufficient to count the expected number of "HILO"s for each
+
+$j \leq x, k \leq N-x,$
+
+and
+
+$b = 0$
+
+or
+
+$b=1$
+
+. Call this quantity
+
+$dp[b][j][k]$
+
+.
+Now, note that all redundant values do not affect the expected number of
+"HILOs", so we ignore all of them. Then, there are
+
+$j+k$
+
+possible values for the
+next number in the permutation, each of which occurs with probability
+
+$\frac{1}{j+k}$
+
+.
+
+We will first consider the case where
+
+$b=0$
+
+. Suppose that the next value in the
+permutation is less than
+
+$x+0.5,$
+
+of which there are
+
+$j$
+
+possibilities. Denote
+these values as
+
+$v_0, v_1, v_2, \cdots v_{j-1}$
+
+such that
+
+$x+0.5 > v_0 > v_1 > v_2 \cdots > v_{j-1}$
+
+.
+
+Suppose the next value in the permutation is
+
+$v_{j_2}$
+
+for some
+
+$0 \leq j_2 < j$
+
+. Then,  Bessie says "LO" (because
+
+$v_{j_2} < x+0.5$
+
+) and there
+are
+
+$j_2$
+
+remaining nonredundant values below Bessie's number. The
+
+$k$
+
+initial
+nonredundant values above Bessie's number are still nonredundant, so the
+expected number of HILOs in the remaining sequence of values is
+
+$dp[0][j_2][k]$
+
+.
+
+Similarly, if we consider the values greater than
+
+$x+0.5,$
+
+which we label
+
+$x+0.5 < u_0 < u_1 < u_2 \cdots < u_{k-1},$
+
+if we choose one of these values
+
+$u_{k_2}$
+
+, Bessie says "HI" and there are
+
+$k_2$
+
+remaining nonredundant values
+above Bessie's number, so the expected number of HILOs in the remaining sequence
+of values is
+
+$dp[1][j][k_2]$
+
+.
+
+So, we have the recurrence
+
+$dp[0][j][k] = \frac{\sum_{j_2 < j} dp[0][j_2][k] + \sum_{k_2 < k} dp[1][j][k_2]}{j+k}$
+
+.
+
+For computing
+
+$dp[1][j][k],$
+
+we can apply the same technique. However, since
+Bessie has just said "HI", if we now choose a value
+
+$v_{j_2} < x+0.5,$
+
+Bessie
+will then say "LO" and the number of "HILO"s increases by one. We choose a value
+less than
+
+$x+0.5$
+
+with probability
+
+$\frac{j}{j+k},$
+
+so the expected number of
+"HILO"s increases by
+
+$\frac{j}{j+k}.$
+
+So, we have the recurrence
+
+$dp[1][j][k] = \frac{\sum_{j_2 < j} dp[0][j_2][k] + \sum_{k_2 < k} dp[1][j][k_2]}{j+k} + \frac{j}{j+k}.$
+
+Now, we can compute every value of
+
+$dp[b][j][k]$
+
+by iterating over all
+
+$j_2 < j, k_2 < k$
+
+and using the above recurrences. Since there are
+
+$N^2$
+
+dp
+states and we sum over
+
+$N$
+
+smaller states, this leads to a time complexity of
+
+$\mathcal{O}(N^3),$
+
+which is enough for the first two subtasks.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class ExpectedHILOCubic {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int x = Integer.parseInt(tokenizer.nextToken());
+        int y = n - x;
+        long[] inverse = new long[n + 1];
+        for (int k = 1; k <= n; k++) {
+            inverse[k] = inverse(k);
+        }
+        long[][][] dp = new long[2][x + 1][y + 1];
+        for (int j = 0; j <= x; j++) {
+            for (int k = 0; k <= y; k++) {
+                for (int j2 = 0; j2 < j; j2++) {
+                    dp[0][j][k] += dp[0][j2][k];
+                }
+                for (int k2 = 0; k2 < k; k2++) {
+                    dp[0][j][k] += dp[1][j][k2];
+                }
+                dp[0][j][k] %= MOD;
+                dp[0][j][k] *= inverse[j + k];
+                dp[0][j][k] %= MOD;
+                dp[1][j][k] = (dp[0][j][k] + (inverse[j + k] * ((long) j))) % MOD;
+            }
+        }
+        long answer = dp[0][x][y];
+        for (long k = 1; k <= n; k++) {
+            answer *= k;
+            answer %= MOD;
+        }
+        System.out.println(answer);
+    }
+ 
+    public static long inverse(long x) {
+        long s = x;
+        long res = 1;
+        long exponent = MOD - 2;
+        while (exponent != 0L) {
+            if ((exponent & 1L) == 1L) {
+                res *= s;
+                res %= MOD;
+            }
+            exponent /= 2L;
+            s *= s;
+            s %= MOD;
+        }
+        return res;
+    }
+}
+
+To speed this up, note that the bottleneck of the runtime comes from computing
+the terms like
+
+$\sum_{j_2 < j} dp[0][j_2][k].$
+
+Now, suppose we are computing the
+value
+
+$dp[0][j][k]$
+
+and want to find the value
+
+$\sum_{j_2 < j} dp[0][j_2][k]$
+
+without using a loop. To do this, note that we have already computed the value
+of
+
+$dp[0][j-1][k],$
+
+which required the value of
+
+$\sum_{j_2 < j-1} dp[0][j_2][k].$
+
+Since we have already computed
+
+$\sum_{j_2 < j-1} dp[0][j_2][k],$
+
+we can use the fact that
+
+$\sum_{j_2 < j} dp[0][j_2][k] = dp[0][j-1][k]+\sum_{j_2 < j-1} dp[0][j_2][k],$
+
+which takes
+
+$\mathcal O(1)$
+
+time instead of
+
+$\mathcal O(N)$
+
+time to compute.
+
+Since we can now compute the
+
+$N^2$
+
+terms of the DP in
+
+$\mathcal O(1)$
+
+time each,
+our overall time complexity is now
+
+$\mathcal{O}(N^2).$
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class ExpectedHILO {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int x = Integer.parseInt(tokenizer.nextToken());
+        int y = n - x;
+        long[] inverse = new long[n + 1];
+        for (int k = 1; k <= n; k++) {
+            inverse[k] = inverse(k);
+        }
+        long[][][] dp = new long[2][x + 1][y + 1];
+        long[] sums1 = new long[x + 1];
+        long[] sums2 = new long[y + 1];
+        for (int j = 0; j <= x; j++) {
+            for (int k = 0; k <= y; k++) {
+                dp[0][j][k] = (inverse[j + k] * (sums1[j] + sums2[k])) % MOD;
+                dp[1][j][k] = (inverse[j + k] * (sums1[j] + sums2[k] + ((long) j))) % MOD;
+                sums1[j] += dp[1][j][k];
+                sums1[j] %= MOD;
+                sums2[k] += dp[0][j][k];
+                sums2[k] %= MOD;
+            }
+        }
+        long answer = dp[0][x][y];
+        for (long k = 1; k <= n; k++) {
+            answer *= k;
+            answer %= MOD;
+        }
+        System.out.println(answer);
+    }
+ 
+    public static long inverse(long x) {
+        long s = x;
+        long res = 1;
+        long exponent = MOD - 2;
+        while (exponent != 0L) {
+            if ((exponent & 1L) == 1L) {
+                res *= s;
+                res %= MOD;
+            }
+            exponent /= 2L;
+            s *= s;
+            s %= MOD;
+        }
+        return res;
+    }
+}
+
+2. Linearity of Expectation Solution
+
+We will distinguish between two types of HILOs and count both of them. Recall
+the definition of the string
+
+$S$
+
+in the problem statement. Consider a "HILO,"
+which occurs at position
+
+$i$
+
+in string
+
+$S$
+
+. We call this "HILO" "special" if
+there is no "LO" before position
+
+$i$
+
+; otherwise, we call it a "normal" HILO. For
+a normal HILO, denote the rightmost "LO" before position
+
+$i$
+
+as the
+"corresponding" LO to this normal HILO.
+
+First, we will count the number of "normal" HILOs.
+
+Instead of summing the number of HILOs over all permutations, we will count the 
+number of permutations over every possible HILO.
+
+Formally, for all
+
+$a, b, c, p_a, p_b, p_c$
+
+such that
+
+$1 \leq a, b, c, p_a, p_b, p_c\leq N$
+
+and
+
+$c < a < b,$
+
+we will count the number
+of permutations such that the following conditions hold:
+
+1. The
+
+$a$
+
+th value in the permutation is
+
+$p_a,$
+
+the
+
+$b$
+
+th value in the
+permutation is
+
+$p_b$
+
+, and the
+
+$c$
+
+th value in the permutation is
+
+$p_c$
+
+.
+
+2. Bessie says "HI" at position
+
+$a$
+
+, "LO" at position
+
+$b$
+
+, and "LO" at position
+
+$c.$
+
+3. The "HI" at position
+
+$a$
+
+and the "LO" at position
+
+$b$
+
+together form a "HILO"
+with corresponding LO at position
+
+$c$
+
+.
+
+To enforce these conditions, it is necessary and sufficient that the following
+conditions hold:
+
+4.
+
+$p_c < p_b < x+0.5 < p_a$
+
+5. For all values
+
+$v$
+
+in the permutation before
+
+$b$
+
+(other than
+
+$p_a$
+
+and
+
+$p_c$
+
+), either
+
+$p_a < v$
+
+or
+
+$v < p_c.$
+
+Condition
+
+$4$
+
+ensures that the values are in the right order, while condition
+
+$5$
+
+ensures that the "HI" at position
+
+$a$
+
+and the "LO" at position
+
+$b$
+
+together
+form a "HILO" with corresponding LO at position
+
+$c$
+
+.
+
+Now, it remains to count the number of permutations such that conditions
+
+$4$
+
+and
+
+$5$
+
+hold. There are
+
+$N-p_a+p_c-1$
+
+possibilities for the remaining values in the
+permutation before position
+
+$b,$
+
+and there are
+
+$b-3$
+
+values that need to be
+chosen, for a total of
+
+$\frac{(N-p_a+p_c-1)!}{(N-p_a+p_c-1-(b-3))!}$
+
+ways to
+choose these values. After these values have been chosen, the remaining values
+in the permutation after position
+
+$b$
+
+can be ordered arbitrarily, of which there
+are
+
+$N-b$
+
+left, for a total of
+
+$(N-b)!$
+
+ways.
+
+So, the desired sum is
+
+$\sum_{a, b, c, p_a, p_b, p_c \mid 1 \leq c < a < b \leq N, 1 \leq p_c < p_b < x+0.5 < p_a \leq N} \frac{(N-p_a+p_c-1)!(N-b)!}{(N-p_a+p_c-b+2)!}$
+
+.
+If we sum this naively, we get a
+
+$\mathcal O(N^6)$
+
+solution, which is enough for
+
+$10$
+
+test cases.
+
+Note that
+
+$p_b, a, c$
+
+do not appear in the summand, so we can easily rewrite the
+sum as
+
+$\sum_{b, p_c, p_a \mid 1 \leq b \leq N, p_c < x+0.5 < p_a} \frac{(N-p_a+p_c-1)!(N-b)!}{(N-p_a+p_c-b+2)!} \cdot (x-p_c) \cdot \binom{b-1}{2}.$
+
+If we sum this naively, we get a
+
+$\mathcal O(N^3)$
+
+solution, which is enough for
+
+$18$
+
+test cases.
+
+Now, to optimize this further, suppose
+
+$b, p_c$
+
+are fixed values. Then, the
+above summand can be expressed in the form
+
+$\sum_{p_a = x+1}^{n}C_1\frac{(C_2-p_a)!}{(C_3-p_a)!}$
+
+, which is also of the
+form
+
+$\sum_{p_a=C_4}^{C_5} C_6\binom{C_7+p_a}{C_8}$
+
+for constants
+
+$C_i$
+
+in terms
+of
+
+$b, p_c.$
+
+Using the
+
+Hockey Stick
+Identity
+
+, we have that
+
+$\sum_{p_a=C_4}^{C_5} C_6\binom{C_7+p_a}{C_8} = C_6\binom{C_7+C_5+1}{C_8+1}-C_6\binom{C_7+C_4}{C_8+1},$
+
+which can be computed in
+
+$\mathcal O(1)$
+
+time for fixed
+
+$b, p_c.$
+
+Alternatively, we can iterate over the value of
+
+$p_c-p_a,$
+
+which does not
+require Hockey Stick.
+
+Thus, for each of the
+
+$N^2$
+
+possible pairs
+
+$b, p_c,$
+
+we can find the value of
+the summand in
+
+$\mathcal O(1)$
+
+time, for a total of
+
+$\mathcal O(N^2)$
+
+time.
+
+Counting special HILOs can be done similarly, but we only need to iterate over
+values of
+
+$a, b, p_a, p_b,$
+
+and  it turns out that only
+
+$p_a$
+
+and
+
+$b$
+
+appear in
+the summand, so the sum can easily be optimized to
+
+$\mathcal O(N^2)$
+
+without
+using Hockey Stick. Using an application of Hockey Stick, we can reduce counting
+special HILOs to an
+
+$\mathcal O(N)$
+
+calculation, but this is not necessary to
+solve the problem.
+
+Richard's
+
+$N^6$
+
+code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using ll = long long;
+
+const int MOD = 1e9+7;
+
+/**
+ * Description: Modular arithmetic.
+ * Source: KACTL
+ * Verification: https://open.kattis.com/problems/modulararithmetic
+ * Usage: mi a = MOD+5; cout << (int)inv(a); // 400000003
+ */
+ 
+struct mi {
+ 	int v; explicit operator int() const { return v; } 
+	mi():v(0) {}
+	mi(ll _v):v(int(_v%MOD)) { v += (v<0)*MOD; }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+mi pow(mi a, ll p) { assert(p >= 0); // won't work for negative p
+	return p==0?1:pow(a*a,p/2)*(p&1?a:1); }
+mi inv(mi a) { assert(a.v != 0); return pow(a,MOD-2); }
+mi operator/(mi a, mi b) { return a*inv(b); }
+bool operator==(mi a, mi b) { return a.v == b.v; }
+ 
+using vmi = vector<mi>;
+/**
+ * Description: pre-compute factorial mod inverses,
+ 	* assumes $MOD$ is prime and $SZ < MOD$.
+ * Time: O(SZ)
+ * Source: KACTL
+ * Verification: https://dmoj.ca/problem/tle17c4p5
+ */
+ 
+vmi invs, fac, ifac;
+void genFac(int SZ) {
+	invs.resize(SZ), fac.resize(SZ), ifac.resize(SZ); 
+	invs[1] = fac[0] = ifac[0] = 1; 
+	for(int i = 2; i < SZ; i++) invs[i] = mi(-(ll)MOD/i*(int)invs[MOD%i]);
+	for(int i = 1; i < SZ; i++) fac[i] = fac[i-1]*i, ifac[i] = ifac[i-1]*invs[i];
+}
+mi comb(int a, int b) {
+	if (a < b || b < 0) return 0;
+	return fac[a]*ifac[b]*ifac[a-b]; }
+ 
+ 
+mi FAC(int a){
+	if(a < 0) return mi(0);
+	return fac[a];
+}
+ 
+mi IFAC(int a){
+	if(a < 0) return mi(0);
+	return ifac[a];
+}
+ 
+int main() {
+	genFac(20005);
+	int N, X; cin >> N >> X;
+	mi ans = mi(0);
+	for(int c = 1; c <= N; c++){
+		for(int a = c+1; a <= N; a++){
+			for(int b = a+1; b <= N; b++){
+				for(int p_c = 1; p_c <= N; p_c++){
+					for(int p_b = p_c+1; p_b <= N; p_b++){
+						if(p_b > X) continue;
+						for(int p_a = X+1; p_a <= N; p_a++){
+							ans+=FAC(N-p_a+p_c-1)*FAC(N-b)*IFAC(N-p_a+p_c-1-b+3);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	for(int a = 1; a <= N; a++){
+		for(int b = a+1; b <= N; b++){
+			for(int p_b = 1; p_b <= X; p_b++){
+				for(int p_a = X+1; p_a <= N; p_a++){
+					ans+=FAC(N-p_a)*FAC(N-b)*IFAC(N-p_a-b+2);
+				}
+			}
+		}
+	}
+ 
+	cout << ans.v << "\n";
+}
+
+Richard's
+
+$N^2$
+
+code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using ll = long long;
+
+const int MOD = 1e9+7;
+
+/**
+ * Description: Modular arithmetic.
+ * Source: KACTL
+ * Verification: https://open.kattis.com/problems/modulararithmetic
+ * Usage: mi a = MOD+5; cout << (int)inv(a); // 400000003
+ */
+ 
+struct mi { // WARNING: needs some adjustment to work with FFT
+ 	int v; explicit operator int() const { return v; } 
+	mi():v(0) {}
+	mi(ll _v):v(int(_v%MOD)) { v += (v<0)*MOD; }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+mi pow(mi a, ll p) { assert(p >= 0); // won't work for negative p
+	return p==0?1:pow(a*a,p/2)*(p&1?a:1); }
+mi inv(mi a) { assert(a.v != 0); return pow(a,MOD-2); }
+mi operator/(mi a, mi b) { return a*inv(b); }
+bool operator==(mi a, mi b) { return a.v == b.v; }
+ 
+using vmi = vector<mi>;
+/**
+ * Description: pre-compute factorial mod inverses,
+ 	* assumes $MOD$ is prime and $SZ < MOD$.
+ * Time: O(SZ)
+ * Source: KACTL
+ * Verification: https://dmoj.ca/problem/tle17c4p5
+ */
+ 
+vmi invs, fac, ifac;
+void genFac(int SZ) {
+	invs.resize(SZ), fac.resize(SZ), ifac.resize(SZ); 
+	invs[1] = fac[0] = ifac[0] = 1; 
+	for(int i = 2; i < SZ; i++) invs[i] = mi(-(ll)MOD/i*(int)invs[MOD%i]);
+	for(int i = 1; i < SZ; i++) fac[i] = fac[i-1]*i, ifac[i] = ifac[i-1]*invs[i];
+}
+mi comb(int a, int b) {
+	if (a < b || b < 0) return 0;
+	return fac[a]*ifac[b]*ifac[a-b]; }
+ 
+ 
+mi FAC(int a){
+	if(a < 0) return mi(0);
+	return fac[a];
+}
+ 
+mi IFAC(int a){
+	if(a < 0) return mi(0);
+	return ifac[a];
+}
+
+int main() {
+	genFac(20005);
+	int N, X; cin >> N >> X;
+	mi ans = mi(0);
+	for(int b = 1; b <= N; b++){
+		for(int p_c = 1; p_c <= X; p_c++){
+			ans+=(comb(N+p_c-X-1, b-2)-comb(p_c-1, b-2))*FAC(b-1)*FAC(N-b)*mi(X-p_c)*invs[2];
+		}
+	}
+	for(int b = 1; b <= N; b++){
+		for(int p_a = X+1; p_a <= N; p_a++){
+			ans+=mi(X)*FAC(N-p_a)*FAC(N-b)*IFAC(N-p_a-b+2)*mi(b-1);
+		}
+	}
+	cout << ans.v << "\n";
+}
+
+We now present an alternative way to optimize counting normal HILOs from
+
+$\mathcal O(N^3)$
+
+to
+
+$\mathcal O(N)$
+
+.
+
+$\sum_{b, p_c, p_a \mid 1 \leq b \leq N, p_c < x+0.5 < p_a} \frac{(N-p_a+p_c-1)!(N-b)!}{(N-p_a+p_c-b+2)!} \cdot (x-p_c) \cdot \binom{b-1}{2}$
+
+.
+
+Let
+
+$p_a-p_c = d_{ac}.$
+
+Then, our sum is equal to
+
+$\sum_{d_{ac}} \sum_{b=1}^{N} \sum_{p_c} \frac{(N-d-1)!(N-b)!}{(N-d-b+2)!} \cdot (x-p_c) \cdot \binom{b-1}{2}$
+
+,
+where
+
+$p_a, p_c$
+
+must satisfy
+
+$1 \leq p_c < x+0.5 < p_a \leq N.$
+
+Consider the set of all pairs
+
+$(p_a, p_c)$
+
+such that the above condition holds
+for some fixed value of
+
+$d_{ac} = p_a-p_c.$
+
+Let
+
+$f(d_{ac})$
+
+be the size of the
+set, and let
+
+$g(d_{ac})$
+
+be the sum over all such pairs of
+
+$p_c.$
+
+Both of these
+values can be computed in
+
+$\mathcal O(1)$
+
+for each value of
+
+$d_{ac}.$
+
+Then, the sum is equal to
+
+$\sum_{d_{ac} = 1}^{N-1} \sum_{b=1}^{N} \frac{(N-d_{ac}-1)!(N-b)!}{(N-d_{ac}-b+2)!} \cdot (x \cdot f(d_{ac})-g(d_{ac})) \cdot \binom{b-1}{2}$
+
+$= \sum_{d_{ac} = 1}^{N-1} (x \cdot f(d_{ac})-g(d_{ac}))(N-d_{ac}-1)! \sum_{b=1}^{N}  \frac{(N-b)!}{(N-d_{ac}-b+2)!} \cdot \binom{b-1}{2}$
+
+If we ignore the
+
+$\binom{b-1}{2}$
+
+term in the inner loop, then the inner loop
+could easily be removed by an application of Hockey Stick (similar to the
+application mentioned earlier).  To do this, note that
+
+$\binom{b-1}{2} = C_1 (N-b+1)(N-b+2) + C_2 (N-b+1)$
+
+for constants
+
+$C_1, C_2$
+
+, so
+
+$\sum_{b=1}^{N}  \frac{(N-b)!}{(N-d_{ac}-b+2)!} \cdot \binom{b-1}{2} = C_1 \sum_{b=1}^{N}  \frac{(N-b+2)!}{(N-d_{ac}-b+2)!} + C_2 \sum_{b=1}^{N} \frac{(N-b+1)!}{(N-d_{ac}-b+2)!}$
+
+.
+
+Now, similar to before, we can apply Hockey Stick to calculate both of these
+sums in
+
+$\mathcal O(1)$
+
+time.
+
+Thus, we have counted both special and normal HILOs in
+
+$\mathcal O(N)$
+
+time,
+leading to a
+
+$\mathcal O(N)$
+
+time solution.
+
+----
+
+As Rowechen Zhong notes
+
+here,
+
+there is actually a simple formula for the number of HILOs (assuming
+
+$0<x<N$
+
+):
+
+$$\begin{align*}
+\text{Answer}(N,x)&=N!\cdot \mathbb{E}[\#(HILO)]\\
+&=N!\cdot \frac{1}{2}\cdot \left(H_x+H_{N-x}-H_N+\frac{N-x}{N}\right)
+\end{align*}$$
+
+where
+
+$H_i\triangleq \sum_{j=1}^i\frac{1}{j}$
+
+. Code:
+
+...
+
+mi H(int x) {
+	mi ans = 0;
+	for (int i = 1; i <= x; ++i) ans += invs[i];
+	return ans;
+}
+
+int main() {
+	int N,x; cin >> N >> x;
+	if (x == 0) {
+		cout << "0\n";
+		exit(0);
+	}
+	genFac(N+1);
+	mi expected = (H(x)+H(N-x)-H(N)+(mi)(N-x)*invs.at(N))/2;
+	cout << (fac.at(N)*expected).v << "\n";
+}
+
+Here is a different way to come up with the above formula for
+
+$\mathbb{E}[\#(HILO)]$
+
+(as well as
+
+$\mathbb{E}[\#(LOLO)], \mathbb{E}[\#(LOHI)],$
+
+and
+
+$\mathbb{E}[\#(HIHI)]$
+
+):
+
+Recall from the work above that
+
+$$\begin{align*}
+\mathbb{E}[\#(HILO)]&=\mathbb{E}[\text{normal }HILO\text{s}]+\mathbb{E}[\text{special }HILO\text{s}]\\
+&=\mathbb{E}[\#(\text{values }a<c\le x<b\text{ such that }a,b,c\text{ form }LOHILO)]+\Pr[HILO\text{ without a preceding }LO]\\
+&=\mathbb{E}[\#(a<c\le x<b\text{ such that }a,b,c\text{ form }LOHILO)]+\frac{N-x}{N}.
+\end{align*}
+$$
+
+Note that our notation here is slightly different than above; here,
+
+$a,b,c$
+
+denote values rather than positions. We can actually count the number of normal
+HILOs directly with a triply nested for loop:
+
+...
+ 
+int main() {
+	int N,x; cin >> N >> x;
+	if (x == 0) {
+		cout << "0\n";
+		exit(0);
+	}
+	genFac(N+1);
+	mi expected = (N-x)*invs.at(N); // special HILOs
+	for (int a = 1; a <= x; ++a) // normal HILOs
+		for (int b = x+1; b <= N; ++b) 
+			for (int c = a+1; c <= x; ++c) {
+				// probability that we see LO at a, then HI at b, then LO at c
+				// only depends on relative ordering of values in a..b
+				const int len = b-a+1;
+				expected += invs.at(len)*invs.at(len-1)*invs.at(len-2);
+			}
+	cout << (expected*fac.at(N)).v << "\n";
+}
+
+Given the value of
+
+$\mathbb{E}[\#(HILO)]$
+
+, we can get the expected number of
+LOHIs:
+
+$$\begin{align*}
+\mathbb{E}[\#(LOHI)]&=\mathbb{E}[\#(HILO)]+\Pr[\text{response}=LO\ldots HI]-\Pr[\text{response}=HI\ldots LO]\\
+&=\mathbb{E}[\#(HILO)]+\Pr[p_1\le x\text{ and }x\text{ appears before }x+1\text{ in }p]-\Pr[p_1> x\text{ and }x+1\text{ appears before }x\text{ in }p]\\
+&=\mathbb{E}[\#(HILO)]+\frac{x+1}{2N}-\frac{N-x+1}{2N}\\
+&=\mathbb{E}[\#(HILO)]+\frac{2x-N}{2N}.
+\end{align*}$$
+
+Define a HILOLO triple
+
+$(a,b,c)$
+
+to be values satisfying
+
+$b<c\le x<a$
+
+such that
+
+$a$
+
+appears before
+
+$b$
+
+before
+
+$c$
+
+,
+
+$b$
+
+and
+
+$c$
+
+are two consecutive LOs, and
+
+$a$
+
+is the latest HI that appears before
+
+$b$
+
+We can get the expected number of LOLOs
+by adding the number of HILOLOs with the number of LOLOs with no HI preceding
+it. The code to count the expected number of HILOLOs turns out to be identical
+to the  code used to compute the expected number of LOHILOs above, so:
+
+$$\begin{align*}
+\mathbb{E}[\#(LOLO)]&=\mathbb{E}[\#(b<c\le x<a\text{ such that }a,b,c\text{ form }HILOLO)]+\mathbb{E}[(\#LOLO\text{s without a preceding }HI)]\\
+&=\mathbb{E}[\#(a<c\le x<b\text{ such that }a,b,c\text{ form }LOHILO)]+\mathbb{E}[(\#LOLO\text{s without a preceding }HI)]\\
+&=\mathbb{E}[\#(a<c\le x<b\text{ such that }a,b,c\text{ form }LOHILO)]+\left(\mathbb{E}[\#(LO\text{s before first }HI)]-\Pr[\text{exists }LO\text{ before first }HI]\right)\\
+&=\mathbb{E}[\#(a<c\le x<b\text{ such that }a,b,c\text{ form }LOHILO)]+\sum_{i=1}^x\left(\frac{1}{N-x+i}\right)-\frac{x}{N}\\
+&=\mathbb{E}[\#(HILO)]+H_N-H_{N-x}-1.
+\end{align*}$$
+
+The equality
+
+$\mathbb{E}[\#(LO\text{ before first }HI)]=\sum_{i=1}^x\left(\frac{1}{N-x+i}\right)$
+
+can be derived by starting with a permutation of the values
+
+$x+1\ldots N$
+
+and
+then consider adding each of the values
+
+$x\ldots 1$
+
+to the permutation in that
+order.
+
+$x+1-i$
+
+is a LO only if it precedes all of the values
+
+$x+2-i\ldots N$
+
+,
+which occurs with probability
+
+$\frac{1}{N-x+i}$
+
+.
+
+By symmetry,
+
+$$\mathbb{E}[\#(HIHI)]=\mathbb{E}[\#(LOHI)]+H_N-H_{x}-1.$$
+
+Also,
+
+$$\begin{align*}
+\mathbb{E}[\#(LOHI)]+\mathbb{E}[\#(LOLO)]+\mathbb{E}[\#(HILO)]+\mathbb{E}[\#(HIHI)]&=\mathbb{E}[\#(LO)]+\mathbb{E}[\#(HI)]-1\\
+&=H_x+H_{N-x}-1.\end{align*}$$
+
+Combining these four equations, we get the following closed forms:
+
+$\mathbb{E}[\#(LOLO)]=\frac{H_x-H_{N-x}+H_N-1-x/N}{2}$
+
+$\mathbb{E}[\#(HIHI)]=\frac{-H_x+H_{N-x}+H_N-1-(N-x)/N}{2}$
+
+$\mathbb{E}[\#(HILO)]=\frac{H_x+H_{N-x}-H_N+(N-x)/N}{2}$
+
+$\mathbb{E}[\#(LOHI)]=\frac{H_x+H_{N-x}-H_N+x/N}{2}$

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi, Chongtian Ma)
+<p>Let&apos;s define <span class='math'>$g(x)$</span> to be the minimum number of operations FJ must perform for
+some integer <span class='math'>$x$</span>, <span class='math'>$f(x,a_i)$</span> denote the closest integer <span class='math'>$y$</span> to <span class='math'>$a_i$</span> such that
+<span class='math'>$y\equiv x \pmod M$</span> (in case of a tie, choose the smaller candidate),  and
+<span class='math'>$h(x,a_i)=|a_i-f(x,a_i)|$</span>. Then <span class='math'>$g(x)=\sum_i h(x, a_i)$</span>, and our goal is to
+compute the  minimum value of <span class='math'>$g(x)$</span>.
+<p><strong>Approach 1:</strong>
+<p><em>Subtask 1:</em> <span class='math'>$N,M\le 1000$</span>
+<p>Since <span class='math'>$g(x)$</span> does not change if we add a multiple of <span class='math'>$M$</span> to <span class='math'>$x$</span>, we only need to
+consider <span class='math'>$x\in [0, M-1]$</span>. For each such <span class='math'>$x$</span>,  we can compute <span class='math'>$g(x)$</span> in <span class='math'>$O(N)$</span>
+time by iterating over each <span class='math'>$i$</span>. This solves a single test case in <span class='math'>$O(NM)$</span> time.
+<p><em>Subtask 2:</em> <span class='math'>$N\le 1000$</span>
+<p>Let&apos;s first consider how to solve the case <span class='math'>$M=\infty$</span>. In this case, <span class='math'>$f(x,a_i)=x$</span> 
+and <span class='math'>$g(x)$</span> is a
+<a href='https://en.wikipedia.org/wiki/Convex_function'>convex</a> function of <span class='math'>$x$</span>. If
+we sort the <span class='math'>$a_i$</span> in increasing order, then it achieves its minimum value of 
+<span class='math'>$\sum_{i=N-\lfloor N/2\rfloor +1}^{N}a_i-\sum_{i=1}^{\lfloor N/2\rfloor}a_i$</span>
+at <span class='math'>$x\in [a_{\lfloor (N+1)/2\rfloor}, a_{\lceil (N+1)/2\rceil}]$</span>.
+<p>When <span class='math'>$M$</span> is finite, we can start by replacing each <span class='math'>$a_i$</span> with its remainder
+modulo <span class='math'>$M$</span> and sorting them in ascending order. Suppose that <span class='math'>$g(x)$</span> attains its
+minimum value at <span class='math'>$x=x_{\min}$</span>. If we apply the <span class='math'>$M=\infty$</span> logic above on the
+current <span class='math'>$a_i$</span>, we will get the correct answer if <span class='math'>$f(x_{\min},a_i)$</span> is equal for
+all <span class='math'>$a_i$</span>. However, it is possible that <span class='math'>$f(x_{\min},a_i)$</span> is equal to one value
+<span class='math'>$v$</span> for a prefix of <span class='math'>$a_i$</span> and <span class='math'>$v+M$</span> for the remaining suffix, in which case the
+correct answer could be smaller. We can address this case by iterating over all
+possible lengths of this prefix, adding <span class='math'>$M$</span> to all elements of this prefix, and
+then applying the <span class='math'>$M=\infty$</span> logic to get a candidate answer. At the end, we
+output the minimum of all <span class='math'>$N$</span> candidate answers.
+<p>This can be implemented in <span class='math'>$O(N^2)$</span> time per test case. We note  that after
+adding <span class='math'>$M$</span> to the smallest element of <span class='math'>$a$</span>, we can maintain the property that <span class='math'>$a$</span>
+is sorted by just moving the first element of the array to the end.
+<p>Ben&apos;s Python Implementation:
+<p><pre class='prettyprint'>
+T = int(input())
+for tc in range(T):
+    N, M = map(int, input().split())
+    A = list(map(int, input().split()))
+    A = sorted([x % M for x in A])
+    ans = float(&apos;inf&apos;)
+    for _ in range(N):
+        ans = min(ans, sum(A[N-N//2:]) - sum(A[:N//2]))
+        A = A[1:] + [A[0] + M]  # add M to first element of A and move it to the end
+    print(ans)
+</pre>
+<p><em>Full Credit:</em> All arrays in the subtask above that we run the <span class='math'>$M=\infty$</span>
+solution for are fixed-length subarrays of the sorted array
+<span class='math'>$[a_1,a_2,\dots,a_N,a_1+M,a_2+M, \dots, a_N+M]$</span>. Thus, we can speed up the
+previous solution by storing
+<a href='https://usaco.guide/silver/prefix-sums?lang=cpp'>prefix sums</a> on this
+doubled array.  The runtime is <span class='math'>$O(N\log N)$</span> per test case due to sorting.
+<p><pre class='prettyprint'>
+T = int(input())
+for tc in range(T):
+    N, M = map(int, input().split())
+    A = list(map(int, input().split()))
+    A = sorted([x % M for x in A])
+    A = A + [x + M for x in A]
+    ans = float(&apos;inf&apos;)
+    cum = [0]
+    for x in A:
+        cum.append(cum[-1] + x)
+    for i in range(N):
+        ans = min(ans, cum[i + N] - cum[i + N - N // 2] - cum[i + N // 2] + cum[i])
+    print(ans)
+</pre>
+<p><strong>Approach 2:</strong> 
+<p>Similar to approach <span class='math'>$1$</span>, let&apos;s replace each <span class='math'>$a_i$</span> with its remainder modulo <span class='math'>$M$</span>
+and sort them in ascending order. Suppose we know <span class='math'>$x$</span>, we can determine the
+total number of operations using the following:
+<p><ul><li> Let&apos;s break up <span class='math'>$a$</span> into two arrays <span class='math'>$b$</span> and <span class='math'>$c$</span>, where <span class='math'>$b$</span> stores all <span class='math'>$a_i$</span>
+such that
+<span class='math'>$a_i \in \{(x - \lfloor \frac{M}{2} \rfloor) \pmod{M}, (x - \lfloor \frac{M}{2} \rfloor + 1) \pmod{M}
+, \ldots , (x - 1) \pmod{M}\}$</span>,
+and <span class='math'>$c$</span> stores all <span class='math'>$a_i$</span> such that
+<span class='math'>$a_i \in \{(x + 1) \pmod {M}, (x + 2) \pmod {M}, \ldots, (x + \lceil \frac{M}{2} \rceil) \pmod{M}\}$</span>.
+</li><li>  Observe that it is only optimal for FJ to increase all elements in <span class='math'>$b$</span>,
+and decrease every element in <span class='math'>$c$</span>.
+</li><li>
+The number of operations FJ must perform is
+<span class='math'>$\sum_{i=1}^{|b|} ((x - b_i) \pmod{M}) + \sum_{i=1}^{|c|} ((c_i - x) \pmod{M})$</span>.
+</li><li>
+Let&apos;s find a way to calculate the first expression quickly, but first, we have
+to solve a simpler problem. Suppose we have an array <span class='math'>$d$</span> and we want to find
+<span class='math'>$\sum_{i=1}^{|d|} (y - d_i)$</span>, we can break the summation up into
+<span class='math'>$\sum_{i=1}^{|d|} y - \sum_{i=1}^{|d|} d_i = |d| \cdot y - \sum_{i=1}^{|d|} d_i$</span>.
+</li><li>
+Let&apos;s try to remove the modulo in the first expression. The inconvenient part is
+that some <span class='math'>$x - b_i$</span> might be negative, while <span class='math'>$(x - b_i) \pmod{M}$</span> is positive.
+However, note that
+<ul><li>given two integers <span class='math'>$p$</span> and <span class='math'>$q$</span> such that <span class='math'>$p &lt; q$</span>,
+<span class='math'>$(p-q) \pmod{M} =(p+M)-q$</span>.
+</li></ul>
+Using this, make some adjustments on the values of <span class='math'>$b$</span> and <span class='math'>$x$</span> (i.e. increasing
+some values by <span class='math'>$M$</span> when necessary) such that <span class='math'>$x - b_i$</span> is always positive and
+less than <span class='math'>$M$</span>. This is necessary because we cannot increase an element in <span class='math'>$b$</span> by
+a negative amount. Now, we can apply the calculation for the simpler problem.
+</li><li>
+The values of <span class='math'>$c_i$</span> can be adjusted, and the second expression can be calculated
+in constant time similarly.
+</li></ul>
+<p>The essential observation for this approach is:
+<p><ul><li><span class='math'>$g$</span> attains its minimum value when <span class='math'>$x$</span> is one of <span class='math'>$a_1, a_2, \ldots, a_N$</span>.
+</li></ul>
+<p>Proof: Let&apos;s first show the following fact: if <span class='math'>$x$</span> is not equivalent to any
+<span class='math'>$a_i \pmod M $</span>, then <span class='math'>$2g(x)\ge g(x-1)+g(x+1)$</span>. By the decomposition of <span class='math'>$g$</span>
+described above, it suffices to show that
+<span class='math'>$2h(x, a_i) \ge h(x-1, a_i) + h(x+1, a_i)$</span> for all <span class='math'>$i$</span>. Observe that
+<div class='math'>$$\max(h(x-1, a_i), h(x+1, a_i))\le h(x, a_i) +1$$</div>
+and  <div class='math'>$$\min(h(x-1, a_i), h(x+1, a_i))=h(x, a_i)-1$$</div>  since
+<span class='math'>$x\not \equiv a_i\pmod M$</span>. So
+<div class='math'>$$2h(x, a_i)\ge \min(h(x-1, a_i), h(x+1, a_i)) + \max(h(x-1, a_i), h(x+1, a_i)) = h(x-1, a_i) + h(x+1, a_i),$$</div>
+as desired.
+<p>Suppose <span class='math'>$g$</span> attains its global minimum at <span class='math'>$x=x_{\min}$</span>, and that
+<span class='math'>$x_{\min}\in [a_i, a_{i+1}]$</span> after shifting <span class='math'>$x_{\min}$</span> by an appropriate
+multiple of <span class='math'>$M$</span> for some <span class='math'>$i\in [1,M]$</span> (let&apos;s define <span class='math'>$a_{M+1}=a_1+M$</span>). Then the
+fact we showed above implies that <span class='math'>$g$</span> is
+<a href='https://en.wikipedia.org/wiki/Concave_function'>concave</a> on the interval
+<span class='math'>$[a_i,a_{i+1}]$</span>, which in turn implies
+<span class='math'>$g(x_{\min})\ge \min(g(a_i), g(a_{i+1}))$</span>. Thus, <span class='math'>$g$</span> attains its global minimum
+at some <span class='math'>$a_i$</span>.
+<p>Now, we have limited the number of possible values of <span class='math'>$x$</span> to at most <span class='math'>$N$</span>. Let&apos;s
+iterate over all <span class='math'>$i$</span> and calculate the number of operations that must be
+performed when <span class='math'>$a_i = x$</span>. Since all elements in <span class='math'>$b$</span> and <span class='math'>$c$</span> must be in a
+continuous segment on the modulo circle, we can precompute the sum of all
+elements in <span class='math'>$b$</span> and <span class='math'>$c$</span> using prefix sums on <span class='math'>$a$</span>. To straighten out the modulo
+circle into a line, we can insert <span class='math'>$a_i + M$</span> to the back of <span class='math'>$a$</span> for each
+<span class='math'>$1 \leq i \leq N$</span>. This way, no minor adjustments with modulo in the expressions
+are needed. To determine the index that is the closest to the border of arrays
+<span class='math'>$b$</span> and <span class='math'>$c$</span> (i.e. <span class='math'>$x - \lfloor \frac{M}{2} \rfloor)$</span>, we can use binary search.
+<p>Chongtian&apos;s C++ Implementation:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+using ll = long long;
+
+int main(){
+	int T; cin &gt;&gt; T;
+	while(T--){	
+		int n, m; cin &gt;&gt; n &gt;&gt; m; 
+		vector&lt;int&gt; a(n);
+		for(int&amp; i: a){
+			cin &gt;&gt; i;
+			i %= m;
+		}
+		sort(a.begin(), a.end());
+		vector&lt;ll&gt; b;
+		for(int i = 0; i &lt; n; i++) b.push_back(a[i]);
+		for(int i = 0; i &lt; n; i++) b.push_back(a[i] + m);
+		
+		int N = (int) b.size();
+		vector&lt;ll&gt; p(N);
+		p[0] = b[0];
+		for(int i = 1; i &lt; N; i++) p[i] = p[i-1] + b[i];
+		
+		ll ans = 1e18;
+		for(int i = 0; i &lt; N; i++){
+			if(b[i] - m / 2 &gt;= 0 &amp;&amp; b[i] + (m - 1) / 2 &lt; 2 * m){
+				auto lower = lower_bound(b.begin(), b.end(), b[i] - m / 2) - b.begin();
+				ll lower_sum = (i == 0 ? 0 : p[i - 1]) - (lower - 1 &lt; 0 ? 0 : p[lower - 1]);
+				ll lower_cnt = i - lower;
+				
+				auto upper = upper_bound(b.begin(), b.end(), b[i] + (m - 1) / 2) - b.begin();
+				ll upper_sum = p[upper - 1] - p[i];
+				ll upper_cnt = upper - 1 - i;
+
+				ll res = (lower_cnt * b[i] - lower_sum) + (upper_sum - upper_cnt * b[i]);
+				ans = min(ans, res);
+			}
+		}
+		cout &lt;&lt; ans &lt;&lt; endl;
+	}
+}
+</pre>
+<p></body></html>

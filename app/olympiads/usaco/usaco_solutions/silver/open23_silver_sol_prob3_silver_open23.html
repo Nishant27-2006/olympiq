@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal, Benjamin Qi)
+<p>Let&apos;s first consider the easier problem of computing <span class='math'>$B(s)$</span> for a single string
+<span class='math'>$s$</span>. We can employ a greedy strategy:
+<p>Find the first occurrence of &apos;b&apos; in <span class='math'>$s$</span>, then find the first occurrence of &apos;e&apos;
+after the &apos;b&apos;, then find the first occurrence of &apos;s&apos; after that, find the first
+occurrence of &apos;s&apos; after that &apos;s&apos;, find the first occurrence of &apos;i&apos; after that,
+and then find the first occurrence of &apos;e&apos; after that. Now we have all the
+letters in &quot;bessie&quot;, and we can delete the letters in between them to get an
+occurrence of &quot;bessie&quot; in <span class='math'>$s$</span>. Then, we continue the greedy algorithm on the
+part of <span class='math'>$s$</span> after that &quot;bessie&quot;, until we reach the end of <span class='math'>$s$</span>. Since we just go
+through <span class='math'>$s$</span> once, this is linear time.
+<p><strong>The string has length at most <span class='math'>$5000$</span></strong>
+<p>The problem is equivalent to finding the sum of <span class='math'>$B(s)$</span> over all prefixes <span class='math'>$s$</span> of
+<span class='math'>$u$</span>, doing so for all suffixes <span class='math'>$u$</span> of <span class='math'>$t$</span> and summing the results. We will
+therefore solve that problem for a given <span class='math'>$u$</span> in <span class='math'>$\mathcal O(|u|)$</span>, then apply it
+to all suffixes of <span class='math'>$t$</span>, yielding an <span class='math'>$\mathcal O(|t|^2)$</span> solution overall.
+<p>Consider applying the greedy algorithm we used for a single <span class='math'>$s$</span> to all prefixes
+<span class='math'>$s$</span> of <span class='math'>$u$</span>. Because the greedy algorithm just repeatedly finds the earliest
+occurrence of the characters in &quot;bessie&quot;, the instances it finds will be the
+same for all prefixes of <span class='math'>$u$</span>; at least, it will be the same for those prefixes
+<span class='math'>$s$</span> which are long enough to contain that instance.
+<p>This means that we can apply the greedy strategy on just <span class='math'>$u$</span> itself, and
+whenever we find a complete &quot;bessie&quot;, we count it for all prefixes which are
+long enough to contain it. Formally, if there are <span class='math'>$k$</span> characters after an
+instance of &quot;bessie&quot; that we find, then we add <span class='math'>$k + 1$</span> to the answer.
+<p>This takes time linear in the length of <span class='math'>$u$</span> as desired.
+<p><strong>No additional constraints</strong>
+<p>We want to optimize the <span class='math'>$O(|u|^2)$</span> solution by simulating all of the greedy
+algorithms at once. We can do this by noticing that each greedy algorithm can be
+viewed as a single &quot;token&quot; that&apos;s located at some position in the string
+&quot;bessie&quot;. Whenever we encounter the corresponding character of &quot;bessie&quot; in <span class='math'>$u$</span>,
+we move to the next position, and whenever we move past the last character we
+add <span class='math'>$k + 1$</span> to the answer and move back to the first position in &quot;bessie&quot;.
+<p>It therefore suffices to go through <span class='math'>$t$</span> itself, and maintain the number of
+tokens at each position of &quot;bessie&quot;. Whenever we look at a character <span class='math'>$c$</span> in <span class='math'>$t$</span>,
+we first add a new token at the first position of &quot;bessie&quot;, then move all tokens
+at a position with character <span class='math'>$c$</span> one step to the right. Whenever we see an &quot;e&quot;,
+if there are <span class='math'>$k$</span> characters remaining in <span class='math'>$t$</span>, we add <span class='math'>$k + 1$</span> multiplied by the
+number of tokens at the end of &quot;bessie&quot; to our answer and move that amount of
+tokens back to the beginning of &quot;bessie&quot;. 
+<p>This takes time linear in the length of <span class='math'>$t$</span> which is fast enough.
+<p>Danny&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+ 
+public class Pareidolia {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        String string = in.readLine();
+        long answer = 0;
+        long[] waiting = new long[7];
+        long rem = string.length();
+        for (char letter : string.toCharArray()) {
+            waiting[0]++;
+            for (int d = 5; d &gt;= 0; d--) {
+                if (letter == &quot;bessie&quot;.charAt(d)) {
+                    waiting[d + 1] += waiting[d];
+                    waiting[d] = 0;
+                }
+            }
+            answer += waiting[6] * rem;
+            waiting[0] += waiting[6];
+            waiting[6] = 0;
+            rem--;
+        }
+        System.out.println(answer);
+    }
+}
+</pre>
+<p><strong>Alternate solution (no additional constraints)</strong>
+<p>For each <span class='math'>$i$</span> from <span class='math'>$|t|$</span> down to <span class='math'>$0$</span>, let&apos;s compute <span class='math'>$total[i]$</span>, the sum of <span class='math'>$B(u)$</span>
+for all prefixes <span class='math'>$u$</span> of <span class='math'>$t[i\dots |t|-1]$</span> The answer equals the sum of
+<span class='math'>$total[i]$</span> for all <span class='math'>$i$</span>. Define <span class='math'>$lst[i]$</span> to be the minimum index such that 
+<span class='math'>$t[i\dots lst[i]-1]$</span> contains an occurrence of &quot;bessie&quot;, or <span class='math'>$|t|+1$</span> if no such
+index exists. Then if we run the greedy algorithm on
+<span class='math'>$t[i\dots j-1]$</span>:
+<p><ul><li>If <span class='math'>$j&lt;lst[i]$</span>, then the greedy algorithm does not find any &quot;bessie&quot;s.</li><li>Otherwise, if <span class='math'>$lst[i]\le j\le |t|$</span>, then the greedy algorithm finds a 
+&quot;bessie&quot; and restarts at <span class='math'>$lst[i]$</span>.</li></ul>
+<p>It follows that <span class='math'>$total[i] = |t|+1-lst[i]+total[lst[i]]$</span>. We can compute <span class='math'>$lst$</span>
+from left to right by maintaining monotonic pointers <span class='math'>$idx[0], \dots, idx[5]$</span>,
+one  for each character of &quot;bessie&quot;. To compute <span class='math'>$lst[i]$</span>, while there exists
+some <span class='math'>$j$</span> such that <span class='math'>$\texttt{&quot;bessie&quot;}[j] \neq idx[j]$</span> or
+<span class='math'>$idx[j]&lt; \begin{cases}
+idx[j-1]+1 &amp; j &gt; 0 \\
+i &amp; j = 0
+\end{cases}$</span>, increase
+<span class='math'>$idx[j]$</span>. Once we have finished processing all increases, 
+<span class='math'>$t[idx[0]], t[idx[1]], \dots, t[idx[5]]$</span>  form the earliest occurrence of
+&quot;bessie&quot; in <span class='math'>$t[i\dots |t|-1]$</span>, so <span class='math'>$lst[i]=idx[5]+1$</span>. 
+<p>As each pointer moves at most <span class='math'>$|t|$</span> times in total, we can compute all entries of
+<span class='math'>$lst$</span> in <span class='math'>$O(|t|)$</span> total time. After computing <span class='math'>$lst$</span>, we can finish by computing
+<span class='math'>$total$</span> in <span class='math'>$O(|t|)$</span> time.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+t = input()
+target = &quot;bessie&quot;
+idx = [0] * len(target)
+ans = float(&quot;inf&quot;)
+lst = [-1] * len(t)
+
+for i in range(len(t)):
+    for j in range(len(target)):
+        idx[j] = max(idx[j], i if j == 0 else idx[j - 1] + 1)
+        while idx[j] &lt; len(t) and t[idx[j]] != target[j]:
+            idx[j] += 1
+    lst[i] = min(idx[-1], len(t)) + 1
+
+total = [0] * (len(t) + 1)  # total[i] = sum of answers for prefixes of t[i:]
+for i in reversed(range(len(lst))):
+    total[i] = len(lst) + 1 - lst[i]
+    if total[i] &gt; 0:
+        total[i] += total[lst[i]]
+
+print(sum(total))
+</pre>
+<p></body></html>

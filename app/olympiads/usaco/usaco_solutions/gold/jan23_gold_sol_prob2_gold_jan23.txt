@@ -1,0 +1,322 @@
+Solution ID: sol_prob2_gold_jan23
+Contest: JAN23
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_jan23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Timothy Qian)
+
+We first show that you can turn all the lights off in
+
+$O(N)$
+
+moves. First, turn
+off all the switches. Next, for every light that is on after you have turned off
+that switch, turn on the corresponding switch, then turn off the rotated switch
+on the next move. This in total takes at most
+
+$3N$
+
+moves.
+
+Now we solve the following sub-problem using bitmask dynamic programming. Say we
+start with all the switches off. Let
+
+$dp[i][mask]$
+
+be a boolean denoting whether
+after
+
+$i$
+
+moves, you can turn on the lights corresponding to the bitmask
+
+$mask$
+
+in exactly
+
+$i$
+
+moves. The base case of
+
+$dp[0][mask]$
+
+is true if and only if
+
+$mask = 0$
+
+. Now let's say we've computed
+
+$dp[i - 1][mask]$
+
+for some
+
+$i \geq 1$
+
+.
+Then to compute
+
+$dp[i][mask]$
+
+, we can do casework on the first move. The effects
+of the first move after exactly
+
+$i$
+
+moves will be effectively turning on
+
+$i$
+
+consecutive lights. Thus, there are
+
+$N$
+
+possible first moves, and we can use
+
+$dp[i - 1][mask]$
+
+to compute transitions for using exactly
+
+$i$
+
+moves. This is
+done in
+
+$O(N^2 \cdot 2^N)$
+
+time. We can remove a factor of
+
+$O(N)$
+
+by computing
+an array
+
+$rep$
+
+(standing for representative), such that we have
+
+$rep[mask1] = rep[mask2]$
+
+if and only if
+
+$mask1, mask2$
+
+that are cyclic
+rotations of each other. Then, we only need to check the first moves up to
+cyclic rotation, which means there is only one possible first move with
+
+$i$
+
+consecutive lights on. See my code for further details. This will take
+
+$O(N\cdot 2^N)$
+
+time.
+
+Now we go back to the full problem, say that we have two bitmasks
+
+$lights$
+
+,
+
+$switches$
+
+corresponding to the lights and switches respectively. Then let us
+check whether we can turn all lights off in exactly
+
+$k$
+
+moves. We can pretend
+all the switches are off by computing the effect of the switches after
+
+$k$
+
+moves
+if we didn't toggle any lights. Let the bitmask representing the lights after
+
+$k$
+
+moves be
+
+$mask$
+
+. Then
+
+$dp[k][mask]$
+
+will denote whether we can do this in
+
+$k$
+
+moves. Thus, we simply need to check this for
+
+$k$
+
+from
+
+$0$
+
+to
+
+$3N$
+
+. For each
+test case, this takes
+
+$O(N)$
+
+time. This overall will take
+
+$O(N\cdot 2^N + TN)$
+
+time. We also note that an algorithm running in
+
+$O(N^2 \cdot 2^N + TN)$
+
+time was
+sufficient for full credit.
+
+$O(N \cdot 2^N + TN)$
+
+time C++ code:
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int t, n;
+  cin >> t >> n;
+  auto cyc_right = [&n](int x) -> int {
+    x <<= 1;
+    if (x & (1 << n)) {
+      x ^= (1 << n) ^ 1;
+    }
+    return x;
+  };
+  auto str_to_bin = [&n](string s) -> int {
+    int res = 0;
+    for (int i = 0; i < n; ++i) {
+      if (s[i] == '1') {
+        res ^= (1 << i);
+      }
+    }
+    return res;
+  };
+  vector<int> rep(1 << n, -1);
+  for (int i = 0; i < 1 << n; ++i) {
+    if (rep[i] == -1) {
+      int j = i;
+      while (rep[j] == -1) {
+        rep[j] = i;
+        j = cyc_right(j);
+      }
+    }
+  }
+  vector<vector<bool>> can(3*n + 1, vector<bool>(1 << n));
+  can[0][rep[0]] = true;
+  int cur_pad = 0;
+  for (int i = 1; i <= 3*n; ++i) {
+    cur_pad ^= 1<<((i-1)%n);
+    for (int mask = 0; mask < 1 << n; ++mask) {
+      if (can[i - 1][rep[mask]]) {
+        can[i][rep[cur_pad ^ mask]] = true;
+      }
+    }
+  }
+  while (t--) {
+    string x, y;
+    cin >> x >> y;
+    int pad = str_to_bin(y);
+    int fin = str_to_bin(x);
+    int cur = 0;
+    for (int i = 0; i <= 3*n; ++i) {
+      if (can[i][rep[cur ^ fin]]) {
+        cout << i << '\n';
+        break;
+      }
+      cur ^= pad;
+      pad = cyc_right(pad);
+    }
+  }
+  return 0;
+}
+
+Danny Mittal's
+
+$O(N^2 \cdot 2^N + TN)$
+
+time Java code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class LightsOffOptimized {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int t = Integer.parseInt(tokenizer.nextToken());
+        int n = Integer.parseInt(tokenizer.nextToken());
+ 
+        int[][] pads = new int[3*n + 1][n];
+        for (int l = 1; l <= 3*n; l++) {
+            for (int d = 0; d < n; d++) {
+                pads[l][d] = (1 << d) ^ pads[l - 1][(d + 1) % n];
+            }
+        }
+ 
+        boolean[][] dp = new boolean[3*n + 1][1 << n];
+        dp[0][0] = true;
+        for (int turns = 1; turns <= 3*n; turns++) {
+            for (int mask = 0; mask < (1 << n); mask++) {
+                for (int d = 0; d < n; d++) {
+                    if (dp[turns - 1][mask ^ pads[turns][d]]) {
+                        dp[turns][mask] = true;
+                        break;
+                    }
+                }
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (; t > 0; t--) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int lights = stringToMask(tokenizer.nextToken());
+            int switches = stringToMask(tokenizer.nextToken());
+ 
+            int pad = 0;
+            int answer = -1;
+            for (int turns = 0; turns <= 3*n; turns++) {
+                int padded = lights ^ pad;
+                if (dp[turns][padded]) {
+                    answer = turns;
+                    break;
+                }
+                pad <<= 1;
+                pad ^= switches;
+                if (pad >= 1 << n) {
+                    pad ^= 1 << n;
+                    pad ^= 1;
+                }
+            }
+ 
+            out.append(answer).append('\n');
+        }
+        System.out.print(out);
+    }
+ 
+    public static int stringToMask(String string) {
+        char[] backwards = new char[string.length()];
+        for (int j = 0; j < string.length(); j++) {
+            backwards[j] = string.charAt(string.length() - 1 - j);
+        }
+        return Integer.parseInt(new String(backwards), 2);
+    }
+}

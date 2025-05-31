@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Eric Hsu)
+<p><strong>Subtask 1:</strong> 
+<p><em>Solution 1:</em> We can greedily build towers one at a time as such: process
+the remaining cows from heaviest to lightest, adding a cow to the current tower
+if possible. Repeat this <span class='math'>$M$</span> times, once for each tower.
+<p>Code:
+<p><pre class='prettyprint'>
+N, M, K = map(int, input().split())
+ 
+cows = []
+for _ in range(N):
+	w, a = map(int, input().split())
+	cows += [w] * a
+cows.sort(reverse=True)
+ 
+answer = 0
+for _ in range(M):
+	remaining_cows = []
+	current_cow = 1e100 #arbitrary large number
+	for cow in cows:
+		if cow + K &lt;= current_cow:
+			current_cow = cow
+			answer += 1
+		else:
+			remaining_cows += [cow]		
+ 
+	if len(remaining_cows) == 0:
+		break
+	cows = remaining_cows
+ 
+print(answer)
+</pre>
+<p>Time Complexity: <span class='math'>$O(c^2)$</span>, where <span class='math'>$c$</span> is the number of cows.
+<p><em>Solution 2a:</em> Process the cows from heaviest to lightest. When we process
+a cow, we try to put it on any tower. This is always optimal since we could put
+any of the remaining cows on a tower that the current cow can be placed on, so
+it doesn&apos;t matter where we place the current cow. 
+<p>Code:
+<p><pre class='prettyprint'>
+N, M, K = map(int, input().split())
+ 
+cows = []
+for _ in range(N):
+	w, a = map(int, input().split())
+	cows += [w] * a
+cows.sort(reverse=True)
+ 
+answer = 0
+towers = [1e100]*min(M, len(cows))
+for cow in cows:
+	for i in range(M):
+		if cow + K &lt;= towers[i]:
+			towers[i] = cow
+			answer += 1
+			break
+ 
+print(answer)
+</pre>
+<p><strong> Solution 2b:</strong> Instead of placing the cow on an arbitrary tower, we only
+try to place it on the tower with the heaviest cow on top. This is because if it
+is possible to place a cow on a tower, it is possible to place it on the tower
+with the heaviest cow on top.
+<p>Time Complexity: <span class='math'>$O(c^2)$</span>
+<p>Note that the number of towers is bounded by the number of cows, since if the
+number of towers is greater than the number of cows, we can just remove the
+excess towers. 
+<p><strong>Subtask 2:</strong> 
+<p>We can optimize <em> solution 2b </em> in <strong> subtask 1 </strong> by speeding up the
+search for the heaviest cow. We can do this by keeping a sorted queue of towers
+where the front of the queue is the tower with the heaviest cow on top. When we
+place the current cow on a tower, we move that tower to the back of the queue
+since the current cow is lighter than all of the cows processed before it.
+<p>Time complexity: <span class='math'>$O(c\log c)$</span>, where the log factor comes from sorting the cows by weight.
+<p>Code:
+<p><pre class='prettyprint'>
+from collections import deque
+N, M, K = map(int, input().split())
+ 
+cows = []
+for _ in range(N):
+	w, a = map(int, input().split())
+	cows += [w] * a
+cows.sort(reverse=True)
+ 
+answer = 0
+towers = deque([1e100]*min(M, len(cows)))
+for cow in cows:
+	if cow + K &lt;= towers[0]:
+		answer += 1
+		towers.popleft()
+		towers.append(cow)
+ 
+print(answer)
+</pre>
+<p><strong>Subtask 3:</strong> Instead of processing individual cows and towers, compress
+them into (weight, count) pairs. See the code for the details.  The time
+complexity of the remaining portion of the code after the sorting step is
+bounded by the number of insertions to and deletions from the queue.  Both of
+these are at most <span class='math'>$N$</span>, so the time complexity of the remaining portion is
+<span class='math'>$O(N)$</span>.
+<p>Overall time complexity: <span class='math'>$O(N \log N)$</span>
+<p>Code:
+<p><pre class='prettyprint'>
+from collections import deque
+N, M, K = map(int, input().split())
+ 
+pairs = []
+for _ in range(N):
+	w, a = map(int, input().split())
+	pairs.append([w, a])
+pairs.sort(reverse = True)
+ 
+towers = deque()
+towers.append([1e100, M])
+answer = 0
+for w, a in pairs:
+	remaining = a
+	while len(towers) &gt; 0 and remaining &gt; 0 and w + K &lt;= towers[0][0]:
+		if towers[0][1] &gt; remaining:
+			towers[0][1] -= remaining
+			remaining = 0
+		else:
+			remaining -= towers[0][1]
+			towers.popleft()
+	cnt = a - remaining
+	if cnt &gt; 0:
+		towers.append([w, cnt])
+		answer += cnt
+	
+ 
+print(answer)
+</pre>
+<p>Using an ordered set rather than a deque can also pass with given constraints.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class BovineAcrobaticsBR {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        CowGroup[] cowGroups = new CowGroup[n];
+        for (int j = 0; j &lt; n; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int weight = Integer.parseInt(tokenizer.nextToken());
+            int amt = Integer.parseInt(tokenizer.nextToken());
+            cowGroups[j] = new CowGroup(weight, amt);
+        }
+        Arrays.sort(cowGroups, Comparator.comparingInt(group -&gt; group.weight));
+ 
+        TreeSet&lt;CowGroup&gt; treeSet = new TreeSet&lt;&gt;(Comparator.comparingInt(group -&gt; group.weight));
+        int towers = 0;
+        long answer = 0;
+        for (CowGroup group : cowGroups) {
+            int disp = group.amt;
+            while (disp &gt; 0) {
+                CowGroup floor = treeSet.floor(new CowGroup(group.weight - k, 0));
+                if (floor == null) {
+                    break;
+                }
+                treeSet.remove(floor);
+                if (floor.amt &lt;= disp) {
+                    disp -= floor.amt;
+                } else {
+                    treeSet.add(new CowGroup(floor.weight, floor.amt - disp));
+                    disp = 0;
+                }
+            }
+            towers -= group.amt - disp;
+            int canAdd = Math.min(group.amt, m - towers);
+            towers += canAdd;
+            answer += canAdd;
+            treeSet.add(new CowGroup(group.weight, canAdd));
+        }
+        System.out.println(answer);
+    }
+ 
+    static class CowGroup {
+        final int weight;
+        final int amt;
+ 
+        CowGroup(int weight, int amt) {
+            this.weight = weight;
+            this.amt = amt;
+        }
+    }
+}
+</pre>
+<p></body></html>

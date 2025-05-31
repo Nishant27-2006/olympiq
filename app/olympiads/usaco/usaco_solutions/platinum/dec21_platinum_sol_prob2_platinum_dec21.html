@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>It&apos;s first important to observe that for any valid pairing, we can sort the
+Guernseys in the pairing, then sort the Holsteins in the pairing, and then pair
+up the first Guernsey with the first Holstein, the second Guernsey with the
+second Holstein, and so on, and that will also be a valid pairing.
+<p>This idea means that we can attain any valid set of paired cows using a DP where
+the first parameter is how many of the first Guernseys we&apos;ve already used, and
+the second parameter is how many of the first Holsteins we&apos;ve already used,
+since it&apos;s optimal to pair the next Guernsey we pair with the next Holstein we
+pair from the above idea. We will use this DP to solve the problem.
+<p><strong>Subtask 1: <span class='math'>$T = 1$</span>, <span class='math'>$N \leq 5000$</span></strong>
+<p>Minimizing the sums of weights of the unpaired cows is the same as maximizing
+the sums of weights of paired cows. Furthermore, the pairing of cows with the
+highest sum of weights will clearly be maximal, because otherwise we could add
+the pair of unpaired cows to increase the sum of weights. Therefore, this
+subtask is equivalent to finding the pairing of cows with maximum sum of weight
+of the paired cows.
+<p>We can do this using the exact DP idea explained above. Define <span class='math'>$dp_{x, y}$</span> to be
+the maximum weight of paired cows where we&apos;ve only considered the first <span class='math'>$x$</span>
+Guernseys and the first <span class='math'>$y$</span> Holsteins. There are three ways to transition to a
+state <span class='math'>$(x, y)$</span>: by choosing not to pair the <span class='math'>$x$</span>-th Guernsey, by choosing not to
+pair the <span class='math'>$y$</span>-th Holstein, or by pairing up the <span class='math'>$x$</span>-th Guernsey with the <span class='math'>$y$</span>-th
+Holstein.
+<p>There are <span class='math'>$O(N^2)$</span> states and the transitions can be computed in constant time,
+so the runtime is <span class='math'>$O(N^2)$</span>, which is fast enough for the given constraints.
+<p>Code:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class PairedUpHarderMin {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int t = Integer.parseInt(tokenizer.nextToken());
+        if (t != 1) {
+            throw new IllegalArgumentException();
+        }
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int[] guernseyLocations = new int[n + 1];
+        long[] guernseyWeights = new long[n + 1];
+        int[] holsteinLocations = new int[n + 1];
+        long[] holsteinWeights = new long[n + 1];
+        boolean[] isGuernsey = new boolean[n + 1];
+        int g = 0;
+        int h = 0;
+        long totalImportance = 0;
+        for (int j = 1; j &lt;= n; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            isGuernsey[j] = tokenizer.nextToken().equals(&quot;G&quot;);
+            int location = Integer.parseInt(tokenizer.nextToken());
+            int weight = Integer.parseInt(tokenizer.nextToken());
+            if (isGuernsey[j]) {
+                g++;
+                guernseyLocations[g] = location;
+                guernseyWeights[g] = weight;
+            } else {
+                h++;
+                holsteinLocations[h] = location;
+                holsteinWeights[h] = weight;
+            }
+            totalImportance += weight;
+        }
+        long[][] dp = new long[g + 1][h + 1];
+        for (int j1 = 1; j1 &lt;= g; j1++) {
+            for (int j2 = 1; j2 &lt;= h; j2++) {
+                dp[j1][j2] = Math.max(dp[j1 - 1][j2], dp[j1][j2 - 1]);
+                if (Math.abs(guernseyLocations[j1] - holsteinLocations[j2]) &lt;= k) {
+                    dp[j1][j2] = Math.max(dp[j1][j2], dp[j1 - 1][j2 - 1] + guernseyWeights[j1] + holsteinWeights[j2]);
+                }
+            }
+        }
+        long answer = totalImportance - dp[g][h];
+        System.out.println(answer);
+    }
+}
+</pre>
+<p><strong>Subtask 2: <span class='math'>$T = 2$</span>, <span class='math'>$N \leq 300$</span></strong>
+<p>For <span class='math'>$T = 2$</span> we will solve the problem directly. We can use the same DP states as
+we did for <span class='math'>$T = 1$</span>, but when choosing not to pair a Guernsey, we need to make
+sure that it is more than <span class='math'>$K$</span> distance to the right from the last Holstein we chose not
+to pair, and vice versa.
+<p>To account for this, we could augment our DP state to also include the last
+Guernsey we chose not to pair and the last Holstein we chose not to pair. This
+DP has <span class='math'>$O(N^4)$</span> states, and the transitions are essentially the same as before,
+so <span class='math'>$O(1)$</span>. Unfortunately, no subtask had constraints low enough for <span class='math'>$O(N^4)$</span> to
+pass (though it would pass the samples).
+<p>We can improve this by noting that we don&apos;t actually need to know the last
+Holstein and the last Guernsey that we chose not to pair -- we only need to know
+the last cow that we chose not to pair. This is because if the last cow we chose
+not to pair was a Guernsey, then it was clearly more than <span class='math'>$K$</span> distance to the right from
+the last Holstein that we chose not to pair, so it&apos;s valid to choose not to pair
+an additional Guernsey (and vice versa).
+<p>Formally, we compute a DP <span class='math'>$dp_{x, y, j}$</span> equal to the maximum sum of weights of
+unpaired cows where we&apos;ve considered the first <span class='math'>$x$</span> Guernseys and the first <span class='math'>$y$</span>
+Holsteins, and the last cow we chose not to pair was cow <span class='math'>$j$</span>. This improves the
+amount of states to <span class='math'>$O(N^3)$</span>, while keeping the transitions basically the same.
+A runtime of <span class='math'>$O(N^3)$</span> is sufficient to pass this subtask.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+
+int main() {
+	int T, N, K;
+	cin &gt;&gt; T &gt;&gt; N &gt;&gt; K;
+	assert(T == 2);
+	V&lt;pair&lt;int, int&gt;&gt; cows[2];
+	for (int i = 0; i &lt; N; ++i) {
+		char b;
+		int x, y;
+		cin &gt;&gt; b &gt;&gt; x &gt;&gt; y;
+		cows[b == &apos;H&apos;].push_back({x, y});
+	}
+	const int A = (int)cows[0].size();
+	const int B = (int)cows[1].size();
+	V&lt;V&lt;V&lt;int&gt;&gt;&gt; dp(A + 1, V&lt;V&lt;int&gt;&gt;(B + 1, V&lt;int&gt;(N + 1, -1)));
+	// dp[i][j][k] = i Guernseys processed, j Holsteins processed,
+	// index of last unpaired (or N if none)
+	dp[0][0][N] = 0;
+	auto ckmax = [&amp;](int &amp;a, int b) { a = max(a, b); };
+	for (int i = 0; i &lt;= A; ++i)
+		for (int j = 0; j &lt;= B; ++j)
+			for (int k = 0; k &lt;= N; ++k) {
+				if (dp[i][j][k] == -1)
+					continue;
+				if (i &lt; A &amp;&amp; j &lt; B &amp;&amp;
+					abs(cows[0][i].first - cows[1][j].first) &lt;= K)
+					ckmax(dp[i + 1][j + 1][k], dp[i][j][k]);
+				if (i &lt; A)
+					if (!(A &lt;= k &amp;&amp; k &lt; A + B &amp;&amp;
+						  cows[0].at(i).first &lt;= cows[1].at(k - A).first + K))
+						ckmax(dp[i + 1][j][i],
+							  dp[i][j][k] + cows[0].at(i).second);
+				if (j &lt; B)
+					if (!(k &lt; A &amp;&amp;
+						  cows[1].at(j).first &lt;= cows[0].at(k).first + K))
+						ckmax(dp[i][j + 1][A + j],
+							  dp[i][j][k] + cows[1].at(j).second);
+			}
+	int ans = INT_MIN;
+	for (int i = 0; i &lt;= N; ++i)
+		ans = max(ans, dp[A][B][i]);
+	cout &lt;&lt; ans;
+}
+</pre>
+<p><strong>Subtask 3: <span class='math'>$T = 2$</span>, <span class='math'>$N \leq 5000$</span></strong>
+<p>We will solve the final subtask using the same general DP idea as before, but
+with a slightly different DP than in the previous subtask. Rather than including
+the last cow that we chose not to pair in the DP state, we will include an
+indicator variable saying either that we are only allowed to not pair Guernseys
+right now, or that we are only allowed to not pair Holsteins right now.
+<p>Formally, define <span class='math'>$dp_{x, y, b}$</span> to be the maximum sum of weights of unpaired
+cows where we&apos;ve considered the first <span class='math'>$x$</span> Guernseys and the first <span class='math'>$y$</span> Holsteins,
+and the next cow that we choose not to pair must be of breed <span class='math'>$b$</span>. This DP has
+<span class='math'>$O(N^2)$</span> states. The motivation for this DP idea is similar to for the previous
+subtask: if we choose not to pair a cow of breed <span class='math'>$b$</span>, then we are also free not
+to pair the next cow of breed <span class='math'>$b$</span>, or any following cow of that breed until we
+at some point choose not to pair a cow of the opposite breed.
+<p>This means that at a state <span class='math'>$(x, y, \text{G})$</span>, choosing not to pair the next
+Guernsey simply transitions to the state <span class='math'>$(x + 1, y, \text{G})$</span>, because we&apos;re
+still free to choose not to pair a Guernsey again. Similarly, from a state
+<span class='math'>$(x, y, \text{H})$</span>, choosing not to pair a Holstein transitions to a state
+<span class='math'>$(x, y + 1, \text{H})$</span>.
+<p>Choosing to pair two cows is as simple as before: we simply transition from the
+state <span class='math'>$(x, y, b)$</span> to the state <span class='math'>$(x + 1, y + 1, b)$</span>.
+<p>The complication comes when we consider the fact that we don&apos;t want to be forced
+to only not pair Guernseys or only not pair Holsteins. At a state <span class='math'>$(x, y, b)$</span>,
+we may want to start not pairing cows of the other breed. This introduces
+another transition. Assume that <span class='math'>$b = \text{G}$</span>. If we&apos;re being forced right now
+to only not pair Guernseys, then in the worst case the last unpaired cow was the
+Guernsey we considered, which was the <span class='math'>$x$</span>-th Guernsey.
+<p>This means that if we want to switch to not pairing Holsteins, then we need to
+repeatedly pair cows until the next available Holstein is more than <span class='math'>$K$</span> distance
+to the right from the <span class='math'>$x$</span>-th Guernsey. If the next Holstein more than <span class='math'>$K$</span> distance to the right
+from the <span class='math'>$x$</span>-th Guernsey is the <span class='math'>$y&apos; + 1$</span>-th Holstein, then we need to pair the
+next <span class='math'>$y&apos; - y$</span> pairs of Guernseys and Holsteins, arriving at the state
+<span class='math'>$(y&apos; - y + x, y&apos;)$</span>.
+<p>We can compute this transition in constant time by precomputing <span class='math'>$y&apos;$</span> for each
+<span class='math'>$x$</span>. We also need to make sure that those <span class='math'>$y&apos; - y$</span> pairs are actually valid
+pairs; this can also be checked in constant time using precomputation.
+<p>We also perform a similar transition for the case where <span class='math'>$b = \text{H}$</span>. All of
+the necessary transitions can therefore be computed in constant time, so since
+we have <span class='math'>$O(N^2)$</span> states, the runtime is <span class='math'>$O(N^2)$</span> which is sufficient to pass the
+final subtask.
+<p>Code:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class PairedUpHarderMaxSimpler {
+    public static final long SMALL = -1000000000;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int t = Integer.parseInt(tokenizer.nextToken());
+        if (t != 2) {
+            throw new IllegalArgumentException();
+        }
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int[] guernseyLocations = new int[n + 1];
+        long[] guernseyWeights = new long[n + 1];
+        int[] holsteinLocations = new int[n + 1];
+        long[] holsteinWeights = new long[n + 1];
+        boolean[] isGuernsey = new boolean[n + 1];
+        int g = 0;
+        int h = 0;
+        for (int j = 1; j &lt;= n; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            isGuernsey[j] = tokenizer.nextToken().equals(&quot;G&quot;);
+            int location = Integer.parseInt(tokenizer.nextToken());
+            int weight = Integer.parseInt(tokenizer.nextToken());
+            if (isGuernsey[j]) {
+                g++;
+                guernseyLocations[g] = location;
+                guernseyWeights[g] = weight;
+            } else {
+                h++;
+                holsteinLocations[h] = location;
+                holsteinWeights[h] = weight;
+            }
+        }
+ 
+        int[][] lastValidPairStartingFrom = new int[g + 1][h + 1];
+        for (int x = g; x &gt;= 0; x--) {
+            for (int y = h; y &gt;= 0; y--) {
+                if (x &lt; g &amp;&amp; y &lt; h &amp;&amp; Math.abs(guernseyLocations[x + 1] - holsteinLocations[y + 1]) &lt;= k) {
+                    lastValidPairStartingFrom[x][y] = lastValidPairStartingFrom[x + 1][y + 1];
+                } else {
+                    lastValidPairStartingFrom[x][y] = x;
+                }
+            }
+        }
+        int[] lastTooCloseHolstein = new int[g + 1];
+        for (int x = 1; x &lt;= g; x++) {
+            while (lastTooCloseHolstein[x] &lt;= h &amp;&amp; holsteinLocations[lastTooCloseHolstein[x]] &lt;= guernseyLocations[x] + k) {
+                lastTooCloseHolstein[x]++;
+            }
+            lastTooCloseHolstein[x]--;
+        }
+        int[] lastTooCloseGuernsey = new int[h + 1];
+        for (int y = 1; y &lt;= h; y++) {
+            while (lastTooCloseGuernsey[y] &lt;= g &amp;&amp; guernseyLocations[lastTooCloseGuernsey[y]] &lt;= holsteinLocations[y] + k) {
+                lastTooCloseGuernsey[y]++;
+            }
+            lastTooCloseGuernsey[y]--;
+        }
+        long[][][] dp = new long[2][g + 1][h + 1];
+        for (int b = 0; b &lt;= 1; b++) {
+            for (int x = 0; x &lt;= g; x++) {
+                for (int y = 0; y &lt;= h; y++) {
+                    dp[b][x][y] = SMALL;
+                }
+            }
+        }
+        dp[0][0][0] = 0;
+        dp[1][0][0] = 0;
+        for (int x = 0; x &lt;= g; x++) {
+            for (int y = 0; y &lt;= h; y++) {
+                int nextY = Math.max(y, lastTooCloseHolstein[x]);
+                if (lastValidPairStartingFrom[x][y] - x + y &gt;= nextY) {
+                    dp[1][nextY - y + x][nextY] = Math.max(dp[1][nextY - y + x][nextY], dp[0][x][y]);
+                }
+                int nextX = Math.max(x, lastTooCloseGuernsey[y]);
+                if (lastValidPairStartingFrom[x][y] &gt;= nextX) {
+                    dp[0][nextX][nextX - x + y] = Math.max(dp[0][nextX][nextX - x + y], dp[1][x][y]);
+                }
+ 
+                if (lastValidPairStartingFrom[x][y] &gt;= x + 1) {
+                    dp[0][x + 1][y + 1] = Math.max(dp[0][x + 1][y + 1], dp[0][x][y]);
+                    dp[1][x + 1][y + 1] = Math.max(dp[1][x + 1][y + 1], dp[1][x][y]);
+                }
+ 
+                if (x &lt; g) {
+                    dp[0][x + 1][y] = Math.max(dp[0][x + 1][y], dp[0][x][y] + guernseyWeights[x + 1]);
+                }
+                if (y &lt; h) {
+                    dp[1][x][y + 1] = Math.max(dp[1][x][y + 1], dp[1][x][y] + holsteinWeights[y + 1]);
+                }
+            }
+        }
+        System.out.println(Math.max(dp[0][g][h], dp[1][g][h]));
+    }
+}
+</pre>
+<p>Open(?) Problem: Can you solve <span class='math'>$T=1$</span> in <span class='math'>$o(N^2)$</span> time?
+<p>Author&apos;s Note: This was inspired by a task from
+<a href='https://musictech.mit.edu/fmp'>21M.387.</a> Given a song, a list of estimated
+boundary locations, and a list of ground truth boundary locations, we can define
+the number of &quot;true positives&quot; to be the maximum number of
+<span class='math'>$(\text{estimated location}, \text{ground truth location})$</span> pairs one can form
+such that <span class='math'>$\text{estimated location}$</span> is within <span class='math'>$\tau$</span> seconds of
+<span class='math'>$\text{ground truth location}$</span> for some choice of <span class='math'>$\tau$</span>.
+<p></body></html>

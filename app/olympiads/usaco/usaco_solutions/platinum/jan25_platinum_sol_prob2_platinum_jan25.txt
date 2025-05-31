@@ -1,0 +1,972 @@
+Solution ID: sol_prob2_platinum_jan25
+Contest: JAN25
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_jan25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Suhas Nagar, Benjamin Qi)
+
+Claim 1: The optimal distribution for the positions of
+
+$K$
+
+punches will have at
+most one position not equal to
+
+$0$
+
+or
+
+$N-1$
+
+. Suppose this were not true, then in
+the optimal solution, we have two positions
+
+$0 < p_1 \leq p_2 < N-1$
+
+. However,
+we can always set
+
+$p_1 = p_1-1$
+
+and
+
+$p_2 = p_2+1$
+
+to form an equivalent (or
+better) solution since all the elements between
+
+$p_1$
+
+and
+
+$p_2$
+
+will increase
+and all positions outside maintain the same value. We can repeat this operation
+until one (or both) of
+
+$p_1,p_2$
+
+is at
+
+$0$
+
+or
+
+$N-1$
+
+.
+
+Subtask 1:
+
+For this subtask, we can observe that if we ever have to punch twice, these
+punches should be placed on either end of the array in order to maximize the
+minimum value in the array. We also know that we must punch an even amount of
+times. If we punched an odd number of times and
+
+$i$
+
+was the last position we
+punched, then we can remove this punch and the power at position
+
+$i$
+
+will remain
+unchanged. If we met the power threshold at
+
+$i$
+
+before, it  will still be
+satisfied after the removal.  In two punches, we can always increase a value in
+the array by
+
+$N-1$
+
+. This means we can just print out
+
+$2 \cdot \lceil \frac{p_1}{N-1} \rceil$
+
+.
+
+Subtask 2:
+
+Let
+
+$K$
+
+be the number of times that Bessie punches the array. Clearly, if
+
+$K$
+
+punches can break all the targets, then
+
+$K+1$
+
+punches can break all the targets.
+Consequently, if we can  determine whether
+
+$K$
+
+punches can break all the tiles
+for some given value of
+
+$K$
+
+, then we can binary search on
+
+$K$
+
+to find the
+minimum number of punches necessary.
+
+Suppose we are trying to determine feasibility for some value of
+
+$K$
+
+.
+
+Let
+
+$(A,B)$
+
+represent distributing
+
+$A$
+
+punches to position
+
+$0$
+
+and
+
+$B$
+
+punches
+to position
+
+$N-1$
+
+where
+
+$A+B = K$
+
+or
+
+$A+B = K-1$
+
+with an extra punch being used
+somewhere in the middle. We can let
+
+$a_i$
+
+represent the amount of power applied
+at position
+
+$i$
+
+and say that a  position
+
+$i$
+
+is "satisfied" if
+
+$a_i \geq p_i$
+
+.
+
+Let's first determine how to deal with
+
+$A+B=K$
+
+in
+
+$O(N)$
+
+time for a single
+
+$K$
+
+;
+to deal with
+
+$A+B=K-1$
+
+we can iterate over all middle positions, remove the
+effect of punching at that position, and then solve assuming we only punch at
+the ends. This would give us the answer for a single
+
+$K$
+
+in
+
+$O(N^2)$
+
+time, for
+an overall runtime of
+
+$O(N^2\log \text{MAX})$
+
+per test case.
+
+To solve
+
+$A+B=K$
+
+in
+
+$O(N)$
+
+time, observe that each
+
+$p_i$
+
+determines each an
+lower bound (if
+
+$i\le (N-1)/2$
+
+) or upper bound  (if
+
+$i\ge (N-1)/2$
+
+) on the
+number of times we choose
+
+$N-1$
+
+. We can compute these bounds  in
+
+$O(N)$
+
+time
+independently for each position; then a solution will exist  if there is some
+position for which the lower bound is at most the upper bound.
+
+Optional: we can speed up the solution
+
+$O(N\log \text{MAX} + N^2)$
+
+time since
+checking the
+
+$A+B=K$
+
+case is sufficient to get within distance 1 of the answer,
+and then we only need to apply the
+
+$O(N^2)$
+
+check to a single candidate value of
+
+$K$
+
+.
+
+Full Solution 1:
+
+Instead of solving for each middle position in
+
+$O(N)$
+
+separately, we need to
+somehow deal with them all at once.
+
+One possible approach is to first determine how to apportion the punches  at the
+end positions, and then determine the middle position (if any).
+
+Apportioning punches at ends:
+
+Claim 2: Suppose that the answer is at most
+
+$K$
+
+; then a solution
+
+$(A,B)$
+
+with
+
+$A+B = K$
+
+exists where
+
+$A$
+
+and
+
+$B$
+
+are not necessarily integers. This is true
+because if there is a solution with integral
+
+$(A,B)$
+
+plus an additional punch at
+
+$i$
+
+satisfying
+
+$A+B=K-1$
+
+, then
+
+$(A+\frac{N-1-i}{N-1}, B+\frac{i}{N-1})$
+
+is a
+non-integral solution.
+
+Suppose we want to find some
+
+$A$
+
+such that
+
+$(A,K-A)$
+
+satisfies our array. The
+power at some index
+
+$i$
+
+can be computed to be
+
+$q_i = A\times i + (K-A) \times (N-1-i)$
+
+. Since
+
+$q_i \geq p_i$
+
+in order for the
+position to be satisfied, we know
+
+$$(2i+1-N)A \geq 
+p_i-K\times(N-1-i).$$
+
+Since
+the coefficient of
+
+$A$
+
+switches signs halfway through the array, we can rewrite
+this as two different inequalities.
+
+$$A \geq 
+\frac{p_i-K\times(N-1-i)}{2i+1-N} \text{ subject to } 2i+1-N > 0$$
+
+$$A \leq 
+\frac{p_i-K\times(N-1-i)}{2i+1-N} \text{ subject to } 2i+1-N < 0$$
+
+We
+can determine this inequality across all positions
+
+$i$
+
+to determine that
+
+$a_1 \leq A \leq a_2$
+
+where
+
+$a_1$
+
+is the maximum of the right-hand side across
+the first inequality and
+
+$a_2$
+
+is the minimum of the right-hand side across the
+second inequality.
+
+If
+
+$N$
+
+is odd, then this inequalities will end up dividing by
+
+$0$
+
+at the
+midpoint. We can guard this case specifically by ensuring that
+
+$K\times \lfloor N/2 \rfloor \geq p_{\lfloor N/2\rfloor }$
+
+if
+
+$N$
+
+is odd and
+failing if this is false.
+
+From here, we have three cases we need to consider.
+
+The range
+
+$[a_1,a_2]$
+
+contains an integer: In this case, there exists some
+integer value of
+
+$A$
+
+and
+
+$B$
+
+where
+
+$A+B = K$
+
+, so we know this makes
+
+$K$
+
+feasible.
+
+$a_1 > a_2$
+
+: In this case, we cannot construct any
+
+$(A,B)$
+
+where
+
+$A+B = K$
+
+so we determine that
+
+$K$
+
+is not feasible.
+
+$[a_1,a_2]$
+
+is nonempty and no integers lie between: By claim 2, if there is an integral
+solution
+
+$(A,B)$
+
+with
+
+$A+B=K-1$
+
+, then
+
+$A+\epsilon$
+
+must lie in the range
+
+$[a_1,a_2]$
+
+for some
+
+$\epsilon\in (0, 1)$
+
+. So the only possible value of
+
+$A$
+
+is
+
+$\lfloor a_1 \rfloor$
+
+.
+
+Determining middle position (case 3 only):
+
+In the third case, we have a single candidate pair
+
+$(A,B)$
+
+satisfying
+
+$A+B = K-1$
+
+, and we need to check if we can place the last punch somewhere in
+the array to satisfy all conditions. Suppose that position
+
+$i$
+
+is not satisfied
+and it needs
+
+$d = p_i-a_i$
+
+more power. This means we can place our last punch at
+any position
+
+$p$
+
+where
+
+$p \leq i-d$
+
+or
+
+$p \geq i+d$
+
+. We need to determine if
+there is any position that satisfies all of these inequalities, which we can do
+using a monotonic stack of the indices.
+
+We can maintain a stack of valid indices and process the indices from left to
+right. If our current
+
+$i$
+
+is unsatisfied, we pop any indices in our stack
+greater than
+
+$i-d$
+
+and we maintain that our upper bound is the max of the
+previous upper bound and
+
+$i+d$
+
+. If our current index is satisfied and greater
+than the upper bound, we add it to our stack. At the end of this process, if our
+stack contains any indices, then there is a valid spot for our last punch and
+
+$K$
+
+is feasible.
+
+This solution runs in
+
+$O(N\log \text{MAX})$
+
+time.
+
+Suhas' C++ Code:
+
+#include <iostream>
+#include <vector>
+#include <stack>
+#include <cmath>
+ 
+using namespace std;
+typedef long long ll;
+ 
+bool isKFeasible(ll n, ll k, const vector<ll>& arr) {
+ 
+    // 2*i+1-n = 0 case
+    if (n%2 && arr[n/2] > k*(n/2)) {
+        return false;
+    }
+    ll lower_bound = 0;
+    ll upper_bound = k;
+    for (int i = 0; i < n; i++){
+        ll num = (arr[i]-k*(n-1-i));
+        ll den = (2*i+1-n);
+        if (den < 0) upper_bound = min(upper_bound,num/den);
+        if (den > 0) lower_bound = max(lower_bound,(num+den-1)/den);
+    }
+    if (lower_bound < upper_bound) return true;
+    if (lower_bound-upper_bound > 1) return false;
+    ll A = upper_bound;
+    ll B = k-1-A;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++){
+        a[i] += A*i+B*(n-1-i);
+    }
+    stack<ll> valid_ind;
+    ll ub = -1;
+    for (int i = 0; i < n; i++) {
+        if (i > ub) valid_ind.push(i);
+        ll diff = max(0LL, arr[i] - a[i]);
+        if (diff <= 0) continue;
+ 
+        ll lowpos = max(-1LL, i - diff);
+        ll highpos = min(n, i + diff);
+        ub = max(ub, highpos - 1);
+ 
+        while (!valid_ind.empty() && valid_ind.top() > lowpos) {
+            valid_ind.pop();
+        }
+    }
+    return !valid_ind.empty();
+}
+ 
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t-- > 0) {
+        int n;
+        cin >> n;
+        vector<ll> arr(n);
+        ll high = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> arr[i];
+            high = max(high, 2 * (arr[i] + n - 2) / (n - 1));
+        }
+        ll low = 0;
+        while (low < high) {
+            ll mid = (low + high) / 2;
+            if (isKFeasible(n, mid, arr)) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        cout << high << endl;
+    }
+    return 0;
+}
+
+Full Solution 2:
+
+Let's revisit the lower and upper bounds for each middle position mentioned in
+the subtask 2 solution. In particular, suppose the middle position is
+
+$x$
+
+and we
+are considering the constraint imposed by
+
+$p_i$
+
+. When
+
+$N-1-2i>0$
+
+, the number of
+times
+
+$B$
+
+that
+
+$N-1$
+
+is chosen can be bounded as follows:
+
+$$B(N-1-i) + (K-1-B)i \ge p_i - |i - x|$$
+
+$$B(N-1-2i) \ge p_i - (K-1)i - |i - x|$$
+
+$$B\ge \left\lceil\frac{p_i - (K-1)i - |i - x|}{N-1-2i}\right\rceil.$$
+
+The case
+
+$N-1-2i<0$
+
+is similar, with the direction of the inequality reversed
+and floor instead of ceiling.
+
+$N-1-2i=0$
+
+can be handled separately.
+
+For a fixed
+
+$i$
+
+, the numerator of the right-hand side  changes by at most
+
+$N$
+
+as
+
+$x$
+
+varies; thus, the right-hand side can take on  at most
+
+$\lceil\frac{N}{|N-1-2i|}\rceil$
+
+distinct values. More specifically, we can
+decompose the range of
+
+$x$
+
+into
+
+$O(N/|N-1-2i|)$
+
+pieces where the  right-hand
+side is equal on each piece. The total number of pieces over all
+
+$i$
+
+will be
+
+$O(N\log N)$
+
+.
+
+Now, for each
+
+$x$
+
+we would like to compute the strictest upper and lower bounds
+imposed by any
+
+$i$
+
+. It suffices to implement a data structure supporting the
+following operations on an integer array
+
+$L_0, L_1, \dots, L_{N-1}$
+
+:
+
+$\texttt{update}(l,r,v)$
+
+; set
+
+$L_i=\max(L_i,v)$
+
+for all
+
+$i\in [l,r]$
+
+(called
+
+$O(N\log N)$
+
+times, once per piece)
+
+Query all: Output
+
+$L_0,L_1,\dots,L_{N-1}$
+
+(called once).
+
+If we use a
+
+sparse table
+
+,
+then updates run in
+
+$O(1)$
+
+time each and query all takes
+
+$O(N\log N)$
+
+time (like
+
+$O(1)$
+
+time query RMQ but in reverse).
+
+From the optional note in the subtask 2 solution, we can apply the
+
+$O(N)$
+
+time
+check for
+
+$A+B=K$
+
+to get within 1 of the answer in
+
+$O(N\log \text{MAX})$
+
+time,
+and then apply the
+
+$O(N\log N)$
+
+time check to only a single
+
+$K$
+
+. This results in
+having only one log factor in the time complexity, not two. An
+
+$O(N\log^2N)$
+
+time check can also be fast enough for full credit, depending on the constant factor.
+
+Benjamin Qi's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+#define ROF(i, a, b) for (int i = (b)-1; i >= (a); --i)
+#define R0F(i, a) ROF(i, 0, a)
+
+template <class T> using V = vector<T>;
+#define sz(x) int(size(x))
+
+template <class T> bool ckmin(T &a, const T &b) {
+    return b < a ? a = b, 1 : 0;
+}  // set a = min(a,b)
+template <class T> bool ckmax(T &a, const T &b) {
+    return a < b ? a = b, 1 : 0;
+}  // set a = max(a,b)
+
+template <class T, class U> T fstTrue(T lo, T hi, U f) {
+    ++hi;
+    assert(lo <= hi);  // assuming f is increasing
+    while (lo < hi) {  // find first index such that f is true
+        T mid = lo + (hi - lo) / 2;
+        f(mid) ? hi = mid : lo = mid + 1;
+    }
+    return lo;
+}
+
+ll cdiv(ll a, ll b) {
+    return a / b + ((a ^ b) > 0 && a % b);
+}  // divide a by b rounded up
+ll fdiv(ll a, ll b) {
+    return a / b - ((a ^ b) < 0 && a % b);
+}  // divide a by b rounded down
+
+bool possible_trivial(int N, ll K, V<ll> v) {
+    ll lo_0 = 0, hi_0 = K;
+    F0R(i, N) {
+        ll dif = v.at(i) - (ll)(N - 1 - i) * K;
+        // + k * (2*i-(N-1))
+        if (2 * i <= N - 1) {
+            if (dif > 0) return 0;
+            if (2 * i < N - 1) {
+                // dif + k * (2*i-(N-1)) >= 0
+                ckmin(hi_0, fdiv(-dif, N - 1 - 2 * i));
+            }
+        } else {
+            ckmax(lo_0, cdiv(dif, 2 * i - (N - 1)));
+        }
+    }
+    return lo_0 <= hi_0;
+}
+
+int level(int x) { return 31 - __builtin_clz(x); }
+
+struct RangeMaxer {
+    int N;
+    V<V<ll>> table;
+    RangeMaxer(int N_, ll v) : N(N_), table(level(N) + 1, V<ll>(N, v)) {}
+    void upd(ll l, ll r, ll v) {
+        ckmax(l, 0LL);
+        ckmin(r, N - 1LL);
+        if (l > r) return;
+        int p = level(r - l + 1);
+        ckmax(table[p][l], v);
+        ckmax(table[p][r - (1 << p) + 1], v);
+    }
+    void upd_around(ll val, int i, int den) {
+        assert(den > 0);
+        ll rem = val - den * fdiv(val, den);
+        assert(0 <= rem && rem < den);
+        upd(i - rem + 1, i + rem - 1, fdiv(val, den) + 1);
+        {
+            int x = i - rem;
+            ll v = fdiv(val, den);
+            while (x >= 0) {
+                upd(x - den + 1, x, v);
+                --v;
+                x -= den;
+            }
+        }
+        {
+            int x = i + rem;
+            ll v = fdiv(val, den);
+            while (x < N) {
+                upd(x, x + den - 1, v);
+                --v;
+                x += den;
+            }
+        }
+    }
+    V<ll> extract() {
+        ROF(i, 1, sz(table)) F0R(j, sz(table[i]) - (1 << i) + 1) {
+            ckmax(table[i - 1][j], table[i][j]);
+            ckmax(table[i - 1][j + (1 << (i - 1))], table[i][j]);
+        }
+        return table.front();
+    }
+};
+
+bool possible(int N, ll K, V<ll> v) {
+    RangeMaxer rmax(N, 0), rmin(N, -K + 1);
+    F0R(i, N) {
+        // ll val = v.at(i) - abs(src - i);
+        // b * (N - 1 - 2*i) + (K - 1) * i >= val
+        ll dif = v.at(i) - (K - 1) * i;
+        int den = N - 1 - 2 * i;
+        if (N - 1 - 2 * i > 0) {
+            rmax.upd_around(dif, i, den);  // max with lower bound
+        } else if (N - 1 - 2 * i == 0) {
+            rmax.upd(i - dif + 1, i + dif - 1, K);
+        } else {
+            rmin.upd_around(dif, i, -den);  // min with upper bound
+        }
+    }
+    V<ll> rmax_v = rmax.extract(), rmin_v = rmin.extract();
+    F0R(i, N) if (rmax_v.at(i) <= -rmin_v.at(i)) return true;
+    return false;
+}
+
+ll solve(int N, V<ll> v) {
+    ll max_K = 2 * cdiv(*max_element(begin(v), end(v)), N - 1);
+    assert(possible_trivial(N, max_K, v));
+    ll ans =
+        fstTrue(0LL, max_K, [&](ll x) { return possible_trivial(N, x, v); });
+    if (ans > 1 && possible(N, ans - 1, v)) --ans;
+    return ans;
+}
+
+void solve(int i) {
+    int N;
+    cin >> N;
+    V<ll> v(N);
+    for (auto &t : v) cin >> t;
+    cout << solve(N, v) << "\n";
+}
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int TC;
+    cin >> TC;
+    FOR(i, 1, TC + 1) solve(i);
+}
+
+Note:
+
+We can also replace binary search with convex hull to remove the factor of
+
+$\log MAX$
+
+.  Since each position contributes one constraint on the space of
+valid trivial solutions (using the inequalities derived from Full Solution 1), 
+we just need to intersect them to determine the optimal value of
+
+$K$
+
+with some
+construction
+
+$(A,B)$
+
+where
+
+$A$
+
+and
+
+$B$
+
+are not necessarily integral. We can then
+apply the middle position test from the first full solution to determine if
+
+$K$
+
+is sufficient, and otherwise output
+
+$K+1$
+
+. The implementation details are left
+as an exercise to the reader.

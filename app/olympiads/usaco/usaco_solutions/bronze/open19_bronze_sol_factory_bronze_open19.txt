@@ -1,0 +1,133 @@
+Solution ID: sol_factory_bronze_open19
+Contest: OPEN19
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_factory_bronze_open19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brian Dean)
+
+This is a nice problem where the coding is straightforward once you have 
+figured out the right structure to search for as an answer.
+
+The abstract structure we are dealing with here is a tree --- a set of
+
+$n$
+
+nodes
+connected by
+
+$n-1$
+
+edges, where every node is reachable from  every other node
+and there is no cycle.  Trees are everywhere in computer science and you can
+expect to see them often in higher divisions.
+
+Let's call a node with only incoming directed edges a "sink", since  things can
+flow into it but not out.  The short answer to the problem is that we need to
+see if our tree has a single unique sink, in which case this is the answer. 
+Let's see if we can argue this:
+
+1. If all nodes in the tree can reach node
+
+$x$
+
+, then we claim node
+
+$x$
+
+must be
+the unique sink.  All nodes aside from
+
+$x$
+
+need at least one outgoing directed
+edge to be able to escape from them, so they aren't sinks.  Further, node
+
+$x$
+
+cannot have any outgoing edges, since if there was an edge
+
+$x \rightarrow y$
+
+then
+
+$y$
+
+couldn't reach
+
+$x$
+
+.
+
+2. If
+
+$x$
+
+is the unique sink, then all nodes in the tree can reach
+
+$x$
+
+.  Suppose
+some node
+
+$y$
+
+cannot reach
+
+$x$
+
+.  We know
+
+$y$
+
+has an outgoing edge since it isn't
+a sink, so let's follow such an edge.   This lands us on another node (say,
+
+$z$
+
+)
+which if not a sink must also have an outgoing edge, so let's  follow such an
+edge.  If we keep following outgoing edges until we no longer can, we inevitably
+must get stuck at a sink, since this is the only node with no outgoing edges
+(and we can't go around in cycles since a tree has no cycles).  This means we
+have reached
+
+$x$
+
+, since
+
+$x$
+
+is the only sink.
+
+My code for solving this problem is below.
+
+#include <iostream>
+#include <fstream>
+using namespace std;
+ 
+int N, incoming[101], outgoing[101];
+ 
+int main(void)
+{
+  ifstream fin ("factory.in");
+  fin >> N;
+  for (int i=0; i<N-1; i++) {
+    int a, b;
+    fin >> a >> b;
+    outgoing[a]++;
+    incoming[b]++; 
+  }
+ 
+  ofstream fout ("factory.out");
+  int answer = -1;
+  for (int i=1; i<=N; i++) {
+    if (outgoing[i]==0 && answer != -1 ) { answer = -1; break; } // found two sinks -- bad!
+    if (outgoing[i]==0) answer = i;  // found first sink; remember it
+  }
+  fout << answer << "\n";
+  return 0;
+}

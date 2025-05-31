@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+by Nathan Pinsker
+<p>The first approach to this problem is to simply brute-force: first, compute all
+substring sequences of length 1 for both spotty and non-spotty cows. Put these
+sequences into two different sets, and make sure that the sets are completely
+disjoint -- if they are, then sequences of length 1 are sufficient to tell these
+types of cows apart, and we are finished. Otherwise, we consider all substring
+sequences of length 2, and continue to consider longer and longer substrings
+until our subsets are completely disjoint.
+<p>The problem with this approach is that string comparison will eventually become
+too slow. Since there may be as many <span class='math'>$O(NM^2)$</span> strings in total and <span class='math'>$M &lt;= 500$</span>,
+and comparing all of these strings will take too much time and memory. One way
+around this problem is to use a
+<a href='href=&quot;https://en.wikipedia.org/wiki/Rolling_hash&quot;'>rolling hash function</a>.
+The main benefit of a rolling hash is that you can hash a string in <span class='math'>$O(n)$</span> time,
+and then find in <span class='math'>$O(1)$</span> time the hash of any substring of that string. (If you
+don&apos;t know what a rolling hash function is, learning about it is really worth
+your time -- it pops up all the time in programming contests!) Thus, instead of
+comparing and storing all substring sequences, we can simply store the hashes of
+all substring sequences instead. To compare two substring sequences, we instead
+compare their hashes. While this does have a small probability of error, the
+hashes are large enough (and <span class='math'>$M$</span> is small enough) that this shouldn&apos;t be an
+issue in practice. 
+<p>Contestants can also use a binary search to quickly locate the minimum value --
+if all substrings with length <span class='math'>$k$</span> are unique to either spotted or non-spotted
+cows, then all substrings with length <span class='math'>$k+1$</span> are unique to either spotted or
+non-spotted cows as well. Using either this approach or the hashing approach is
+sufficient to receive full credit.
+<p>Here&apos;s Brian Dean&apos;s code, which uses the hashing approach with a very simple
+hash function -- it hashes a substring by simply taking a dot product between that
+string and a random vector of integers.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;cmath&gt;
+#include &lt;set&gt;
+#include &lt;cstdlib&gt;
+using namespace std;
+
+int N, M;
+string spotty[500], plain[500];
+unsigned long long hashes1[500], hashes2[500], R[500];
+
+int main(void)
+{
+  ifstream fin (&quot;cownomics.in&quot;);
+  ofstream fout (&quot;cownomics.out&quot;);
+  fin &gt;&gt; N &gt;&gt; M;
+  for (int i=0; i&lt;N; i++) fin &gt;&gt; spotty[i];
+  for (int i=0; i&lt;N; i++) fin &gt;&gt; plain[i];
+  for (int i=0; i&lt;M; i++) R[i] = rand() % 1000000000;
+  int i=0, j=0;
+  int best = M, dups = N;
+  while (j &lt; M) {
+    // There is (very small) but some false positive risk in 
+    // using hashing here, so we could have explicitly verified
+    // matches if desired just to be 100% certain of correctness
+    if (dups == 0) best = min(best, j-i);
+    if (dups&gt;0) {
+      set&lt;int&gt; H;
+      dups = 0;
+      for (int k=0; k&lt;N; k++) H.insert(hashes1[k] += R[j] * spotty[k][j]);
+      for (int k=0; k&lt;N; k++) if (H.count(hashes2[k] += R[j] * plain[k][j])&gt;0) dups++;
+      j++;
+    } else {
+      dups = 0;
+      set&lt;int&gt; H;
+      for (int k=0; k&lt;N; k++) H.insert(hashes1[k] -= R[i] * spotty[k][i]);
+      for (int k=0; k&lt;N; k++) if (H.count(hashes2[k] -= R[i] * plain[k][i])&gt;0) dups++;
+      i++;
+    }
+  }
+  fout &lt;&lt; best &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

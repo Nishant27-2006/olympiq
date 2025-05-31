@@ -1,0 +1,207 @@
+Solution ID: sol_prob1_bronze_open22
+Contest: OPEN22
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Consider replacing every length-two substring of the input string with
+
+. if the two characters are equal
+
+A if the substring is GH
+
+B if the substring is HG
+
+For example, the sample input would be transformed as follows:
+
+GG|GH|GH|HG|HH|HG|HG
+-> .BBA.AA
+
+Reversing an even-length prefix in the original string corresponds to reversing
+and then flipping a prefix in the new string (where a flip converts As to Bs, Bs
+to As, and leaves .s unchanged). Let's call a combination of a reversal and a
+flip an
+
+operation
+
+. The goal is to maximize the number of As in the  new
+string with the minimum number of operations.
+
+Now we can use the following observations to simplify the new string. First,
+drop all occurrences of .:
+
+.BBA.AA
+-> BBAAA
+
+Second, condense all consecutive occurrences of the same character into a single
+occurrence since we can always choose to reverse them as a block.
+
+BBAAA
+-> BA
+
+Third, drop the last character of the string if it is an A.
+
+BA
+-> B
+
+To recap, we are left with the string
+
+$s=\text{simplify}(\texttt{.BBA.AA})=\texttt{B}$
+
+. Note that regardless of the
+input string,
+
+$s$
+
+will always be an alternating sequence of As and Bs that ends
+with B if it is nonempty.
+
+The final observation is that regardless of how we choose a prefix of
+
+$s$
+
+to
+operate on,
+
+$\text{length}(\text{simplify}(\text{operate}(s))) \ge \text{length}(s)-1$
+
+.
+For example, when
+
+$s=\texttt{ABAB}$
+
+we can show that regardless of what prefix
+of
+
+$s$
+
+we choose to operate on, the simplified string after the operation will
+have length at least
+
+$3$
+
+:
+
+ABAB
+-> BBAB (operate on prefix of length 1)
+-> BAB (simplify)
+
+ABAB
+-> ABAB (operate on prefix of length 2)
+-> ABAB (simplify)
+
+Also, it is always possible to choose a prefix to operate on such that
+
+$\text{length}(\text{simplify}(\text{operate}(s))) = \text{length}(s)-1$
+
+when
+
+$\text{length}(s)>0$
+
+;  just choose to operate on the length-1 prefix of
+
+$s$
+
+.
+
+So the answer is
+
+$\text{length}(s)$
+
+, which may be computed in
+
+$O(N)$
+
+time.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+ 
+public class Photoshoot3 {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        char[] ordering = in.readLine().toCharArray();
+        int answer = 0;
+        for (int j = n - 2; j >= 0; j -= 2) {
+            if (ordering[j] != ordering[j + 1] && (ordering[j] == 'G') == (answer % 2 == 0)) {
+                answer++;
+            }
+        }
+        System.out.println(answer);
+    }
+}
+
+Jichao Qian's code:
+
+#include <stdio.h>
+#include <stdint.h>
+ 
+#include <vector>
+#include <algorithm>
+using namespace std;
+ 
+ 
+int main()
+{
+    int N;
+    scanf("%d", &N);
+ 
+    char str[200002];
+    scanf("%s", str + 1);
+ 
+    int ret = 0;
+    for (int idx = N; idx >= 2; idx -= 2)
+    {
+        if (str[idx] == str[idx-1])
+            continue;
+ 
+        if (str[idx] == 'G' && ret % 2 == 1)
+            ++ret;
+ 
+        if (str[idx] == 'H' && ret % 2 == 0)
+            ++ret;
+    }
+ 
+    printf("%d\n", ret);
+ 
+    return 0;
+}
+
+Benjamin Qi's code:
+
+N = int(input())
+s = input()
+ 
+lst = '.'
+ans = 0
+ 
+for i in range(0,N,2):
+	if s[i] != s[i+1]:
+		if s[i] != lst:
+			ans += 1
+			lst = s[i]
+ 
+if lst == 'H':
+	ans -= 1
+ 
+print(ans)
+
+Exercise: We did not formally prove all of our observations. Verify that the quantity computed by  each solution
+does not decrease by more than one after any prefix reversal of  the input
+string.
+
+Note: This problem is vaguely similar to
+
+Mad Scientist
+
+.

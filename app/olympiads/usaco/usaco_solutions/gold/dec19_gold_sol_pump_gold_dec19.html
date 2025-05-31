@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>Let&apos;s first approach a simpler problem - what is the minimum cost needed to
+reach junction <span class='math'>$N$</span> from junction <span class='math'>$1$</span>, ignoring flow rate? This is a shortest paths problem and can
+be solved by applying Dijkstra&apos;s.
+<p>There&apos;s a small problem though - if we just use Dijkstra&apos;s to compute the length
+of the shortest path, we don&apos;t know which edges are used so we can&apos;t compute the
+ratio of flow rate and cost directly. We need more information about the minimum
+weight edge used in the graph.
+<p>There are two ways that we can handle this. The first way is to delete all edges
+with the minimum weight, and recompute the length of the shortest path. We
+repeatedly apply this process until there is no path between junctions <span class='math'>$1$</span> and
+<span class='math'>$N$</span>. For each application of Dijkstra&apos;s, compute the ratio between the minimum
+weight edge present in the graph and the length of the shortest path, and take
+the maximum of all of these values.
+<p>This answer is clearly a lower bound on the answer since it cannot overestimate
+the flow rate within the graph, and the reason that this answer must be valid is
+that if the length of the shortest path increases after deleting edges of
+minimum weight, then all shortest paths in the prior graph must have used one of
+those edges.
+<p>Here is Brian Dean&apos;s code implementing this approach.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;vector&gt;
+#include &lt;set&gt;
+#include &lt;map&gt;
+using namespace std;
+ 
+int N, M;
+map&lt;int, vector&lt;int&gt;&gt; nbrs;
+map&lt;pair&lt;int,int&gt;,double&gt; edgecost;
+map&lt;pair&lt;int,int&gt;,double&gt; edgeflow;
+vector&lt;int&gt; flows;
+ 
+int dijkstra(int source, int destination, int flowmin)
+{
+  map&lt;int,int&gt; dist;
+  set&lt;pair&lt;int,int&gt;&gt; visited;
+  visited.insert(make_pair(0,source));
+  while (!visited.empty()) {
+    int i = visited.begin()-&gt;second;
+    visited.erase(visited.begin());
+    if (i == destination) return dist[i];
+    for (auto j : nbrs[i])
+      if (edgeflow[make_pair(i,j)] &gt;= flowmin)
+	if (dist.count(j) == 0 || dist[i] + edgecost[make_pair(i,j)] &lt; dist[j]) {
+	  dist[j] = dist[i] + edgecost[make_pair(i,j)];
+	  visited.insert(make_pair(dist[j],j));
+	}
+  }
+  return -1;
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;pump.in&quot;);
+  ofstream fout (&quot;pump.out&quot;);
+  fin &gt;&gt; N &gt;&gt; M;
+  int i, j, c, f;
+  for (int m=0; m&lt;M; m++) {
+    fin &gt;&gt; i &gt;&gt; j &gt;&gt; c &gt;&gt; f;
+    flows.push_back(f);
+    nbrs[i].push_back(j);
+    nbrs[j].push_back(i);
+    edgecost[make_pair(i,j)] = edgecost[make_pair(j,i)] = c;
+    edgeflow[make_pair(i,j)] = edgeflow[make_pair(j,i)] = f;
+  }
+  long long best_num = 0, best_den = 1, cur_num, cur_den;
+  for (int f : flows) {
+    cur_num = f;
+    cur_den = dijkstra(1, N, f);
+    if (cur_den != -1) {
+      if (cur_num * best_den &gt; best_num * cur_den) {
+	best_num = cur_num; best_den = cur_den;
+      }
+    }
+  }
+  fout &lt;&lt; best_num * 1000000LL / best_den &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+<p>The other way to approach this is to augment the vertices to also keep track of
+the flow rate currently going through the vertex at that point in time. With
+this approach, you only run Dijkstra&apos;s once, but you have to maintain more
+information when computing the transitions. Here is my code implementing this
+approach.
+<p><pre class='prettyprint'>
+#include &lt;cstring&gt;
+#include &lt;iostream&gt;
+#include &lt;queue&gt;
+
+using namespace std;
+
+typedef pair&lt;int, int&gt; pii;
+typedef pair&lt;int, pii&gt; edge; // &lt;flow, cost&gt;
+typedef pair&lt;int, pii&gt; vertex; // &lt;vertex, flow&gt;
+
+int dp[1001][1001];
+vector&lt;edge&gt; edges[1001];
+int main() {
+  freopen(&quot;pump.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;pump.out&quot;, &quot;w&quot;, stdout);
+  memset(dp, 1, sizeof(dp));
+  int n, m;
+  cin &gt;&gt; n &gt;&gt; m;
+  dp[1][1000] = 0;
+  while(m--) {
+    int a, b, c, f;
+    cin &gt;&gt; a &gt;&gt; b &gt;&gt; c &gt;&gt; f;
+    edges[a].push_back(edge(b, {f, c}));
+    edges[b].push_back(edge(a, {f, c}));
+  }
+  priority_queue&lt;vertex&gt; q;
+  q.push(vertex(0, {1, 1000}));
+  double ret = -1;
+  while(q.size()) {
+    vertex curr = q.top(); q.pop();
+    if(curr.second.first == n) {
+      ret = max(ret, curr.second.second / (double)dp[curr.second.first][curr.second.second]);
+      continue;
+    }
+    for(edge out: edges[curr.second.first]) {
+      int nf = min(out.second.first, curr.second.second);
+      int nc = dp[curr.second.first][curr.second.second] + out.second.second;
+      int nd = out.first;
+      if(nc &lt; dp[nd][nf]) {
+        dp[nd][nf] = nc;
+        q.push(vertex(-dp[nd][nf], {nd, nf}));
+      }
+    }
+  }
+  cout &lt;&lt; (int)(1000000 * ret) &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Subtask 1: <span class='math'>$N\le 6$</span></strong> 
+<p>Consider all <span class='math'>$2^{N(N-1)/2}$</span> ways to either have a direct flight or not between
+each pair of cities. For each of these ways, check whether it will produce the
+input by iterating over all <span class='math'>$2^N$</span> subsets of cities and checking whether that
+subset forms a valid flight route. The overall runtime is <span class='math'>$O(2^{N(N-1)/2}\cdot 2^N)=O(2^{N(N+1)/2})$</span>.
+<p><strong>Subtask 2: <span class='math'>$N\le 100$</span></strong>
+<p>Suppose we want to determine whether there is a direct flight from <span class='math'>$l$</span> to <span class='math'>$r$</span>.
+First, determine whether there is a direct flight from <span class='math'>$l&apos;$</span> to <span class='math'>$r&apos;$</span> for all 
+<span class='math'>$(l&apos;,r&apos;)\neq (l,r)$</span> satisfying <span class='math'>$l\le l&apos; &lt;r&apos;\le r$</span>. Then, compute the parity of
+the number of flight routes from <span class='math'>$l$</span> to <span class='math'>$r$</span> excluding the potential direct
+flight from <span class='math'>$l$</span> to <span class='math'>$r$</span>. There is a direct flight from <span class='math'>$l$</span> to <span class='math'>$r$</span> if the computed
+parity does not match the parity given in the input. 
+<p>Computing the parity of the number of flight routes from <span class='math'>$l$</span> to <span class='math'>$r$</span> excluding
+the potential direct flight from <span class='math'>$l$</span> to <span class='math'>$r$</span> can be done in  <span class='math'>$O(N^2)$</span> time (see
+the function <span class='math'>$\texttt{count_routes_excluding_direct}(l,r)$</span> in the code below).
+For <span class='math'>$l\le i\le r$</span>, let <span class='math'>$\text{routes_to}_{l}(i)$</span> denote the parity of the number
+of flight routes from <span class='math'>$l$</span> to <span class='math'>$i$</span>  using only the previously computed direct
+flights, or <span class='math'>$1$</span> if <span class='math'>$l=i$</span>. Also, let <span class='math'>$\text{direct}[j][i]$</span> denote whether there
+is a direct flight from <span class='math'>$j$</span> to <span class='math'>$i$</span>. Then for <span class='math'>$l&lt;i\le r$</span> we have the relation
+<span class='math'>$\text{routes_to}_{l}(i)\equiv\sum_{j=l}^{i-1}\text{routes_to}_l(j)\cdot \text{direct}[j][i]\pmod{2}$</span>.
+Using this, we can compute <span class='math'>$\text{routes_to}_{l}(i)$</span> in increasing order from
+<span class='math'>$i=l+1$</span> to
+<span class='math'>$i=r$</span>.
+<p><em>Time Complexity:</em> The function
+<span class='math'>$\texttt{count_routes_excluding_direct}(l,r)$</span> is called <span class='math'>$O(N^2)$</span> times and each
+call takes <span class='math'>$O(N^2)$</span> time, so the overall runtime is
+<span class='math'>$O(N^2\cdot N^2)=O(N^4)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	V&lt;V&lt;int&gt;&gt; routes(N, V&lt;int&gt;(N));
+	for (int i = 0; i &lt; N - 1; ++i) {
+		string s;
+		cin &gt;&gt; s;
+		for (int j = i + 1; j &lt; N; ++j) routes[i][j] = s.at(j - i - 1) - &apos;0&apos;;
+	}
+	V&lt;V&lt;int&gt;&gt; direct(N, V&lt;int&gt;(N));
+	auto count_routes_excluding_direct = [&amp;](int l, int r) {
+		V&lt;int&gt; routes_to(N);
+		routes_to[l] = 1;
+		for (int i = l + 1; i &lt;= r; ++i)
+			for (int j = l; j &lt; i; ++j)
+				routes_to[i] ^= routes_to[j] * direct[j][i];
+		return routes_to[r];
+	};
+	int ans = 0;
+	for (int i = N - 1; i &gt;= 0; --i)
+		for (int j = i + 1; j &lt; N; ++j) {
+			direct[i][j] = routes[i][j] ^ count_routes_excluding_direct(i, j);
+			ans += direct[i][j];
+		}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Full Solution: <span class='math'>$N\le 750$</span></strong>
+<p>We reduce the time complexity of the function
+<span class='math'>$\texttt{count_routes_excluding_direct}(l,r)$</span> to <span class='math'>$O(N)$</span>. Since
+<span class='math'>$\text{routes_to}_{l}(i)$</span> for <span class='math'>$l&lt;i&lt;r$</span> is equal to the parity of the number of
+flight routes from <span class='math'>$l$</span> to <span class='math'>$i$</span>, we can remove the loop over <span class='math'>$i$</span> in the function
+and directly compute <span class='math'>$\text{routes_to}_{l}(r)$</span>. The overall runtime is
+<span class='math'>$O(N^3)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	V&lt;V&lt;int&gt;&gt; routes(N, V&lt;int&gt;(N));
+	for (int i = 0; i &lt; N - 1; ++i) {
+		string s;
+		cin &gt;&gt; s;
+		for (int j = i + 1; j &lt; N; ++j) routes[i][j] = s.at(j - i - 1) - &apos;0&apos;;
+	}
+	V&lt;V&lt;int&gt;&gt; direct(N, V&lt;int&gt;(N));
+	auto count_routes_excluding_direct = [&amp;](int l, int r) {
+		int ret = 0;
+		for (int j = l; j &lt; r; ++j) ret ^= routes[l][j] * direct[j][r];
+		return ret;
+	};
+	int ans = 0;
+	for (int i = N - 1; i &gt;= 0; --i)
+		for (int j = i + 1; j &lt; N; ++j) {
+			direct[i][j] = routes[i][j] ^ count_routes_excluding_direct(i, j);
+			ans += direct[i][j];
+		}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Bonus: <span class='math'>$N\le 5000$</span></strong>
+<p>Try solving this using <a href='https://usaco.guide/plat/bitsets'>bitsets</a>.
+<p></body></html>

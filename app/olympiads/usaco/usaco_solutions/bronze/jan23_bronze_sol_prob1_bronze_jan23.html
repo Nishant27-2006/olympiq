@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by David Hu)
+<p>Note that each cow visits only cows at or after it. This implies that it is 
+impossible for any pair of two cows to visit each other. Thus, either the 
+leader of the guernseys must have visited all the guernseys or the leader of
+holsteins must have visited all the holsteins (or both). This means that the
+leader of the guernseys must be the earliest guernsey or the leader of the
+holsteins must be the earliest holstein (or both).
+<p>Once we fix the leader of the guernseys to be the earliest guernsey and verify
+that the earliest guernsey has indeed visited all the other guernseys, we can
+brute force  over all holsteins and check whether they can also be a leader
+together with the earliest guernsey. Likewise, we also consider a similar case
+where the leader of the holsteins is the earliest holstein.
+<p>Make sure to pay special attention to the case where the earliest guernsey and
+earliest holstein are both leaders.
+<p>My C++ code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+
+using namespace std;
+
+const int MAXN = 3e5 + 13;
+
+int N;
+string s;
+int arr[MAXN];
+int eG, eH; //earliest guernsey, earliest holstein
+int lG, lH; //latest guernsey, latest holstein
+int ans;
+
+int main()
+{
+    cin &gt;&gt; N &gt;&gt; s;
+    for (int i = 0; i &lt; N; i++)
+    {
+        cin &gt;&gt; arr[i];
+        arr[i]--;
+    }
+    for (int i = 0; i &lt; N; i++)
+    {
+        if (s[i] == &apos;G&apos;)
+        {
+            eG = i;
+            break;
+        }
+    }
+    for (int i = N - 1; i &gt;= 0; i--)
+    {
+        if (s[i] == &apos;G&apos;)
+        {
+            lG = i;
+            break;
+        }
+    }
+    for (int i = 0; i &lt; N; i++)
+    {
+        if (s[i] == &apos;H&apos;)
+        {
+            eH = i;
+            break;
+        }
+    }
+    for (int i = N - 1; i &gt;= 0; i--)
+    {
+        if (s[i] == &apos;H&apos;)
+        {
+            lH = i;
+            break;
+        }
+    }
+    if (arr[eG] &gt;= lG)
+    {
+        //earliest guernsey visited everybody and is the leader.
+        //holstein leader has to visit earliest guernsey or visit all holsteins.
+        //handle case where holstein leader has visited earliest guernsey.
+        for (int i = 0; i &lt; eG; i++)
+        {
+            if (i == eH) //ignore the case where the holstein leader is earliest holstein.
+            {
+                continue;
+            }
+            if (s[i] == &apos;H&apos; &amp;&amp; arr[i] &gt;= eG)
+            {
+                ans++;
+            }
+        }
+    }
+    if (arr[eH] &gt;= lH)
+    {
+        //earliest holstein visited everybody.
+        for (int i = 0; i &lt; eH; i++)
+        {
+            if (i == eG)
+            {
+                continue;
+            }
+            if (s[i] == &apos;G&apos; &amp;&amp; arr[i] &gt;= eH)
+            {
+                ans++;
+            }
+        }
+    }
+    //check whether earliest guernsey and earliest holstein can together be leaders.
+    if ((arr[eG] &gt;= lG || (eG &lt;= eH &amp;&amp; arr[eG] &gt;= eH)) &amp;&amp; (arr[eH] &gt;= lH || (eH &lt;= eG &amp;&amp; arr[eH] &gt;= eG)))
+    {
+        ans++;
+    }
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+    return 0;
+}
+</pre>
+<p>My Python code:
+<pre class='prettyprint'>
+N = int(input())
+s = input()
+arr = list(map(int, input().split()))
+arr = [x - 1 for x in arr]
+
+eG, eH, lG, lH = -1, -1, -1, -1
+
+for i in range(N - 1, -1, -1):
+    if (s[i] == &apos;G&apos;):
+        eG = i
+    if (s[i] == &apos;H&apos;):
+        eH = i
+
+for i in range(N):
+    if (s[i] == &apos;G&apos;):
+        lG = i
+    if (s[i] == &apos;H&apos;):
+        lH = i
+
+ans = 0
+
+if (arr[eG] &gt;= lG):
+    for i in range(eG):
+        if (i == eH):
+            continue
+        if (s[i] == &apos;H&apos; and arr[i] &gt;= eG):
+            ans += 1
+
+if (arr[eH] &gt;= lH):
+    for i in range(eH):
+        if (i == eG):
+            continue
+        if (s[i] == &apos;G&apos; and arr[i] &gt;= eH):
+            ans += 1
+
+if ((arr[eG] &gt;= lG or (eG &lt;= eH and arr[eG] &gt;= eH)) and (arr[eH] &gt;= lH or (eH &lt;= eG and arr[eH] &gt;= eG))):
+    ans += 1
+
+print(ans)
+</pre>
+<p></body></html>

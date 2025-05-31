@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+We can solve this problem by binary searching on the answer.
+<p>How can we tell if a given ratio <em>x</em> is achievable? What we want is a set
+<em>S</em> of cows satisfying,
+<p><span class='math'>$\frac{\sum_{i \in S} T_i}{\sum_{i \in S} W_i} \ge x$</span> and
+<span class='math'>$\sum_{i \in S} W_i \ge w$</span>.
+<p>The first condition is more easily expressed as
+<p><span class='math'>$\sum_{i \in S} (T_i - x W_i) \ge 0$</span>.
+<p>Binary searching with real numbers can be tricky, but here, our life is
+simplified because we know we are only looking for
+<span class='math'>$\lfloor 1000x \rfloor$</span>. We can let <em>y</em> = 1000<em>x</em> and then
+we want to find the maximum integer <em>y</em> such that
+<p><span class='math'>$\sum_{i \in S} (1000T_i - y W_i) \ge 0$</span> and
+<span class='math'>$\sum_{i \in S} W_i \ge w$</span>
+<p>is satisfiable for some <em>S</em>. Let&apos;s call the quantity
+<span class='math'>$1000T_i - y W_i$</span> the
+<em>adjusted-talent-score</em>.
+<p>To do this, we can use a simple knapsack DP, where we compute, for each <em>j</em>
+and <em>k</em>, the maximum adjusted-talent-score  achievable with a subset of the
+first <em>j</em> cows and exactly <em>k</em> weight. The maximum total weight is
+very high, but we can take a shortcut since we do not care about weights higher
+than <em>w</em> - or at least, for a given set of cows with weight at least
+<em>w</em>, we don&apos;t care what its <em>exact</em> weight is. The DP, then, is
+<span class='math'>$O(wn)$</span>. The total runtime would be <span class='math'>$O(wn \log(t))$</span> where
+<em>t</em> is the maximum value of
+<em>y</em>.
+<p><pre class='prettyprint'>#include &lt;cstdio&gt;
+#include &lt;algorithm&gt;
+#include &lt;cassert&gt;
+using namespace std;
+
+#define NMAX 250
+#define WMAX 1000
+
+#define infinite 1000000000000000000LL
+
+// The inputs
+int weights[NMAX];
+int talent[NMAX];
+
+int n;
+int w;
+
+// The dp state.
+// For 0 &lt;= i &lt; w, this is the maximum adjusted-talent-score achievable
+// with weight exactly i.
+// For i=w, this is the maximum talent achievable
+// with weight AT LEAST w.
+long long dp[WMAX + 1];
+
+// Check if a ratio of y/1000 is achievable.
+bool doable(int y) {
+  for (int i = 0; i &lt;= w; i++) {
+    dp[i] = -infinite;
+  }
+  dp[0] = 0;
+
+  for (int j = 0; j &lt; n; j++) {
+    long long value = 1000*(long long)talent[j] - y*(long long)weights[j];
+    int inc = weights[j];
+    for (int k = w; k &gt;= 0; k--) {
+      int k1 = min(w, k + inc);
+      if (dp[k] != -infinite) {
+        if (dp[k1] &lt; dp[k] + value) {
+          dp[k1] = dp[k] + value;
+        }
+      }
+    }
+  }
+
+  return dp[w] &gt;= 0;
+}
+
+int main() {
+  scanf(&quot;%d&quot;, &amp;n);
+  scanf(&quot;%d&quot;, &amp;w);
+  assert(1 &lt;= n &amp;&amp; n &lt;= NMAX);
+  assert(1 &lt;= w &amp;&amp; w &lt;= WMAX);
+
+  for (int i = 0; i &lt; n; i++) {
+    scanf(&quot;%d&quot;, &amp;weights[i]);
+    scanf(&quot;%d&quot;, &amp;talent[i]);
+    assert(1 &lt;= weights[i] &amp;&amp; weights[i] &lt;= 1000000);
+    assert(1 &lt;= talent[i] &amp;&amp; talent[i] &lt;= 1000);
+  }
+
+  // Binary search
+  // Invariant: lo &lt;= answer &lt; hi
+  int lo = 0;
+  int hi = (1000 * 250 * 1000) + 1;
+  while (hi &gt; lo + 1) {
+    int mid = (lo + hi) / 2;
+    if (doable(mid)) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+  printf(&quot;%d\n&quot;, lo);
+}</pre>
+<p></body></html>

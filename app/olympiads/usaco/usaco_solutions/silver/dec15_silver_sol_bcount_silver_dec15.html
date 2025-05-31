@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have a list of N integers, each either being 1, 2, or 3. For
+a list of certain intervals, we want to count how many numbers in that list are
+1&apos;s, 2&apos;s, or 3&apos;s.
+<p>The straightforward way to do this is, for each interval, to count the number of
+1&apos;s, 2&apos;s, and 3&apos;s in each interval. This solution will take at most <span class='math'>$N \cdot Q$</span>
+operations, which can be on the order of <span class='math'>$10^{10}$</span>, which is too many
+operations.
+<p>For intervals that are small, it takes relatively few operations to count how
+many of each number are in the given interval. However, for intervals which are
+large, it would actually be faster to count how many of each number are not
+inside the given interval, and to precompute how many of each number there are
+in the entire list.
+<p>In particular, if we want to count how many of each number appears in the
+interval <span class='math'>$[A, B]$</span>, we can count how many of each number appears in the interval <span class='math'>$[1, B]$</span>, and then
+count how many of each number appears in the interval <span class='math'>$[1, A-1]$</span> and subtract the
+two quantities.
+<p>Now, it remains to effectively answer questions of the form: for a given number <span class='math'>$K$</span>,
+how many times does <span class='math'>$K$</span> appear in the interval <span class='math'>$[1, B]$</span>?
+<p>Define <span class='math'>$f(K, X)$</span> to be the number of times that <span class='math'>$K$</span> appears in the interval <span class='math'>$[1, X]$</span>.
+If the <span class='math'>$i$</span>th number in the list is <span class='math'>$L$</span>, then <span class='math'>$f(L, i) = F(L, i-1) + 1$</span>. Otherwise,
+for all other numbers <span class='math'>$M$</span>, <span class='math'>$f(M, i) = f(M-1, I)$</span>. By definition, <span class='math'>$f(K, 0) = 0$</span> for all <span class='math'>$K$</span>.
+<p>We can compute <span class='math'>$f$</span> in <span class='math'>$O(N)$</span> time, and then each query can be answered in <span class='math'>$O(1)$</span> time.
+<p>This technique is known as maintaining <em>prefix sums</em>.
+<p>Here is my code illustrating this process.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class bcount {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;bcount.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;bcount.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int q = Integer.parseInt(st.nextToken());
+		int[][] prefix = new int[4][n+1];
+		for(int i = 1; i &lt;= n; i++) {
+			int curr = Integer.parseInt(br.readLine());
+			// shift over the prefix sums for each value from 1 to 3
+			for(int j = 1; j &lt;= 3; j++) {
+				prefix[j][i] = prefix[j][i-1];
+			}
+			// increment the prefix sum for the number that we read in
+			prefix[curr][i]++;
+		}
+		for(int i = 0; i &lt; q; i++) {
+			st = new StringTokenizer(br.readLine());
+			int a = Integer.parseInt(st.nextToken());
+			int b = Integer.parseInt(st.nextToken());
+			pw.println((prefix[1][b] - prefix[1][a-1]) + &quot; &quot; + (prefix[2][b] - prefix[2][a-1]) + &quot; &quot; + (prefix[3][b] - prefix[3][a-1]));
+		}
+		pw.close();
+	}
+}
+</pre></body></html>

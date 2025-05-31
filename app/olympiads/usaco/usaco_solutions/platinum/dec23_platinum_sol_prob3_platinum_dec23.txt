@@ -1,0 +1,576 @@
+Solution ID: sol_prob3_platinum_dec23
+Contest: DEC23
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_dec23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Chen)
+
+Subtask 1 (
+
+$N \leq 15$
+
+)
+
+A brute force approach works since the number of orders in which the trains can
+leave is small. Assume that the trains are sorted by time. For each train, the
+next train that will leave is the train with the smallest time that hasn't left
+yet from either from station
+
+$A$
+
+or
+
+$B$
+
+, so this gives
+
+$O(2^N)$
+
+orderings of
+trains. Given an ordering, we can simulate by minimizing the departure time of
+each train.
+
+Richard Qi's implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+#define sz(x) int((x).size())
+
+ll T;
+vector<ll> tim_station[2];
+ll ans = 1e18;
+
+void searchInds(int a, int b, ll leave_tim, bool leave_station, ll delay) {
+    if (a == sz(tim_station[0]) && b == sz(tim_station[1])) {
+        ans = min(ans, delay);
+        return;
+    }
+
+    if (a < sz(tim_station[0])) {
+        if (leave_station == 0) {
+            ll actual_leave = max(tim_station[0][a], leave_tim);
+            searchInds(a + 1, b, actual_leave, 0,
+                       delay + actual_leave - tim_station[0][a]);
+        } else {
+            ll actual_leave = max(tim_station[0][a], leave_tim + T);
+            searchInds(a + 1, b, actual_leave, 0,
+                       delay + actual_leave - tim_station[0][a]);
+        }
+    }
+    if (b < sz(tim_station[1])) {
+        if (leave_station == 1) {
+            ll actual_leave = max(tim_station[1][b], leave_tim);
+            searchInds(a, b + 1, actual_leave, 1,
+                       delay + actual_leave - tim_station[1][b]);
+        } else {
+            ll actual_leave = max(tim_station[1][b], leave_tim + T);
+            searchInds(a, b + 1, actual_leave, 1,
+                       delay + actual_leave - tim_station[1][b]);
+        }
+    }
+}
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int N;
+    cin >> N >> T;
+
+    for (int i = 1; i <= N; i++) {
+        char s;
+        ll t;
+        cin >> s >> t;
+        tim_station[s - 'A'].push_back(t);
+    }
+    sort(tim_station[0].begin(), tim_station[0].end());
+    sort(tim_station[1].begin(), tim_station[1].end());
+
+    if (sz(tim_station[0])) searchInds(1, 0, tim_station[0][0], 0, 0LL);
+    if (sz(tim_station[1])) searchInds(0, 1, tim_station[1][0], 1, 0LL);
+    cout << ans << "\n";
+}
+
+Subtask 2 (
+
+$N \leq 100$
+
+)
+
+Let
+
+$0$
+
+represent the left side and
+
+$1$
+
+represent the right side of the track.
+Define
+
+$\texttt{departure_time}[s][i]$
+
+to be the time the
+
+$i$
+
+th train on the
+
+$s$
+
+th side is expected to leave.
+
+In an optimal solution, after we send a train off from one side, we can either
+wait to send the next train off from the same side, or we will wait
+
+$T$
+
+time
+until that train reaches the other side and now we can send trains off from the
+other side.
+
+We use a dp represented by
+
+$(s, a, b, t)$
+
+, which represents the minimum delay
+after
+
+$a$
+
+trains have left from side
+
+$s$
+
+and
+
+$b$
+
+trains have left from the other
+side, and the current time is
+
+$t$
+
+, where we currently are considering sending
+off trains from the
+
+$s$
+
+th side.
+
+A key observation is that we only have to consider
+
+$t$
+
+in the form of
+
+$\texttt{departure_time}[s][i] + T*x$
+
+, or some multiple of
+
+$T$
+
+after the
+departure time of a train. The reason being that there is no reason to wait
+unless we wait fully until the next train is ready to send off. Moreover,
+
+$x \leq N$
+
+since there is no reason to switch sides more than the number of
+trains we have to send off. So the number of distinct
+
+$t$
+
+is bounded by the
+
+$N^2$
+
+, giving a
+
+$O(N^4)$
+
+dp.
+
+From
+
+$(s, a, b, t)$
+
+, we either can transition to
+
+$(s, a+1, b, \text{max}(t, \text{time}[s][a+1]))$
+
+by sending off the next train
+or
+
+$(1-s, b, a, t+T)$
+
+by switching sides.
+
+Subtask 3 (
+
+$N \leq 500$
+
+)
+
+For this subtask, we can drop
+
+$t$
+
+from our state altogether. Let
+
+$\texttt{dp}[s][a][b]$
+
+represent the min cost of sending the
+
+$a$
+
+th train on time
+from side
+
+$s$
+
+and having already sent off
+
+$b$
+
+trains on the other side, where
+the
+
+$a$
+
+th train on side
+
+$s$
+
+leaves after the
+
+$b$
+
+th train on the other side.
+
+For transitions, we consider the next train that will be sent on time. Either we
+wait for the next train on side
+
+$s$
+
+, transitioning to
+
+$(s, a+1, b)$
+
+, or we will
+switch sides
+
+$k\leq N$
+
+times (while sending off trains whenever possible), and
+then wait for the next train on that side. This gives
+
+$O(N^2)$
+
+states with
+
+$O(N)$
+
+transitions, giving an overall time complexity of
+
+$O(N^3)$
+
+.
+
+Benjamin Qi's implementation (note that the DP states are indexed slightly differently
+than in the explanation above):
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+#define all(x) begin(x), end(x)
+template <class T> using V = vector<T>;
+
+using ll = int64_t;
+
+const ll BIG = 1e18;
+
+template <class T> void ckmin(T &a, T b) { a = min(a, b); }
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int N;
+    ll T;
+    array<V<ll>, 2> times;
+    cin >> N >> T;
+    for (int i = 0; i < N; ++i) {
+        char s;
+        ll t;
+        cin >> s >> t;
+        times[s == 'B'].push_back(t);
+    }
+    for (int i = 0; i < 2; ++i) sort(all(times[i]));
+    V<V<array<ll, 2>>> dp(size(times[0]) + 1,
+                          V<array<ll, 2>>(size(times[1]) + 1, {BIG, BIG}));
+    if (size(times[0])) dp.at(1).at(0).at(0) = 0;
+    if (size(times[1])) dp.at(0).at(1).at(1) = 0;
+    ll ans = BIG;
+    for (int i = 0; i <= size(times[0]); ++i)
+        for (int j = 0; j <= size(times[1]); ++j) {
+            for (int side : {0, 1}) {
+                if (dp.at(i).at(j).at(side) == BIG) continue;
+                array<int, 2> cur{i, j};
+
+                // check that train last sent from side is
+                // the latest train sent
+                assert(cur.at(side ^ 1) == 0 ||
+                       times.at(side).at(cur.at(side) - 1) >
+                           times.at(side ^ 1).at(cur.at(side ^ 1) - 1));
+
+                // stay on same side
+                ll val = dp.at(i).at(j).at(side);
+                if (cur.at(side) < size(times.at(side)))
+                    ckmin(dp.at(i + (side == 0)).at(j + (side == 1)).at(side),
+                          val);
+
+                // switch sides k times
+                ll t = times.at(side).at(cur.at(side) - 1);
+                for (int k = 1; k <= N; ++k) {
+                    t += T;
+                    const int s = (side + k) & 1;
+                    for (; cur.at(s) < size(times.at(s)) &&
+                           times.at(s).at(cur.at(s)) <= t;
+                         ++cur.at(s)) {  // send off all trains on current side
+                                         // departing at time <= t
+                        val += t - times.at(s).at(cur.at(s));
+                    }
+                    if (cur.at(s) == size(times.at(s))) {
+                        if (cur.at(s ^ 1) == size(times.at(s ^ 1)))
+                            ckmin(ans, val);
+                    } else {
+                        ckmin(dp.at(cur.at(0) + (s == 0))
+                                  .at(cur.at(1) + (s == 1))
+                                  .at(s),
+                              val);
+                    }
+                }
+            }
+        }
+    cout << ans << "\n";
+}
+
+Subtask 4 (
+
+$N \leq 2000$
+
+)
+
+This subtask allows for less efficient full solutions or
+
+$O(N^2\log N)$
+
+to pass.
+
+Full Solution
+
+Notice that in the solution in subtask
+
+$3$
+
+, there is a lot of redundancy in the
+transitions when switching sides. Specifically, the transitions when switching
+sides are almost exactly the same for different values of
+
+$b$
+
+. This motivates us
+to define an additional dp state
+
+$\texttt{dp2}[s][a]$
+
+as the min cost of sending
+the
+
+$a$
+
+th train on time from side
+
+$s$
+
+, then switching sides (and sending off all
+backlogged trains on the other side if possible).
+
+From
+
+$\texttt{dp}[s][a][b]$
+
+, we either send off the next train on the same side,
+represented by
+
+$\texttt{dp}[s][a+1][b]$
+
+, or we decide to switch sides, which is
+
+$\texttt{dp2}[s][a]$
+
+(we assume the
+
+$a$
+
+th train on side
+
+$s$
+
+leaves after the
+
+$b$
+
+th train on other side, so this is valid). In this case we have
+
+$O(1)$
+
+transitions for
+
+$O(N^2)$
+
+states.
+
+From
+
+$\texttt{dp2}[s][a]$
+
+, we can switch sides
+
+$k\leq N$
+
+times (sending off
+trains whenever we can) until eventually deciding to wait for a train, which is
+some state in
+
+$\texttt{dp}$
+
+. In this case we have
+
+$O(N)$
+
+states with
+
+$O(N)$
+
+transitions out of them.
+
+Overall, this dp runs in
+
+$O(N^2)$
+
+. Make sure to process dp states in increasing
+order of the time when the
+
+$a$
+
+th train on side
+
+$s$
+
+leaves.
+
+Benjamin Qi's implementation:
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+#define all(x) begin(x), end(x)
+template <class T> using V = vector<T>;
+
+using ll = int64_t;
+
+const ll BIG = 1e18;
+
+template <class T> void ckmin(T &a, T b) { a = min(a, b); }
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int N;
+    ll T;
+    array<V<ll>, 2> times;
+    cin >> N >> T;
+    for (int i = 0; i < N; ++i) {
+        char s;
+        ll t;
+        cin >> s >> t;
+        times[s == 'B'].push_back(t);
+    }
+    for (int i = 0; i < 2; ++i) sort(all(times[i]));
+    V<V<array<ll, 2>>> dp(size(times[0]) + 1,
+                          V<array<ll, 2>>(size(times[1]) + 1, {BIG, BIG}));
+    if (size(times[0])) dp.at(1).at(0).at(0) = 0;
+    if (size(times[1])) dp.at(0).at(1).at(1) = 0;
+    array<int, 2> sent_so_far{};
+    ll ans = BIG;
+    auto process_all = [&](int side) {
+        const int i = ++sent_so_far[side];
+        ll t = times[side].at(i - 1) + T;
+        ll dp2 = BIG, add = 0;
+        array<int, 2> cur{i, 0};
+
+        // transition to dp or dp2
+        auto get_dp = [&](int i, int j) {
+            if (side) swap(i, j);
+            return dp.at(i).at(j).at(side);
+        };
+        auto upd_dp = [&](int i, int j, ll v) {
+            if (side) swap(i, j);
+            ckmin(dp.at(i).at(j).at(side), v);
+        };
+        for (int j = (int)size(times[side ^ 1]); j >= 0; --j) {
+            if (j < size(times[side ^ 1]) && times[side ^ 1].at(j) <= t) {
+                add += t - times[side ^ 1].at(j);
+                if (cur[1] == 0) cur[1] = j + 1;
+            }
+            ll v = get_dp(i, j);
+            if (v != BIG) {
+                assert(j == 0 ||
+                       times.at(side).at(i - 1) > times.at(side ^ 1).at(j - 1));
+                // stay on same side
+                if (i < size(times[side])) upd_dp(i + 1, j, v);
+                // or transition to dp2
+                ckmin(dp2, v + add);
+            }
+        }
+
+        // switch sides k times, transition from dp2 to dp
+        if (side) swap(cur[0], cur[1]);
+        for (int k = 1; k <= N; ++k, t += T) {
+            const int s = (side + k) & 1;
+            for (; cur.at(s) < size(times.at(s)) &&
+                   times.at(s).at(cur.at(s)) <= t;
+                 ++cur.at(s)) {  // send off all trains on current side
+                                 // departing at time <= t
+                dp2 += t - times.at(s).at(cur.at(s));
+            }
+            if (cur.at(s) == size(times.at(s))) {
+                if (cur.at(s ^ 1) == size(times.at(s ^ 1))) ckmin(ans, dp2);
+            } else {
+                ckmin(
+                    dp.at(cur.at(0) + (s == 0)).at(cur.at(1) + (s == 1)).at(s),
+                    dp2);
+            }
+        }
+    };
+    // process states in increasing order of departure time
+    while (sent_so_far[0] < size(times[0]) && sent_so_far[1] < size(times[1])) {
+        if (times[0].at(sent_so_far[0]) < times[1].at(sent_so_far[1]))
+            process_all(0);
+        else process_all(1);
+    }
+    for (int side : {0, 1})
+        while (sent_so_far[side] < size(times[side])) process_all(side);
+    cout << ans << "\n";
+}

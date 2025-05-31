@@ -1,0 +1,283 @@
+Solution ID: sol_prob3_platinum_jan23
+Contest: JAN23
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_jan23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Claim:
+
+The original problem is a special case of the following, more
+general problem:
+
+You're given a weighted undirected tree on vertices
+
+$1\dots N$
+
+, as well as
+
+$N$
+
+additional weighted undirected edges connecting vertices
+
+$1\dots N$
+
+with a
+special vertex
+
+$S$
+
+. All edge weights are non-negative. Compute the smallest
+possible weight of any
+
+circuit
+
+that visits every vertex at least once.
+
+Proof:
+
+Let
+
+$sub[x]$
+
+denote the number of vertices in the subtree rooted
+at
+
+$x$
+
+in the input tree. Consider the following weighted undirected graph:
+
+For every parent-to-child edge
+
+$p\leftrightarrow c$
+
+in the input tree, add
+an edge between
+
+$p$
+
+and
+
+$c$
+
+in the graph with weight
+
+$sub[p]-sub[c]$
+
+.
+
+For every vertex
+
+$v$
+
+from
+
+$1$
+
+to
+
+$N$
+
+, add an edge between
+
+$S$
+
+and
+
+$v$
+
+with
+weight
+
+$sub[v]$
+
+.
+
+Observe that the weight of the shortest path between two vertices
+
+$a$
+
+to
+
+$b$
+
+in
+this graph is precisely the number of toggles that you need to go from
+activating the subtree of
+
+$a$
+
+to activating the subtree of
+
+$b$
+
+. A sequence of
+operations satisfying the conditions in the problem statement corresponds to a
+circuit starting and ending at
+
+$S$
+
+that passes through every vertex at least
+once, and vice versa.
+
+$\blacksquare$
+
+Next, we describe how to solve the problem in the claim. It suffices to find a 
+multiset of the edges of the minimum total weight such that
+
+The edges connect all vertices into a single connected component.
+
+Every vertex is connected to an even number of edges.
+
+Clearly, both conditions are necessary. Furthermore, they are sufficient because
+given any multiset satisfying the conditions above we can construct an
+
+Euler circuit
+
+that
+passes through every edge as many times as it appears in the multiset.
+
+We can find this multiset using subtree DP in
+
+$O(N)$
+
+time. For each subtree of
+the input tree, we keep track of four values, corresponding to the minimum total
+weight for choosing a multiset of edges within the union of the subtree and
+
+$\{S\}$
+
+such that:
+
+The root of the subtree isn't or is connected to
+
+$S$
+
+(and every vertex
+within the subtree not connected to the root of the subtree is connected to
+
+$S$
+
+).
+
+The parity of the number of edges involving the root of the
+subtree is even or odd.
+
+For each edge, we need to choose whether to include it
+
+$0$
+
+,
+
+$1$
+
+, or
+
+$2$
+
+times,
+and update the quantities mentioned accordingly. The exact details of the DP
+transitions are left as an exercise to the reader.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+const ll BIG = 1e18;
+
+void ckmin(ll &a, ll b) { a = min(a, b); }
+
+namespace TSP {
+
+vector<int> X; // X[i] = weight of edge between S and i
+vector<vector<pair<int, int>>> adj;
+
+// solve subtree rooted at x (with parent p)
+array<array<ll, 2>, 2> dp(int x, int p) {
+    array<array<ll, 2>, 2> ret{};
+    // first dimension: 1 if x is in the same connected component as 0
+    // second dimension: parity of number of edges connected to x
+    ret[0][1] = BIG;
+    ret[1][1] = X.at(x); // use edge S-x one time
+    ret[1][0] = 2 * X.at(x); // use edge S-x two times
+    for (auto [y, w] : adj.at(x))
+        if (y != p) { // y is child of x
+            array<array<ll, 2>, 2> nret;
+            for (int i : {0, 1})
+                for (int j : {0, 1}) nret[i][j] = BIG;
+            auto cret = dp(y, x);
+            for (int a : {0, 1})
+                for (int b : {0, 1})
+                    for (int c : {0, 1})
+                        for (int d : {0, 1}) {
+                            if (d) { // use edge x-y once
+                                ckmin(nret[a | c][b ^ d],
+                                      ret[a][b] + cret[c][d] + w);
+                            } else {
+                                if (c) { // don't use edge x-y
+                                    ckmin(nret[a][b ^ d],
+                                          ret[a][b] + cret[c][d]);
+                                }
+                                ckmin(nret[a | c][b ^ d], // use edge x-y twice
+                                      ret[a][b] + cret[c][d] + 2 * w);
+                            }
+                        }
+            swap(ret, nret);
+        }
+    return ret;
+}
+
+} // namespace TSP
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int N;
+    cin >> N;
+    vector<int> p(N), sub(N, 1); // parent, subtree size
+    for (int i = 1; i < N; ++i) {
+        cin >> p[i];
+        --p[i];
+    }
+    for (int i = N - 1; i; --i) sub[p[i]] += sub[i];
+    assert(sub[0] == N);
+    TSP::adj.resize(N);
+    for (int i = 1; i < N; ++i) {
+        int w = sub[p[i]] - sub[i];
+        TSP::adj[i].push_back({p[i], w});
+        TSP::adj[p[i]].push_back({i, w});
+    }
+    TSP::X = sub;
+    cout << TSP::dp(0, -1).at(1).at(0) << "\n";
+}
+
+Note:
+
+Here are some observations that may be used to obtain a simpler
+tree DP for the original problem (not the more general problem):
+
+We can ignore all edges adjacent to
+
+$S$
+
+with weight greater than one.
+
+The minimum-cost circuit is the union of some number of subcircuits of the
+form
+
+$S\to x\to S$
+
+with total weight
+
+$2\cdot sub[x]$
+
+, where a subcircuit may
+contain the same vertex multiple times, but no pair of subcircuits share any
+vertices except for
+
+$S$
+
+.

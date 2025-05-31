@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>Consider any &quot;optimal&quot; sequence of events: a minimum-length sequence of moves or
+doublings that causes every farm to have a sick cow. Observe that if an infected
+cow at any time moves from some farm <span class='math'>$i$</span> to an adjacent farm <span class='math'>$j$</span> which already
+has an infected cow, we can replace this event with a superspreader event at
+farm <span class='math'>$j$</span>. This replacement causes an equally optimal sequence of events, because
+it doesn&apos;t decrease the ensuing number of infected cows at either farm. So
+without loss of generality, we can assume that in the optimal solution, an
+infected cow never moves to a farm with another infected cow.
+<p>Additionally, suppose that at some point in time, a farm <span class='math'>$i$</span> has exactly one
+infected cow, and this cow moves to an adjacent farm <span class='math'>$j$</span>. Then there&apos;ll be no
+infected cow in farm <span class='math'>$i$</span>, so at some later time, some infected cow has to move
+*into* farm <span class='math'>$i$</span>. Let&apos;s insert into the event sequence a superspreader event at
+farm <span class='math'>$i$</span>, right before the infected cow leaves farm <span class='math'>$i$</span>. If we keep the rest of
+the sequence the same, farm <span class='math'>$i$</span> will subsequently always have at least one more
+cow than in the original sequence. So we can cut out the event where an infected
+cow moves back into farm <span class='math'>$i$</span>. This produces an optimal sequence without increasing the number of moves.
+So once again, we can assume without loss of generality that the described event
+never happens.
+<p>This means that if we look at the set of *infected farms*, i.e. farms which have
+an infected cow, this set never shrinks, and every time a move event happens,
+the set expands by exactly one. Essentially, the set forms an ever-expanding
+subtree around farm <span class='math'>$1$</span>.
+<p>So our (specifically constructed) optimal sequence of events has exactly <span class='math'>$n-1$</span>
+move events, one for each farm besides farm <span class='math'>$1$</span>: the event where this farm
+enters the infected set. How many superspreader events do we need?
+<p>Root the tree at farm <span class='math'>$1$</span> and consider any subtree rooted at farm <span class='math'>$i$</span>.
+Eventually there will be exactly one infected cow in farm <span class='math'>$i$</span> (and none yet in
+its subtree). If the farm has <span class='math'>$d(i)$</span> children, then we can do
+<span class='math'>$\lceil \log_2 (d(i)+1) \rceil$</span> consecutive superspreader events at farm <span class='math'>$i$</span>,
+and then move one infected cow to each child. It&apos;s always better to do all the
+superspreader events at farm <span class='math'>$i$</span> before moving cows out to the children, so this
+is optimal.
+<p>As a result, the total number of superspreader events needed is
+<span class='math'>$\sum_i \lceil \log_2 (d(i)+1) \rceil$</span> (summing over all farms with at least one
+child) and the minimum number of events needed to infect all farms is this
+quantity plus <span class='math'>$n-1$</span>.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MAXN 100000
+
+int N;
+int d[MAXN];
+
+int main()
+{
+	cin &gt;&gt; N;
+	int a,b;
+	for(int i=0;i&lt;N-1;i++)
+	{
+		cin &gt;&gt; a &gt;&gt; b;
+		a--,b--;
+		d[a]++, d[b]++;
+	}
+	int ans = N-1; // number of move events
+	for(int i=0;i&lt;N;i++)
+		if(d[i] &gt; 1 || i == 0)	// check that i is not leaf node in tree
+		{
+			int children = d[i];
+			if(i!=0) children--;
+			// compute ceil(log(children + 1))
+			int log_children = 0;
+			int pow = 1;
+			while(pow &lt; children + 1)
+				log_children++, pow *= 2;
+			ans += log_children;
+		}
+	cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

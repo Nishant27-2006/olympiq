@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Daniel Zhang)
+<p>Directly implementing the described process yields a <span class='math'>$O(N^3)$</span> solution.
+<p>To speed this up, observe that all the pairwise linking is somewhat redundant.
+For example, suppose the first cow was initially friends with all other cows.
+Then, when she leaves, all the other cows become friends pairwise. When the next
+cow leaves, since she is now friends with all the remaining cows, they would
+become friends pairwise again.
+<p>Instead of linking together the <span class='math'>$i$</span>-th cow&apos;s friends pairwise when she leaves,
+we only need to link the friend of the <span class='math'>$i$</span>-th cow with the smallest index <span class='math'>$j$</span>
+still on the farm with all of the <span class='math'>$i$</span>-th cow&apos;s other friends still on the farm.
+The other pairs of the <span class='math'>$i$</span>-th cow&apos;s friends would automatically become friends
+as the later cows leave. Implementing this process yields a <span class='math'>$O(N^2)$</span> solution.
+<p>To obtain a <span class='math'>$O(M\log^2 N)$</span> solution, we merge the friend lists of the <span class='math'>$i$</span>-th and
+<span class='math'>$j$</span>-th cows by iterating over the smaller list and inserting elements one by one
+into the larger list.
+<p>It is possible to improve the complexity to <span class='math'>$O(M\log N)$</span> by using other data
+structures but this was not necessary to get full points.
+<p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;set&gt;
+
+std::set&lt;int&gt; adj[200005];
+
+int main(){
+  int N,M;
+  scanf(&quot;%d %d&quot;,&amp;N,&amp;M);
+  for(int i=0;i&lt;M;i++){
+    int U,V;
+    scanf(&quot;%d %d&quot;,&amp;U,&amp;V);
+    U--,V--;
+    if(U&gt;V) std::swap(U,V);
+    adj[U].insert(V);
+  }
+  long long total=-M;
+  for(int i=0;i&lt;N;i++){
+    total+=adj[i].size();
+    if(!adj[i].empty()){
+      int j=*adj[i].begin();
+      adj[i].erase(j);
+      if(adj[i].size()&gt;adj[j].size()){
+	std::swap(adj[i],adj[j]);
+      }
+      for(int x:adj[i]){
+	adj[j].insert(x);
+      }
+    }
+  }
+  printf(&quot;%lld\n&quot;,total);   
+}
+</pre>
+<p></body></html>

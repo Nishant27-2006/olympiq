@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Partial credit (inputs 1-7):</strong>
+<p>For an index <span class='math'>$i$</span>, the answer for that index is equal to the minimum absolute 
+difference between all subarrays that include <span class='math'>$a_i$</span> and all subarrays that don&apos;t
+include <span class='math'>$a_i$</span>. This gives us the following solution: for each <span class='math'>$i$</span>, sort all
+subarrays that don&apos;t include <span class='math'>$a_i$</span> and all those that include <span class='math'>$a_i$</span> by sum, and
+then use two pointers to compute the answer. This takes <span class='math'>$O(N^2\log N)$</span> time for
+each <span class='math'>$i$</span>, giving <span class='math'>$O(N^3\log N)$</span> time overall.
+<p><pre class='prettyprint'>
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Scanner;
+ 
+public class EqualSumSubarraysSlow {
+ 
+    public static void main(String[] args) throws IOException {
+        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        long[] sums = new long[n + 1];
+        for (int k = 1; k &lt;= n; k++) {
+            sums[k] = in.nextLong();
+            sums[k] += sums[k - 1];
+        }
+ 
+        StringBuilder out = new StringBuilder();
+        for (int k = 1; k &lt;= n; k++) {
+            List&lt;Subarray&gt; subarrays = new ArrayList&lt;&gt;();
+            for (int r = 1; r &lt;= n; r++) {
+                for (int l = 1; l &lt;= r; l++) {
+                    subarrays.add(new Subarray(l, r, sums[r] - sums[l - 1]));
+                }
+            }
+            subarrays.sort(Comparator.comparingLong(subarray -&gt; subarray.sum));
+            long answer = Long.MAX_VALUE;
+            for (int j = 1; j &lt; subarrays.size(); j++) {
+                Subarray left = subarrays.get(j - 1);
+                Subarray right = subarrays.get(j);
+                if (left.contains(k) != right.contains(k)) {
+                    answer = Math.min(answer, right.sum - left.sum);
+                }
+            }
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+ 
+    static class Subarray {
+        final int from;
+        final int to;
+        final long sum;
+ 
+        public Subarray(int from, int to, long sum) {
+            this.from = from;
+            this.to = to;
+            this.sum = sum;
+        }
+ 
+        boolean contains(int index) {
+            return from &lt;= index &amp;&amp; index &lt;= to;
+        }
+    }
+}
+</pre>
+<p>There are other ways to pass the first seven inputs. For example, we could
+iterate over all <span class='math'>$O(N^4)$</span> pairs of disjoint subarrays, and for each pair, update
+the answers for all indices in exactly one of the subarrays in <span class='math'>$O(1)$</span> time,
+similarly as the bonus solution below.
+<p><strong>Full credit:</strong>
+<p>To optimize the solution above, observe that we only need to sort the subarrays
+by sum once. Then for an index <span class='math'>$i$</span>, the answer for that index is equal to the
+minimum absolute difference between two consecutive subarrays in the sorted
+order where one subarray contains <span class='math'>$i$</span> and the other doesn&apos;t, which we can
+compute in <span class='math'>$O(N^2)$</span> time for each <span class='math'>$i$</span>. This takes <span class='math'>$O(N^3)$</span> time overall.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Scanner;
+ 
+public class EqualSumSubarrays {
+ 
+    public static void main(String[] args) throws IOException {
+        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        long[] sums = new long[n + 1];
+        for (int k = 1; k &lt;= n; k++) {
+            sums[k] = in.nextLong();
+            sums[k] += sums[k - 1];
+        }
+ 
+        List&lt;Subarray&gt; subarrays = new ArrayList&lt;&gt;();
+        for (int k = 1; k &lt;= n; k++) {
+            for (int j = 1; j &lt;= k; j++) {
+                subarrays.add(new Subarray(j, k, sums[k] - sums[j - 1]));
+            }
+        }
+        subarrays.sort(Comparator.comparingLong(subarray -&gt; subarray.sum));
+ 
+        StringBuilder out = new StringBuilder();
+        for (int k = 1; k &lt;= n; k++) {
+            long answer = Long.MAX_VALUE;
+            for (int j = 1; j &lt; subarrays.size(); j++) {
+                Subarray left = subarrays.get(j - 1);
+                Subarray right = subarrays.get(j);
+                if (left.contains(k) != right.contains(k)) {
+                    answer = Math.min(answer, right.sum - left.sum);
+                }
+            }
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+ 
+    static class Subarray {
+        final int from;
+        final int to;
+        final long sum;
+ 
+        public Subarray(int from, int to, long sum) {
+            this.from = from;
+            this.to = to;
+            this.sum = sum;
+        }
+ 
+        boolean contains(int index) {
+            return from &lt;= index &amp;&amp; index &lt;= to;
+        }
+    }
+}
+</pre>
+<p><strong>Bonus:</strong>
+<p>It is easy to optimize the solution above to <span class='math'>$O(N^2\log N)$</span> time by looking at
+every two consecutive subarrays in the sorted order and updating the answer for
+all indices <span class='math'>$i$</span> contained in exactly one of the subarrays in <span class='math'>$O(1)$</span> time.
+However,  this was not necessary for full credit, and it is not much faster
+under the given constraints.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.util.*;
+ 
+public class EqualSumSubarraysFast {
+ 
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        long[] sums = new long[n + 1];
+        for (int k = 1; k &lt;= n; k++) {
+            sums[k] = in.nextLong();
+            sums[k] += sums[k - 1];
+        }
+ 
+        List&lt;Subarray&gt; subarrays = new ArrayList&lt;&gt;();
+        for (int k = 1; k &lt;= n; k++) {
+            for (int j = 1; j &lt;= k; j++) {
+                subarrays.add(new Subarray(j, k, sums[k] - sums[j - 1]));
+            }
+        }
+        subarrays.sort(Comparator.comparingLong(subarray -&gt; subarray.sum));
+ 
+        long[][] answers = new long[n + 1][n + 1];
+        for (int l = 1; l &lt;= n; l++) {
+            Arrays.fill(answers[l], Long.MAX_VALUE);
+        }
+ 
+        for (int j = 1; j &lt; subarrays.size(); j++) {
+            Subarray left = subarrays.get(j - 1);
+            Subarray right = subarrays.get(j);
+            long difference = right.sum - left.sum;
+ 
+            int l = Math.min(left.from, right.from);
+            int r = Math.min(Math.min(left.to, right.to), Math.max(left.from, right.from) - 1);
+            if (l &lt;= r) {
+                answers[l][r] = Math.min(answers[l][r], difference);
+            }
+ 
+            r = Math.max(left.to, right.to);
+            l = Math.max(Math.max(left.from, right.from), Math.min(left.to, right.to) + 1);
+            if (l &lt;= r) {
+                answers[l][r] = Math.min(answers[l][r], difference);
+            }
+        }
+ 
+        for (int l = 1; l &lt;= n; l++) {
+            for (int r = n; r &gt; l; r--) {
+                answers[l + 1][r] = Math.min(answers[l + 1][r], answers[l][r]);
+                answers[l][r - 1] = Math.min(answers[l][r - 1], answers[l][r]);
+            }
+        }
+ 
+        StringBuilder out = new StringBuilder();
+        for (int k = 1; k &lt;= n; k++) {
+            out.append(answers[k][k]).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+ 
+    static class Subarray {
+        final int from;
+        final int to;
+        final long sum;
+ 
+        public Subarray(int from, int to, long sum) {
+            this.from = from;
+            this.to = to;
+            this.sum = sum;
+        }
+    }
+}
+</pre>
+<p></body></html>

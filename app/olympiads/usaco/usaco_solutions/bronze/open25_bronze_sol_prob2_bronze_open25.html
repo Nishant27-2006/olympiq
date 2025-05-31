@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p><strong>Subtask 1:</strong> Due to the small value of <span class='math'>$N$</span>, we can just brute force all
+possible subsets of cows and all permutations of them.
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+ 
+int main() {
+  int t;
+  std::cin &gt;&gt; t;
+  for(int cn = 1; cn &lt;= t; cn++) {
+    int n;
+    std::cin &gt;&gt; n;
+    std::vector&lt;int&gt; v(n);
+    for(auto&amp; x: v) std::cin &gt;&gt; x;
+    std::sort(v.begin(), v.end());
+    int ret = 1;
+    do {
+      for(int len = 1; len &lt;= n; len+=2) {
+        bool valid = true;
+        for(int i = 0; valid &amp;&amp; 2*i+1 &lt; len; i++) {
+          valid = v[i] == v[len-1-i] &amp;&amp; v[i] &lt; v[i+1];
+        }
+        if(valid) ret = std::max(ret, len);
+      }
+    }
+    while(std::next_permutation(v.begin(), v.end()));
+    std::cout &lt;&lt; ret &lt;&lt; &quot;\n&quot;;
+  }
+}
+</pre>
+<p><strong>Subtask 2:</strong> Assume that Farmer John wants the picture to have a cow with
+every height from <span class='math'>$1$</span> to <span class='math'>$10$</span>. What is the maximum number of cows that can be in
+the picture?
+<p>It is not hard to see that the only valid arrangement is to have cows with
+heights <span class='math'>$[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]$</span>. In
+general, if multiple heights exist, then the middle cow must be the tallest, and
+then two cows of the next-tallest height must get placed on each end, and
+progressively shorter cows are placed on each end.
+<p>We can therefore brute force all <span class='math'>$\mathcal{O}(2^{10})$</span> subsets of heights that
+could appear and see if we can construct such a photo.
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+ 
+int main() {
+  int t;
+  std::cin &gt;&gt; t;
+  for(int cn = 1; cn &lt;= t; cn++) {
+    int n;
+    std::cin &gt;&gt; n;
+    std::vector&lt;int&gt; f(n+1);
+    for(int i = 0; i &lt; n; i++) {
+      int x;
+      std::cin &gt;&gt; x;
+      f[x]++;
+    }
+    int ret = 1;
+    for(int mask = 1; mask &lt; (1&lt;&lt;std::min(n,10)); mask++) {
+      bool valid = true;
+      bool seen = false;
+      for(int i = std::min(n,10); valid &amp;&amp; i &gt; 0; i--) {
+        if(mask&amp;(1&lt;&lt;(i-1))) {
+          if(f[i] == 0) valid = false;
+          if(!seen) seen = true;
+          else if(f[i] &lt; 2) valid = false;
+        }
+      }
+      if(valid) ret = std::max(ret, 2*__builtin_popcount(mask)-1);
+    }
+    std::cout &lt;&lt; ret &lt;&lt; &quot;\n&quot;;
+  }
+}
+</pre>
+<p><strong>Full credit:</strong> Consider an optimal picture. If the middle cow is not the
+tallest one, we can safely replace the middle cow with the tallest cow. From
+then, consider the cows in decreasing height. If it is possible to take taller
+cows and replace a pair of non-adjacent cows of smaller height, then we can do
+so without affecting the optimality of the picture.
+<p>Therefore, we have the following algorithm for constructing an optimal picture:
+<ul><li>Take the tallest cow and put them in the middle.</li><li>Find the next
+tallest height where there are at least two cows of that height, and put them on
+the end of the picture.</li><li>Repeat the above until there are no more such
+pairs.</li></ul>
+<p>This gives us a linear-time algorithm - all that we need to efficiently simulate
+this is that we track for a given height <span class='math'>$H$</span> how many cows have that height.
+<p>Nick Wu&apos;s C++ solution:
+<pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+ 
+int main() {
+  int t;
+  std::cin &gt;&gt; t;
+  for(int cn = 1; cn &lt;= t; cn++) {
+    int n;
+    std::cin &gt;&gt; n;
+    std::vector&lt;int&gt; f(n+1);
+    for(int i = 0; i &lt; n; i++) {
+      int x;
+      std::cin &gt;&gt; x;
+      f[x]++;
+    }
+    int ret = 0;
+    bool seen = false;
+    for(int i = n; i &gt; 0; i--) {
+      if(f[i] == 0) continue;
+      if(!seen) ret++;
+      else if(f[i] &gt;= 2) ret += 2;
+      seen = true;
+    }
+    std::cout &lt;&lt; ret &lt;&lt; &quot;\n&quot;;
+  }
+}
+</pre>
+<p>Benjamin Qi&apos;s Python solution:
+<pre class='prettyprint'>
+from collections import Counter
+ 
+T = int(input())
+for _ in range(T):
+	N = int(input())
+	A = map(int, input().split())
+	 
+	c = Counter(A)
+	 
+	max_key = max(c.keys())
+	print(sum(2 * (v &gt;= 2) for v in c.values()) + (c[max_key] == 1) - (c[max_key] &gt;= 2))
+</pre>
+</body></html>

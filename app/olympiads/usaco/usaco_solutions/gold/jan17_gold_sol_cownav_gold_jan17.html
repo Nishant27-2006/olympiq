@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>We start by solving a simpler problem - given a specific starting location and
+orientation, compute the minimum distance needed for Bessie to reach some other
+square. In this situation, we can do a breadth-first search through the grid,
+keeping track of Bessie&apos;s location and direction. Note that this graph has at
+most <span class='math'>$4N^2$</span> vertices, and each vertex has at most <span class='math'>$3$</span> edges.
+<p>The given problem is more complicated though - Bessie could be in one of two
+orientations, and we don&apos;t know which one she&apos;s in. We need to make sure that,
+no matter which orientation she is in, she gets to the final destination.
+<p>Fortunately, we can turn this problem back into a standard shortest path problem
+solvable by breadth-first search, only in a much larger graph.  Since Bessie&apos;s
+&quot;state&quot; can be represented by the (position, direction) of two possible
+situations in which she can find herself in at a given point in time, we end up
+with <span class='math'>$16N^4$</span> possible states, each a vertex in a large graph through which
+we will conduct our breadth-first search.  Since each vertex still has at most
+three outgoing edges (corresponding to the transitions caused by &quot;forward&quot;, &quot;turn left&quot;, and &quot;turn right&quot;),
+the graph is still small enough that our breadth-first search will run quickly.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class cownav {
+	static int[] dx = new int[]{-1,0,1,0};
+	static int[] dy = new int[]{0,1,0,-1};
+	static int n;
+	static char[][] grid;
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;cownav.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;cownav.out&quot;)));
+		n = Integer.parseInt(br.readLine());
+		grid = new char[n][];
+		for(int i = 0; i &lt; n; i++) {
+			grid[i] = br.readLine().toCharArray();
+		}
+		int[][][][][][] dp = new int[n][n][4][n][n][4];
+		dp[n-1][0][0][n-1][0][1] = 1;
+		LinkedList&lt;State&gt; q = new LinkedList&lt;State&gt;();
+		q.add(new State(n-1, 0, 0, n-1, 0, 1));
+		while(!q.isEmpty()) {
+			State curr = q.removeFirst();
+			if(curr.ax == 0 &amp;&amp; curr.bx == 0 &amp;&amp; curr.ay == n-1 &amp;&amp; curr.by == n-1) {
+				pw.println(dp[curr.ax][curr.ay][curr.ad][curr.bx][curr.by][curr.bd] - 1);
+				break;
+			}
+			for(State next: curr.genTransitions()) {
+				if(dp[next.ax][next.ay][next.ad][next.bx][next.by][next.bd] == 0) {
+					dp[next.ax][next.ay][next.ad][next.bx][next.by][next.bd] = dp[curr.ax][curr.ay][curr.ad][curr.bx][curr.by][curr.bd] + 1;
+					q.add(next);
+				}
+			}
+		}
+		pw.close();
+	}
+	static class State {
+		int ax, ay, ad;
+		int bx, by, bd;
+		public State(int ax, int ay, int ad, int bx, int by, int bd) {
+			this.ax = ax;
+			this.ay = ay;
+			this.ad = ad;
+			this.bx = bx;
+			this.by = by;
+			this.bd = bd;
+		}
+		public State[] genTransitions() {
+			return new State[]{
+					turnLeft(),
+					turnRight(),
+					advance(),
+			};
+		}
+		private State turnLeft() {
+			return new State(ax, ay, (ad+3)%4, bx, by, (bd+3)%4);
+		}
+		private State turnRight() {
+			return new State(ax, ay, (ad+1)%4, bx, by, (bd+1)%4);
+		}
+		private State advance() {
+			int nax = ax;
+			int nay = ay;
+			if(nax != 0 || nay != n-1) {
+				if(nax + dx[ad] &gt;= 0 &amp;&amp; nax + dx[ad] &lt; n) {
+					nax += dx[ad];
+				}
+				if(nay + dy[ad] &gt;= 0 &amp;&amp; nay + dy[ad] &lt; n) {
+					nay += dy[ad];
+				}
+				if(grid[nax][nay] == &apos;H&apos;) {
+					nax = ax;
+					nay = ay;
+				}
+			}
+			int nbx = bx;
+			int nby = by;
+			if(nbx != 0 || nby != n-1) {
+				if(nbx + dx[bd] &gt;= 0 &amp;&amp; nbx + dx[bd] &lt; n) {
+					nbx += dx[bd];
+				}
+				if(nby + dy[bd] &gt;= 0 &amp;&amp; nby + dy[bd] &lt; n) {
+					nby += dy[bd];
+				}
+				if(grid[nbx][nby] == &apos;H&apos;) {
+					nbx = bx;
+					nby = by;
+				}
+			}
+			return new State(nax, nay, ad, nbx, nby, bd);
+		}
+	}
+}
+</pre>
+<p></body></html>

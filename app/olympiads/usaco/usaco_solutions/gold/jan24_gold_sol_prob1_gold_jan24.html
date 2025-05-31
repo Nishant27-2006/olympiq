@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p><strong>Subtask 1 (all numbers in input are at most <span class='math'>$100$</span>)</strong>
+<p>We can simply simulate the process. There are <span class='math'>$Q \leq 100$</span> queries to test, each
+of which involves walking at most <span class='math'>$d_i \leq 100$</span> units, and for each unit we
+walk we can determine the direction we walk by keeping track of the time and
+checking through all <span class='math'>$N \leq 100$</span> roads to see which ones we are on. This is
+<span class='math'>$100^3 = 10^6$</span> checks which runs well in time.
+<p><strong>Subtask 2 (<span class='math'>$N, Q \leq 3000$</span>)</strong>
+<p>We can simulate the process more efficiently. Instead of walking one unit at a
+time, we can walk until we reach a new cross street.
+<p>To do this we will first create a sorted list of each type of road, then for
+each query determine our starting position among each sorted list. For each step
+we look in the sorted list corresponding to the direction that we are not
+currently walking in and check the position of the following element, which
+tells us how far we walk before potentially changing our direction. We can then
+update our direction based on the time.
+<p>As there are at most <span class='math'>$N$</span> roads, it takes <span class='math'>$O(N\lg N)$</span> time to create the sorted
+lists. For each query it then takes <span class='math'>$O(N)$</span> time to find our initial position in
+each list and each subsequent step increases our position in one of the lists,
+meaning that the number of steps is <span class='math'>$O(N)$</span>. The time complexity of this solution
+is therefore <span class='math'>$O(N(\lg N + Q))$</span> which is fast enough.
+<p><strong>Full solution</strong>
+<p>Because John walks one unit per second, the amount of time has been walking is
+equal to the distance that he has walked. This means that what direction he goes
+next at an intersection depends on the parity of the distance he has walked thus
+far. That distance in turn simply depends on his current position and his
+starting position. Specifically, if he started at <span class='math'>$(x, y)$</span> and is now at
+<span class='math'>$(a, b)$</span>, then he has walked <span class='math'>$(a - x) + (b - y)$</span> units, meaning that what
+direction he goes next depends on the parity of <span class='math'>$(a - x) + (b - y)$</span>.
+<p>For each query, <span class='math'>$x + y$</span> is either even or odd. We can assume that it is even,
+and simply reproduce everything below analogously to handle the case where it is
+odd.
+<p>If <span class='math'>$x + y$</span> is even, then the parity of <span class='math'>$(a - x) + (b - y)$</span> is equal to the
+parity of <span class='math'>$a + b$</span>. This means that which direction we go at an intersection
+depends only on the position of the intersection itself.
+<p>Consider separating the vertical roads into those located at even and odd
+<span class='math'>$x$</span>-coordinates, and similarly separating the horizontal roads into those
+located at even and odd <span class='math'>$y$</span>-coordinates. If John is currently walking on a
+vertical road with even <span class='math'>$x$</span>-coordinate, and encounters a horizontal road with an
+even <span class='math'>$y$</span>-coordinate, then his current position will have even <span class='math'>$a + b$</span>, meaning
+that he will always walk north in such a case. On the other hand, if he
+encounters a horizontal road with odd <span class='math'>$y$</span>-coordinate, he will switch to walking
+east from that intersection.
+<p>Thus, if Farmer John is currently walking on a vertical road with even
+<span class='math'>$x$</span>-coordinate, he will walk until the first horizontal road he finds with odd
+<span class='math'>$y$</span>-coordinate, then start walking on that road. Similarly, he will walk on that
+road until the first vertical road with <em>odd</em> <span class='math'>$x$</span>-coordinate, and then walk
+on <em>that</em> road until the first horizontal road with <em>even</em>
+<span class='math'>$y$</span>-coordinate, which he then walks on until the first vertical road with even
+<span class='math'>$x$</span>-coordinate.
+<p>In this way Farmer John cycles through the four types of roads. This structure
+has two useful properties:
+<ul><li>John alternates between vertical and horizontal roads</li><li>If John is
+currently on a vertical road, the next vertical road he walks on will have the
+opposite parity, and it will be the earliest such road (and same for horizontal
+roads)</li></ul>
+<p>This suggests that we create a list of each type of road that doesn&apos;t contain
+all such roads, but rather works as follows. The first road in each list is
+simply the earliest (farthest southwest) road of each type, but every following
+road is the first road after the current one that&apos;s of the opposite parity.
+<p>Given this, if John is currently at an intersection of two roads that are both
+in their respective lists, then he will always be on roads on the list because
+of the second property mentioned above. This means that if we assume that John
+ends up walking a certain amount of total roads, we can use the first property
+to determine how many of each road he walks on and which direction he is walking
+in at the end, then use the list to lookup the last roads he walks on. The
+difference in the positions of those roads and the roads he begins on tells us
+the distance he travelled in each direction to get to that point.
+<p>We can then binary search the amount of roads he walks on, checking that he
+doesn&apos;t travel too far to get to that last intersection and that the
+intersection of the following pair of roads is sufficiently far away. After
+completing that binary search, that last intersection, combined with the
+direction he ends up in, will tell us the total distance he travels in each
+direction.
+<p>Finally, note that this requires Farmer John to start at the intersection of two
+roads in the lists; he doesn&apos;t necessarily start at an intersection or at a road
+on the list, but because of the second property we know that the second time he
+walks on a certain type of road it&apos;ll be in the list, so we can use the strategy
+of subtask 2 to walk him through four roads, at which point he&apos;ll be at such an
+intersection.
+<p>This solution requires <span class='math'>$O(N\lg N)$</span> precomputation to create both the lists for
+subtask 2 and the lists used in the binary search, then requires an <span class='math'>$O(\lg N)$</span>
+binary search for each query, making the runtime complexity <span class='math'>$O((N + Q)\lg N)$</span>
+which is fast enough.
+<p>My Java code:
+<pre class='prettyprint'>
+import java.util.*;
+ 
+public class WalkingInManhattan {
+ 
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int q = in.nextInt();
+        TreeSet&lt;Integer&gt; verticalRoads = new TreeSet&lt;&gt;();
+        TreeSet&lt;Integer&gt; horizontalRoads = new TreeSet&lt;&gt;();
+        for (; n &gt; 0; n--) {
+            if (in.next().equals(&quot;V&quot;)) {
+                verticalRoads.add(in.nextInt());
+            } else {
+                horizontalRoads.add(in.nextInt());
+            }
+        }
+ 
+        List&lt;Integer&gt; mainVerticalRoads = new ArrayList&lt;&gt;();
+        TreeMap&lt;Integer, Integer&gt; mainVerticalRoadsTreeSet = new TreeMap&lt;&gt;();
+        for (int x : verticalRoads) {
+            if (mainVerticalRoads.isEmpty() || mainVerticalRoads.get(mainVerticalRoads.size() - 1) % 2 != x % 2) {
+                mainVerticalRoadsTreeSet.put(x, mainVerticalRoadsTreeSet.size());
+                mainVerticalRoads.add(x);
+            }
+        }
+        List&lt;Integer&gt; mainHorizontalRoads = new ArrayList&lt;&gt;();
+        TreeMap&lt;Integer, Integer&gt; mainHorizontalRoadsTreeSet = new TreeMap&lt;&gt;();
+        for (int y : horizontalRoads) {
+            if (mainHorizontalRoads.isEmpty() || mainHorizontalRoads.get(mainHorizontalRoads.size() - 1) % 2 != y % 2) {
+                mainHorizontalRoadsTreeSet.put(y, mainHorizontalRoadsTreeSet.size());
+                mainHorizontalRoads.add(y);
+            }
+        }
+ 
+        StringBuilder out = new StringBuilder();
+        for (; q &gt; 0; q--) {
+            int x = in.nextInt();
+            int y = in.nextInt();
+            int d = in.nextInt();
+ 
+            int parity = (x + y) % 2;
+ 
+            boolean startsNorth = verticalRoads.contains(x);
+ 
+            if (!startsNorth) {
+                Integer initialVerticalRoad = verticalRoads.ceiling(x);
+                if (initialVerticalRoad != null &amp;&amp; (initialVerticalRoad + y) % 2 != parity) {
+                    initialVerticalRoad = mainVerticalRoadsTreeSet.higherKey(initialVerticalRoad);
+                }
+                if (initialVerticalRoad == null || initialVerticalRoad - x &gt; d) {
+                    answer(out, x + d, y);
+                    continue;
+                }
+                d -= initialVerticalRoad - x;
+                x = initialVerticalRoad;
+            }
+ 
+            Integer initialHorizontalRoad = horizontalRoads.ceiling(y);
+            if (initialHorizontalRoad != null &amp;&amp; (initialHorizontalRoad + x) % 2 == parity) {
+                initialHorizontalRoad = mainHorizontalRoadsTreeSet.higherKey(initialHorizontalRoad);
+            }
+            if (initialHorizontalRoad == null || initialHorizontalRoad - y &gt; d) {
+                answer(out, x, y + d);
+                continue;
+            }
+            d -= initialHorizontalRoad - y;
+            y = initialHorizontalRoad;
+ 
+            Map.Entry&lt;Integer, Integer&gt; firstVerticalRoad = mainVerticalRoadsTreeSet.higherEntry(x);
+            if (firstVerticalRoad == null || firstVerticalRoad.getKey() - x &gt; d) {
+                answer(out, x + d, y);
+                continue;
+            }
+            d -= firstVerticalRoad.getKey() - x;
+            x = firstVerticalRoad.getKey();
+            
+            Map.Entry&lt;Integer, Integer&gt; firstHorizontalRoad = mainHorizontalRoadsTreeSet.higherEntry(y);
+            if (firstHorizontalRoad == null || firstHorizontalRoad.getKey() - y &gt; d) {
+                answer(out, x, y + d);
+                continue;
+            }
+            d -= firstHorizontalRoad.getKey() - y;
+            y = firstHorizontalRoad.getKey();
+            
+ 
+            int verticalBaseline = firstVerticalRoad.getValue();
+            int horizontalBaseline = firstHorizontalRoad.getValue();
+ 
+            int upper = mainVerticalRoads.size() + mainHorizontalRoads.size();
+            int lower = 0;
+            while (upper &gt; lower) {
+                int mid = (upper + lower + 1) / 2;
+ 
+                int verticalEnd = verticalBaseline + ((mid + 1) / 2);
+                int horizontalEnd = horizontalBaseline + (mid / 2);
+                if (verticalEnd &gt;= mainVerticalRoads.size() || horizontalEnd &gt;= mainHorizontalRoads.size()) {
+                    upper = mid - 1;
+                } else {
+                    int distance = (mainVerticalRoads.get(verticalEnd) - x) + (mainHorizontalRoads.get(horizontalEnd) - y);
+                    if (distance &gt; d) {
+                        upper = mid - 1;
+                    } else {
+                        lower = mid;
+                    }
+                }
+            }
+ 
+            int verticalEnd = verticalBaseline + ((upper + 1) / 2);
+            int horizontalEnd = horizontalBaseline + (upper / 2);
+            int answerX = mainVerticalRoads.get(verticalEnd);
+            int answerY = mainHorizontalRoads.get(horizontalEnd);
+            int extra = d - (answerX - x) - (answerY - y);
+            if (upper % 2 == 0) {
+                answerX += extra;
+            } else {
+                answerY += extra;
+            }
+            answer(out, answerX, answerY);
+        }
+        System.out.print(out);
+    }
+ 
+    public static void answer(StringBuilder out, int x, int y) {
+        out.append(x).append(&apos; &apos;).append(y).append(&apos;\n&apos;);
+    }
+}
+</pre>
+<p>Brandon Wang&apos;s C++ code:
+<pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+ 
+const int MAXN = 200005;
+const int MAXL = 18;
+const int INFTY = 2e9+7;
+ 
+int N, Q;
+int H, V;
+int horiz[MAXN];
+int vert[MAXN];
+int hn[MAXN][MAXL];
+int vn[MAXN][MAXL];
+ 
+void input () {
+	std::cin &gt;&gt; N &gt;&gt; Q;
+	while (N--) {
+		char c; int x;
+		std::cin &gt;&gt; c &gt;&gt; x;
+		if (c == &apos;H&apos;) {
+			horiz[H] = x;
+			H++;
+		}
+		else {
+			vert[V] = x;
+			V++;
+		}
+	}
+}
+ 
+void proc () {
+	std::sort(horiz, horiz+H);
+	std::sort(vert, vert+V);
+	horiz[H] = INFTY;
+	vert[V] = INFTY;
+	for (int i = 0; i &lt; MAXL; i++) {
+		hn[H][i] = H;
+		vn[V][i] = V;
+	}
+ 
+	for (int i = H-1; i &gt;= 0; i--) {
+		if (horiz[i]%2 != horiz[i+1]%2) {
+			hn[i][0] = i+1;
+		}
+		else {
+			hn[i][0] = hn[i+1][0];
+		}
+		for (int t = 1; t &lt; MAXL; t++) {
+			hn[i][t] = hn[hn[i][t-1]][t-1];
+		}
+	}
+ 
+	for (int i = V-1; i &gt;= 0; i--) {
+		if (vert[i]%2 != vert[i+1]%2) {
+			vn[i][0] = i+1;
+		}
+		else {
+			vn[i][0] = vn[i+1][0];
+		}
+		for (int t = 1; t &lt; MAXL; t++) {
+			vn[i][t] = vn[vn[i][t-1]][t-1];
+		}
+	}	
+}
+ 
+std::pair&lt;int, int&gt; query (int x, int y, int d) {
+	int hlo = 0, hhi = H;
+	while (hlo &lt; hhi) {
+		int hmi = (hlo + hhi) / 2;
+		if (horiz[hmi] &gt;= y) {
+			hhi = hmi;
+		}
+		else {
+			hlo = hmi + 1;
+		}
+	}
+	int vlo = 0, vhi = V;
+	while (vlo &lt; vhi) {
+		int vmi = (vlo + vhi) / 2;
+		if (vert[vmi] &gt;= x) {
+			vhi = vmi;
+		}
+		else {
+			vlo = vmi + 1;
+		}
+	}
+	int t = 0;
+	if (y &lt; horiz[hlo]) {
+		if (d + y &lt;= horiz[hlo]) {
+			return {x, d+y};
+		}
+		d -= (horiz[hlo] - y);
+		t += horiz[hlo] - y;
+	}
+	if (x &lt; vert[vlo]) {
+		if (d + x &lt;= vert[vlo]) {
+			return {d+x, y};
+		}
+		d -= (vert[vlo] - x);
+		t += vert[vlo] - x;
+	}
+	for (int k = MAXL-1; k &gt;= 0; k--) {
+		int h = hn[hlo][k], v = vn[vlo][k];
+		if (horiz[h] - horiz[hlo] &gt; d) {
+			continue;
+		}
+		if (vert[v] - vert[vlo] &gt; d) {
+			continue;
+		}
+		if ((vert[v] - vert[vlo]) + (horiz[h] - horiz[hlo]) &gt; d) {
+			continue;
+		}
+		d -= (vert[v] - vert[vlo]) + (horiz[h] - horiz[hlo]);
+		t += (vert[v] - vert[vlo]) + (horiz[h] - horiz[hlo]);
+		hlo = h;
+		vlo = v;
+	}
+	if (t%2) {
+		int v = vn[vlo][0];
+		if (vert[v] - vert[vlo] &gt;= d) {
+			return {vert[vlo] + d, horiz[hlo]};
+		}
+		d -= (vert[v] - vert[vlo]);
+		return {vert[v], horiz[hlo]+d};
+	}
+	int h = hn[hlo][0];
+	if (horiz[h] - horiz[hlo] &gt;= d) {
+		return {vert[vlo], horiz[hlo]+d};
+	}
+	d -= (horiz[h] - horiz[hlo]);
+	return {vert[vlo]+d, horiz[h]};
+}
+ 
+int main () {
+	input();
+	proc();
+	while (Q--) {
+		int x, y, d; std::cin &gt;&gt; x &gt;&gt; y &gt;&gt; d;
+		std::pair&lt;int,int&gt; pi = query(x, y, d);
+		std::cout &lt;&lt; pi.first &lt;&lt; &quot; &quot; &lt;&lt; pi.second &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p></body></html>

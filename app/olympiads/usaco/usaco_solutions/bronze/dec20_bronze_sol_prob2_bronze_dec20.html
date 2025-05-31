@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>The most direct solution involves taking each photo and then checking every 
+flower in that photo for an average flower.
+<p>There are <span class='math'>$\mathcal{O}(N^2)$</span> photos, and checking each flower in the photo takes
+<span class='math'>$\mathcal{O}(N)$</span>, so this solution runs in <span class='math'>$\mathcal{O}(N^3)$</span> time.
+<p>Code is as follows.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class Main {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    int n = Integer.parseInt(br.readLine());
+    int[] petals = new int[n];
+    StringTokenizer st = new StringTokenizer(br.readLine());
+    for(int i = 0; i &lt; n; i++) {
+      petals[i] = Integer.parseInt(st.nextToken());
+    }
+    int photos = 0;
+    for(int i = 0; i &lt; n; i++) {
+      for(int j = i; j &lt; n; j++) {
+        int totalPetals = 0;
+        for(int k = i; k &lt;= j; k++) {
+          totalPetals += petals[k];
+        }
+        boolean present = false;
+        for(int k = i; k &lt;= j; k++) {
+          if(petals[k] * (j-i+1) == totalPetals) {
+            present = true;
+          }
+        }
+        if(present) {
+          photos++;
+        }
+      }
+    }
+    pw.println(photos);
+    pw.close();
+  }
+}
+</pre>
+<p>It&apos;s possible (but not necessary) to optimize this down to <span class='math'>$\mathcal{O}(N^2)$</span>.
+One observation we can make is that all photos with more than one flower 
+consist of taking a smaller photo and then including the next rightmost flower.
+<p>Let us consider processing all photos that use flower <span class='math'>$i$</span> as the leftmost
+flower, starting by using the photo that contains only flower <span class='math'>$i$</span> and then
+adding flowers one by one to the right. We can maintain a collection of all the
+flowers we have seen so far. As we do this, we also need to keep track of the
+total sum of petals we have seen so far so we know what the average petal count
+is, and then we can check whether we have seen that petal count before. Because
+the number of petals is bounded above by <span class='math'>$10^3$</span>, we can use a boolean array to
+track which petal counts we have seen. Alternatively, we can use a set.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class Main {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    int n = Integer.parseInt(br.readLine());
+    int[] petals = new int[n];
+    StringTokenizer st = new StringTokenizer(br.readLine());
+    for(int i = 0; i &lt; n; i++) {
+      petals[i] = Integer.parseInt(st.nextToken());
+    }
+    int photos = 0;
+    for(int i = 0; i &lt; n; i++) {
+      boolean[] present = new boolean[1001];
+      int petalsSeen = 0;
+      for(int j = i; j &lt; n; j++) {
+        petalsSeen += petals[j];
+        present[petals[j]] = true;
+        if(petalsSeen % (j-i+1) == 0 &amp;&amp; present[petalsSeen / (j-i+1)]) {
+          photos++;
+        }
+      }
+    }
+    pw.println(photos);
+    pw.close();
+  }
+}
+</pre>
+<p></body></html>

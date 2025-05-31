@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Claire Zhang) 
+<p>We model Cowland as a directed acyclic graph with towns as nodes and roads as
+weighted directed edges.
+<p>Throughout the code and analysis, say
+<p><ul><li> <span class='math'>$\text{len}[i]$</span> is the length of the longest path starting at <span class='math'>$i$</span>, </li><li> <span class='math'>$i\rightarrow j$</span> is the edge from <span class='math'>$i$</span> to <span class='math'>$j$</span>, and </li><li> <span class='math'>$l[i\rightarrow j]$</span> is the label of edge <span class='math'>$i\rightarrow j$</span>. </li></ul>
+<p>For all subtasks, it is required to process nodes in an order such that for all
+nodes, we visit its successors before visiting itself. We can process nodes in
+this so called topological order by processing batches of nodes in order of
+increasing <span class='math'>$\text{len}$</span>, where we add a node to the next batch once we visit all
+its successors (see code).
+<p><strong>Subtask 1 (Labels are the same).</strong>
+<p>If all labels are <span class='math'>$c$</span>, we are asked to output <span class='math'>$c\cdot \text{len}[i]$</span> for each
+<span class='math'>$i$</span>. We can compute <span class='math'>$\text{len}[i]$</span> in topological order, taking the max length
+over successors of <span class='math'>$i$</span>:
+<p><pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int N=2e5+1;
+vector&lt;vector&lt;int&gt;&gt; radj[N];
+int deg[N], len[N];
+ 
+int main(){
+    int n,m;
+    cin &gt;&gt; n &gt;&gt; m;
+    long long c=0;
+    for(int i=0; i&lt;m; i++){
+        int u,v,l; cin &gt;&gt; u &gt;&gt; v &gt;&gt; l;
+        c=l;
+        radj[v].push_back({u, l});
+        deg[u]++;
+    }
+    vector&lt;int&gt; nodes;
+    for(int i=1; i&lt;=n; i++){
+        if(!deg[i]) nodes.push_back(i);
+    }
+ 
+    // bfs from sinks
+    while(int(nodes.size())){
+        vector&lt;int&gt; nodes2;
+ 
+        // update predecessors&apos; deg and (possibly) len
+        for(int b:nodes){
+            for(auto e:radj[b]){
+                int a=e[0], l=e[1];
+                deg[a]--;
+                if(deg[a]==0){
+                    len[a]=len[b]+1;
+                    nodes2.push_back(a);
+                }
+            }
+        }
+        // next round&apos;s nodes to process
+        swap(nodes, nodes2);
+    }
+ 
+    for(int i=1; i&lt;=n; i++) cout &lt;&lt; len[i] &lt;&lt; &quot; &quot; &lt;&lt; c*len[i] &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+The time complexity is <span class='math'>$O(N+M)$</span>.
+<p><strong>Subtask 2 (Labels are distinct).</strong>  
+<p>Bessie&apos;s preferred path is the path <span class='math'>$P$</span> with lexicographically minimal
+<span class='math'>$\text{value}(P):= (-\text{len}(P), l^{P}_1, l^{P}_2, \ldots, l^{P}_{\text{len}(P)-1})$</span>,
+where <span class='math'>$l^P_j$</span> denotes the label of the <span class='math'>$j$</span>th edge on path <span class='math'>$P$</span>. If <span class='math'>$l_j$</span> are
+pairwise distinct, <span class='math'>$l^{P}_1 \ne l^{P&apos;}_1$</span> for different paths <span class='math'>$P$</span>, <span class='math'>$P&apos;$</span>, so it
+suffices to only consider <span class='math'>$(-\text{len}(P), l^P_1)$</span>. 
+<p>Let&apos;s modify the previous solution. For each node <span class='math'>$i$</span>, find the successor <span class='math'>$j$</span>
+with minimum <span class='math'>$(-\text{len}[j], l[i\rightarrow j])$</span>. This is stored in
+<span class='math'>$\text{best}[i]$</span> in the code below. We keep track of the desired sums and update
+<span class='math'>$\text{sum}[i] = \text{sum}[j]+l[i\rightarrow j]$</span> in topological order.
+<p><pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int N=2e5+1;
+vector&lt;vector&lt;int&gt;&gt; radj[N];
+vector&lt;vector&lt;long long&gt;&gt; cand[N];
+int deg[N];
+pair&lt;int, int&gt; best[N];
+long long sum[N];
+ 
+int main(){
+    int n,m;
+    cin &gt;&gt; n &gt;&gt; m;
+    for(int i=0; i&lt;m; i++){
+        int u,v,l; cin &gt;&gt; u &gt;&gt; v &gt;&gt; l;
+        radj[v].push_back({u, l});
+        deg[u]++;
+    }
+    vector&lt;int&gt; nodes;
+    for(int i=1; i&lt;=n; i++){
+        if(!deg[i]) nodes.push_back(i);
+    }
+ 
+    // bfs from sinks
+    while(int(nodes.size())){
+        vector&lt;int&gt; nodes2;
+ 
+        // update predecessors&apos; deg and (possibly) best
+        for(int b:nodes){
+            for(auto e:radj[b]){
+                int a=e[0], l=e[1];
+                deg[a]--;
+                if(make_pair(best[b].first-1, l) &lt; best[a]){
+                    best[a] = {best[b].first-1, l};
+                    sum[a] = sum[b]+l;
+                }
+                if(deg[a]==0){
+                    nodes2.push_back(a);
+                }
+            }
+        }
+        // next round&apos;s nodes to process
+        swap(nodes, nodes2);
+    }
+ 
+    for(int i=1; i&lt;=n; i++) cout &lt;&lt; -best[i].first &lt;&lt; &quot; &quot; &lt;&lt; sum[i] &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+The time complexity is <span class='math'>$O(N+M)$</span>.
+<p><strong>Subtask 3 (<span class='math'>$N,M \le 5000$</span>).</strong> 
+<p>Now we must consider the entire path:
+<span class='math'>$\text{value}(P):= (-\text{len}(P), l^{P}_1, l^{P}_2, \ldots, l^{P}_{\text{len(P)}-1})$</span>.
+<p>Let&apos;s store the preferred path from each node <span class='math'>$i$</span> that we&apos;ve visited. It
+suffices to store the next node on the path and the label of the edge to it.
+This is stored as <span class='math'>$\text{nxt}[i]$</span> in the below code.
+<p>Starting at each node <span class='math'>$i$</span>, we can compare the values of the <span class='math'>$\deg i$</span> candidate
+paths using each outward edge. Let <span class='math'>$\text{better}(i, j)$</span> be a function that
+returns whether the preferred path from <span class='math'>$i$</span> is better (has lexicographically
+smaller value) than the preferred path from <span class='math'>$j$</span>, as well as the sum of the
+better path. <span class='math'>$\text{better}(i, j)$</span> can be computed by comparing
+<ol><li> the length of each path, </li><li> the edge weight of the first edge in
+each path, </li><li>
+<span class='math'>$\text{better}(\text{nxt}(i), \text{nxt}(j))$</span> (<span class='math'>$\text{nxt}(i)$</span> refers to the
+second node on the preferred path from <span class='math'>$i$</span>, which is <span class='math'>$\texttt{nxt[i].first}$</span> in
+the code) </li></ol>
+- breaking whenever the two quantities are different.
+<p>For each node <span class='math'>$i$</span>, we compare <span class='math'>$O(\deg i)$</span> paths; each comparison takes <span class='math'>$O(N)$</span>,
+and so the total time complexity is <span class='math'>$O(\sum_i \deg i \cdot N) = O(MN)$</span>.
+<p><pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int N=2e5+1;
+vector&lt;vector&lt;int&gt;&gt; radj[N];
+int deg[N], len[N];
+pair&lt;int, int&gt; nxt[N];
+long long sum[N];
+ 
+#define mp make_pair
+ 
+int main(){
+    int n,m;
+    cin &gt;&gt; n &gt;&gt; m;
+    for(int i=0; i&lt;m; i++){
+        int u,v,l; cin &gt;&gt; u &gt;&gt; v &gt;&gt; l;
+        radj[v].push_back({u, l});
+        deg[u]++;
+    }
+    vector&lt;int&gt; nodes;
+    for(int i=1; i&lt;=n; i++){
+        if(!deg[i]) nodes.push_back(i);
+    }
+ 
+    // process nodes in order of increasing longest path
+    while(int(nodes.size())){
+        vector&lt;int&gt; nodes2;
+ 
+        // determine which min.lex. path is better
+        auto better=[&amp;](auto&amp;&amp; better, int a, int b)-&gt;int{
+            if(!len[a] and !len[b]) return 1;
+            if(mp(len[a], nxt[a].second) != mp(len[b], nxt[b].second)){
+                return 1+(mp(len[b], -nxt[b].second) &gt; mp(len[a], -nxt[a].second));
+            }
+            return better(better, nxt[a].first, nxt[b].first);
+        };
+ 
+        // update best path nxt[a]
+        auto ckmin=[&amp;](int a, pair&lt;int, int&gt; cand){
+            int b = cand.first;
+            if(!nxt[a].first){
+                nxt[a]=cand;
+                len[a]=len[cand.first]+1;
+                return;
+            }
+            len[0] = len[b] + 1;
+            nxt[0] = cand;
+            if(better(better, a, 0)==2){
+                len[a] = len[b] + 1;
+                nxt[a] = cand;
+            }
+        };
+ 
+        // update predecessors&apos; deg and (possibly) nxt
+        for(int b:nodes){
+            sum[b] = sum[nxt[b].first] + nxt[b].second;
+            for(auto e:radj[b]){
+                int a=e[0], l=e[1];
+                deg[a]--;
+                ckmin(a, {b, l});
+                if(deg[a]==0){
+                    nodes2.push_back(a);
+                }
+            }
+        }
+        
+        // next round&apos;s nodes to process
+        swap(nodes, nodes2);
+    }
+ 
+    for(int i=1; i&lt;=n; i++) cout &lt;&lt; len[i] &lt;&lt; &quot; &quot; &lt;&lt; sum[i] &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p><strong>Subtask 4 (<span class='math'>$N \le 2\cdot 10^5, M \le 4\cdot 10^5$</span>).</strong>    
+<p>If the preferred path from <span class='math'>$i$</span> goes to <span class='math'>$j$</span> in the first step, the rest of the
+path must be the preferred path starting at <span class='math'>$j$</span>. Thus, subtask 3 could recompare
+the same pair of nodes multiple times. We can memoize <span class='math'>$\texttt{better}(i, j)$</span>
+using a map but this still could take <span class='math'>$\Omega(M\sqrt{M})$</span> time and memory (try
+to think of a test case!). Instead, we maintain a rank function.
+<p>For each batch of nodes (batched by len), let&apos;s compute <span class='math'>$\text{rnk}[i]$</span> which
+satisfies <span class='math'>$\text{rnk}[i] &lt; \text{rnk}[j]$</span> for all pairs of nodes <span class='math'>$i,j$</span> such that
+the preferred path is lexicographically smaller than the preferred path from
+<span class='math'>$j$</span>.  Then, to compute the ranks of the predecessors of nodes in this batch, it
+suffices to sort 3-tuples, as in Subtask 2. Specifically,
+<span class='math'>$\text{nxt}(i) = \text{argmin}_{j} (-\text{len}[j], l[i\rightarrow j], \text{rnk}[j])$</span>
+and <span class='math'>$\text{rnk}[i]$</span> is the index of
+<span class='math'>$(l[i\rightarrow \text{nxt}(i)], \text{rnk}[\text{nxt}(i)])$</span> in a sorted list of
+<span class='math'>$(l[k \rightarrow \text{nxt}[k]], \text{rnk}[\text{nxt}(k)])$</span>, over all nodes
+<span class='math'>$k$</span> in <span class='math'>$i$</span>&apos;s batch. 
+<p><pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int N=2e5+1;
+vector&lt;vector&lt;int&gt;&gt; radj[N];
+vector&lt;vector&lt;long long&gt;&gt; cand[N];
+int deg[N], rnk[N], len[N];
+long long sum[N];
+ 
+int main(){
+    int n, m;
+    cin &gt;&gt; n &gt;&gt; m;
+    for(int i=0; i&lt;m; i++){
+        int u,v,l; cin &gt;&gt; u &gt;&gt; v &gt;&gt; l;
+        radj[v].push_back({u, l});
+        deg[u]++;
+    }
+    vector&lt;int&gt; nodes;
+    for(int i=1; i&lt;=n; i++){
+        if(!deg[i]) nodes.push_back(i);
+    }
+ 
+    // bfs from sinks
+    while(int(nodes.size())){
+        vector&lt;int&gt; nodes2;
+ 
+        // update predecessors&apos; deg, len, and cand
+        for(int u:nodes){
+            for(auto e:radj[u]){
+                int v=e[0], l=e[1];
+                cand[v].push_back({-len[u], l, rnk[u], sum[u]+l});
+                deg[v]--;
+                if(deg[v]==0){
+                    len[v]=len[u]+1;
+                    nodes2.push_back(v);
+                }
+            }
+        }
+        // next round&apos;s nodes to process
+        swap(nodes, nodes2);
+ 
+        // find the lex. min. path
+        vector&lt;vector&lt;long long&gt;&gt; v;
+        for(int i=0; i&lt;nodes.size(); i++){
+            int x=nodes[i];
+            sort(cand[x].begin(), cand[x].end());
+            vector&lt;long long&gt; use=cand[x][0];
+            sum[x]=use[3];
+            v.push_back({use[1], use[2], x});
+        }
+ 
+        // rank this level&apos;s nodes
+        sort(v.begin(), v.end());
+        for(int i=0; i&lt;v.size(); i++){
+            rnk[v[i][2]]=i;
+        }
+    }
+ 
+    for(int i=1; i&lt;=n; i++) cout &lt;&lt; len[i] &lt;&lt; &quot; &quot; &lt;&lt; sum[i] &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+The time complexity is <span class='math'>$O(M\log N)$</span>.
+<p></body></html>

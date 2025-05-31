@@ -1,0 +1,463 @@
+Solution ID: sol_prob1_gold_feb22
+Contest: FEB22
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob1_gold_feb22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+The first observation that needs to be made is that in each query, the Guernseys
+and Holsteins can be treated independently of each other. Specifically, if we
+define
+
+$G$
+
+to be the set of Guernseys within a query, then the answer to that
+query is
+
+$\texttt{ans}[G]\cdot \texttt{ans}[\{1,2,\ldots,N\}\backslash G]$
+
+,
+where
+
+$\texttt{ans}[S]$
+
+denotes the number of ways for the cows in
+
+$S$
+
+to trade
+amongst each other.
+
+It remains to describe how to compute
+
+$\texttt{ans}[S]$
+
+for all subsets
+
+$S\subseteq \{1,2,\ldots,N\}$
+
+.
+
+Special Case:
+
+Computing
+
+$\texttt{ans}[\{1,2,\ldots,N\}]$
+
+We can solve this using Bitmask DP (see
+
+this
+
+USACO Guide module). In fact,
+this case turns out to be equivalent to
+
+this
+
+problem 
+from that module.
+
+Let's assign gifts to cow 1, then to cow 2, and so on up to cow
+
+$N$
+
+in that
+order. Our current state is represented by the pair:
+
+$$(p,i)=(\text{the number of cows assigned}, \text{the bitmask of gifts assigned}),$$
+
+where
+
+$0\le p\le N$
+
+and
+
+$0\le i<2^N$
+
+.
+
+Let
+
+$\oplus$
+
+denote bitwise XOR. From the current state we may transition to
+
+$(p+1, i\oplus (1\ll j))$
+
+where gift
+
+$j$
+
+is any unassigned gift that cow
+
+$p+1$
+
+may be assigned. There are
+
+$2^N$
+
+states (since
+
+$p$
+
+is always equal to the number
+of bits in
+
+$i$
+
+) and the number of transitions from each state is at most
+
+$N$
+
+,
+yielding an overall time complexity of
+
+$\mathcal O(N\cdot 2^N)$
+
+.
+
+Partial Solution:
+
+Suppose that we compute
+
+$\texttt{ans}[S]$
+
+independently
+for all subsets
+
+$S$
+
+using the solution for a single
+
+$S$
+
+given above. The total
+number of operations  is bounded above by:
+
+$$\begin{align*}
+\sum_{S\subseteq \{1\ldots N\}}|S|\cdot 2^{|S|}&\le N\cdot \left(\sum_{S\subseteq \{1\ldots N\}}2^{|S|}\right)\\
+&=N\cdot \prod_{c=1}^N[(1\text{ if }c\text{ not in }S)+(2\text{ if }c\text{ in }S)]\\
+&=N\cdot 3^N
+\end{align*}$$
+
+yielding a solution that runs in
+
+$\mathcal O(N\cdot 3^N+NQ)$
+
+time.
+
+This is
+enough for 11 out of 18 test cases.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+uint64_t solve_adj(const vector<int> &new_adj) {
+	const int N = (int)size(new_adj);
+	vector<uint64_t> dp(1 << N);
+	dp[0] = 1;
+	for (int i = 0; i < (1 << N); ++i) {
+		int p = __builtin_popcount(i);
+		for (int j = 0; j < N; ++j)
+			if (!(i & (1 << j)))
+				if (new_adj.at(p) & (1 << j))
+					dp[i ^ (1 << j)] += dp[i];
+	}
+	return dp.back();
+}
+
+const int MAX_N = 20;
+uint64_t ans[1 << MAX_N];
+int adj[MAX_N];
+int N;
+
+uint64_t solve_subset(int mask) {
+	if (!ans[mask]) { // would speed up if not all queries distinct
+		vector<int> bits;
+		for (int i = 0; i < N; ++i)
+			if (mask & (1 << i))
+				bits.push_back(i);
+		vector<int> new_adj(size(bits));
+		for (size_t i = 0; i < size(bits); ++i)
+			for (size_t j = 0; j < size(bits); ++j)
+				if (adj[bits[i]] & (1 << bits[j]))
+					new_adj[i] ^= 1 << j;
+		ans[mask] = solve_adj(new_adj);
+	}
+	return ans[mask];
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	cin >> N;
+	assert(N <= MAX_N);
+	for (int i = 0; i < N; ++i) {
+		vector<int> pref(N);
+		for (int &g : pref)
+			cin >> g;
+		for (int &g : pref) {
+			--g;
+			adj[i] |= 1 << g;
+			if (g == i)
+				break;
+		}
+	}
+	int Q;
+	cin >> Q;
+	while (Q--) {
+		string breeds;
+		cin >> breeds;
+		int g = 0, h = 0;
+		for (int i = 0; i < N; ++i) {
+			if (breeds[i] == 'G')
+				g ^= 1 << i;
+			else
+				h ^= 1 << i;
+		}
+		cout << solve_subset(g) * solve_subset(h) << "\n";
+	}
+}
+
+Full Credit:
+
+We again use bitmask DP to compute all entries of
+
+$\texttt{ans}$
+
+, but this time we'll do so in
+
+$\mathcal O(N^2\cdot 2^N)$
+
+time.
+
+Motivated by the silver version of this problem, the key idea is to assign gifts
+to cows in order of the cycle decomposition of the assignment, rather than in
+increasing order of cow label. For example, consider the assignment consisting
+of the pairs:
+
+$$1\to 2, 2\to 5, 3\to 4, 4\to 3, 5\to 1,$$
+
+where
+
+$a\to b$
+
+means that cow
+
+$a$
+
+is assigned gift
+
+$b$
+
+. This assignment
+decomposes into two cycles:
+
+$$4\to 3\to 4, 5\to 1\to 2\to 5.$$
+
+To avoid counting any assignment more than once, we have rotated each cycle such
+that its largest label comes first and sorted the cycles in increasing order of
+largest label. Then we would process the pairs in the following order:
+
+$$4\to 3, 3\to 4, 5\to 1, 1\to 2, 2\to 5.$$
+
+Let
+
+$\texttt{dp}[mask][last]$
+
+, where the highest set bit of
+
+$mask$
+
+is
+
+$i$
+
+and
+
+$mask\&(1\ll last) \neq 0$
+
+, represent the state where all cows in
+
+$mask\oplus(1\ll last)$
+
+and all gifts in
+
+$mask\oplus(1\ll i)$
+
+have been paired
+up, and we are assigning a gift to cow
+
+$last$
+
+next. From this state, we can
+either
+
+Assign cow
+
+$last$
+
+a gift with index less than
+
+$i$
+
+, extending the current
+cycle.
+
+Assign cow
+
+$last$
+
+the gift with index
+
+$i$
+
+, completing the current cycle.
+Then start a new cycle.
+
+After converting the above assignment from 1- to 0-indexing:
+
+$$3\to 2, 2\to 3, 4\to 0, 0\to 1, 1\to 4,$$
+
+this would correspond to the following transitions between DP states:
+
+$$\texttt{dp}[8][3] \to \texttt{dp}[12][2] \to \texttt{ans}[12] \to \texttt{dp}[28][4]\to \texttt{dp}[29][0]\to \texttt{dp}[31][1] \to \texttt{ans}[31].$$
+
+There are
+
+$\mathcal O(N\cdot 2^N)$
+
+states and each transitions to at most
+
+$N$
+
+others, yielding the desired time complexity.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 20;
+uint64_t ans[1 << MAX_N];
+uint64_t dp[1 << MAX_N][MAX_N];
+int adj[MAX_N];
+int N;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	cin >> N;
+	assert(N <= MAX_N);
+	for (int i = 0; i < N; ++i) {
+		vector<int> pref(N);
+		for (int &g : pref)
+			cin >> g;
+		for (int &g : pref) {
+			--g;
+			adj[i] |= 1 << g;
+			if (g == i)
+				break;
+		}
+	}
+	ans[0] = 1;
+	for (int k = 0; k < N; ++k) // start a cycle
+		dp[1 << k][k] = 1;
+	for (int i = 0; i < N; ++i) {
+		for (int mask = 1 << i; mask < 1 << (i + 1); ++mask) {
+			for (int last = 0; last <= i; ++last)
+				if (mask & (1 << last)) {
+					const uint64_t val = dp[mask][last];
+					for (int k = 0; k < i; ++k) // case 1, extend the cycle
+						if (!(mask & (1 << k)))
+							if (adj[last] & (1 << k))
+								dp[mask ^ (1 << k)][k] += val;
+					if (adj[last] & (1 << i)) // case 2, complete the cycle
+						ans[mask] += val;
+				}
+			for (int k = i + 1; k < N; ++k) // start a new cycle
+				dp[mask ^ (1 << k)][k] += ans[mask];
+		}
+	}
+	int Q;
+	cin >> Q;
+	while (Q--) {
+		string breeds;
+		cin >> breeds;
+		int g = 0, h = 0;
+		for (int i = 0; i < N; ++i) {
+			if (breeds[i] == 'G')
+				g ^= 1 << i;
+			else
+				h ^= 1 << i;
+		}
+		cout << ans[g] * ans[h] << "\n";
+	}
+}
+
+Danny Mittal's code (which sorts the cycles in decreasing order of lowest
+label):
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class RedistributingGiftsGold {
+    static int[][] rankings;
+ 
+    static boolean adj(int from, int to) {
+        return rankings[to][from] >= rankings[to][to];
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        rankings = new int[n][n];
+        for (int cow = 0; cow < n; cow++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            for (int rank = n; rank > 0; rank--) {
+                rankings[cow][Integer.parseInt(tokenizer.nextToken()) - 1] = rank;
+            }
+        }
+        long[][] dpEndingAt = new long[n][1 << n];
+        long[] dpClosed = new long[1 << n];
+        dpClosed[0] = 1;
+        for (int start = n - 1; start >= 0; start--) {
+            for (int mask = 1 << start; mask < 1 << n; mask += 1 << (start + 1)) {
+                for (int end = start; end < n; end++) {
+                    if ((mask & (1 << end)) != 0) {
+                        if (end == start) {
+                            dpEndingAt[end][mask] = dpClosed[mask - (1 << end)];
+                        } else {
+                            for (int last = start; last < n; last++) {
+                                if (last != end && adj(last, end) && (mask & (1 << last)) != 0) {
+                                    dpEndingAt[end][mask] += dpEndingAt[last][mask - (1 << end)];
+                                }
+                            }
+                        }
+                    }
+                    if (adj(end, start)) {
+                        dpClosed[mask] += dpEndingAt[end][mask];
+                    }
+                }
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q > 0; q--) {
+            String breeds = in.readLine();
+            int guernseyMask = 0;
+            int holsteinMask = 0;
+            for (int cow = 0; cow < n; cow++) {
+                if (breeds.charAt(cow) == 'G') {
+                    guernseyMask += 1 << cow;
+                } else {
+                    holsteinMask += 1 << cow;
+                }
+            }
+            out.append(dpClosed[guernseyMask] * dpClosed[holsteinMask]).append('\n');
+        }
+        System.out.print(out);
+    }
+}

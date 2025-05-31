@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>We can rephrase the problem as finding an integer <span class='math'>$h$</span> such that the number of
+cows who provided information inconsistent with Bessie hiding at <span class='math'>$h$</span> is
+minimized. For the first sample input, any <span class='math'>$h$</span> satisfying <span class='math'>$3\le h\le 5$</span> is
+consistent with there being zero liars. For the second sample input, any <span class='math'>$h$</span>
+satisfying <span class='math'>$h\le 1$</span> or <span class='math'>$h\ge 2$</span> is consistent with there being a single liar.
+<p>Of course, we don&apos;t have time to try all possible values of <span class='math'>$h$</span>. We can reduce
+the number of <span class='math'>$h$</span> we need to consider by observing that if we move <span class='math'>$h$</span> leftwards
+or rightward until it equals one of the <span class='math'>$p_i$</span> provided in the input, the number
+of cows that are inconsistent with <span class='math'>$h$</span> either stays the same or decreases. For
+example, consider the first sample input:
+<p><ul><li>If we move <span class='math'>$h=6$</span> leftwards to <span class='math'>$h=5$</span>, the number of cows inconsistent with
+<span class='math'>$h$</span> stays the same (zero for both values of <span class='math'>$h$</span>).</li><li>If we move <span class='math'>$h=4$</span> rightwards to <span class='math'>$h=5$</span>, the number of cows inconsistent with
+<span class='math'>$h$</span> decreases from one to zero.</li></ul>
+<p>So it suffices to only consider the case when <span class='math'>$h=p_i$</span> for some <span class='math'>$i$</span>. That is,
+<p><div class='math'>$$\min_{\text{all integers }h}(\text{# cows inconsistent with }h)=\min_{1\le i\le N}(\text{# cows inconsistent with }h=p_i).$$</div>
+<p>For a single value of <span class='math'>$h$</span>, we can count the number of cows inconsistent with <span class='math'>$h$</span>
+in <span class='math'>$O(N)$</span> time by looping over all cows in the input. So the overall time
+complexity is <span class='math'>$O(N^2)$</span>.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class CountingLiarsQuadratic {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        Information[] infos = new Information[n];
+        for (int j = 0; j &lt; n; j++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            char direction = tokenizer.nextToken().charAt(0);
+            int reference = Integer.parseInt(tokenizer.nextToken());
+            infos[j] = new Information(direction, reference);
+        }
+        int answer = n;
+        for (Information tight : infos) {
+            int x = tight.reference;
+            int liars = 0;
+            for (Information info : infos) {
+                if (info.direction == &apos;G&apos; ? x &lt; info.reference : x &gt; info.reference) {
+                    liars++;
+                }
+            }
+            answer = Math.min(answer, liars);
+        }
+        System.out.println(answer);
+    }
+ 
+    public static class Information {
+        public final char direction;
+        public final int reference;
+ 
+        public Information(char direction, int reference) {
+            this.direction = direction;
+            this.reference = reference;
+        }
+    }
+}
+</pre>
+<p>Jichao Qian&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;stdio.h&gt;
+#include &lt;stdint.h&gt;
+ 
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+ 
+int main()
+{
+    int N;
+    scanf(&quot;%d&quot;, &amp;N);
+ 
+    vector&lt;pair&lt;int, int&gt;&gt; locations(N);
+    for (int idx = 0; idx &lt; N; ++idx)
+    {
+        char dir[10];
+        scanf(&quot;%s&quot;, dir);
+        scanf(&quot;%d&quot;, &amp;locations[idx].first);
+        if (dir[0] == &apos;G&apos;)
+            locations[idx].second = -1;
+        else
+            locations[idx].second = +1;
+    }
+ 
+    int minLiars = N;
+    sort(locations.begin(), locations.end());
+ 
+    for (int idx = 0; idx &lt; N; ++idx)
+    {
+        int numLiars = 0;
+        for (int jdx = 0; jdx &lt; idx; ++jdx)
+            if (locations[jdx].second == 1)
+                ++numLiars;
+ 
+        for (int jdx = idx+1; jdx &lt; N; ++jdx)
+            if (locations[jdx].second == -1)
+                ++numLiars;
+ 
+        minLiars = min(numLiars, minLiars);
+    }
+ 
+    printf(&quot;%d\n&quot;, minLiars);
+}
+</pre>
+<p>Bonus: Solve the problem in <span class='math'>$O(N\log N)$</span> time.
+<p></body></html>

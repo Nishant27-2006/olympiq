@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+If, in the shuffle, there is some position that won&apos;t receive any cows, then that position
+will contain no cows after one shuffle. However, given that that position will contain no cows,
+it is possible that the position reachable from that one in one shuffle could end
+up containing no cows, and this effect can cascade through the positions.
+<p>In general, if all of the positions that direct a cow to position <span class='math'>$p$</span> are known to eventually
+contain no cows, then position <span class='math'>$p$</span> will also not contain any cows.
+<p>We start by keeping track of, for every position
+<span class='math'>$p$</span>, how many positions there are which still could contain cows forever
+and direct them to position <span class='math'>$p$</span> after exactly one shuffle. After we&apos;ve computed these
+quantities, we start a queue of positions which are now known never to contain any cows
+after some number of shuffles. Any such position cannot contribute cows to the position
+it directs to, so we need to decrement the counter for that position and possibly
+enqueue it. We&apos;ll keep processing positions in the queue until it&apos;s empty, and
+the answer is the number of elements which were never enqueued.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class shuffle {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;shuffle.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;shuffle.out&quot;)));
+		int n = Integer.parseInt(br.readLine());
+		int[] to = new int[n];
+		int[] parent = new int[n];
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		for(int i = 0; i &lt; n; i++) {
+			to[i] = Integer.parseInt(st.nextToken())-1;
+			parent[to[i]]++;
+		}
+		int ret = n;
+		LinkedList&lt;Integer&gt; q = new LinkedList&lt;Integer&gt;();
+		for(int i = 0; i &lt; n; i++) {
+			if(parent[i] == 0) {
+				q.add(i);
+				ret--;
+			}
+		}
+		while(!q.isEmpty()) {
+			int curr = q.removeFirst();
+			if(--parent[to[curr]] == 0) {
+				q.add(to[curr]);
+				ret--;
+			}
+		}
+		pw.println(ret);
+		pw.close();
+	}
+}
+</pre></body></html>

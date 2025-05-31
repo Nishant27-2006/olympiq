@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Ethan Guo)
+<p>Clearly, Bessie may send an invitation to any individual cow. To gain intuition
+on how to maximize probability, we will investigate on what circumstances we
+should extend an interval to increase probability. We will then show the
+strategy works in general.
+<p>Firstly, we will create an expression for the probability of exactly one
+acceptance. This equals
+<span class='math'>$\sum\limits_{l\leq i\leq r}\left(p_i\prod\limits_{l\leq j\leq r,j\neq i}(1-p_j)\right)$</span>.
+Letting <span class='math'>$P=\prod\limits_{l\leq j\leq r}(1-p_j)$</span>, this expression reduces to
+<span class='math'>$P\sum\limits_{l\leq i\leq r}\frac{p_i}{1-p_i}$</span>.
+<p>Consider the expression after a probability <span class='math'>$pâ$</span> is added to an end of the
+interval. For this to increase the answer, we have that
+<span class='math'>$P(1-pâ)\left(\frac{pâ}{1-pâ}+\sum\limits_{l\leq i\leq r}\frac{p_i}{1-p_i}\right)&gt;P\sum\limits_{l\leq i\leq r}\frac{p_i}{1-p_i}$</span>.
+This, surprisingly, reduces to <span class='math'>$\sum\limits_{l\leq i\leq r}\frac{p_i}{1-p_i}&lt;1$</span>.
+Therefore, as long as the sum of <span class='math'>$\frac{p_i}{1-p_i}$</span> within the interval is less
+than <span class='math'>$1$</span>, it is desirable to extend the interval.
+<p>Note that the quantity <span class='math'>$\frac{p_i}{1-p_i}$</span> for any probability is positive.
+Therefore, each time we extend an interval, we increase <span class='math'>$\sum\frac{p_i}{1-p_i}$</span>.
+Up to a given point, this sum will remain less than <span class='math'>$1$</span>, and each augmentation
+before then is optimal to maximize the answer.
+<p>Since we can always extend the interval as long as the condition is satisfied,
+the correct strategy is to consider the maximal interval subject to the
+constraint for each starting point. This can be done with the two-pointer method
+in <span class='math'>$O(N)$</span> since the right end of the maximal interval is nondecreasing (advance
+the right pointer as long as the sum is still less than <span class='math'>$1$</span>, then advance the
+left pointer once to consider the next starting point).  My solution code is
+shown below.
+<p>(Note from Brian Dean: this problem is related to the so-called &quot;Odds
+Algorithm&quot;, for those who want to understand more about its underlying
+mathematical structure)
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+ 
+using namespace std;
+ 
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0);
+    freopen(&quot;cowdate.in&quot;, &quot;r&quot;, stdin);
+    freopen(&quot;cowdate.out&quot;, &quot;w&quot;, stdout);
+    int n; cin &gt;&gt; n;
+    double p[n];
+    for (int i = 0; i &lt; n; i++) {
+        int pt; cin &gt;&gt; pt;
+        p[i] = pt * 0.000001;
+    }
+    // left and right pointers
+    int l = 0, r = 0;
+    // product of 1-p_i and sum of p_i/(1-p_i) within current interval
+    double prod = 1, sum = 0;
+    // answer
+    double mxp = -1;
+    while (l &lt; n) {
+        // advance right pointer as long as condition is satisfied
+        while (r &lt; n &amp;&amp; sum &lt; 1) {
+            // update product and sum
+            prod *= (1 - p[r]);
+            sum += p[r] / (1 - p[r]);
+            r++;
+        }
+        // expression for probability is prod * sum
+        mxp = max(mxp, prod * sum);
+        // advance left pointer by removing from prod and sum
+        prod /= (1 - p[l]);
+        sum -= p[l] / (1 - p[l]);
+        l++;
+    }
+    cout &lt;&lt; (int) (1000000 * mxp) &lt;&lt; endl;
+    return 0;
+}
+</pre>
+<p></body></html>

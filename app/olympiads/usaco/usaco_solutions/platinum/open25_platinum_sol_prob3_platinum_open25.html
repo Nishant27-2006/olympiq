@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by William Lin)
+<p>First, let&apos;s observe some properties about the optimal solution.
+<p><ul><li>Any two cows cannot have touching paths, otherwise the moves starting from
+when the cows touch can be removed.</li><li>A single cow&apos;s path will cover a range <span class='math'>$[l, r]$</span> on the number line. If the cow
+starts at <span class='math'>$s$</span>, the optimal sequence of moves will be to always move left to <span class='math'>$l$</span>
+then always move right to <span class='math'>$r$</span>, or vice versa. We can also imagine that a single
+cow can extend both to the left and to the right, although one of them will have
+double the cost.</li></ul>
+<p>We can use DP for this problem: <span class='math'>$dp[i][s]$</span> is the min cost to cover all packages
+<span class='math'>$\le i$</span> where <span class='math'>$s$</span> is one of five states:
+<p><ul><li>Some cow has extended to its right to cover <span class='math'>$i$</span>, unit cost.</li><li>Some cow has extended to its right to cover <span class='math'>$i$</span>, double cost.</li><li>Some cow will need to extend to its left to cover <span class='math'>$i$</span>, unit cost.</li><li>Some cow will need to extend to its left to cover <span class='math'>$i$</span>, double cost.</li><li>None of the above apply</li></ul>
+<p>To transition from <span class='math'>$dp[i]$</span> to <span class='math'>$dp[j]$</span> (assuming no cows or packages in
+<span class='math'>$(i, j)$</span>), we add a cost of <span class='math'>$j-i$</span> for states 1 and 3 and <span class='math'>$2(j-i)$</span> for states 2
+and 4. Depending on whether <span class='math'>$j$</span> has a cow or a package, we can then transition
+between <span class='math'>$dp[j]$</span>.
+<p>Unfortunately, we can have up to <span class='math'>$10^{18}$</span> cows and packages so doing this DP
+naively is not feasible. However, note that we can describe the transitions with
+min-plus matrix multiplication: <span class='math'>$dp[j]=dp[i] A_{i,j}$</span>. If we have many repeated
+chunks of size <span class='math'>$M$</span> between <span class='math'>$i$</span> and <span class='math'>$j$</span>, we can use binary exponentiation to
+efficiently find the transition matrix from the beginning since
+<span class='math'>$A_{i, j}=(A_{i, i+M})^{(j-i)/M}$</span>.
+<p>We will consider the number line in chunks of <span class='math'>$M$</span>. Adjacent chunks are
+equivalent except when an endpoint of a range of cows or packages lies in one of
+the chunks, which happens at most <span class='math'>$O(N+P)$</span> times. We can sweep through the
+endpoints of these ranges while maintaining a segment tree that stores all
+active cows and packages in the current chunk and allows range queries for
+transition matrices. Between endpoints, we will need to perform a constant
+number of segment tree queries and also binary exponentiation, which will be
+<span class='math'>$O(\log(N+P)+\log C)$</span>, where <span class='math'>$C$</span> is the maximum number of chunks, bounded by
+<span class='math'>$\frac{10^{18}}{M}$</span> in this problem. The final time complexity is
+<span class='math'>$O((N+P)(\log(N+P)+\log C))$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define ll long long
+#define DP array&lt;array&lt;ll, 5&gt;, 5&gt;
+ 
+DP dptrans(const DP a, const DP b) {
+    DP c;
+    memset(&amp;c, 0x3f, sizeof(c));
+    for(int i=0; i&lt;5; ++i)
+        for(int j=0; j&lt;5; ++j)
+            for(int k=0; k&lt;5; ++k)
+                c[i][j]=min(c[i][j], a[i][k]+b[k][j]);
+    return c;
+}
+ 
+const int mxNP=4e4;
+ll m, l[mxNP], r[mxNP];
+int n, p;
+array&lt;ll, 2&gt; ps[2*mxNP+1];
+array&lt;ll, 3&gt; es[2*mxNP+1];
+DP st[1&lt;&lt;18];
+ 
+void upd(int l1, int x, int i=1, int l2=0, int r2=2*(n+p)-1) {
+    if(l2==r2) {
+        memset(&amp;st[i], 0x3f, sizeof(st[i]));
+        if(!x)
+            st[i][0][4]=st[i][0][0]=st[i][1][4]=st[i][1][1]=st[i][4][2]=st[i][2][2]=st[i][4][3]=st[i][3][3]=0;
+        else if(x&amp;1)
+            st[i][4][4]=st[i][2][1]=st[i][3][0]=st[i][2][4]=st[i][4][0]=0;
+        else
+            st[i][0][0]=st[i][1][1]=st[i][2][2]=st[i][3][3]=st[i][4][4]=0;
+        for(int j=0; j&lt;5; ++j)
+            for(int k=0; k&lt;4; ++k)
+                st[i][j][k]+=(ps[l1+1][0]-ps[l1][0])*(1+k%2);
+        return;
+    }
+    int m2=(l2+r2)/2;
+    if(l1&lt;=m2)
+        upd(l1, x, 2*i, l2, m2);
+    else
+        upd(l1, x, 2*i+1, m2+1, r2);
+    st[i]=dptrans(st[2*i], st[2*i+1]);
+}
+ 
+DP qry(int l1, int r1, int i=1, int l2=0, int r2=2*(n+p)-1) {
+    if(l1&lt;=l2&amp;&amp;r2&lt;=r1)
+        return st[i];
+    int m2=(l2+r2)/2;
+    if(r1&lt;=m2)
+        return qry(l1, r1, 2*i, l2, m2);
+    if(m2&lt;l1)
+        return qry(l1, r1, 2*i+1, m2+1, r2);
+    return dptrans(qry(l1, r1, 2*i, l2, m2), qry(l1, r1, 2*i+1, m2+1, r2));
+}
+ 
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+ 
+    cin &gt;&gt; m &gt;&gt; n &gt;&gt; p;
+    for(int i=0; i&lt;n+p; ++i) {
+        cin &gt;&gt; l[i] &gt;&gt; r[i];
+        ps[i]={l[i]%m, i};
+    }
+    sort(ps, ps+n+p);
+    for(int i=0; i&lt;n+p; ++i) {
+    	ps[n+p+i]={ps[i][0]+m};
+        es[2*i]={l[ps[i][1]]/m, i, ps[i][1]&lt;n};
+        es[2*i+1]={r[ps[i][1]]/m+1, i, 2};
+    }
+    es[2*(n+p)]={-1, 0};
+    sort(es, es+2*(n+p)+1);
+    for(int i=0; i&lt;2*(n+p); ++i)
+        upd(i, 2);
+    DP ans;
+    memset(&amp;ans, 0x3f, sizeof(ans));
+    ans[4][4]=0;
+    for(int i=1; i&lt;=2*(n+p); ++i) {
+        ans=dptrans(ans, qry(es[i-1][1], es[i][1]-1+(es[i-1][0]&lt;es[i][0]?n+p:0)));
+        ll rl=es[i][0]-es[i-1][0]-1;
+        if(rl&gt;0) {
+            DP b=qry(es[i][1], es[i][1]-1+n+p);
+            while(rl) {
+                if(rl&amp;1)
+                    ans=dptrans(ans, b);
+                b=dptrans(b, b);
+                rl/=2;
+            }
+        }
+        upd(es[i][1], es[i][2]);
+        upd(es[i][1]+n+p, es[i][2]);
+    }
+    cout &lt;&lt; ans[4][4] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+</body></html>

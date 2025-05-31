@@ -1,0 +1,356 @@
+Solution ID: sol_prob2_gold_dec20
+Contest: DEC20
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_dec20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal)
+
+For convenience, let
+
+$S$
+
+be the given string.
+
+Subtask 1
+
+(
+
+$|S| \leq 10$
+
+)
+
+There are at most
+
+$4^{10} \approx 10^6$
+
+possible genomes, so we can just try
+each one to see if it produces something consistent with the input after Farmer
+John's edits. This runs in
+
+$O(|S|4^{|S|})$
+
+.
+
+Subtask 2
+
+(
+
+$|S| \leq 10^2$
+
+)
+
+Consider dividing the result of Farmer's John's edits back into the substrings
+of the genome after he had reversed them (but before he had concatenated them).
+Such a division could only correspond to one starting genome, which we could get
+by reversing the substrings back and concatenating them. However, not every
+division is valid (corresponds to some starting genome). In order for a division
+to be valid, it must satisfy two properties:
+
+For any two consecutive substrings
+
+$s$
+
+and
+
+$t$
+
+in our division, the first
+letter of
+
+$s$
+
+and the last letter of
+
+$t$
+
+, which were adjacent before Farmer John
+reversed the substrings, must be equal in order for Farmer John to have split
+the genome there.
+
+Any substring
+
+$s$
+
+must not have two adjacent
+letters within itself that are equal, because if it did, Farmer John would have
+split the genome there as well.
+
+Given these conditions, we can solve this problem using DP. It is useful to
+first compute a preliminary DP that for each substring
+
+$S[j\ldots k]$
+
+and
+letters
+
+$l, m$
+
+computes the amount of ways to replace the question marks in
+
+$s[j\ldots k]$
+
+with letters so that
+
+$s[j\ldots k]$
+
+starts with
+
+$l$
+
+, ends with
+
+$m$
+
+, and satisfies our second condition, i. e. doesn't contain any two adjacent
+equal letters. This DP is fairly straightforward to compute in
+
+$O(|S|^2)$
+
+.
+
+After that, we will perform our main DP, where for each index
+
+$k$
+
+and letter
+
+$l$
+
+, we compute the number of divisions of
+
+$S[1\ldots k]$
+
+such that the last
+substring in the division begins with
+
+$l$
+
+. To transition, we try each possible
+ending index
+
+$j$
+
+of the previous substring in our division. By making use of our
+preliminary DP values for
+
+$s[j + 1\ldots k]$
+
+, we can do this in constant time
+for each
+
+$(j, k)$
+
+, making this DP, and thus the overall algorithm,
+
+$O(|S|^2)$
+
+as
+well.
+
+Subtask 3
+
+(
+
+$|S| \leq 10^5$
+
+)
+
+To solve this subtask, we will optimize our solution to the previous subtask.
+
+In our new DP, we will instead, for each
+
+$k$
+
+, count divisions of
+
+$S[1 \ldots k]$
+
+which may be incomplete, in that the last letter of the last substring may not
+match the first character of the second-to-last substring. This means that in
+addition to keeping track of the first letter
+
+$l$
+
+of the last substring, we also
+need to keep track of the last letter
+
+$m$
+
+of the last substring as well as the
+first letter
+
+$n$
+
+of the second-to-last substring. We will refer to said DP value
+as
+
+$dp_{k, n, l, m}$
+
+.
+
+The optimization comes from the transitions necessary for this DP. Instead of
+going through all previous indexes
+
+$j$
+
+, our transition is either extending the
+last substring in our division up to
+
+$k - 1$
+
+by one character, or adding a new
+substring consisting of a single character to our division up to
+
+$k - 1$
+
+.
+
+In the first type of transition, the letters
+
+$n$
+
+and
+
+$l$
+
+stay the same, and the
+last two letters in the substring we are extending must not be equal in order to
+satisfy our second condition, so we simply add
+
+$dp_{k - 1, n, l, m}$
+
+to
+
+$dp_{k, n, l, m'}$
+
+for all
+
+$n, l, m, m'$
+
+such that
+
+$m \neq m'$
+
+and
+
+$m'$
+
+is a
+valid letter for
+
+$S_k$
+
+.
+
+In the second type of transition, the old values of
+
+$n$
+
+and
+
+$m$
+
+must match in
+order to satisfy our first condition, so we add
+
+$dp_{k - 1, m, l, m}$
+
+to
+
+$dp_{k, l, m', m'}$
+
+for all
+
+$m, l, m'$
+
+such that
+
+$m'$
+
+is a valid letter for
+
+$S_k$
+
+.
+
+To compute our final answer, we simply need to ensure that we have
+
+$n = m$
+
+, so
+our answer is the sum over
+
+$dp_{|S|, m, l, m}$
+
+for all
+
+$m, l$
+
+.
+
+For each
+
+$k$
+
+, we compute at most
+
+$4^4 + 4^3$
+
+transitions, which is constant (and
+still small enough), making our algorithm
+
+$O(|S|)$
+
+.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+ 
+public class BovineGenomicsII {
+    public static final long MOD = 1000000007;
+    public static final char[] BASES = "AGCT".toCharArray();
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        char[] s = in.readLine().toCharArray();
+        long[][][][] dp = new long[s.length][4][4][4];
+        for (int n = 0; n < 4; n++) {
+            for (int l = 0; l < 4; l++) {
+                if (s[0] == '?' || s[0] == BASES[l]) {
+                    dp[0][n][l][l] = 1L;
+                }
+            }
+        }
+        for (int k = 1; k < s.length; k++)
+            for (int m2 = 0; m2 < 4; m2++)
+                if (s[k] == '?' || s[k] == BASES[m2]) {
+                    for (int n = 0; n < 4; n++) {
+                        for (int l = 0; l < 4; l++) {
+                            for (int m = 0; m < 4; m++) {
+                                if (m != m2) {
+                                    dp[k][n][l][m2] += dp[k-1][n][l][m];
+                                    dp[k][n][l][m2] %= MOD;
+                                }
+                                if (n == m) {
+                                    dp[k][l][m2][m2] += dp[k-1][n][l][m];
+                                    dp[k][l][m2][m2] %= MOD;
+                                }
+                            }
+                        }
+                    }
+                }
+        long answer = 0;
+        for (int l = 0; l < 4; l++) {
+            for (int m = 0; m < 4; m++) {
+                answer += dp[s.length - 1][m][l][m];
+            }
+        }
+        answer %= MOD;
+        System.out.println(answer);
+    }
+}

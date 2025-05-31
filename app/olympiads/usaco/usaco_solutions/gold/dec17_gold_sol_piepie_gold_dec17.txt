@@ -1,0 +1,172 @@
+Solution ID: sol_piepie_gold_dec17
+Contest: DEC17
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_piepie_gold_dec17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nathan Pinsker)
+
+This problem can be reframed as a shortest-path problem. We consider each pie to
+be a node, and a directed edge between nodes
+
+$A$
+
+and
+
+$B$
+
+to exist if Bessie can
+gift pie
+
+$B$
+
+to Elsie after receiving pie
+
+$A$
+
+(or likewise for Elsie to Bessie).
+Under this formulation, we are given
+
+$2N$
+
+"starting nodes" and must determine,
+for each such node, the shortest path to a valid "ending node".
+
+We cannot simply use all-pairs shortest paths to solve this problem, as such
+algorithms are too slow for
+
+$N \leq 10^5$
+
+. However, we can take advantage of the
+fact that all paths have weight
+
+$1$
+
+, and perform the search using a BFS from
+multiple source nodes. This can be done simply by adding all source nodes to the
+queue at the beginning of the algorithm.
+
+Normally, this algorithm would take
+
+$O(N)$
+
+, but we also need to efficiently
+find, for various given
+
+$k$
+
+, the set of nodes that have tastiness value between
+
+$k$
+
+and
+
+$k + D$
+
+. This can be done using binary search after sorting both
+Bessie's and Elsie's list of pies by how tasty they consider them to be. This
+makes our overall running time
+
+$O(N \lg N)$
+
+, which is still plenty fast enough
+to receive full credit.
+
+Here's Dhruv's solution. He uses C++'s
+
+$\texttt{multiset}$
+
+to perform binary
+searches:
+
+#include <iostream>
+#include <algorithm>
+#include <set>
+using namespace std;
+#define MAXN 100000
+#define INF 1000000000
+ 
+int N,D;
+int A[2*MAXN];
+int B[2*MAXN];
+int dist[2*MAXN];
+ 
+struct cmpA
+{
+	bool operator()(int a,int b) const
+	{
+		return B[a]<B[b];
+	}
+};
+ 
+struct cmpB
+{
+	bool operator()(int a,int b) const
+	{
+		return A[a]<A[b];
+	}
+};
+ 
+multiset<int,cmpA> sA;
+multiset<int,cmpB> sB;
+ 
+int que[2*MAXN];
+int cur,len;
+ 
+int main()
+{
+	cin >> N >> D;
+	for(int i=0;i<2*N;i++)
+	{
+		cin >> A[i] >> B[i];
+		A[i] = -A[i], B[i] = -B[i];
+		dist[i] = -1;
+	}
+	for(int i=0;i<N;i++)
+	{
+		if(B[i]==0)
+			que[len++] = i, dist[i] = 1;
+		else
+			sA.insert(i);
+		if(A[N+i]==0)
+			que[len++] = N+i, dist[N+i] = 1;
+		else
+			sB.insert(N+i);
+	}
+	multiset<int,cmpA>::iterator itA;
+	multiset<int,cmpB>::iterator itB;
+	while(cur < len)
+	{
+		int i = que[cur];
+		if(i < N)
+		{
+			while(1)
+			{
+				itB = sB.lower_bound(i);
+				if(itB == sB.end() || A[*itB] > A[i]+D)
+					break;
+				dist[*itB] = dist[i] + 1;
+				que[len++] = *itB;
+				sB.erase(itB);
+			}
+		}
+		else
+		{
+			while(1)
+			{
+				itA = sA.lower_bound(i);
+				if(itA == sA.end() || B[*itA] > B[i]+D)
+					break;
+				dist[*itA] = dist[i] + 1;
+				que[len++] = *itA;
+				sA.erase(itA);
+			}
+		}
+		cur++;
+	}
+	for(int i=0;i<N;i++)
+		cout << dist[i] << '\n';
+}

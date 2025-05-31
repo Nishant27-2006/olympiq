@@ -1,0 +1,279 @@
+Solution ID: sol_prob2_bronze_dec22
+Contest: DEC22
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_dec22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Mythreya Dharani)
+
+Let's start by defining a cow as
+
+covered
+
+if there is a patch feeding its
+breed within a distance of
+
+$K$
+
+. The problem is asking us to cover all cows with
+the minimum number of patches.
+
+Consider each cow
+
+$i$
+
+from
+
+$1 \dots N$
+
+in that order, placing patches whenever
+necessary. First of all, if the current cow is already covered,  then we don't
+need to place another patch, and we can just move on. Otherwise, we need to
+place a new patch for this cow, so where would we place it? Consider what
+happens if we place the patch at position
+
+$i + K$
+
+. Not only will cow
+
+$i$
+
+be
+covered but any cows after it which are within
+
+$K$
+
+distance of that patch will
+also be covered. In fact, placing it at this location maximizes the number of
+potential cows that can be covered.
+
+Thus, we can just implement this strategy starting at cow
+
+$1$
+
+. Keep in mind that
+if there is a cow
+
+$i$
+
+which needs to be fed and
+
+$i + K > N$
+
+, we can just place
+our new patch at position
+
+$i$
+
+since all remaining same-breed cows can feed off
+that patch. This solution runs in
+
+$O(N)$
+
+time since we are just doing a single
+pass over the
+
+$N$
+
+cows.
+
+There is actually one edge case; what if when we try to place a patch at
+position
+
+$i$
+
+but there is already a patch there? In this case, we can place the
+patch at
+
+$i-1$
+
+instead, as it may be proven that there can't already be patches
+at both
+
+$i-1$
+
+and
+
+$i$
+
+. As
+
+$i-1+K\ge N$
+
+, this patch covers all cows from
+
+$i$
+
+to
+
+$N$
+
+of the same breed as cow
+
+$i$
+
+.
+
+Mythreya Dharani's C++ code:
+
+#include <bits/stdc++.h>
+using namespace std;
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+
+	int T;
+	cin >> T;
+
+	while (T--) {
+		int n;
+		int k;
+		cin >> n >> k;
+		string s;
+		cin >> s;
+
+		int patchG = -k - 1; // first patch location which does not cover cow 1
+		int patchH = -k - 1; // first patch location which does not cover cow 1
+
+		int cnt = 0;
+		string ans(n, '.');
+
+		for (int i = 0; i < n; i++) {
+			if (s[i] == 'G' && i - patchG > k) {
+				// the nearest G patch we placed does not cover cow i
+				++cnt;
+				if (i + k >= n) {
+					patchG = i;
+					if (ans[patchG] == 'H') { patchG--; }
+				} else {
+					patchG = i + k; // place the G patch k away
+				}
+				ans[patchG] = 'G';
+			}
+			if (s[i] == 'H' && i - patchH > k) {
+				// the nearest H patch we placed does not cover cow i
+				++cnt;
+				if (i + k >= n) {
+					patchH = i;
+					if (ans[patchH] == 'G') { patchH--; }
+				} else {
+					patchH = i + k; // place the H patch k away
+				}
+				ans[patchH] = 'H';
+			}
+		}
+		cout << cnt << endl << ans << endl;
+	}
+}
+
+Danny Mittal's Java code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class FeedingTheCows {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        for (int t = Integer.parseInt(in.readLine()); t > 0; t--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int n = Integer.parseInt(tokenizer.nextToken());
+            int k = Integer.parseInt(tokenizer.nextToken());
+            char[] cows = in.readLine().toCharArray();
+            int lastGuernseyPatch = -k - 1;
+            int lastHolsteinPatch = -k - 1;
+            char[] answer = new char[n];
+            for (int j = 0; j < n; j++) {
+                answer[j] = '.';
+            }
+            int amtPatches = 0;
+            for (int j = k; j < n; j++) {
+                if (cows[j - k] == 'G') {
+                    if ((j - k) - lastGuernseyPatch > k) {
+                        amtPatches++;
+                        answer[j] = 'G';
+                        lastGuernseyPatch = j;
+                    }
+                } else {
+                    if ((j - k) - lastHolsteinPatch > k) {
+                        amtPatches++;
+                        answer[j] = 'H';
+                        lastHolsteinPatch = j;
+                    }
+                }
+            }
+            boolean gNeeds = false;
+            for (int j = n - 1; j >= 0; j--) {
+                if (cows[j] == 'G' && j - lastGuernseyPatch > k) {
+                    gNeeds = true;
+                }
+            }
+            if (gNeeds) {
+                for (int j = n - 1; j >= 0; j--) {
+                    if (answer[j] == '.') {
+                        amtPatches++;
+                        answer[j] = 'G';
+                        break;
+                    }
+                }
+            }
+            boolean hNeeds = false;
+            for (int j = n - 1; j >= 0; j--) {
+                if (cows[j] == 'H' && j - lastHolsteinPatch > k) {
+                    hNeeds = true;
+                }
+            }
+            if (hNeeds) {
+                for (int j = n - 1; j >= 0; j--) {
+                    if (answer[j] == '.') {
+                        amtPatches++;
+                        answer[j] = 'H';
+                        break;
+                    }
+                }
+            }
+            System.out.println(amtPatches);
+            System.out.println(answer);
+        }
+    }
+}
+
+Nick Wu's Python code:
+
+def solve():
+    n, k = (int(x) for x in input().split())
+    patches = ['.'] * n
+    gCover = -1
+    hCover = -1
+    s = input()
+    for idx, ch in enumerate(s):
+        if ch == 'G' and gCover < idx:
+            if idx + k >= len(patches):
+                if patches[idx] != '.':
+                    patches[idx-1] = 'G'
+                else:
+                    patches[idx] = 'G'
+                gCover = n
+            else:
+                patches[idx+k] = 'G'
+                gCover = idx + 2*k
+        elif ch == 'H' and hCover < idx:
+            if idx + k >= len(patches):
+                if patches[idx] != '.':
+                    patches[idx-1] = 'H'
+                else:
+                    patches[idx] = 'H'
+                hCover = idx + k
+            else:
+                patches[idx+k] = 'H'
+                hCover = idx + 2*k
+    print(n - patches.count('.'))
+    print("".join(patches))
+ 
+t = int(input())
+for _ in range(t): solve()

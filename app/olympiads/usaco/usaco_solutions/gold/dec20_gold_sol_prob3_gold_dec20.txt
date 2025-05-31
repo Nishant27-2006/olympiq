@@ -1,0 +1,207 @@
+Solution ID: sol_prob3_gold_dec20
+Contest: DEC20
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_dec20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+For a set of greater than one cow that can be covered by a square, let the
+
+bounding rectangle
+
+of the set be the rectangle of the minimum size with
+sides parallel to the coordinates axes that contains all cows in the set.
+
+It suffices to deal with the case where the width of the bounding rectangle is
+greater or equal to its height. (We can handle the other case by swapping all
+
+$x$
+
+and
+
+$y$
+
+coordinates and rerunning the solution, while making sure not to
+overcount bounding rectangles with equal width as height.)
+
+Fix the leftmost and rightmost cows
+
+$a=(x_a,y_a)$
+
+and
+
+$b=(x_b,y_b)$
+
+(
+
+$x_a<x_b$
+
+)
+in the set. Then we must be able to cover all cows in the set (and none outside
+of it) with a square that contains
+
+$a$
+
+on its left side and
+
+$b$
+
+on its right
+side. The square will include all cows
+
+$(x_t,y_t)$
+
+such that
+
+$x_t\in [x_a,x_b]$
+
+and
+
+$y_t\in [y,y+x_b-x_a]$
+
+for some
+
+$y\in [lo,hi]$
+
+, where
+
+$lo=\max(y_a,y_b)-(x_b-x_a)$
+
+and
+
+$hi=\min(y_a,y_b)$
+
+. Note that if
+
+$lo>hi$
+
+, this
+would contradict the assumption that the height of the bounding rectangle is
+less than or equal to the width.
+
+Given the
+
+$y$
+
+-coordinates of all cows
+
+$(x_c,y_c)$
+
+satisfying
+
+$x_a<x_c<x_b$
+
+,  we
+can compute the number of such squares in
+
+$\mathcal{O}(N\log N)$
+
+by sorting the
+
+$y$
+
+-coordinates and using two pointers. Start with the bottom side of the square
+at
+
+$y=lo$
+
+and increase
+
+$y$
+
+until a new cow enters the set  through the top side
+or leaves the set through the bottom side (or both at once).
+
+This gives a solution that runs in
+
+$\mathcal{O}(N^3\log N)$
+
+or
+
+$\mathcal{O}(N^3)$
+
+time.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+using pi = pair<int,int>;
+#define f first
+#define s second
+#define sz(x) int((x).size())
+
+int N,ans,eq;
+vector<pi> cows;
+ 
+void solve() {
+	sort(begin(cows),end(cows));
+	for (int a = 0; a < N; ++a) { // leftmost cow a
+		set<int> sorted_y; // set of y-coordinates for cows a+1..b-1
+		for (int b = a+1; b < N; ++b) { // rightmost cow b
+			if (a < b-1) sorted_y.insert(cows[b-1].s);
+			int len = cows[b].f-cows[a].f; // side length of square
+			int lo = max(cows[a].s,cows[b].s)-len, hi = min(cows[a].s,cows[b].s); 
+			if (lo > hi) continue;
+
+			// initialize the square as [cows[a].f,cows[b].f] x [lo,lo+len]
+			vector<int> y(begin(sorted_y),end(sorted_y)); 
+			int l = 0, r = -1;
+			// find cow of lowest y-coordinate that square currently contains
+			while (l < sz(y) && lo >= y[l]+1) l ++; 
+			// find cow of highest y-coordinate that square currently contains
+			while (r+1 < sz(y) && lo >= y[r+1]-len) r ++; 
+			// initial square currently includes cows [l,r]
+
+			while (1) { // repeatedly increase y
+				++ ans;
+				int yl = min(cows[a].s,cows[b].s), yr = max(cows[a].s,cows[b].s);
+				if (l <= r) yl = min(yl,y[l]), yr = max(yr,y[r]);
+				assert(yr-yl <= len); 
+				eq += yr-yl == len; // width is equal to height
+				// current bounding rectangle is [cows[a].f,cows[b].f] x [yl,yr]
+				int leave_bottom = (l < sz(y) ? y[l]+1 : INT_MAX);  // set will no longer include cow l
+				int enter_top    = (r+1 < sz(y) ? y[r+1]-len : INT_MAX); // set will include cow r+1
+				int change_y = min(leave_bottom ,enter_top); // find min y such that set changes
+				if (change_y > hi) break;
+				l += leave_bottom == change_y;
+				r += enter_top == change_y;
+			}
+		}
+	}
+}
+ 
+int main() {
+	cin >> N; cows.resize(N); 
+	for (pi& cow: cows) cin >> cow.f >> cow.s;
+	ans = N+1;
+
+	solve();
+	for(pi& cow: cows) swap(cow.f,cow.s);
+	solve();
+
+	assert(eq%2 == 0); // bounding rectangles with equal width as height counted twice
+	cout << ans-eq/2;
+}
+
+Note that the answer to this problem would be different if the cows were treated
+as points rather than squares. For example, if the input was
+
+4
+0 2
+2 3
+3 0
+4 1
+
+then we cannot create a square that encloses only the cows occupying cells
+
+$(2,3)$
+
+and
+
+$(3,0)$
+
+.

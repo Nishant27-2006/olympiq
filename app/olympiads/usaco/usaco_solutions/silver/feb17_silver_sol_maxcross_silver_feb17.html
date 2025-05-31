@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>We start by making an observation about the optimal block of signals to consider such that
+we minimize the number of signals that need to be repaired. We claim that there is an optimal
+block where the leftmost signal in the block does not need to be repaired. Assume for the sake
+of contradiction that this is not the case, and consider any optimal block of signals. If
+we slide it over to the leftmost contiguous block to the right of the optimal one such that the
+leftmost block does not need to be repaired, note that we removed signals that did need to be repaired.
+Therefore, in the worst case, this block requires at most the original number of blocks to be repaired,
+making it optimal.
+<p>Therefore, we only need to constrain ourselves to consider contiguous blocks where the leftmost
+block does not need to be repaired. If we sort the signals that are working, we can use binary search
+to find the rightmost working signal that would be within a block of <span class='math'>$K$</span>. This gives us an
+<span class='math'>$O(N \log N + B \log N)$</span> algorithm.
+<p>Here is Mark Gordon&apos;s code, which is actually <span class='math'>$O(N \log N + B)$</span>. His solution leverages the fact that
+as we iterate over the leftmost signal from left to right, the rightmost signal that would be valid
+also iterates from left to right.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+
+using namespace std;
+
+vector&lt;int&gt; A;
+
+int main() {
+  int N, K, B;
+  cin &gt;&gt; N &gt;&gt; K &gt;&gt; B;
+
+  A.resize(B);
+  for (int i = 0; i &lt; B; i++) {
+    cin &gt;&gt; A[i];
+  }
+  sort(A.begin(), A.end());
+
+  int hia = 0;
+  while (hia &lt; B &amp;&amp; A[hia] &lt;= K) {
+    hia++;
+  }
+
+  int result = hia;
+  for (int i = 0; i &lt; B; i++) {
+    if (A[i] + K &gt; N) {
+      break;
+    }
+    while (hia &lt; B &amp;&amp; A[hia] &lt;= A[i] + K) {
+      hia++;
+    }
+    result = min(result, hia - i - 1);
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+
+<p>An alternative approach, which can get the running time as low as $O(N)$ is to think of the array
+of signals as a binary array: 0 for a working signal, 1 for a broken signal.  We then want to find
+a subarray of length $K$ whose sum is minimal, which can be done very easily after first
+computing an array $P$ of "prefix" sums, where $P[j]$ gives the sum of the first $j$ elements
+of our binary array.  The sum of any range from signal $i$ to signal $j$ is then easy to
+obtain by taking $P[j] - P[i-1]$, so evaluating every length-$K$ range takes only $O(N)$ time.
+
+<p>Between these two approaches, note that Mark's approach above can more easily extend to the
+case where signals live at potentially large $x$ coordinates on a number line, not just at 
+locations small enough to fit into an array.
+
+</body></html>

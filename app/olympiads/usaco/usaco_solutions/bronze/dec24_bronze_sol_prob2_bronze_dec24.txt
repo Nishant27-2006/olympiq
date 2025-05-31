@@ -1,0 +1,217 @@
+Solution ID: sol_prob2_bronze_dec24
+Contest: DEC24
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_dec24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Chongtian Ma)
+
+There are only three orientations to place a brick - its longest side is
+parallel to the x-axis, y-axis, or z-axis.
+
+If we are placing a brick where its longest side is parallel to the x-axis and
+it's lowermost vertex is
+
+$(0, y, z)$
+
+and its uppermost vertex is
+
+$(N, y+1, z+1)$
+
+, then the
+
+$1$
+
+by
+
+$1$
+
+by
+
+$1$
+
+blocks with lowermost coordinates
+
+$(0, y, z), (1, y, z), \ldots, (N-1, y, z)$
+
+must not contain any cheese.
+Otherwise, our brick will overlap with a cheese block.
+
+Let's generalize the above to the y-axis and the z-axis. For the y-axis, the
+lowermost vertex of the brick will occupy vertices
+
+$(x, 0, z), (x,1,z), \ldots, (x, N-1, z)$
+
+, so none of those coordinates can
+contain any cheese. Similarly, the generalization for z-axis is
+
+$(x, y, 0), (x, y, 1), \ldots, (x, y, N-1)$
+
+.
+
+There are many ways to earn partial credit. Here is one method that passes
+subtasks
+
+$1$
+
+and
+
+$2$
+
+. After each update, we go through each of the axes and all
+of the previous updates to check whether a new configuration was formed. This
+results in a
+
+$\mathcal{O}(Q^2)$
+
+solution.
+
+Benjamin Qi's Python code:
+
+N, Q = map(int, input().split())
+points = [tuple(map(int, input().split())) for _ in range(Q)]
+ 
+ans = 0
+ 
+for i in range(Q):
+    for a in range(3):
+        for b in range(a+1, 3):
+            cnt = 1
+            for j in range(i):
+                cnt += points[i][a] == points[j][a] and points[i][b] == points[j][b]
+            ans += cnt == N  # new configuration formed
+    print(ans)
+
+For full credit, we can keep track of the number of empty blocks in the
+remaining axis after fixing two of the three axis. For example, for the x-axis,
+we can create an 2D array
+
+$cnt$
+
+of size
+
+$N$
+
+in both dimensions where
+
+$cnt[y][z]$
+
+stores the number of
+
+$x$
+
+such that
+
+$(x, y, z)$
+
+has been removed. Once
+
+$cnt[y][z]$
+
+first hits
+
+$N$
+
+, we know that we can stick another brick parallel to
+the
+
+$x$
+
+-axis, so we increment the answer by one. We can create the same kind of
+array for bricks parallel to the
+
+$y$
+
+and
+
+$z$
+
+axis. This will only take
+
+$3N^2$
+
+memory, which is totally fine.
+
+This works because each update can only contribute at most
+
+$3$
+
+to the answer,
+depending on the orientation of the brick. After each update, we only need to
+check the
+
+$cnt$
+
+arrays for the three axis, which becomes constant time,
+resulting in a
+
+$\mathcal{O}(N^2+Q)$
+
+algorithm.
+
+Alex Liang's python code is shown below (note that he initializes the
+
+$cnt$
+
+arrays with
+
+$N$
+
+and decreases them with each update until they reach
+
+$0$
+
+, which
+is equivalent):
+
+class cheese_block:
+    def __init__(self, n):
+        self.n = n 
+        self.ans = 0
+        self.xy = [[n] * n for i in range(n)]
+        self.xz = [[n] * n for i in range(n)]
+        self.yz = [[n] * n for i in range(n)]
+ 
+    def carve(self, x, y, z):
+        self.xy[x][y] -= 1
+        self.xz[x][z] -= 1
+        self.yz[y][z] -= 1
+        self.ans += (self.xy[x][y] == 0) + (self.xz[x][z] == 0) + (self.yz[y][z] == 0)
+ 
+    def answer(self):
+        return self.ans
+ 
+n, q = map(int, input().split())
+cb = cheese_block(n)
+ 
+for _ in range(q):
+    x, y, z = map(int, input().split())
+    cb.carve(x, y, z)
+    print(cb.answer())
+
+Alex Liang's C++ code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+int main(){
+    int n, q;
+    cin >> n >> q;
+ 
+    vector<vector<vector<int>>> cnt(3, vector<vector<int>>(n, vector<int>(n, n)));
+    int ans = 0;
+ 
+    while (q--){
+        int x, y, z;
+        cin >> x >> y >> z;
+ 
+        for (auto [dim, a, b] : {array<int, 3>{0, y, z}, array<int, 3>{1, x, z}, array<int, 3>{2, x, y}})
+            if (!(--cnt[dim][a][b]))
+                ans++;
+        
+        cout << ans << "\n";
+    }
+}

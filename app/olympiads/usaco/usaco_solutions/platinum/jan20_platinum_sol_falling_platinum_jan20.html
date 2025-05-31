@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Fix <span class='math'>$i.$</span> Consider a graph of time versus
+<span class='math'>$y$</span>-coordinate; then world <span class='math'>$i$</span> is represented by a line of slope <span class='math'>$-i$</span>. Call a 
+point <span class='math'>$(T,Y)$</span> on this graph &quot;attainable&quot; if it is possible for cow <span class='math'>$i$</span> to be at
+<span class='math'>$y$</span>-coordinate <span class='math'>$Y$</span> at time <span class='math'>$T.$</span> 
+<p><strong>Subtask 1:</strong> <span class='math'>$O(N^3)$</span> BFS
+<p><strong>Subtask 2:</strong> It can be shown that the shortest path between any two worlds
+contains at most one intermediate world. So for each query, iterate over all 
+worlds aside from the start and the end and check if it can be the intermediate
+one in <span class='math'>$O(N^2)$</span> time. Alternatively, speed up the solution from subtask 1 with
+bitset.
+<p><strong>Subtask 3:</strong> WLOG suppose that <span class='math'>$A[Q_i]&lt;A_i.$</span> Clearly no attainable points lie below the lower convex hull
+of all lines representing worlds <span class='math'>$j$</span> such that <span class='math'>$A_j\ge A_i$</span>. Furthermore, all
+points on this hull are attainable. Thus, it suffices to find the <span class='math'>$t$</span>-coordinate
+of the intersection of the line <span class='math'>$y=-Q_it+A[Q_i]$</span> with this lower hull. We can
+compute the hulls for all <span class='math'>$i$</span> by sorting the lines by <span class='math'>$A_i$</span> in decreasing order
+and adding them to the hull one by one. This can be done using a deque. After
+computing the hull for <span class='math'>$i,$</span> we can binary search to find the intersection of the
+line with the hull.
+<p>Spencer&apos;s Code:
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+
+public class falling {
+	public static class Obj implements Comparable&lt;Obj&gt;{
+		public long y, d;
+		public int ind;
+		public Obj(long a, long b, int c) {
+			y = a;
+			d = b;
+			ind = c;
+		}
+		public int compareTo(Obj o) {
+			return Long.compare(y, o.y);
+		}
+	}
+	public static long gc(long a, long b) {
+		if(a==0L || b==0L) {
+			return a+b;
+		}
+		return gc(b%a,a);
+	}
+	public static class Pair{
+		public long first, second;
+		Pair(long a, long b){
+			first = a;
+			second = b;
+		}
+	}
+	public static Pair make_pair(long a, long b) {
+		return new Pair(a,b);
+	}
+	public static Pair ev(Obj a, Obj b) {
+		return make_pair(Math.abs(a.y-b.y),Math.abs(a.d-b.d));
+	}
+	public static int cmp(Obj a, Obj b, Obj c) {
+		Pair l = ev(a,c);
+		Pair r = ev(b,c);
+		long res = l.first*r.second-r.first*l.second;
+		if(res&lt;0L) {
+			return -1;
+		}
+		if(res==0L) {
+			return 0;
+		}
+		return 1;
+	}
+	public static boolean used(Obj a, Obj b, Obj c) {
+		Pair l = ev(a,b);
+		Pair r = ev(b,c);
+		long res = l.first*r.second-r.first*l.second;
+		return (res&lt;0L);
+	}
+	
+	public static void main(String[] args) throws IOException{
+		BufferedReader in = new BufferedReader(new FileReader(&quot;falling.in&quot;));
+		int n = Integer.parseInt(in.readLine());
+		String[] line = in.readLine().split(&quot; &quot;);
+		long[] a = new long[n];
+		int[] q = new int[n];
+		long[] num = new long[n];
+		long[] dem = new long[n];
+		for(int i = 0; i&lt;line.length; i++) {
+			a[i] = Integer.parseInt(line[i]);
+		}
+		line = in.readLine().split(&quot; &quot;);
+		for(int i =0 ; i&lt;line.length; i++) {
+			q[i] = Integer.parseInt(line[i])-1;
+		}
+		ArrayList&lt;Obj&gt; li = new ArrayList&lt;Obj&gt;();
+		ArrayList&lt;Obj&gt; all = new ArrayList&lt;Obj&gt;();
+		for(int i = 0; i&lt;n; i++) {
+			li.add(new Obj(a[i],-(i+1),i));
+			all.add(new Obj(a[i],-(i+1),i));
+		}
+		Collections.sort(li);
+		ArrayList&lt;Obj&gt; cur = new ArrayList&lt;Obj&gt;();
+		for(int i = li.size()-1; i&gt;=0; i--) {
+			Obj now = li.get(i);
+			while(cur.size()&gt;0) {
+				if(now.d &lt; cur.get(cur.size()-1).d) {
+					cur.remove(cur.size()-1);
+					continue;
+				}
+				if(cur.size()&gt;1 &amp;&amp; !used(now,cur.get(cur.size()-1),cur.get(cur.size()-2))) {
+					cur.remove(cur.size()-1);
+					continue;
+				}
+				break;
+			}
+			cur.add(now);
+			int ind = li.get(i).ind;
+			if(a[ind]&gt;a[(int)q[(int)ind]]) {
+				if(cur.get(0).d &gt; -(q[ind]+1)) {
+					num[ind]=-1;
+				}
+				else{
+					int lo = 0;
+					int hi = cur.size()-1;
+ 
+					while(lo&lt;hi){
+						int mid = (lo+hi)/2;
+						int l = mid;
+						int r = mid+1;
+						if(cur.get(r).d &gt; - (q[ind]+1)){
+							hi = l;
+							continue;
+						}
+						int res = cmp(cur.get(l),cur.get(r),all.get((int)q[(int)ind]));
+						if(res&lt;0){
+							hi = l;
+						}
+						else if(res==0){
+							lo = l;
+							hi = l;
+						}
+						else{
+							lo = r;
+						}
+					}
+					Pair got = ev(cur.get(lo),all.get((int)q[(int)ind]));
+					long g = gc(got.first,got.second);
+					num[ind] = got.first/g;
+					dem[ind] = got.second/g;
+				}
+			}
+		}
+		cur.clear();
+		for(int i = 0; i&lt;li.size(); i++){
+			Obj now = li.get(i);
+			while(cur.size()&gt;0){
+				if(now.d &gt; cur.get(cur.size()-1).d){
+					cur.remove(cur.size()-1);
+					continue;
+				}
+				if(cur.size()&gt;1 &amp;&amp; !used(now, cur.get(cur.size()-1), cur.get(cur.size()-2))){
+					cur.remove(cur.size()-1);
+					continue;
+				}
+				break;
+			}
+			cur.add(now);
+			int ind = li.get(i).ind;
+			if(a[ind]&lt;a[(int)q[(int)ind]]){
+				if(cur.get(0).d &lt; -(q[ind]+1)){
+					num[ind] = -1;
+				}
+				else{
+					int lo = 0;
+					int hi = cur.size()-1;
+					while(lo&lt;hi){
+						int mid = (lo+hi)/2;
+						int l = mid;
+						int r = mid+1;
+						if(cur.get(r).d &lt; - (q[ind]+1)){
+							hi = l;
+							continue;
+						}
+						int res = cmp(cur.get(l),cur.get(r),all.get((int)q[(int)ind]));
+						if(res&lt;0){
+							hi = l;
+						}
+						else if(res==0){
+							lo = l;
+							hi = l;
+						}
+						else{
+							lo = r;
+						}
+					}
+					Pair got = ev(cur.get(lo),all.get((int)q[(int)ind]));
+					long g = gc(got.first,got.second);
+					num[ind] = got.first/g;
+					dem[ind] = got.second/g;
+				}
+			}
+		}
+		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(&quot;falling.out&quot;)));
+		for(int i = 0; i&lt;n; i++){
+			if (num[i]==-1) out.println(-1);
+			else out.println(num[i]+&quot;/&quot;+dem[i]);
+		}
+		out.close();
+	}
+}
+</pre>
+<p></body></html>

@@ -1,0 +1,65 @@
+Solution ID: sol_cowjog_bronze
+Contest: DEC14
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_cowjog_bronze.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Jonathan Paulson -
+
+[email protected]
+
+)
+
+If a faster cow is behind a slower cow, the faster cow is eventually
+going to catch up and join the slower cow's group (or join a
+group in the middle).
+
+So we want to count the number of cows who have no slower cows ahead
+of them; this is the number of cows who won't join another group
+(and hence will start their own group).
+
+The most obvious way to to go through each cow and check if any of the
+cows ahead of them are faster. But this is too slow: there are about
+$N^2$ pairs of cows, and N = $10^5$. So $N^2$ is about $10^{10}$, and
+computers only do about $10^9$ operations per second (which usually
+translates to about $10^7$ iterations of a simple loop in one second
+of time).
+
+Luckily, there is a faster way: start from the back, and keep track of
+the slowest cow as you go. This only takes about $N$ operations, which
+is very fast.
+
+Here is my C++ code for the fast approach:
+
+#include <cstdio>
+#include <vector>
+
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+  ll n;
+  scanf("%lld", &n);
+  vector<ll> S;
+  for(ll i=0; i<n; i++) {
+    ll x, s;
+    scanf("%lld %lld\n", &x, &s);
+    S.push_back(s);
+  }
+
+  ll ans = 1;
+  ll slow = S[n-1];
+  for(ll i=n-2; i>=0; i--) {
+    if(S[i] > slow) {
+      // cows group up
+    } else {
+      ans++;
+    }
+    slow = min(slow, S[i]);
+  }
+  printf("%lld\n", ans);
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Call the number of steps that a permutation takes the <strong>period</strong> of the
+permutation. Every permutation can be partitioned into cycles of sizes
+<span class='math'>$c_1,c_2,c_3,\ldots,c_k$</span>  such that <span class='math'>$c_1+c_2+\ldots+c_k=N$</span> (see 
+<a href='https://www.usaco.org/index.php?page=viewproblem2&amp;cpid=1014'>Swapity Swapity
+Swap</a> from the last contest). Then the  period is equal to
+<span class='math'>$\text{lcm}(c_1,c_2,\ldots,c_k)$</span>. 
+<p>Suppose that we want find the minimum <span class='math'>$n$</span> such that there exists a permutation
+of length <span class='math'>$n$</span> with period <span class='math'>$K=\prod p_i^{e_i},$</span> where the right side denotes the 
+prime factorization of <span class='math'>$K$</span>. It turns out that <span class='math'>$n=\sum p_i^{e_i}$</span> because 
+<p><ul><li>It is never optimal to have <span class='math'>$\text{gcd}(c_i,c_j)&gt;1$</span> for <span class='math'>$i\neq j$</span> because
+then we could divide each of <span class='math'>$c_i,c_j$</span> by an appropriate factor. This would
+reduce the value of <span class='math'>$\sum_{i=1}^kc_i$</span>. </li><li>It is never optimal to have <span class='math'>$c_i=pq$</span> for <span class='math'>$\min(p,q)&gt;1$</span> and
+<span class='math'>$\text{gcd}(p,q)=1$</span> because then <span class='math'>$p+q&lt;c_i$</span>.</li></ul>
+<p>Thus, we need to find the sum of all positive integers <span class='math'>$K$</span> such that 
+<span class='math'>$\sum p_i^{e_i}\le N$</span>.
+<p><strong>Subtask <span class='math'>$N\le 100$</span>:</strong>
+<p>Just searching for all possible <span class='math'>$K$</span> suffices (there are only <span class='math'>$18663$</span> for
+<span class='math'>$N=100$</span>). However, this number grows quite rapidly as <span class='math'>$N$</span> increases.
+<p><strong>Full Credit:</strong>
+<p>Maintain a DP table storing the sum of all possible <span class='math'>$K$</span> for each prime power sum
+<span class='math'>$n$</span> in <span class='math'>$[0,N]$</span>. Then we can add prime powers in increasing order of <span class='math'>$p$</span> and
+update the table in <span class='math'>$O(N)$</span> for each of them.
+<p>Unfortunately, I was unaware that the sequence could be found on 
+<a href='https://oeis.org/A060179'>OEIS</a>. I&apos;ll try to be more careful about this 
+in the future ...
+<p>Mark Chen&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+ 
+using namespace std;
+ 
+typedef long long LL;
+
+const int MAXP = 1234;
+const int MAXN = 10005;
+ 
+LL res[MAXP][MAXN];  // result for permutations of length n restricted to using the first p primes
+ 
+int n; LL m;
+ 
+LL mul(LL x, LL y) {
+    return (x * y) % m;
+}
+ 
+LL add(LL x, LL y) {
+    x += y;
+    if (x &gt;= m) x -= m;
+    return x;
+}
+ 
+LL sub(LL x, LL y) {
+    x -= y;
+    if (x &lt; 0) x += m;
+    return x;
+}
+ 
+int main() {
+    freopen(&quot;exercise.in&quot;,&quot;r&quot;,stdin);
+    freopen(&quot;exercise.out&quot;,&quot;w&quot;,stdout);
+    cin &gt;&gt; n &gt;&gt; m;
+ 
+    vector&lt;int&gt; composite(n+1);
+    vector&lt;int&gt; primes;
+ 
+    for (int i = 2; i &lt;= n; i++) {
+        if (!composite[i]) {
+            primes.push_back(i);
+            for (int j = 2*i; j &lt;= n; j += i) {
+                composite[j] = 1;
+            }
+        }
+    }
+ 
+    if (primes.size() == 0) {
+        cout &lt;&lt; &quot;1\n&quot;;
+        return 0;
+    }
+ 
+    for (int j = 0; j &lt;= n; j++) res[0][j] = 1;  // identities
+ 
+    for (int i = 1; i &lt;= primes.size(); i++) {
+        for (int j = 0; j &lt;= n; j++) {
+            res[i][j] = res[i-1][j];
+ 
+            int pp = primes[i-1];
+            while (pp &lt;= j) {
+                res[i][j] = add(res[i][j], mul(pp, res[i-1][j-pp]));
+                pp *= primes[i-1];
+            }
+        }
+    }
+ 
+    cout &lt;&lt; res[primes.size()][n] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

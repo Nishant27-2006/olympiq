@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>There are too many substitution ciphers for us to check every single one and see
+which one gives the maximum number of MOOs.
+<p>However, if we only care about appearances of the word MOO, then we only care
+about two letters in the substitution cipher - which letter gets converted to M,
+and which letters gets converted to O.
+<p>We can brute force over all such pairs, making sure that we don&apos;t map M to M, O
+to O, or try to map the same letter to both M and O. The grid has at most
+<span class='math'>$50^2 \cdot 8 = 20000$</span> words, and there are at most
+<span class='math'>$26^2 = 676$</span> pairs that we would brute force (we would ignore some of
+them), so the number of operations is roughly 20 million, which is small enough.
+<p>Here is Mark Gordon&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+int N, M;
+vector&lt;string&gt; A;
+
+int dr[] = {-1, -1, -1, 0, 1, 1, 1, 0};
+int dc[] = {-1, 0, 1, 1, 1, 0, -1, -1};
+
+char get(int r, int c) {
+  if (r &lt; 0 || N &lt;= r || c &lt; 0 || M &lt;= c) {
+    // we are outside the grid, return a non-letter
+    return &apos;_&apos;;
+  }
+  return A[r][c];
+}
+
+int main() {
+  freopen(&quot;moocrypt.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;moocrypt.out&quot;, &quot;w&quot;, stdout);
+
+  cin &gt;&gt; N &gt;&gt; M;
+  A.resize(N);
+  for (int i = 0; i &lt; M; i++) {
+    cin &gt;&gt; A[i];
+  }
+
+  int best = 0;
+  for (char mch = &apos;A&apos;; mch &lt;= &apos;Z&apos;; mch++) {
+    // pick a character that will be set to M
+    if (mch == &apos;M&apos;) {
+      continue;
+    }
+    for (char och = &apos;A&apos;; och &lt;= &apos;Z&apos;; och++) {
+      // pick a character that will be set to O
+      if (och == &apos;O&apos; || mch == och) {
+        continue;
+      }
+      int result = 0;
+      for (int i = 0; i &lt; N; i++) {
+        for (int j = 0; j &lt; M; j++) {
+          // check the first character would be M
+          if (get(i, j) != mch) {
+            continue;
+          }
+          // try all possible words starting at square (i,j)
+          for (int k = 0; k &lt; 8; k++) {
+            // check the next two characters would be O
+            if (get(i + 1 * dr[k], j + 1 * dc[k]) == och &amp;&amp;
+                get(i + 2 * dr[k], j + 2 * dc[k]) == och) {
+              result++;
+            }
+          }
+        }
+      }
+      best = max(best, result);
+    }
+  }
+  cout &lt;&lt; best &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+<p></body></html>

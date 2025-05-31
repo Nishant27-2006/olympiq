@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+by Nathan Pinsker
+<p>We can simulate this problem by running each step of Farmer John&apos;s movement. At
+each step, we check Farmer John&apos;s starting position and his intended ending
+position, and check to see whether that overlaps Bessie&apos;s position. If it does
+not, then we add the full distance to a running total and move poor Farmer John
+back to his starting position. Otherwise, we add the distance between FJ&apos;s
+current position and Bessie&apos;s position to the running total, and return that
+total as our answer.
+<p>Here&apos;s Jonathan Paulson&apos;s code. See the comments for some more insight on what
+he&apos;s doing:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+
+using namespace std;
+typedef long long ll;
+
+int main() {
+  ll x, y;
+  cin &gt;&gt; x &gt;&gt; y;
+
+  ll ans = 0;
+  ll by = 1;
+  ll dir = 1;
+  while(true) {
+    // dir == 1 means Farmer John is moving to the right, and
+    // dir == -1 means he is moving to the left.
+    if((dir==1 &amp;&amp; x&lt;=y &amp;&amp; y&lt;=x+by) || (dir==-1 &amp;&amp; x-by&lt;=y &amp;&amp; y&lt;=x)) {
+      // We found Bessie!
+      ans += abs(y-x);
+      cout &lt;&lt; ans &lt;&lt; endl;
+      break;
+    } else {
+      // Didn&apos;t find Bessie! Add to our running total the cost of
+      // moving &apos;by&apos; units away from the start and back again.
+      // Then multiply our next move&apos;s length by 2 and switch direction.
+      ans += by*2;
+      by *= 2;
+      dir *= -1;
+    }
+  }
+}
+</pre>
+<p></body></html>

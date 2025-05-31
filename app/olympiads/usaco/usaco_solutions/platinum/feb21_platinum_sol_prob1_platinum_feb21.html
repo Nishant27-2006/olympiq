@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>This is a harder version of a problem from last month&apos;s 
+<a href='https://www.usaco.org/index.php?page=viewproblem2&amp;cpid=1087'>Silver
+contest</a>.
+<p>Let <span class='math'>$A_a$</span> denote the color of fence segment <span class='math'>$a$</span> for each <span class='math'>$a\in [1,N]$</span>. 
+<p><strong>Approach 1:</strong>
+<p>The minimum number of strokes required to paint a subrange <span class='math'>$[a,b]$</span> is equal  to
+<span class='math'>$b-a+1$</span> minus the number of indices <span class='math'>$(l,r)$</span> such that
+<span class='math'>$A_l=A_r&lt;\min_{l&lt;i&lt;r}{A_i}$</span> (similarly as Modern Art from the Gold contest).
+<p>In the sample case, the pairs of indices are <span class='math'>$(1,4)$</span>, <span class='math'>$(2,3)$</span>, <span class='math'>$(4,5)$</span>, and
+<span class='math'>$(6,8)$</span>.
+<p>To generate all such pairs of indices (there are <span class='math'>$\mathcal O(N)$</span> of them), we
+can use a monotonic stack (as alluded to by the <a href='https://www.usaco.org/current/data/sol_prob2_silver_jan21.html'>analysis</a> for the silver problem).  The diagram
+below displays which elements are in the stack at what times for the sample case
+(<span class='math'>$1$</span> and <span class='math'>$2$</span> remain in the stack at the end):
+<p><pre>
+            3
+  2-2     2---2- ...
+1-----1-1------- ...
+</pre>
+<p>Computing the number of intervals contained within some query interval can be
+done offline in <span class='math'>$\mathcal{O}(\log N)$</span> per query; answer queries in increasing
+order of right endpoint and store a BIT for the left endpoints.
+<p><em>Time Complexity:</em> <span class='math'>$\mathcal{O}((N+Q)\log N)$</span>
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define f first
+#define s second
+
+const int MX = 2e5+5;
+
+int N,Q;
+vector&lt;pair&lt;int,int&gt;&gt; query[MX];
+
+struct {
+	int bit[MX];
+	int sum(int i) {
+		int sum = 0;
+		for (;i;i-=i&amp;-i) sum += bit[i];
+		return sum;
+	}
+	int query(int l, int r) { return sum(r)-sum(l-1); }
+	void inc(int i) { for (;i&lt;MX;i+=i&amp;-i) ++bit[i]; }
+} BIT;
+
+int main() {
+	cin &gt;&gt; N &gt;&gt; Q; 
+	vector&lt;int&gt; A(N), ans(Q); 
+	for (int&amp; t: A) cin &gt;&gt; t;
+	for (int i = 0; i &lt; Q; ++i) {
+		int l,r; cin &gt;&gt; l &gt;&gt; r; --l,--r;
+		query[r].push_back({l,i});
+	}
+	vector&lt;int&gt; stk;
+	for (int i = 0; i &lt; N; ++i) {
+		while (!stk.empty() &amp;&amp; A[stk.back()] &gt; A[i]) stk.pop_back();
+		if (!stk.empty() &amp;&amp; A[stk.back()] == A[i]) { // consider pair (stk.back(),i)
+			BIT.inc(1+stk.back());
+			stk.back() = i;
+		} else stk.push_back(i);
+		for (pair&lt;int,int&gt; q: query[i])
+			ans[q.s] = i-q.f+1-BIT.query(q.f+1,i+1);
+	}
+	for (int t: ans) cout &lt;&lt; t &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Approach 2 (courtesy of Spencer Compton):</strong>
+<p>The pairs of indices above join the segments into several connected components.
+For example, the connected components in the sample case are
+<span class='math'>$[1,4,5],[2,3],[6,8],[7]$</span>. Define <span class='math'>$\texttt{is_last}[i]$</span> to be true if <span class='math'>$i$</span> is the
+last number in its group and there exists some <span class='math'>$j&gt;i$</span> such that <span class='math'>$A_j&lt;A_i$</span>. So for
+the sample case, <span class='math'>$\texttt{is_last}[3]$</span> and <span class='math'>$\texttt{is_last}[7]$</span> are both true.
+As in the above solution, we can generate all such indices <span class='math'>$i$</span> with a monotonic
+stack.
+<p>The answer for a query <span class='math'>$[l,r]$</span> is equal to the number of <span class='math'>$i\in [l,r]$</span> such that 
+<span class='math'>$\texttt{is_last}[i]$</span> is true (which we can compute in <span class='math'>$\mathcal{O}(1)$</span> using
+prefix sums),  plus some additional contribution by connected components that
+continue past <span class='math'>$r$</span>,  if the greatest index included in such a component that is
+at most <span class='math'>$r$</span> is at least <span class='math'>$l$</span>. 
+<p>For example, the answer to the query <span class='math'>$(3,6)$</span> in the sample case is <span class='math'>$3$</span> because
+<p><ul><li><span class='math'>$\texttt{is_last}[3]$</span> is true</li><li>The component starting at index <span class='math'>$1$</span> continues past index <span class='math'>$6$</span>, greatest index
+at most <span class='math'>$6$</span> is <span class='math'>$5\ge 3$</span>.</li><li>The component starting at index <span class='math'>$6$</span> continues past index <span class='math'>$6$</span>, greatest index
+at most <span class='math'>$6$</span> is <span class='math'>$6\ge 3$</span>.</li></ul>
+<p>We can maintain these indices in a stack <span class='math'>$\texttt{last_found}$</span>. For every query,
+binary search on the stack to count the number of indices at least <span class='math'>$l$</span>. The time
+complexity remains the same.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int MX = 2e5+5;
+
+#define f first
+#define s second
+#define sz(x) (int)(x).size()
+
+int N,Q;
+vector&lt;pair&lt;int,int&gt;&gt; query[MX];
+
+int main() {
+	cin &gt;&gt; N &gt;&gt; Q;
+	vector&lt;int&gt; A(N);
+	for (int&amp; t: A) cin &gt;&gt; t;
+	for (int i = 0; i &lt; Q; ++i) {
+		int l,r; cin &gt;&gt; l &gt;&gt; r; --l,--r;
+		query[r].push_back({l,i});
+	}
+	vector&lt;bool&gt; is_last(N);
+	vector&lt;pair&lt;int,int&gt;&gt; stk;
+	for (int i = 0; i &lt; N; ++i) {
+		while (!stk.empty() &amp;&amp; stk.back().f &gt; A[i]) {
+			is_last[stk.back().s] = true;
+			stk.pop_back();
+		}
+		if (!stk.empty() &amp;&amp; stk.back().f == A[i]) stk.back().s = i;
+		else stk.push_back({A[i],i});
+	}
+	vector&lt;int&gt; cum_last{0}, last_found;
+	vector&lt;int&gt; ans(Q);
+	for (int r = 0; r &lt; N; ++r) {
+		cum_last.push_back(cum_last.back());
+		if (!last_found.empty() &amp;&amp; A[r] == A[last_found.back()]) 
+			last_found.pop_back();
+		last_found.push_back(r);
+		if (is_last[r]) {
+			++cum_last.back();
+			last_found.pop_back();
+		}
+		for (pair&lt;int,int&gt; p: query[r]) {
+			int lo = 0, hi = sz(last_found);
+			while (lo &lt; hi) {
+				int mid = (lo+hi)/2;
+				if (p.f &lt;= last_found[mid]) hi = mid;
+				else lo = mid+1;
+			}
+			ans[p.s] = cum_last[r+1]-cum_last[p.f]+sz(last_found)-lo;
+		}
+	}
+	for (int t: ans) cout &lt;&lt; t &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

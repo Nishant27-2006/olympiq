@@ -1,0 +1,80 @@
+Solution ID: sol_revegetate_bronze_feb19
+Contest: FEB19
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_revegetate_bronze_feb19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+In this problem, we have a graph where the vertices are pastures, and there is
+an edge between two pastures if those two pastures are the favorites of some
+cow. We want to color each vertex with one of
+
+$4$
+
+colors so that no two adjacent
+vertices (i.e. no two vertices connected by an edge) are given the same color.
+
+So let's just assign colors to the vertices in order. For each vertex, we need
+to find a color which has not already been assigned to any adjacent vertices.
+Luckily, in our case this is always possible: the problem statement guarantees
+that no vertex is adjacent to more than
+
+$3$
+
+other vertices, so at least one of
+the
+
+$4$
+
+colors is free. Thus, we will always be able to find a coloring with
+this strategy. The complexity is
+
+$O(NM)$
+
+if implemented naively, and could easily
+be reduced to
+
+$O(N)$
+
+by storing for each vertex the identities of the
+
+$\leq 3$
+
+adjacent vertices. However, for the given constraints, this optimization is unnecessary.
+
+Brian Dean's code is below.
+
+#include <iostream>
+#include <fstream>
+using namespace std;
+ 
+int main(void)
+{
+  int N, M;
+  int A[151], B[151], G[101];
+  ifstream fin ("revegetate.in");
+  fin >> N >> M;
+  for (int i=0; i<M; i++) { 
+    fin >> A[i] >> B[i];
+    if (A[i] > B[i]) swap (A[i], B[i]);
+  }
+ 
+  ofstream fout ("revegetate.out");  
+  for (int i=1; i<=N; i++) {
+    int g;
+    for (g = 1; g <= 4; g++) {
+      bool ok = true;
+      for (int j=0; j<M; j++) 
+	if (B[j] == i && G[A[j]] == g) ok = false;
+      if (ok) break;
+    }
+    G[i] = g;
+    fout << g;
+  }
+  fout << "\n";
+  return 0;
+}

@@ -1,0 +1,61 @@
+Solution ID: sol_cowsignal_bronze_dec16
+Contest: DEC16
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_cowsignal_bronze_dec16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we are given a grid of characters and want to expand it by a
+factor of K in both the horizontal and vertical dimensions.
+
+It's worth noting to begin with that the first K rows that we print can be
+generated from the first row of the grid, the next K rows will be generated from
+the second row, and so on. Therefore, we focus our attention only on expanding a
+single row.
+
+Note that expanding a single row will generate K copies of the same row, so we
+only need to figure out how to generate a copy of a row that is stretched
+horizontally by a factor of K.
+
+We can do this though just by printing each character K times.
+
+Here is my Java code.
+
+import java.io.*;
+import java.util.*;
+public class cowsignal {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader("cowsignal.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("cowsignal.out")));
+
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int r = Integer.parseInt(st.nextToken());
+		int c = Integer.parseInt(st.nextToken());
+		int k = Integer.parseInt(st.nextToken());
+		
+		for(int i = 0; i < r; i++) {
+			// get the next row to generate k copies of
+			String currRow = br.readLine();
+			
+			// we will generate the same row K times
+			for(int internalRow = 0; internalRow < k; internalRow++) {
+				// loop over each character...
+				for(int j = 0; j < c; j++) {
+					// and print it k times
+					for(int a = 0; a < k; a++) {
+						pw.print(currRow.charAt(j));
+					}
+				}
+				// we need to print a new line to indicate that we need to go to the next row
+				pw.println();
+			}
+		}
+		
+		pw.close();
+	}
+}

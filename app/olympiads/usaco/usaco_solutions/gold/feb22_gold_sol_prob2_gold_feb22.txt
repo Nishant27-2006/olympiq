@@ -1,0 +1,420 @@
+Solution ID: sol_prob2_gold_feb22
+Contest: FEB22
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_feb22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Let's ignore the sample case by subtracting one from
+
+$T$
+
+(at the end, we'll add
+one back to the answer). Then the probability of Bessie's solution solving
+exactly
+
+$i$
+
+test cases out of
+
+$T$
+
+is precisely
+
+$p_i=\frac{\binom{T}{i}}{2^T}.$
+
+Define
+
+$E_x$
+
+to be the expected value given at most
+
+$x$
+
+submissions, where
+
+$E_0=0$
+
+. The goal is to compute
+
+$E_K$
+
+. If we have already computed
+
+$E_x$
+
+then
+
+$E_{x+1}$
+
+may be computed as follows:
+
+Suppose that Bessie's first submission scores
+
+$i$
+
+out of
+
+$T$
+
+test cases.
+
+Bessie now has two choices: either she can stop submitting and end up with a
+final score of
+
+$i$
+
+, or she will end up with expected score
+
+$E_x$
+
+if she submits
+at least one more time and uses her remaining
+
+$x$
+
+submissions optimally.
+
+Therefore, her strategy is as follows:
+
+If
+
+$i>E_x$
+
+, then stop submitting.
+
+If
+
+$i\le E_{x},$
+
+then continue submitting.
+
+In equations,
+
+$$\begin{align*}
+E_{x+1}&=\sum_{i=0}^Tp_i\cdot \mathbb{E}[\text{Bessie's strategy given that her first submission scored }i] \\
+&=\sum_{i=0}^Tp_i\cdot \max(i,E_x) \\
+&=E_x\cdot \sum_{i=0}^{\lfloor E_{x}\rfloor}p_i+\sum_{i=\lfloor E_{x}\rfloor+1}^Tip_i.
+\end{align*}$$
+
+Subtask 1:
+
+The above equations can be simulated in
+
+$O(TK)$
+
+time.
+
+The solution below uses Python's
+
+decimal
+
+module for
+increased precision (though it was not necessary to do so).
+
+from decimal import *
+getcontext().prec = 100
+ 
+T, K = map(int, input().split())
+T -= 1
+ 
+prob = [Decimal(1)]
+for _ in range(T):
+	prob = [(x+y)/2 for x, y in zip([Decimal(0)]+prob, prob+[Decimal(0)])]
+ 
+E = Decimal(T)/2
+K -= 1
+ 
+while K > 0:
+	K -= 1
+	next_E = 0
+	for i in range(T+1):
+		next_E += prob[i]*max(i,E)
+	E = next_E
+
+getcontext().prec = 20
+print(E+1)
+
+Subtask 2:
+
+Let
+
+$a=\sum_{i=0}^{\lfloor E_{x}\rfloor}p_i$
+
+and
+
+$b=\sum_{i=\lfloor E_{x}\rfloor+1}^Tip_i,$
+
+such that
+
+$E_{x+1}=aE_{x}+b.$
+
+Observe that when
+
+$\lfloor E_{x+1}\rfloor=\lfloor E_x\rfloor$
+
+, we do not need to
+recalculate
+
+$a$
+
+and
+
+$b$
+
+.
+
+The runtime of the solution below is
+
+$O(T^2+K)$
+
+.
+
+T, K = map(int, input().split())
+T -= 1
+ 
+prob = [1]
+for _ in range(T):
+	prob = [(x+y)/2 for x, y in zip([0]+prob, prob+[0])]
+ 
+E = T/2
+K -= 1
+
+for f in range(T):
+	a, b = 0, 0
+	for i in range(T+1):
+		if i <= f:
+			a += prob[i]
+		else:
+			b += prob[i]*i
+	while K > 0 and E < f+1:
+		E = a*E+b
+		K -= 1
+
+print(E+1)
+
+Full Credit:
+
+For a solution without a factor of
+
+$O(K)$
+
+, we need to be
+able to advance
+
+$x$
+
+multiple submissions forward at once.
+
+Under this assumption, we can write
+
+$$E_{x+q}=a^qE_x+b\cdot \sum_{i=0}^{q-1}a^i=a^qE_x+b\cdot \frac{1-a^q}{1-a}$$
+
+by the geometric series formula. It remains to either determine that
+
+$\lfloor E_{K}\rfloor=\lfloor E_x\rfloor$
+
+, or find the smallest
+
+$q\le K-x$
+
+such
+that
+
+$\lfloor E_{x+q}\rfloor>\lfloor E_x\rfloor.$
+
+After finding
+
+$q$
+
+via one of the two methods below, we may simulate
+
+$\min(q,K-x)$
+
+submissions at once and then update
+
+$x \mathrel{{+}{=}} \min(q,K-x)$
+
+. If we now have
+
+$x=K$
+
+, then we're done.
+Otherwise, we know that
+
+$\lfloor E_x\rfloor$
+
+has increased by one.
+
+$\lfloor E_x\rfloor$
+
+can increase a total of at most
+
+$T$
+
+times, which is a lot
+smaller than
+
+$K$
+
+.
+
+Method 1:
+
+Binary search on
+
+$q$
+
+.
+
+My code follows. The total number of calls to
+
+$\texttt{pow}$
+
+is
+
+$O(T\log K)$
+
+.
+
+from decimal import *
+getcontext().prec = 100
+ 
+T, K = map(int, input().split())
+T -= 1
+ 
+prob = [Decimal(1)]
+for _ in range(T):
+	prob = [(x+y)/2 for x, y in zip([Decimal(0)]+prob, prob+[Decimal(0)])]
+ 
+E = Decimal(T)/2
+K -= 1
+
+for f in range(T):
+	if K == 0:
+		break
+	if E // 1 > f:
+		continue
+	a, b = Decimal(0), Decimal(0)
+	for i in range(T+1):
+		if i <= f:
+			a += prob[i]
+		else:
+			b += prob[i]*i
+
+	def next_E(q): # value of E after q timesteps
+		return pow(a,q)*E+(1-pow(a,q))/(1-a)*b
+
+	# binary search on q
+	q_lo = 1
+	while 2*q_lo <= K and next_E(q_lo*2) < f+1:
+		q_lo *= 2
+	q_hi = 2*q_lo
+	while q_lo < q_hi:
+		q_mid = (q_lo+q_hi)//2
+		if next_E(q_mid) < f+1:
+			q_lo = q_mid+1
+		else:
+			q_hi = q_mid
+
+	# advance q submissions
+	q_lo = min(q_lo, K)
+	K -= q_lo
+	E = next_E(q_lo)
+ 
+getcontext().prec = 20
+print(E+1)
+
+Method 2:
+
+We can rewrite
+
+$\lfloor E_{x+q}\rfloor>\lfloor E_x\rfloor$
+
+as
+follows:
+
+$$\begin{align*}
+& a^q \cdot E_x + \frac{b}{1-a} \cdot \left(1-a^q\right) \ge \lfloor E_x\rfloor + 1 \\
+\implies & a^q \left(\frac{b}{1-a} - E_x\right) \le \frac{b}{1-a} - \left(\lfloor E_x\rfloor + 1\right) \\
+\implies & a^q \le \frac{\frac{b}{1-a} - \left(\lfloor E_x\rfloor + 1\right)}{\frac{b}{1-a} - E_x}. \\
+\end{align*}$$
+
+Then we can take the natural logarithm of both sides to get
+
+$$q\ge \frac{\log \left(\frac{\frac{b}{1-a} - \left(\lfloor E_x\rfloor + 1\right)}{\frac{b}{1-a} - E_x}\right)}{\log a}.$$
+
+The runtime of the solution below is
+
+$O(T^2)$
+
+.
+
+$a$
+
+corresponds to
+
+$\texttt{probabilityLower}$
+
+and
+
+$\frac{b}{1-a}$
+
+corresponds to
+
+$\texttt{expectedHigher}$
+
+.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class CowCamp {
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int t = Integer.parseInt(tokenizer.nextToken()) - 1;
+        int k = Integer.parseInt(tokenizer.nextToken());
+        double[][] probability = new double[t + 1][t + 1];
+        probability[0][0] = 1.0;
+        for (int a = 1; a <= t; a++) {
+            probability[a][0] = probability[a - 1][0] / 2.0;
+            for (int b = 1; b <= t; b++) {
+                probability[a][b] = (probability[a - 1][b - 1] + probability[a - 1][b]) / 2.0;
+            }
+        }
+        double expected = .0;
+        int attempts = 0;
+        for (int score = 1; score <= t; score++) {
+            double probabilityLower = .0;
+            for (int lower = 0; lower < score; lower++) {
+                probabilityLower += probability[t][lower];
+            }
+            double expectedHigher = .0;
+            for (int higher = score; higher <= t; higher++) {
+                expectedHigher += probability[t][higher] * ((double) higher);
+            }
+            expectedHigher /= 1.0 - probabilityLower;
+            double difference = expectedHigher - expected;
+            double differenceToAchieve = expectedHigher - ((double) score);
+            double attemptsNeeded = Math.log(differenceToAchieve / difference) / Math.log(probabilityLower);
+            boolean doneHere = attemptsNeeded > k - attempts;
+            int attemptsToUse = doneHere ? (k - attempts) : (int) Math.round(Math.ceil(attemptsNeeded));
+            difference *= Math.pow(probabilityLower, attemptsToUse);
+            expected = expectedHigher - difference;
+            attempts += attemptsToUse;
+            if (attempts == k) {
+                break;
+            }
+        }
+        System.out.println(1.0 + expected);
+    }
+}

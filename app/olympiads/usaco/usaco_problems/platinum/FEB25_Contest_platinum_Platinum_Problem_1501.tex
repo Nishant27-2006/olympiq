@@ -1,0 +1,121 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB25 Contest - Platinum Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Answer $Q$ ($1\le Q\le 10^5$) independent queries each of the following form:
+
+You are given four integers $a,b,c,d$ ($-10^{18}\le a,b,c,d\le 10^{18}$). In one
+operation you can either do $a\mathrel{+}=b$,  or $b\mathrel{+}=a$. Determine
+the minimum number of operations to transform $(a,b)$ into $(c,d)$, or if it is
+impossible to do so, output $-1$. 
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $Q$.
+
+The next $Q$ lines each contain four integers $a,b,c,d$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+The answer for each query on a separate line.
+
+SAMPLE INPUT:
+4
+5 -3 -1 -3
+5 3 5 2
+5 3 8 19
+5 3 5 3
+SAMPLE OUTPUT: 
+2
+-1
+3
+0
+
+First query: $(5,-3)\to (2,-3)\to (-1,-3)$
+
+Second query: Impossible.
+
+Third query: $(5,3) \to (8, 3) \to (8, 11) \to (8, 19)$
+
+Fourth query: No operations necessary.
+
+SCORING:
+Input 2: $|a|, |b|, |c|,|d|\le 10$Input 3: $a,b\ge 0$Input 4: $a \geq 0 \geq b$Input 5: $a \leq 0 \leq b$Input 6: $a,b\le 0$Input 7: $c,d\ge 0$Input 8: $c \geq 0 \geq d$Input 9: $c \leq 0 \leq d$Input 10: $c,d\le 0$Inputs 11-14: $Q \leq 10^3$Inputs 15-19: No additional constraints.
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+The next $Q$ lines each contain four integers $a,b,c,d$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):The answer for each query on a separate line.SAMPLE INPUT:4
+5 -3 -1 -3
+5 3 5 2
+5 3 8 19
+5 3 5 3SAMPLE OUTPUT:2
+-1
+3
+0First query: $(5,-3)\to (2,-3)\to (-1,-3)$Second query: Impossible.Third query: $(5,3) \to (8, 3) \to (8, 11) \to (8, 19)$Fourth query: No operations necessary.SCORING:Input 2: $|a|, |b|, |c|,|d|\le 10$Input 3: $a,b\ge 0$Input 4: $a \geq 0 \geq b$Input 5: $a \leq 0 \leq b$Input 6: $a,b\le 0$Input 7: $c,d\ge 0$Input 8: $c \geq 0 \geq d$Input 9: $c \leq 0 \leq d$Input 10: $c,d\le 0$Inputs 11-14: $Q \leq 10^3$Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:4
+5 -3 -1 -3
+5 3 5 2
+5 3 8 19
+5 3 5 3SAMPLE OUTPUT:2
+-1
+3
+0First query: $(5,-3)\to (2,-3)\to (-1,-3)$Second query: Impossible.Third query: $(5,3) \to (8, 3) \to (8, 11) \to (8, 19)$Fourth query: No operations necessary.SCORING:Input 2: $|a|, |b|, |c|,|d|\le 10$Input 3: $a,b\ge 0$Input 4: $a \geq 0 \geq b$Input 5: $a \leq 0 \leq b$Input 6: $a,b\le 0$Input 7: $c,d\ge 0$Input 8: $c \geq 0 \geq d$Input 9: $c \leq 0 \leq d$Input 10: $c,d\le 0$Inputs 11-14: $Q \leq 10^3$Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+4
+5 -3 -1 -3
+5 3 5 2
+5 3 8 19
+5 3 5 3
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+2
+-1
+3
+0
+
+First query: $(5,-3)\to (2,-3)\to (-1,-3)$Second query: Impossible.Third query: $(5,3) \to (8, 3) \to (8, 11) \to (8, 19)$Fourth query: No operations necessary.SCORING:Input 2: $|a|, |b|, |c|,|d|\le 10$Input 3: $a,b\ge 0$Input 4: $a \geq 0 \geq b$Input 5: $a \leq 0 \leq b$Input 6: $a,b\le 0$Input 7: $c,d\ge 0$Input 8: $c \geq 0 \geq d$Input 9: $c \leq 0 \leq d$Input 10: $c,d\le 0$Inputs 11-14: $Q \leq 10^3$Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+Second query: Impossible.Third query: $(5,3) \to (8, 3) \to (8, 11) \to (8, 19)$Fourth query: No operations necessary.SCORING:Input 2: $|a|, |b|, |c|,|d|\le 10$Input 3: $a,b\ge 0$Input 4: $a \geq 0 \geq b$Input 5: $a \leq 0 \leq b$Input 6: $a,b\le 0$Input 7: $c,d\ge 0$Input 8: $c \geq 0 \geq d$Input 9: $c \leq 0 \leq d$Input 10: $c,d\le 0$Inputs 11-14: $Q \leq 10^3$Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+Third query: $(5,3) \to (8, 3) \to (8, 11) \to (8, 19)$Fourth query: No operations necessary.SCORING:Input 2: $|a|, |b|, |c|,|d|\le 10$Input 3: $a,b\ge 0$Input 4: $a \geq 0 \geq b$Input 5: $a \leq 0 \leq b$Input 6: $a,b\le 0$Input 7: $c,d\ge 0$Input 8: $c \geq 0 \geq d$Input 9: $c \leq 0 \leq d$Input 10: $c,d\le 0$Inputs 11-14: $Q \leq 10^3$Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+Fourth query: No operations necessary.SCORING:Input 2: $|a|, |b|, |c|,|d|\le 10$Input 3: $a,b\ge 0$Input 4: $a \geq 0 \geq b$Input 5: $a \leq 0 \leq b$Input 6: $a,b\le 0$Input 7: $c,d\ge 0$Input 8: $c \geq 0 \geq d$Input 9: $c \leq 0 \leq d$Input 10: $c,d\le 0$Inputs 11-14: $Q \leq 10^3$Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+
+SCORING:Input 2: $|a|, |b|, |c|,|d|\le 10$Input 3: $a,b\ge 0$Input 4: $a \geq 0 \geq b$Input 5: $a \leq 0 \leq b$Input 6: $a,b\le 0$Input 7: $c,d\ge 0$Input 8: $c \geq 0 \geq d$Input 9: $c \leq 0 \leq d$Input 10: $c,d\le 0$Inputs 11-14: $Q \leq 10^3$Inputs 15-19: No additional constraints.Problem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1501
+
+\section*{Source}
+USACO FEB25 Contest, Platinum Division, Problem ID: 1501
+
+\end{document}

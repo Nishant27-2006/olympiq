@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>To reword the problem more precisely, we have an undirected weighted tree.
+Define <span class='math'>$f(v, w)$</span> to be the minimum weight over all edges on the path from <span class='math'>$v$</span> to
+<span class='math'>$w$</span>. We want to answer several queries for a given vertex <span class='math'>$v$</span> and <span class='math'>$k$</span> of the
+form -  how many vertices <span class='math'>$w$</span> exist where <span class='math'>$f(v, w) \ge k$</span>?
+<p>To answer this query for a given vertex, we can start by doing a BFS from <span class='math'>$v$</span>.
+We never want to traverse an edge with edge weight strictly less than <span class='math'>$k$</span>, so we
+ignore those edges. We can then count how many other vertices we have visited.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class mootube {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;mootube.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;mootube.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int q = Integer.parseInt(st.nextToken());
+		LinkedList&lt;Edge&gt;[] edges = new LinkedList[n];
+		for(int i = 0; i &lt; n; i++) {
+			edges[i] = new LinkedList&lt;Edge&gt;();
+		}
+		for(int a = 1; a &lt; n; a++) {
+			st = new StringTokenizer(br.readLine());
+			int x = Integer.parseInt(st.nextToken())-1;
+			int y = Integer.parseInt(st.nextToken())-1;
+			int w = Integer.parseInt(st.nextToken());
+			edges[x].add(new Edge(y, w));
+			edges[y].add(new Edge(x, w));
+		}
+		for(int query = 0; query &lt; q; query++) {
+			st = new StringTokenizer(br.readLine());
+			int threshold = Integer.parseInt(st.nextToken());
+			int start = Integer.parseInt(st.nextToken())-1;
+			int ret = 0;
+			LinkedList&lt;Integer&gt; queue = new LinkedList&lt;Integer&gt;();
+			queue.add(start);
+			boolean[] seen = new boolean[n];
+			seen[start] = true;
+			while(!queue.isEmpty()) {
+				int curr = queue.removeFirst();
+				for(Edge out: edges[curr]) {
+					if(!seen[out.d] &amp;&amp; out.w &gt;= threshold) {
+						seen[out.d] = true;
+						queue.add(out.d);
+						ret++;
+					}
+				}
+			}
+			pw.println(ret);
+		}
+		pw.close();
+	}
+	
+	static class Edge {
+		public int d, w;
+		public Edge(int a, int b) {
+			d=a;
+			w=b;
+		}
+	}
+		
+}
+</pre>
+<p></body></html>

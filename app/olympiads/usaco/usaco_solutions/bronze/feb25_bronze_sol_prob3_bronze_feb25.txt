@@ -1,0 +1,322 @@
+Solution ID: sol_prob3_bronze_feb25
+Contest: FEB25
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_feb25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Alex Liang)
+
+Subtask 1:
+
+$K=1$
+
+When
+
+$K=1$
+
+, the answer will always be "YES" since the sequence will contain all
+
+$1$
+
+s due to the constraint that all elements of the sequence have to be at most
+
+$K$
+
+.
+
+Subtask 2:
+
+$K \le 2$
+
+When
+
+$K=2$
+
+, all sequences can be outputted with code that is described by the
+following format.
+
+REP outer
+    REP o1
+        PRINT x
+    END
+    REP o2
+        PRINT y
+    END
+END
+
+One way is to approach this is to store information about blocks of same
+numbers.  For example,
+
+$[1, 1, 1, 2, 2, 1, 1, 1, 2, 2]$
+
+can be broken down into
+the following.
+
+Three
+
+$1$
+
+s
+
+Two
+
+$2$
+
+s
+
+Three
+
+$1$
+
+s
+
+Two
+
+$2$
+
+s
+
+From here we can see that a sequence can be outputted by the code if
+
+both
+
+the following is true.
+
+The number of blocks is even
+
+or
+
+$\le 2$
+
+.
+
+Block
+
+$i$
+
+is the
+same as block
+
+$i+2$
+
+for all
+
+$i$
+
+.
+
+Checking for these cases is sufficient to solve this subtask in
+
+$\mathcal{O}(N)$
+
+time. See the full solution code for implementation details.
+
+Full Solution
+
+We can extend the reasoning for
+
+$K=3$
+
+. Let a
+
+$d$
+
+-
+
+degree
+
+sequence be some
+sequence that can be outputted with at most
+
+$d$
+
+"REP"s. We can reduce the
+
+$K=3$
+
+problem into the following cases.
+
+REP outer
+    <Program that outputs a degree 1 sequence>
+    <Program that outputs a degree 2 sequence>
+END
+
+REP outer
+    <Program that outputs a degree 2 sequence>
+    <Program that outputs a degree 1 sequence>
+END
+
+The inside of the outer "REP" will make up some repeating block of the sequence.
+We can iterate over each prefix and check if it is a repeating block. If so, we
+check whether it can be the output of the body of the outer "REP". This means
+that we need to check if it is the concatenation of a degree
+
+$1$
+
+and degree
+
+$2$
+
+sequence or vice versa.
+
+Checking can be done by iterating over the dividing point of the degree
+
+$1$
+
+and
+
+$2$
+
+sequences and seeing if the sequences on the left and right of the dividing
+point have the desired degrees. We can use our solution from the previous
+subtask to help us do this.
+
+Now, let's look at the complexity of this solution. Let the divisors of
+
+$N$
+
+be
+
+$d_1,d_2,\ldots,d_v$
+
+. Checking some length
+
+$\frac{N}{d_i}$
+
+prefix takes
+
+$\mathcal{O}\left(\left(\frac{N}{d_i}\right)^2\right)$
+
+time if we iterate over
+the dividing point and check each half in linear time using the solution
+described in the previous subtask. In total, this will take
+
+$\mathcal{O}\left(N^2(\sum_{i=1}^v \frac{1}{d_i^2})\right)=\mathcal{O}(N^2)$
+
+time.
+
+Benjamin Qi's Python code:
+
+def solve1(l):
+    if len(l) == 0:
+        return True
+    return min(l) == max(l)
+
+
+def solve2(l):
+    if solve1(l):
+        return True
+    r = 0
+    blocks = []
+    while r < len(l):
+        i = r
+        while r < len(l) and l[r] == l[i]:
+            r += 1
+        blocks.append((r - i, l[i]))
+    return len(blocks) % 2 == 0 and blocks[2:] == blocks[:-2]
+
+
+def solve3(l):
+    for i in range(1, len(l) + 1):
+        if len(l) % i == 0:
+            if l[:-len(l) // i] == l[len(l) // i:]:
+                substring = l[:len(l) // i]
+                for i in range(len(substring) + 1):
+                    if solve2(substring[:i]) and solve1(substring[i:]):
+                        return True
+                    if solve1(substring[:i]) and solve2(substring[i:]):
+                        return True
+
+
+def solve():
+    N, K = map(int, input().split())
+    seq = list(map(int, input().split()))
+    if K == 1:
+        return solve1(seq)
+    elif K == 2:
+        return solve2(seq)
+    else:
+        assert K == 3
+        return solve3(seq)
+
+
+T = int(input())
+for _ in range(T):
+    print("YES" if solve() else "NO")
+
+Alex Liang's C++ code:
+
+#include <bits/stdc++.h>
+using namespace std; 
+ 
+void solve(){
+    int n, k;
+    cin >> n >> k;
+ 
+    vector<int> A(n);
+    for (int &i : A)
+        cin >> i;
+    
+    auto check1 = [&](int l, int r){
+        for (int i = l + 1; i <= r; i++)
+            if (A[i] != A[i - 1])
+                return false;
+        return true;
+    };
+    auto check2 = [&](int l, int r){
+        vector<pair<int, int>> blk;
+ 
+        for (int i = l; i <= r; i++){
+            if (blk.size() and A[i] == A[i - 1])
+                blk.back().second++;
+            else
+                blk.push_back({A[i], 1});
+        }
+        if (blk.size() <= 2 or blk.size() % 2 == 0){
+            for (int i = 0; i + 2 < blk.size(); i++)
+                if (blk[i] != blk[i + 2])
+                    return false;
+            return true;
+        }
+        return false;
+    };
+    auto check3 = [&](int l, int r){
+        for (int blkLen = 1; blkLen <= r - l + 1; blkLen++){
+            if ((r - l + 1) % blkLen)
+                continue;
+ 
+            bool ok = true;
+ 
+            for (int i = l; i + blkLen <= r; i++)
+                ok &= (A[i] == A[i + blkLen]);
+            
+            if (!ok)
+                continue;
+            
+            // Check the prefix
+            for (int i = l; i <= l + blkLen; i++)
+                if ((check1(l, i) and check2(i + 1, l + blkLen - 1)) or (check2(l, i) and check1(i + 1, l + blkLen - 1)))
+                    return true;
+        }
+        return false;
+    };
+ 
+    if (k == 1)
+        cout<<(check1(0, n - 1) ? "YES" : "NO")<<"\n";
+    else if (k == 2)
+        cout<<(check2(0, n - 1) ? "YES" : "NO")<<"\n";
+    else
+        cout<<(check3(0, n - 1) ? "YES" : "NO")<<"\n";
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int tc; 
+    cin >> tc;
+ 
+    while (tc--) 
+        solve();
+}

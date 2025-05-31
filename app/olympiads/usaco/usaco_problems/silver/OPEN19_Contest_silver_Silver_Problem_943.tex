@@ -1,0 +1,113 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: OPEN19 Contest - Silver Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+In the past, Farmer John had contemplated a number of innovative ideas for new
+cow sports, among them Cow Steeplechase, where herds of cows would race around a
+course and jump over hurdles.  His past efforts to build interest in this sport
+have met with mixed results, so he is hoping to build an even larger Cow
+Steeplechase course on his farm to try and create more publicity for the sport.
+
+Farmer John's new course is carefully planned around $N$ hurdles, conveniently
+numbered $1 \ldots N$ $(2 \leq N \leq 10^5$), each one described as a line
+segment on the 2D map of the course.  These line segments should not intersect
+each-other in any way, even their at endpoints.  
+
+Unfortunately, Farmer John wasn't paying attention when crafting the course map
+and notices that there are intersections between segments.  However, he also
+notices that if he takes away just one segment, the map is restored to its
+intended state of having no intersecting segments (not even at endpoints).
+
+Please determine a line segment Farmer John can remove from his plan to  restore
+the property that no segments intersect.  If multiple segments are possible to
+remove in this way, please output the index of the earliest one in the input.
+
+INPUT FORMAT (file cowjump.in):
+The first line of input contains $N$.  Each of the $N$ remaining lines describe
+one line segment with four integers $x_1$ $y_1$ $x_2$ $y_2$, all nonnegative
+integers at most $10^9$.  The line segment has $(x_1, y_1)$ and $(x_2, y_2)$  as
+its endpoints.  All endpoints are distinct from each-other.
+
+OUTPUT FORMAT (file cowjump.out):
+Output the earliest index within the input of a segment such that removing that
+segment causes the remaining segments not to intersect.
+
+SAMPLE INPUT:
+4
+2 1 6 1
+4 0 1 5
+5 6 5 5
+2 7 1 3
+SAMPLE OUTPUT: 
+2
+
+Note: You may want to be careful of integer overflow in this problem, due to the
+size of the integers provided as coordinates of segment endpoints.
+
+
+Problem credits: Brian Dean
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (file cowjump.out):Output the earliest index within the input of a segment such that removing that
+segment causes the remaining segments not to intersect.SAMPLE INPUT:4
+2 1 6 1
+4 0 1 5
+5 6 5 5
+2 7 1 3SAMPLE OUTPUT:2Note: You may want to be careful of integer overflow in this problem, due to the
+size of the integers provided as coordinates of segment endpoints.Problem credits: Brian Dean
+
+\section*{Output Format}
+SAMPLE INPUT:4
+2 1 6 1
+4 0 1 5
+5 6 5 5
+2 7 1 3SAMPLE OUTPUT:2Note: You may want to be careful of integer overflow in this problem, due to the
+size of the integers provided as coordinates of segment endpoints.Problem credits: Brian Dean
+
+\section*{Sample Input}
+\begin{verbatim}
+4
+2 1 6 1
+4 0 1 5
+5 6 5 5
+2 7 1 3
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+2
+
+Note: You may want to be careful of integer overflow in this problem, due to the
+size of the integers provided as coordinates of segment endpoints.Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=943
+
+\section*{Source}
+USACO OPEN19 Contest, Silver Division, Problem ID: 943
+
+\end{document}

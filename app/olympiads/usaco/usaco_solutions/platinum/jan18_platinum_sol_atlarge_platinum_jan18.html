@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Dhruv Rohatgi and Bruce Merry)
+<p>In this problem, we are given a tree. For each node, we are asked to calculate
+the minimum number of farmers needed to catch Bessie should she start at that
+node.
+<p>To solve the gold version of this problem (where we are given a fixed starting
+node for Bessie), it suffices to make the following observation: the number of
+farmers needed to catch Bessie is the number of nodes which are at least as
+close to a leaf as to Bessie&apos;s starting location, but whose parents are closer
+to Bessie&apos;s starting location than to any leaf. For a justification of this
+criterion, see the editorial for the gold version of this problem.
+<p>To solve the platinum version with only this observation, we would have to make
+<span class='math'>$O(N)$</span> depth-first searches, a constant number for each possible starting
+location. This yields an <span class='math'>$O(N^2)$</span> algorithm, which is not fast enough.
+To improve our running time, several approaches can be employed.  
+<p>Fix some starting node <span class='math'>$u$</span> for Bessie. Let <span class='math'>$S_u$</span> be the set of nodes which are
+at least as close to a leaf as to the starting node. Then <span class='math'>$S_u$</span> is the union of
+several disjoint subtrees, and the number of farmers needed is exactly the
+number of subtrees comprising the set. Unless <span class='math'>$u$</span> is a leaf, there will be
+multiple subtrees.
+<p>Consider any proper subtree of the whole tree; suppose it has <span class='math'>$k$</span> nodes. Then
+the sum of degrees of all <span class='math'>$k$</span> nodes is <span class='math'>$2k-1$</span>, since <span class='math'>$k-1$</span> edges are counted
+twice and one edge is counted once. Hence the sum over all nodes <span class='math'>$v$</span> in the
+subtree of <span class='math'>$2 - \text{deg}(v)$</span> is exactly <span class='math'>$1$</span>. 
+<p>The above diversion implies that the number of subtrees comprising <span class='math'>$S_u$</span> is
+<div class='math'>$$\sum_{v \in S_u} (2 - \text{deg}(v)).$$</div>
+<p>Now we seek to maintain the set <span class='math'>$S_u$</span>, along with the above sum, as we vary <span class='math'>$u$</span>.
+Fix some arbitrary node to be the &quot;initial&quot; <span class='math'>$u$</span>. Every node has some
+distance-to-nearest-leaf and some distance-to-<span class='math'>$u$</span>, and is in the set <span class='math'>$S_u$</span> if
+and only if the difference between distances is at most <span class='math'>$0$</span>. Suppose we
+depth-first search, changing <span class='math'>$u$</span> as we go. When we traverse an edge from a
+parent to a child node, the differences of all nodes in the subtree increase by
+<span class='math'>$1$</span>, and the differences of all other nodes in the tree decrease by <span class='math'>$1$</span>. When we
+traverse the same edge in the opposite direction, the opposite happens.
+<p>Throughout the depth-first search, we want to maintain a weighted sum over all
+nodes with nonpositive differences. To do so, we use the following data
+structure. Compute the inorder traversal of the tree, and divide it into
+<span class='math'>$\sqrt{N}$</span> blocks. For each block, maintain a Binary Indexed Tree in which a
+node with weight <span class='math'>$w = 2 - \text{deg}(v)$</span> and difference <span class='math'>$d$</span> contributes <span class='math'>$w$</span> to
+index <span class='math'>$d$</span> of the BIT. 
+<p>A subtree corresponds to a range in the inorder traversal. Given an update
+range, for each block contained entirely within the range, lazily update a
+counter. For the two blocks cut by the range, rebuild the BITs entirely. And to
+handle a summation query on the whole data structure, query each block&apos;s BIT for
+a partial sum, taking into account the lazy counter. The complexity of both
+updates and queries is <span class='math'>$O(\sqrt{N} \log N)$</span>. Over the course of the depth-first
+search we make <span class='math'>$O(N)$</span> updates and queries, yielding an overall time complexity
+of <span class='math'>$O(N \sqrt{N} \log N)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+#include &lt;ctime&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+#include &lt;fstream&gt;
+#include &lt;vector&gt;
+using namespace std;
+#define MAXN 70500
+#define BSIZE 141
+#define MAX_BLOCKS 500
+
+vector&lt;int&gt; edges[MAXN];
+int distLeaf[MAXN];
+int distStart[MAXN];
+int startLoc[MAXN], endLoc[MAXN];
+int C;
+
+void dfsDistances(int i,int par)
+{
+	distLeaf[i] = MAXN + 1;
+	if(par != -1)
+		distStart[i] = 1 + distStart[par];
+	else
+		distStart[i] = 0;
+	for(int j=0;j&lt;edges[i].size();j++)
+		if(par != edges[i][j])
+		{
+			dfsDistances(edges[i][j],i);
+			distLeaf[i] = min(distLeaf[i], 1 + distLeaf[edges[i][j]]);
+		}
+	if(edges[i].size()==1)
+		distLeaf[i] = 0;
+}
+
+void dfsDistances2(int i,int par)
+{
+	if(par!=-1)
+		distLeaf[i] = min(distLeaf[i],distLeaf[par]+1);
+	for(int j=0;j&lt;edges[i].size();j++)
+		if(par!=edges[i][j])
+			dfsDistances2(edges[i][j],i);
+}
+
+void dfsOrder(int i,int par)
+{
+	startLoc[i] = C++;
+	for(int j=0;j&lt;edges[i].size();j++)
+		if(edges[i][j]!=par)
+			dfsOrder(edges[i][j],i);
+	endLoc[i] = C-1;
+}
+
+int val[MAXN],key[MAXN];
+int lazy[MAX_BLOCKS];
+int overallLazy;
+int T[MAX_BLOCKS][2*MAXN];
+
+void update(int block,int i,int d)
+{
+	for(i++;i&lt;2*MAXN;i+=(i&amp;-i))
+		T[block][i] += d;
+}
+long long getSum(int block,int i)
+{
+	long long c = 0;
+	for(i++;i&gt;0;i-=(i&amp;-i))
+		c += T[block][i];
+	return c;
+}
+
+void unbuildBlock(int b,int x,int y)
+{
+	for(int i=x;i&lt;=y;i++)
+		update(b,key[i],-val[i]);
+}
+
+void rebuildBlock(int b,int x,int y)
+{
+	for(int i=x;i&lt;=y;i++)
+		update(b,key[i],val[i]);
+}
+
+void updateKey(int low,int high,int dif)
+{
+	int ilow = low;
+	int ihigh = high;
+	int blockLow = low/BSIZE;
+	int blockHigh = high/BSIZE;
+	if(blockLow == blockHigh)
+	{
+		unbuildBlock(blockLow,low,high);
+		while(low&lt;=high)
+			key[low++] += dif;
+		rebuildBlock(blockLow,ilow,ihigh);
+		return;
+	}
+	unbuildBlock(blockLow,ilow,BSIZE*(ilow/BSIZE) + BSIZE-1);
+	unbuildBlock(blockHigh,BSIZE*(ihigh/BSIZE),ihigh);
+	while(low != (blockLow+1)*BSIZE)
+		key[low++] += dif;
+	while(high != blockHigh*BSIZE-1)
+		key[high--] += dif;
+	rebuildBlock(blockLow,ilow,BSIZE*(ilow/BSIZE) + BSIZE-1);
+	rebuildBlock(blockHigh,BSIZE*(ihigh/BSIZE),ihigh);
+	for(int b=blockLow+1;b&lt;blockHigh;b++)
+		lazy[b] += dif;
+}
+
+long long getTotalSum()
+{
+	long long sm = 0;
+	for(int b=0;b&lt;MAX_BLOCKS;b++)
+		sm += getSum(b,MAXN-lazy[b]-overallLazy);
+	return sm;
+}
+
+int ans[MAXN];
+int N;
+
+void dfs(int i,int par)
+{
+	ans[i] = getTotalSum();
+	for(int j=0;j&lt;edges[i].size();j++)
+		if(edges[i][j]!=par)
+		{
+			updateKey(startLoc[edges[i][j]], endLoc[edges[i][j]], 2);
+			overallLazy--;
+			dfs(edges[i][j],i);
+			overallLazy++;
+			updateKey(startLoc[edges[i][j]], endLoc[edges[i][j]], -2);
+		}
+}
+
+
+
+int main()
+{
+	int a,b;
+	cin &gt;&gt; N;
+	for(int i=1;i&lt;N;i++)
+	{
+		cin &gt;&gt; a &gt;&gt; b;
+		a--,b--;
+		edges[a].push_back(b);
+		edges[b].push_back(a);
+	}
+	dfsDistances(0,-1);
+	dfsDistances2(0,-1);
+	dfsOrder(0,-1);
+	for(int i=0;i&lt;N;i++)
+	{
+		val[startLoc[i]] = 2 - (int)edges[i].size();
+		key[startLoc[i]] = distLeaf[i] - distStart[i] + MAXN;
+	}
+	for(int b=0;b&lt;MAX_BLOCKS;b++)
+		rebuildBlock(b,BSIZE*b,BSIZE*(b+1)-1);
+	dfs(0,-1);
+	int mdif = 0;
+	for(int i=0;i&lt;N;i++)
+	{
+		if(edges[i].size()==1)
+			ans[i] = 1;
+		cout &lt;&lt; ans[i] &lt;&lt; &apos;\n&apos;;
+	}
+}
+</pre>
+<p>
+
+Alternatively, we can use divide and conquer -- via the so-called "centroid decomposition" of a tree --
+to achieve an <span class='math'>$O(N \log N)$</span> running time.  Bruce Merry's notes and code for
+this are as follows:
+
+<p> 1. Compute the distance <span class='math'>$L(X)$</span> to the nearest leaf from every node <span class='math'>$X$</span>; this is a two-pass DP approach
+requiring <span class='math'>$O(N)$</span> time.
+
+<p> 2. Find the centroid <span class='math'>$C$</span> of the graph. We will
+make some precomputations that allow us to find the terms in the sum
+where <span class='math'>$B$</span> and <span class='math'>$X$</span> are in different subtrees. Let <span class='math'>$d(X)$</span> be the depth of <span class='math'>$X$</span>
+when <span class='math'>$C$</span> is the root (which we precompute for all <span class='math'>$X$</span>). Consider one
+subtree <span class='math'>$S$</span>. For every node <span class='math'>$X$</span>
+in <span class='math'>$S$</span>, it contributes to the sum iff <span class='math'>$d(B) >= L(X) - d(X)$</span>. Thus for each <span class='math'>$X$</span>, we can add <span class='math'>$2-deg(X)$</span> to a table at index <span class='math'>$L(X) - d(X)$</span>, then take a prefix sum of this table to get a table of the <span class='math'>$S$</span> indexed by <span class='math'>$d(B)$</span>. Note
+that the indices in this table can be large, but the range (max-min)
+is <span class='math'>$O(|S|)$</span>, so total storage remains <span class='math'>$O(N)$</span>. Since <span class='math'>$C$</span> may have many
+subtrees, we also store the sum of these tables across all subtrees <span class='math'>$S$</span>,
+which allows us to find the contribution for some <span class='math'>$B$</span> given only <span class='math'>$d(B)$</span>
+and knowing which subtree contains <span class='math'>$B$</span> (so that it can be subtracted
+out, as we started with the assumption that <span class='math'>$X$</span> and <span class='math'>$B$</span> are in different
+subtrees).
+
+<p> 3. Recursively apply step 2 in a centroid decomposition.  
+
+<p> Each query now requires <span class='math'>$O(1)$</span> time per ancestor in the centroid decomposition tree, for <span class='math'>$O(\log N)$</span> in total.
+
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef vector&lt;int&gt; vi;
+typedef pair&lt;int, int&gt; pii;
+#define RA(x) begin(x), end(x)
+#define SZ(x) ((x).size())
+
+template&lt;class T&gt; T gcd(T a, T b) { return b ? gcd(b, a % b) : a; }
+
+class table
+{
+    vi values;
+
+public:
+    int lo = 0, hi = 0;
+    int expr = 0;
+
+    int operator[](int idx) const
+    {
+        if (idx &lt; lo)
+            return 0;
+        else if (idx &gt;= hi)
+            return expr;
+        else
+            return values[idx - lo];
+    }
+
+    void incr(int idx, int delta)
+    {
+        if (lo == hi)
+        {
+            lo = idx;
+            hi = idx + 1;
+            values.push_back(delta);
+            return;
+        }
+        while (idx &gt;= hi)
+        {
+            values.push_back(0);
+            hi++;
+        }
+        if (idx &lt; lo)
+        {
+            int nlo = min(2 * lo - hi, idx);
+            vi values2(hi - nlo);
+            copy(RA(values), values2.begin() + (lo - nlo));
+            values = move(values2);
+            lo = nlo;
+        }
+        values[idx - lo] += delta;
+    }
+
+    void psum()
+    {
+        for (int i = 1; i &lt; SZ(values); i++)
+            values[i] += values[i - 1];
+        expr = values.empty() ? 0 : values.back();
+    }
+};
+
+struct node
+{
+    vi edges;
+    int nleaf = INT_MAX / 2;
+    int size;
+    bool used = false;
+    vi depth;
+
+    int ctop;
+    int cparent;
+    int cpid;
+    vector&lt;table&gt; freq;
+    table freqs;
+};
+
+static vector&lt;node&gt; nodes;
+
+static int nleaf_down(int cur, int parent)
+{
+    node &n = nodes[cur];
+    for (int v : n.edges)
+        if (v != parent)
+            n.nleaf = min(n.nleaf, nleaf_down(v, cur) + 1);
+    if (SZ(n.edges) == 1)
+        n.nleaf = 0;
+    return n.nleaf;
+}
+
+static void nleaf_up(int cur, int parent, int pleaf)
+{
+    node &n = nodes[cur];
+    n.nleaf = min(n.nleaf, pleaf + 1);
+    for (int v : n.edges)
+        if (v != parent)
+            nleaf_up(v, cur, n.nleaf);
+}
+
+static int make_size(int cur, int parent)
+{
+    node &n = nodes[cur];
+    n.size = 1;
+    for (int v : n.edges)
+        if (v != parent && !nodes[v].used)
+            n.size += make_size(v, cur);
+    return n.size;
+}
+
+static int find_centroid(int cur, int parent, int full)
+{
+    const node &n = nodes[cur];
+    for (int v : n.edges)
+        if (v != parent && !nodes[v].used && nodes[v].size * 2 &gt;= full)
+            return find_centroid(v, cur, full);
+    return cur;
+}
+
+static void update_freq(table &freq, table &freq2, int cur, int parent, int depth)
+{
+    node &n = nodes[cur];
+    n.depth.push_back(depth);
+    int m = max(0, n.nleaf - depth);
+    freq.incr(m, 2 - SZ(n.edges));
+    freq2.incr(m, 2 - SZ(n.edges));
+    for (int v : n.edges)
+        if (v != parent && !nodes[v].used)
+            update_freq(freq, freq2, v, cur, depth + 1);
+}
+
+static void decompose(int top, int cparent, int cpid)
+{
+    int full = make_size(top, -1);
+    int c = find_centroid(top, -1, full);
+    node &t = nodes[c];
+    t.ctop = top;
+    t.cparent = cparent;
+    t.cpid = cpid;
+    t.used = true;
+    t.depth.push_back(0);
+    int id = 0;
+    t.freqs.incr(t.nleaf, 2 - SZ(t.edges));
+    for (int v : t.edges)
+        if (!nodes[v].used)
+        {
+            t.freq.emplace_back();
+            update_freq(t.freqs, t.freq.back(), v, -1, 1);
+            t.freq.back().psum();
+            decompose(v, c, id);
+            id++;
+        }
+    t.freqs.psum();
+}
+
+int main(int argc, const char **argv)
+{
+    ifstream cin("atlarge.in");
+    ofstream cout("atlarge.out");
+    int N;
+    cin &gt;&gt; N;
+    nodes.resize(N);
+
+    for (int i = 0; i &lt; N - 1; i++)
+    {
+        int x, y;
+        cin &gt;&gt; x &gt;&gt; y;
+        x--;
+        y--;
+        nodes[x].edges.push_back(y);
+        nodes[y].edges.push_back(x);
+    }
+
+    nleaf_down(0, -1);
+    nleaf_up(0, -1, INT_MAX / 2);
+
+    decompose(0, -1, -1);
+    for (int i = 0; i &lt; N; i++)
+    {
+        const node &n = nodes[i];
+        if (SZ(n.edges) == 1)
+        {
+            cout &lt;&lt; "1\n";
+            continue;
+        }
+        int c = i;
+        int sum = 0;
+        int pid = -1;
+        for (int j = SZ(n.depth) - 1; j &gt;= 0; j--)
+        {
+            const node &t = nodes[c];
+            int d = n.depth[j];
+            sum += t.freqs[d];
+            if (pid != -1)
+                sum -= t.freq[pid][d];
+            pid = t.cpid;
+            c = t.cparent;
+        }
+        assert(c == -1);
+        cout &lt;&lt; sum &lt;&lt; '\n';
+    }
+
+    return 0;
+}
+</pre>
+
+</body></html>

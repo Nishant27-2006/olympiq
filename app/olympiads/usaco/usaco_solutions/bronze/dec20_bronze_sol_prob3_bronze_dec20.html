@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>At a high level, this problem is approachable in several straightforward ways.  
+Perhaps the most natural approach is to directly simulate the moovements of the 
+cows.  For the earlier testcases (numbers 2-5), all coordinates are at most 100,
+so one can simulate the movement of each cow on a 2D array, marking squares
+visited by cows as ruts, and making a note of whenever a cow hits a  rut. 
+However, this approach won&apos;t work for the larger cases, since we don&apos;t have
+enough memory to store the 2D representation of the farm explicitly as a 2D
+array when coordinates are large.
+<p>To simulate larger cases, we could keep track of the position and direction  of
+each cow, along with when (and if) the cow has already stopped.  With a bit of
+math, we can determine the next time an &quot;interesting event&quot; happens -- namely,
+that some cow <span class='math'>$i$</span> hits a rut carved out by some other cow <span class='math'>$j$</span>.  We move all the
+cows forward to this point in time, mark cow <span class='math'>$i$</span> as stopped, and then continue,
+looking for the next &quot;interesting event&quot;, and so on.  Each step requires looking
+at all pairs of cows to find the next intersection with a rut, and so takes
+<span class='math'>$O(N^2)$</span> time.  The simulation involves at most <span class='math'>$N$</span> total steps, since each step
+ends with at least one cow stopping.  Hence, the total running time of a direct
+simulation is <span class='math'>$O(N^3)$</span>.  It&apos;s important that we &quot;fast forward&quot; from one
+interesting event to the next, instead of stepping forward by 1 time step at a
+time, since otherwise the solution might take too long, with coordinates being
+as large as they are.  My C++ code for this approach is as follows; I&apos;ve tried
+to add comments to make it reasonably readable:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+using namespace std;
+
+int Infinity = 1000000001;
+
+struct Cow {
+  int time_stopped; // time at which stopped
+  int x, y;         // current location
+  char dir;         // N or E
+};
+
+int N;
+Cow C[50];
+
+// At what time would cow i hit the rut carved out by cow j and stop?  (Infinity if no such event)
+// (and this is only considering these two cows for the moment)
+int when_hits(int i, int j, int current_time)
+{
+  Cow I = C[i], J = C[j];
+  if (I.dir == J.dir) return Infinity; // never hits if moving same direction (or same cow)
+  if (I.dir == &apos;E&apos;) { // assume without loss of generality that I is moving north, and J east
+    swap (I.x, I.y); swap (J.x, J.y); 
+  }
+  if (J.y &lt;= I.y) return Infinity; // J isn&apos;t north of I?
+  if (J.time_stopped == Infinity) {
+    if (I.x &lt; J.x - current_time || I.x &gt;= J.x + J.y - I.y) return Infinity; // No insersection, J still mooving
+  } else {
+    if (I.x &gt; J.x || I.x &lt; J.x - J.time_stopped) return Infinity; // No intersection; j stopped already
+  } 
+  return current_time + J.y - I.y;
+}
+
+// Returns the next time after current_time at which a cow hits a rut and stops  (or Infinity if no such event)
+// Also move cows forward until that time and update which cows are stopped
+int advance_to_next_event(int current_time)
+{
+  // T[i] is the next time something happens to cow i; minT is the earliest of these
+  int T[50], minT = Infinity;
+ 
+  for (int i=0; i&lt;N; i++) {
+    T[i] = Infinity;
+    if (C[i].time_stopped == Infinity) { // For all cows still mooving....
+      for (int j=0; j&lt;N; j++) {            // What does it hit next?
+        int t = when_hits(i, j, current_time);
+        if (t &lt; T[i]) T[i] = t; 
+      }
+      if (T[i] &lt; minT) minT = T[i]; 
+    }
+  }
+  
+  if (minT == Infinity) return Infinity;
+
+  // Advance cows, stopping those that hit a rut
+  for (int i=0; i&lt;N; i++) {
+    if (C[i].time_stopped == Infinity)
+      if (C[i].dir == &apos;N&apos;) C[i].y += (minT - current_time);
+      else                 C[i].x += (minT - current_time);
+    if (T[i] == minT) C[i].time_stopped = minT;
+  }
+
+  return minT;
+}
+
+int main(void)
+{
+  cin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++) {
+    cin &gt;&gt; C[i].dir &gt;&gt; C[i].x &gt;&gt; C[i].y;
+    C[i].time_stopped = Infinity;
+  }
+
+  // Now just advance from one &quot;event&quot; to another until done...
+  int current_time = 0;
+  do { current_time = advance_to_next_event(current_time); }
+  while (current_time != Infinity);
+
+  for (int i=0; i&lt;N; i++)
+    if (C[i].time_stopped == Infinity) cout &lt;&lt; &quot;Infinity\n&quot;;
+    else                               cout &lt;&lt; C[i].time_stopped &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>There are several variations on this theme.  In another approach, one can look
+at all pairs of cows and generate a list of all <span class='math'>$O(N^2)$</span> possible &quot;potential
+intersections&quot; that will ever happen.  Some may not happen, if one or more of
+the cows in a pair have already stopped before reaching the point where their 
+trails would intersect.  However, we can again simulate the moovement of the
+cows, by stepping through these potential intersections in chronological order. 
+At each step, we look at the next prospective intersection (say, where cow <span class='math'>$i$</span>
+would nominally hit the rut carved by cow <span class='math'>$j$</span>).  If cow <span class='math'>$i$</span> is still mooving and
+cow <span class='math'>$j$</span> has mooved at least to the point of this intersection, then cow <span class='math'>$i$</span> is
+stopped at this point.  Each iteration, we scan the list of <span class='math'>$O(N^2)$</span>
+intersections to find the next one chronologically, so a straightforward
+implementation here might take  <span class='math'>$O(N^4)$</span> time.  I&apos;m including a couple of
+implementations along these lines --- here&apos;s  some C++ code I wrote that uses
+this approach:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+using namespace std;
+
+const int MAX_N = 50;
+
+int N, x[MAX_N], y[MAX_N], tstop[MAX_N];
+char dir[MAX_N];
+
+struct Intersection {
+  int i, j, time_i, time_j, active;
+};
+Intersection I[MAX_N*MAX_N];
+
+void find_all_intersections(void)
+{
+  int current = 0;
+  for (int i=0; i&lt;N; i++)
+    for (int j=0; j&lt;N; j++) {
+
+      if (dir[i] == dir[j]) continue; // no intersection if same direction (or same cow)
+
+      // Possibly flip coordinates so that for simpllicity, we can
+      // assume without loss of generality that cow i is moving north, and cow j east
+      int xi = x[i], yi = y[i], xj = x[j], yj = y[j];
+      if (dir[i] == &apos;E&apos;) { swap(xi,yi); swap(xj,yj); } 
+      
+      if (yi &gt; yj) continue; // cow i already north of cow j?
+      if (xi &lt; xj) continue; // cow i already west of cow j?
+      if (xi &gt;= xj + yj - yi) continue; // cow i passes before cow j can cut her off
+
+      Intersection Inew = { i, j, yj-yi, xi-xj, 1 };
+      I[current] = Inew;
+      current++;
+    }
+}
+
+int main(void)
+{
+  cin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++) cin &gt;&gt; dir[i] &gt;&gt; x[i] &gt;&gt; y[i];
+
+  find_all_intersections();
+  
+  // Repeatedly find earliest remaining intersection and process it
+  while (1) {
+    int earliest = -1;
+    for (int i=0; i&lt;MAX_N*MAX_N; i++)
+      if (I[i].active)
+        if (earliest == -1 || I[i].time_i &lt; I[earliest].time_i) earliest = i;
+    if (earliest == -1) break;
+    Intersection &amp;E = I[earliest];
+    if (tstop[E.i] == 0 &amp;&amp; (tstop[E.j] == 0 || tstop[E.j] &gt; E.time_j))
+      tstop[E.i] = E.time_i;
+    E.active = 0;
+  }
+  
+  for (int i=0; i&lt;N; i++)
+    if (tstop[i] == 0) cout &lt;&lt; &quot;Infinity\n&quot;;
+    else               cout &lt;&lt; tstop[i] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>I&apos;ve made it a point in my code above not to use sorting, with this being a
+bronze-level problem, to emphasize that one doesn&apos;t need any elaborate
+algorithms.  Sorting can of course also be part of your solution, and it can
+help with simplifying the task of visiting things in chronological order.  Below
+is some Java code from Danny Mittal, where he finds the time of every
+&quot;prospective&quot; intersection  point, sorts these values of time, and then
+processes them in order.  For each time point of interest, he loops over all
+pairs of cows to figure out if there is an intersection caused by the pair at
+the point in time in question:
+<p><pre class='prettyprint'>
+    import java.util.*;
+     
+    public class StuckInARutBronzeQuartic {
+     
+        public static void main(String[] args) {
+            Scanner in = new Scanner(System.in);
+            int n = in.nextInt();
+            int[] xs = new int[n];
+            int[] ys = new int[n];
+            char[] dir = new char[n];
+            for (int j = 0; j &lt; n; j++) {
+                dir[j] = in.next().charAt(0);
+                xs[j] = in.nextInt();
+                ys[j] = in.nextInt();
+            }
+            int[] answer = new int[n];
+            Arrays.fill(answer, Integer.MAX_VALUE);
+            List&lt;Integer&gt; differences = new ArrayList&lt;&gt;();
+            for (int j = 0; j &lt; n; j++) {
+                for (int k = j + 1; k &lt; n; k++) {
+                    differences.add(Math.abs(xs[k] - xs[j]));
+                    differences.add(Math.abs(ys[k] - ys[j]));
+                }
+            }
+            Collections.sort(differences);
+            for (int d : differences) {
+                for (int j = 0; j &lt; n; j++) {
+                    for (int k = 0; k &lt; n; k++) {
+                        if (dir[j] == &apos;E&apos; &amp;&amp; dir[k] == &apos;N&apos; &amp;&amp; xs[j] &lt; xs[k] &amp;&amp; ys[k] &lt; ys[j]) {
+                            if (xs[j] + d == xs[k] &amp;&amp; ys[k] + Math.min(answer[k], d) &gt; ys[j]) {
+                                answer[j] = Math.min(answer[j], d);
+                            } else if (ys[k] + d == ys[j] &amp;&amp; xs[j] + Math.min(answer[j], d) &gt; xs[k]) {
+                                answer[k] = Math.min(answer[k], d);
+                            }
+                        }
+                    }
+                }
+            }
+            for (int j = 0; j &lt; n; j++) {
+                System.out.println(answer[j] == Integer.MAX_VALUE ? &quot;Infinity&quot; : answer[j]);
+            }
+        }
+    }
+</pre>
+<p>Faster solutions are possible by using essentially the same approach (i.e.,
+finding all interesting time points and simulating these in chronological order)
+-- these are needed to solve the silver variation of this problem, so please
+consult the silver solutions  for further details.
+<p></body></html>

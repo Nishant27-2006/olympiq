@@ -1,0 +1,176 @@
+Solution ID: sol_prob3_silver_dec22
+Contest: DEC22
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_dec22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Solution 1:
+
+First set
+
+$a_N=0$
+
+. Next, we determine
+
+$a_i$
+
+for
+
+$i=N-1,N-2,\dots,1$
+
+in that
+order.  We know that
+
+$a_i=a_{i+1}\pm r_{i,i+1}$
+
+. We can first try setting
+
+$a_i=a_{i+1}+r_{i,i+1}$
+
+; if this is incompatible with some
+
+$r_{i,j}$
+
+then set
+
+$a_i=a_{i+1}-r_{i,i+1}$
+
+instead. Using induction, it may be proven that this 
+recovers the original array up to a negation and a translation.
+
+Ben's code:
+
+N = int(input())
+ 
+difs = [list(map(int, input().split())) for _ in range(N)]
+ 
+ans = [0]*N
+for i in reversed(range(N-1)):
+	def ok():
+		mx = -float('inf')
+		mn = float('inf')
+		for j in range(i,N):
+			mx = max(mx, ans[j])
+			mn = min(mn, ans[j])
+			if mx-mn != difs[i][j-i]:
+				return False
+		return True
+	ans[i] = ans[i+1] + difs[i][1]
+	if not ok():
+		ans[i] = ans[i+1] - difs[i][1]
+		assert ok()
+ 
+print(" ".join(map(str, ans)))
+
+Solution 2:
+
+Consider the case where every two consecutive elements of
+
+$a$
+
+are distinct (that
+is,
+
+$r_{i,i+1}\neq 0$
+
+for all
+
+$1\le i<N$
+
+). Then given
+
+$a_i$
+
+,
+
+$a_{i+1}$
+
+,
+
+$r_{i+1,i+2}$
+
+and
+
+$r_{i,i+2}$
+
+, we can uniquely determine
+
+$a_{i,i+2}$
+
+. This gives
+us a solution that runs in linear time after reading in the input: set
+
+$a_1=0$
+
+,
+
+$a_2=r_{1,2}$
+
+, and then use the observation above to uniquely determine
+
+$a_3,\dots,a_N$
+
+. Handling the case  where consecutive elements of
+
+$a$
+
+can be
+equal requires a bit more care.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringJoiner;
+import java.util.StringTokenizer;
+ 
+public class ArrayDifferences {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        int[][] differences = new int[n][n];
+        for (int j = 0; j < n; j++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            for (int k = j; k < n; k++) {
+                differences[j][k] = Integer.parseInt(tokenizer.nextToken());
+            }
+        }
+        List<Integer> distinct = new ArrayList<>();
+        distinct.add(0);
+        for (int j = 1; j < n; j++) {
+            if (differences[j - 1][j] != 0) {
+                distinct.add(j);
+            }
+        }
+        int[] answer = new int[n];
+        if (distinct.size() > 1) {
+            answer[distinct.get(1)] = differences[0][distinct.get(1)];
+            for (int j = 2; j < distinct.size(); j++) {
+                int a = distinct.get(j - 2);
+                int b = distinct.get(j - 1);
+                int c = distinct.get(j);
+                int sign = differences[a][c] == differences[a][b] + differences[b][c] ? 1 : -1;
+                answer[c] = answer[b] + (sign * Integer.signum(answer[b] - answer[a]) * differences[b][c]);
+            }
+            for (int j = 1; j < n; j++) {
+                if (differences[j - 1][j] == 0) {
+                    answer[j] = answer[j - 1];
+                }
+            }
+        }
+        StringJoiner joiner = new StringJoiner(" ");
+        for (int j = 0; j < n; j++) {
+            joiner.add("" + answer[j]);
+        }
+        System.out.println(joiner);
+    }
+}

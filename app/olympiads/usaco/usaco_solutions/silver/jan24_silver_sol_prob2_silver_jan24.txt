@@ -1,0 +1,352 @@
+Solution ID: sol_prob2_silver_jan24
+Contest: JAN24
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_jan24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Suhas Nagar)
+
+The minimal number of traversals to visit every node must be the number of
+leaves of the tree. If the starting room
+
+$1$
+
+is a leaf, we exclude it from this
+count. Let this number of leaves excluding the starting room be
+
+$L$
+
+.
+
+Observation 1: The number of potions we can collect is bounded by the number of
+leaves of the tree. Since we have to explore a path (indicated by a new leaf)
+each iteration, the potions at
+
+$p_{L+1}, p_{L+2}, \ldots, p_{N}$
+
+will never
+spawn since we explore the tree by then so we can disregard them.
+
+Observation 2: We notice that the order of
+
+$p_1\dots p_L$
+
+does not matter since
+we could just change the order that we make our traversals in.
+
+Subtask 1:
+
+$N \leq 1000$
+
+:
+
+For each leaf
+
+$l_i$
+
+, we can greedily pair it with the closest potion
+
+$p_i$
+
+that
+is an ancestor of the leaf.
+
+Suppose this was not optimal. This means that
+
+$l_i$
+
+should get paired with some
+other
+
+$p_j$
+
+or not get paired at all. If
+
+$l_i$
+
+gets paired with some
+
+$p_j$
+
+and
+another leaf
+
+$l_j$
+
+pairs with
+
+$p_i$
+
+, this is equivalent to our greedy pairing
+since
+
+$p_j$
+
+must be an ancestor of
+
+$p_i$
+
+and therefore be able to pair with
+
+$l_j$
+
+. If
+
+$l_i$
+
+should not get paired and
+
+$l_j$
+
+should pair with
+
+$p_i$
+
+, this
+will still provide an equivalent answer to our construction.
+
+Since there are
+
+$O(N)$
+
+leaves with each leaf having up to
+
+$O(N)$
+
+nodes between
+it and the  nearest potion, this solution will run in
+
+$O(N^2)$
+
+.
+
+Brandon Wang's C++ code:
+
+#include <iostream>
+#include <vector>
+ 
+const int MAXN = 200005;
+ 
+int N;
+std::vector<int> adj[MAXN];
+int at[MAXN];
+int p[MAXN];
+int par[MAXN];
+ 
+void input () {
+	std::cin >> N;
+	for (int i = 0; i < N; i++) {
+		std::cin >> p[i];
+	}
+	for (int i = 1; i < N; i++) {
+		int a, b; std::cin >> a >> b;
+		adj[a].push_back(b);
+		adj[b].push_back(a);
+	}
+}
+ 
+void dfs (int v) {
+	for (auto &u : adj[v]) {
+		if (u != par[v]) {
+			par[u] = v;
+			dfs(u);
+		}
+	}
+}
+ 
+void proc () {
+	int L = 0;
+	for (int i = 2; i <= N; i++) {
+		L += (int(adj[i].size()) == 1);
+	}
+	for (int i = 0; i < L; i++) {
+		at[p[i]]++;
+	}
+}
+ 
+bool grab (int v) {
+	while (v > 0) {
+		if (at[v] > 0) {
+			at[v]--;
+			return 1;
+		}
+		v = par[v];
+	}	
+	return 0;
+}
+ 
+int solve () {
+	int ans = 0;
+	for (int i = 2; i <= N; i++) {
+		if (int(adj[i].size()) == 1) {
+			ans += grab(i);
+		}
+	}
+	return ans;
+}
+ 
+int main () {
+	input();
+	proc();
+	dfs(1);
+	std::cout << solve() << std::endl;
+}
+
+Full Credit:
+
+Let
+
+$C(i)$
+
+be the number of leaves that node
+
+$i$
+
+is an ancestor of. Let
+
+$P(i)$
+
+be the number of potions collected by all the paths that go through node
+
+$i$
+
+.
+Building on observation
+
+$1$
+
+, we see that
+
+$P(i) \leq C(i)$
+
+across all nodes
+
+$i$
+
+.
+We can apply this fact recursively across all nodes to create our solution.
+
+Let
+
+$pot[i]$
+
+be the number of potions that spawn at node
+
+$i$
+
+. To compute the
+value of
+
+$P(i)$
+
+, we can determine the values of
+
+$P(c)$
+
+for all children of
+
+$i$
+
+and sum them together:
+
+$P(i) = \min(C(i),\sum_c P(c)+pot[i])$
+
+. If we build this
+answer from the leaves up to the root, which can be done after the recursive
+step of a DFS iteration through the tree, we can compute our answer up to
+
+$P(1)$
+
+and print this as our answer.
+
+We can apply a similar proof to subtask 1 to show why this works, because we are
+still pairing leaves with the closest potion that is an ancestor. Since we build
+this  answer recursively from the leaves up to the root, if
+
+$\sum_c P(c) < C(i)$
+
+, this means that there are some unpaired leaves.
+Consequently, any potions found at node
+
+$i$
+
+are the closest potions that are
+ancestors of those unpaired leaves, so we can just pair them. On the other hand,
+if
+
+$\sum_c P(c) = C(i)$
+
+, that means that every leaf in this subtree has  already
+encountered a potion that is closer than the node that we are currently
+processing, so there is no leaf to pair with it. Since we only use a single DFS
+to compute these values, this solution runs in
+
+$O(N)$
+
+.
+
+My code:
+
+import java.util.*;
+import java.io.*;
+ 
+public class PotionFarming {
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        int s = 0;
+        int[] pots = new int[n];
+        int i = 0;
+        for (String potion : in.readLine().split(" ")) {
+            pots[i++] = Integer.parseInt(potion)-1;
+        }
+        ArrayList[] graph = new ArrayList[n];
+        for (i = 0; i < n; i++) {
+            graph[i] = new ArrayList();
+        }
+        for (i = 0; i < n - 1; i++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken()) - 1;
+            int b = Integer.parseInt(tokenizer.nextToken()) - 1;
+            graph[a].add(b);
+            graph[b].add(a);
+        }
+        numleaves = new int[n];
+        int leaves = countleaves(s, -1, graph);
+        int[] modpots = new int[n];
+        for (i = 0; i < leaves; i++) {
+            modpots[pots[i]]++;
+        }
+        System.out.println(countPotions(s, -1, graph, modpots));
+    }
+    public static int countPotions(int cur, int par, ArrayList[] graph, int[] modpots){
+        int sum = 0;
+        for (Object a : graph[cur]){
+            if ((int)a == par){
+                continue;
+            }
+            sum += countPotions((int)a,cur,graph, modpots);
+        }
+        sum += modpots[cur];
+        return Math.min(sum,numleaves[cur]);
+    }
+    public static int[] numleaves;
+    public static int countleaves(int cur, int par, ArrayList[] graph){
+        if ((graph[cur].size() == 1 && (int)graph[cur].get(0) == par) || graph[cur].size() == 0){
+            numleaves[cur] = 1;
+            return 1;
+        }
+        int sum = 0;
+        for (Object a : graph[cur]){
+            if ((int)a == par){
+                continue;
+            }
+            sum += countleaves((int)a,cur,graph);
+        }
+        numleaves[cur] = sum;
+        return sum;
+    }
+}

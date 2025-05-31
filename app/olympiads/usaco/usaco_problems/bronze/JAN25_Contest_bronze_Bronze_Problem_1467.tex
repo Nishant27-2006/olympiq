@@ -1,0 +1,429 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN25 Contest - Bronze Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+**Note: The time limit for this problem is 4s, twice the default.**
+Bessie is using her nifty telescope to take photos of all the stars in the night
+sky. Her telescope can capture an $N \times N$ ($1 \leq N \leq 1000$) photo of
+the stars where each pixel is either a star or empty sky. Each star will be
+represented by exactly one pixel, and no two distinct stars share the same
+pixel.
+
+Overnight, something strange happens to the stars in the sky. Every star either
+disappears or moves $A$ pixels to the right, and $B$ pixels downwards
+($0 \leq A,B \leq N$). If a star disappears or moves beyond the photo boundary,
+it no longer appears in the second photo.
+
+Bessie took photos before and after the shifting positions, but after
+experimenting in  Mootoshop, she accidentally superimposed one photo onto the
+other. Now, she can see white pixels where both photos were empty, gray pixels
+where stars existed in exactly one photo, and black pixels where there was a
+star in both photos. Bessie also remembers that no new stars moved into the
+frame of the second photo, so her first photo contains all of the stars in the
+night sky.
+
+Given the final photo, determine the minimum possible number of stars in the sky
+before the shifting incident for $T$ ($1 \leq T \leq 1000$) independent test
+cases. If no arrangement of stars can produce the given final photo, output
+$-1$.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line of input contains $T$ and $T$ test cases will follow.
+
+The first line of each test case will contain $N$ $A$ $B$.
+
+Then follow $N$ lines each representing one row of the superimposed photo.  The
+$i$th row from the top is represented by a string $c_{i,1}c_{i,2}\dots c_{i,N}$,
+where each $c_{i,j} \in \{W,G,B\}$, representing the colors white, gray, and
+black respectively.
+
+It is guaranteed that the sum of $N^2$ over all test cases will not exceed
+$10^7$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+For each test case, output the minimum number of stars that existed before the
+shifting, or $-1$ if impossible.
+
+SAMPLE INPUT:
+1
+3 0 0
+WWB
+BBB
+GGG
+SAMPLE OUTPUT: 
+7
+
+In this example, there is no shifting. The first photo is as follows: (. for
+sky, * for star)
+
+
+..*
+***
+***
+
+The second photo, where the stars on the bottom row disappeared, is as follows:
+
+
+..*
+***
+...
+
+This is the only way to produce the superimposed photo, so the minimum possible
+number of initial stars is $7$.
+
+SAMPLE INPUT:
+3
+5 1 2
+GWGWW
+WGWWW
+WBWGW
+WWWWW
+WWGWW
+3 1 1
+WWW
+WBW
+WWW
+3 1 0
+GGB
+GGW
+WWW
+SAMPLE OUTPUT: 
+4
+-1
+4
+
+In the first case, there were at least $4$ stars at the start. If we let $(r,c)$
+denote the intersection of the $r$th row from the top and $c$th column from the
+left, one possibility is that they were initially at $(1,1), (3,2), (2,2),$  and
+$(1,3)$. All the stars shifted, except for the one at $(2,2)$ which disappeared.
+
+In the second case, there is no arrangement of stars in the initial photo that
+can produce the middle black pixel given the shift.
+
+In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.
+
+SCORING:
+Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.
+
+
+Problem credits: Suhas Nagar
+
+
+
+\section*{Input Format}
+The first line of each test case will contain $N$ $A$ $B$.Then follow $N$ lines each representing one row of the superimposed photo.  The
+$i$th row from the top is represented by a string $c_{i,1}c_{i,2}\dots c_{i,N}$,
+where each $c_{i,j} \in \{W,G,B\}$, representing the colors white, gray, and
+black respectively.It is guaranteed that the sum of $N^2$ over all test cases will not exceed
+$10^7$.
+
+Then follow $N$ lines each representing one row of the superimposed photo.  The
+$i$th row from the top is represented by a string $c_{i,1}c_{i,2}\dots c_{i,N}$,
+where each $c_{i,j} \in \{W,G,B\}$, representing the colors white, gray, and
+black respectively.It is guaranteed that the sum of $N^2$ over all test cases will not exceed
+$10^7$.
+
+It is guaranteed that the sum of $N^2$ over all test cases will not exceed
+$10^7$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):For each test case, output the minimum number of stars that existed before the
+shifting, or $-1$ if impossible.SAMPLE INPUT:1
+3 0 0
+WWB
+BBB
+GGGSAMPLE OUTPUT:7In this example, there is no shifting. The first photo is as follows: (. for
+sky, * for star)..*
+***
+***The second photo, where the stars on the bottom row disappeared, is as follows:..*
+***
+...This is the only way to produce the superimposed photo, so the minimum possible
+number of initial stars is $7$.SAMPLE INPUT:3
+5 1 2
+GWGWW
+WGWWW
+WBWGW
+WWWWW
+WWGWW
+3 1 1
+WWW
+WBW
+WWW
+3 1 0
+GGB
+GGW
+WWWSAMPLE OUTPUT:4
+-1
+4In the first case, there were at least $4$ stars at the start. If we let $(r,c)$
+denote the intersection of the $r$th row from the top and $c$th column from the
+left, one possibility is that they were initially at $(1,1), (3,2), (2,2),$  and
+$(1,3)$. All the stars shifted, except for the one at $(2,2)$ which disappeared.In the second case, there is no arrangement of stars in the initial photo that
+can produce the middle black pixel given the shift.In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+
+\section*{Output Format}
+SAMPLE INPUT:1
+3 0 0
+WWB
+BBB
+GGGSAMPLE OUTPUT:7In this example, there is no shifting. The first photo is as follows: (. for
+sky, * for star)..*
+***
+***The second photo, where the stars on the bottom row disappeared, is as follows:..*
+***
+...This is the only way to produce the superimposed photo, so the minimum possible
+number of initial stars is $7$.SAMPLE INPUT:3
+5 1 2
+GWGWW
+WGWWW
+WBWGW
+WWWWW
+WWGWW
+3 1 1
+WWW
+WBW
+WWW
+3 1 0
+GGB
+GGW
+WWWSAMPLE OUTPUT:4
+-1
+4In the first case, there were at least $4$ stars at the start. If we let $(r,c)$
+denote the intersection of the $r$th row from the top and $c$th column from the
+left, one possibility is that they were initially at $(1,1), (3,2), (2,2),$  and
+$(1,3)$. All the stars shifted, except for the one at $(2,2)$ which disappeared.In the second case, there is no arrangement of stars in the initial photo that
+can produce the middle black pixel given the shift.In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+
+\section*{Sample Input}
+\begin{verbatim}
+1
+3 0 0
+WWB
+BBB
+GGG
+
+3
+5 1 2
+GWGWW
+WGWWW
+WBWGW
+WWWWW
+WWGWW
+3 1 1
+WWW
+WBW
+WWW
+3 1 0
+GGB
+GGW
+WWW
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+7
+
+..*
+***
+***The second photo, where the stars on the bottom row disappeared, is as follows:..*
+***
+...This is the only way to produce the superimposed photo, so the minimum possible
+number of initial stars is $7$.SAMPLE INPUT:3
+5 1 2
+GWGWW
+WGWWW
+WBWGW
+WWWWW
+WWGWW
+3 1 1
+WWW
+WBW
+WWW
+3 1 0
+GGB
+GGW
+WWWSAMPLE OUTPUT:4
+-1
+4In the first case, there were at least $4$ stars at the start. If we let $(r,c)$
+denote the intersection of the $r$th row from the top and $c$th column from the
+left, one possibility is that they were initially at $(1,1), (3,2), (2,2),$  and
+$(1,3)$. All the stars shifted, except for the one at $(2,2)$ which disappeared.In the second case, there is no arrangement of stars in the initial photo that
+can produce the middle black pixel given the shift.In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+
+..*
+***
+***
+
+The second photo, where the stars on the bottom row disappeared, is as follows:..*
+***
+...This is the only way to produce the superimposed photo, so the minimum possible
+number of initial stars is $7$.SAMPLE INPUT:3
+5 1 2
+GWGWW
+WGWWW
+WBWGW
+WWWWW
+WWGWW
+3 1 1
+WWW
+WBW
+WWW
+3 1 0
+GGB
+GGW
+WWWSAMPLE OUTPUT:4
+-1
+4In the first case, there were at least $4$ stars at the start. If we let $(r,c)$
+denote the intersection of the $r$th row from the top and $c$th column from the
+left, one possibility is that they were initially at $(1,1), (3,2), (2,2),$  and
+$(1,3)$. All the stars shifted, except for the one at $(2,2)$ which disappeared.In the second case, there is no arrangement of stars in the initial photo that
+can produce the middle black pixel given the shift.In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+
+..*
+***
+...This is the only way to produce the superimposed photo, so the minimum possible
+number of initial stars is $7$.SAMPLE INPUT:3
+5 1 2
+GWGWW
+WGWWW
+WBWGW
+WWWWW
+WWGWW
+3 1 1
+WWW
+WBW
+WWW
+3 1 0
+GGB
+GGW
+WWWSAMPLE OUTPUT:4
+-1
+4In the first case, there were at least $4$ stars at the start. If we let $(r,c)$
+denote the intersection of the $r$th row from the top and $c$th column from the
+left, one possibility is that they were initially at $(1,1), (3,2), (2,2),$  and
+$(1,3)$. All the stars shifted, except for the one at $(2,2)$ which disappeared.In the second case, there is no arrangement of stars in the initial photo that
+can produce the middle black pixel given the shift.In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+
+..*
+***
+...
+
+This is the only way to produce the superimposed photo, so the minimum possible
+number of initial stars is $7$.SAMPLE INPUT:3
+5 1 2
+GWGWW
+WGWWW
+WBWGW
+WWWWW
+WWGWW
+3 1 1
+WWW
+WBW
+WWW
+3 1 0
+GGB
+GGW
+WWWSAMPLE OUTPUT:4
+-1
+4In the first case, there were at least $4$ stars at the start. If we let $(r,c)$
+denote the intersection of the $r$th row from the top and $c$th column from the
+left, one possibility is that they were initially at $(1,1), (3,2), (2,2),$  and
+$(1,3)$. All the stars shifted, except for the one at $(2,2)$ which disappeared.In the second case, there is no arrangement of stars in the initial photo that
+can produce the middle black pixel given the shift.In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+
+SAMPLE INPUT:3
+5 1 2
+GWGWW
+WGWWW
+WBWGW
+WWWWW
+WWGWW
+3 1 1
+WWW
+WBW
+WWW
+3 1 0
+GGB
+GGW
+WWWSAMPLE OUTPUT:4
+-1
+4In the first case, there were at least $4$ stars at the start. If we let $(r,c)$
+denote the intersection of the $r$th row from the top and $c$th column from the
+left, one possibility is that they were initially at $(1,1), (3,2), (2,2),$  and
+$(1,3)$. All the stars shifted, except for the one at $(2,2)$ which disappeared.In the second case, there is no arrangement of stars in the initial photo that
+can produce the middle black pixel given the shift.In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+
+4
+-1
+4
+
+In the first case, there were at least $4$ stars at the start. If we let $(r,c)$
+denote the intersection of the $r$th row from the top and $c$th column from the
+left, one possibility is that they were initially at $(1,1), (3,2), (2,2),$  and
+$(1,3)$. All the stars shifted, except for the one at $(2,2)$ which disappeared.In the second case, there is no arrangement of stars in the initial photo that
+can produce the middle black pixel given the shift.In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+
+In the second case, there is no arrangement of stars in the initial photo that
+can produce the middle black pixel given the shift.In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+
+In the third case, there were at least $4$ stars at the start. One possibility
+is that they were initially at $(1,1), (1,2), (1,3),$ and $(2,1)$. In the second
+photo, the star originally at $(1,1)$ disappeared and the star originally at
+$(1,3)$ moved off frame. The other two stars shifted to the right by 1.SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+
+SCORING:Input 3: $A=B=0$Inputs 4-7: $A=1, B=0, N\le 10$Inputs 8-9: $A=1, B=0$Inputs 10-12: No additional constraints.Problem credits: Suhas Nagar
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1467
+
+\section*{Source}
+USACO JAN25 Contest, Bronze Division, Problem ID: 1467
+
+\end{document}

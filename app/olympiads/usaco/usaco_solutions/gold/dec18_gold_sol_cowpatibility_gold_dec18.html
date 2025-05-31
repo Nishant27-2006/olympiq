@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>Instead of trying to count the number of pairs of cows that are not compatible,
+we will count the number of pairs of cows that are compatible. The answer is
+therefore <span class='math'>$\frac{N(N-1)}{2}$</span> minus the number of pairs of cows that are
+compatible.
+<p>The most direct approach of checking every pair of cows for compatibility takes
+<span class='math'>$O(N^2)$</span> and will be too slow.
+<p>The most naive <span class='math'>$O(N^2)$</span> solution will loop over all pairs of cows and look for a
+common flavor. This solution with no optimizations is unlikely to pass any
+additional test cases. One way to optimize the <span class='math'>$O(N^2)$</span> solution is to, for a
+given ice cream flavor, keep track of every cow that likes that flavor, and to
+then only loop over pairs of cows if they are known to share a common flavor. If
+the cows&apos; favorite ice cream flavors are generated uniformly at random, this
+solution performs really well, since any given flavor, for the given bounds,
+will be liked by 0.25 cows in expectation.
+<p>Fortunately, this optimized <span class='math'>$O(N^2)$</span> solution does not pass all of the test
+cases. However, it does motivate us towards the intended solution, which is
+linear in <span class='math'>$N$</span>.
+<p>Imagine for simplicity that the only flavors that are a favorite of at least 2
+cows are flavor 1 and flavor 2. If we only count the number of pairs of cows
+that like flavor 1 and the number of pairs of cows that like flavor 2, this is
+an overestimate of the number of pairs of cows that are compatible because we
+have double-counted by the number of pairs of cows that like both flavor 1 and
+flavor 2.
+<p>This motivates the following inclusion-exclusion solution: for every subset of
+flavors, count how many pairs of cows that like all flavors within each subset.
+We add all the counts for subsets of size 1, then to avoid double-counting, we
+subtract all the counts for subsets of size 2. We then add all the counts of
+subsets of size 3, subtract all the counts of subsets of size 4, and add the
+counts of subsets of size 5.
+<p>There are too many subsets of size 2 and more to iterate over directly, so we
+can explicitly generate all the subsets of flavors where at least one cow likes
+all the flavors in that subset. There are at most <span class='math'>$31N$</span> distinct such subsets.
+<p>Below is Brian Dean&apos;s code.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;map&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+long long N, inc_exc[] = { -1, +1, -1, +1, -1, +1 };
+ 
+// a set of up to 5 ints
+struct S5 { 
+  int n;
+  int v[5]; // zero-pad if not used
+};
+ 
+S5 A[100000];
+ 
+bool operator&lt; (const S5 &amp;a, const S5 &amp;b)
+{
+  for (int j=0; j&lt;5; j++) {
+    if (a.v[j] &lt; b.v[j]) return true;
+    if (a.v[j] &gt; b.v[j]) return false;
+  }
+  return false;
+}
+ 
+S5 get_subset(S5 &amp;a, int x)
+{
+  S5 result = { 0, {0,0,0,0,0} };
+  for (int j=0; j&lt;5; j++)
+    if ((1&lt;&lt;j)&amp;x) result.v[result.n++] = a.v[j];
+  return result;
+}
+ 
+map&lt;S5, int&gt; subsets;
+ 
+int main(void)
+{
+  ifstream fin(&quot;cowpatibility.in&quot;);
+  fin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++) {
+    A[i].n = 5;
+    for (int j=0; j&lt;5; j++) 
+      fin &gt;&gt; A[i].v[j];
+    sort(A[i].v, A[i].v+5);
+    for (int x=1; x&lt;32; x++) subsets[get_subset(A[i], x)]++;
+  }
+ 
+  long long answer = N * (N-1) / 2;
+  for (auto &amp;p : subsets) 
+    answer -= inc_exc[p.first.n] * p.second * (p.second - 1) / 2;
+  
+  ofstream fout (&quot;cowpatibility.out&quot;);
+  fout &lt;&lt; answer &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+<p></body></html>

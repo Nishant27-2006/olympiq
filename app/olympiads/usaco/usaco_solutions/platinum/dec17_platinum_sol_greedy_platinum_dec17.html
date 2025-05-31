@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Dhruv Rohatgi)
+<p>A first observation is that if some cow never receives a gift, then her rank in
+the queue (that is, the number of cows ahead of her in the queue) never
+increases. This has several consequences. First, none of the cows after her can
+receive a gift, since it&apos;s impossible for one cow to actively ``overtake&quot;
+another. So the set of cows who never receive gifts actually forms a suffix of
+the list of cows, and our problem is to find the length of this suffix.
+<p>Consider the first cow who never receives a gift. Her rank never reaches <span class='math'>$0$</span>. So
+after a sufficiently long time, she will attain some minimum rank <span class='math'>$k$</span>. By our
+previous observation, she will remain at this rank forever. It follows that no
+cow in front of her will jump behind her upon reaching the head of the queue.
+But every cow in front of her reaches the head at some point, since she is by
+choice the first cow to not reach the head. Thus all <span class='math'>$k$</span> cows in front of her
+have skipping number at least <span class='math'>$N-k$</span>. Rephrasing skipping numbers in terms of
+ranks, all <span class='math'>$k$</span> cows in front of her jump to ranks at most <span class='math'>$k$</span>. In the original
+permutation of cows, these <span class='math'>$k$</span> cows (and possibly some other cows) must already
+have been ahead of her, since ``overtaking&quot; cannot happen.
+<p>So for any cow who never receives a gift, there is some positive integer <span class='math'>$k$</span>
+such that there are <span class='math'>$k$</span> cows ahead of her with ``jumping numbers&quot; at most <span class='math'>$k$</span>.
+It turns out that this condition is also sufficient for a cow to not receive a
+gift. Suppose that there is a cow who receives a gift (call her Moomoo), but who
+is preceded by <span class='math'>$k$</span> cows with jumping numbers at most <span class='math'>$k$</span>. We claim by induction
+that at every timestep, Moomoo is preceded by <span class='math'>$k$</span> cows with jumping numbers at
+most <span class='math'>$k$</span>. To see this, suppose one of these <span class='math'>$k$</span> cows has reached the head of the
+queue. This cow will jump to a rank at most <span class='math'>$k$</span>. But Moomoo&apos;s rank is at least
+<span class='math'>$k$</span>, by our inductive hypothesis. So the jumping cow will remain in front of
+Moomoo. By induction, Moomoo never reaches the head of the queue (and in
+particular, never has rank less than <span class='math'>$k$</span>).
+<p>So now we simply need to find the first cow for whom there is some positive
+integer <span class='math'>$k$</span> such that there are <span class='math'>$k$</span> cows ahead of her with ``jumping numbers&quot; at
+most <span class='math'>$k$</span>, where the jumping number of cow <span class='math'>$i$</span> is simply <span class='math'>$N - c_i$</span>. This can be
+done in <span class='math'>$O(N \log N)$</span> time: binary search for the first such cow. To check if a
+given cow satisfies the condition, compute for each <span class='math'>$k$</span> the number of cows in
+front of the given cow with number at exactly <span class='math'>$k$</span>, and then check for each <span class='math'>$k$</span>
+if the <span class='math'>$k^\text{th}$</span> partial sum is at least <span class='math'>$k$</span>.
+<p>Below is Travis Hance&apos;s solution implementing this idea.
+<p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;cassert&gt;
+#include &lt;ctime&gt;
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+ 
+#define NMAX 2000005
+ 
+int c[NMAX];
+ 
+int num[NMAX+1];
+ 
+bool all_recv(int k, int n) {
+  for (int i = 1; i &lt;= n; i++) {
+    num[i] = 0;
+  }
+  for (int i = 0; i &lt; k-1; i++) {
+    num[c[i]]++;
+  }
+  int total = 0;
+  for (int i = 1; i &lt;= n; i++) {
+    total += num[i];
+    if (total &gt;= i) {
+      return false;
+    }
+  }
+  return true;
+}
+ 
+int main() {
+  int n;
+  scanf(&quot;%d&quot;,&amp;n);
+  for (int i = 0; i &lt; n; i++) {
+    int d;
+    scanf(&quot;%d&quot;, &amp;d);
+    assert(0 &lt;= d &amp;&amp; d &lt; n);
+    c[i] = n - d;
+  }
+
+  // lo &lt;= the answer &lt; hi
+  int lo = 1;
+  int hi = n+1;
+  while (hi &gt; lo + 1) {
+    int mid = (lo + hi) / 2;
+    if (all_recv(mid, n)) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+ 
+  int ans = lo;
+  printf(&quot;%d\n&quot;, n - ans);
+}
+</pre>
+<p></body></html>

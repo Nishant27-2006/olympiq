@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>For this problem, the figurine is small enough and there are few enough pieces that we can
+check every possible pair of figurines along with every possible pair of ways to shift
+the two pieces.
+<p>Because the board has size N, we can shift either vertically or horizontally in either direction
+by at most N-1.
+<p>Here is my Java solution.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class bcsB {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;bcs.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;bcs.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int k = Integer.parseInt(st.nextToken());
+		boolean[][] goal = read(br, n);
+		boolean[][][] grids = new boolean[k][n][n];
+		for(int i = 0; i &lt; k; i++) {
+			grids[i] = read(br, n);
+		}
+		for(int i = 0; i &lt; k; i++) {
+			for(int j = i+1; j &lt; k; j++) {
+				for(int idx = -n+1; idx &lt;= n-1; idx++) {
+					for(int idy = -n+1; idy &lt;= n-1; idy++) {
+						for(int jdx = -n+1; jdx &lt;= n-1; jdx++) {
+							for(int jdy = -n+1; jdy &lt;= n-1; jdy++) {
+								boolean good = true;
+								for(int x = 0; good &amp;&amp; x &lt; n; x++) {
+									for(int y = 0; good &amp;&amp; y &lt; n; y++) {
+										boolean iLoc = get(grids[i], idx + x, idy + y);
+										boolean jLoc = get(grids[j], jdx + x, jdy + y);
+										if(iLoc &amp;&amp; jLoc) {
+											good = false;
+										}
+										if(goal[x][y] != (iLoc || jLoc)) {
+											good = false;
+										}
+									}
+								}
+								if(good) {
+									pw.println((i+1) + &quot; &quot; + (j+1));
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		pw.close();
+	}
+
+	public static boolean get(boolean[][] grid, int x, int y) {
+		return x &gt;= 0 &amp;&amp; x &lt; grid.length &amp;&amp; y &gt;= 0 &amp;&amp; y &lt; grid[x].length &amp;&amp; grid[x][y];
+	}
+
+	public static boolean[][] read(BufferedReader br, int n) throws IOException {
+		boolean[][] grid = new boolean[n][n];
+		for(int i = 0; i &lt; n; i++) {
+			String s = br.readLine();
+			for(int j = 0; j &lt; n; j++) {
+				grid[i][j] = s.charAt(j) == &apos;#&apos;;
+			}
+		}
+		return grid;
+	}
+
+}
+</pre></body></html>

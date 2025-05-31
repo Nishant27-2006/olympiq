@@ -1,0 +1,1290 @@
+Solution ID: sol_prob2_platinum_open24
+Contest: OPEN24
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_open24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Rain Jiang, Richard Qi, Benjamin Qi)
+
+Let
+
+$A$
+
+be an upper bound on
+
+$a_1$
+
+, and
+
+$T=N+Q+A$
+
+. The intended time complexity
+is
+
+$O(T\log T)$
+
+. Several ways of achieving this complexity are described below.
+
+Subtask 1:
+
+$Q\le 100$
+
+Let
+
+$x$
+
+be the number of Bessie's haybales minus the number of Elsie's haybales
+at any given moment. Then when giving the
+
+$i$
+
+-th haybale,
+
+$x$
+
+increases by
+
+$a_i$
+
+if
+
+$x \le 0$
+
+, and decreases by
+
+$a_i$
+
+if
+
+$x > 0$
+
+. Simulating this in
+
+$O(N)$
+
+per
+query gives an
+
+$O(NQ)$
+
+solution.
+
+Subtask 2:
+
+$(\#\text{ distinct }a_i)\le 100$
+
+We can process each query in
+
+$O(\#\text{ distinct }a_i)$
+
+time rather than
+
+$O(N)$
+
+time. More specifically, for a range of equal
+
+$a_i$
+
+we can process its effect on
+
+$x$
+
+in
+
+$O(1)$
+
+time; first,
+
+$x$
+
+will consistently decrease in absolute value 
+until its absolute value goes below
+
+$a_i$
+
+, and then it will alternate in sign.
+
+Full Solution 1:
+
+Binary lifting
+
+Let's look more closely at how
+
+$x$
+
+changes during a query.
+
+Let's consider what happens when
+
+$x > 0$
+
+. For the first few haybales,
+
+$x$
+
+could
+be very big and you would decrease it repeatedly until
+
+$x \le 0$
+
+. Let
+
+$i$
+
+be the
+index of the haybale that makes
+
+$x \le 0$
+
+.
+
+After giving out each of the
+
+$(i+1)$
+
+-th and later haybales, it makes sense for
+
+$x$
+
+to alternate between positive and non-positive values for a while. Let
+
+$j$
+
+be the index of the haybale after which
+
+$x$
+
+breaks this pattern.
+
+Suppose that
+
+$j-i$
+
+is even. Then notice the following chain of events:
+
+After the
+
+$i$
+
+-th haybale,
+
+$x$
+
+is in the range
+
+$(-a_i, 0]$
+
+(because before
+this
+
+$x > 0$
+
+).
+
+After the
+
+$(i+1)$
+
+-th haybale,
+
+$x$
+
+is in the range
+
+$(0, a_{i+1}]$
+
+.
+
+After the
+
+$(i+2)$
+
+-th haybale,
+
+$x$
+
+is in the range
+
+$(-a_{i+2}, 0]$
+
+.
+
+After the
+
+$(i+3)$
+
+-th haybale,
+
+$x$
+
+is in the range
+
+$(0, a_{i+3}]$
+
+.
+
+$\dots$
+
+After the
+
+$(j-1)$
+
+-th haybale,
+
+$x$
+
+is in the range
+
+$(0, a_{j-1}]$
+
+.
+
+Finally, after the
+
+$j$
+
+-th haybale,
+
+$x$
+
+is in the range
+
+$(0, a_{j-1}-a_j]$
+
+.
+Similar reasoning also holds when
+
+$j-i$
+
+is odd; we can see that in this case
+
+$x$
+
+is in the range
+
+$(-(a_{j-1}-a_j), 0]$
+
+.
+
+Symmetrically, the above also works if
+
+$x \le 0$
+
+initially.
+
+To conclude, after giving haybales in the above manner, we either give out all
+the haybales from
+
+$l$
+
+to
+
+$r$
+
+, or we stop just before giving the
+
+$k$
+
+-th haybale
+(
+
+$k \ge l+2$
+
+), with the new
+
+$x$
+
+satisfying
+
+$|x| \le a_{k-2}-a_{k-1}$
+
+.
+
+From now on, we refer to the above as
+
+jumping
+
+from
+
+$(l, x)$
+
+. We can find
+
+$i$
+
+using a binary search. Using the fact that
+
+$a$
+
+is non-increasing, we can
+also find
+
+$j$
+
+using two binary searches for odd
+
+$j-i$
+
+and even
+
+$j-i$
+
+. In this
+way, calculating a jump takes
+
+$O(\log N)$
+
+time.
+
+Now let's solve the problem. We first calculate, for all
+
+$i$
+
+from
+
+$3$
+
+to
+
+$N$
+
+and
+
+$|x| \le a_{i-2}-a_{i-1}$
+
+, where you will jump to if you start at
+
+$(i, x)$
+
+. We
+can build a binary lifting table on top of these jumps.
+
+Then, to answer queries, we do the following.
+
+Jump once from
+
+$(l, x)$
+
+to
+
+$(i, y)$
+
+.
+
+Use the binary lifting table
+to jump repeatedly from
+
+$(i, y)$
+
+until the next jump goes beyond
+
+$r$
+
+. Let's call
+the state you reach
+
+$(j, z)$
+
+.
+
+Jump from
+
+$(j, z)$
+
+, stopping when you
+give out the
+
+$r$
+
+-th haybale.
+
+Why is the above fast? Let's first calculate how many states we need to
+calculate jumps from. This is equal to
+
+$$
+\begin{align*}
+\sum_{i=3}^{N} \left(2 \cdot (a_{i-2}-a_{i-1}) + 1\right)
+&= \left(2 \sum_{i=3}^{N} \left(a_{i-2}-a_{i-1}\right)\right) + O(N)\\
+&= 2 \cdot (a_1 - a_{N-1}) + O(N)\\
+&= O(N + A).
+\end{align*}
+$$
+
+So, computing the jumps takes
+
+$O((N + A) \log N)$
+
+time, and building the binary
+lifting table takes
+
+$O((N + A) \log N)$
+
+time (or
+
+$O(N+A)$
+
+time using
+
+this blog
+
+). Answering each query
+consists of doing a binary search, using the binary lifting table, and doing
+another binary search, for a total of
+
+$O(\log N)$
+
+time per query. Therefore, the
+running time of the whole solution is
+
+$O((N + A + Q) \log N)$
+
+, which gets full
+credit.
+
+Rain's code:
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define N	200000
+
+int min(int a, int b) { return a < b ? a : b; }
+
+int aa[N], n; long long ss[N + 1], ss_[N + 1];
+
+void jump(int l, int r, int x, int *l_, int *x_) {
+	int lower, upper, i, k, flip;
+
+	if (l < r && x != 0) {
+		flip = 0;
+		if (x < 0)
+			x = -x, flip = 1;
+		lower = l, upper = r;
+		while (upper - lower > 1) {
+			i = (lower + upper) / 2;
+			if (x > ss[i] - ss[l])
+				lower = i;
+			else
+				upper = i;
+		}
+		i = upper;
+		x -= ss[i] - ss[l], l = i;
+		if (flip)
+			x = -x;
+	}
+	if (l < r) {
+		flip = 0;
+		if (x <= 0)
+			x = -x, flip = 1;
+		lower = 0, upper = (r - l) / 2 + 1;
+		while (upper - lower > 1) {
+			k = (lower + upper) / 2;
+			if (x - (ss_[l + k * 2] - ss_[l]) * (l % 2 == 0 ? 1 : -1) > 0)
+				lower = k;
+			else
+				upper = k;
+		}
+		r = min(r, l + upper * 2);
+		lower = -1, upper = (r - l - 1) / 2 + 1;
+		while (upper - lower > 1) {
+			k = (lower + upper) / 2;
+			if (x - (ss_[l + k * 2 + 1] - ss_[l]) * (l % 2 == 0 ? 1 : -1) < 0)
+				lower = k;
+			else
+				upper = k;
+		}
+		r = min(r, l + upper * 2 + 1);
+		x -= (ss_[r] - ss_[l]) * (l % 2 == 0 ? 1 : -1), l = r;
+		if (flip)
+			x = -x;
+	}
+	*l_ = l, *x_ = x;
+}
+
+int main() {
+	static int *jj[N], *yy[N], *jj_[N], *yy_[N], xx[N];
+	static char *rank[N];
+	int q, i, j, j_, k, l, r, x, y, y_, z;
+	char rk;
+
+	scanf("%d", &n);
+	for (i = 0; i < n; i++)
+		scanf("%d", &aa[i]);
+	for (i = 0; i < n; i++)
+		ss[i + 1] = ss[i] + aa[i];
+	for (i = 0; i < n; i++)
+		ss_[i + 1] = ss_[i] + (i % 2 == 0 ? aa[i] : -aa[i]);
+	for (i = 0; i < n; i++) {
+		xx[i] = i < 2 ? 0 : aa[i - 2] - aa[i - 1];
+		jj[i] = (int *) malloc((xx[i] * 2 + 1) * sizeof *jj[i]);
+		yy[i] = (int *) malloc((xx[i] * 2 + 1) * sizeof *yy[i]);
+		jj_[i] = (int *) malloc((xx[i] * 2 + 1) * sizeof *jj_[i]);
+		yy_[i] = (int *) malloc((xx[i] * 2 + 1) * sizeof *yy_[i]);
+		rank[i] = (char *) malloc((xx[i] * 2 + 1) * sizeof *rank[i]);
+	}
+	for (i = n - 1; i >= 0; i--)
+		for (x = -xx[i]; x <= xx[i]; x++) {
+			jump(i, n, x, &j, &y);
+			jj[i][xx[i] + x] = j, yy[i][xx[i] + x] = y;
+			if (j == n)
+				j_ = j, y_ = y, rk = 0;
+			else {
+				k = jj_[j][xx[j] + y], z = yy_[j][xx[j] + y];
+				if (k == n || rank[k][xx[k] + z] != rank[j][xx[j] + y])
+					j_ = j, y_ = y, rk = 1;
+				else
+					j_ = jj_[k][xx[k] + z], y_ = yy_[k][xx[k] + z], rk = rank[j][xx[j] + y] + 1;
+			}
+			jj_[i][xx[i] + x] = j_, yy_[i][xx[i] + x] = y_, rank[i][xx[i] + x] = rk;
+		}
+	scanf("%d", &q);
+	while (q--) {
+		scanf("%d%d%d", &l, &r, &x), l--;
+		jump(l, r, x, &l, &x);
+		if (l < r)
+			while (1)
+				if (jj_[l][xx[l] + x] < r) {
+					j = jj_[l][xx[l] + x], y = yy_[l][xx[l] + x];
+					l = j, x = y;
+				} else if (jj[l][xx[l] + x] < r) {
+					j = jj[l][xx[l] + x], y = yy[l][xx[l] + x];
+					l = j, x = y;
+				} else {
+					jump(l, r, x, &l, &x);
+					break;
+				}
+		printf("%d\n", x);
+	}
+	return 0;
+}
+
+Full Solution 2:
+
+Sets and DSU
+
+Answer the queries offline. We will sweep from left to right across
+
+$a$
+
+and
+maintain the current values of
+
+$x$
+
+for all queries. For convenience, we can
+transform all values using
+
+$x \leftarrow 2x-1$
+
+and
+
+$a_i \leftarrow 2a_i$
+
+, so
+that all values are odd (and thus are never equal to
+
+$0$
+
+), and the new update
+rule is if
+
+$x > 0$
+
+, then subtract
+
+$a_i$
+
+, and otherwise if
+
+$x < 0$
+
+, and you add
+
+$a_i$
+
+.
+
+After processing a certain
+
+$a_i$
+
+, the values of
+
+$x$
+
+for all queries fall into
+
+$4$
+
+categories:
+
+$x > a_i$
+
+, which we call "positive bigs".
+
+$a_i > x > 0$
+
+, which we call "positive smalls".
+
+$0 > x > -a_i$
+
+, which we call "negative smalls".
+
+$-a_i > x$
+
+, which we call "negative bigs".
+
+Now, let each of these
+
+$4$
+
+categories be its own "Lazy Set", which supports
+insertions, deletions, and updates of the form "add
+
+$v$
+
+to all elements". Our
+implementation simply stores a set of value, query index pairs, and a single
+lazy value, which can be incremented by
+
+$v$
+
+.
+
+Suppose we have stored all values in the
+
+$4$
+
+Lazy Sets for some
+
+$a_{i}$
+
+, and
+want to transition to the next
+
+$a_{i+1}$
+
+. First, we insert all queries with
+
+$L = i+1$
+
+into their corresponding set.
+
+Then, because
+
+$a_i \ge a_{i+1}$
+
+, some elements
+
+$x$
+
+satisfying
+
+$a_{i} > x > a_{i+1}$
+
+which were previously considered "positive smalls" are now
+considered "positive bigs", so we remove elements from the end of the positive
+smalls set to insert into the positive bigs set. Similarly, we move elements
+from negative smalls to negative bigs.
+
+Next, we process the operation itself. All negative small values
+
+$x$
+
+satisfy
+
+$0 > x > -a_{i+1}$
+
+, and after the operation satisfy
+
+$a_{i+1} > x > 0$
+
+, so they
+all become positive smalls. Similarly, all positive smalls become negative
+smalls. We can implement this by adding to the lazy values and swapping the two
+LazySets.
+
+Also, all negative bigs remain negative and all positive bigs remain positive,
+so we simply add to the lazy values of these sets.
+
+Finally, it is possible that some negative bigs become negative smalls, if
+before adding
+
+$a_{i+1}$
+
+they satisfy
+
+$x < -a_{i+1}$
+
+and after adding
+
+$a_{i+1}$
+
+they satisfy
+
+$-a_{i+1} < x < 0$
+
+. So, we remove some elements from the end of the
+negative bigs and insert them into the negative smalls set.
+
+During this process, we can keep track for each query index, what value it is
+attached to in the current set it is in (before the lazy value of the set is
+applied). Additionally, we can keep track of which set it is currently in.
+
+To answer queries, we add the value it is attached to, plus the lazy value of
+the LazySet it is currently in.
+
+Now, let us analyze the time complexity of this algorithm. Let
+
+$M$
+
+be the number
+of times an element moves from a "smalls" set to a "bigs" set; the time
+complexity is bounded by
+
+$(N+Q+M) \cdot \log{Q}$
+
+. So, it suffices to show that
+
+$M = O(A)$
+
+.
+
+Now, notice that an element that is initially positive small becomes positive
+big only if it satisfies
+
+$a_i > x > a_{i+1}$
+
+, and there are at most
+
+$a_i-a_{i+1}$
+
+such values. If every query index has a unique value, then the
+number of elements that go from small to big on the
+
+$i$
+
+th iteration is at most
+
+$O(a_i-a_{i+1})$
+
+, so
+
+$M$
+
+is bounded by
+
+$O(\sum_{i=1}^{N-1} a_i-a_{i+1}) = O(A)$
+
+.
+
+However, it is possible that not every query index has a unique value. We fix
+this in the following manner: if a query index is inserted into a LazySet and
+has the same value as a query index already inside the LazySet, we merge these
+two query indices, as their corresponding values will be the same from this
+point forward. To do this, we store a Disjoint Set Union data structure on the
+queries, along with the corresponding value of the representative (the value
+before adding the lazy value of the LazySet it is contained within). Then, to
+answer queries, we find the corresponding representative and proceed as before.
+
+Richard Qi's code:
+
+#include <bits/stdc++.h> 
+using namespace std;
+ 
+#define sz(x) int((x).size())
+#define f first
+#define s second
+ 
+/**
+ * Description: Disjoint Set Union with path compression
+ 	* and union by size. Add edges and test connectivity. 
+ 	* Use for Kruskal's or Boruvka's minimum spanning tree.
+ * Time: O(\alpha(N))
+ * Source: CSAcademy, KACTL
+ */
+ 
+struct DSU {
+	vector<int> e; 
+	vector<long long> stor_val;
+	void init(int N) { 
+		e = vector<int>(N,-1); 
+		stor_val = vector<long long>(N, -1);
+	}
+	int get(int x) { return e[x] < 0 ? x : e[x] = get(e[x]); } 
+	bool sameSet(int a, int b) { return get(a) == get(b); }
+	int size(int x) { return -e[get(x)]; }
+	bool unite(int x, int y) { // union by size
+		x = get(x), y = get(y); if (x == y) return 0;
+		if (e[x] > e[y]) swap(x,y);
+		e[x] += e[y]; e[y] = x; return 1;
+	}
+};
+
+const int mx = 200005;
+int a[mx];
+int l[mx];
+int r[mx];
+long long x[mx];
+ 
+vector<int> L_queries[mx]; //queries with this left endpoint
+vector<int> R_queries[mx];
+long long ans[mx];
+ 
+DSU dsu;
+ 
+ 
+ 
+struct LazySet{
+	map<long long, int> val_reps;
+	long long lazy_val = 0;
+ 
+	LazySet(){
+ 
+	}
+};
+ 
+LazySet* inside_set[mx];
+ 
+void ADD(LazySet* s, long long val, int rep){
+	assert(rep == dsu.get(rep));
+	val-=s->lazy_val;
+	if(!s->val_reps.count(val)){
+		s->val_reps[val] = rep;
+		dsu.stor_val[rep] = val;
+		inside_set[rep] = s;
+		return;
+	}
+	
+	int current_rep = s->val_reps[val];
+	assert(current_rep != rep && current_rep != 0);
+	dsu.unite(current_rep, rep);
+	int new_rep = dsu.get(rep);
+ 
+	s->val_reps[val] = new_rep;
+	dsu.stor_val[new_rep] = val;
+	inside_set[new_rep] = s;
+}
+ 
+void removeBeg(LazySet* s){
+	assert(sz(s->val_reps));
+	s->val_reps.erase(s->val_reps.begin());
+}
+ 
+void removeEnd(LazySet* s){
+	assert(sz(s->val_reps));
+	s->val_reps.erase(prev(s->val_reps.end()));
+}
+ 
+pair<long long, int> getBeg(LazySet* s){
+	assert(sz(s->val_reps));
+	pair<long long, int> res = *(s->val_reps.begin());
+	res.f += s->lazy_val;
+	return res;
+}
+ 
+pair<long long, int> getEnd(LazySet* s){
+	assert(sz(s->val_reps));
+	pair<long long, int> res = *prev(s->val_reps.end());
+	res.f += s->lazy_val;
+	return res;
+}
+ 
+ 
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	for(int i = 0; i < mx; i++) inside_set[i] = new LazySet();
+	int N; cin >> N;
+	for(int i = 1; i <= N; i++){
+		cin >> a[i]; a[i]*=2;
+	}
+	int Q; cin >> Q;
+	for(int i = 1; i <= Q; i++){
+		cin >> l[i] >> r[i] >> x[i];
+		x[i] = 2*x[i] - 1;
+	}
+ 
+	for(int i = 1; i <= Q; i++){
+		L_queries[l[i]].push_back(i);
+		R_queries[r[i]].push_back(i);
+	}
+ 
+	LazySet* neg_smalls = new LazySet(); 
+	LazySet* pos_smalls = new LazySet();
+ 
+	dsu.init(Q+5);
+	for(int i = 1; i <= Q; i++){
+		dsu.stor_val[i] = x[i];
+	}
+ 
+	LazySet* neg_bigs = new LazySet();
+	LazySet* pos_bigs = new LazySet();
+ 
+	for(int i = 1; i <= N; i++){
+		//insert L queries into smalls set
+		for(auto q: L_queries[i]){
+			//x[q]
+			if(x[q] > 0){
+				ADD(pos_smalls, x[q], dsu.get(q));
+			}
+			else{
+				ADD(neg_smalls, x[q], dsu.get(q));
+			}
+		}
+ 
+		//move stuff from smalls => bigs
+		while(sz(neg_smalls->val_reps)){
+			//possibly move the smallest small to big
+			pair<long long, int> smallest = getBeg(neg_smalls);
+			if(smallest.f < -a[i]){
+				removeBeg(neg_smalls);
+				ADD(neg_bigs, smallest.f, smallest.s);
+			}
+			else break;
+		}
+ 
+		while(sz(pos_smalls->val_reps)){
+			pair<long long, int> largest = getEnd(pos_smalls);
+			if(largest.f > a[i]){
+				removeEnd(pos_smalls);
+				ADD(pos_bigs, largest.f, largest.s);
+			}
+			else break;
+		}
+ 
+		//edit smalls
+		neg_smalls->lazy_val += a[i];
+		pos_smalls->lazy_val -= a[i];
+		swap(neg_smalls, pos_smalls);
+ 
+		//edit bigs
+		neg_bigs->lazy_val += a[i];
+		pos_bigs->lazy_val -= a[i];
+ 
+		//move bigs => smalls
+		while(sz(neg_bigs->val_reps)){
+			pair<long long, int> largest = getEnd(neg_bigs);
+			assert(largest.f < 0);
+			if(largest.f > -a[i]){
+				removeEnd(neg_bigs);
+				ADD(neg_smalls, largest.f, largest.s);
+			}
+			else break;
+		}
+ 
+		while(sz(pos_bigs->val_reps)){
+			pair<long long, int> smallest = getBeg(pos_bigs);
+			assert(smallest.f > 0);
+			if(smallest.f < a[i]){
+				removeBeg(pos_bigs);
+				ADD(pos_smalls, smallest.f, smallest.s);
+			}
+			else break;
+		}
+ 
+		//answer R queries
+		for(auto q: R_queries[i]){
+			LazySet* inside = inside_set[dsu.get(q)];
+			assert(inside != NULL);
+			long long res = inside->lazy_val + dsu.stor_val[dsu.get(q)];
+			ans[q] = res;
+		}
+	}
+ 
+	for(int i = 1; i <= Q; i++){
+		assert((ans[i]&1) == 1);
+		cout << (ans[i]+1)/2 << "\n";
+	}
+}
+
+Full Solution 3:
+
+Treap
+
+Answer the queries offline. As in solution 2 we will sweep from left to right
+across
+
+$a$
+
+and maintain the current values of
+
+$x$
+
+for all queries including the
+current
+
+$a_i$
+
+, in sorted order, in a balanced binary search tree (BBST) such  as
+a
+
+treap
+
+. If its size is
+
+$N$
+
+, the BBST
+should support the following operations:
+
+Split the BBST into two parts, one consisting of all values
+
+$\le v$
+
+and the
+other consisting of all values
+
+$>v$
+
+. This should take
+
+$O(\log N)$
+
+time.
+
+Add a constant to all values using lazy propagation. This should take
+
+$O(1)$
+
+time.
+
+Merging two BBSTs consisting of
+
+$k$
+
+interleaving segments in
+
+$O(k\log N)$
+
+time, where interleaving segments are defined as in
+
+this blog.
+
+For each original value inserted into the BBST, return a pointer so that we
+can query the current value associated with this original value in
+
+$O(\log N)$
+
+time.
+
+When processing
+
+$a_i$
+
+, we
+
+Insert into the BBST the
+
+$x$
+
+associated with all queries with
+
+$l=i$
+
+.
+
+Split the BBST at
+
+$0$
+
+.
+
+Add the appropriate constants to each of the two resulting BBSTs.
+
+Merge them.
+
+Answer all queries with
+
+$r=i$
+
+.
+
+Using the argument from the blog, the sum of
+
+$k$
+
+across all  merge operations
+will be
+
+$O((N+Q)\log M)$
+
+, where
+
+$M$
+
+is an upper bound on
+
+$a_1$
+
+and all
+
+$x_i$
+
+.
+However, if we use similar reasoning as solution 2 we can bound the sum of all
+
+$k$
+
+by
+
+$O(N+Q+\sum |a_i-a_{i+1}|)=O(A)$
+
+. So the overall runtime is
+
+$O(A\log Q)$
+
+,
+same as the above.
+
+Benjamin Qi's code:
+
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+#include <random>
+#include <vector>
+using namespace std;
+
+template <class T> using V = vector<T>;
+
+using pt = struct tnode *;
+
+struct tnode {
+    int pri;
+    int lazy, val;
+    pt c[2], p;  // children, parent
+};
+
+// prop x to children
+void prop(pt x) {
+    if (!x || !x->lazy) return;
+    x->val += x->lazy;
+    for (int i : {0, 1})
+        if (x->c[i]) x->c[i]->lazy += x->lazy;
+    x->lazy = 0;
+}
+
+// prop all ancestors of x
+void propall(pt x) {
+    if (x->p) propall(x->p);
+    prop(x);
+}
+
+void link(pt x, int d, pt c) {
+    assert(x);
+    x->c[d] = c;
+    if (c) c->p = x;
+}
+
+pair<pt, pt> split(pt x, int val) {
+    // >= val goes to right
+    if (!x) return {};
+    prop(x);
+    if (val <= x->val) {
+        auto [l, r] = split(x->c[0], val);
+        link(x, 0, r);
+        return {l, x};
+    } else {
+        auto [l, r] = split(x->c[1], val);
+        link(x, 1, l);
+        return {x, r};
+    }
+}
+
+// split and fix parent pointers
+pair<pt, pt> split_root(pt x, int val) {
+    auto [l, r] = split(x, val);
+    if (l) l->p = nullptr;
+    if (r) r->p = nullptr;
+    return {l, r};
+}
+
+pt merge(pt l, pt r) {
+    if (!l) return r;
+    if (!r) return l;
+    prop(l);
+    prop(r);
+    if (l->pri > r->pri) {
+        link(l, 1, merge(l->c[1], r));
+        return l;
+    } else {
+        link(r, 0, merge(l, r->c[0]));
+        return r;
+    }
+}
+
+pt ins(pt root, pt x) {
+    auto [l, r] = split_root(root, x->val);
+    return merge(merge(l, x), r);
+}
+
+int getmin(pt p) {
+    assert(p);
+    while (true) {
+        prop(p);
+        if (!p->c[0]) return p->val;
+        p = p->c[0];
+    }
+}
+
+// O(k log N) merge
+pt merge_overlapping(pt l, pt r) {
+    if (!l) return r;
+    if (!r) return l;
+    pt res = nullptr;
+    if (getmin(l) > getmin(r)) swap(l, r);
+    while (r) {
+        assert(l);
+        auto [l1, l2] = split_root(l, getmin(r) + 1);
+        res = merge(res, l1);
+        tie(l, r) = make_pair(r, l2);
+    }
+    res = merge(res, l);
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N;
+    cin >> N;
+    V<int> A(N);
+    for (int &a : A) cin >> a;
+    int Q;
+    cin >> Q;
+    V<pt> queries(Q);
+    V<V<pair<int, int>>> ins_at(N);
+    V<V<int>> query_at(N);
+    for (int q = 0; q < Q; ++q) {
+        int l, r, x;
+        cin >> l >> r >> x;
+        ins_at.at(l - 1).push_back({q, x});
+        query_at.at(r - 1).push_back(q);
+    }
+    pt root = nullptr;
+    V<int> ans(Q);
+    mt19937 rng(0);
+    for (int i = 0; i < N; ++i) {
+        for (auto [q, x] : ins_at.at(i)) {
+            queries.at(q) = new tnode();
+            queries.at(q)->pri = rng();
+            assert(!queries.at(q)->c[0]);
+            assert(!queries.at(q)->c[1]);
+            assert(!queries.at(q)->p);
+            queries.at(q)->val = x;
+            root = ins(root, queries.at(q));
+        }
+        auto [l, r] = split_root(root, 1);
+        if (r) r->lazy -= A[i];
+        if (l) l->lazy += A[i];
+        root = merge_overlapping(l, r);
+        for (int q : query_at.at(i)) {
+            propall(queries.at(q));
+            ans.at(q) = queries.at(q)->val;
+        }
+    }
+    for (int t : ans) cout << t << "\n";
+}

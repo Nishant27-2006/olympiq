@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+Let <span class='math'>$L = 1000$</span> be the bound on <span class='math'>$x, y$</span>. We store an <span class='math'>$(L+1)$</span> by <span class='math'>$(L+1)$</span> array, on
+which we will record the distance along the fence of each point.
+<p>We read the posts in order (ending with the first post again), and as we do, we
+traverse every point along the fence, marking each point in the array with
+<span class='math'>$0, 1, 2, \dots$</span>. We also record the perimeter <span class='math'>$\ell$</span> (which is the number after
+the one we ended on). Since the fence visits each point at most once, the total
+time taken for this is <span class='math'>$O(L^2)$</span>.
+<p>Now, to compute the answer for each cow, we look up the value of both points in
+the array. Then, the distance along the fence in one direction is equal to the
+(absolute) difference between these two values; call this distance <span class='math'>$d$</span>. The
+distance in the other direction is then just <span class='math'>$\ell - d$</span>, so the answer for this
+cow is just <span class='math'>$\min(d, \ell-d)$</span>.
+<p>For each cow, the answer takes <span class='math'>$O(1)$</span> time to compute, so the total runtime of
+this algorithm is <span class='math'>$O(N+L^2)$</span>.
+<p>C++ Code (Benjamin Qi):
+<p><pre class='prettyprint'>
+N, P = map(int, input().split())
+fence_posts = [tuple(map(int, input().split())) for _ in range(P)]
+label = [[-1] * 1001 for _ in range(1001)]
+perimeter = 0
+
+
+def walk_segment(start, end):  # walk from start to end one unit at a time
+    global perimeter
+    assert (start[0] == end[0]) + (start[1] == end[1]) == 1
+    dif = end[0] - start[0], end[1] - start[1]
+    dist = abs(dif[0]) + abs(dif[1])
+    dif = dif[0] // dist, dif[1] // dist
+    for _ in range(dist):
+        assert label[start[0]][start[1]] == -1
+        label[start[0]][start[1]] = perimeter
+        perimeter += 1
+        start = start[0] + dif[0], start[1] + dif[1]
+    assert start == end
+
+
+for i in range(P):
+    walk_segment(fence_posts[i], fence_posts[(i + 1) % P])
+
+for _ in range(N):
+    x1, y1, x2, y2 = map(int, input().split())
+    p1 = label[x1][y1]
+    p2 = label[x2][y2]
+    dist = abs(p2 - p1)
+    dist = min(dist, perimeter - dist)
+    print(dist)
+</pre>
+</body></html>

@@ -1,0 +1,114 @@
+Solution ID: sol_revegetate_silver_feb19
+Contest: FEB19
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_revegetate_silver_feb19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brian Dean)
+
+Imagine forming a graph (a network) of all the cows, with two cows linked 
+together with edges labeled "S" or "D".  Our goal is to count the number of
+connected components,
+
+$K$
+
+, in this graph, and then two also figure out if each
+component can be labeled with 1's and 2's in a consistent way that respects all
+of the "S" and "D" edges within the component.  If labeling each component is
+possible, the answer is
+
+$2^K$
+
+, since note that we can reverse the labeling of
+any component (toggle 1s to 2s and vice versa) to  produce another valid
+labeling; so each component can be labeled in exactly 2 ways.  Conveniently,
+
+$2^K$
+
+in binary is a 1 followed by
+
+$K$
+
+zeros.
+
+In my code below, I use a recursive "depth first" search to solve both of the
+problems above.  I scan all the nodes of the graph and upon finding one that
+isn't labeled yet, I launch a recursive search from that point, which fans out
+and visits every node within its connected component, labeling nodes with 1s and
+2s along the way in a consistent manner.  If it ever discovers an inherent
+inconsistency (two 1s connected with a "D" edge or a 1 and 2 connected by an "S"
+edge), it flags the solution as being impossible.
+
+If you are interested in related problems, this is quite similar to the problem
+of testing if a graph is "bipartite" --- colorable with just 2 colors so that no
+two connected nodes have the same color (in fact, if all the edges are "D"
+edges, then this problem is exactly the problem of testing bipartiteness).  It's
+also related to the "2SAT" problem --- setting variables in a boolean expression
+like (x OR y) AND (not(x) OR y) AND (z OR not(y)) to either true or false so 
+the entire expression evaluates to true.  The reason it's called "2SAT" is that
+the expression must consist of "clauses" that are all ANDed together (so we need
+to satisfy all of them to satisfy the overall expression), where each clause is
+an OR of two things (a variable or its negation).  To solve a problem like this,
+observe that each clause turns into an "S" or "D" edge between two variables.
+
+Here is my code.  The label
+
+$L[x]$
+
+of node
+
+$x$
+
+is zero if we haven't visited the
+node yet, or else 1 or 2.
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+using namespace std;
+ 
+int N, M, answer;
+int L[100001];
+vector<int> S_nbrs[100001], D_nbrs[100001];
+bool impossible;
+ 
+void visit(int x, int v)
+{
+  L[x] = v;
+  for (auto n : S_nbrs[x]) {
+    if (L[n] == 3-v) impossible = true; 
+    if (L[n] == 0) visit(n, v);
+  }
+  for (auto n : D_nbrs[x]) {
+    if (L[n] == v) impossible = true; 
+    if (L[n] == 0) visit(n, 3-v);
+  }  
+}
+ 
+int main(void)
+{
+  ifstream fin ("revegetate.in");
+  fin >> N >> M;
+  for (int i=0; i<M; i++) {
+    int a, b;
+    string s;
+    fin >> s >> a >> b;
+    if (s=="S") { S_nbrs[a].push_back(b); S_nbrs[b].push_back(a); }
+    if (s=="D") { D_nbrs[a].push_back(b); D_nbrs[b].push_back(a); }
+  }
+ 
+  for (int i=1; i<=N; i++) 
+    if (!L[i]) { visit(i,1); answer++; }
+  
+  ofstream fout ("revegetate.out");
+  if (impossible) fout << "0\n";
+  else {
+    fout << "1";
+    for (int i=0; i<answer; i++) fout << "0";
+    fout << "\n";
+  }
+  return 0;
+}

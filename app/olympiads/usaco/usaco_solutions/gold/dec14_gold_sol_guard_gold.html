@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+
+</head>
+<p>(Analysis by Bill Cooperman)</p><p>
+
+An initial observation for many experienced contestants is that there can be no
+more than 20 cows. Immediately this suggests some solution that is exponential
+in <span class='math'>$n$</span>, possibly examining all subsets of cows. However, the order in which the
+cows are stacked is important as well. Specifically, it can quickly be shown
+that the optimal arrangement of cows might not be sorted in order of strength or
+weight (this is left as an exercise to the reader). Luckily, the problem of
+finding an optimal arrangement of some subset of the cows can be deconstructed
+into several smaller sub-problems of the same type, so it is possible to
+construct a dynamic programming solution.</p><p>
+
+Let <span class='math'>$f(C)$</span> be the maximum possible strength factor for a stack of cows
+consisting of exactly the subset <span class='math'>$C$</span> of all the cows. Then the solution to our
+problem is just the maximum <span class='math'>$f(C)$</span> for all <span class='math'>$C$</span> where the sum of all the heights
+of cows in <span class='math'>$C$</span> is at least <span class='math'>$H$</span>. Now, we just need to calculate <span class='math'>$f(C)$</span>.  If we let
+<span class='math'>$f(\emptyset) =
+\infty$</span> (analagous to the ground being able to support all the cows&apos; weights),
+then we have the recurrence</p><p>
+
+</p><div class='math'>$$
+    f(C) = \max_{c \in C} \,\, \min \left(f(C \setminus c), \,\, S_c - \sum_{d \in (C
+    \setminus c)} W_d \right)
+$$</div><p></p><p>
+
+Intuitively, we are trying to place each cow <span class='math'>$c \in C$</span> on the bottom of the
+stack, and then placing the remaining set <span class='math'>$C \setminus c$</span> of cows
+above <span class='math'>$c$</span>. The
+straightforward implementation of this idea runs in <span class='math'>$O(n2^n)$</span> time (assuming the
+sum of weights of cows in a subset is pre-computed), which is fast enough to get
+full points.</p>
+</html>

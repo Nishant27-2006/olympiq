@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>Imagine forming a graph (a network) of all the cows, with two cows linked 
+together with edges labeled &quot;S&quot; or &quot;D&quot;.  Our goal is to count the number of
+connected components, <span class='math'>$K$</span>, in this graph, and then two also figure out if each
+component can be labeled with 1&apos;s and 2&apos;s in a consistent way that respects all
+of the &quot;S&quot; and &quot;D&quot; edges within the component.  If labeling each component is
+possible, the answer is <span class='math'>$2^K$</span>, since note that we can reverse the labeling of
+any component (toggle 1s to 2s and vice versa) to  produce another valid
+labeling; so each component can be labeled in exactly 2 ways.  Conveniently, <span class='math'>$2^K$</span>
+in binary is a 1 followed by <span class='math'>$K$</span> zeros.
+<p>In my code below, I use a recursive &quot;depth first&quot; search to solve both of the
+problems above.  I scan all the nodes of the graph and upon finding one that
+isn&apos;t labeled yet, I launch a recursive search from that point, which fans out
+and visits every node within its connected component, labeling nodes with 1s and
+2s along the way in a consistent manner.  If it ever discovers an inherent
+inconsistency (two 1s connected with a &quot;D&quot; edge or a 1 and 2 connected by an &quot;S&quot;
+edge), it flags the solution as being impossible.  
+<p>If you are interested in related problems, this is quite similar to the problem
+of testing if a graph is &quot;bipartite&quot; --- colorable with just 2 colors so that no
+two connected nodes have the same color (in fact, if all the edges are &quot;D&quot;
+edges, then this problem is exactly the problem of testing bipartiteness).  It&apos;s
+also related to the &quot;2SAT&quot; problem --- setting variables in a boolean expression
+like (x OR y) AND (not(x) OR y) AND (z OR not(y)) to either true or false so 
+the entire expression evaluates to true.  The reason it&apos;s called &quot;2SAT&quot; is that
+the expression must consist of &quot;clauses&quot; that are all ANDed together (so we need
+to satisfy all of them to satisfy the overall expression), where each clause is
+an OR of two things (a variable or its negation).  To solve a problem like this,
+observe that each clause turns into an &quot;S&quot; or &quot;D&quot; edge between two variables.
+<p>Here is my code.  The label <span class='math'>$L[x]$</span> of node <span class='math'>$x$</span> is zero if we haven&apos;t visited the
+node yet, or else 1 or 2.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;vector&gt;
+using namespace std;
+ 
+int N, M, answer;
+int L[100001];
+vector&lt;int&gt; S_nbrs[100001], D_nbrs[100001];
+bool impossible;
+ 
+void visit(int x, int v)
+{
+  L[x] = v;
+  for (auto n : S_nbrs[x]) {
+    if (L[n] == 3-v) impossible = true; 
+    if (L[n] == 0) visit(n, v);
+  }
+  for (auto n : D_nbrs[x]) {
+    if (L[n] == v) impossible = true; 
+    if (L[n] == 0) visit(n, 3-v);
+  }  
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;revegetate.in&quot;);
+  fin &gt;&gt; N &gt;&gt; M;
+  for (int i=0; i&lt;M; i++) {
+    int a, b;
+    string s;
+    fin &gt;&gt; s &gt;&gt; a &gt;&gt; b;
+    if (s==&quot;S&quot;) { S_nbrs[a].push_back(b); S_nbrs[b].push_back(a); }
+    if (s==&quot;D&quot;) { D_nbrs[a].push_back(b); D_nbrs[b].push_back(a); }
+  }
+ 
+  for (int i=1; i&lt;=N; i++) 
+    if (!L[i]) { visit(i,1); answer++; }
+  
+  ofstream fout (&quot;revegetate.out&quot;);
+  if (impossible) fout &lt;&lt; &quot;0\n&quot;;
+  else {
+    fout &lt;&lt; &quot;1&quot;;
+    for (int i=0; i&lt;answer; i++) fout &lt;&lt; &quot;0&quot;;
+    fout &lt;&lt; &quot;\n&quot;;
+  }
+  return 0;
+}
+</pre>
+<p></body></html>

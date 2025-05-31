@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brandon Wang)
+<p>Phrased in graph theoretic terms, this problem is asking us the following:  We
+are given a rooted tree with each edge being labeled with a difficulty <span class='math'>$d$</span> and
+an enjoyment <span class='math'>$e$</span>. For any given query <span class='math'>$(s, c)$</span>, we want to find the maximum
+total enjoyment path  among all paths from the root satisfying the following
+condition: At most <span class='math'>$c$</span> of the edges can have difficulty greater than <span class='math'>$s$</span>.
+<p>Note that trying all vertices would take <span class='math'>$O(M \sum \delta_i)$</span>, where <span class='math'>$\delta_i$</span>
+is the depth of node <span class='math'>$i$</span>, which would take too long  as it could be up to
+<span class='math'>$O(MN^2)$</span>.
+<p><strong>Subtask 1 (<span class='math'>$N, M \leq 1000$</span>):</strong>
+<p>In this case, let <span class='math'>$E_i$</span> be the total enjoyment on the path starting from node
+<span class='math'>$i$</span>. We can compute <span class='math'>$E_i$</span> via the following dfs (all code snippets will assume
+we have shifted the nodes to be <span class='math'>$0$</span>-indexed):
+<p><pre class='prettyprint'>
+def precompute_E(p, e):
+    E[0] = 0
+    
+    for i in range(1, N):
+        E[i] := E[p[i]] + e[i]
+
+    return E
+</pre>
+<p>Similarly, we need to precompute the top 11 difficulty edges on the path from
+<span class='math'>$i$</span>. We can do this by first computing collecting all the difficulties, and
+checking the top 11.
+<p><pre class='prettyprint'>
+def precompute_top_11(p, d):
+    all_difficulties[0] = []
+    top_11_difficulties[0] = []
+
+    for i in range(1, N):
+        all_weights[i] := all_weights[p[i]] + [d[i]]
+        top_11_difficulties[i] = sorted(all_weights[i])[-11:]  # In practice, we&apos;ll need to pad these 
+</pre>
+<p>Then, for any query <span class='math'>$s$</span>, <span class='math'>$c$</span>, we need to find the maximum <span class='math'>$E_i$</span> over all nodes
+<span class='math'>$i$</span> whose <span class='math'>$c+1$</span>th difficulty is at most <span class='math'>$s$</span>.
+<p>Here is a C++ implementation. The precomputation takes <span class='math'>$O(N^2\log N)$</span>  and
+processing queries takes <span class='math'>$O(N)$</span>, giving a runtime of <span class='math'>$O(N^2\log N + MN)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+ 
+using namespace std;
+ 
+int main() {
+    int N; 
+    cin &gt;&gt; N;
+    int p[N], d[N], e[N];
+ 
+    for (int i = 1; i &lt; N; i++) {
+        cin &gt;&gt; p[i] &gt;&gt; d[i] &gt;&gt; e[i];
+        p[i]--;
+    }
+ 
+    long long E[N];
+    E[0] = 0;
+    for (int i = 1; i &lt; N; i++) {
+        E[i] = E[p[i]] + e[i];
+    }
+ 
+    vector&lt;int&gt; difficulties[N], top_11[N];
+    // pad with -1s, so that paths with k &lt; 11 weights will
+    // have their remaining 11-k elements filled with -1
+    difficulties[0] = vector&lt;int&gt;(11, -1);
+    top_11[0] = vector&lt;int&gt;(11, -1);
+    for (int i = 1; i &lt; N; i++) {
+        difficulties[i] = difficulties[p[i]];
+        difficulties[i].push_back(d[i]);
+        top_11[i] = difficulties[i];
+        sort(top_11[i].begin(), top_11[i].end(), greater&lt;int&gt;());
+        top_11[i].resize(11);
+    }
+ 
+    int M;
+    cin &gt;&gt; M;
+ 
+    for (int i = 0; i &lt; M; i++) {
+        int S, C;
+        cin &gt;&gt; S &gt;&gt; C;
+        long long ans = 0;
+        for (int j = 0; j &lt; N; j++) {
+            if (top_11[j][C] &lt;= S) {
+                ans = max(ans, E[j]);
+            }
+        }
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p>Alternatively, we can answer each query independently with a depth-first search
+in <span class='math'>$O(MN)$</span> time overall, though this doesn&apos;t naturally extend to the remaining
+subtasks.
+<p><strong>Subtask 2 (<span class='math'>$c = 0$</span>):</strong>
+<p>Here, we make two observations:
+<p><ol><li>We only need to maintain the max weight in any path. We can do this with a
+DFS in <span class='math'>$O(N)$</span>.</li><li>Let <span class='math'>$D_i$</span> be the maximum difficulty on the path from
+<span class='math'>$i$</span>. We can sort all the vertices in increasing order of <span class='math'>$i$</span>. Then, if (after
+sorting) we have <span class='math'>$D_1 \leq D_2 \leq \cdots \leq D_N$</span>, then for any query if we have 
+<div class='math'>$$D_1 \leq \cdots \le D_i \le s &lt; D_{i+1} \leq \cdots D_N,$$</div>
+then we know that the answer is <span class='math'>$\max(E_1, \ldots, E_i)$</span>. Thus, we can answer
+queries with binary search.</li></ol>
+<p>By preprocessing the array <span class='math'>$D$</span> and sorting by <span class='math'>$D$</span>, as well as maintaining
+cumulative maximum (i.e. precomputing <span class='math'>$\max(E_1, \ldots, E_i)$</span> for each <span class='math'>$i$</span>), 
+we can answer queries in <span class='math'>$O(\log N)$</span> with <span class='math'>$O(N\log N)$</span> preprocessing, giving an
+<span class='math'>$O(N\log N + M\log N)$</span> runtime.
+<p>Here is a C++ implementation:
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+ 
+using namespace std;
+ 
+int main() {
+    int N;
+    cin &gt;&gt; N;
+    int p[N], d[N], e[N];
+ 
+    for (int i = 1; i &lt; N; i++) {
+        cin &gt;&gt; p[i] &gt;&gt; d[i] &gt;&gt; e[i];
+        p[i]--;
+    }
+ 
+    pair&lt;int, long long&gt; DE[N];
+    DE[0] = {-1, 0};
+    for (int i = 1; i &lt; N; i++) {
+        int Dpi = DE[p[i]].first;
+        long long Epi = DE[p[i]].second;
+        DE[i] = {max(Dpi, d[i]), Epi + e[i]};
+    }
+ 
+    sort(DE, DE + N);
+    for (int i = 1; i &lt; N; i++) {
+        DE[i].second = max(DE[i].second, DE[i-1].second);
+    }
+ 
+    int M, S, C;
+    cin &gt;&gt; M;
+ 
+    for (int i = 0; i &lt; M; i++) {
+        cin &gt;&gt; S &gt;&gt; C;
+        int idx = lower_bound(DE, DE + N, make_pair(S+1, -1LL)) - DE;
+        cout &lt;&lt; DE[idx-1].second &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p><strong>Full Solution:</strong>
+<p>Note that observation 2 from Subtask 2 applies in general. If we can compute the
+top 11 difficulties array,  then we can sort by <span class='math'>$c$</span>th difficulty for each
+<span class='math'>$c = 1, 2, \ldots, 11$</span>. 
+<p>To compute the top 11 difficulties quickly, note that we can compute the top 11
+difficulties for a given vertex <span class='math'>$i$</span> given the top 11 from <span class='math'>$p_i$</span> and <span class='math'>$d_i$</span>. This
+is because anything difficulty that is not in the top 11 for <span class='math'>$p_i$</span> won&apos;t be in
+the top 11 for <span class='math'>$i$</span>. This gives the following improvement:
+<p><pre class='prettyprint'>
+def precompute_top_11(p, d):
+    top_11_difficulties[0] = []
+
+    for i in range(1, N):
+        relevant_weights = top_11_difficulties[p[i]] + [d[i]]
+        top_11_difficulties[i] = sorted(relevant_weights)[-11:]
+</pre>
+<p>(Note: You can remove the sorting here by inserting <span class='math'>$d_i$</span> into the appropriate
+position.  Depending on how you implement this, it will take either <span class='math'>$O(C)$</span> or
+<span class='math'>$O(\log C)$</span> per step, which is a slight improvement from <span class='math'>$O(C\log C)$</span> per step
+shown here.)
+<p>Putting it all together, we get a solution that runs in <span class='math'>$O(NC\log N + M\log N)$</span>.
+Here is a C++ implementation:
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+ 
+const int MAXC = 11;
+ 
+using namespace std;
+ 
+int main() {
+    int N; 
+    cin &gt;&gt; N;
+    int p[N], d[N], e[N];
+ 
+    for (int i = 1; i &lt; N; i++) {
+        cin &gt;&gt; p[i] &gt;&gt; d[i] &gt;&gt; e[i];
+        p[i]--;
+    }
+ 
+    long long E[N];
+    E[0] = 0;
+    for (int i = 1; i &lt; N; i++) {
+        E[i] = E[p[i]] + e[i];
+    }
+ 
+    vector&lt;int&gt; topC[N];
+    topC[0] = vector&lt;int&gt;(MAXC, -1);
+    for (int i = 1; i &lt; N; i++) {
+        topC[i] = topC[p[i]];
+        topC[i].push_back(d[i]);
+        sort(topC[i].begin(), topC[i].end(), greater&lt;int&gt;());
+        topC[i].resize(MAXC);
+    }
+    
+    pair&lt;int, long long&gt; DE[MAXC][N];
+    for (int c = 0; c &lt; MAXC; c++) {
+        for (int i = 0; i &lt; N; i++) {
+            DE[c][i] = {topC[i][c], E[i]};
+        }
+        sort(DE[c], DE[c] + N);
+        for (int i = 1; i &lt; N; i++) {
+            DE[c][i].second = max(DE[c][i].second, DE[c][i-1].second);
+        }
+    }
+ 
+    int M;
+    cin &gt;&gt; M;
+ 
+    for (int i = 0; i &lt; M; i++) {
+        int S, C;
+        cin &gt;&gt; S &gt;&gt; C;
+        int idx = lower_bound(DE[C], DE[C] + N, make_pair(S+1, -1LL)) - DE[C];
+        cout &lt;&lt; DE[C][idx-1].second &lt;&lt; endl;
+    }
+}
+</pre>
+<p></body></html>

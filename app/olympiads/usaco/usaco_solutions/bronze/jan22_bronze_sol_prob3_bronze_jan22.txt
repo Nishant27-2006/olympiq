@@ -1,0 +1,565 @@
+Solution ID: sol_prob3_bronze_jan22
+Contest: JAN22
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_jan22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Arpan Banerjee, Benjamin Qi)
+
+Define an
+
+operation
+
+on
+
+$(i,i+1)$
+
+as the act of decreasing both
+
+$h_i$
+
+and
+
+$h_{i+1}$
+
+by one. Also define
+
+$f$
+
+to be the final hunger value.
+
+Half Credit:
+
+For inputs 1-8, it suffices to try all possible values of
+
+$f$
+
+from
+
+$0$
+
+to
+
+$\min(h_i)$
+
+and see if they result in valid solutions. This can be done by
+sweeping left to right across
+
+$h$
+
+and remedying instances where
+
+$h_i$
+
+is greater
+than
+
+$f$
+
+by doing operations on
+
+$(i,i+1)$
+
+until one of
+
+$h_i$
+
+or
+
+$h_{i+1}$
+
+equals
+
+$f$
+
+. If there is a solution, this method must lead to it, because doing
+operations on
+
+$(i,i+1)$
+
+is the only way to make
+
+$h_i$
+
+equal
+
+$f$
+
+assuming no more
+operations on
+
+$(i-1,i)$
+
+are allowed.
+
+This solution runs in
+
+$O(N\max(h_i))$
+
+time.
+
+Arpan's code:
+
+#include<bits/stdc++.h>
+#define int long long
+#define nl "\n"
+using namespace std;
+
+int n;
+const int inf = 1e18;
+
+int cost(vector<int> h, int f){
+	int o = 0;
+	for (int i = 0; i < n - 1; i++){
+		if (h[i] > f){
+			int sub = min(h[i], h[i + 1]) - f;
+			h[i] -= sub, h[i + 1] -= sub;
+			o += sub * 2;
+		}
+	}
+	for (int i = 0; i < n - 1; i++)
+		if (h[i] != h[i + 1])
+			return inf;
+	return o;
+}
+
+int exe(){
+	cin >> n; vector<int> h(n);
+	int mn = inf, ans = inf;
+	for (int& i : h) cin >> i, mn = min(mn, i);
+	for (int f = 0; f <= mn; f++)
+		ans = min(ans, cost(h, f));
+	return (ans == inf ? -1 : ans);
+}
+
+signed main(){
+	cin.tie(0)->sync_with_stdio(0); cin.exceptions(ios_base::failbit);
+	int t; cin >> t;
+	while (t--) cout << exe() << nl;
+}
+
+(Almost) Full Solution:
+
+Consider any
+
+$i$
+
+such that
+
+$h_{i-1} < h_{i}$
+
+. If
+
+$i=N$
+
+, then there is no
+solution because no operation can bring
+
+$h_N$
+
+closer to
+
+$h_{N-1}$
+
+. Otherwise,
+the only way to make
+
+$h_i$
+
+equal to
+
+$h_{i-1}$
+
+is to do at least
+
+$h_i-h_{i-1}$
+
+operations on
+
+$(i,i+1)$
+
+. Similar reasoning applies when
+
+$h_{i-1} > h_{i}$
+
+(there
+is no solution if
+
+$i=2$
+
+, otherwise at least
+
+$h_{i-1}-h_i$
+
+operations must be
+performed on
+
+$(i-2,i-1)$
+
+).
+
+One approach is to repeatedly find the leftmost pair
+
+$(i-1,i)$
+
+such that
+
+$h_{i-1}\neq h_{i}$
+
+and perform the appropriate number of operations to make
+
+$h_{i-1}=h_{i}$
+
+. It can be proven that this terminates in
+
+$O(N^3)$
+
+time, and is
+enough to solve all but the last input.
+
+Ben's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using i64 = int64_t;
+ 
+i64 solve(vector<i64> h){
+	const int N = (int)h.size();
+	i64 ans = 0;
+	auto operations = [&h,&ans](int idx, i64 num_op) {
+		assert(num_op >= 0);
+		h.at(idx) -= num_op; 
+		h.at(idx+1) -= num_op;
+		ans += 2*num_op;
+	};
+	bool flag = true;
+	while (flag) {
+		flag = false;
+		for (int i = 1; i < N; ++i) if (h[i-1] != h[i]) {
+			flag = true;
+			if (h[i-1] < h[i]) {
+				if (i == N-1) return -1;
+				operations(i,h[i]-h[i-1]);
+			} else {
+				if (i == 1) return -1;
+				operations(i-2,h[i-1]-h[i]);
+			}
+			break;
+		}
+	}
+	// now h is all equal
+	if (h[0] < 0) return -1;
+	return ans;
+}
+
+int main() {
+	int t; cin >> t;
+	while (t--) {
+		int N; cin >> N;
+		vector<i64> H(N);
+		for (auto& i: H) cin >> i;
+		cout << solve(H) << "\n";
+	}
+}
+
+Full Solution 1:
+
+For a faster solution, let's start by moving left to right across
+
+$h$
+
+and
+applying the necessary number of operations to
+
+$(i,i+1)$
+
+to make
+
+$h_i$
+
+equal to
+
+$h_{i-1}$
+
+whenever we find
+
+$i$
+
+such that
+
+$h_i > h_{i-1}$
+
+. After doing a pass
+through the array with this procedure, either
+
+$h_N > h_{N-1}$
+
+(in which case
+there is no solution), or
+
+$h$
+
+will be non-increasing (
+
+$h_i\le h_{i-1}$
+
+for all
+
+$2\le i\le N$
+
+).
+
+In the latter case, let's reverse
+
+$h$
+
+. Now
+
+$h$
+
+will be non-decreasing
+(
+
+$h_i\ge h_{i-1}$
+
+for all
+
+$2\le i\le N$
+
+). After one more pass with the above
+procedure, all elements of
+
+$h$
+
+will be equal except possibly
+
+$h_N$
+
+. If
+
+$h_N > h_{N-1}$
+
+, then there is no solution. Otherwise, all elements of
+
+$h$
+
+are
+equal, and it remains to verify whether these elements are non-negative.
+
+This solution takes
+
+$O(N)$
+
+time.
+
+Arpan's code:
+
+#include<bits/stdc++.h>
+#define int long long
+#define nl "\n"
+using namespace std;
+
+int exe(){
+	int ans = 0, n;
+	cin >> n; vector<int> h(n);
+	for (int& i : h) cin >> i;
+	if (n == 1) return 0;
+	for (int j : {1, 2}){
+		for (int i = 1; i < n - 1; i++){
+			if (h[i] > h[i - 1]){
+				int dif = h[i] - h[i - 1];
+				ans += 2 * dif, h[i + 1] -= dif, h[i] = h[i - 1];
+			}
+		}
+		if (h[n - 1] > h[n - 2]) return -1;
+		// now h is non-increasing
+		reverse(h.begin(), h.end());
+		// now h is non-decreasing
+	}
+	// now h is all equal
+	return h[0] < 0 ? -1 : ans;
+}
+
+signed main(){
+	cin.tie(0)->sync_with_stdio(0); cin.exceptions(ios_base::failbit);
+	int t; cin >> t;
+	while (t--) cout << exe() << nl;
+}
+
+Full Solution 2:
+
+Let
+
+$o_i$
+
+be the total number of operations FJ performs on
+
+$(i,i+1)$
+
+for each
+
+$1\le i<N$
+
+. The goal is to find the maximum
+
+$f$
+
+such that there exists a
+solution to the following system of equations. Firstly, the final hunger value
+and the number of operations performed at every pair of indices must be
+non-negative:
+
+$$f,o_1,\ldots,o_{N-1}\ge 0$$
+
+Also,
+
+$$f+o_1=h_1$$
+
+$$f+o_1+o_2=h_2$$
+
+$$f+o_2+o_3=h_3$$
+
+$$\vdots$$
+
+$$f+o_{N-2}+o_{N-1}=h_{N-1}$$
+
+$$f+o_{N-1}=h_{N}$$
+
+The first solution in the analysis can be interpreted as trying all possible
+values of
+
+$f$
+
+from
+
+$0$
+
+to
+
+$\min(h_i)$
+
+, determining
+
+$o_1, o_2,\ldots, o_{N-1}$
+
+in
+that order, and checking whether all of them are non-negative. For a faster
+solution, letâs rewrite the system of equations in the following form.
+
+$$o_1=h_1-f\ge 0$$
+
+$$o_2=h_2-h_1\ge 0$$
+
+$$o_3=h_3-h_2+h_1-f\ge 0$$
+
+$$\vdots$$
+
+$$o_{N-1}=h_{N-1}-h_{N-2}+h_{N-3}-\cdots \ge 0$$
+
+$$h_N-h_{N-1}+h_{N-2}-h_{N-3}+...+h_2-h_1=0\text{ if }N\text{ even}$$
+
+$$h_N-h_{N-1}+h_{N-2}-h_{N-3}+...-h_2+h_1-f=0\text{ if }N\text{ odd}$$
+
+Observe that if
+
+$N$
+
+is odd, the last equation uniquely determines
+
+$f$
+
+, so we can
+simply plug this value of
+
+$f$
+
+into the brute force solution.
+
+If
+
+$N$
+
+is even, then if there exists some
+
+$f$
+
+such that this system of
+equations, then
+
+$fâ=0$
+
+will as well. Let
+
+$o_1â, o_2â, \ldots, o_{N-1}â$
+
+be the resulting numbers of operations. To find the maximum
+
+$f$
+
+, observe from
+the above equations that increasing
+
+$fâ$
+
+will decrease
+
+$o_1â, o_3â, \ldots, o_{N-1}â$
+
+, while
+
+$o_2â, o_4â, \ldots, o_{N-2}â$
+
+remain constant. Thus, we may take
+
+$f=\min(o_1â,o_3â,\ldots,o_{N-1}â)$
+
+.
+
+Ben's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using i64 = int64_t;
+ 
+i64 solve(const vector<i64>& H) {
+	const int N = (int)H.size();
+	i64 f = 0;
+	for (int i = 0; i < N; ++i)
+		f += (i%2 == 0 ? 1 : -1)*H[i];
+	if (N%2 == 0) {
+		if (f != 0) return -1;
+	} else {
+		if (f < 0) return -1;
+	}
+	i64 last_o = 0;
+	vector<i64> o(N-1);
+	for (int i = 0; i+1 < N; ++i) {
+		last_o = o[i] = H[i]-f-last_o;
+		if (o[i] < 0) return -1;
+	}
+	if (N%2 == 0) {
+		i64 mn = o[0];
+		for (int i = 0; i < N; i += 2)
+			mn = min(mn,o[i]);
+		for (int i = 0; i < N; i += 2)
+			o[i] -= mn;
+	}
+	i64 sum_o = 0;
+	for (i64 i: o) sum_o += i;
+	return 2*sum_o;
+}
+ 
+int main() {
+	int t; cin >> t;
+	while (t--) {
+		int N; cin >> N;
+		vector<i64> H(N);
+		for (auto& i: H) cin >> i;
+		cout << solve(H) << "\n";
+	}
+}

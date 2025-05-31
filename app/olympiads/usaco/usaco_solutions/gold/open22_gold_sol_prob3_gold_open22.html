@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Say that <span class='math'>$i$</span> and <span class='math'>$j$</span> are related if <span class='math'>$i$</span> is an ancestor of <span class='math'>$j$</span> or vice versa. Let
+<span class='math'>$\texttt{ans}$</span> denote the minimum possible imbalance.
+<p><strong>Part 1: <span class='math'>$l_i=r_i$</span></strong>
+<p>Here <span class='math'>$w_i$</span> is fixed for all <span class='math'>$i$</span>. To calculate <span class='math'>$\texttt{ans}$</span>, we can compute for
+every node <span class='math'>$i$</span> the minimum <span class='math'>$w_j$</span> and maximum <span class='math'>$w_j$</span> over all ancestors <span class='math'>$j$</span> of <span class='math'>$i$</span>
+as well as <span class='math'>$j=i$</span>. This can be done in <span class='math'>$O(N)$</span> time.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int T, B;
+	cin &gt;&gt; T &gt;&gt; B;
+	while (T--) {
+		int N;
+		cin &gt;&gt; N;
+		vector&lt;int&gt; P(N + 1), L(N + 1), R(N + 1);
+		for (int i = 2; i &lt;= N; ++i) {
+			cin &gt;&gt; P[i];
+		}
+		int ans = 0;
+		vector&lt;pair&lt;int, int&gt;&gt; bounds(N + 1);
+		for (int i = 1; i &lt;= N; ++i) {
+			cin &gt;&gt; L[i] &gt;&gt; R[i];
+			assert(L[i] == R[i]);
+			bounds[i] = {L[i], L[i]};
+			if (i &gt; 1) {
+				bounds[i].first = min(bounds[i].first, bounds[P[i]].first);
+				bounds[i].second = max(bounds[i].second, bounds[P[i]].second);
+			}
+			ans = max(ans, bounds[i].second - bounds[i].first);
+		}
+		cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+		if (B == 1) {
+			for (int i = 1; i &lt;= N; ++i) {
+				if (i &gt; 1) cout &lt;&lt; &quot; &quot;;
+				cout &lt;&lt; L[i];
+			}
+			cout &lt;&lt; &quot;\n&quot;;
+		}
+	}
+}
+</pre>
+<p><strong>Part 2: <span class='math'>$B=0$</span></strong>
+<p>Let&apos;s start by lower bounding the answer. If <span class='math'>$i$</span> and <span class='math'>$j$</span> are related then the
+answer must be at least <span class='math'>$l_i-r_j$</span>. Furthermore, for any pair of vertices <span class='math'>$i$</span> and
+<span class='math'>$j$</span> (not necessarily related), <span class='math'>$\frac{l_i-r_j}{2}$</span> is a lower bound on the
+answer (consider the path <span class='math'>$i\leftrightarrow 1\leftrightarrow j$</span>). 
+<p>So we know that
+<p><div class='math'>$$\texttt{ans}\ge \max\left(\max_{i,j\text{ related}}(l_i-r_j),\left\lceil\frac{\max_il_i-\min_ir_i}{2}\right\rceil\right).$$</div>
+<p>As described in part 3, the <span class='math'>$w_i$</span> can be chosen in such a way that equality
+holds, so printing the right-hand side of the above inequality is sufficient for
+half credit.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int T, B;
+	cin &gt;&gt; T &gt;&gt; B;
+	while (T--) {
+		int N;
+		cin &gt;&gt; N;
+		vector&lt;int&gt; P(N + 1), L(N + 1), R(N + 1);
+		for (int i = 2; i &lt;= N; ++i) {
+			cin &gt;&gt; P[i];
+		}
+		int ans = 0;
+		vector&lt;pair&lt;int, int&gt;&gt; bounds(N + 1);
+		pair&lt;int, int&gt; all_bounds{INT_MAX, INT_MIN};
+		for (int i = 1; i &lt;= N; ++i) {
+			cin &gt;&gt; L[i] &gt;&gt; R[i];
+			bounds[i] = {R[i], L[i]};
+			all_bounds.first = min(all_bounds.first, bounds[i].first);
+			all_bounds.second = max(all_bounds.second, bounds[i].second);
+			if (i &gt; 1) {
+				bounds[i].first = min(bounds[i].first, bounds[P[i]].first);
+				bounds[i].second = max(bounds[i].second, bounds[P[i]].second);
+			}
+			ans = max(ans, bounds[i].second - bounds[i].first);
+		}
+		ans = max(ans, (all_bounds.second - all_bounds.first + 1) / 2);
+		cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+		if (B == 1) {
+			for (int i = 1; i &lt;= N; ++i) {
+				if (i &gt; 1) cout &lt;&lt; &quot; &quot;;
+				cout &lt;&lt; L[i];
+			}
+			cout &lt;&lt; &quot;\n&quot;;
+		}
+	}
+}
+</pre>
+<p><strong>Part 3: <span class='math'>$B=1$</span></strong>
+<p>Define <span class='math'>$\texttt{minR}=\min_{1\le i\le N}r_i$</span>, 
+<span class='math'>$\texttt{maxL}=\max_{1\le i\le N}l_i$</span>, and 
+<span class='math'>$\texttt{mid}=\left\lfloor\frac{\texttt{minR}+\texttt{maxL}}{2}\right\rfloor$</span>.
+Then setting 
+<span class='math'>$w_i=\max\left(\min\left(\texttt{mid},r_i\right),l_i\right)$</span>
+for all <span class='math'>$i$</span> suffices.
+<p>Why does this work? If <span class='math'>$\texttt{minR}\ge \texttt{maxL}$</span> then the answer is <span class='math'>$0$</span>.
+Otherwise, observe that 
+<span class='math'>$\left|w_i-\texttt{mid}\right|\le \left\lceil\frac{\texttt{maxL}-\texttt{minR}}{2}\right\rceil$</span>
+for all <span class='math'>$i$</span>. Then for all <span class='math'>$(i,j)$</span> such that <span class='math'>$i$</span> and <span class='math'>$j$</span> are related,
+<p><ul><li>If <span class='math'>$\max(w_i,w_j)\le \texttt{mid}$</span>, then
+<span class='math'>$|w_i-w_j|\le \left\lceil\frac{\texttt{maxL}-\texttt{minR}}{2}\right\rceil\le\texttt{ans}$</span>
+by the observation.</li><li>Similar reasoning applies when
+<span class='math'>$\min(w_i,w_j)\ge \texttt{mid}$</span>.</li><li>The final case is when
+<span class='math'>$w_i&gt; \texttt{mid}$</span> and <span class='math'>$w_j&lt; \texttt{mid}$</span>. This means that <span class='math'>$w_i=l_i$</span> and
+<span class='math'>$w_j=r_j$</span>, so <span class='math'>$|w_i-w_j|=l_i-r_j\le\texttt{ans}$</span>.</li></ul>
+<p>Surprisingly, the complete solution ends up being only a few lines longer than the solution for part 1.
+<p>My code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int T, B;
+	cin &gt;&gt; T &gt;&gt; B;
+	while (T--) {
+		int N;
+		cin &gt;&gt; N;
+		vector&lt;int&gt; P(N + 1), L(N + 1), R(N + 1);
+		for (int i = 2; i &lt;= N; ++i) {
+			cin &gt;&gt; P[i];
+		}
+		int ans = 0;
+		vector&lt;pair&lt;int, int&gt;&gt; bounds(N + 1);
+		pair&lt;int, int&gt; all_bounds{INT_MAX, INT_MIN};
+		for (int i = 1; i &lt;= N; ++i) {
+			cin &gt;&gt; L[i] &gt;&gt; R[i];
+			bounds[i] = {R[i], L[i]};
+			all_bounds.first = min(all_bounds.first, bounds[i].first);
+			all_bounds.second = max(all_bounds.second, bounds[i].second);
+			if (i &gt; 1) {
+				bounds[i].first = min(bounds[i].first, bounds[P[i]].first);
+				bounds[i].second = max(bounds[i].second, bounds[P[i]].second);
+			}
+			ans = max(ans, bounds[i].second - bounds[i].first);
+		}
+		ans = max(ans, (all_bounds.second - all_bounds.first + 1) / 2);
+		int mid = (all_bounds.first + all_bounds.second) / 2;
+		cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+		if (B == 1) {
+			for (int i = 1; i &lt;= N; ++i) {
+				if (i &gt; 1) cout &lt;&lt; &quot; &quot;;
+				cout &lt;&lt; max(min(mid, R[i]), L[i]);
+			}
+			cout &lt;&lt; &quot;\n&quot;;
+		}
+	}
+}
+</pre>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringJoiner;
+import java.util.StringTokenizer;
+ 
+public class BalancingARootedTreeSimpler {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int t = Integer.parseInt(tokenizer.nextToken());
+        boolean needConstruction = tokenizer.nextToken().equals(&quot;1&quot;);
+        while (t &gt; 0) {
+            --t;
+            tokenizer = new StringTokenizer(in.readLine());
+            int n = Integer.parseInt(tokenizer.nextToken());
+            int[] parent = new int[n + 1];
+            tokenizer = new StringTokenizer(in.readLine());
+            for (int a = 2; a &lt;= n; a++) {
+                parent[a] = Integer.parseInt(tokenizer.nextToken());
+            }
+            int[] l = new int[n + 1];
+            int[] r = new int[n + 1];
+            int minR = Integer.MAX_VALUE;
+            int maxL = 0;
+            for (int a = 1; a &lt;= n; a++) {
+                tokenizer = new StringTokenizer(in.readLine());
+                l[a] = Integer.parseInt(tokenizer.nextToken());
+                r[a] = Integer.parseInt(tokenizer.nextToken());
+                minR = Math.min(minR, r[a]);
+                maxL = Math.max(maxL, l[a]);
+            }
+            int answer = 0;
+            StringJoiner joiner = new StringJoiner(&quot; &quot;);
+            int[] minChoice = new int[n + 1];
+            int[] maxChoice = new int[n + 1];
+            for (int a = 1; a &lt;= n; a++) {
+                int choice = Math.min(r[a], Math.max(l[a], (minR + maxL) / 2));
+                minChoice[a] = a == 1 ? choice : Math.min(minChoice[parent[a]], choice);
+                maxChoice[a] = a == 1 ? choice : Math.max(maxChoice[parent[a]], choice);
+                answer = Math.max(answer, maxChoice[a] - minChoice[a]);
+                joiner.add(&quot;&quot; + choice);
+            }
+            System.out.println(answer);
+            if (needConstruction) {
+                System.out.println(joiner);
+            }
+ 
+        }
+    }
+}
+</pre>
+<p></body></html>

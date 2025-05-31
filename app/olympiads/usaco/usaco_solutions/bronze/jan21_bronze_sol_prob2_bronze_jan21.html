@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In the best case, each cow is in its own group, and the answer is <span class='math'>$N$</span>. When is
+this allowed to happen?
+<p>Let <span class='math'>$O$</span> be the number of odd cows and <span class='math'>$E$</span> be the number of even cows initially
+in the list. For each cow to be in its own group, either <span class='math'>$E = O$</span> or <span class='math'>$E = O+1$</span>.
+<p>If this is not the case, then we must have groups with more than one cow. There
+are two cases. 
+<p>If <span class='math'>$E &gt; O+1$</span>, then the problem is that we have too many even cows. However, note
+that two even numbers added together is an even number. Therefore, we can do the
+assignment as follows - take one even cow, then one odd cow, and repeat this <span class='math'>$O$</span>
+times. The remaining cows are all even, and we can put them all in the same
+group. In this case, the answer is <span class='math'>$2O+1$</span>.
+<p>The other case is when <span class='math'>$E &lt; O$</span>, so we have too many odd cows. Note that two odd
+numbers added together is an even number. To deal with having too many odd cows,
+we have to take two odd cows and pair them, which is equivalent to having two
+fewer odd cows and one more even cow. We can repeat this process of pairing two
+odd cows until <span class='math'>$E \ge O$</span>, and then we can use the above logic to compute the
+answer.
+<p>Here is Brian Dean&apos;s code.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+using namespace std;
+ 
+int main(void)
+{
+  int O=0, E=0, N, x;
+  cin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++) {
+    cin &gt;&gt; x;
+    if (x % 2 == 0) E++; else O++;
+  }
+  while (O &gt; E) { O=O-2; E++; }
+  if (E &gt; O+1) E = O+1;
+  cout &lt;&lt; E + O &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

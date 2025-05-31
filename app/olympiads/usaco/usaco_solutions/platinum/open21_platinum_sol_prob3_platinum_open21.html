@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Spencer Compton)
+<p>A key aspect in approaching this problem is more humanly characterizing what
+makes a 4-connected subset valid. For each row with at least one cell in the
+subset, the subset&apos;s cells in this row must make up a contiguous range. This is
+necessary and sufficient to satisfy the third constraint in the problem
+statement. 
+<p>However, we must characterize when the fourth constraint is also satisfied.
+First, the rows which have any subset cells must be a contiguous range of rows
+(otherwise it would not be 4-connected). Thus, let us characterize these rows.
+We can denote the column of the leftmost cell in the <span class='math'>$i$</span>-th row (among those
+with  cells in the subset) as <span class='math'>$L_i$</span> and the column of the rightmost cell in the
+<span class='math'>$i$</span>-th row as <span class='math'>$R_i$</span>. To maintain 4-connectedness, each pair of consecutive rows
+must have some overlap (a  necessary and sufficient requirement for this is that
+<span class='math'>$L_{i+1} \le R_{i}$</span> and <span class='math'>$R_{i+1} \ge L_{i}$</span>). Finally, <span class='math'>$L$</span> must be
+non-increasing for some prefix and then non-decreasing for the remaining 
+(likewise <span class='math'>$R$</span> must be non-decreasing and then non-increasing). If this condition
+is not met, then there will be a violation of the fourth condition. If this
+condition is met, there will be no such violation. Thus, we finalize our
+characterization by saying this property must hold for <span class='math'>$L$</span> and <span class='math'>$R$</span>.
+<p>Now, we must calculate the number of subsets that satisfy this characterization
+and contain only grass. Our main intuition is that we would like to use dynamic
+programming, where our state is the current row we are looking at, the starting
+and ending column of a contiguous range within this row, and flags that indicate
+whether our <span class='math'>$L$</span> should be non-increasing or non-decreasing (and likewise for
+<span class='math'>$R$</span>). There would be <span class='math'>$O(N^3)$</span> such states, and we could use this to ask how many
+valid subsets there are such that the bottom row of the subset is exactly this
+contiguous range of the row with these flags.
+<p>To be more concrete, one such method is supposing <span class='math'>$dp(a,b,h,L,R)$</span> corresponds to
+the number of valid subsets with bottom row <span class='math'>$h$</span>, cells from column <span class='math'>$L$</span> to <span class='math'>$R$</span>
+within <span class='math'>$h$</span>, and flags <span class='math'>$a$</span> and <span class='math'>$b$</span> at the end of this process. The flag in <span class='math'>$a$</span>
+corresponds to <span class='math'>$0$</span> if <span class='math'>$L$</span> is in  the non-increasing stage and <span class='math'>$1$</span> if it is in
+the non-decreasing stage. Likewise with the <span class='math'>$b$</span> flag for <span class='math'>$R$</span>, it is <span class='math'>$0$</span> for
+non-decreasing and <span class='math'>$1$</span> for non-increasing.
+<p>If we have computed the DP values for row <span class='math'>$h-1$</span>, we can compute the values for
+row <span class='math'>$h$</span>.
+<p>For example, <span class='math'>$dp(0,0,h,L,R)$</span> (denoting row <span class='math'>$h$</span>, leftmost column <span class='math'>$L$</span>, rightmost
+column <span class='math'>$R$</span>, <span class='math'>$L$</span> is in the non-increasing prefix, and <span class='math'>$R$</span> is in the
+non-decreasing prefix) is equal to <span class='math'>$0$</span> if there is a non-grass cell between
+columns <span class='math'>$L$</span> and <span class='math'>$R$</span> at row <span class='math'>$h$</span>, and otherwise equal to:
+<p><span class='math'>$1 + \sum_{l=L}^{R} \sum_{r=l}^{R} dp(0,0,h-1,l,r)$</span>
+<p>If we assume DP values are 0 when <span class='math'>$l &gt; r$</span>, then we can also use the following
+sum such that the sum is over a rectangle:
+<p><span class='math'>$1 + \sum_{l=L}^{R} \sum_{r=L}^{R} dp(0,0,h-1,l,r)$</span>
+<p>Note that there are more summands with different cases of flags. A naive
+transition given <span class='math'>$L_i$</span> and <span class='math'>$R_i$</span>  is to loop over <span class='math'>$O(N^2)$</span> possible <span class='math'>$L_{i-1}$</span>
+and <span class='math'>$R_{i-1}$</span>,  which would result in an <span class='math'>$O(N^5)$</span>  running time solution which
+is sufficient for the first two subtasks.
+<p>To speed up this solution, we can observe that the logic of this <span class='math'>$O(N^2)$</span>
+transition can instead be replaced with operations using prefix sums with DP
+values. 
+<p>We maintain the required values in <span class='math'>$O(N^2)$</span> time for each row, enabling a
+solution with <span class='math'>$O(N^3)$</span> runtime.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+ 
+public class BeautifulSubsets {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        boolean[][] grid = new boolean[n][n];
+        for (int y = 0; y &lt; n; y++) {
+            String line = in.readLine();
+            for (int x = 0; x &lt; n; x++) {
+                grid[y][x] = line.charAt(x) == &apos;G&apos;;
+            }
+        }
+        long answer = 0;
+        long[][][][] dpPrev = new long[2][2][n][n];
+        for (int y = 0; y &lt; n; y++) {
+            long[][][][] sums1 = new long[2][2][n][n];
+            for (int x2 = 0; x2 &lt; n; x2++) {
+                for (int x1 = x2; x1 &gt;= 0; x1--) {
+                    for (int b = 0; b &lt; 2; b++) {
+                        sums1[0][b][x1][x2] = dpPrev[0][b][x1][x2];
+                        if (x1 &lt; x2) {
+                            sums1[0][b][x1][x2] += sums1[0][b][x1 + 1][x2];
+                            sums1[0][b][x1][x2] %= MOD;
+                        }
+                    }
+                }
+                for (int x1 = 0; x1 &lt;= x2; x1++) {
+                    for (int b = 0; b &lt; 2; b++) {
+                        sums1[1][b][x1][x2] = dpPrev[1][b][x1][x2];
+                        if (x1 &gt; 0) {
+                            sums1[1][b][x1][x2] += sums1[1][b][x1 - 1][x2] + dpPrev[0][b][x1 - 1][x2];
+                            sums1[1][b][x1][x2] %= MOD;
+                        }
+                    }
+                }
+            }
+            long[][][][] sums2 = new long[2][2][n][n];
+            for (int x1 = 0; x1 &lt; n; x1++) {
+                for (int x2 = x1; x2 &lt; n; x2++) {
+                    for (int a = 0; a &lt; 2; a++) {
+                        sums2[a][0][x1][x2] = sums1[a][0][x1][x2];
+                        if (x2 &gt; x1) {
+                            sums2[a][0][x1][x2] += sums2[a][0][x1][x2 - 1];
+                            sums2[a][0][x1][x2] %= MOD;
+                        }
+                    }
+                }
+                for (int x2 = n - 1; x2 &gt;= x1; x2--) {
+                    for (int a = 0; a &lt; 2; a++) {
+                        sums2[a][1][x1][x2] = sums1[a][1][x1][x2];
+                        if (x2 &lt; n - 1) {
+                            sums2[a][1][x1][x2] += sums2[a][1][x1][x2 + 1] + sums1[a][0][x1][x2 + 1];
+                            sums2[a][1][x1][x2] %= MOD;
+                        }
+                    }
+                }
+            }
+            long[][][][] dpNext = new long[2][2][n][n];
+            for (int x1 = 0; x1 &lt; n; x1++) {
+                boolean valid = true;
+                for (int x2 = x1; x2 &lt; n; x2++) {
+                    valid = valid &amp;&amp; grid[y][x2];
+                    if (valid) {
+                        dpNext[0][0][x1][x2] = (sums2[0][0][x1][x2] + 1L) % MOD;
+                        dpNext[0][1][x1][x2] = (sums2[0][1][x1][x2] - (x2 == n - 1 ? 0L : (sums2[0][1][x2 + 1][x2 + 1] + dpPrev[0][0][x2 + 1][x2 + 1])) + (2L * MOD)) % MOD;
+                        dpNext[1][0][x1][x2] = sums2[1][0][x1][x2];
+                        dpNext[1][1][x1][x2] = sums2[1][1][x1][x2];
+                    } else {
+                        for (int a = 0; a &lt; 2; a++) {
+                            for (int b = 0; b &lt; 2; b++) {
+                                dpNext[a][b][x1][x2] = 0;
+                            }
+                        }
+                    }
+                    for (int a = 0; a &lt; 2; a++) {
+                        for (int b = 0; b &lt; 2; b++) {
+                            answer += dpNext[a][b][x1][x2];
+                            answer %= MOD;
+                        }
+                    }
+                }
+            }
+            dpPrev = dpNext;
+        }
+        System.out.println(answer);
+    }
+}
+ 
+</pre>
+<p></body></html>

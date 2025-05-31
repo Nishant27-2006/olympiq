@@ -1,0 +1,270 @@
+Solution ID: sol_prob3_gold_feb24
+Contest: FEB24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_feb24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Andi Qu)
+
+Although the problem does not state what happens when two particles of the same
+type meet, this event will never occur in Bessie's experiment setup. This is due
+to three reasons:
+
+Particles meet in pairs.
+
+And two particles cannot meet each other
+until all particles between them are gone.
+
+But particles of the same
+type start with an
+
+odd
+
+number of particles between them.
+
+So meetings will only ever occur between mootrinos and antimootrinos.
+
+Subtask 1:
+
+$O(1)$
+
+for a single pair of particles
+
+The two particles meet only when they are moving toward each other. Because the
+particles start off moving toward each other, Bessie must observe their
+disappearance on an
+
+odd
+
+observation.
+
+On the
+
+$k$
+
+-th odd observation, the mootrino will be
+
+$k \cdot s_1$
+
+units to the
+right of its initial position. Likewise, the antimootrino will be
+
+$k \cdot s_2$
+
+units to the left of its initial position. Therefore, Bessie will observe their
+disappearance on the
+
+$\left\lceil\frac{p_2 - p_1}{s_1 + s_2}\right\rceil$
+
+-th odd
+observation.
+
+We can generalize this solution somewhat by considering what happens if the
+leftmost particle is an antimootrino instead. In this case, Bessie will observe
+the particles' disappearance on the
+
+$\left\lceil\frac{p_2 - p_1}{s_1 + s_2}\right\rceil$
+
+-th
+
+even
+
+observation.
+
+Putting it together, we get the following function:
+
+long long compute_meeting_time(int a, int b) {
+    long long dist = p[b] - p[a];
+    long long speed_sum = s[a] + s[b];
+    return 2 * ((dist + speed_sum - 1) / speed_sum) - (a % 2 == 0);
+}
+
+which we will use in the subsequent subtasks.
+
+Subtask 2:
+
+$O(N \cdot \max\{p_i\})$
+
+Simulating the movement of the particles is sufficient for this subtask.
+
+Subtask 3:
+
+$O(N^2)$
+
+The problem with brute-force simulation is that there may be long stretches of
+observations where nothing happens. (For example, if the particles are all
+spaced very far apart but all have very low speeds.)
+
+A more efficient algorithm works as follows:
+
+Iterate through all pairs of adjacent particles and compute when they meet
+using the function from Subtask 1.
+
+Choose the pair that meets earliest,
+breaking ties arbitrarily.
+
+Store the answer for that pair and remove
+them from the line of particles.
+
+Repeat until all particles have been
+removed.
+
+This algorithm runs in
+
+$O(N^2)$
+
+because we repeat the steps
+
+$\frac{N}{2}$
+
+times,
+and each step takes
+
+$O(N)$
+
+time to execute.
+
+Full credit:
+
+$O(N \log N)$
+
+We can improve this algorithm further by noticing that the list of particle
+pairs to consider only changes by at most
+
+$4$
+
+pairs each iteration. Suppose
+particles
+
+$o_1$
+
+,
+
+$o_2$
+
+,
+
+$o_3$
+
+, and
+
+$o_4$
+
+are next to each other (in that order).
+When we remove the pair
+
+$(o_2, o_3)$
+
+from the line:
+
+We no longer need to consider the three pairs
+
+$(o_1, o_2)$
+
+,
+
+$(o_2, o_3)$
+
+,
+and
+
+$(o_3, o_4)$
+
+.
+
+But we now need to consider the pair
+
+$(o_1, o_4)$
+
+.
+
+With this in mind, we can use a
+
+priority queue
+
+to store the list of
+adjacent pairs, sorted by meeting time.
+
+We can also use a
+
+linked list
+
+to help determine which new pairs to add
+to the priority queue. For each still-existing particle, this linked list would
+store the indices of the still-existing particle(s) directly adjacent to it.
+
+These improvements bring the time complexity down to
+
+$O(N \log N)$
+
+because each
+step now modifies the priority queue
+
+$O(1)$
+
+times, and each modification takes
+
+$O(\log N)$
+
+time.
+
+C++ code implementing this solution:
+
+#include <iostream>
+#include <queue>
+#include <utility>
+typedef long long ll;
+using namespace std;
+ 
+ll p[200000], s[200000], ans[200000];
+pair<int, int> adj[200000];
+ 
+ll compute_meeting_time(int a, int b) {
+    ll dist = p[b] - p[a], speed_sum = s[a] + s[b];
+    return 2 * ((dist + speed_sum - 1) / speed_sum) - (a % 2 == 0);
+}
+ 
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        for (int i = 0; i < n; i++)
+            cin >> p[i];
+        for (int i = 0; i < n; i++)
+            cin >> s[i];
+ 
+        for (int i = 0; i < n; i++) {
+            adj[i] = {i - 1, i + 1};
+            ans[i] = 0;
+        }
+        priority_queue<pair<ll, pair<int, int>>> pq;
+        for (int i = 1; i < n; i++)
+            pq.push({-compute_meeting_time(i - 1, i), {i - 1, i}});
+ 
+        while (pq.size()) {
+            pair<ll, pair<int, int>> next_meeting = pq.top();
+            pq.pop();
+            ll meeting_time = next_meeting.first;
+            pair<int, int> cows = next_meeting.second;
+            if (ans[cows.first] || ans[cows.second])
+                continue;
+            ans[cows.first] = ans[cows.second] = -meeting_time;
+            if (cows.first != 0 && cows.second != n - 1) {
+                int prv = adj[cows.first].first, nxt = adj[cows.second].second;
+                adj[prv].second = nxt;
+                adj[nxt].first = prv;
+                pq.push({-compute_meeting_time(prv, nxt), {prv, nxt}});
+            }
+        }
+ 
+        for (int i = 0; i < n; i++)
+            cout << ans[i] << " \n"[i == n - 1];
+    }
+    return 0;
+}

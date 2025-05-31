@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>Start by sorting the patches of the grass in increasing order of quality.
+<p>Let <span class='math'>$f(i)$</span> be the maximum energy that we can accumulate if we end at patch <span class='math'>$i$</span>.
+<p>From patch <span class='math'>$i$</span>, we can compute the minimum distance from patch <span class='math'>$i$</span> to every
+other patch. Then, for every patch <span class='math'>$j$</span> where patch <span class='math'>$j$</span> has lower quality
+grass than patch <span class='math'>$i$</span>, we have that <span class='math'>$f(i) \ge f(j) + q_j - E * d(i,j)$</span>.
+<p>It takes linear time to compute this information for a given patch. If we
+sort all the patches initially in <span class='math'>$O(N \log N)$</span>, then this process takes
+<span class='math'>$O(N^2)$</span>, which will run in time.
+<p>Here is Mark Gordon&apos;s code.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+#include &lt;queue&gt;
+#include &lt;cstring&gt;
+
+using namespace std;
+
+#define MAXN 1010
+
+int Q[MAXN];
+int DP[MAXN];
+int D[MAXN];
+vector&lt;int&gt; E[MAXN];
+
+int main() {
+  freopen(&quot;buffet.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;buffet.out&quot;, &quot;w&quot;, stdout);
+
+  int N, ECST;
+  cin &gt;&gt; N &gt;&gt; ECST;
+  for (int i = 0; i &lt; N; i++) {
+    int D;
+    cin &gt;&gt; Q[i] &gt;&gt; D;
+    for (int j = 0; j &lt; D; j++) {
+      int v;
+      cin &gt;&gt; v;
+      E[i].push_back(v - 1);
+    }
+  }
+
+  vector&lt;int&gt; PI;
+  for (int i = 0; i &lt; N; i++) {
+    PI.push_back(i);
+  }
+  sort(PI.begin(), PI.end(), [&amp;](int x, int y) {
+    return Q[x] &lt; Q[y];
+  });
+
+  int result = 0;
+  for (int i = N - 1; i &gt;= 0; i--) {
+    int u = PI[i];
+
+    queue&lt;int&gt; q;
+    memset(D, -1, sizeof(D));
+    q.push(u);
+    D[u] = 0;
+    while (!q.empty()) {
+      int v = q.front();
+      q.pop();
+      for (int i = 0; i &lt; E[v].size(); i++) {
+        int nv = E[v][i];
+        if (D[nv] == -1) {
+          D[nv] = D[v] + 1;
+          q.push(nv);
+        }
+      }
+    }
+
+    int res = Q[u];
+    for (int j = 0; j &lt; N; j++) {
+      if (D[j] != -1) {
+        res = max(res, Q[u] + DP[j] - ECST * D[j]);
+      }
+    }
+    DP[u] = res;
+    result = max(result, res);
+  }
+
+  cout &lt;&lt; result &lt;&lt; endl;
+  return 0;
+}
+</pre></body></html>

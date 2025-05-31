@@ -1,0 +1,134 @@
+Solution ID: sol_cowdate_platinum_feb19
+Contest: FEB19
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_cowdate_platinum_feb19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Ethan Guo)
+
+Clearly, Bessie may send an invitation to any individual cow. To gain intuition
+on how to maximize probability, we will investigate on what circumstances we
+should extend an interval to increase probability. We will then show the
+strategy works in general.
+
+Firstly, we will create an expression for the probability of exactly one
+acceptance. This equals
+
+$\sum\limits_{l\leq i\leq r}\left(p_i\prod\limits_{l\leq j\leq r,j\neq i}(1-p_j)\right)$
+
+.
+Letting
+
+$P=\prod\limits_{l\leq j\leq r}(1-p_j)$
+
+, this expression reduces to
+
+$P\sum\limits_{l\leq i\leq r}\frac{p_i}{1-p_i}$
+
+.
+
+Consider the expression after a probability
+
+$pâ$
+
+is added to an end of the
+interval. For this to increase the answer, we have that
+
+$P(1-pâ)\left(\frac{pâ}{1-pâ}+\sum\limits_{l\leq i\leq r}\frac{p_i}{1-p_i}\right)>P\sum\limits_{l\leq i\leq r}\frac{p_i}{1-p_i}$
+
+.
+This, surprisingly, reduces to
+
+$\sum\limits_{l\leq i\leq r}\frac{p_i}{1-p_i}<1$
+
+.
+Therefore, as long as the sum of
+
+$\frac{p_i}{1-p_i}$
+
+within the interval is less
+than
+
+$1$
+
+, it is desirable to extend the interval.
+
+Note that the quantity
+
+$\frac{p_i}{1-p_i}$
+
+for any probability is positive.
+Therefore, each time we extend an interval, we increase
+
+$\sum\frac{p_i}{1-p_i}$
+
+.
+Up to a given point, this sum will remain less than
+
+$1$
+
+, and each augmentation
+before then is optimal to maximize the answer.
+
+Since we can always extend the interval as long as the condition is satisfied,
+the correct strategy is to consider the maximal interval subject to the
+constraint for each starting point. This can be done with the two-pointer method
+in
+
+$O(N)$
+
+since the right end of the maximal interval is nondecreasing (advance
+the right pointer as long as the sum is still less than
+
+$1$
+
+, then advance the
+left pointer once to consider the next starting point).  My solution code is
+shown below.
+
+(Note from Brian Dean: this problem is related to the so-called "Odds
+Algorithm", for those who want to understand more about its underlying
+mathematical structure)
+
+#include <iostream>
+#include <iomanip>
+ 
+using namespace std;
+ 
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(0);
+    freopen("cowdate.in", "r", stdin);
+    freopen("cowdate.out", "w", stdout);
+    int n; cin >> n;
+    double p[n];
+    for (int i = 0; i < n; i++) {
+        int pt; cin >> pt;
+        p[i] = pt * 0.000001;
+    }
+    // left and right pointers
+    int l = 0, r = 0;
+    // product of 1-p_i and sum of p_i/(1-p_i) within current interval
+    double prod = 1, sum = 0;
+    // answer
+    double mxp = -1;
+    while (l < n) {
+        // advance right pointer as long as condition is satisfied
+        while (r < n && sum < 1) {
+            // update product and sum
+            prod *= (1 - p[r]);
+            sum += p[r] / (1 - p[r]);
+            r++;
+        }
+        // expression for probability is prod * sum
+        mxp = max(mxp, prod * sum);
+        // advance left pointer by removing from prod and sum
+        prod /= (1 - p[l]);
+        sum -= p[l] / (1 - p[l]);
+        l++;
+    }
+    cout << (int) (1000000 * mxp) << endl;
+    return 0;
+}

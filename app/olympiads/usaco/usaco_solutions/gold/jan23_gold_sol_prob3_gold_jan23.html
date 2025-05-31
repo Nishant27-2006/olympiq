@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Claire Zhang and Brandon Wang)
+<p>Let&apos;s annotate each character in the route with a subscript that indicates which
+<span class='math'>$i.5$</span> point it passes. That is, we denote <span class='math'>$i+1\to i$</span> moves by <span class='math'>$L_i$</span>, and
+<span class='math'>$i\to i+1$</span> moves by <span class='math'>$R_i$</span>. Then, our string must contain exactly
+<span class='math'>$B_i = \frac{A_i}{2}$</span> <span class='math'>$L_i$</span>&apos;s, and <span class='math'>$B_i$</span> <span class='math'>$R_i$</span>&apos;s. In any route with minimal
+turns, we must have:
+<p><ul><li>If <span class='math'>$B_i \geq B_{i+1}$</span>, then any <span class='math'>$L_{i+1}$</span> must be followed by a <span class='math'>$L_i$</span>. 
+Furthermore, exactly <span class='math'>$B_{i+1}$</span> <span class='math'>$R_i$</span>&apos;s are followed by <span class='math'>$R_{i+1}$</span>&apos;s, and the
+other <span class='math'>$B_i - B_{i+1}$</span>  are followed by <span class='math'>$L_i$</span>&apos;s.</li><li>If <span class='math'>$B_i \leq B_{i+1}$</span>,
+then any <span class='math'>$R_i$</span> must be followed by a <span class='math'>$R_{i+1}$</span>.  Furthermore, exactly <span class='math'>$B_i$</span>
+<span class='math'>$L_{i+1}$</span>&apos;s are followed by <span class='math'>$L_i$</span>&apos;s, and the other <span class='math'>$B_{i+1} - B_i$</span>  are followed
+by <span class='math'>$R_{i+1}$</span>&apos;s.</li></ul>
+<p>In addition, we note that in any route, the final <span class='math'>$L_{i+1}$</span> must be followed by
+an <span class='math'>$L_i$</span> (and not an <span class='math'>$R_{i+1}$</span>)  since otherwise Bessie would not have a way to
+return to <span class='math'>$0$</span>.
+<p>We claim that this is the only restriction. That is, to count the number of
+paths, for each <span class='math'>$i = 0, 1, \ldots, N-2$</span> it suffices to count the number of ways
+to pick which <span class='math'>$R_i$</span>&apos;s that are followed by <span class='math'>$R_{i+1}$</span>&apos;s if <span class='math'>$B_i \geq B_{i+1}$</span>, 
+or which <span class='math'>$L_{i+1}$</span>&apos;s followed by <span class='math'>$L_i$</span>&apos;s if <span class='math'>$B_i \leq B_{i+1}$</span> (such that the
+last <span class='math'>$L_{i+1}$</span> is followed by an <span class='math'>$L_i$</span>).  Then, any such assignment will produce
+a unique valid path.
+<p>Uniqueness is clear, but to show validity, suppose we construct the route by
+following the assignments, where the route ends when the last <span class='math'>$L_0$</span> is reached
+(and all previous <span class='math'>$L_0$</span>&apos;s are followed by <span class='math'>$R_0$</span>&apos;s). We need to check that all of
+the <span class='math'>$L_i$</span>&apos;s and <span class='math'>$R_i$</span>&apos;s are actually used; since the number of <span class='math'>$R_i$</span>&apos;s and
+<span class='math'>$L_i$</span>&apos;s is the same, we need to check that this path visits <span class='math'>$B_i$</span> <span class='math'>$L_i$</span>&apos;s. 
+<p>We will do this by induction, where <span class='math'>$L_0$</span> is true by assumption. For the
+inductive step, suppose <span class='math'>$B_i$</span> <span class='math'>$L_i$</span>&apos;s appear in the path. Then, if
+<span class='math'>$B_i \geq B_{i+1}$</span>, then <span class='math'>$B_i-B_{i+1}$</span> <span class='math'>$L_i$</span>&apos;s are preceded by <span class='math'>$R_i$</span>&apos;s, and
+<span class='math'>$B_{i+1}$</span> of them are preceded by <span class='math'>$L_{i+1}$</span>&apos;s. So, in order for all the <span class='math'>$L_i$</span>&apos;s
+to appear, all the <span class='math'>$L_{i+1}$</span>&apos;s must also appear. Conversely, if
+<span class='math'>$B_i \leq B_{i+1}$</span>, then since the last <span class='math'>$L_{i+1}$</span> is immediately followed by an
+<span class='math'>$L_i$</span>,  if not all <span class='math'>$L_{i+1}$</span>&apos;s appear then not all <span class='math'>$L_i$</span>&apos;s can appear,
+contradicting the inductive hypothesis. So, the constructed path contains <span class='math'>$B_i$</span>
+<span class='math'>$L_i$</span>&apos;s for each <span class='math'>$i$</span>, and thus crosses <span class='math'>$i.5$</span> exactly <span class='math'>$2B_i = A_i$</span> times.
+Minimality (i.e. the fact that exactly
+<span class='math'>$(B_0 - 1) + \left(\sum_{i=0}^{n-2} |B_i - B_{i+1}|\right) + (B_{n-1})$</span>  turns are made) follows by the
+construction.
+<p>Now, if <span class='math'>$B_i \geq B_{i+1}$</span>, then the number of assignments is just
+<span class='math'>$\binom{B_i}{B_{i+1}}$</span>. In the second the other case, since the last <span class='math'>$L_{i+1}$</span>
+must be followed by <span class='math'>$L_i$</span>, the answer is
+<span class='math'>$\binom{B_{i+1}-1}{B_i-1}$</span>.
+<p>Thus we obtain our answer as a product of binomial coefficients:
+<div class='math'>$$
+\prod_{i=0}^{N-2} \begin{cases} \binom{B_i}{B_{i+1}} &amp; \text{ if } B_i \geq B_{i+1} \\
+\binom{B_{i+1}-1}{B_i-1} &amp; \text{ otherwise } \end{cases}
+$$</div>
+<p>Let <span class='math'>$T = \max_i A_i$</span>. We can precompute factorials in <span class='math'>$O(T)$</span> time. We can
+compute inverse factorials by first computing the modular inverse of <span class='math'>$T!$</span> (e.g.,
+by raising it to <span class='math'>$MOD-2$</span> with binary exponentiation). Then we can obtain all
+smaller inverse factorials in decreasing order. Now we can compute each binomial
+coefficient in the desired expression in <span class='math'>$O(1)$</span> time, for a total runtime of
+<span class='math'>$O(\log(MOD) + T+N)$</span>.
+<p>Python solution:
+<pre class='prettyprint'>
+P = int(1e9+7)
+MAX_A = int(1e6+1)
+ 
+# computes a^n mod P
+def exp(a, n):
+    if n == 0:
+        return 1
+    base = exp((a*a)%P, n // 2)
+    return base if n%2 == 0 else (a*base)%P
+ 
+# initialize
+facts = [1]
+for i in range(1, MAX_A):
+    facts.append((facts[-1] * i)%P)
+inv_facts = [exp(facts[-1], P-2)]
+for i in range(MAX_A-1, 0, -1):
+    inv_facts.append((inv_facts[-1] * i)%P)
+inv_facts.reverse()
+ 
+# binom(n, m) = n!/(m!(n-m)!)
+binom = lambda n, m : (inv_facts[m] * (facts[n] * inv_facts[n-m])%P)%P
+ 
+N = int(input())
+A = [int(x) for x in input().split()]
+B = [a // 2 for a in A]
+ 
+ans = 1
+for i in range(N-1):
+    if B[i] &gt;= B[i+1]:
+        ans *= binom(B[i], B[i+1])
+    else:
+        ans *= binom(B[i+1]-1, B[i]-1)
+    ans %= P
+ 
+print(ans)
+</pre>
+<p></body></html>

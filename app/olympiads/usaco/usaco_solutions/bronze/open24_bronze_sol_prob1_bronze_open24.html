@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Chongtian Ma)
+<p><strong>Subtask 1: <span class='math'>$N, Q \leq 100$</span></strong>
+<p>It suffices to re-evaluate the statement for every query and simulate the
+process outlined in the problem statement. Since we need to check if any
+<strong>and</strong>s or <strong>or</strong>s remain in the statement and replace the phrase with
+its evaluation, this process will take <span class='math'>$\mathcal{O}(N^2)$</span>. The time complexity
+is <span class='math'>$\mathcal{O}(QN^2)$</span>.
+<p><strong>Subtask 2: <span class='math'>$N, Q \leq 1000$</span></strong>
+<p>We can evaluate the statement in <span class='math'>$\mathcal{O}(N)$</span>. First, we need to evaluate 
+all <strong>and</strong> phrases, and then all <strong>or</strong> phrases. When processing  phrases
+with the same operator, since the processing order does not matter, we go from
+left to right.
+<p>In total, this will take <span class='math'>$\mathcal{O}(QN)$</span> time. 
+<p>C++:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+string eval_statement(vector&lt;string&gt; statement){
+	int n = statement.size();
+	vector&lt;string&gt; removed_and;
+	// evaluate and first
+	int i = 0;
+	while(i &lt; n){
+		if(i &lt; n - 1 &amp;&amp; statement[i + 1] == &quot;and&quot;){
+			string final_eval = statement[i];
+			int j = i + 2;
+                        // obtain the farthest consecutive and
+			while(j &lt; n &amp;&amp; statement[j - 1] == &quot;and&quot;){
+				if(statement[j] == &quot;false&quot;){
+					final_eval = &quot;false&quot;;
+				}
+				j += 2;
+			}
+			removed_and.push_back(final_eval);
+			i = j;
+		}
+		else{
+			removed_and.push_back(statement[i]);
+			i += 2;
+		}
+	}
+	// evaluate with ors only
+	string final_eval = &quot;false&quot;;
+	for(string s: removed_and){
+                // recall we only need one phrase to be true
+		if(s == &quot;true&quot;){
+			final_eval = &quot;true&quot;;
+		}
+	}
+	return final_eval;	
+}
+
+int main(){
+	cin.tie(0) -&gt; sync_with_stdio(0);
+	int N, Q; cin &gt;&gt; N &gt;&gt; Q;
+	vector&lt;string&gt; statement(N);
+	for(string&amp; s: statement) cin &gt;&gt; s;
+	while(Q--){
+		int l, r; string t; cin &gt;&gt; l &gt;&gt; r &gt;&gt; t;
+		--l; --r;
+		bool ok = false;
+		for(string try_replace: {&quot;true&quot;, &quot;false&quot;}){
+			vector&lt;string&gt; new_statement;
+			for(int i = 0; i &lt; l; i++) new_statement.push_back(statement[i]);
+			new_statement.push_back(try_replace);
+			for(int i = r + 1; i &lt; N; i++) new_statement.push_back(statement[i]);
+			if(eval_statement(new_statement) == t){
+				ok = true;
+			}
+		}
+		cout &lt;&lt; (ok ? &apos;Y&apos; : &apos;N&apos;);
+	}
+}
+</pre>
+<p>If using Python, we can use <span class='math'>$\texttt{eval}$</span> instead of manually evaluating the
+statement.
+<p>Python (from Benjamin Qi):
+<p><pre class='prettyprint'>
+N, Q = map(int, input().split())
+keywords = input().split()
+ 
+def capitalize_first(w):
+	return w[:1].upper() + w[1:]
+ 
+for i in range(0, N, 2):
+	keywords[i] = capitalize_first(keywords[i])
+ 
+assert N % 2 == 1
+answers = []
+for _ in range(Q):
+	l, r, result = input().split()
+	l = int(l)
+	r = int(r)
+	result = capitalize_first(result)
+	assert l % 2 == 1 and r % 2 == 1
+	answer = False
+	for val in [&quot;True&quot;, &quot;False&quot;]:
+		res = keywords[:l-1] + [val] + keywords[r:]
+		answer |= eval(&quot; &quot;.join(res)) == eval(result)
+	answers.append(answer)
+ 
+print(&quot;&quot;.join(map(lambda x: {False: &apos;N&apos;, True: &apos;Y&apos;}[x], answers)))
+</pre>
+<p><strong>No additional constraints</strong>
+<p>Let&apos;s call a maximal sequence of booleans separated by <strong>and</strong> operators a
+group. These groups are separated by <strong>or</strong> operators. For example, in the
+first sample, there are two groups, which we will surround with parentheses:
+<p><pre>
+(false and true) or (true)
+</pre>
+<p><strong>Observation 1: </strong> The statement evaluates to true if and only if at least
+one group that evaluates to true.
+<p>For the original statement, note the first and last groups that evaluate to
+true. For each query,  denote the group that index <span class='math'>$l$</span> is in by <span class='math'>$gl$</span> and the
+group that index <span class='math'>$r$</span> is by <span class='math'>$gr$</span>. First, we check if the first true group is
+before <span class='math'>$gl$</span> or the last true group is after <span class='math'>$gr$</span>. If either of these hold, then
+at least one group evaluates to true, so the statement will be true regardless
+of what boolean value we replace the segment with.
+<p>Otherwise, we know for all <span class='math'>$g$</span> where <span class='math'>$g &lt; gl$</span> or <span class='math'>$g &gt; gr$</span>, group <span class='math'>$g$</span> will
+evaluate to false, we can now focus on groups <span class='math'>$g$</span> such that <span class='math'>$gl \leq g \leq gr$</span>.
+For each <span class='math'>$g$</span>, note the first and last false keywords. This is because as long as
+a group contains at least one false, it evaluates to false regardless of the
+remaining keywords in the group.
+<p>It is always optimal to replace the segment with the boolean value that the
+query asks for, because: 
+<p><ol><li>If the value the statement evaluates to does not depend on the replaced
+value, it does not matter what we replace the segment with.</li><li>Otherwise, the statement evaluates to the replaced value.</li></ol>
+<p>For queries asking for &quot;true&quot;, we have to do another check if the segment
+contains the first false keyword of <span class='math'>$gl$</span> and the last false keyword of <span class='math'>$gr$</span>. If
+it doesn&apos;t, then the statement will evaluate to false even if we replace the rest
+of the statement with &quot;true&quot;. For queries asking for false, if we place a false,
+the statement will evaluate to false.
+<p>If we store the leftmost &quot;false&quot; and the rightmost &quot;false&quot; of each group, in
+addition to the first and last group that already evaluates to &quot;true&quot;, we can
+answer each query in constant time. Thus, the total time complexity is
+<span class='math'>$\mathcal{O}(N + Q)$</span>.
+<p>C++:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+const int INF = 1e9;
+
+int main(){
+	cin.tie(0) -&gt; sync_with_stdio(0);
+	int n, q; cin &gt;&gt; n &gt;&gt; q;
+	vector&lt;string&gt; s(n);
+	for(int i = 0; i &lt; n; i++) cin &gt;&gt; s[i];
+	vector&lt;int&gt; group(n);
+	int group_no = 0;
+	for(int i = 0; i &lt; n; i++){
+		if(s[i] == &quot;or&quot;){
+			group_no++;
+		}
+		else{
+			if(i % 2 == 0){
+				group[i] = group_no;
+			}
+		}
+	}
+	vector&lt;int&gt; first_false(group_no + 1, INF);
+	vector&lt;int&gt; last_false(group_no + 1, -1);
+	for(int i = 0; i &lt; n; i += 2){
+		int g = group[i];
+		if(s[i] == &quot;false&quot;){
+			if(first_false[g] == INF){
+				first_false[g] = i;
+			}
+			last_false[g] = i;
+		}
+	}
+	int total_first_true = INF, total_last_true = -1;
+	for(int i = 0; i &lt;= group_no; i++){
+		if(first_false[i] == INF){
+			if(total_first_true == INF){
+				total_first_true = i;
+			}
+			total_last_true = i;
+		}
+	}
+	while(q--){
+		int l, r; cin &gt;&gt; l &gt;&gt; r;
+		--l; --r;
+		string t; cin &gt;&gt; t;
+		// we only need one true for whole statement to be true
+		int l_group = group[l], r_group = group[r];
+		if(total_first_true &lt; l_group || total_last_true &gt; r_group){
+			cout &lt;&lt; (t == &quot;true&quot; ? &apos;Y&apos; : &apos;N&apos;);
+			continue;
+		}
+		if(t == &quot;true&quot;){
+			cout &lt;&lt; (first_false[l_group] &lt; l || last_false[r_group] &gt; r ? &apos;N&apos; : &apos;Y&apos;);
+		}
+		else{
+			cout &lt;&lt; &apos;Y&apos;;
+		}
+	}
+}
+</pre>
+<p>Python (from Benjamin Qi):
+<p><pre class='prettyprint'>
+N, Q = map(int, input().split())
+keywords = input().split()
+assert N % 2 == 1 and len(keywords) == N
+ 
+ 
+for i in range(0, N, 2):
+    keywords[i] = keywords[i] == &quot;true&quot;
+ 
+lowest_r = float(&quot;inf&quot;)
+highest_l = -1
+ 
+r = 0
+while r &lt; N:
+    l = r
+    group_result = keywords[l]
+    while r + 1 &lt; N and keywords[r + 1] == &quot;and&quot;:
+        r += 2
+        group_result &amp;= keywords[r]
+    if group_result:
+        lowest_r = min(lowest_r, r)
+        highest_l = max(highest_l, l)
+    r += 2
+ 
+exists_false_left_of = [False] * N
+for i in range(2, N, 2):
+    if keywords[i - 1] == &quot;or&quot;:
+        continue
+    exists_false_left_of[i] = exists_false_left_of[i - 2] or keywords[i - 2] == False
+ 
+exists_false_right_of = [False] * N
+for i in reversed(range(0, N - 1, 2)):
+    if keywords[i + 1] == &quot;or&quot;:
+        continue
+    exists_false_right_of[i] = exists_false_right_of[i + 2] or keywords[i + 2] == False
+ 
+answers = []
+for _ in range(Q):
+    l, r, result = input().split()
+    l = int(l) - 1
+    r = int(r) - 1
+    result = result == &quot;true&quot;
+    assert l % 2 == 0 and r % 2 == 0
+    eval_result = lowest_r &lt; l or r &lt; highest_l
+    if not (exists_false_left_of[l] or exists_false_right_of[r]):
+        eval_result |= result
+    answers.append(result == eval_result)
+ 
+ 
+print(&quot;&quot;.join(map(lambda x: {False: &quot;N&quot;, True: &quot;Y&quot;}[x], answers)))
+</pre>
+<p></body></html>

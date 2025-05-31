@@ -1,0 +1,575 @@
+Solution ID: sol_prob3_gold_jan24
+Contest: JAN24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_jan24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Subtask 1:
+
+$O(2^N\cdot N\log N)$
+
+Iterate over all
+
+$2^N$
+
+ways to split into piles, and check each of them in
+
+$O(N\log N)$
+
+time.
+
+Subtask 2:
+
+$O(N^3)$
+
+First, sort the
+
+$a_i$
+
+in increasing order (
+
+$a_1\le a_2\le a_3\le \dots\le a_N$
+
+).
+Let
+
+$B$
+
+be the size of Bessie's pile. The answer must be at most
+
+$a_N$
+
+since we
+can take
+
+$B=0$
+
+. If the answer is less than
+
+$a_N$
+
+, then
+
+$a_N$
+
+must be added to
+the array by Bessie at time
+
+$B(B+1)/2$
+
+.  Our goal is to find the minimum
+
+$B$
+
+such this is possible, and output
+
+$\min(B(B+1)/2, a_N)$
+
+as the answer.
+
+For convenience, let's assume that the indices in the Bessie pile are in
+increasing order (
+
+$1\le b_1 < b_2 < \dots < b_B\le N$
+
+) and similarly for the
+Helper pile (
+
+$1\le h_1 < h_2 < \dots < h_{N-B}\le N$
+
+). Then the final array is
+defined by the following pseudocode.
+
+i_b = 0, i_h = 0
+index_seq = []
+repeat(N) {
+  if (i_h == N - B or (i_b < B and sum(B - i_b, B) <= a_{h_{i_h + 1}})) {
+    i_b += 1
+    index_seq.append(b_{i_b})
+  } else {
+    i_h += 1
+    index_seq.append(h_{i_h})
+  }
+}
+final_array = [a_i for i in index_seq]
+
+Note that if
+
+$\texttt{index_seq}=[1,2,\dots,N]$
+
+, then the final array is sorted.
+The converse holds if all
+
+$a_i$
+
+are distinct, but not necessarily if there are
+duplicate
+
+$a_i$
+
+s. However, if we have a division producing a sorted final array
+but
+
+$\texttt{index_seq}\neq [1,2,\dots,N]$
+
+, there is always a way to modify the
+division such that the time to sort the array remains the same and
+
+$\texttt{index_seq}= [1,2,\dots,N]$
+
+. This is true because we can freely take any
+two indices
+
+$b_i$
+
+and
+
+$h_j$
+
+with
+
+$a_{b_i}=a_{h_j}$
+
+and exchange them, leaving
+the final array unchanged but potentially changing
+
+$\texttt{index_seq}$
+
+. The
+details are left as an exercise to the reader.
+
+For this subtask, we provide an
+
+$O(N^2)$
+
+to check whether a given
+
+$B$
+
+is
+possible. Given such a checking algorithm, we can iterate from
+
+$B=1$
+
+to
+
+$B=N$
+
+in
+increasing order and stop once we find
+
+$B$
+
+such that
+
+$B$
+
+is possible.
+
+Checking whether a given
+
+$B$
+
+is possible can be done with dynamic programming. 
+Iterate over each index
+
+$i$
+
+in
+
+$1\dots N$
+
+and decide whether to add it to the 
+Bessie or the Helper pile. The only state we need to keep track of about the
+previous indices are how many of them are in the Bessie pile, and whether index
+
+$i-1$
+
+was added to the  Bessie or the Helper pile. Each state has up to two
+transitions out of it: either add
+
+$i$
+
+to the Bessie pile or the Helper pile, as
+long as
+
+$i$
+
+is added to
+
+$\texttt{index_seq}$
+
+after
+
+$i-1$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+#define all(x) begin(x), end(x)
+#define mp make_pair
+
+// sum(l ... r)
+int64_t arith(int64_t l, int64_t r) { return (l + r) * (r - l + 1) / 2; }
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin >> T;
+    while (T--) {
+        int N;
+        cin >> N;
+        vector<int64_t> A(N);
+        for (auto &a : A) cin >> a;
+        sort(all(A));
+        auto possible = [&](int B) {
+            const int H = N - B;
+            vector<vector<array<bool, 2>>> dp(
+                B + 1, vector<array<bool, 2>>(H + 1, {0, 0}));
+            // size of Bessie pile, Helper pile so far
+            // p: {0 -> last was in Bessie pile, 1 -> last was in Helper pile}
+            dp[0][0][0] = 1;
+            for (int b = 0; b <= B; ++b)
+                for (int h = 0; h <= H; ++h)
+                    for (int p : {0, 1})
+                        if (dp[b][h][p]) {
+                            // i = b + h + 1
+                            auto get_last = [&]() {
+                                // time when i-1 was added to array
+                                // (tiebreaking by pile)
+                                return p == 0 ? mp(arith(B + 1 - b, B), 0)
+                                              : mp(A.at(b + h - 1), 1);
+                            };
+                            auto get_next_0 = [&]() {
+                                // time when i will be added to array if in
+                                // Bessie pile
+                                return mp(arith(B - b, B), 0);
+                            };
+                            auto get_next_1 = [&]() {
+                                // time when i will be added to array if in
+                                // Helper pile
+                                return mp(A.at(b + h), 1);
+                            };
+                            if (b < B && get_last() <= get_next_0())
+                                dp[b + 1][h][0] = 1;
+                            if (h < H && get_last() <= get_next_1())
+                                dp[b][h + 1][1] = 1;
+                        }
+            return dp.at(B).at(N - B).at(0);
+            // 0 -> last element must be in Bessie pile
+        };
+        int B = 1;
+        while (!possible(B)) ++B;
+        cout << min(arith(1, B), A.back()) << "\n";
+    }
+}
+
+Subtask 3:
+
+$O(N^2)$
+
+We provide an
+
+$O(N)$
+
+time algorithm to check whether a given
+
+$B$
+
+is possible.
+
+$B=N$
+
+is always possible, so let's restrict consideration to the case
+
+$B<N$
+
+(the
+Helper pile is nonempty). Note that for each index
+
+$i$
+
+, if we choose to place it
+in the Helper pile, then its position is uniquely determined regardless of what
+other indices we place in the Helper pile. Specifically, its position in the
+Helper pile must be
+
+$$pos_i=i-(\text{the number of integers in Bessie's pile that would be added before }a_i\text{ is added by a Helper})$$
+
+in order for
+
+$i$
+
+to be the
+
+$i$
+
+th index added to
+
+$\texttt{index_seq}$
+
+. Then
+
+$B$
+
+is possible iff there exist indices
+
+$1\le h_1<h_2<\dots < h_{N-B} < N$
+
+such that
+
+$pos_{h_1}=1, pos_{h_2}=2, \dots, pos_{h_{N-B}}=N-B$
+
+. We can compute
+
+$pos_i$
+
+in
+increasing order of
+
+$i$
+
+in
+
+$O(N)$
+
+with two pointers.
+
+Additional observations:
+
+$pos_1\le 1$
+
+and
+
+$pos_{i+1}\le pos_i+1$
+
+. So actually
+there exist such indices if and only if there exists some
+
+$1\le i<N$
+
+with
+
+$pos_i=N-B$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+#define all(x) begin(x), end(x)
+#define mp make_pair
+
+// sum(l ... r)
+int64_t arith(int64_t l, int64_t r) { return (l + r) * (r - l + 1) / 2; }
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin >> T;
+    while (T--) {
+        int N;
+        cin >> N;
+        vector<int64_t> A(N);
+        for (auto &a : A) cin >> a;
+        sort(all(A));
+        auto possible = [&](int B) {
+            if (B == N) return true;
+            int num_before = 0;
+            for (int i = 0; i + 1 < N; ++i) {
+                while (num_before < B && arith(B - num_before, B) <= A[i])
+                    ++num_before;
+                if (i + 1 - num_before == N - B)
+                    return true;  // found potential last element of Helper pile
+            }
+            return false;
+        };
+        int B = 1;
+        while (!possible(B)) ++B;
+        cout << min(arith(1, B), A.back()) << "\n";
+    }
+}
+
+Full Credit:
+
+$O(N\log N)$
+
+We claim that if
+
+$B<N$
+
+and
+
+$B$
+
+is possible, then
+
+$B+1$
+
+is also possible.
+
+This holds when
+
+$B=N-1$
+
+, since
+
+$B=N$
+
+is always possible.
+
+Otherwise, from subtask 3 we have that
+
+$B$
+
+is possible if and only if there
+exists some
+
+$1\le i<N$
+
+with
+
+$pos_i\ge N-B$
+
+(such
+
+$i$
+
+immediately implies the
+existence of
+
+$j$
+
+such that
+
+$pos_j=N-B$
+
+). If
+
+$B$
+
+is possible, take any index
+
+$i\in [1,N)$
+
+such that the inequality
+
+$pos_i\ge N-B$
+
+is satisfied. Then if
+
+$B$
+
+increases by one, the right-hand side decreases, the left-hand side of this
+inequality stays the same or increases,  which means that this inequality will
+still be satisfied.  Thus,
+
+$B+1$
+
+is also possible.
+
+Note: To see this fact about the left-hand side, let
+
+$n_i\in [0,B)$
+
+be the value
+of the subtrahend in
+
+$pos_i$
+
+for
+
+$B$
+
+. Then the
+
+$n_i+1$
+
+-st index in Bessie's pile
+must be added after time
+
+$a_i$
+
+. If
+
+$B$
+
+increases by one, then the
+
+$n_i+1$
+
+-st
+index in Bessie's pile must still be added after time
+
+$a_i$
+
+, since the time it
+is added increases.
+
+So we can binary search to find the first possible
+
+$B$
+
+, reducing the number of
+
+$B$
+
+we need to check to
+
+$O(\log N)$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+#define all(x) begin(x), end(x)
+#define mp make_pair
+
+// sum(l ... r)
+int64_t arith(int64_t l, int64_t r) { return (l + r) * (r - l + 1) / 2; }
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin >> T;
+    while (T--) {
+        int N;
+        cin >> N;
+        vector<int64_t> A(N);
+        for (auto &a : A) cin >> a;
+        sort(all(A));
+        auto possible = [&](int B) {
+            if (B == N) return true;
+            int num_before = 0;
+            for (int i = 0; i + 1 < N; ++i) {
+                while (num_before < B && arith(B - num_before, B) <= A[i])
+                    ++num_before;
+                if (i + 1 - num_before == N - B)
+                    // found potential last element of Helper pile
+                    return true;
+            }
+            return false;
+        };
+        int lo = 1, hi = N;
+        while (lo < hi) {
+            int mid = (lo + hi) / 2;
+            if (possible(mid)) hi = mid;
+            else lo = mid + 1;
+        }
+        cout << min(arith(1, lo), A.back()) << "\n";
+    }
+}

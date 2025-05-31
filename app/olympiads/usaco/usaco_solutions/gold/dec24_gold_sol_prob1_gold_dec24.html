@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Chongtian Ma)
+<p>Since a friendship group must all have the same label, let&apos;s lock in on a
+specific label <span class='math'>$L$</span> and denote the sorted indices of the cows with label <span class='math'>$L$</span> as
+<span class='math'>$b_1, b_2, \ldots, b_k$</span> (assuming there are <span class='math'>$k$</span> cows with label <span class='math'>$L$</span>). The number
+of friendship groups contributed by the label is the minimum number of disjoint
+subarrays that <span class='math'>$b$</span> must be partitioned such that the last element of each
+subarray must be at most <span class='math'>$x$</span> more than the first element of the subarray.
+<p>For a fixed <span class='math'>$x$</span> and <span class='math'>$L$</span>, this can be solved with a greedy algorithm. Let&apos;s
+iterate over the indices in sorted order and keep two pointers <span class='math'>$l$</span> and <span class='math'>$r$</span>, the
+left and right pointers respectively. We will keep incrementing <span class='math'>$r$</span> until
+<span class='math'>$b_r - b_l &gt; x$</span>. Then, we will increase the number of groups by <span class='math'>$1$</span> and set <span class='math'>$l$</span>
+to <span class='math'>$r$</span>. We will repeat this process until <span class='math'>$r$</span> has reached the end of <span class='math'>$b$</span>. Over
+all <span class='math'>$x$</span>, since the sum of lengths of <span class='math'>$b$</span> over all <span class='math'>$L$</span> is <span class='math'>$N$</span>, this will take
+<span class='math'>$\mathcal{O}(N^2)$</span> time. This is sufficient to pass subtask <span class='math'>$1$</span>.
+<p>For subtask <span class='math'>$2$</span>, there are only <span class='math'>$10$</span> possible values of <span class='math'>$L$</span>. For each <span class='math'>$L$</span>, let&apos;s
+create an array <span class='math'>$\mathtt{next}$</span> where <span class='math'>$\mathtt{next}_i$</span> stores the least
+<span class='math'>$j \geq i$</span> such that <span class='math'>$a_j = L$</span> (or <span class='math'>$N + 1$</span> if there is no such <span class='math'>$j$</span>). This array
+can be precomputed by looping through <span class='math'>$a$</span> backwards. For a fixed <span class='math'>$x$</span>, we can
+count the number of groups in <span class='math'>$\mathcal{O}(\frac{N}{x})$</span> time using the
+following algorithm:
+<p><pre class='prettyprint'>
+pointer = first i such that a[i] = L
+while pointer &lt;= n:
+   add 1 to number of groups
+   if pointer + x + 1 &gt; n:
+      break out of the loop
+   pointer = next[pointer + x + 1]
+</pre>
+<p>Initially, the pointer is at the first index of first group. In every iteration,
+we are jumping to the start of the next group, which must be at least <span class='math'>$x + 1$</span>
+indices forwards. In the worst case, we will jump <span class='math'>$\frac{N}{x}$</span> times.  Over all
+<span class='math'>$x$</span>, the total running time is <span class='math'>$\mathcal{O}(N \log N)$</span> due to the harmonic
+series. Finally, over all <span class='math'>$L$</span> this becomes
+<span class='math'>$\mathcal{O}(10N \log N) \approx \mathcal{O}(N \log N)$</span>.  
+<p>For subtask <span class='math'>$3$</span>, the number of possible <span class='math'>$L$</span> can be huge, but the length of <span class='math'>$b$</span>
+for each <span class='math'>$L$</span> is at most <span class='math'>$10$</span>. Observe that the maximum number of groups that can
+be made is <span class='math'>$10$</span> because each group must have at least <span class='math'>$1$</span> element. If we fix and
+denote the number of groups we want to make as <span class='math'>$g$</span>, then we want to find <span class='math'>$l$</span>,
+the minimum <span class='math'>$x$</span> such that <span class='math'>$g$</span> groups can be made. This can be done with binary
+search.
+<p>Let&apos;s create an array <span class='math'>$c_1, c_2, \ldots, c_k$</span>, where <span class='math'>$c_i$</span> is the value of <span class='math'>$l$</span>
+for each <span class='math'>$i = g$</span>. It is apparent that <span class='math'>$c$</span> must be sorted in decreasing order.
+Essentially, <span class='math'>$c_g$</span> is the barrier point of <span class='math'>$x$</span> that splits <span class='math'>$g$</span> groups and <span class='math'>$g+1$</span>
+groups. We know that <span class='math'>$1$</span> group can be made for <span class='math'>$x$</span> in the interval <span class='math'>$[c_1, N]$</span>,
+<span class='math'>$2$</span> groups for <span class='math'>$[c_2, c_1-1]$</span>, and so on.
+<p>The complexity for a fixed <span class='math'>$L$</span> is
+<span class='math'>$\mathcal{O}(10^2 \log N) \approx \mathcal{O}(\log N)$</span>. Over all <span class='math'>$L$</span>, the total
+complexity is
+<span class='math'>$\mathcal{O}(\frac{N}{10} \cdot 10^2 \log N) \approx \mathcal{O}(N \log N)$</span>.
+<p>For full credit, make the following observation:
+<p><ul><li> If we collect all <span class='math'>$L$</span> such that <span class='math'>$L$</span> appears at least <span class='math'>$z$</span> times in <span class='math'>$a$</span>, then
+there can be no more than <span class='math'>$\frac{N}{z}$</span> values of <span class='math'>$L$</span>. </li></ul>
+<p>Inevitably, if we set <span class='math'>$z$</span> to be a relatively large value, then the number of <span class='math'>$L$</span>
+we have to process will be relatively small since they are inversely
+proportional. Using our subtask <span class='math'>$2$</span> algorithm, the total complexity to process
+all such <span class='math'>$L$</span> is <span class='math'>$\mathcal{O}(\frac{N}{z} \cdot N \log N)$</span>. 
+<p>Now, collect all <span class='math'>$L$</span> such that <span class='math'>$L$</span> appears less than <span class='math'>$z$</span> times in <span class='math'>$a$</span>. Using our
+subtask <span class='math'>$3$</span> algorithm, the total complexity to process all such <span class='math'>$L$</span> is
+<span class='math'>$\mathcal{O}(\frac{N}{z} \cdot z^2 \log N)$</span>.
+<p>It becomes apparent that the complexities of our subtask <span class='math'>$2$</span> and <span class='math'>$3$</span> algorithms
+are inversely proportional. We must choose a suitable value for <span class='math'>$z$</span> such that
+the complexities for both subtasks are as equal as possible.
+<p>Finally, if we set <span class='math'>$z \approx \sqrt{N}$</span>, then the complexity of both subtasks is
+<span class='math'>$\mathcal{O}(N \sqrt{N} \log {N})$</span>, which is enough to receive full credit.
+<p>My C++ Code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int N = 1e5 + 5;
+vector&lt;int&gt; lab_idx[N];
+
+// use two pointers to manually calculate number of groups
+int get_groups(int label, int x) {
+	int cnt = 0, l = 0, r = 0;
+	auto &amp;v = lab_idx[label];
+	while (l &lt; (int)v.size()) {
+		while (r &lt; (int)v.size() &amp;&amp; v[r] - v[l] &lt;= x) { r++; }
+		cnt++;
+		l = r;
+	}
+	return cnt;
+}
+
+int n;
+vector&lt;int&gt; nxt;
+
+int get_groups_big(int label, int x) {
+	int cnt = 0, i = lab_idx[label][0];
+	while (i &lt; n) {
+		cnt++;
+		if (i + x + 1 &gt;= n) break;
+		i = nxt[i + x + 1];
+	}
+	return cnt;
+}
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	cin &gt;&gt; n;
+	nxt.resize(n + 1);
+	for (int i = 0; i &lt; n; i++) {
+		int c;
+		cin &gt;&gt; c;
+		lab_idx[c].push_back(i);
+	}
+	vector&lt;int&gt; small_ans(n + 1), large_ans(n + 1);
+	int SQ = (int)sqrt(n);
+	for (int label = 1; label &lt;= n; label++) {
+		auto&amp; v = lab_idx[label];
+		int lab_sz = v.size();
+		if (lab_sz &gt; SQ) {
+			// Subtask 2
+			fill(nxt.begin(), nxt.end(), 0);
+			for (int i : v) { nxt[i] = i; }
+			nxt[n] = n;
+			for (int i = n - 1; i &gt;= 0; i--) {
+				if (!nxt[i]) nxt[i] = nxt[i + 1];
+			}
+			for (int x = 1; x &lt;= n; x++) {
+				large_ans[x] += get_groups_big(label, x);
+			}
+		} else {
+			// Subtask 3
+			for (int groups = 1; groups &lt;= lab_sz; groups++) {
+				int l = 0, r = n + 1;
+				while (l &lt; r - 1) {
+					int mid = l + (r - l) / 2;
+					if (get_groups(label, mid) &lt; groups) {
+						r = mid;
+					} else {
+						l = mid;
+					}
+				}
+				// will contribute to x in the range of [1, r)
+				small_ans[1]++;
+				if (r &lt;= n) small_ans[r]--;
+			}
+		}
+	}
+	for (int i = 2; i &lt;= n; i++) { small_ans[i] += small_ans[i - 1]; }
+	for (int i = 1; i &lt;= n; i++) {
+		cout &lt;&lt; small_ans[i] + large_ans[i] &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p>Bonus: Solve this problem in <span class='math'>$O(N\sqrt N)$</span> time using the method from
+<a href='https://codeforces.com/blog/entry/134445'>this</a> blog post.
+<p></body></html>

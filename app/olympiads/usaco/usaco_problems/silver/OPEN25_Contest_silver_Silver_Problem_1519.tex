@@ -1,0 +1,224 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: OPEN25 Contest - Silver Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Deep in the countryside, Farmer John’s cows aren’t just ordinary farm
+animals—they are part of a clandestine bovine intelligence network. Each cow
+carries an ID number, carefully assigned by the elite cow cryptographers.
+However, due to Farmer John's rather haphazard tagging system, some cows ended
+up with the same ID.
+
+Farmer John noted that there are $N$ ($1\le N\le 2\cdot 10^5$) unique ID
+numbers, and for each unique ID $d_i$ ($0\le d_i\le 10^9$), there are $n_i$
+($1\le n_i\le 10^9$) cows who shared it.
+
+The cows can only communicate in pairs, and their secret encryption method has
+one strict rule: two cows can only exchange information if they are not the same
+cow and the sum of their ID numbers equals either $A$ or $B$
+($0\le A\le B\le 2\cdot 10^9$). A cow can only engage in one conversation at a
+time (i.e., no cow can be part of more than one pair).
+
+Farmer John would like to maximize the number of disjoint communication pairs to
+ensure the best information flow. Can you determine the largest number of
+conversations that can happen at once?
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$, $A$, $B$.
+
+The next $N$ lines each contain $n_i$ and $d_i$. No two $d_i$ are the same. 
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+The maximum number of disjoint communicating pairs that can be formed at the
+same time.
+    Note that the large size of integers involved in this problem may require the
+use of 64-bit integer data types (e.g., a "long long" in C/C++).
+
+SAMPLE INPUT:
+4 4 5
+17 2
+100 0
+10 1
+200 4
+SAMPLE OUTPUT: 
+118
+
+A cow with an ID of $0$ can communicate with another cow with an ID of $4$
+because the sum of their IDs is $4$.  Since there are a total of $100$ cows of
+ID $0$ and $200$ cows of ID $4$,  there can be up to $100$ communicating pairs
+with this combination of IDs.
+
+A cow with an ID of $4$ can also communicate with another cow with an ID of $1$
+(sum to $5$). There are $10$ cows of ID $1$ and $100$ remaining unpaired cows of
+ID $4$, allowing for another $10$ pairs.
+
+Finally, a cow with an ID of $2$ can communicate with another cow of the same
+ID.  Since there are a total of $17$ cows of ID $2$, there can be up to $8$ more
+pairs.
+
+In total, there are $100+10+8=118$ communicating pairs. It can be shown that
+this is the maximum possible number of pairs.
+
+SAMPLE INPUT:
+4 4 5
+100 0
+10 1
+100 3
+20 4
+SAMPLE OUTPUT: 
+30
+
+Pairing IDs $0$ and $4$ makes $20$ pairs, while pairing IDs $1$ and $3$ makes
+$10$ pairs. It can be shown that this is the optimal pairing, resulting in a
+total of $30$ pairs.
+
+SCORING:
+Inputs 3-4: $A=B$ Inputs 5-7: $N\le 1000$ Inputs 8-12: No additional constraints
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+The next $N$ lines each contain $n_i$ and $d_i$. No two $d_i$ are the same.
+
+OUTPUT FORMAT (print output to the terminal / stdout):The maximum number of disjoint communicating pairs that can be formed at the
+same time.Note that the large size of integers involved in this problem may require the
+use of 64-bit integer data types (e.g., a "long long" in C/C++).SAMPLE INPUT:4 4 5
+17 2
+100 0
+10 1
+200 4SAMPLE OUTPUT:118A cow with an ID of $0$ can communicate with another cow with an ID of $4$
+because the sum of their IDs is $4$.  Since there are a total of $100$ cows of
+ID $0$ and $200$ cows of ID $4$,  there can be up to $100$ communicating pairs
+with this combination of IDs.A cow with an ID of $4$ can also communicate with another cow with an ID of $1$
+(sum to $5$). There are $10$ cows of ID $1$ and $100$ remaining unpaired cows of
+ID $4$, allowing for another $10$ pairs.Finally, a cow with an ID of $2$ can communicate with another cow of the same
+ID.  Since there are a total of $17$ cows of ID $2$, there can be up to $8$ more
+pairs.In total, there are $100+10+8=118$ communicating pairs. It can be shown that
+this is the maximum possible number of pairs.SAMPLE INPUT:4 4 5
+100 0
+10 1
+100 3
+20 4SAMPLE OUTPUT:30Pairing IDs $0$ and $4$ makes $20$ pairs, while pairing IDs $1$ and $3$ makes
+$10$ pairs. It can be shown that this is the optimal pairing, resulting in a
+total of $30$ pairs.SCORING:Inputs 3-4: $A=B$Inputs 5-7: $N\le 1000$Inputs 8-12: No additional constraintsProblem credits: Benjamin Qi
+
+\section*{Output Format}
+Note that the large size of integers involved in this problem may require the
+use of 64-bit integer data types (e.g., a "long long" in C/C++).
+
+SAMPLE INPUT:4 4 5
+17 2
+100 0
+10 1
+200 4SAMPLE OUTPUT:118A cow with an ID of $0$ can communicate with another cow with an ID of $4$
+because the sum of their IDs is $4$.  Since there are a total of $100$ cows of
+ID $0$ and $200$ cows of ID $4$,  there can be up to $100$ communicating pairs
+with this combination of IDs.A cow with an ID of $4$ can also communicate with another cow with an ID of $1$
+(sum to $5$). There are $10$ cows of ID $1$ and $100$ remaining unpaired cows of
+ID $4$, allowing for another $10$ pairs.Finally, a cow with an ID of $2$ can communicate with another cow of the same
+ID.  Since there are a total of $17$ cows of ID $2$, there can be up to $8$ more
+pairs.In total, there are $100+10+8=118$ communicating pairs. It can be shown that
+this is the maximum possible number of pairs.SAMPLE INPUT:4 4 5
+100 0
+10 1
+100 3
+20 4SAMPLE OUTPUT:30Pairing IDs $0$ and $4$ makes $20$ pairs, while pairing IDs $1$ and $3$ makes
+$10$ pairs. It can be shown that this is the optimal pairing, resulting in a
+total of $30$ pairs.SCORING:Inputs 3-4: $A=B$Inputs 5-7: $N\le 1000$Inputs 8-12: No additional constraintsProblem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+4 4 5
+17 2
+100 0
+10 1
+200 4
+
+4 4 5
+100 0
+10 1
+100 3
+20 4
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+118
+
+A cow with an ID of $4$ can also communicate with another cow with an ID of $1$
+(sum to $5$). There are $10$ cows of ID $1$ and $100$ remaining unpaired cows of
+ID $4$, allowing for another $10$ pairs.Finally, a cow with an ID of $2$ can communicate with another cow of the same
+ID.  Since there are a total of $17$ cows of ID $2$, there can be up to $8$ more
+pairs.In total, there are $100+10+8=118$ communicating pairs. It can be shown that
+this is the maximum possible number of pairs.SAMPLE INPUT:4 4 5
+100 0
+10 1
+100 3
+20 4SAMPLE OUTPUT:30Pairing IDs $0$ and $4$ makes $20$ pairs, while pairing IDs $1$ and $3$ makes
+$10$ pairs. It can be shown that this is the optimal pairing, resulting in a
+total of $30$ pairs.SCORING:Inputs 3-4: $A=B$Inputs 5-7: $N\le 1000$Inputs 8-12: No additional constraintsProblem credits: Benjamin Qi
+
+Finally, a cow with an ID of $2$ can communicate with another cow of the same
+ID.  Since there are a total of $17$ cows of ID $2$, there can be up to $8$ more
+pairs.In total, there are $100+10+8=118$ communicating pairs. It can be shown that
+this is the maximum possible number of pairs.SAMPLE INPUT:4 4 5
+100 0
+10 1
+100 3
+20 4SAMPLE OUTPUT:30Pairing IDs $0$ and $4$ makes $20$ pairs, while pairing IDs $1$ and $3$ makes
+$10$ pairs. It can be shown that this is the optimal pairing, resulting in a
+total of $30$ pairs.SCORING:Inputs 3-4: $A=B$Inputs 5-7: $N\le 1000$Inputs 8-12: No additional constraintsProblem credits: Benjamin Qi
+
+In total, there are $100+10+8=118$ communicating pairs. It can be shown that
+this is the maximum possible number of pairs.SAMPLE INPUT:4 4 5
+100 0
+10 1
+100 3
+20 4SAMPLE OUTPUT:30Pairing IDs $0$ and $4$ makes $20$ pairs, while pairing IDs $1$ and $3$ makes
+$10$ pairs. It can be shown that this is the optimal pairing, resulting in a
+total of $30$ pairs.SCORING:Inputs 3-4: $A=B$Inputs 5-7: $N\le 1000$Inputs 8-12: No additional constraintsProblem credits: Benjamin Qi
+
+SAMPLE INPUT:4 4 5
+100 0
+10 1
+100 3
+20 4SAMPLE OUTPUT:30Pairing IDs $0$ and $4$ makes $20$ pairs, while pairing IDs $1$ and $3$ makes
+$10$ pairs. It can be shown that this is the optimal pairing, resulting in a
+total of $30$ pairs.SCORING:Inputs 3-4: $A=B$Inputs 5-7: $N\le 1000$Inputs 8-12: No additional constraintsProblem credits: Benjamin Qi
+
+30
+
+Pairing IDs $0$ and $4$ makes $20$ pairs, while pairing IDs $1$ and $3$ makes
+$10$ pairs. It can be shown that this is the optimal pairing, resulting in a
+total of $30$ pairs.SCORING:Inputs 3-4: $A=B$Inputs 5-7: $N\le 1000$Inputs 8-12: No additional constraintsProblem credits: Benjamin Qi
+
+SCORING:Inputs 3-4: $A=B$Inputs 5-7: $N\le 1000$Inputs 8-12: No additional constraintsProblem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1519
+
+\section*{Source}
+USACO OPEN25 Contest, Silver Division, Problem ID: 1519
+
+\end{document}

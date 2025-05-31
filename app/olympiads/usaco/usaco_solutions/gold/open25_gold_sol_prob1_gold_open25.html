@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Dhruv Rohatgi)
+<p>Let&apos;s first suppose that <span class='math'>$L=1$</span>. As a first attempt, consider some sort of
+dynamic programming where for each index <span class='math'>$i \leq N$</span>, we count the number of ways
+to validly partition the first <span class='math'>$i$</span> letters of the input string (i.e. the number
+of partitions so that each subsequence is a string <span class='math'>$MO\cdots O$</span> with at most <span class='math'>$k$</span>
+<span class='math'>$O$</span>&apos;s). If we could compute this for all <span class='math'>$i$</span>, then the value for <span class='math'>$i = N$</span> would
+be our answer. Unfortunately, it&apos;s not immediately obvious how to use the value
+at <span class='math'>$i$</span> to help compute the value at <span class='math'>$i+1$</span>, since if the letter at index <span class='math'>$i+1$</span> is
+an <span class='math'>$O$</span>, then for any valid partition of the first <span class='math'>$i$</span> letters, the number of
+ways to assign the new letter to an existing subsequence depends on how many of
+these subsequence have strictly less than <span class='math'>$k$</span> <span class='math'>$O$</span>&apos;s, which could vary based on
+the partition. We could try to augment the dynamic programming state with this
+information (e.g. for each <span class='math'>$m$</span>, count the number of valid partitions where
+exactly <span class='math'>$m$</span> subsequences have less than <span class='math'>$k$</span> <span class='math'>$O$</span>&apos;s), but computing these dynamic
+programming values would seem to require yet more information. We are looking
+for a roughly linear-time solution, so this approach does not seem promising.
+<p>Intuitively, the difficulty arises because for any particular prefix, each <span class='math'>$M$</span>
+that we have seen so far  can be in any of <span class='math'>$k+1$</span> different &quot;states&quot;, depending
+on how many <span class='math'>$O$</span>&apos;s have been assigned to it so far, and this affects the
+combinatorics of the unseen suffix, so the dynamic programming state in a
+forward-pass algorithm seemingly must include a histogram of how many <span class='math'>$M$</span>&apos;s are
+in each state. This suggests reversing our perspective. In a back-to-front
+algorithm, where we count the number of valid partitions of each suffix, each
+<span class='math'>$O$</span> can only be in one of two states (assigned to an <span class='math'>$M$</span>, or not), so
+intuitively all that we need to update our counts is the number of unassigned
+<span class='math'>$O$</span>&apos;s in the suffix. Moreover, this is always the total number of <span class='math'>$O$</span>&apos;s in the
+suffix, minus <span class='math'>$k$</span> times the total number of <span class='math'>$M$</span>&apos;s in the suffix, irrespective of
+the partition!
+<p>More formally, suppose we have computed <span class='math'>$V_i$</span>, the number of ways to partition
+the last <span class='math'>$i$</span> letters so that all but one subsequence are strings <span class='math'>$MO\cdots O$</span>
+with exactly <span class='math'>$k$</span> <span class='math'>$O$</span>&apos;s, and the remaining subsequence is the unused <span class='math'>$O$</span>&apos;s. To
+compute <span class='math'>$V_{i+1}$</span> there are two cases. If the <span class='math'>$i+1$</span>-st letter from the end is an
+<span class='math'>$O$</span>, then <span class='math'>$V_{i+1} = V_i$</span> since this letter cannot be used yet. Otherwise,
+<span class='math'>$V_{i+1} = \binom{O_i - kM_i}{k} V_i$</span>, since for each valid partition of the
+last <span class='math'>$i$</span> letters, there are <span class='math'>$\binom{O_i - kM_i}{k}$</span> ways to choose <span class='math'>$k$</span> <span class='math'>$O$</span>&apos;s
+from the unused <span class='math'>$O$</span>&apos;s. Here, <span class='math'>$O_i$</span> is the number of <span class='math'>$O$</span>&apos;s in the last <span class='math'>$i$</span>
+letters, and <span class='math'>$M_i = i-O_i$</span> is the number of <span class='math'>$M$</span>&apos;s in the last <span class='math'>$i$</span> letters. This
+gives an <span class='math'>$O(N)$</span> time algorithm so long as we can efficiently compute the needed
+binomial coefficients. While this algorithm is most naturally expressed via a
+reverse pass through the input data, it can just as easily be implemented in a
+forward pass by maintaining the value <span class='math'>$O_i - kM_i$</span>; see the code below.
+<p>There are several ways to compute the needed binomial coefficients efficiently.
+One way, which suffices for this problem, is to precompute all factorials up to
+<span class='math'>$N!$</span> (all modulo <span class='math'>$p = 10^9 + 7$</span>). We can then compute any given binomial
+coefficient <span class='math'>$\binom{n}{k} = \frac{n!}{k!(n-k)!}$</span> efficiently by using Fermat&apos;s
+little theorem for the modular inverses: <span class='math'>$a^{p-2} \equiv a^{-1} \bmod{p}$</span> for
+any <span class='math'>$1\leq a &lt; p$</span> and prime <span class='math'>$p$</span>. Since <span class='math'>$p$</span> is large, we need to use fast
+exponentiation (i.e. repeated squaring) to compute the quantities
+<span class='math'>$a^{p-2} \bmod{p}$</span>.
+<p>This is a complete solution for <span class='math'>$L=1$</span>. To extend to general <span class='math'>$L$</span>, it suffices to
+notice that no subsequence can cross between two different repeats of the input
+string: for example, if some subsequence starting in the second-to-last repeat
+used an <span class='math'>$O$</span> in the last repeat, then the last repeat would not have enough <span class='math'>$O$</span>&apos;s
+for all of its <span class='math'>$M$</span>&apos;s; this argument generalizes. Thus, the answer for general
+<span class='math'>$L$</span> is equal to the answer for <span class='math'>$L=1$</span>, raised to the <span class='math'>$L$</span>-th power. We can compute
+this quantity using fast exponentiation.
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+using namespace std;
+#define MOD 1000000007
+#define MAXN 1000001
+ 
+int fact[MAXN];
+ 
+int mul(int a, int b) { return (((long long)a) * b) % MOD; }
+ 
+void computeFactorials() {
+	fact[0] = 1;
+	for (int i = 1; i &lt;= MAXN; i++) fact[i] = mul(fact[i - 1], i);
+}
+ 
+int bexp(int a, long long e) {
+	if (e == 0) return 1;
+	int ans = bexp(a, e / 2);
+	ans = mul(ans, ans);
+	if (e % 2) ans = mul(ans, a);
+	return ans;
+}
+ 
+int binv(int a) { return bexp(a, MOD - 2); }
+ 
+int binom(int n, int k) {
+	int ans = fact[n];
+	ans = mul(ans, binv(fact[k]));
+	ans = mul(ans, binv(fact[n - k]));
+	return ans;
+}
+ 
+int main() {
+	int N, K;
+	long long L;
+	cin &gt;&gt; K &gt;&gt; N &gt;&gt; L;
+	computeFactorials();
+	string s;
+	cin &gt;&gt; s;
+	int req = 0;
+	int ans = 1;
+	for (int i = 0; i &lt; N; i++) {
+		if (s[i] == &apos;M&apos;) {
+			ans = mul(ans, binom(req + K, K));
+			req += K;
+		} else req--;
+	}
+	cout &lt;&lt; bexp(ans, L) &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

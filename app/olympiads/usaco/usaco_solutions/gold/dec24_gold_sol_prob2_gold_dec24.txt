@@ -1,0 +1,985 @@
+Solution ID: sol_prob2_gold_dec24
+Contest: DEC24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_dec24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Alex Liang)
+
+Subtasks 1 and 2 (
+
+$N \le 10^4$
+
+):
+
+We can have
+
+$dp[i]$
+
+be the number of ways to paint the first
+
+$i$
+
+points. To
+transition, we can iterate over the interval that ends at
+
+$i$
+
+. For some
+
+$x$
+
+, we
+check if
+
+$[i-2x+1,i-x]$
+
+can be painted red and
+
+$[i-x+1,i]$
+
+can be painted blue.
+If so, we can paint the interval
+
+$[i-2x+1,i]$
+
+. So we have
+
+$dp[i]=\sum_x dp[i-2x]$
+
+over all such valid
+
+$x$
+
+. Checking some
+
+$x$
+
+can be done
+in
+
+$\mathcal{O}(1)$
+
+time with prefix sums.
+
+We can also choose to not paint the
+
+$i$
+
+-th point. Specifically, if
+
+$s_i$
+
+is
+
+$X$
+
+,
+then we add
+
+$dp[i-1]$
+
+to
+
+$dp[i]$
+
+. In all, this solution runs in
+
+$\mathcal{O}(N^2)$
+
+time.
+
+Sample Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define ll long long
+ 
+const int MAX = 5e5 + 5, MOD = 1e9 + 7;
+ 
+int n, R[MAX], B[MAX]; ll dp[MAX];
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin >> n;
+ 
+    dp[0] = 1;
+ 
+    for (int i = 1; i <= n; i++){
+        char c;
+        cin >> c;
+ 
+        R[i] = (c == 'R') + R[i - 1];
+        B[i] = (c == 'B') + B[i - 1];
+ 
+        if (c != 'R' and c != 'B')
+            dp[i] = dp[i - 1];
+        
+        for (int x = 1; i - 2 * x + 1 >= 1; x++)
+            if (B[i - x] - B[i - 2 * x] == 0 and R[i] - R[i - x] == 0)
+                dp[i] = (dp[i] + dp[i - 2 * x]) % MOD;
+    }
+    cout << dp[n] << "\n";
+}
+
+Subtask 3 (All but at most
+
+$100$
+
+characters in
+
+$s$
+
+are
+
+$X$
+
+):
+
+Consider the transitions for some
+
+$dp[i]$
+
+. In the naive transition we would
+iterate over each
+
+$x$
+
+and look at whether interval
+
+$[i-2x+1,i]$
+
+is paintable.
+Let's view this from a different perspective. For each
+
+$s_j \neq X$
+
+, we look at
+the ranges of
+
+$x$
+
+in which the interval
+
+$[i-2x+1,i]$
+
+becomes
+
+unpaintable
+
+(let's call such
+
+$x$
+
+bad
+
+) due to the constraint at
+
+$j$
+
+.
+
+If some
+
+$s_j=R$
+
+then we know that the right half (i.e. the portion painted blue:
+
+$[i-x+1,i]$
+
+must not contain
+
+$j$
+
+). In other words,
+
+$x$
+
+is bad if
+
+$j \ge i-x+1$
+
+which is equivalent to
+
+$x \ge i - j + 1$
+
+.
+
+If some
+
+$s_j=B$
+
+then we know that the left half (i.e. the portion painted blue:
+
+$[i-2x+1,i-x]$
+
+must not contain
+
+$j$
+
+). So
+
+$x$
+
+is bad if
+
+$i - 2x + 1 \le j \le i - x$
+
+. The inequality
+
+$i - 2x + 1 \le j$
+
+is true when
+
+$x \ge \lceil \frac{i-j+1}{2} \rceil$
+
+. The inequality
+
+$j \le i - x$
+
+is true when
+
+$x \le i - j$
+
+. So
+
+$x$
+
+is bad if
+
+$\lceil \frac{i-j+1}{2} \rceil \le x \le i - j$
+
+.
+
+Let's put these cases together. For some
+
+$x$
+
+we transition off
+
+$dp[i-2x]$
+
+so let
+
+$t=i-2x$
+
+. Then for some
+
+$s_j=R$
+
+, we know that
+
+$x$
+
+is bad if
+
+$x \ge i - j + 1$
+
+which means we can not transition off
+
+$t$
+
+if
+
+$t \le i - 2(i-j+1)$
+
+. And for
+
+$s_j=B$
+
+, we know that
+
+$x$
+
+is bad if
+
+$\lceil \frac{i-j+1}{2} \rceil \le x \le i - j$
+
+which means we can
+
+not
+
+transition off
+
+$t$
+
+if
+
+$2j - i \le t \le j - 1$
+
+.
+
+Let the number of
+
+$s_i$
+
+that are
+
+$R$
+
+or
+
+$B$
+
+be
+
+$c$
+
+. We know that there are
+
+$\mathcal{O}(c)$
+
+intervals we can transition off. Note that another condition
+for transitioning off
+
+$t$
+
+at some
+
+$i$
+
+is that they are the same parity so we
+need to make sure to only transition off same parity indices in the interval.
+Getting these intervals and using prefix sums to quickly transition leads to a
+
+$\mathcal{O}(Nc)$
+
+solution which runs in time since
+
+$c \le 100$
+
+in this subtask.
+
+Sample Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define ll long long
+ 
+const int MAX = 5e5 + 5, MOD = 1e9 + 7;
+ 
+int n, recR; vector<int> locB; ll dp[MAX], psm[MAX][2];
+ 
+ll sumRange(int l, int r, int i){
+    // Gets sum of dp values for l...r that are the same parity as i
+    l += (l % 2 != i % 2);
+    r -= (r % 2 != i % 2);
+ 
+    if (l > r)
+        return 0;
+    return (psm[r][i % 2] - (l - 1 >= 0 ? psm[l - 1][i % 2] : 0) + MOD) % MOD;
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin >> n;
+    dp[0] = psm[0][0] = 1;
+ 
+    for (int i = 1; i <= n; i++){
+        char c;
+        cin >> c;
+ 
+        if (c == 'R')
+            recR = i;
+        else if (c == 'B')
+            locB.push_back(i);
+ 
+        // Choose to not paint
+        else
+            dp[i] = dp[i - 1];
+        
+        // Gather bad intervals for B (don't transition from <= cut to satisfy R)
+        int curPt = -1;
+        int cut = i - 2 * (i - recR + 1);
+        int st = lower_bound(locB.begin(), locB.end(), cut + 2) - locB.begin();
+ 
+        dp[i] = (dp[i] + sumRange(cut + 1, i - 1, i)) % MOD;
+        
+        for (int j = st; j < locB.size(); j++){
+            // Start a new one
+            int badL = max({2 * locB[j] - i, cut + 1, 0});
+            int badR = locB[j] - 1;
+            
+            if (badL > curPt)
+                curPt = badL - 1;
+            if (badR >= curPt){
+                dp[i] = (dp[i] - sumRange(curPt + 1, badR, i) + MOD) % MOD;
+                curPt = badR;
+            }
+        }
+        for (int p : {0, 1})
+            psm[i][p] = (psm[i - 1][p] + (p == i % 2 ? dp[i] : 0)) % MOD;
+    }
+    cout << dp[n] << "\n";
+}
+
+Full credit
+
+$1$
+
+:
+
+We can speed up the subtask
+
+$3$
+
+solution. We know that each
+
+$s_j=B$
+
+corresponds
+to interval of
+
+$t$
+
+(the index we transition off)
+
+$2j - i \le t \le j - 1$
+
+being
+bad. Notice that as
+
+$i$
+
+increases, the right endpoint of the interval stays the
+same while the left endpoint shifts by
+
+$1$
+
+.
+
+Define a point as active if we might be able to transition off it in the future
+(i.e. points
+
+$t$
+
+that are not contained in any
+
+$[2j-i, j-1]$
+
+interval). Let's
+keep track of all  left points of bad intervals
+
+$[2j-i, j-1]$
+
+. When we move to
+the next index, we shift  all left points by
+
+$1$
+
+and deactivate all the new
+points that are still active. Keeping track of only the necessary points leads
+to this part taking
+
+$\mathcal{O}(N)$
+
+time in total since each point can only be
+deactivated once.
+
+For some
+
+$S_j=R$
+
+, we know that
+
+$t$
+
+is bad if
+
+$t \le i - 2(i-j+1)$
+
+. Let
+
+$j_r$
+
+represent the index of the closest
+
+$R$
+
+on the left. Then we can only transition
+off indices
+
+$t$
+
+if
+
+$t \ge i - 2(i-j_r+1)$
+
+. So we want to transition off active
+
+$t$
+
+that are in the range
+
+$[i - 2(i-j_r+1), i]$
+
+. We store the sums of active
+points in
+
+$[i - 2(i-j_r+1), i]$
+
+and keep a pointer at
+
+$i - 2(i-j_r+1)$
+
+and
+adjust the pointer at each
+
+$i$
+
+. This solution runs in
+
+$\mathcal{O}(N)$
+
+time.
+
+Sample Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define ll long long
+ 
+const int MAX = 5e5 + 5, MOD = 1e9 + 7;
+ 
+int n, lp, recR, good[MAX]; char A[MAX]; ll sum[2], dp[MAX]; vector<int> pts;
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin >> n;
+    dp[0] = sum[0] = good[0] = 1;
+
+    for (int i = 1; i <= n; i++){
+        cin >> A[i];
+        good[i] = true;
+
+        // Insert [i - 2, i - 2]
+        if (i - 1 >= 1 and A[i - 1] == 'B')
+            pts.push_back(i - 1);
+
+        // Update bad positions to transition from
+        vector<int> npts;
+
+        for (int p : pts){
+            if (p - 1 >= 0 and good[p - 1]){
+                good[p - 1] = false;
+                if (p - 1 >= lp)
+                    sum[(p - 1) % 2] = (sum[(p - 1) % 2] - dp[p - 1] + MOD) % MOD;
+                npts.push_back(p - 1);
+            }
+        }
+        pts = npts;
+
+        // Update for nearest R
+        if (A[i] == 'R')
+            recR = i;
+
+        // Only consider bound...i
+        int bound = max(i - 2 * (i - recR + 1) + 1, 0); 
+
+        while (lp < bound){
+            sum[lp % 2] = (sum[lp % 2] - dp[lp] * good[lp] + MOD) % MOD;
+            lp++;
+        }
+        while (lp > bound){
+            lp--;
+            sum[lp % 2] = (sum[lp % 2] + dp[lp] * good[lp]) % MOD;
+        }
+
+        // Choose to not paint
+        dp[i] = (dp[i - 1] * (A[i] == 'X') + sum[i % 2]) % MOD;
+        sum[i % 2] = (sum[i % 2] + dp[i]) % MOD;
+    }
+    cout << dp[n] << "\n";
+}
+
+Full credit
+
+$2$
+
+:
+
+Consider an improved version of subtask
+
+$3$
+
+where we maintain and merge
+adjacent/overlapping bad intervals so the bad intervals in our list will all be
+at least
+
+$1$
+
+apart. Let
+
+$L_i$
+
+be the list of bad intervals when we are at
+
+$i$
+
+.
+Then, we know that
+
+$\sum_{1 \le i \le N}{|L_i|}=\mathcal{O}(N)$
+
+by the full
+credit
+
+$1$
+
+solution. Specifically, let an index contribute
+
+$1$
+
+to the number of
+bad intervals if it is the start of a bad interval. Aside from the first index,
+each index will only contribute exactly once as all bad intervals extend left
+every time we move to the next element (described in full credit
+
+$1$
+
+solution).
+Thus, this solution works in
+
+$\mathcal{O}(N)$
+
+time.
+
+Sample Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define ll long long
+ 
+const int MAX = 5e5 + 5, MOD = 1e9 + 7;
+ 
+int n, recR; char A[MAX]; vector<pair<int, int>> bad; ll dp[MAX], psm[MAX][2];
+ 
+ll sumRange(int l, int r, int i){
+    // Gets sum of dp values for l...r that are the same parity as i
+    l += (l % 2 != i % 2);
+    r -= (r % 2 != i % 2);
+ 
+    if (l > r)
+        return 0;
+    return (psm[r][i % 2] - (l - 1 >= 0 ? psm[l - 1][i % 2] : 0) + MOD) % MOD;
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin >> n;
+    dp[0] = psm[0][0] = 1;
+
+    for (int i = 1; i <= n; i++){
+        cin >> A[i];
+ 
+        if (A[i] == 'R')
+            recR = i;
+        
+        // Choose to not paint
+        else if (A[i] == 'X')
+            dp[i] = dp[i - 1];
+        
+        // Include everything in the dp
+        int cut = i - 2 * (i - recR + 1); 
+        dp[i] = (dp[i] + sumRange(max(cut + 1, 0), i - 1, i)) % MOD;
+
+        // Modify bad
+        for (auto &[l, r] : bad)
+            l = max(l - 1, 0);
+
+        // Insert interval
+        if (i - 1 >= 1 and A[i - 1] == 'B')
+            bad.push_back(make_pair(i - 2, i - 2));
+        
+        // Merge intervals in bad
+        int curL = 1e9;
+        int curR = -1e9;
+        vector<pair<int, int>> newBad;
+
+        for (int j = 0; j < bad.size(); j++){
+            curL = min(curL, bad[j].first);
+            curR = max(curR, bad[j].second);
+
+            // End the current interval
+            if (j == (int)bad.size() - 1 or bad[j + 1].first > curR){
+                newBad.push_back({curL, curR});
+                // Proccess the interval
+                dp[i] = (dp[i] - sumRange(max({curL, cut + 1, 0}), curR, i) + MOD) % MOD;
+                curL = 1e9;
+                curR = -1e9;
+            }
+        }
+        bad = newBad;
+
+        for (int p : {0, 1})
+            psm[i][p] = (psm[i - 1][p] + (p == i % 2 ? dp[i] : 0)) % MOD;
+    }
+    cout << dp[n] << "\n";
+}
+
+Full credit
+
+$3$
+
+:
+
+Suppose some
+
+$x$
+
+is good but
+
+$x+1$
+
+is bad. Then we know one of the following is
+true.
+
+$s_{i-x}=R$
+
+$i-2x-1 \le 0$
+
+At least  one of
+
+$s_{i-2x}$
+
+and
+
+$s_{i-2x-1}$
+
+must be
+
+$B$
+
+In the first two cases, no larger
+
+$x$
+
+will work. In the third case, the next
+good interval must have the
+
+$B$
+
+in
+
+$s_{i-2x}$
+
+and/or
+
+$s_{i-2x-1}$
+
+be in the
+right half which means
+
+$x$
+
+will at least double. Thus, every time we switch from
+
+$x$
+
+being good to bad to good,
+
+$x$
+
+doubles so the number of possible intervals
+we need to transition off is
+
+$\mathcal{O}(\log N)$
+
+. This motivates the following
+solution.
+
+We start out at some
+
+$x$
+
+. Let's repeatedly expand our interval
+
+until
+
+the
+right half (i.e.
+
+$[i-x+1,i]$
+
+) contains a
+
+$R$
+
+meaning
+
+$x$
+
+will now
+
+always
+
+be bad.
+
+Suppose
+
+$x$
+
+is good. We can find the next bad
+
+$x$
+
+by looking at the first
+
+$B$
+
+with index
+
+$\le i-2x$
+
+. If some
+
+$x$
+
+is bad and the condition in the previous
+paragraph is satisfied, then we stop expanding our interval.
+
+Suppose we are at some bad
+
+$x$
+
+and want to find the next good
+
+$x$
+
+. Since
+
+$x$
+
+is
+bad, we know that there is a
+
+$B$
+
+in
+
+$[i-2x+1,i-x]$
+
+. Let the leftmost such
+
+$B$
+
+be
+at index
+
+$j$
+
+. The first
+
+$x$
+
+that can be potentially good is the
+
+$x$
+
+where the
+right half of the interval includes
+
+$j$
+
+. So we set
+
+$x=j$
+
+and continue expanding.
+Clearly, every two times we do this,
+
+$x$
+
+will double.
+
+This technique gets the
+
+$\mathcal{O}(\log N)$
+
+good intervals (and considers each
+good interval exactly once). And it also spends
+
+$\mathcal{O}(\log N)$
+
+time on
+bad intervals due to the doubling argument above. Thus, transitioning takes
+
+$\mathcal{O}(\log N)$
+
+time and this solution runs in
+
+$\mathcal{O}(N \log N)$
+
+time.
+
+Sample Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define ll long long
+ 
+const int MAX = 5e5 + 5, MOD = 1e9 + 7;
+ 
+int n, leftB[MAX], leftR[MAX], rightB[MAX]; char A[MAX]; ll dp[MAX], psm[MAX][2];
+ 
+ll sumRange(int l, int r, int i){
+    // Gets sum of dp values for l...r that are the same parity as i
+    l += (l % 2 != i % 2);
+    r -= (r % 2 != i % 2);
+ 
+    if (l > r)
+        return 0;
+    return (psm[r][i % 2] - (l - 1 >= 0 ? psm[l - 1][i % 2] : 0) + MOD) % MOD;
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    cin >> n;
+ 
+    for (int i = 1; i <= n; i++){
+        cin >> A[i];
+        leftB[i] = (A[i] == 'B') ? i : leftB[i - 1];
+        leftR[i] = (A[i] == 'R') ? i : leftR[i - 1];
+    }
+    for (int i = n; i >= 1; i--){
+        rightB[i] = (A[i] == 'B') ? i : rightB[i + 1];
+    }
+ 
+    dp[0] = psm[0][0] = 1;
+ 
+    for (int i = 1; i <= n; i++){
+        // Choose to not paint
+        if (A[i] != 'R' and A[i] != 'B')
+            dp[i] = dp[i - 1];
+        
+        // Biggest X that won't cause right half to be bad
+        int cutoffX = i - leftR[i];
+        int x = 1;
+ 
+        while (i - 2 * x + 1 >= 1 and x <= cutoffX){
+            int lRed = i - 2 * x + 1;
+            int rRed = i - x;
+ 
+            // Bad
+            if (rightB[lRed] and rightB[lRed] <= rRed){
+                x = i - rightB[lRed] + 1;
+            }
+            // Good
+            else{
+                dp[i] = (dp[i] + sumRange(max(leftB[lRed - 1], i - 2 * cutoffX), i - 2 * x, i)) % MOD;
+                x = (i - leftB[lRed - 1]) / 2 + 1;
+            }
+        }
+        for (int p : {0, 1})
+            psm[i][p] = (psm[i - 1][p] + (p == i % 2 ? dp[i] : 0)) % MOD;
+    }
+    cout << dp[n] << "\n";
+}

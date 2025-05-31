@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Andi Qu)
+<p>At first glance, this problem may seem like a messy graph problem with the barns
+forming some network. Luckily, the way the barns are connected means that we
+don&apos;t have to construct a graph explicitly.
+<p>The key observation is that because there are <span class='math'>$K$</span> barns in a cycle and <span class='math'>$K$</span> total
+pairs of connections, no two barns outside the cycle are connected. (Try drawing
+some cycles and counting the connections to verify this fact!) This observation
+means that we can split the answer into a sum of two values: the number of
+same-labelled barns (a) <em>outside</em> and (b) <em>inside</em> the cycle.
+<p>If a barn outside the cycle is labelled the same by Annabelle and Bessie, then
+its label must not appear in the lists <span class='math'>$a_i$</span> or <span class='math'>$b_i$</span>. And because the total
+number of barns outside the cycle is no greater than the number of integers from
+<span class='math'>$1$</span> to <span class='math'>$N$</span> appearing in neither <span class='math'>$a_i$</span> nor <span class='math'>$b_i$</span>, the maximum number of
+same-labelled barns outside the cycle is exactly equal to that number. This
+value can be computed in <span class='math'>$O(N)$</span> time with a set data structure.
+<p>To find the maximum number of same-labelled barns inside the cycle, imagine
+placing the two cycles on top of each other and rotating one cycle until the
+maximum number of labels align. Rotating a cycle and counting the number of
+alignments takes <span class='math'>$O(N)$</span> time, so a straightforward implementation of this
+algorithm would take <span class='math'>$O(N^2)$</span> time. To speed it up, we can count the number of
+alignments for a particular rotation (say rotating <span class='math'>$a_i$</span> to the right by <span class='math'>$r$</span>
+positions) by counting the number of positions <span class='math'>$i$</span> where <span class='math'>$a_i = b_{i + r}$</span>
+(wrapping around as necessary). Specifically:
+<p><ul><li>We start with a counter array <span class='math'>$c_0, \dots, c_{K - 1}$</span>, initially all set to
+zeroes.</li><li>We iterate over every value in <span class='math'>$a_i$</span> and find the corresponding
+value <span class='math'>$b_j = a_i$</span> if it exists.</li><li>We then increment <span class='math'>$c_r$</span> for <span class='math'>$r = i - j$</span>
+if <span class='math'>$i \geq j$</span>, or <span class='math'>$r = i - j + K$</span> if <span class='math'>$j &gt; i$</span>.</li><li>Finally, we take the
+maximum <span class='math'>$c_r$</span> at the end of this process as the answer.</li></ul>
+<p>(Note that we also need to consider the case where the list <span class='math'>$a_i$</span> or <span class='math'>$b_i$</span> is
+reversed!)
+<p>With this improved algorithm, we no longer iterate over all barns each time we
+do a rotation, so it runs in <span class='math'>$O(N)$</span> time.
+<p>Altogether, this solution runs in <span class='math'>$O(N)$</span> time. <span class='math'>$O(N \log N)$</span>-time solutions
+using slower set data structures should also pass all test cases.
+<p>Python code implementing this solution:
+<p><pre class='prettyprint'>
+n, k = map(int, input().split())
+a = list(map(int, input().split()))
+b = list(map(int, input().split()))
+
+same_outside = set(range(1, n + 1)) - set(a) - set(b)
+
+def max_rotation(cycle_a, cycle_b):
+    position_a = {val: idx for idx, val in enumerate(cycle_a)}
+    with_offset = [0] * k
+    for idx, val in enumerate(cycle_b):
+        if val in position_a:
+            with_offset[idx - position_a[val]] += 1
+    return max(with_offset)
+
+print(len(same_outside) +
+      max(max_rotation(a, b), max_rotation(a, b[::-1])))
+</pre>
+<p></body></html>

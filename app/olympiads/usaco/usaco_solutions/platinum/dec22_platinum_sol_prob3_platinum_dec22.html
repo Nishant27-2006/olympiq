@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>Consider minimizing the number of transpositions to make a single array <span class='math'>$a$</span> into
+a palindrome. We will assume for convenience that the number of &apos;G&apos;s in <span class='math'>$a$</span> is
+an even number <span class='math'>$2k$</span>. The case where the number of &apos;G&apos;s is odd is essentially the
+same, except that you have to account for moving the middle &apos;G&apos; to the center
+(and using <span class='math'>$-1$</span> instead if the length of <span class='math'>$a$</span> isn&apos;t odd).
+<p>Notice that we should never swap two adjacent &apos;G&apos;s as it doesn&apos;t change the
+array. It follows that the &apos;G&apos;s in <span class='math'>$a$</span>, relative to each other, stay in the same
+order as they were originally, meaning that to make <span class='math'>$a$</span> into a palindrome, we
+want to match the first &apos;G&apos; in <span class='math'>$a$</span> with the last &apos;G&apos;, the second &apos;G&apos; with the
+second to last &apos;G&apos; and so on.
+<p>Therefore, for <span class='math'>$1 \leq j \leq k$</span>, let <span class='math'>$a_j$</span> be the position of the <span class='math'>$j$</span>th &apos;G&apos; in
+<span class='math'>$a$</span> and let <span class='math'>$b_j$</span> be the position <strong>counted from the end</strong> of the <span class='math'>$j$</span>th to
+last &apos;G&apos; in <span class='math'>$a$</span>. The number of &apos;H&apos;s from the beginning to the <span class='math'>$j$</span>th &apos;G&apos; is
+<span class='math'>$a_j - j$</span>, and the number of &apos;H&apos;s from the <span class='math'>$j$</span>th to last &apos;G&apos; to the end is
+<span class='math'>$b_j - j$</span>. To make them match, we have to make the amount of &apos;H&apos;s between each
+and their respective ends the same, which requires
+<span class='math'>$|(a_j - j) - (b_j - j)| = |a_j - b_j|$</span> transpositions.
+<p>Given this, to solve the problem in <span class='math'>$\mathcal O(N^3)$</span> we can simply iterate over
+the <span class='math'>$O(N^2)$</span> subarrays, and for each one calculate the values of <span class='math'>$a_j, b_j$</span>,
+then simply sum <span class='math'>$|a_j - b_j|$</span> over all <span class='math'>$j$</span> in <span class='math'>$\mathcal O(N)$</span>.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class Palindromes {
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        char[] lineup = in.readLine().toCharArray();
+        long answer = 0;
+        for (int l = 0; l &lt; lineup.length; l++) {
+            for (int r = l; r &lt; lineup.length; r++) {
+                long here = 0;
+                int a = l;
+                int b = r;
+                while (true) {
+                    while (a &lt; lineup.length &amp;&amp; lineup[a] == &apos;H&apos;) {
+                        a++;
+                    }
+                    while (b &gt;= 0 &amp;&amp; lineup[b] == &apos;H&apos;) {
+                        b--;
+                    }
+                    if (a &gt; b) {
+                        break;
+                    }
+                    if (a == b) {
+                        if ((l - r) % 2 == 0) {
+                            here += Math.abs(a - ((l + r) / 2));
+                        } else {
+                            here = -1;
+                        }
+                        break;
+                    }
+                    here += Math.abs((a - l) - (r - b));
+                    a++;
+                    b--;
+                }
+                answer += here;
+            }
+        }
+
+        System.out.println(answer);
+    }
+}
+</pre>
+<p>To optimize the runtime to <span class='math'>$O(N^2)$</span>, we can consider fixing the middle two &apos;G&apos;s,
+then calculating the answer for all corresponding subarrays more quickly. Say
+that the middle two &apos;G&apos;s we fixed are at positions <span class='math'>$x &lt; y$</span> in the entire array.
+The idea is that when we fix the middle two &apos;G&apos;s, every single &apos;G&apos; is matched to
+the same other &apos;G&apos;: the <span class='math'>$j$</span>th &apos;G&apos; to the left of <span class='math'>$a_x$</span> is always matched to the
+<span class='math'>$j$</span>th &apos;G&apos; to the right of <span class='math'>$a_y$</span>.
+<p>Following this idea, let&apos;s define <span class='math'>$u_j$</span> to be the position of the <span class='math'>$j$</span>th &apos;G&apos; to
+the left of position <span class='math'>$x$</span>, and <span class='math'>$v_j$</span> to be the position of the <span class='math'>$j$</span>th &apos;G&apos; to the
+right of <span class='math'>$y$</span>. Given that the subarray we are currently considering has endpoints
+<span class='math'>$l \leq r$</span>, the positions of these &apos;G&apos;s in the subarray are <span class='math'>$u_j - l + 1$</span>
+counted from the beginning and <span class='math'>$r - v_j + 1$</span> counted from the end respectively.
+Therefore, the number of transpositions needed to match them is
+<div class='math'>$$|(u_j - l + 1) - (r - v_j + 1)| = |(u_j + v_j) - (l + r)|.$$</div>
+Consider this quantity as a function of <span class='math'>$l + r$</span>. Specifically, let&apos;s write
+<div class='math'>$$f_j(s) = |(u_j + v_j) - s|.$$</div>
+When you increase <span class='math'>$s$</span> by <span class='math'>$1$</span>, <span class='math'>$f_j(s)$</span> decreases by <span class='math'>$1$</span> for <span class='math'>$s &lt; u_j + v_j$</span> and
+increases by <span class='math'>$1$</span> for <span class='math'>$s \ge u_j + v_j$</span>. This means that if we know <span class='math'>$f_j(s)$</span>, we
+can calculate <span class='math'>$f_j(s + 1)$</span> by simply adding <span class='math'>$1$</span> or <span class='math'>$-1$</span>, which takes constant
+time.
+<p>We can extend this idea to <span class='math'>$F(s) = \sum_{j = 1}^k f_j(s)$</span>, which is actually the
+number of transpositions needed for a subarray <span class='math'>$a[l..r]$</span> with <span class='math'>$l + r = s$</span> with
+<span class='math'>$2k$</span> &apos;G&apos;s such that <span class='math'>$a_x$</span> and <span class='math'>$a_y$</span> are the middle &apos;G&apos;s. When we increase <span class='math'>$s$</span> by
+<span class='math'>$1$</span>, <span class='math'>$F(s)$</span> increases by <span class='math'>$1$</span> for all <span class='math'>$j$</span> such that <span class='math'>$s \geq u_j + v_j$</span>, and
+decreases by <span class='math'>$1$</span> for other <span class='math'>$j$</span>. Let&apos;s quantify this difference as
+<span class='math'>$d(s) = F(s + 1) - F(s)$</span>. If we maintain <span class='math'>$d(s)$</span>, then we can update <span class='math'>$F(s)$</span> to
+<span class='math'>$F(s + 1)$</span> by simply adding <span class='math'>$d(s)$</span>. To then be able to calculate <span class='math'>$F(s)$</span> for
+higher <span class='math'>$s$</span>, we need to be able to update <span class='math'>$d(s)$</span> to <span class='math'>$d(s + 1)$</span> as well, but to do
+that we simply need to add <span class='math'>$2$</span> for each <span class='math'>$j$</span> such that <span class='math'>$u_j + v_j = s + 1$</span>; we
+can do this easily by simply storing an array <span class='math'>$e(s)$</span> that counts the amount of
+<span class='math'>$j$</span> such that <span class='math'>$u_j + v_j = s$</span>, and calculating <span class='math'>$d(s + 1)$</span> as <span class='math'>$d(s) + 2e(s + 1)$</span>.
+<p>Therefore, our algorithm will be as follows. For each adjacent pair of &apos;G&apos;s
+<span class='math'>$a_x$</span> and <span class='math'>$a_y$</span> (there can be &apos;H&apos;s between them but no &apos;G&apos;s), initialize an
+array <span class='math'>$e$</span> to be all <span class='math'>$0$</span>s. We will then compute the answers for subarrays
+centered at <span class='math'>$a_x, a_y$</span> in phases. For each <span class='math'>$k$</span> starting from <span class='math'>$1$</span>, we update <span class='math'>$e$</span>
+by adding <span class='math'>$1$</span> to <span class='math'>$e(u_k + v_k)$</span>. Then, we compute the answers for all subarrays
+<span class='math'>$a[l..r]$</span> such that <span class='math'>$u_{k + 1} &lt; l \leq u_k$</span> and <span class='math'>$v_k \leq r &lt; v_{k + 1}$</span>.
+Starting with <span class='math'>$l = u_k$</span> and <span class='math'>$r = v_k$</span>, we maintain the values of <span class='math'>$F(l + r)$</span> and
+<span class='math'>$d(l + r)$</span>. We repeatedly increase <span class='math'>$r$</span> by <span class='math'>$1$</span>, updating <span class='math'>$F(l + r)$</span> and
+<span class='math'>$d(l + r)$</span> in constant time as we explained above, and importantly adding
+<span class='math'>$F(l + r)$</span> to our overall answer, until we reach <span class='math'>$r = v_{k + 1}$</span>, at which we
+decrease <span class='math'>$r$</span> back down to <span class='math'>$v_k$</span> in a similar manner. We then decrease <span class='math'>$l$</span> by
+<span class='math'>$1$</span>, and repeat, until we reach <span class='math'>$l = u_{k + 1}$</span>. At that point, we&apos;ve calculated
+the contributions of all the subarrays that we wanted to.
+<p>In terms of runtime, we aren&apos;t guaranteed that a single step of fixing the
+middle two &apos;G&apos;s takes <span class='math'>$\mathcal O(N)$</span> -- even a single phase could take <span class='math'>$O(N^2)$</span>
+-- but overall, we only take constant time to compute the answer for each
+subarray, meaning that the overall runtime is <span class='math'>$O(N^2)$</span>. We also need to
+initialize the array <span class='math'>$e$</span> which needs <span class='math'>$O(N)$</span> space, but since we fix the middle
+two &apos;G&apos;s less than  <span class='math'>$N$</span> times, this is also <span class='math'>$O(N^2)$</span>. 
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class Palindromes {
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        char[] lineup = in.readLine().toCharArray();
+        int[] gs = new int[lineup.length];
+        int amountG = 0;
+        for (int j = 0; j &lt; lineup.length; j++) {
+            if (lineup[j] == &apos;G&apos;) {
+                gs[amountG] = j;
+                amountG++;
+            }
+        }
+        long answer = 0;
+        for (int leftCenter = 0; leftCenter &lt; amountG; leftCenter++) {
+            for (int rightCenter = leftCenter; rightCenter &lt;= leftCenter + 1 &amp;&amp; rightCenter &lt; amountG; rightCenter++) {
+                long[] e = new long[2 * lineup.length];
+                long d = 0;
+                long F = 0;
+
+                for (int k = 0; leftCenter - k &gt;= 0 &amp;&amp; rightCenter + k &lt; amountG; k++) {
+                    int uk = gs[leftCenter - k];
+                    int uk1 = leftCenter - k == 0 ? -1 : gs[leftCenter - (k + 1)];
+                    int vk = gs[rightCenter + k];
+                    int vk1 = rightCenter + (k + 1) == amountG ? lineup.length : gs[rightCenter + (k + 1)];
+
+                    if (uk &lt; vk) {
+                        e[uk + vk] += 2;
+                        d++;
+                    }
+
+                    for (int l = uk; l &gt; uk1; l--) {
+                        for (int r = vk; r &lt; vk1; r++) {
+                            if (leftCenter == rightCenter) {
+                                if ((r - l) % 2 == 0) {
+                                    answer += F + ((long) Math.abs(((r + l) / 2) - gs[leftCenter]));
+                                } else {
+                                    answer--;
+                                }
+                            } else {
+                                answer += F;
+                            }
+                            F += d;
+                            d += e[l + r + 1];
+                        }
+
+                        for (int r = vk1; r &gt; vk; r--) {
+                            d -= e[l + r];
+                            F -= d;
+                        }
+
+                        d -= e[l + vk];
+                        F -= d;
+                    }
+
+                    for (int r = vk; r &lt; vk1; r++) {
+                        F += d;
+                        d += e[uk1 + r + 1];
+                    }
+                }
+            }
+        }
+        System.out.println(answer);
+    }
+}
+</pre>
+<p></body></html>

@@ -1,0 +1,61 @@
+Solution ID: sol_crosswords_bronze
+Contest: DEC14
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_crosswords_bronze.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Jonathan Paulson -
+
+[email protected]
+
+)
+
+We can go along the squares in top-to-bottom, left-to-right order. For each square, we want to see if it starts a clue. It can start either a horizontal or vertical clue. For it to start a horizontal clue, the cell to the left must be blocked or off the board, and the two cells to the right must be clear and on the board. Similarly, to start a vertical clue, the cell above must be blocked or off the board, and the two cells below must be on the board and clear.
+
+As we find cells that start a clue, we can add them to a list. Then at the end, we need to print the size of the list and its contents. Here's my C++ code:
+
+#include <cstdio>
+#include <vector>
+
+#define MP make_pair
+#define PB push_back
+#define X first
+#define Y second
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pll;
+
+int main() {
+  ll R, C;
+  scanf("%lld %lld\n", &R, &C);
+  vector<vector<char> > G(R, vector<char>(C, ' '));
+  for(ll r=0; r<R; r++) {
+    char buf[100];
+    scanf("%s", buf);
+    for(ll c=0; c<C; c++) {
+      G[r][c] = buf[c];
+    }
+  }
+  vector<pll> A;
+
+  for(ll r=0; r<R; r++) {
+    for(ll c=0; c<C; c++) {
+      bool horizontal = (c+2<C && G[r][c]=='.' && G[r][c+1]=='.' && G[r][c+2]=='.' &&
+                         (c==0 || G[r][c-1]=='#'));
+      bool vertical = (r+2<R && G[r][c]=='.' && G[r+1][c]=='.' && G[r+2][c]=='.' &&
+                       (r==0 || G[r-1][c]=='#'));
+      if(horizontal || vertical) {
+        A.PB(MP(r+1, c+1));
+      }
+    }
+  }
+  printf("%lu\n", A.size());
+  for(pll clue : A) {
+    printf("%lld %lld\n", clue.X, clue.Y);
+  }
+}

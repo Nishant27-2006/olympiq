@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi, Austin Geng)
+<p><div class='prob-section'><h4>Partial Credit: Quadratic Time</h4>
+When <span class='math'>$N\le 1000$</span>, we can afford to iterate over all pairs of boxes.
+<p>A box <span class='math'>$i$</span> is blocked by another box <span class='math'>$j$</span> (<span class='math'>$j\neq i$</span>) if <span class='math'>$(x_{j1}, y_{j1})$</span> is to
+the lower-left of <span class='math'>$(x_{i2},y_{i2})$</span>. Consider a graph with directed edges
+<span class='math'>$i\to j$</span> for all such pairs of boxes.
+<p><span class='math'>$M=2$</span>: For each <span class='math'>$i$</span>, check if there is an edge to some <span class='math'>$j&gt;i$</span>. If so, output
+<span class='math'>$\texttt{0}$</span>. Otherwise, output <span class='math'>$\texttt{1}$</span>.
+<p><span class='math'>$M=1$</span>: Construct a
+<a href='https://cp-algorithms.com/graph/topological-sort.html'>topological
+ordering</a> of the graph, and then output its reversal. The fact that a valid
+order exists is equivalent to the graph being acyclic.
+<p>Both <span class='math'>$M=1$</span> and <span class='math'>$M=2$</span> run in <span class='math'>$O(N^2)$</span> time (and <span class='math'>$O(N)$</span> memory, if you don&apos;t
+explicitly store the edges).
+</div>
+<p><div class='prob-section'><h4>Full Credit: Segment Tree</h4>
+Note that there are some solutions for <span class='math'>$M=1$</span> only, but because they do not
+generalize to <span class='math'>$M=2$</span>, they are described after this section.
+<p>The graph described above has too many edges, so we want to optimize the key
+operations we perform on it. At its core, we would like a data structure
+supporting the following operations efficiently:
+<p><ol><li>Update: Deactivate a box.</li><li>Query: Given an active box, output another active box it is blocked by, or
+determine that no such box exists.</li></ol>
+<p>We can support these operations in <span class='math'>$O(\log N)$</span> time each using a
+<a href='https://usaco.guide/gold/PURS?lang=cpp#segment-tree'>segment tree</a> (see:
+<a href='https://atcoder.github.io/ac-library/production/document_en/segtree.html'>abstract
+description</a>) storing the lower-left corners of each active box, supporting
+range minimum queries. Specifically, define an integer array <span class='math'>$a$</span> with all
+entries initially set to <span class='math'>$\infty$</span>, and then for each active box <span class='math'>$i$</span> set
+<span class='math'>$a[x_{i1}]=y_{i1}$</span>. An Update corresponds to updating <span class='math'>$a[x_{i1}] = \infty$</span>. For
+a Query, an active box <span class='math'>$i$</span> is blocked if after <span class='math'>$i$</span> is deactivated, 
+<span class='math'>$\min(a[0\dots x_{i2}-1])&lt;y_{i2}$</span>. (Note we can easily re-activate box <span class='math'>$i$</span> by
+updating <span class='math'>$a[x_{i1}]=y_{i1}$</span>.)
+<p><span class='math'>$M=2$</span>: For each box in order, make a Query and then an Update. Output
+<span class='math'>$\texttt{1}$</span> if the Query returns non-blocked, and <span class='math'>$\texttt{0}$</span> otherwise.
+<p><span class='math'>$M=1$</span>: We can use the DFS-based recursive implementation of topological sort
+(example implementation
+<a href='https://cp-algorithms.com/graph/topological-sort.html#implementation'>here</a>),
+except that instead of looping over all <span class='math'>$u$</span> out of <span class='math'>$v$</span>, we can use a Query to
+directly find a <span class='math'>$u$</span> that has not yet been pushed to the answer list. This also
+means we should Update a box when it gets pushed, to remove it from
+consideration. Since the graph is acyclic, we will never iterate over the same
+vertex more than once, meaning that the total number of vertices iterated over
+is at most <span class='math'>$N$</span>.
+<p>Both <span class='math'>$M=1$</span> and <span class='math'>$M=2$</span> run in <span class='math'>$O(N\log N)$</span> time and <span class='math'>$O(N)$</span> memory.
+<p>Benjamin Qi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+
+struct S {  // y-coordinate and the box associated with it
+    int y;
+    int label;
+};
+
+S op(S a, S b) {  // combiner function: return the lower y-coordinate
+    if (a.y &lt; b.y) return a;
+    return b;
+}
+
+S e() { return {(int)1e9, -1}; }  // identity
+
+
+struct Segtree {  // simplified version of AtCoder&apos;s segment tree implementation
+    int n = 1;
+    V&lt;S&gt; d;
+    Segtree(int n_) {
+        while (n &lt; n_) n *= 2;
+        d = V&lt;S&gt;(2 * n, e());
+    }
+    void set(int p, S x) {
+        d.at(p += n) = x;
+        while (p &gt; 1) p /= 2, d.at(p) = op(d.at(2 * p), d.at(2 * p + 1));
+    }
+    S prod(int l, int r) {
+        assert(0 &lt;= l &amp;&amp; l &lt;= r &amp;&amp; r &lt;= n);
+        S vl = e(), vr = e();
+        for (l += n, r += n; l &lt; r; l /= 2, r /= 2) {
+            if (l &amp; 1) vl = op(vl, d.at(l++));
+            if (r &amp; 1) vr = op(d.at(--r), vr);
+        }
+        return op(vl, vr);
+    }
+};
+
+int M;
+
+void solve() {
+    int N;
+    cin &gt;&gt; N;
+    V&lt;array&lt;array&lt;int, 2&gt;, 2&gt;&gt; boxes(N);
+    for (auto &amp;a : boxes)  // read and zero-index
+        for (auto &amp;b : a)
+            for (auto &amp;c : b) {
+                cin &gt;&gt; c;
+                --c;
+            }
+    Segtree seg(2 * N);
+    auto rem = [&amp;](int x) {  // deactivate op
+        seg.set(boxes.at(x).at(0).at(0), e());
+    };
+    auto add = [&amp;](int x) {  // activate op
+        seg.set(boxes.at(x).at(0).at(0), S{boxes.at(x).at(0).at(1), x});
+    };
+    auto edge_out = [&amp;](int i) {  // query op: returns -1 if not blocked, or
+                                  // some blocking box
+        rem(i);
+        S s = seg.prod(0, boxes.at(i).at(1).at(0));
+        int ret = (s.y &lt; boxes.at(i).at(1).at(1)) ? s.label : -1;
+        add(i);
+        return ret;
+    };
+    for (int i = 0; i &lt; N; ++i) add(i);
+    if (M == 1) {
+        V&lt;bool&gt; active(N, true);
+        V&lt;int&gt; ans;
+        function&lt;void(int)&gt; dfs = [&amp;](int x) -&gt; void {
+            assert(active.at(x));
+            while (true) {
+                int y = edge_out(x);
+                if (y == -1) {
+                    active.at(x) = false;
+                    rem(x);
+                    ans.push_back(x);
+                    return;
+                }
+                dfs(y);
+            }
+        };
+        for (int i = 0; i &lt; N; ++i)
+            if (active.at(i)) dfs(i);
+        assert(ans.size() == N);
+        for (int i = 0; i &lt; N; ++i) {
+            if (i) cout &lt;&lt; &quot; &quot;;
+            cout &lt;&lt; ans[i] + 1;
+        }
+        cout &lt;&lt; &quot;\n&quot;;
+    } else {
+        string ans;
+        for (int i = 0; i &lt; N; ++i) {
+            int x = edge_out(i);
+            ans += (x == -1 ? &apos;1&apos; : &apos;0&apos;);
+            rem(i);
+        }
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin &gt;&gt; T &gt;&gt; M;
+    while (T--) solve();
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Alternative solutions for M=1</h4>
+We would like some more lightweight version of the graph described above, by
+excluding unnecessary edges. The key insight is that while it is hard to
+construct a sparse graph where every topological sort forms a valid removal
+order, we can instead construct a sparse graph that stores only some information
+about how boxes block each other and use a specific toposort that accounts for
+the nature of the remaining blocking constraints.
+<p>One method is: From left to right, at every box&apos;s right side, add an edge to the
+nearest box directly below this right side (or an abstract &quot;root&quot; node if no
+boxes are below). This can be done with a sweep line. This forms a tree, and its
+pre-order traversal is a valid removal order.
+<p>Another method is: At every box&apos;s left side, add an edge to the nearest
+rectangles above and below this left side, if they exist. This can also be done
+with a sweep line. Toposort using Kahn&apos;s algorithm (keeping track of indegree),
+always removing the leftmost available box (by either <span class='math'>$x$</span>-coordinate).
+<p>To prove correctness, it suffices to show that if a box blocks another box, it
+will come earlier in the outputted order.
+<p>Unfortunately, these methods do not generalize to <span class='math'>$M=2$</span>, since they rely on
+specific ways to construct a valid ordering that are, in a sense, more
+restrictive than what is allowed. Notice that, in both methods above, only one
+<span class='math'>$y$</span>-coordinate of each box needs to be known!
+<p>Austin Geng&apos;s code for the latter method:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+ 
+using namespace std;
+ 
+template&lt;typename T&gt;
+using PQ = priority_queue&lt;T, vector&lt;T&gt;, greater&lt;T&gt;&gt;;
+ 
+int main() {
+    ios_base::sync_with_stdio(false); cin.tie(nullptr);
+ 
+    int t; int m; cin&gt;&gt;t&gt;&gt;m;
+    if (m != 1) {
+        assert(false);
+    }
+    for (int ti = 0; ti &lt; t; ++ti) {
+        int n; cin&gt;&gt;n;
+        vector&lt;tuple&lt;int,int,int&gt;&gt; events;
+        vector&lt;int&gt; xs(n);
+        for (int i = 0; i &lt; n; ++i) {
+            int x1,y1,x2,y2; cin&gt;&gt;x1&gt;&gt;y1&gt;&gt;x2&gt;&gt;y2;
+            xs[i] = x1;
+            events.emplace_back(x1,y1,i);
+            events.emplace_back(x2,y1,-1);
+        }
+        sort(events.begin(),events.end());
+        map&lt;int,int&gt; sweep;
+        vector&lt;vector&lt;int&gt;&gt; out(n);
+        vector&lt;int&gt; deps(n,0);
+        for (auto [_,y,i] : events) {
+            if (i == -1) {    
+                sweep.erase(y);
+                continue;
+            }
+            auto it = sweep.lower_bound(y);
+            if (it != sweep.begin()) {
+                auto j = prev(it)-&gt;second;
+                out[j].push_back(i);
+                ++deps[i];
+            }
+            if (it != sweep.end()) {
+                auto j = it-&gt;second;
+                out[i].push_back(j);
+                ++deps[j];
+            }
+            sweep[y] = i;
+        }
+        PQ&lt;pair&lt;int,int&gt;&gt; next;
+        for (int i = 0; i &lt; n; ++i) {
+            if (deps[i] != 0) continue;
+            next.push({xs[i],i});
+        }
+        while (!next.empty()) {
+            auto [_,a] = next.top(); next.pop();
+            cout &lt;&lt; a+1 &lt;&lt; &quot; &quot;;
+            for (auto b : out[a]) {
+                --deps[b];
+                if (deps[b] != 0) continue;
+                next.push({xs[b],b});
+            }
+        }
+        cout &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Existence of a valid removal order</h4>
+<p>Although not part of the problem, one might wonder why a valid removal order
+always exists. Here is a simple informal proof (idea by Benjamin Chen).
+<p>It suffices to show that there always exists a box that can be removed, since
+this fact can be repeatedly applied to produce a removal order. Imagine that
+&quot;gravity&quot; drags boxes down to a &quot;floor&quot; at <span class='math'>$y=0$</span>. Observe that if a box was
+blocked by another box, it will remain blocked. The leftmost box on the ground
+is, and thus was, removable.
+<p></div>
+</body></html>

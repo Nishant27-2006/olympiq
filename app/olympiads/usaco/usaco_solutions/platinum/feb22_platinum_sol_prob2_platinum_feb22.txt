@@ -1,0 +1,492 @@
+Solution ID: sol_prob2_platinum_feb22
+Contest: FEB22
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_feb22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Daniel Zhang, Benjamin Qi)
+
+Partial Credit:
+
+$N,Q\le 5000$
+
+To solve this subtask, we need to be able to answer each query in
+
+$O(N)$
+
+time.
+Define
+
+$S=a_1+a_2+\cdots +a_N$
+
+, and suppose that the candidate we are
+considering is
+
+$d$
+
+.
+
+If
+
+$d\not \mid S$
+
+, then the answer is
+
+$-1$
+
+.
+
+Otherwise, define
+
+$p_i=\sum_{j=1}^ia_j$
+
+for
+
+$1\le i\le N$
+
+to be the
+
+$i$
+
+-th
+prefix sum of the input sequence. Consider how the set of prefix sums changes
+with each operation. Splitting a class period inserts a number into the set of
+prefix sums, while merging two class periods removes a number from the set of
+prefix sums. The set of prefix sums is initially all
+
+$p_i$
+
+, and at the end is
+all multiples of
+
+$d$
+
+up to
+
+$S$
+
+. Hence, the minimum number of operations is the
+size of the symmetric difference between the two sets. Letting
+
+$x_d=(\#\text{ of }i\text{ such that }d|p_i)$
+
+be the number of prefix sums in
+common between the initial and final sequences, the size of the symmetric difference is
+
+$N+\frac{S}{d}-2x_d$
+
+.
+
+This immediately leads to an
+
+$O(NQ)$
+
+solution.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class SleepingInClassHarder {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        long[] times = new long[n];
+        long sum = 0;
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 0; j < n; j++) {
+            times[j] = Long.parseLong(tokenizer.nextToken());
+            sum += times[j];
+        }
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q > 0; q--) {
+            long targetNumber = Long.parseLong(in.readLine());
+            if (sum % targetNumber == 0L) {
+                long res = ((long) n) + (sum / targetNumber);
+                long curr = 0;
+                for (long time : times) {
+                    curr += time;
+                    if (curr % targetNumber == 0L) {
+                        res -= 2L;
+                    }
+                }
+                out.append(res);
+            } else {
+                out.append(-1);
+            }
+            out.append('\n');
+        }
+        System.out.print(out);
+    }
+}
+
+Full Solution:
+
+We need a faster way to compute
+
+$x_d$
+
+.
+
+Define
+
+$q_i=\gcd(p_i,S)$
+
+. If
+
+$d|S$
+
+, then
+
+$d|p_i\Leftrightarrow d|q_i$
+
+, so we can
+ignore all the
+
+$p_i$
+
+and instead count the number of
+
+$i$
+
+such that
+
+$d|q_i$
+
+. Each
+
+$q_i$
+
+is a factor of
+
+$S$
+
+. Knowing the number of times each factor occurs is
+enough to answer all queries, so we first count them.
+
+Let
+
+$\sigma_0(S)$
+
+denote the number of factors of
+
+$S$
+
+. The maximum number of
+factors that can occur within the input constraints is achieved by the largest
+
+highly composite
+number
+
+not exceeding
+
+$10^{18}$
+
+. This is
+
+$$897612484786617600=2^8\times 3^4\times 5^2\times 7^2\times 11\times 13\times 17\times 19\times 23\times 29\times 31\times 37$$
+
+which has
+
+$103680$
+
+factors (see
+
+OEIS
+
+).
+
+In the worst case, there are
+
+$O(\sigma_0(S))$
+
+distinct nontrivial queries. If we
+can answer each query naively in
+
+$O(\sigma_0(S))$
+
+, this part by itself will take
+
+$O(\sigma_0(S)^2)$
+
+, which is too slow.
+
+A faster way is to observe that if we arrange the factors in a multidimensional
+array, with a dimension for each prime factor, answering the queries from the
+frequencies is just computing multidimensional prefix sums.
+
+Using inclusion-exclusion, we can compute each prefix sum in
+
+$O(2^{\omega(S)})$
+
+,
+where
+
+$\omega(S)$
+
+counts the number of distinct prime factors of
+
+$S$
+
+(not to be
+confused with the
+
+$\omega$
+
+from complexity theory), but this is still slow.
+
+A better way is to iterate over the dimensions, and compute prefix sums along
+that direction. This is a generalization of what is commonly referred to as Sum
+Over Subsets (SOS) and runs in
+
+$O(\omega(S)\sigma_0(S))$
+
+.
+
+To compute the dimensions of the array, it helps to know the prime factorization
+of
+
+$S$
+
+. One way to do this is to use a factorization algorithm that is fast
+enough to factor numbers up to
+
+$10^{18}$
+
+. Alternatively, one can use trial
+division up to
+
+$10^6$
+
+to eliminate all but at most two prime factors, then
+compute
+
+$\gcd$
+
+s of the remaining factor with the prefix sums and the queries. It
+is possible that a semiprime is left unfactored, but treating it as prime will
+not affect the correctness of the queries in that case since no query could
+distinguish it from being prime.
+
+#include <cstdio>
+#include <vector>
+#include <numeric>
+
+int N;
+long long prefix[100005];
+int Q;
+long long queries[100005];
+
+std::vector<std::pair<long long,int> > primes;
+
+int num_factors(){
+  int cnt=1;
+  for(int i=0;i<primes.size();i++){
+    cnt*=primes[i].second+1;
+  }
+  return cnt;
+}
+
+int freq[103680];
+
+int& get_freq(long long num){
+  int code=0;
+  for(int j=0;j<primes.size();j++){
+    int cnt=0;
+    while(num%primes[j].first==0){
+      num/=primes[j].first;
+      cnt++;
+    }
+    code=code*(primes[j].second+1)+std::min(cnt,primes[j].second);
+  }
+  return freq[code];
+}
+
+int main(){
+  scanf("%d",&N);
+  for(int i=1;i<=N;i++){
+    scanf("%lld",&prefix[i]);
+    prefix[i]+=prefix[i-1];
+  }
+  long long rest=prefix[N];
+  for(int p=2;p<=1000000;p++){
+    if(rest%p==0){
+      int cnt=0;
+      while(rest%p==0){
+        rest/=p;
+        cnt++;
+      }
+      primes.emplace_back(p,cnt);
+    }
+  }
+  //now rest has at most two prime factors
+  for(int i=1;i<N;i++){
+    long long tmp=std::gcd(rest,prefix[i]);
+    if(tmp!=1&&tmp!=rest){
+      if(tmp>rest/tmp){
+        tmp=rest/tmp;
+      }
+      if(tmp*tmp==rest){
+        primes.emplace_back(tmp,2);
+      }else{
+        primes.emplace_back(tmp,1);
+        primes.emplace_back(rest/tmp,1);
+      }
+      rest=1;
+    }
+  }
+  scanf("%d",&Q);
+  for(int i=0;i<Q;i++){
+    scanf("%lld",&queries[i]);
+    long long tmp=queries[i];
+    if(rest%tmp==0&&tmp!=1&&tmp!=rest){
+      if(tmp>rest/tmp){
+        tmp=rest/tmp;
+      }
+      if(tmp*tmp==rest){
+        primes.emplace_back(tmp,2);
+      }else{
+        primes.emplace_back(tmp,1);
+        primes.emplace_back(rest/tmp,1);
+      }
+      rest=1;
+    }
+  }
+  if(rest!=1){
+    //assume it is prime; can't tell anyway
+    primes.emplace_back(rest,1);
+  }
+  for(int i=1;i<=N;i++){
+    get_freq(prefix[i])++;
+  }
+  int block=1;
+  for(int i=primes.size()-1;i>=0;i--){
+    for(int code=num_factors()-1;code>=0;code--){
+      if(code/block%(primes[i].second+1)!=0){
+        freq[code-block]+=freq[code];
+      }
+    }
+    block*=primes[i].second+1;
+  }
+  for(int i=0;i<Q;i++){
+    if(prefix[N]%queries[i]!=0){
+      printf("-1\n");
+    }else{
+      long long ans=N+prefix[N]/queries[i];
+      ans-=get_freq(queries[i])*2;
+      printf("%lld\n",ans);
+    }
+  }
+}
+
+In the implementation above, each factor
+
+$f$
+
+of
+
+$S$
+
+gets encoded to a location
+
+$\text{code}(f)$
+
+in the
+
+$\texttt{freq}$
+
+array. This encoding is generalized to
+other numbers
+
+$g$
+
+by mapping them to the location
+
+$\text{code}(\gcd(S,g))$
+
+.
+
+The part that performs the multidimensional prefix sum is as follows:
+
+int block=1;
+for(int i=primes.size()-1;i>=0;i--){
+  for(int code=num_factors()-1;code>=0;code--){
+    if(code/block%(primes[i].second+1)!=0){
+      freq[code-block]+=freq[code];
+    }
+  }
+  block*=primes[i].second+1;
+}
+
+Initially,
+
+$\texttt{freq}[\text{code}(f)]$
+
+stores the number of
+
+$q_i$
+
+that
+equal
+
+$f$
+
+(equivalently, the number of
+
+$p_i$
+
+such that
+
+$\gcd(p_i,S)=f$
+
+).
+
+After
+processing some primes,
+
+$\texttt{freq}[\text{code}(f)]$
+
+will store the number
+of
+
+$i$
+
+such that
+
+$\frac{q_i}{f}$
+
+only contains prime factors among the already
+processed primes.
+
+After processing all primes,
+
+$\texttt{freq}[\text{code}(f)]=x_f$
+
+: the number of
+
+$q_i$
+
+such that
+
+$q_i$
+
+is a multiple of
+
+$f$
+
+(equivalently, the number of
+
+$p_i$
+
+that is a multiple of
+
+$f$
+
+).

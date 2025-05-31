@@ -1,0 +1,228 @@
+Solution ID: sol_family_bronze_open18
+Contest: OPEN18
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_family_bronze_open18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+In this problem, we're given a family tree and asked to identify the
+relationship between two cows; call them Bessie and Elsie. We will do this by
+finding the common ancestor of Bessie and Elsie (if she exists), and the number
+of generations by which each of Bessie and Elsie are removed from the ancestor
+cow. Notice that the numbers uniquely define the relationship between Bessie and
+Elsie.
+
+But how do we find the two numbers? We can find the mother of a given cow in
+
+$O(N)$
+
+time (also determining whether the mother even exists), by looping over
+all relationships. Call this the MOTHER function. Now we can determine whether
+one cow is a direct ancestor of another cow in
+
+$O(N^2)$
+
+time, by repeatedly
+finding the mother of the second cow, and then her mother, and so forth. Let's
+call this the IS-ANCESTOR function. We can also have the IS-ANCESTOR function
+return the number of generations by which the first cow is removed from the
+second cow.
+
+Now we almost have an algorithm. We can repeatedly check if Bessie is an
+ancestor of Elsie, and then if Bessie's mother is an ancestor of Elsie, and so
+forth. By keeping a counter, we can find the minimum number of generations up
+the family tree we need to go before Bessie's ancestor is an ancestor of Elsie.
+If no such ancestor satisfies the property, then we can immmediately output "NOT
+RELATED."
+
+Otherwise, let
+
+$b$
+
+be the distance of Bessie from the common ancestor, and let
+
+$a$
+
+be the distance of Elsie from the common ancestor (where
+
+$a$
+
+is returned by
+our IS-ANCESTOR function). All that remains is some casework, but it's possible
+to write less code by putting in a bit more thought. If
+
+$a$
+
+and
+
+$b$
+
+are both
+
+$1$
+
+, then Bessie and Elsie are "SIBLINGS." If
+
+$a$
+
+and
+
+$b$
+
+are both greater than
+
+$1$
+
+, then they are "COUSINS." Now observe that either
+
+$a > b$
+
+or
+
+$b > a$
+
+. In the
+former case, Bessie is the mother/grandmother/etc. or aunt/great-aunt/etc. of
+Elsie. In the latter case, the reverse is true. So if
+
+$a > b$
+
+, we can simply
+swap the names of Elsie and Bessie, and swap
+
+$a$
+
+and
+
+$b$
+
+, and we find ourselves
+in the
+
+$b > a$
+
+case.
+
+Now we can observe that either
+
+$a = 0$
+
+or
+
+$a = 1$
+
+. In the former case,
+Elsie is the mother/grandmother/etc. of Bessie, whereas in the latter case she
+is the aunt/great-aunt/etc. of Bessie. So we simply output the appropriate
+number of "great-"s, depending on the value of
+
+$b$
+
+, possibly output "grand-",
+depending on
+
+$a$
+
+and
+
+$b$
+
+, and then output either "mother" or "aunt", depending
+on
+
+$a$
+
+.
+
+The overall algorithm is
+
+$O(N^3)$
+
+, since we call IS-ANCESTOR at most
+
+$N$
+
+times.
+Since
+
+$N = 100$
+
+, this runs in the time limit, but it is possible to speed up the
+algorithm by not recomputing the ancestors of Elsie each time.
+
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <cassert>
+using namespace std;
+#define MAXN 100
+ 
+int N;
+string daughter[MAXN];
+string mother[MAXN];
+ 
+// returns mother of cow, or "" if mother does not exist
+string find_mother(string cow)
+{
+	for(int i=0;i<N;i++)
+		if(cow == daughter[i])
+			return mother[i];
+	return "";
+}
+ 
+// returns number of generations by which cow1 is removed from cow2
+// if cow1 is a direct ancestor of cow2.
+// returns -1 otherwise.
+int is_ancestor(string cow1, string cow2)
+{
+	int counter = 0;
+	while(cow2 != "")
+	{
+		if(cow1 == cow2)
+			return counter;
+		cow2 = find_mother(cow2);
+		counter++;
+	}
+	return -1;
+}
+ 
+int main()
+{
+	string bessie, elsie;
+	cin >> N >> bessie >> elsie;
+	for(int i=0;i<N;i++)
+		cin >> mother[i] >> daughter[i];
+	
+	string cow = bessie;
+	int b = 0;
+	while(cow != "")
+	{
+		if(is_ancestor(cow, elsie) != -1)
+			break;
+		cow = find_mother(cow);
+		b++;
+	}
+	if(cow == "")
+	{
+		cout << "NOT RELATED\n";
+		return 0;
+	}
+	int a = is_ancestor(cow, elsie);
+	if(a == 1 && b == 1) cout << "SIBLINGS\n";
+	else if(a > 1 && b > 1) cout << "COUSINS\n";
+	else
+	{
+		if(a > b) swap(elsie, bessie), swap(a, b);
+		cout << elsie << " is the ";
+		for(int i=0;i<b-2;i++) cout << "great-";
+		if(b > 1 && a == 0) cout << "grand-";
+		if(a == 0) cout << "mother";
+		else cout << "aunt";
+		cout << " of " << bessie << '\n';
+	}
+	return 0;
+}

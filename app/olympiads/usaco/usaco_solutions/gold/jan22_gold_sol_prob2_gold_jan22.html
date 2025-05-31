@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>The idea is to process the updates in reverse order and maintain which farms are
+relevant. Note that once a farm becomes relevant, it never becomes irrelevant
+due to the assumption that roads are only added between active farms.
+<p>For updates of type R, add the <span class='math'>$e$</span>-th edge to the graph. If exactly one endpoint
+of this edge was previously relevant, mark all vertices in the connected
+component of the other endpoint as relevant as well.
+<p>For updates of type D, if vertex <span class='math'>$x$</span> was not previously relevant, then mark
+every vertex in its connected component as relevant.
+<p>For updates of type A, do nothing.
+<p>We can process these operations in <span class='math'>$O(N+Q)$</span> time.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class GarbageCollection {
+    static List&lt;Integer&gt;[] adj = null;
+    static int[] answers;
+
+    // marks everything in the connected component of a 
+    // as relevant
+    static void dfs(int a, int time) {
+        if (answers[a] == 0) {
+            answers[a] = time;
+            for (int b : adj[a]) {
+                dfs(b, time);
+            }
+        }
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int q = Integer.parseInt(tokenizer.nextToken());
+        adj = new List[n + 1];
+        for (int a = 1; a &lt;= n; a++) {
+            adj[a] = new ArrayList&lt;&gt;();
+        }
+        answers = new int[n + 1];
+        List&lt;Edge&gt; added = new ArrayList&lt;&gt;();
+        Edge[] removed = new Edge[q];
+        int[] deactivated = new int[q];
+        Set&lt;Integer&gt; alwaysActive = new HashSet&lt;&gt;();
+        for (int a = 1; a &lt;= n; a++) {
+            alwaysActive.add(a);
+        }
+        for (int j = 0; j &lt; q; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            char type = tokenizer.nextToken().charAt(0);
+            if (type == &apos;D&apos;) {
+                int a = Integer.parseInt(tokenizer.nextToken());
+                deactivated[j] = a;
+                alwaysActive.remove(a);
+            } else if (type == &apos;A&apos;) {
+                int a = Integer.parseInt(tokenizer.nextToken());
+                int b = Integer.parseInt(tokenizer.nextToken());
+                added.add(new Edge(a, b));
+            } else {
+                int k = Integer.parseInt(tokenizer.nextToken());
+                removed[j] = added.get(k - 1);
+                added.set(k - 1, null);
+            }
+        }
+        for (Edge edge : added) {
+            if (edge != null) {
+                adj[edge.from].add(edge.to);
+                adj[edge.to].add(edge.from);
+            }
+        }
+        for (int a : alwaysActive) {
+            dfs(a, q);
+        }
+        for (int j = q - 1; j &gt; 0; j--) {
+            if (deactivated[j] != 0) {
+                dfs(deactivated[j], j);
+            } else if (removed[j] != null) {
+                int a = removed[j].from;
+                int b = removed[j].to;
+                adj[a].add(b);
+                adj[b].add(a);
+                if (answers[a] != 0 || answers[b] != 0) {
+                    dfs(a, j);
+                    dfs(b, j);
+                }
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int a = 1; a &lt;= n; a++) {
+            out.append(answers[a]).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+ 
+    static class Edge {
+        final int from;
+        final int to;
+ 
+        Edge(int from, int to) {
+            this.from = from;
+            this.to = to;
+        }
+    }
+}
+</pre>
+<p></body></html>

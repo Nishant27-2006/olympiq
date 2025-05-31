@@ -1,0 +1,129 @@
+Solution ID: sol_piggyback_silver
+Contest: DEC14
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_piggyback_silver.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Jonathan Paulson -
+
+[email protected]
+
+)
+
+The first step is to see that we can break Bessie and Elsie's trip into two parts: the start until they meet and piggyback, and then piggybacking to the end (if they never piggyback, that's the same as meeting at the end and then piggybacking for 0 distance).
+
+If we knew where they met, the problem would be easy. Suppose they meet at field
+
+$X$
+
+. Then from
+
+$X$
+
+, we can use a BFS to calculate the fastest paths to all the other fields. Then if it takes
+
+$D_i$
+
+edges to travel from field
+
+$X$
+
+to field
+
+$i$
+
+, the answer is
+
+$B*D_1 + E*D_2 + P*D_N$
+
+.
+
+This already gives us an
+
+$O(N^2)$
+
+solution; just try out each
+
+$X$
+
+. To speed it up to
+
+$O(N)$
+
+, notice that we always want the distances from fields
+
+$1$
+
+,
+
+$2$
+
+, and
+
+$N$
+
+. So if we precompute those distances, it takes
+
+$O(1)$
+
+time to try out each
+
+$X$
+
+.
+
+Here's my C++ code for that solution:
+
+#include <cstdio>
+#include <vector>
+#include <queue>
+
+#define PB push_back
+
+using namespace std;
+
+typedef long long ll;
+
+vector<ll> D(ll st, const vector<vector<ll>>& E) {
+  vector<ll> D(E.size(), -1);
+
+  deque<ll> Q;
+  D[st] = 0;
+  Q.PB(st);
+  while(!Q.empty()) {
+    ll x = Q.front(); Q.pop_front();
+    for(ll y : E[x]) {
+      if(D[y] == -1) {
+        D[y] = D[x]+1;
+        Q.PB(y);
+      }
+    }
+  }
+  return D;
+}
+
+int main() {
+  ll b, e, p, n, m;
+  scanf("%lld %lld %lld %lld %lld", &b, &e, &p, &n, &m);
+  vector<vector<ll>> E(n, vector<ll>());
+  for(ll i=0; i<m; i++) {
+    ll x, y;
+    scanf("%lld %lld", &x, &y);
+    x--; y--;
+    E[x].PB(y);
+    E[y].PB(x);
+  }
+
+  vector<ll> D0 = D(0, E);
+  vector<ll> D1 = D(1, E);
+  vector<ll> Dn = D(n-1, E);
+
+  ll ans = ll(1000)*1000*1000*1000;
+  for(ll meet=0; meet<n; meet++) {
+    ans = min(ans, D0[meet]*b + D1[meet]*e + Dn[meet]*p);
+  }
+  printf("%lld\n", ans);
+}

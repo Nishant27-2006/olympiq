@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal, Benjamin Qi)
+<p>The problem reduces to the following: we want to add the minimum number of bits
+to the Farm ID numbers so that no Farm ID number is a prefix of another. We can
+solve this problem greedily.
+<p>We maintain a partial assignment of Farm ID numbers to new bitstrings with some
+bits added so that, considering all the bitstrings currently in our assignment,
+none is a prefix of another.
+<p>The current assignment can be thought of as a binary tree where each node
+represents a bitstring -- the root represents the empty bitstring, and each
+node&apos;s left child represents that bitstring plus &apos;0&apos;, while each node&apos;s right
+child represents that bitstring plus &apos;1&apos;.
+<p>The nodes that belong to Farm ID numbers in the assignment are leaves, because
+they can&apos;t have any descendants in the assignment (otherwise they would be a
+prefix of another Farm ID numbers in the assignment), while nodes with children
+represent bitstrings that can&apos;t be used because they are (and so will always be)
+a prefix of a current Farm ID number. Every node that isn&apos;t a leaf has two
+children, because even if one child isn&apos;t in use as a Farm ID number and doesn&apos;t
+have any descendants in use, that node (or its descendants) could potentially be
+used in the future.
+<p><strong>All Farm ID numbers have length exactly <span class='math'>$1$</span></strong>
+<p>All bitstrings in the input are either &quot;0&quot; or &quot;1&quot;; we cannot make a &quot;0&quot;
+bitstring the prefix of a &quot;1&quot; bitstring or vice versa by adding bits, so
+consider them separately. Below, we will instead assume that all bitstrings in
+the input are
+&quot;&quot;.
+<p>The first Farm ID number that we see can just be left as is, and so will become
+the root of our tree. Each additional Farm ID number needs to be assigned to a
+new node in such a way that all Farm ID numbers in the assignment remain leaves.
+A way to do this is to take a current leaf, remove it from the assignment, then
+make its two children leaves, so that one child represents the bitstring of the
+old node which we added one bit to, and the other child represents the new
+bitstring that we were accounting for.
+<p>For the second Farm ID number we see, that is the only way to incorporate the
+Farm ID number, because the only node is the root, so there are no free leaves
+that we could use instead. Furthermore, because each leaf that becomes a nonleaf
+now has its two children used, there is never a free leaf to use, so the above
+way is the only way to incorporate new Farm ID numbers.
+<p>If the leaf that we make into a nonleaf was at depth <span class='math'>$d$</span>, then we need to add
+<span class='math'>$1$</span> bit to push down the Farm ID number it represented to one of its children,
+and <span class='math'>$d + 1$</span> bits to push down the new Farm ID number to its other child, adding
+<span class='math'>$d + 2$</span> bits in total. This also means that we should greedily push down the
+nodes at smaller depths first.
+<p>The first Farm ID number is free. The second involves pushing down the root, at
+depth <span class='math'>$0$</span>, costing <span class='math'>$0 + 2$</span> bits. After that, at depth <span class='math'>$k$</span> we have <span class='math'>$2^k$</span> nodes
+that can be pushed down at a cost of <span class='math'>$k + 2$</span> bits. We can go through each depth
+until we&apos;ve assigned all the Farm ID numbers, adding up the costs, to get our
+answer (for each of &quot;0&quot; and &quot;1&quot;). This runs in <span class='math'>$O(N)$</span> (and can be made even
+faster using formulas).
+<p><strong><span class='math'>$N \leq 10^2$</span> and the total length of Farm ID numbers <span class='math'>$\leq 10^3$</span></strong>
+<p>The key observation here is that we should incorporate the longer Farm ID
+numbers first, because they have more limited options to choose from and so
+should be prioritized.
+<p>More rigorously, if we attained some assignment by first incorporating a shorter
+(at the beginning) Farm ID number, which becomes the bitstring <span class='math'>$x$</span>, then a
+longer (at the beginning) Farm ID number, which becomes the bitstring <span class='math'>$y$</span>,
+swapping the order of those incorporations could change nothing, or it could
+mean assigning the longer Farm ID number to <span class='math'>$x$</span> and the shorter one to <span class='math'>$y$</span>, but
+that wouldn&apos;t change the cost, so we may as well consider the longer ones first.
+<p>The algorithm is thus to simply incorporate the Farm ID numbers in the input in
+order of decreasing length. A Farm ID number that is currently of length <span class='math'>$l$</span> can
+be incorporated by pushing down an in use leaf at depth <span class='math'>$d$</span> at a cost of
+<span class='math'>$(d - l) + 2$</span>, similarly to what was mentioned before, with the <span class='math'>$- l$</span> accounting
+for the fact that we need to add less bits if the Farm ID number already has
+some of them. It can also be incorporated by using up a previously unused leaf
+at depth <span class='math'>$d$</span> at a cost of <span class='math'>$d - l$</span>. 
+<p>We simply act greedily and do whatever is cheapest. This works because the
+options that each choice opens up for later are always at least as expensive: if
+we use up a free leaf at depth <span class='math'>$d$</span> for a cost of <span class='math'>$d - l$</span>, then we now  have a
+used leaf at depth <span class='math'>$d$</span> that will cost <span class='math'>$(d - l) + 2$</span> to push down later on. If we
+push down a used leaf at depth <span class='math'>$d$</span> at a cost of <span class='math'>$(d - l) + 2$</span>, then we now have
+two used leaves at depth <span class='math'>$d + 1$</span> each at a cost of <span class='math'>$(d + 1 - l) + 2$</span>. This
+implies that what is currently the cheapest option will always be the cheapest
+option, so there is no reason to not just use it right now.
+<p>For each Farm ID number that we incorporate, we can find the cheapest option
+using BFS, starting from the node that represents the bitstring that the Farm ID
+is currently equal to, and going through its descendants in depth order. The
+first in-use leaf that we find, we save for later. If we ever find a free leaf,
+then we use that; otherwise, if we get to the point where the saved in-use leaf
+is the best option, which occurs if that leaf was at depth <span class='math'>$d$</span> and we have
+reached <span class='math'>$d + 2$</span>, meaning that either way we pay at least <span class='math'>$d - l + 2$</span>, then we
+just use that.
+<p>To bound the runtime of this BFS, we will argue that the size of the tree at any
+point in time is bounded by the input. To see this, note that the depth of the
+node that a Farm ID number starts at is equal to its length, and the number of
+new nodes we add when inserting that Farm ID number initially is at most twice
+that depth: we at most add each of its ancestors, as well as a sibling for each
+of its ancestors to make sure that all nonleaves have two children. The only
+other time we add nodes is when we push down an in-use leaf: in this case we add
+two new nodes; since we do this at most once per Farm ID number, the number of
+new nodes is <span class='math'>$2N$</span>.
+<p>Therefore the size of the tree is at most <span class='math'>$2(N + \sum \text{length})$</span>, so each
+BFS takes <span class='math'>$O(\sum \text{length})$</span> (because the sum of lengths is at least <span class='math'>$N$</span>).
+The overall runtime is therefore <span class='math'>$O(N\sum \text{length})$</span>, which is fast enough.
+<p>Note that we can analyze the runtime of the BFS in another way to get
+<span class='math'>$O(N\lg N)$</span>, yielding an <span class='math'>$O(N^2\lg N)$</span> runtime.
+<p><strong>Full solution</strong>
+<p>There are many ways to optimize the computation carried out in the previous
+subtask. Interestingly, we can make one simple change to the BFS to make it
+efficient. 
+<p>A bad case for the original BFS is simply the first subtask: if we simply have a
+lot of &quot;1&quot; bitstrings, then each one (at least, the latter half) will have to
+BFS through a tree of size <span class='math'>$O(N)$</span>.
+<p>We can account for this by doing only one BFS for each distinct bitstring in the
+input. In order to assign nodes to multiple Farm ID numbers, we maintain two
+queues: one that performs normal BFS, finding leaves, and one that maintains
+in-use leafs to push down. At each step, if the normal queue is at depth <span class='math'>$d_1$</span>
+and the second queue is at depth <span class='math'>$d_2$</span>, we perform one step of the first queue
+if <span class='math'>$d_1 \leq d_2 + 2$</span> and of the second queue otherwise. Free leaves that we
+find in the first queue are used then added to the second queue, in-use leaves
+that we find in the first queue are just added to the second queue, and in-use
+leaves from the second queue are pushed down then their children added back. 
+<p>To analyze this, we consider for each node how many BFSs it could show up in. A
+node can only be found in a BFS from one of its ancestors, so one bound on the
+total runtime of the BFSs is the sum of depths of all nodes in the end.
+<p>We can do slightly better: say that each Farm ID number in the input has a
+potential equal to <span class='math'>$2l$</span>, where <span class='math'>$l$</span> is its length, that we can spread between
+nodes, and the goal is to place potential into nodes so that the amount of BFSs
+which see them is at most the amount of potential they have.
+<p>When we assign that Farm ID number, either we place it into a free leaf, in
+which case we just put <span class='math'>$l$</span> potential into that leaf, or we push down an in-use
+leaf into two in-use leafs, in which case we place <span class='math'>$l$</span> potential into each leaf.
+The total number of ancestors of the leaves in both cases could be slightly more
+than <span class='math'>$l$</span>, but because this is the first BFS in which we see that leaf, and we
+will only BFS from less deep nodes later on, the only nodes whose BFSs could see
+the new leaf/leaves are their <span class='math'>$l$</span> ancestors that are higher than the node
+corresponding to the Farm ID number. 
+<p>The placements of potentials therefore bounds the total number of BFSs that each
+node can be seen by, and so the total runtime of all BFSs, by
+<span class='math'>$2\sum\text{length}$</span>, and so this algorithm is <span class='math'>$O(\sum\text{length})$</span>, meaning
+that it is in fact linear in the length of the input.
+<p>Java code:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class PrefixFreeCodeBFS {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        Trie root = new Trie(0);
+        List&lt;Trie&gt; need = new ArrayList&lt;&gt;();
+        for (int i = 0; i &lt; n; i++) {
+            String s = in.readLine();
+            Trie node = root;
+            for (char bit : s.toCharArray()) {
+                node.status = Status.BLOCKED;
+                node = node.get(bit - &apos;0&apos;);
+            }
+            if (node.needToAssign == 0) {
+                need.add(node);
+            }
+            node.needToAssign++;
+        }
+ 
+        need.sort(Comparator.comparingInt(node -&gt; -node.depth));
+        int answer = 0;
+        for (Trie source : need) {
+            LinkedList&lt;Trie&gt; q = new LinkedList&lt;&gt;();
+            LinkedList&lt;Trie&gt; expandable = new LinkedList&lt;&gt;();
+            q.add(source);
+            while (source.needToAssign &gt; 0) {
+                if (!expandable.isEmpty() &amp;&amp; (q.isEmpty() || expandable.peek().depth + 2 &lt;= q.peek().depth)) {
+                    Trie node = expandable.remove();
+                    source.needToAssign--;
+                    node.status = Status.BLOCKED;
+                    answer += node.depth - source.depth + 2;
+                    for (int bit = 0; bit &lt;= 1; bit++) {
+                        node.get(bit).status = Status.IN_USE;
+                        expandable.add(node.get(bit));
+                    }
+                } else {
+                    Trie node = q.remove();
+                    if (node.status == Status.FREE) {
+                        source.needToAssign--;
+                        node.status = Status.IN_USE;
+                        answer += node.depth - source.depth;
+                    }
+                    if (node.status == Status.BLOCKED) {
+                        for (int bit = 0; bit &lt;= 1; bit++) {
+                            q.add(node.get(bit));
+                        }
+                    } else {
+                        expandable.add(node);
+                    }
+                }
+            }
+        }
+        System.out.println(answer);
+    }
+ 
+    enum Status {
+        FREE, IN_USE, BLOCKED
+    }
+ 
+    static class Trie {
+        private Trie[] children;
+        public int depth;
+        public Status status;
+        public int needToAssign;
+ 
+        public Trie(int depth) {
+            this.children = new Trie[2];
+            this.depth = depth;
+            this.status = Status.FREE;
+            this.needToAssign = 0;
+        }
+ 
+        public Trie get(int bit) {
+            if (children[bit] == null) {
+                children[bit] = new Trie(depth + 1);
+            }
+            return children[bit];
+        }
+    }
+ 
+}
+</pre>
+<p>C++ code:
+<p><pre class='prettyprint'>
+//
+// Created by Danny Mittal on 3/9/24.
+//
+ 
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;algorithm&gt;
+ 
+enum Status {
+    FREE, IN_USE, BLOCKED
+};
+ 
+class Trie {
+public:
+    int depth;
+    Trie* children[2];
+    Status status;
+    int needToAssign;
+ 
+    Trie(int depth) : depth(depth), status(FREE), needToAssign(0) {
+        children[0] = nullptr;
+        children[1] = nullptr;
+    }
+ 
+    Trie* get(int bit) {
+        if (children[bit] == nullptr) {
+            children[bit] = new Trie(depth + 1);
+        }
+        return children[bit];
+    }
+};
+ 
+int main() {
+    int n;
+    std::cin &gt;&gt; n;
+    Trie root(0);
+    std::vector&lt;Trie*&gt; need;
+    for (int i = 0; i &lt; n; ++i) {
+        std::string s;
+        std::cin &gt;&gt; s;
+        Trie* node = &amp;root;
+        for (char bitChar : s) {
+            int bit = bitChar - &apos;0&apos;;
+            node-&gt;status = BLOCKED;
+            node = node-&gt;get(bit);
+        }
+        if (node-&gt;needToAssign == 0) {
+            need.push_back(node);
+        }
+        node-&gt;needToAssign++;
+    }
+    int answer = 0;
+    std::sort(need.begin(), need.end(), [](Trie* a, Trie* b) {
+        return a-&gt;depth &gt; b-&gt;depth;
+    });
+    for (Trie* source : need) {
+        std::queue&lt;Trie*&gt; q;
+        std::queue&lt;Trie*&gt; expandable;
+        q.push(source);
+        while (source-&gt;needToAssign &gt; 0) {
+            if (!expandable.empty() &amp;&amp; (q.empty() || expandable.front()-&gt;depth + 2 &lt;= q.front()-&gt;depth)) {
+                Trie* node = expandable.front();
+                expandable.pop();
+                source-&gt;needToAssign--;
+                node-&gt;status = BLOCKED;
+                answer += node-&gt;depth - source-&gt;depth + 2;
+                for (int bit = 0; bit &lt;= 1; ++bit) {
+                    node-&gt;get(bit)-&gt;status = IN_USE;
+                    expandable.push(node-&gt;get(bit));
+                }
+            } else {
+                Trie* node = q.front();
+                q.pop();
+                if (node-&gt;status == FREE) {
+                    source-&gt;needToAssign--;
+                    node-&gt;status = IN_USE;
+                    answer += node-&gt;depth - source-&gt;depth;
+                }
+                if (node-&gt;status == BLOCKED) {
+                    for (int bit = 0; bit &lt;= 1; ++bit) {
+                        q.push(node-&gt;get(bit));
+                    }
+                } else {
+                    expandable.push(node);
+                }
+            }
+        }
+    }
+    std::cout &lt;&lt; answer &lt;&lt; std::endl;
+    return 0;
+}
+</pre>
+<p><strong>Alternate Full Solution:</strong>
+<p>Another approach is to use dynamic programming on subtrees. For each prefix <span class='math'>$p$</span>
+of any input string and integer <span class='math'>$x\in [0,N]$</span>, store the minimum time <span class='math'>$dp[p][x]$</span>
+to solve the problem if we restrict consideration to strings starting with <span class='math'>$p$</span>,
+along with <span class='math'>$x$</span> additional occurrences of <span class='math'>$p$</span>. To compute the answer for <span class='math'>$p$</span> we
+can combine the answers for <span class='math'>$p+`0&apos;$</span> and <span class='math'>$p+`1&apos;$</span> in <span class='math'>$O(N^2)$</span> time, giving an
+<span class='math'>$O(\sum\text{length}\cdot N^2)$</span> solution. 
+<p>To speed this up, we use the observation that
+<span class='math'>$dp[p][x+2]-dp[p][x+1]\ge dp[p][x+1]-dp[p][x]$</span> to store <span class='math'>$dp[p]$</span> in a compressed 
+format: store only <span class='math'>$dp[p][0]$</span>, and for each <span class='math'>$k\in [0, O(\log N))$</span>, the number of
+<span class='math'>$x$</span> such that <span class='math'>$dp[p][x]-dp[p][x-1]=k$</span>. Here, the upper bound on <span class='math'>$k$</span> comes from
+the fact that we can always reach a leaf after adding <span class='math'>$O(\log N)$</span> bits to <span class='math'>$p$</span>.
+We can merge the compressed forms for <span class='math'>$dp[p + `0&apos;]$</span> and <span class='math'>$dp[p+`1&apos;]$</span> in
+<span class='math'>$O(\log N)$</span> time. 
+<p>The overall time and memory complexities are both
+<span class='math'>$O(\sum\text{length}\cdot \log N)$</span>. Depending on your implementation, you may
+run into the memory limit. Some ways to improve the memory usage are to:
+<p><ol><li>Use fixed-length arrays instead of vectors.</li><li>Avoid using recursion.</li></ol>
+<p>Benjamin Qi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;array&gt;
+#include &lt;cassert&gt;
+#include &lt;iostream&gt;
+#include &lt;numeric&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+using ll = long long;
+using vi = vector&lt;int&gt;;
+int N;
+
+vi operator+(const vi &amp;l, const vi &amp;r) {
+    vi res = l;
+    if (size(l) &lt; size(r)) res.resize(size(r));
+    for (int i = 0; i &lt; size(r); ++i) res.at(i) += r.at(i);
+    res.insert(begin(res), 0);
+    int sum = accumulate(begin(res), end(res), 0);
+    while (true) {
+        assert(size(res));
+        if (sum - res.back() &lt; N) break;
+        sum -= res.back();
+        res.pop_back();
+    }
+    return res;
+}
+
+struct DP {
+    int init;
+    vi dp;
+    void advance(int x) {  // push x strings into subtree
+        for (int i = 0; i &lt; size(dp); ++i) {
+            int cnt = min(x, dp[i]);
+            init += cnt * i;
+            x -= cnt;
+            dp[i] -= cnt;
+        }
+        assert(x == 0);
+    }
+};
+
+DP empty_dp() {  // if no strings starting with p
+    vi ans{1, 0};
+    int s = 1;
+    for (int i = 2; s &lt; N; ++i) {
+        int x = 1 &lt;&lt; (i - 2);
+        ans.push_back(x);
+        s += x;
+    }
+    return DP{0, ans};
+}
+
+DP operator+(const DP &amp;l, const DP &amp;r) {
+    return DP{l.init + r.init, l.dp + r.dp};
+}
+
+struct TrieNode {
+    int cnt;
+    array&lt;int, 2&gt; child;
+    DP dp;
+};
+
+vector&lt;TrieNode&gt; nodes(2);
+int nxt = 1;
+
+void fill(int idx) {
+    if (nodes.at(idx).child.at(0) == 0 &amp;&amp; nodes.at(idx).child.at(1) == 0) {
+        nodes.at(idx).dp = nodes.at(0).dp;
+    } else {
+        nodes.at(idx).dp = nodes.at(nodes.at(idx).child.at(0)).dp +
+                           nodes.at(nodes.at(idx).child.at(1)).dp;
+    }
+    nodes.at(idx).dp.advance(nodes.at(idx).cnt);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cin &gt;&gt; N;
+    for (int i = 0; i &lt; N; ++i) {
+        string s;
+        cin &gt;&gt; s;
+        int cur = 1;
+        for (char c : s) {
+            if (!nodes.at(cur).child.at(c - &apos;0&apos;)) {
+                nodes.at(cur).child.at(c - &apos;0&apos;) = ++nxt;
+                nodes.emplace_back();
+            }
+            cur = nodes.at(cur).child.at(c - &apos;0&apos;);
+        }
+        ++nodes.at(cur).cnt;
+    }
+    nodes.at(0).dp = empty_dp();
+    for (int i = nxt; i &gt;= 1; --i) fill(i);
+    cout &lt;&lt; nodes.at(1).dp.init &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Note:</strong> This solution can be modified to solve the following extension:
+<p>For each Farm ID you are also provided with the number of times it occurs. The
+sum of the occurrence counts does not exceed
+<span class='math'>$10^{15}$</span>.
+<p></body></html>

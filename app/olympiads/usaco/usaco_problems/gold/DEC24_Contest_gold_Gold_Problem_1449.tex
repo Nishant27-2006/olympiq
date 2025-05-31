@@ -1,0 +1,183 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: DEC24 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Farmer John's $N$ $(1 \leq N \leq 10^5)$ cows have been arranged into a line. 
+The $i$th cow has label $a_i$ ($1 \leq a_i \leq N$). A group of cows  can form a
+friendship group if they all have the same label and each cow is  within $x$
+cows of all the others in the group, where $x$ is an integer in the range
+$[1,N]$.  Every cow must be in exactly one friendship group.
+
+For each $x$ from $1$ to $N$, calculate the minimum number of friendship groups
+that could have formed.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line consists of an integer $N$.
+
+The next line contains $a_1 ... a_N$, the labels of each cow.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+For each $x$ from $1$ to $N$, output the minimum number of friendship groups for
+that $x$ on a new line.
+
+SAMPLE INPUT:
+9
+1 1 1 9 2 1 2 1 1
+SAMPLE OUTPUT: 
+7
+5
+4
+4
+4
+4
+4
+3
+3
+
+
+Here are examples of how to assign cows to friendship groups for $x=1$ and $x=2$
+in a way that minimizes the number of groups. Each letter corresponds to a
+different group.
+
+
+Example:
+
+       1 1 1 9 2 1 2 1 1
+x = 1: A B B C D E F G G (7 groups)
+x = 1: A A B C D E F G G (7 groups, alternative grouping)
+x = 2: A A A B C D C E E (5 groups)
+x = 2: A A A B C D C D E (5 groups, alternative grouping)
+
+SCORING:
+Inputs 2-3: $N\le 5000$Inputs 4-7: $a_i\le 10$ for all $i$Inputs 8-11: No label appears more than $10$ times.Inputs 12-20: No additional constraints.
+
+
+Problem credits: Chongtian Ma
+
+
+
+\section*{Input Format}
+The next line contains $a_1 ... a_N$, the labels of each cow.
+
+OUTPUT FORMAT (print output to the terminal / stdout):For each $x$ from $1$ to $N$, output the minimum number of friendship groups for
+that $x$ on a new line.SAMPLE INPUT:9
+1 1 1 9 2 1 2 1 1SAMPLE OUTPUT:7
+5
+4
+4
+4
+4
+4
+3
+3Here are examples of how to assign cows to friendship groups for $x=1$ and $x=2$
+in a way that minimizes the number of groups. Each letter corresponds to a
+different group.Example:
+
+       1 1 1 9 2 1 2 1 1
+x = 1: A B B C D E F G G (7 groups)
+x = 1: A A B C D E F G G (7 groups, alternative grouping)
+x = 2: A A A B C D C E E (5 groups)
+x = 2: A A A B C D C D E (5 groups, alternative grouping)SCORING:Inputs 2-3: $N\le 5000$Inputs 4-7: $a_i\le 10$ for all $i$Inputs 8-11: No label appears more than $10$ times.Inputs 12-20: No additional constraints.Problem credits: Chongtian Ma
+
+\section*{Output Format}
+SAMPLE INPUT:9
+1 1 1 9 2 1 2 1 1SAMPLE OUTPUT:7
+5
+4
+4
+4
+4
+4
+3
+3Here are examples of how to assign cows to friendship groups for $x=1$ and $x=2$
+in a way that minimizes the number of groups. Each letter corresponds to a
+different group.Example:
+
+       1 1 1 9 2 1 2 1 1
+x = 1: A B B C D E F G G (7 groups)
+x = 1: A A B C D E F G G (7 groups, alternative grouping)
+x = 2: A A A B C D C E E (5 groups)
+x = 2: A A A B C D C D E (5 groups, alternative grouping)SCORING:Inputs 2-3: $N\le 5000$Inputs 4-7: $a_i\le 10$ for all $i$Inputs 8-11: No label appears more than $10$ times.Inputs 12-20: No additional constraints.Problem credits: Chongtian Ma
+
+\section*{Sample Input}
+\begin{verbatim}
+9
+1 1 1 9 2 1 2 1 1
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+7
+5
+4
+4
+4
+4
+4
+3
+3
+
+Here are examples of how to assign cows to friendship groups for $x=1$ and $x=2$
+in a way that minimizes the number of groups. Each letter corresponds to a
+different group.Example:
+
+       1 1 1 9 2 1 2 1 1
+x = 1: A B B C D E F G G (7 groups)
+x = 1: A A B C D E F G G (7 groups, alternative grouping)
+x = 2: A A A B C D C E E (5 groups)
+x = 2: A A A B C D C D E (5 groups, alternative grouping)SCORING:Inputs 2-3: $N\le 5000$Inputs 4-7: $a_i\le 10$ for all $i$Inputs 8-11: No label appears more than $10$ times.Inputs 12-20: No additional constraints.Problem credits: Chongtian Ma
+
+Here are examples of how to assign cows to friendship groups for $x=1$ and $x=2$
+in a way that minimizes the number of groups. Each letter corresponds to a
+different group.Example:
+
+       1 1 1 9 2 1 2 1 1
+x = 1: A B B C D E F G G (7 groups)
+x = 1: A A B C D E F G G (7 groups, alternative grouping)
+x = 2: A A A B C D C E E (5 groups)
+x = 2: A A A B C D C D E (5 groups, alternative grouping)SCORING:Inputs 2-3: $N\le 5000$Inputs 4-7: $a_i\le 10$ for all $i$Inputs 8-11: No label appears more than $10$ times.Inputs 12-20: No additional constraints.Problem credits: Chongtian Ma
+
+Example:
+
+       1 1 1 9 2 1 2 1 1
+x = 1: A B B C D E F G G (7 groups)
+x = 1: A A B C D E F G G (7 groups, alternative grouping)
+x = 2: A A A B C D C E E (5 groups)
+x = 2: A A A B C D C D E (5 groups, alternative grouping)SCORING:Inputs 2-3: $N\le 5000$Inputs 4-7: $a_i\le 10$ for all $i$Inputs 8-11: No label appears more than $10$ times.Inputs 12-20: No additional constraints.Problem credits: Chongtian Ma
+
+Example:
+
+       1 1 1 9 2 1 2 1 1
+x = 1: A B B C D E F G G (7 groups)
+x = 1: A A B C D E F G G (7 groups, alternative grouping)
+x = 2: A A A B C D C E E (5 groups)
+x = 2: A A A B C D C D E (5 groups, alternative grouping)
+
+SCORING:Inputs 2-3: $N\le 5000$Inputs 4-7: $a_i\le 10$ for all $i$Inputs 8-11: No label appears more than $10$ times.Inputs 12-20: No additional constraints.Problem credits: Chongtian Ma
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1449
+
+\section*{Source}
+USACO DEC24 Contest, Gold Division, Problem ID: 1449
+
+\end{document}

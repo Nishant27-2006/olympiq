@@ -1,0 +1,95 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: DEC17 Contest - Platinum Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Farmer John's nemesis, Farmer Nhoj, has $N$ cows ($1 \leq N \leq 10^5$),
+conveniently numbered $1 \dots N$. They have unexpectedly turned up at Farmer
+John's farm, so the unfailingly polite Farmer John is attempting to give them
+gifts.
+
+To this end, Farmer John has brought out his infinite supply of gifts, and
+Nhoj's cows have queued up in front of him, with cow $1$ at the head of the
+queue and cow $N$ at the tail. Farmer John was expecting that at every timestep,
+the cow at the head of the queue would take a gift from Farmer John and go to
+the tail of the queue.  However, he has just realized that Nhoj's cows are not
+that polite!  After receiving her gift, each cow may not go to the tail of the
+queue, but rather may cut some number of cows at the tail, and insert herself in
+front of them. Specifically, cow $i$ will always cut exactly $c_i$ cows
+($0 \leq c_i \leq N-1$).
+
+Farmer John knows that some cows might receive multiple gifts; as he has an
+infinite supply, this does not worry him. But he is worried that some cows might
+become unhappy if they do not get any gifts.
+
+Help Farmer John find the number of cows who never receive any gifts, no matter
+how many gifts are handed out.
+
+INPUT FORMAT (file greedy.in):
+The first line contains a single integer, $N$.
+
+The second line contains $N$ space-separated integers $c_1, c_2, \dots, c_N$.
+
+
+OUTPUT FORMAT (file greedy.out):
+Please output the number of cows who cannot receive any gifts.
+
+SAMPLE INPUT:
+3
+1 2 0
+SAMPLE OUTPUT: 
+1
+
+
+Problem credits: Dhruv Rohatgi
+
+
+
+\section*{Input Format}
+The second line contains $N$ space-separated integers $c_1, c_2, \dots, c_N$.
+
+OUTPUT FORMAT (file greedy.out):Please output the number of cows who cannot receive any gifts.SAMPLE INPUT:3
+1 2 0SAMPLE OUTPUT:1Problem credits: Dhruv Rohatgi
+
+\section*{Output Format}
+SAMPLE INPUT:3
+1 2 0SAMPLE OUTPUT:1Problem credits: Dhruv Rohatgi
+
+\section*{Sample Input}
+\begin{verbatim}
+3
+1 2 0
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+1
+
+Problem credits: Dhruv Rohatgi
+
+Problem credits: Dhruv Rohatgi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=770
+
+\section*{Source}
+USACO DEC17 Contest, Platinum Division, Problem ID: 770
+
+\end{document}

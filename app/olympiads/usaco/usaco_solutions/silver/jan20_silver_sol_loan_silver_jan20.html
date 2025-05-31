@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Binary search on <span class='math'>$X$</span>. For the first subtask, we can check whether the number of
+gallons of milk that FJ gives is at least <span class='math'>$N$</span> in <span class='math'>$O(K)$</span> time. However, this does
+not suffice for full points. 
+<p>How can we do better than <span class='math'>$\Theta(K)?$</span> As the numbers in the statement are up to
+<span class='math'>$10^{12},$</span> not <span class='math'>$10^{18},$</span> this suggests that some sort of <span class='math'>$\sqrt{N}$</span> factor
+is involved.
+<p>Suppose that we fix <span class='math'>$X.$</span> Then <span class='math'>$Y$</span> decreases over time. It turns out that if we
+process all transitions that leave <span class='math'>$Y$</span> unchanged in <span class='math'>$O(1)$</span> time, then our
+solution runs quickly enough! If there are more than <span class='math'>$\sqrt {2N}$</span> distinct
+values of <span class='math'>$Y$</span> then FJ definitely gives Bessie enough mlik because 
+<div class='math'>$$1+2+\ldots+\lceil \sqrt {2N}\rceil\ge N.$$</div>
+Thus, we can check whether <span class='math'>$X$</span> works in <span class='math'>$O(\sqrt N)$</span> time.
+<p>It follows that our solution runs in <span class='math'>$O(\sqrt N\log N)$</span> time.
+<p>Nick Wu&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;stdio.h&gt;
+ 
+int valid(long long n, long long k, long long m, long long x) {
+  long long g = 0;
+  while(k &gt; 0 &amp;&amp; g &lt; n) {
+    long long y = (n - g) / x;
+    if(y &lt; m) {
+      long long leftover = (n-g + m-1) / m;
+      return leftover &lt;= k;
+    }
+    long long maxmatch = n - x*y;
+    long long numdays = (maxmatch - g) / y + 1;
+    if(numdays &gt; k) numdays = k;
+    g += y * numdays;
+    k -= numdays;
+  }
+  return g &gt;= n;
+}
+ 
+int main() {
+  freopen(&quot;loan.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;loan.out&quot;, &quot;w&quot;, stdout);
+  long long n, k, m;
+  scanf(&quot;%lld %lld %lld&quot;, &amp;n, &amp;k, &amp;m);
+  long long lhs = 1;
+  long long rhs = 1e12;
+  while(lhs &lt; rhs) {
+    long long mid = (lhs + rhs + 1) / 2;
+    if(valid(n, k, m, mid)) {
+      lhs = mid;
+    }
+    else {
+      rhs = mid - 1;
+    }
+  }
+  printf(&quot;%lld\n&quot;, lhs);
+}
+</pre>
+<p></body></html>

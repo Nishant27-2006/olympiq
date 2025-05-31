@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi, Larry Xing)
+<p>The first step is to determine the maximum possible minimum difference. This
+will always be <span class='math'>$\lfloor N/2\rfloor$</span>:
+<p>For even <span class='math'>$N$</span>, a sample construction is 
+<p><div class='math'>$$
+[N/2, 0, N/2+1, 1, \dots, N-1, N/2-1]
+$$</div>
+<p>and for odd <span class='math'>$N$</span>, a sample construction is 
+<p><div class='math'>$$
+[0, \lfloor N/2\rfloor, N-1, \lfloor N/2 \rfloor-1, N-2, \dots, 1, \lfloor N/2 \rfloor+1]
+$$</div>
+<p>To show that this is the maximum possible, suppose that a larger difference
+could be achieved,  <span class='math'>$d &gt; \lfloor N/2 \rfloor$</span>. Then, consider
+<span class='math'>$\lfloor N/2 \rfloor$</span>. Its neighbors must be at most 
+<span class='math'>$\lfloor N/2 \rfloor-d &lt; 0$</span>, or at least <span class='math'>$\lfloor N/2 \rfloor+d \ge N$</span>; thus, it
+is impossible for <span class='math'>$d &gt; \lfloor N/2 \rfloor$</span>. 
+<p><div class='prob-section'><h4>Subtask 1 (N is small):</h4>
+We can first generate every permutation that works for <span class='math'>$N$</span> via recursive search.
+<p>Then, for a specific test case, we can iterate over each of these permutations
+and check if they work.
+</div>
+<p><div class='prob-section'><h4>Subtask 2 (N is even):</h4>
+<p>When <span class='math'>$N$</span> is even and <span class='math'>$K=0$</span>, it turns out that the answer is always two. To show
+this, first observe that the permutation must alternate between large elements
+(<span class='math'>$\ge N/2$</span>) and small elements (<span class='math'>$&lt; N/2$</span>). Suppose, without loss of generality,
+that the permutation  starts with a large element and ends with a small element.
+<p>Then, <span class='math'>$N/2$</span> is only at least <span class='math'>$N/2$</span> away from a single element, <span class='math'>$0$</span>. Since the
+start and end of the permutation are the only places where elements are only
+adjacent to a single element,  <span class='math'>$N/2$</span> must be placed at the start, followed by a
+<span class='math'>$0$</span>: 
+<p><div class='math'>$$
+\begin{align*}
+    [N/2, 0, \dots]
+\end{align*}
+$$</div>
+<p>Now, <span class='math'>$N/2+1$</span> can only be adjacent to <span class='math'>$0$</span> and <span class='math'>$1$</span>. Thus, it must be placed right
+after the <span class='math'>$0$</span>  (since the end must be small): 
+<p><div class='math'>$$
+\begin{align*}
+    [N/2, 0, N/2+1, 1, \dots]
+\end{align*}
+$$</div>
+<p>We can continue this logic: <span class='math'>$N/2+2$</span> now can only be next to <span class='math'>$0$</span>, <span class='math'>$1$</span>, or <span class='math'>$2$</span>, so
+it must be placed right after. Thus, assuming that we started with a large
+element, we can uniquely generate our entire permutation: 
+<p><div class='math'>$$
+\begin{align*}
+    [N/2, 0, N/2+1, 1, \dots, N-1, N/2-1]
+\end{align*}
+$$</div>
+<p>If the first element was small, we could just reverse this permutation. Thus,
+for any even <span class='math'>$N$</span>, we  can use a linear check to check if both of these
+permutations work. 
+<p></div>
+<p><div class='prob-section'><h4>Intuition for N odd</h4>
+To gain an intuition for a solution when <span class='math'>$N$</span> is odd, we can first find some 
+properties that all possible permutations can have. Let&apos;s classify elements into
+&quot;middle&quot; (<span class='math'>$\frac{N-1}{2}$</span>), &quot;small&quot; (<span class='math'>$&lt;\frac{N-1}{2}$</span>), and &quot;big&quot;
+(<span class='math'>$&gt;\frac{N-1}{2}$</span>).
+<p>Then, small elements can not be adjacent, and similarly big elements can not be
+adjacent. 
+<p>Now, suppose the middle element is fixed somewhere. Then, the two elements it is
+adjacent to must be <span class='math'>$0$</span> and <span class='math'>$N-1$</span>. 
+<p>We can see this by using <span class='math'>$N = 13$</span> as an example. If we fix where <span class='math'>$6$</span> is, we get
+three general types of permutations: 
+<p><div class='math'>$$
+\begin{align*}
+    [6, 0, +, -, +, -, +, -, +, -, +, -, +] \\
+    [+, 0, 6, 12, -, +, -, +, -, +, -, +, -] \\
+    [-, +, 0, 6, 12, -, +, -, +, -, +, -, +]
+\end{align*}
+$$</div>
+<p>where a <span class='math'>$-$</span> denotes a small element and a <span class='math'>$+$</span> denotes a big element. 
+<p>Note that when fixing <span class='math'>$6$</span> to be at an odd index would cause a completely
+different structure than fixing <span class='math'>$6$</span> to be at an even index, since the two ranges
+that the  permutation splits into have fundamentally different structure. 
+</div>
+<p><div class='prob-section'><h4>Subtask 3 (middle element must be on an endpoint):</h4>
+<p>In this subtask, our middle element is fixed to one of the endpoints. Without
+loss of generality,  assume that the first element must be <span class='math'>$\frac{N-1}{2}$</span>, and
+the next element is <span class='math'>$0$</span>. 
+<p>Thus, our big and small elements must alternate positions, with the third and
+last element being big. 
+<p>In this case, we can consider where we put <span class='math'>$\frac{N+1}{2}$</span>. Since it can only be
+adjacent to <span class='math'>$0$</span> and <span class='math'>$1$</span>,  we know that it must either be at the third or last
+position, and <span class='math'>$1$</span> must be the next element. 
+<p><div class='math'>$$
+\begin{align*}
+    [\frac{N-1}{2}, 0, \frac{N+1}{2}, 1 \dots] \\
+    [\frac{N-1}{2}, 0, \dots, 1, \frac{N+1}{2}]
+\end{align*}
+$$</div>
+<p>Now, <span class='math'>$\frac{N+3}{2}$</span> must similarly be on either end of the range we do not
+know, and we can repeat the same logic for the smallest big element left in our 
+range. 
+<p>We can illustrate this with an example. Consider what happens if <span class='math'>$N=13$</span>. WLOG, 
+suppose that our permutation was of the form 
+<p><div class='math'>$$
+\begin{align*}
+    [6, 0, +, -, +, -, +, -, +, -, +, -, +]
+\end{align*}
+$$</div>
+<p>where a <span class='math'>$+$</span> denotes a big element and a <span class='math'>$-$</span> denotes a small one. Then, consider
+where <span class='math'>$7$</span> can be placed. It can only be adjacent to <span class='math'>$0$</span> or <span class='math'>$1$</span>, so it must
+either be placed third or last, and the <span class='math'>$1$</span> next to it: 
+<p><div class='math'>$$
+\begin{align*}
+    [6, 0, 7, 1, +, -, +, -, +, -, +, -, +] \\
+    [6, 0, +, -, +, -, +, -, +, -, +, 1, 7]
+\end{align*}
+$$</div>
+<p>Similarly, the <span class='math'>$8$</span> and the <span class='math'>$2$</span> must be placed together on either of the ends of
+the undecided range, up until we decide the entirety of the range. An example
+permutation might look like this: 
+<p><div class='math'>$$
+\begin{align*}
+    [6, 0, 7, 1, 9, 3, 10, 4, 12, 5, 11, 2, 8]
+\end{align*}
+$$</div>
+<p>where we decided first to place the <span class='math'>$7$</span> on the left, then the <span class='math'>$8$</span> on the right,
+and so on until we generated the full permutation. 
+<p>This inspires an  <span class='math'>$O(N^2)$</span> dynamic program. Let <span class='math'>$dp(l, r)$</span> be the number of ways
+to make the range <span class='math'>$[l, r]$</span>, if we know that the smallest big element remaining
+is <span class='math'>$N-\frac{r-l}{2}-1$</span>. We can transition by trying to put  the smallest big
+element remaining either at the beginning or end. 
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+typedef pair&lt;int, int&gt; pii;
+typedef pair&lt;ll, ll&gt; pll;
+#define ff first
+#define ss second
+const int MAX_N = 2e3+5;
+const ll MOD = 1e9+7;
+
+int t, n;
+ll p[MAX_N], dp[MAX_N][MAX_N];
+
+ll t1(int l, int r, int k){
+    if(l &gt; r) return 1;
+    if(l == r){
+        if(k == p[l] || p[l] == -1) return 1;
+        return 0;
+    }
+    ll &amp;ret = dp[l][r];
+    if(ret != -1) return ret;
+    ret = 0;
+    if((k == p[l] || p[l] == -1) &amp; (k-n/2 == p[l+1] || p[l+1] == -1)) ret += t1(l+2, r, k+1);
+    if((k == p[r] || p[r] == -1) &amp; (k-n/2 == p[r-1] || p[r-1] == -1)) ret += t1(l, r-2, k+1);
+    ret %= MOD;
+    return ret;
+}
+
+void solve(){
+    int k; cin &gt;&gt; k;
+    memset(p, -1, sizeof(p));
+    int type = -1;
+    for(int i = 0; i &lt; k; i++){
+        int a, b; cin &gt;&gt; a &gt;&gt; b;
+        if(p[a] != -1) assert(false);
+        p[a] = b;
+    }
+    ll ans = 0;
+    memset(dp, -1, sizeof(dp));
+    if(p[1] == 0 || p[1] == -1) ans = (ans+t1(2, n-1, n/2+1))%MOD;
+    memset(dp, -1, sizeof(dp));
+    if(p[1] == n-1 || p[1] == -1){
+        for(int i = 0; i &lt; n; i++) if(p[i] != -1)
+            p[i] = n-1-p[i];
+        ans = (ans+t1(2, n-1, n/2+1))%MOD;
+        for(int i = 0; i &lt; n; i++) if(p[i] != -1)
+            p[i] = n-1-p[i];
+    }
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin &gt;&gt; t &gt;&gt; n;
+    while(t--) solve();
+    return 0;
+}
+</pre>
+</div>
+<p><div class='prob-section'><h4>Subtask 4 (middle element is fixed):</h4>
+<p>Suppose, now, that we fix that the &quot;middle&quot; element is at position <span class='math'>$i$</span>. Then, we
+know that the  only elements around it can be <span class='math'>$0$</span> or <span class='math'>$N-1$</span>. Assume without loss
+of generality that the <span class='math'>$0$</span> comes before the <span class='math'>$\frac{N-1}{2}$</span> which comes before
+the <span class='math'>$N-1$</span>. 
+<p>No matter what, we know that <span class='math'>$i-2$</span> must contain a big element, and <span class='math'>$i+2$</span> must
+contain a small element.
+<p>Now, we can do casework on whether <span class='math'>$i$</span> is odd or even. 
+<p>Case 1: <span class='math'>$i$</span> is even. 
+<p>In this case, <span class='math'>$i-2$</span>, which must contain a big element, must be even, so <span class='math'>$0$</span> must
+contain a big element. 
+<p>Similarly, <span class='math'>$i+2$</span> contains a small element, so <span class='math'>$N-1$</span> must contain a small element
+as well. 
+<p>Let&apos;s say that our left interval <span class='math'>$[0, i-2]$</span> is the &quot;big&quot; interval, and the
+right interval <span class='math'>$[i+2, N-1]$</span> is the &quot;small&quot; interval. 
+<p>Similarly to before, we can consider where we put the smallest remaining big
+element.  Since it can only be adjacent to one of the remaining elements we have
+not placed, it  must go on one of the endpoints of our big interval. Repeating
+this logic, we see that we can run the same dp as described in Subtask 2. 
+<p>And for the small intervals, it is the same: we consider where we put the
+biggest remaining small element. It must go on one of the endpoints, and that
+inspires us to use a very similar dp formulation as before. 
+<p>To illustrate this, consider an example with <span class='math'>$N = 13$</span>, and <span class='math'>$i = 4$</span>. 
+<p>Then, from these assumptions, we know that our permutation must look like:
+<p><div class='math'>$$
+\begin{align*}
+    [+, -, +, 0, 6, 12, -, +, -, +, -, +, -]
+\end{align*}
+$$</div>
+<p>Then, <span class='math'>$5$</span> must go in one of the endpoints of the &quot;small&quot; range, and so on for
+<span class='math'>$4$</span> down to <span class='math'>$2$</span>. The same analysis holds for the &quot;big&quot; range: <span class='math'>$7$</span> must go on one
+of the endpoints of the big range, and then same for <span class='math'>$8$</span>. 
+<p>In the end, we can see an example permutation: 
+<p><div class='math'>$$
+\begin{align*}
+    [7, 1, 8, 0, 6, 12, 5, 11, 2, 9, 3, 10, 4]
+\end{align*}
+$$</div>
+<p>where <span class='math'>$5$</span> is put on the left, <span class='math'>$4$</span> on the right, and so on, until we generate the
+full permutation. 
+<p>Case 2: <span class='math'>$i$</span> is odd. 
+<p>In this case, <span class='math'>$i-2$</span>, which must contain a big element, must be odd, so <span class='math'>$0$</span> must
+contain a  small element. Similarly, <span class='math'>$i+2$</span> must contain a small element, so
+<span class='math'>$N-1$</span> must contain a big element. 
+<p>We can similarly consider where we put the smallest big element. Now, it must
+always (by the same logic) be at the end of either of our ranges. 
+<p>Consider another example with <span class='math'>$N = 13$</span> and <span class='math'>$i = 5$</span>. 
+<p><div class='math'>$$
+\begin{align*}
+    [-, +, -, +, 0, 6, 12, -, +, -, +, -, +]
+\end{align*}
+$$</div>
+<p>Here, <span class='math'>$7$</span> must either be placed in position <span class='math'>$3$</span> or position <span class='math'>$12$</span>, and so we get
+<p><div class='math'>$$
+\begin{align*}
+    [-, +, 1, 7, 0, 6, 12, -, +, -, +, -, +] \\
+    [-, +, -, +, 0, 6, 12, -, +, -, +, 1, 7]
+\end{align*}
+$$</div>
+<p>Similarly, <span class='math'>$8$</span> must be placed on one of those right endpoints, and ultimately we
+can generate a permutation such as
+<p><div class='math'>$$
+\begin{align*}
+    [4, 10, 1, 7, 0, 6, 12, 5, 11, 3, 9, 2, 8]
+\end{align*}
+$$</div>
+<p>where we repeatedly choose which place we put the smallest big element. 
+<p>Thus, we can create a new <span class='math'>$O(N^2)$</span> dp formulation <span class='math'>$dp(l, r)$</span> which is the number
+of ways to assign <span class='math'>$[0, l]$</span> and <span class='math'>$[i+2, r]$</span> if the smallest remaining big element
+is <span class='math'>$\frac{N-1}{2}+1+\frac{i-2-l}{2}+\frac{N-1-r}{2}$</span>. 
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+typedef pair&lt;int, int&gt; pii;
+typedef pair&lt;ll, ll&gt; pll;
+#define ff first
+#define ss second
+const int MAX_N = 2e3+5;
+const ll MOD = 1e9+7;
+
+int t, n;
+ll p[MAX_N], dp[MAX_N][MAX_N];
+
+ll t1(int l, int r, int k){
+    if(l &gt; r) return 1;
+    if(l == r){
+        if(k == p[l] || p[l] == -1) return 1;
+        return 0;
+    }
+    ll &amp;ret = dp[l][r];
+    if(ret != -1) return ret;
+    ret = 0;
+    if((k == p[l] || p[l] == -1) &amp; (k-n/2 == p[l+1] || p[l+1] == -1)) ret += t1(l+2, r, k+1);
+    if((k == p[r] || p[r] == -1) &amp; (k-n/2 == p[r-1] || p[r-1] == -1)) ret += t1(l, r-2, k+1);
+    ret %= MOD;
+    return ret;
+}
+
+ll t2(int l, int r, int k){
+    if(p[l+1] == n/2 &amp;&amp; r == n) return 1;
+    if(k &gt; n) return 0;
+    ll &amp;ret = dp[l][r];
+    if(ret != -1) return ret;
+    ret = 0;
+    if((k == p[l] || p[l] == -1) &amp; (k-n/2 == p[l+1] || p[l+1] == -1)) ret += t2(l+2, r, k+1);
+    if((k == p[r] || p[r] == -1) &amp; (k-n/2 == p[r+1] || p[r+1] == -1)) ret += t2(l, r+2, k+1);
+    ret %= MOD;
+    return ret;
+}
+
+void solve(){
+    int k; cin &gt;&gt; k;
+    memset(p, -1, sizeof(p));
+    int type = -1;
+    for(int i = 0; i &lt; k; i++){
+        int a, b; cin &gt;&gt; a &gt;&gt; b;
+        if(p[a] != -1) assert(false);
+        p[a] = b;
+    }
+    ll ans = 0, r = 0;
+    do{
+        if(p[0] == n/2){
+            memset(dp, -1, sizeof(dp));
+            if(p[1] == 0 || p[1] == -1) ans = (ans+t1(2, n-1, n/2+1))%MOD;
+            memset(dp, -1, sizeof(dp));
+            if(p[1] == n-1 || p[1] == -1){
+                for(int i = 0; i &lt; n; i++) if(p[i] != -1)
+                    p[i] = n-1-p[i];
+                ans = (ans+t1(2, n-1, n/2+1))%MOD;
+                for(int i = 0; i &lt; n; i++) if(p[i] != -1)
+                    p[i] = n-1-p[i];
+            }
+        }
+        for(int i = 1; i &lt; n-1; i++){
+            if(p[i] != n/2) continue;
+            if(p[i-1] != n-1 &amp;&amp; p[i-1] != -1) continue;
+            if(p[i+1] != 0 &amp;&amp; p[i+1] != -1) continue;
+            memset(dp, -1, sizeof(dp));
+            int w1 = p[i-1] == n-1, w2 = p[i] == n/2, w3 = p[i+1] == 0; p[i-1] = n-1, p[i] = n/2, p[i+1] = 0;
+            if(i%2 == 1){
+                ans = (ans+t2(0, i+2, n/2+1))%MOD;
+            } else{
+                ll a = t1(i+2, n-1, n/2+1);
+                for(int i = 0; i &lt; n; i++) if(p[i] != -1)
+                    p[i] = n-1-p[i];
+                ll b = t1(0, i-2, n/2+1);
+                for(int i = 0; i &lt; n; i++) if(p[i] != -1)
+                    p[i] = n-1-p[i];
+                ans = (ans+a*b)%MOD;
+            }
+            if(!w1) p[i-1] = -1;
+            if(!w2) p[i] = -1;
+            if(!w3) p[i+1] = -1;
+        }
+        reverse(p, p+n); r ^= 1;
+    } while(r);
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin &gt;&gt; t &gt;&gt; n;
+    while(t--) solve();
+    return 0;
+}
+</pre>
+</div>
+<p><div class='prob-section'><h4>Full Credit:</h4>
+<p>For full credit, we can fix where the middle element is, and solve for each
+individual case in <span class='math'>$O(N)$</span>. 
+<p>Let&apos;s consider how we can optimize our <span class='math'>$O(N^2)$</span> dp in each case. 
+<p>Case 1: <span class='math'>$i$</span> is odd. 
+<p>Consider any constraint on a small element: <span class='math'>$p_j = x$</span>. In order for that small
+element to be  <span class='math'>$x$</span>, the big element <span class='math'>$p_{j+1}$</span> must have been <span class='math'>$x+\frac{N-1}{2}$</span>.
+Thus, we can view all of the constraints as a constraint on the big elements
+instead (and if two constraints said different things, then we could just output
+<span class='math'>$0$</span>). 
+<p>Consider the constraint that minimizes <span class='math'>$x$</span>. We must have <span class='math'>$x-\frac{N+1}{2}$</span> big
+elements placed down before it, and we also know how many of those elements must
+have been placed on the left interval and how many of those elements must have
+been placed on the right interval; suppose that <span class='math'>$k$</span> of them  must have been
+placed on the left. 
+<p>Since how we place the elements smaller than <span class='math'>$x$</span> has no bearing on how we place
+things in the future,  we know that there are <span class='math'>$\binom{x-\frac{N+1}{2}}{k}$</span> ways
+of placing these down, and once we place them down our intervals shrink. 
+<p>Then, we can repeat with our second smallest constraint: we know how many must
+be on the left and how many must be on the right, so we can multiply by the
+appropriate binomial coefficient. 
+<p>Thus, our answer in this case would be the product of these of binomial
+coefficients, which can easily be found in <span class='math'>$O(N)$</span> time. 
+<p>Another way to think about this case is by considering what actually happens in
+our dp formulation. In one step, we are essentially walking along a grid. Any
+constraint is simply just a point on which we need to get to at some point, so
+the number of permutations is clearly just the product of the corresponding
+binomial coefficients. 
+<p>Case 2: <span class='math'>$i$</span> is even. 
+<p>We will consider only big intervals (analysis for small intervals is completely
+symmetric). 
+<p>Consider the index containing the largest element in a big interval. To the left
+of that index,  any small index containing <span class='math'>$x$</span> must be preceded by
+<span class='math'>$x+\frac{N-1}{2}$</span>, and to the right of it,  any small index containing <span class='math'>$x$</span> must
+be followed by <span class='math'>$x+\frac{N-1}{2}$</span>. 
+<p>Thus, every constraint essentially communicated information about where the
+<span class='math'>$(x, x+\frac{N-1}{2})$</span> pair must be placed. 
+<p>Suppose we iterate on these possible <span class='math'>$x$</span> in order from small to large. If we
+know which side of the center we are on, then we know how many of the pairs must
+be placed on the left and how many of the pairs must be placed on the right, and
+so we can just multiply the answer by the corresponding binomial coefficient.
+Thus, it remains to figure out which  side of the center we are on. 
+<p>How do we figure out which side of the center we are on?
+<p>If there are two constraints for the same <span class='math'>$x$</span>, we automatically know what order
+they  are in, since we have the constraint over the small and big index. 
+<p>If there are additional constraints after it, we know that all additional
+constraints must be on the same side of our original constraint as the center.
+Thus, if we just compare our constraint with the next one, we know which side
+the center is on. 
+<p>If there are no additional constraints, it could actually be possible for the
+center to be in  either direction. In this case, we can just consider both
+directions,  adding up the number of ways from each. 
+<p>The following is an <span class='math'>$O(N^2 \log N)$</span> implementation (sufficient to solve the
+problem). 
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+typedef pair&lt;int, int&gt; pii;
+typedef pair&lt;ll, ll&gt; pll;
+#define ff first
+#define ss second
+const int MAX_N = 2e3+5;
+const ll MOD = 1e9+7;
+
+int t, n;
+ll p[MAX_N], f[MAX_N], inv[MAX_N];
+
+ll po(ll a, ll b = MOD-2){
+    if(b == 0) return 1;
+    ll x = po(a, b/2);
+    x = x*x%MOD;
+    if(b%2 == 1) x = x*a%MOD;
+    return x;
+}
+
+ll c(int n, int k){
+    if(k &gt; n || k &lt; 0) return 0;
+    return f[n]*inv[k]%MOD*inv[n-k]%MOD;
+}
+
+ll t1(int l, int r, int k){
+    vector&lt;pii&gt; v;
+    for(int i = l; i &lt;= r; i++){
+        if(p[i] == -1) continue;
+        if(p[i] == n/2) return 0;
+        if(i&amp;1){
+            if(p[i] &gt; n/2) return 0;
+            if(p[i] &gt;= k-n/2) return 0;
+            v.push_back({p[i]+n/2, i});
+        } else{
+            if(p[i] &lt; n/2) return 0;
+            if(p[i] &gt; k) return 0;
+            v.push_back({p[i], i});
+        }
+    }
+    sort(v.begin(), v.end());
+    if(!v.size()) return po(2, (r-l)/2);
+    ll ans = 1, curr = n/2;
+    for(int i = 0; i &lt; v.size()-1; i++){
+        if(v[i].ff == v[i+1].ff){
+            if(abs(v[i+1].ss-v[i].ss) != 1) return 0;
+            if(v[i].ss%2 == l%2){
+                int num = v[i].ff-curr, s = (v[i].ss-l)/2+1;
+                ans = ans*c(num-1, s-1)%MOD;
+                curr = v[i].ff, l += 2*s, r -= 2*(num-s);
+            } else{
+                int num = v[i].ff-curr, s = (r-v[i].ss)/2+1;
+                ans = ans*c(num-1, s-1)%MOD;
+                curr = v[i].ff, l += 2*(num-s), r -= 2*s;
+            }
+            i++;
+            if(i == v.size()-1) return (ans*po(2, (r-l)/2))%MOD;
+            continue;
+        }
+        if(v[i].ss &lt; l || v[i].ss &gt; r) return 0;
+        if(v[i+1].ss &gt; v[i].ss){
+            int num = v[i].ff-curr, s = (v[i].ss-l)/2+1;
+            ans = ans*c(num-1, s-1)%MOD;
+            curr = v[i].ff, l += 2*s, r -= 2*(num-s);
+        } else{
+            int num = v[i].ff-curr, s = (r-v[i].ss)/2+1;
+            ans = ans*c(num-1, s-1)%MOD;
+            curr = v[i].ff, l += 2*(num-s), r -= 2*s;
+        }
+    }
+    if(v.back().ss &gt; r || v.back().ss &lt; l) return 0;
+    if(v.back().ff == k) return ans*c((r-l)/2, (v.back().ss-l)/2)%MOD;
+    ans = ans*(c(v.back().ff-curr-1, (v.back().ss-l)/2)+c(v.back().ff-curr-1, (r-v.back().ss)/2))%MOD;
+    return ans*(po(2, k-v.back().ff-1))%MOD;
+}
+
+ll t2(int l, int r, int k){
+    vector&lt;pii&gt; v;
+    for(int i = l; i &lt; k-1; i++){
+        if(p[i] == -1) continue;
+        if(p[i] == n/2) return 0;
+        if(i%2 == l%2){
+            if(p[i] &lt; n/2) return 0;
+            v.push_back({p[i], i});
+        } else{
+            if(p[i] &gt; n/2) return 0;
+            v.push_back({p[i]+n/2, i});
+        }
+    }
+    for(int i = r; i &lt; n; i++){
+        if(p[i] == -1) continue;
+        if(p[i] == n/2) return 0;
+        if(i%2 == r%2){
+            if(p[i] &lt; n/2) return 0;
+            v.push_back({p[i], i});
+        } else{
+            if(p[i] &gt; n/2) return 0;
+            v.push_back({p[i]+n/2, i});
+        }
+    }
+    sort(v.begin(), v.end());
+    ll ans = 1, curr = n/2;
+    for(int i = 0; i &lt; v.size(); i++){
+        if(i &gt; 0 &amp;&amp; v[i].ff == v[i-1].ff){
+            if(v[i].ss-v[i-1].ss != 1) return 0;
+            if(v[i].ss &lt; k){
+                if(v[i].ss%2 == l%2) return 0;
+            } else{
+                if(v[i].ss%2 == r%2) return 0;
+            }
+            continue;
+        }
+        if(v[i].ss &lt; l || (v[i].ss &gt;= k &amp;&amp; v[i].ss &lt; r)) return 0;
+        if(v[i].ss &lt; k){
+            int num = v[i].ff-curr, s = (v[i].ss-l)/2+1;
+            ans = ans*c(num-1, s-1)%MOD;
+            curr = v[i].ff, l += 2*s, r += 2*(num-s);
+        } else{
+            int num = v[i].ff-curr, s = (v[i].ss-r)/2+1;
+            ans = ans*c(num-1, s-1)%MOD;
+            curr = v[i].ff, l += 2*(num-s), r += 2*s;
+        }
+    }
+    ans = ans*c((k-2-l+1)/2+(n-1-r+1)/2, (k-2-l+1)/2)%MOD;
+    return ans;
+}
+
+void solve(){
+    int k; cin &gt;&gt; k;
+    memset(p, -1, sizeof(p));
+    for(int i = 0; i &lt; k; i++){
+        int a, b; cin &gt;&gt; a &gt;&gt; b;
+        if(p[a] != -1) assert(false);
+        p[a] = b;
+    }
+    if(n%2 == 0){
+        // if n is even, we can immediately find the answer
+        vector&lt;int&gt; p2(n, -1);
+        for(int i = 0; i &lt; n; i++){
+            if(i%2 == 0) p2[i] = n/2+i/2;
+            else p2[i] = i/2;
+        }
+        int w1 = 1, w2 = 1;
+        for(int i = 0; i &lt; n; i++){
+            if(p[i] != -1){
+                if(p[i] != p2[i]) w1 = 0;
+                if(p[i] != p2[n-i-1]) w2 = 0;
+            }
+        }
+        cout &lt;&lt; w1+w2 &lt;&lt; &apos;\n&apos;;
+        return;
+    }
+    ll ans = 0, r = 0;
+    do{
+        if(p[0] == n/2 || p[0] == -1){
+            // we fix one of the endpoints to be the middle element
+            if(p[1] == 0 || p[1] == -1) ans = (ans+t1(2, n-1, n-1))%MOD;
+            if(p[1] == n-1 || p[1] == -1){
+                for(int i = 0; i &lt; n; i++) if(p[i] != -1)
+                    p[i] = n-1-p[i];
+                ans = (ans+t1(2, n-1, n-1))%MOD;
+                for(int i = 0; i &lt; n; i++) if(p[i] != -1)
+                    p[i] = n-1-p[i];
+            }
+        }
+        for(int i = 1; i &lt; n-1; i++){
+            if(p[i] != n/2 &amp;&amp; p[i] != -1) continue;
+            if(p[i-1] != n-1 &amp;&amp; p[i-1] != -1) continue;
+            if(p[i+1] != 0 &amp;&amp; p[i+1] != -1) continue;
+            // fix i to be the middle element, i-1 to be n-1, and i+1 to be 0
+            int w1 = p[i-1] == n-1, w2 = p[i] == n/2, w3 = p[i+1] == 0; p[i-1] = n-1, p[i] = n/2, p[i+1] = 0;
+            if(i%2 == 1){
+                ans = (ans+t2(0, i+2, i))%MOD;
+            } else{
+                ll a = t1(i+2, n-1, n-i/2-1);
+                for(int i = 0; i &lt; n; i++) if(p[i] != -1)
+                    p[i] = n-1-p[i];
+                ll b = t1(0, i-2, n/2+i/2);
+                for(int i = 0; i &lt; n; i++) if(p[i] != -1)
+                    p[i] = n-1-p[i];
+                ans = (ans+a*b)%MOD;
+            }
+            if(!w1) p[i-1] = -1;
+            if(!w2) p[i] = -1;
+            if(!w3) p[i+1] = -1;
+        }
+        reverse(p, p+n); r ^= 1;
+    } while(r);
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin &gt;&gt; t &gt;&gt; n;
+    f[0] = 1; for(int i = 1; i &lt;= n; i++) f[i] = f[i-1]*i%MOD;
+    inv[n] = po(f[n]); for(int i = n-1; i &gt;= 0; i--) inv[i] = inv[i+1]*(i+1)%MOD;
+    while(t--) solve();
+    return 0;
+}
+</pre>
+</div>
+<p></body></html>

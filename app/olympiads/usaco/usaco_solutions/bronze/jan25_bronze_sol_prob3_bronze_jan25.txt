@@ -1,0 +1,284 @@
+Solution ID: sol_prob3_bronze_jan25
+Contest: JAN25
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_jan25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Chongtian Ma)
+
+Partial Credit:
+
+$N \leq 100$
+
+.
+
+It suffices to loop through the endpoints of every subarray, manually reverse
+it, then count the number of indices such that
+
+$a_i = b_i$
+
+. This runs in
+
+$\mathcal{O}(N^3)$
+
+time.
+
+Full Credit:
+
+First, let's calculate the number of indices
+
+$i$
+
+where
+
+$a_i$
+
+is already equal to
+
+$b_i$
+
+. Let's denote this number as
+
+$S$
+
+. Note that if we are not reversing a
+subarray that contains
+
+$i$
+
+, this index will always contribute to the number of
+total checkups.
+
+We can visualize reversing an array as a series of swaps. Suppose we want to
+reverse an array
+
+$b$
+
+of length
+
+$M$
+
+, then it is equivalent to swapping
+
+$b_i$
+
+with
+
+$b_{M-i+1}$
+
+over all
+
+$1 \leq i \leq \lfloor \frac{M}{2} \rfloor$
+
+.
+
+Suppose we reverse an odd length subarray of length
+
+$M$
+
+. Let
+
+$K$
+
+represent the
+index of the middle element of the subarray. We are essentially swapping the
+
+$(K - 1)$
+
+'th element with the
+
+$(K + 1)$
+
+'th element,
+
+$(K - 2)$
+
+'th element with
+the
+
+$(K + 2)$
+
+'th element,
+
+$\ldots$
+
+,
+
+$(K - \frac{M-1}{2})$
+
+'th element with the
+
+$(K + \frac{M-1}{2})$
+
+'th element.
+
+This motivates a solution where we enumerate over
+
+$K$
+
+, enumerate over
+
+$i$
+
+where
+we swap the
+
+$(K-i)$
+
+'th element with the
+
+$(K+i)$
+
+'th element of
+
+$a$
+
+, then
+determine whether
+
+$a_{K-i} = b_{K-i}$
+
+or
+
+$a_{K+i} = b_{K+i}$
+
+. However, it may be
+the case that the elements that we swapped are already equal to their
+corresponding elements in
+
+$b$
+
+, and after the swap, they are no longer equal. Let
+
+$x$
+
+denote the number of integers
+
+$j$
+
+among
+
+$\{K - i, K + i\}$
+
+that such that
+
+$a_j = b_j$
+
+after the swap, and
+
+$y$
+
+denote the number of integers
+
+$j$
+
+among the
+set such that
+
+$a_j = b_j$
+
+before the swap. We must add
+
+$x$
+
+to
+
+$S$
+
+to account
+for the new cows that can be checked up, and subtract
+
+$y$
+
+from
+
+$S$
+
+to account
+for the old cows that cannot be checked up. This way, we are always able to keep
+track of the total number of cows that can be checked up when enumerating.
+
+Even-length subarrays can be enumerated similarly. The only difference is that
+the middle element is technically between the
+
+$\frac{M}{2}$
+
+'th and the
+
+$(\frac{M}{2}+1)$
+
+'th element. Let
+
+$K$
+
+represent the index to the left of the
+middle of the subarray, then we are swapping the
+
+$(K-i+1)$
+
+'th element with the
+
+$(K+i)$
+
+'th element for each
+
+$i$
+
+. We can track the total number of checked cows
+in the same way as odd-length subarrays.
+
+Enumerating over all
+
+$K$
+
+and
+
+$i$
+
+over all subarrays requires
+
+$\mathcal{O}{(N^2)}$
+
+time.
+
+Alex Liang's C++ Code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n;
+    cin >> n;
+ 
+    vector<int> A(n), B(n);
+ 
+    for (int &i : A)
+        cin >> i;
+    for (int &i : B)
+        cin >> i;
+    
+    int alreadySame = 0;
+    vector<int> ans(n + 1, 0);
+ 
+    for (int i = 0; i < n; i++)
+        alreadySame += (A[i] == B[i]);
+ 
+    auto expand = [&](int l, int r){
+        int match = alreadySame;
+ 
+        for (; l >= 0 and r < n; l--, r++){
+            match += ((A[l] == B[r]) + (A[r] == B[l])) - ((A[l] == B[l]) + (A[r] == B[r]));
+            ans[match]++;
+        }
+    };
+    for (int mid = 0; mid < n; mid++){
+        expand(mid, mid);
+        expand(mid, mid + 1);
+    }
+    for (int i : ans)
+        cout << i << "\n";
+}

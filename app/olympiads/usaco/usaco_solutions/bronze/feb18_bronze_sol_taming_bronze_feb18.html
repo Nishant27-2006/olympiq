@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>Notice that if the counter is a positive number <span class='math'>$i$</span> on some day, then the
+counter must be <span class='math'>$i-1$</span> on the previous day. So we can sweep from the last day
+backwards in time, applying this rule to fill in missing entries. If we try to
+fill in an entry which was not missing, then either nothing happens (if we try
+to fill in some number <span class='math'>$n$</span>, and the entry is already <span class='math'>$n$</span>), or we get a
+contradiction (if we try to fill in a number <span class='math'>$n$</span>, but the entry contains a
+different nonnegative number).
+<p>The first entry in the log is a special case, since Farmer John already knows
+the cows broke out on that day. So if it is a missing entry, we can set it to
+<span class='math'>$0$</span>. If it is any positive number, then we have a contradiction.
+<p>If we ever come across a contradiction, then the log is necessarily
+inconsistent, so we can just output <span class='math'>$-1$</span>. Otherwise, the log must consist of
+several streaks <span class='math'>$0, 1, 2, \dots, k$</span> of various lengths, with possibly some <span class='math'>$-1$</span>s
+between streaks - entries which we could not uniquely deduce. We know that the
+first streak starts on the first day. 
+<p>Suppose there are <span class='math'>$s$</span> streaks and <span class='math'>$t$</span> entries that are still missing. Then to
+minimize the number of breakouts, each sequence of consecutive missing entries
+would be filled in so that it continues the streak preceding it (e.g.
+<span class='math'>$0,1,2,3,-1,-1$</span> would be filled in as <span class='math'>$0,1,2,3,4,5$</span>). So the minimum number of
+breakouts is <span class='math'>$s$</span>. 
+<p>To maximize the number of breakouts, the cows would have broken out on each of
+the <span class='math'>$t$</span> days for which the entry is missing (e.g. <span class='math'>$0,1,2,3,-1,-1$</span> would be
+filled in as <span class='math'>$0,1,2,3,0,0$</span>). So the maximum number of breakouts is <span class='math'>$s+t$</span>.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MAXN 100000
+ 
+int N;
+int A[MAXN];
+ 
+int main()
+{
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;N;i++)
+		cin &gt;&gt; A[i];
+	if(A[0] &gt; 0)
+	{
+		cout &lt;&lt; -1 &lt;&lt; &apos;\n&apos;;
+		return 0;
+	}
+	A[0] = 0;
+	int t = -1;
+	int req = 0;
+	int pos = 0;
+	for(int i=N-1;i&gt;=0;i--)
+	{
+		if(t != -1 &amp;&amp; A[i] != -1 &amp;&amp; A[i] != t)
+		{
+			cout &lt;&lt; -1 &lt;&lt; &apos;\n&apos;;
+			return 0;
+		}
+		if(t == -1)
+			t = A[i];
+		if(A[i] == -1)
+			A[i] = t;
+		if(A[i] == 0)
+			req++;
+		if(A[i] == -1)
+			pos++;
+		if(t &gt; -1)
+			t--;
+	}
+	cout &lt;&lt; req &lt;&lt; &apos; &apos; &lt;&lt; req+pos &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

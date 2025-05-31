@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+If we experimentally play around with bubble sort, we find that elements
+&quot;bubble&quot; to the right very quickly, but &quot;bubble&quot; to the left very slowly.
+Consider, for example, this permutation:
+<p><pre class='prettyprint'>1 9 7 5 4
+1 7 5 4 9
+1 5 4 7 9
+1 4 5 7 9</pre>
+<p>The 9 moved to the right very quickly, but the 4 moved to the left very slowly.
+<p>In general, a single element can move left at most once per iteration of bubble
+sort.
+<p>Let&apos;s &quot;normalize&quot; the input array to be a permutation of 0 ... n-1, so that the
+value of each array element indices the index where that element should go in
+the sorted array:
+<p><pre class='prettyprint'>1 9 7 5 4
+    |
+    v
+0 4 3 2 1</pre>
+<p>For any <span class='math'>$i$</span>, the value <span class='math'>$i - a_i$</span> is therefore a lower
+bound on the total number of bubble passes that need to occur before the array
+is sorted. (If positive, it means the element needs to move left by that amount.
+If negative, it&apos;s <em>definitely</em> a lower bound.)
+<p>Now, can we say that <span class='math'>$\max_i(i - a_i)$</span> is actually the answer?
+Indeed, we can! However, to prove this requires some subtlety, since of course
+some elements can move right, thus some elements have increasing values of
+<span class='math'>$i - a_i$</span>. 
+<p>To see why this is actually true, consider any element <span class='math'>$a_i$</span> which
+has a positive value of <span class='math'>$i - a_i$</span> (i.e., that element is to the right
+of where it should be). Then there must be some element to the left which is
+greater; then we can check from the way bubble sort operates that our element
+<span class='math'>$a_i$</span> must move left. So <span class='math'>$i - a_i$</span> decreases by 1.
+<p>Next, consider any element <span class='math'>$a_i$</span> where <span class='math'>$i - a_i = 0$</span> (that
+is, the element is in exactly the correct position.) It may or may not move
+left, but it certainly will not move right: for it to move to the right, the
+element just right of it must be smaller, but then some element to its left must
+be greater than it, and in that case the element will move left instead.
+<p>Therefore, <span class='math'>$\max_i(i - a_i)$</span>, if positive, will decrease by 1 in a
+bubble sort iteration.
+<p>Note that after counting the number of bubbles needed to reach the sorted array,
+we need to add 1 to account for the final iteration of the algorithm in the
+given pseudocode.
+<p><pre class='prettyprint'>#include &lt;cstdio&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+struct Entry {
+  int index;
+  int value;
+};
+
+Entry entries[100000];
+
+int main() {
+  int n;
+  scanf(&quot;%d&quot;, &amp;n);
+
+  for (int i = 0; i &lt; n; i++) {
+    entries[i].index = i;
+    scanf(&quot;%d&quot;, &amp;entries[i].value);
+  }
+
+  sort(entries, entries + n, [](Entry a, Entry b) {
+    // Break ties by making the smaller element be whichever
+    // element was first in the array originally.
+    return a.value &lt; b.value || (a.value == b.value &amp;&amp; a.index &lt; b.index);
+  });
+
+  int answer = 0;
+  for (int j = 0; j &lt; n; j++) {
+    // In terms of the notation from the above analysis, we have,
+    // entries[j].index = i
+    // j = a_i
+    answer = max(answer, entries[j].index - j);
+  }
+
+  printf(&quot;%d\n&quot;, answer + 1);
+}</pre>
+<p></body></html>

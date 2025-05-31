@@ -1,0 +1,318 @@
+Solution ID: sol_prob1_gold_dec23
+Contest: DEC23
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob1_gold_dec23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Subtask 1:
+
+$N\le 6$
+
+Consider all
+
+$2^{N(N-1)/2}$
+
+ways to either have a direct flight or not between
+each pair of cities. For each of these ways, check whether it will produce the
+input by iterating over all
+
+$2^N$
+
+subsets of cities and checking whether that
+subset forms a valid flight route. The overall runtime is
+
+$O(2^{N(N-1)/2}\cdot 2^N)=O(2^{N(N+1)/2})$
+
+.
+
+Subtask 2:
+
+$N\le 100$
+
+Suppose we want to determine whether there is a direct flight from
+
+$l$
+
+to
+
+$r$
+
+.
+First, determine whether there is a direct flight from
+
+$l'$
+
+to
+
+$r'$
+
+for all
+
+$(l',r')\neq (l,r)$
+
+satisfying
+
+$l\le l' <r'\le r$
+
+. Then, compute the parity of
+the number of flight routes from
+
+$l$
+
+to
+
+$r$
+
+excluding the potential direct
+flight from
+
+$l$
+
+to
+
+$r$
+
+. There is a direct flight from
+
+$l$
+
+to
+
+$r$
+
+if the computed
+parity does not match the parity given in the input.
+
+Computing the parity of the number of flight routes from
+
+$l$
+
+to
+
+$r$
+
+excluding
+the potential direct flight from
+
+$l$
+
+to
+
+$r$
+
+can be done in
+
+$O(N^2)$
+
+time (see
+the function
+
+$\texttt{count_routes_excluding_direct}(l,r)$
+
+in the code below).
+For
+
+$l\le i\le r$
+
+, let
+
+$\text{routes_to}_{l}(i)$
+
+denote the parity of the number
+of flight routes from
+
+$l$
+
+to
+
+$i$
+
+using only the previously computed direct
+flights, or
+
+$1$
+
+if
+
+$l=i$
+
+. Also, let
+
+$\text{direct}[j][i]$
+
+denote whether there
+is a direct flight from
+
+$j$
+
+to
+
+$i$
+
+. Then for
+
+$l<i\le r$
+
+we have the relation
+
+$\text{routes_to}_{l}(i)\equiv\sum_{j=l}^{i-1}\text{routes_to}_l(j)\cdot \text{direct}[j][i]\pmod{2}$
+
+.
+Using this, we can compute
+
+$\text{routes_to}_{l}(i)$
+
+in increasing order from
+
+$i=l+1$
+
+to
+
+$i=r$
+
+.
+
+Time Complexity:
+
+The function
+
+$\texttt{count_routes_excluding_direct}(l,r)$
+
+is called
+
+$O(N^2)$
+
+times and each
+call takes
+
+$O(N^2)$
+
+time, so the overall runtime is
+
+$O(N^2\cdot N^2)=O(N^4)$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin >> N;
+	V<V<int>> routes(N, V<int>(N));
+	for (int i = 0; i < N - 1; ++i) {
+		string s;
+		cin >> s;
+		for (int j = i + 1; j < N; ++j) routes[i][j] = s.at(j - i - 1) - '0';
+	}
+	V<V<int>> direct(N, V<int>(N));
+	auto count_routes_excluding_direct = [&](int l, int r) {
+		V<int> routes_to(N);
+		routes_to[l] = 1;
+		for (int i = l + 1; i <= r; ++i)
+			for (int j = l; j < i; ++j)
+				routes_to[i] ^= routes_to[j] * direct[j][i];
+		return routes_to[r];
+	};
+	int ans = 0;
+	for (int i = N - 1; i >= 0; --i)
+		for (int j = i + 1; j < N; ++j) {
+			direct[i][j] = routes[i][j] ^ count_routes_excluding_direct(i, j);
+			ans += direct[i][j];
+		}
+	cout << ans << "\n";
+}
+
+Full Solution:
+
+$N\le 750$
+
+We reduce the time complexity of the function
+
+$\texttt{count_routes_excluding_direct}(l,r)$
+
+to
+
+$O(N)$
+
+. Since
+
+$\text{routes_to}_{l}(i)$
+
+for
+
+$l<i<r$
+
+is equal to the parity of the number of
+flight routes from
+
+$l$
+
+to
+
+$i$
+
+, we can remove the loop over
+
+$i$
+
+in the function
+and directly compute
+
+$\text{routes_to}_{l}(r)$
+
+. The overall runtime is
+
+$O(N^3)$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin >> N;
+	V<V<int>> routes(N, V<int>(N));
+	for (int i = 0; i < N - 1; ++i) {
+		string s;
+		cin >> s;
+		for (int j = i + 1; j < N; ++j) routes[i][j] = s.at(j - i - 1) - '0';
+	}
+	V<V<int>> direct(N, V<int>(N));
+	auto count_routes_excluding_direct = [&](int l, int r) {
+		int ret = 0;
+		for (int j = l; j < r; ++j) ret ^= routes[l][j] * direct[j][r];
+		return ret;
+	};
+	int ans = 0;
+	for (int i = N - 1; i >= 0; --i)
+		for (int j = i + 1; j < N; ++j) {
+			direct[i][j] = routes[i][j] ^ count_routes_excluding_direct(i, j);
+			ans += direct[i][j];
+		}
+	cout << ans << "\n";
+}
+
+Bonus:
+
+$N\le 5000$
+
+Try solving this using
+
+bitsets
+
+.

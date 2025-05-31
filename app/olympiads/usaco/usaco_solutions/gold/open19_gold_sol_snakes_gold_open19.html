@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>We solve this problem by dynamic programming. Let <span class='math'>$dp(m,k)$</span> be the minimum sum
+of net sizes needed to catch the first <span class='math'>$m$</span> groups of snakes with <span class='math'>$k$</span> net size
+changes. Then <span class='math'>$dp(m,0) = m \cdot \max\{a_1, \dots, a_m\}$</span> and for all <span class='math'>$k &gt; 0$</span>,
+<div class='math'>$$dp(m,k) = \min_{i &lt; m}(dp(i,k-1) + (m-i)\max\{a_{i+1},\dots,a_m\})$$</div> with the
+convention that <span class='math'>$dp(0,k) = 0$</span>. Then the answer is <span class='math'>$dp(N,K) - \sum_{i=1}^N a_i$</span>.
+<p>Naively, there are <span class='math'>$O(N^2)$</span> states each with <span class='math'>$O(N)$</span> transitions each computable
+in <span class='math'>$O(N)$</span> time, but the resulting complexity of <span class='math'>$O(N^4)$</span> is too slow. However,
+it can be improved. For each <span class='math'>$m$</span> and <span class='math'>$k$</span>, start with <span class='math'>$i = m-1$</span> and decrement
+down to <span class='math'>$0$</span>. Then <span class='math'>$\max\{a_{i+1},\dots,a_m\}$</span> can be maintained with constant
+time work for each <span class='math'>$i$</span>, so the cost of computing all transitions for <span class='math'>$dp(m,k)$</span>
+is only <span class='math'>$O(N)$</span>. This yields an <span class='math'>$O(N^3)$</span> runtime, which is sufficient for the
+given bounds.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define INF 1000000000
+ 
+int N,K;
+int A[401];
+int dp[401][401];
+ 
+int main()
+{
+	cin &gt;&gt; N &gt;&gt; K;
+	int tot = 0;
+	int high = 0;
+	for(int i=1;i&lt;=N;i++)
+	{
+		cin &gt;&gt; A[i];
+		high = max(high, A[i]);
+		dp[i][0] = high*i;
+		for(int j=1;j&lt;=K;j++)
+		{
+			dp[i][j] = INF;
+			int mx = A[i];
+			for(int b=i-1;b&gt;=0;b--)
+			{
+				dp[i][j] = min(dp[i][j], dp[b][j-1] + mx*(i-b));
+				mx = max(mx, A[b]);
+			}
+		}
+		tot += A[i];
+	}
+	cout &lt;&lt; dp[N][K] - tot &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

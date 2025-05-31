@@ -1,0 +1,632 @@
+Solution ID: sol_prob2_platinum_dec23
+Contest: DEC23
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_dec23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Andrew Gu, Anand John)
+
+Subtask 1:
+
+We can directly perform the process according to the problem statement. Maintain
+a priority queue of edges between
+
+$S$
+
+and
+
+$[N]\setminus S$
+
+to find the one with
+the minimum label. This will take
+
+$O(M\log N)$
+
+time. We should also maintain the
+value of
+
+$h\pmod{10^9+7}$
+
+rather than
+
+$h$
+
+itself. Overall, the runtime is
+
+$O(NM\log N)$
+
+.
+
+Subtask 2:
+
+Observe that the edges are chosen according to Prim's algorithm, which will find
+a minimum spanning tree.  We can do a first pass to find the minimum spanning
+tree and only keep the
+
+$N-1$
+
+edges that are part of it.  Then use the solution
+of subtask 1 to solve the problem in
+
+$O(N^2\log N)$
+
+time.
+
+Subtask 3:
+
+Observe that the edges are selected according to Prim's algorithm, so they will
+always form the unique minimum spanning tree of the graph. We need to understand
+how the answers for different vertices are related. Assume that instead of the
+
+$h = 10h+e$
+
+operation,
+
+$h$
+
+is an array and we append
+
+$e$
+
+to it. Given an array,
+we can retrieve the original value, e.g.
+
+$[1, 20, 9] \mapsto 309$
+
+. Then we may
+calculate the arrays for all vertices at once using Kruskal's algorithm as
+follows:
+
+Initially, every vertex has an empty array.
+
+When we have an edge
+
+$e = (u, v)$
+
+which connects two components, let
+
+$h_u$
+
+and
+
+$h_v$
+
+be the current arrays for
+
+$u$
+
+and
+
+$v$
+
+, respectively. First, append
+
+$e$
+
+to every vertex in one of the two components. Then append
+
+$h_u$
+
+to every vertex
+in the connected component of
+
+$v$
+
+and vice versa.
+
+This is because when the edge
+
+$(u, v)$
+
+is added, the next edges that Prim's
+algorithm will explore are exactly what was obtained by starting at
+
+$u$
+
+. There
+are
+
+$N-1$
+
+useful edges and we update the
+
+$h$
+
+values for
+
+$O(N)$
+
+vertices in each
+step, but maintaining the whole array adds an extra factor of
+
+$N$
+
+. Instead of
+maintaining the whole array, we maintain the ordered pair of length and value
+
+$\pmod{10^9+7}$
+
+. These take
+
+$O(1)$
+
+memory and can be combined in
+
+$O(1)$
+
+time if
+we precalculate the powers of
+
+$10$
+
+(see the code for details). The overall time
+complexity is
+
+$O(N^2+M\alpha(N))$
+
+.
+
+Implementation (note that we overload the "+" operator):
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+const int N = 2e5+5;
+int pw[N], fa[N];
+
+vector<int> component[N];
+
+using val = pair<int, int>; // (len, residue)
+
+val operator + (const val& a, const val& b) {
+  return {a.first+b.first, (1LL*pw[b.first]*a.second+b.second)%MOD};
+}
+
+val& operator += (val& a, const val& b) {
+  a = a + b;
+  return a;
+}
+
+val res[N];
+
+int root(int x) {
+  return (fa[x] == x ? x : fa[x] = root(fa[x]));
+}
+
+int main () {
+  ios_base::sync_with_stdio(0); cin.tie(0);
+  pw[0] = 1;
+  for (int i = 1; i < N; i++) pw[i] = 10LL*pw[i-1]%MOD;
+  iota(fa, fa+N, 0);
+  int n, m;
+  cin >> n >> m;
+
+  for (int i = 0; i < n; i++) component[i].emplace_back(i);
+  for (int i = 1; i <= m; i++) {
+    int u, v;
+    cin >> u >> v;
+    u--, v--;
+    int ru = root(u);
+    int rv = root(v);
+    if (ru != rv) {
+      val du = make_pair(1, i) + res[u];
+      val dv = make_pair(1, i) + res[v];
+      for (int x: component[ru]) res[x] += dv;
+      for (int x: component[rv]) res[x] += du;
+      fa[ru] = rv;
+      component[rv].insert(component[rv].end(), component[ru].begin(), component[ru].end());
+    }
+  }
+  for (int i = 0; i < n; i++) cout << res[i].second << '\n';
+}
+
+Note that in following parts, we will use "value" to refer to these ordered
+pairs in the code above and "addition" to the operation that combines them.
+
+Subtask 4:
+
+According to the condition, the connected components will always be consecutive
+ranges. We need to be able to obtain the value at a particular point and add a
+value on a range. This can be done with a segment tree, solving the problem in
+
+$O(M\log N)$
+
+time. (This is idea is part of full solution 2, so refer to that for
+the implementation.)
+
+Full solution 1:
+
+Let's maintain a disjoint-set union with only path compression with the
+following invariant: at any point, to obtain the current value at a vertex
+
+$v$
+
+,
+start at
+
+$v$
+
+and walk up to the root in the data structure, adding up all the
+values along the way in order. Note that we can perform path compression here by
+also updating the values as we compress. Recall that to perform an update of
+connecting
+
+$u$
+
+and
+
+$v$
+
+, we must add
+
+$(1, i) + h_u$
+
+to everything in the
+component of
+
+$v$
+
+and
+
+$(1, i) + h_v$
+
+to everything in the component of
+
+$u$
+
+, then
+combine the components.  This can be done as follows:
+
+Add
+
+$h_u$
+
+to the vertex at the root of
+
+$v$
+
+'s component in the data
+structure, and vice versa.
+
+Make the two roots children of a new vertex in the data structure with value
+
+$0$
+
+. This vertex won't correspond to any of the vertices in the original
+graph.
+
+The time complexity of the below implementation is
+
+$O(M\log N)$
+
+because we use a
+disjoint set union with only path compression, not union by rank. This can be
+theoretically improved by using a separate data structure to find the minimum
+spanning tree but there is no practical improvement in speed.
+
+Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+const int N = 4e5+5;
+int pw[N], fa[N];
+
+using val = pair<int, int>; // (len, residue)
+
+val operator + (const val& a, const val& b) {
+  return {a.first+b.first, (1LL*pw[b.first]*a.second+b.second)%MOD};
+}
+
+val dp[N];
+
+int root(int x) {
+  if (fa[x] == x) return x;
+  int v = root(fa[x]);
+  if (fa[x] == v) return v;
+  dp[x] = dp[x] + dp[fa[x]];
+  return fa[x] = v;
+}
+
+val get(int x) {
+  return root(x) == x ? dp[x] : dp[x] + get(fa[x]);
+}
+
+int main () {
+  ios_base::sync_with_stdio(0); cin.tie(0);
+  pw[0] = 1;
+  for (int i = 1; i < N; i++) pw[i] = 10LL*pw[i-1]%MOD;
+  iota(fa, fa+N, 0);
+  int n, m;
+  cin >> n >> m;
+
+  int next_vtx = n;
+  for (int i = 1; i <= m; i++) {
+    int u, v;
+    cin >> u >> v;
+    u--, v--;
+    int ru = root(u), rv = root(v);
+    if (ru == rv) continue;
+    val du = get(u), dv = get(v);
+    dp[ru] = dp[ru] + make_pair(1, i) + dv;
+    dp[rv] = dp[rv] + make_pair(1, i) + du;
+    fa[ru] = fa[rv] = next_vtx++;
+  }
+  for (int i = 0; i < n; i++) cout << get(i).second << '\n';
+}
+
+Full solution 2:
+
+It turns out that we can relabel the vertices of the tree in such a way that as
+we perform Kruskal's algorithm, the connected components are always consecutive
+ranges of numbers. First, we explain how to find the relabeling in a first pass
+of creating the minimum spanning tree.  For every connected component, maintain
+a rightmost vertex and a leftmost vertex. When an edge between
+
+$u$
+
+and
+
+$v$
+
+is
+formed, we declare that the label of the leftmost vertex of
+
+$v$
+
+'s component will
+be one more than the label of the rightmost vertex of
+
+$u$
+
+'s component. The
+leftmost vertex of the combined component is the leftmost vertex of
+
+$u$
+
+'s
+component and the rightmost vertex is the rightmost vertex of
+
+$v$
+
+'s component.
+After forming all these consecutive pairs, we can compute the correct labeling.
+
+With the relabeling, we can use the approach of subtask 4 to solve the problem
+in
+
+$O(M\log N)$
+
+time.
+
+Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+const int N = 2e5+5;
+int pw[N], fa[N], L[N], R[N], nxt[N], relabel[N];
+
+using val = pair<int, int>; // (len, residue)
+
+val operator + (const val& a, const val& b) {
+  return {a.first+b.first, (1LL*pw[b.first]*a.second+b.second)%MOD};
+}
+
+val& operator += (val& a, const val& b) {
+  a = a + b;
+  return a;
+}
+
+val lazy[4*N], cur[4*N];
+
+void push(int v) {
+  lazy[2*v] += lazy[v];
+  cur[2*v] += lazy[v];
+  lazy[2*v+1] += lazy[v];
+  cur[2*v+1] += lazy[v];
+  lazy[v] = make_pair(0, 0);
+}
+
+val query(int v, int tl, int tr, int i) {
+  if (tl == tr) return cur[v];
+  push(v);
+  int tm = (tl+tr)/2;
+  if (i <= tm) return query(2*v, tl, tm, i);
+  else return query(2*v+1, tm+1, tr, i);
+}
+
+void add_on_range(int v, int tl, int tr, int l, int r, val x) {
+  if (l > tr || r < tl) return;
+  if (l <= tl && tr <= r) {
+    cur[v] += x;
+    lazy[v] += x;
+    return;
+  }
+  push(v);
+  int tm = (tl+tr)/2;
+  add_on_range(2*v, tl, tm, l, r, x);
+  add_on_range(2*v+1, tm+1, tr, l, r, x);
+}
+
+int root(int x) {
+  return fa[x] == x ? x : fa[x] = root(fa[x]);
+}
+
+int main () {
+  ios_base::sync_with_stdio(0); cin.tie(0);
+  pw[0] = 1;
+  for (int i = 1; i < N; i++) pw[i] = 10LL*pw[i-1]%MOD;
+  iota(fa, fa+N, 0);
+  iota(L, L+N, 0);
+  iota(R, R+N, 0);
+  int n, m;
+  cin >> n >> m;
+
+  // find the relabeling
+  vector<tuple<int, int, int>> useful_edges;
+  for (int i = 1; i <= m; i++) {
+    int u, v;
+    cin >> u >> v;
+    int ru = root(u);
+    int rv = root(v);
+    if (ru == rv) continue;
+    useful_edges.emplace_back(u, v, i);
+    nxt[R[ru]] = L[rv];
+    fa[ru] = rv;
+    L[rv] = L[ru];
+  }
+  vector<int> seq;
+  int v = L[root(1)];
+  seq.push_back(v);
+  while (nxt[v]) {
+    v = nxt[v];
+    seq.push_back(v);
+  }
+  assert(seq.size() == n);
+  for (int i = 0; i < n; i++) relabel[seq[i]] = i+1;
+
+  // apply subtask 4 solution
+  iota(fa, fa+N, 0);
+  iota(L, L+N, 0);
+  iota(R, R+N, 0);
+  for (auto& [u, v, i]: useful_edges) {
+    u = relabel[u];
+    v = relabel[v];
+    val du = query(1, 1, n, u);
+    val dv = query(1, 1, n, v);
+    u = root(u);
+    v = root(v);
+    add_on_range(1, 1, n, L[u], R[u], make_pair(1, i) + dv);
+    add_on_range(1, 1, n, L[v], R[v], make_pair(1, i) + du);
+    fa[u] = v;
+    L[v] = min(L[v], L[u]);
+    R[v] = max(R[v], R[u]);
+  }
+  for (int i = 1; i <= n; i++) cout << query(1, 1, n, relabel[i]).second << '\n';
+}
+
+Full solution 3:
+
+We can actually optimize the solution in subtask 3 using small-to-large merging.
+Note that only two different values are being added each time we add an edge
+
+$(u,v)$
+
+:
+
+$h_u$
+
+, and
+
+$h_v$
+
+. WLOG assume
+
+$u$
+
+is in the smaller component by size.
+Then, we can normally add
+
+$h_v-h_u$
+
+to each node in the component of
+
+$u$
+
+and
+have a lazy value that tells us to add
+
+$h_u$
+
+to each node in the newly merged
+component. Because we only add directly to the smaller component, we only do
+
+$O(N\log N)$
+
+additions. We can perform subtraction like this since the
+
+$h\mapsto
+10h+e$
+
+operation is invertible. Specifically, it inverts to
+
+$h\mapsto (h-e)/10$
+
+.
+
+This gives a total time complexity of
+
+$O(N\log N + M)$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+const int N = 2e5+5;
+int pw[N], ipw[N], fa[N], sz[N];
+
+vector<int> component[N];
+
+using val = pair<int, int>; // (len, residue)
+
+val operator + (const val& a, const val& b) {
+  return {a.first+b.first, (1LL*pw[b.first]*a.second+b.second)%MOD};
+}
+
+val& operator += (val& a, const val& b) {
+  a = a + b;
+  return a;
+}
+
+val operator - (const val& a, const val& b) {
+  return {a.first-b.first, 1LL*(a.second-b.second+MOD)*ipw[b.first]%MOD};
+}
+
+val lazy[N], res[N];
+
+int main () {
+  ios_base::sync_with_stdio(0); cin.tie(0);
+  pw[0] = ipw[0] = 1;
+  for (int i = 1; i < N; i++) pw[i] = 10LL*pw[i-1]%MOD;
+  //700000005 = 10^-1 mod 1e9+7
+  for (int i = 1; i < N; i++) ipw[i] = 700000005LL*ipw[i-1]%MOD;
+
+  iota(fa, fa+N, 0);
+  fill(sz, sz+N, 1);
+  int n, m;
+  cin >> n >> m;
+
+  for (int i = 0; i < n; i++) component[i].emplace_back(i);
+  for (int i = 1; i <= m; i++) {
+    int u, v;
+    cin >> u >> v;
+    u--, v--;
+    int ru = fa[u];
+    int rv = fa[v];
+
+    if (ru != rv) {
+      // ensure that u is part of the smaller component
+      if(sz[ru] > sz[rv]) swap(u,v), swap(ru, rv);
+
+      val du = make_pair(1, i) + res[u] + lazy[ru];
+      val dv = make_pair(1, i) + res[v] + lazy[rv];
+      lazy[rv] += du;
+      for (int x: component[ru]) res[x] += lazy[ru] + dv - lazy[rv];
+
+      for (int x: component[ru]) fa[x] = rv;
+      sz[rv] += sz[ru];
+      component[rv].insert(component[rv].end(), component[ru].begin(), component[ru].end());
+    }
+  }
+  for (int i = 0; i < n; i++) res[i] += lazy[fa[i]];
+  for (int i = 0; i < n; i++) cout << res[i].second << '\n';
+}

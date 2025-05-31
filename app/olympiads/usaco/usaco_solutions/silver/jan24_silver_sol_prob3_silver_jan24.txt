@@ -1,0 +1,334 @@
+Solution ID: sol_prob3_silver_jan24
+Contest: JAN24
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_jan24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brandon Wang)
+
+The first thing we should do is remove duplicates of
+
+$a_i$
+
+.  After this, we'll
+assume all the
+
+$a_i$
+
+are distinct, and let
+
+$N'$
+
+denote the number of distinct
+
+$a_i$
+
+. Note that if
+
+$N' \leq 3$
+
+, then any
+
+$L$
+
+satisfies the second condition.
+So, the answer is just
+
+$1 + 2 + \cdots + (\min a_i)/4$
+
+.
+
+Subtask 1 (
+
+$a_i\leq 10^6$
+
+):
+
+For this subtask, we first consider the following naive algorithm:  Let
+
+$U = (\min a_i)/4$
+
+be an upper bound on
+
+$L$
+
+.  For each
+
+$1\leq L \leq U$
+
+, we can
+check how many possible values of
+
+$a_i\pmod L$
+
+there are. It turns out that if
+we break once we see 4 distinct values, then we will pass this subtask.
+
+Here is an implementation:
+
+N = input()
+S = list(set([int(x) for x in input().split()]))
+
+U = min(S) // 4
+if len(S) < 4:
+    print(U*(U+1)//2)
+    exit()
+
+def test(L):
+    mods = set()
+    for a in S:
+        mods.add(a%L)
+        if len(mods) >= 4:
+            return False
+    return True
+
+print(sum([L for L in range(1, U+1) if test(L)]))
+
+Now, why do we pass? A naive analysis says that this time should take
+
+$O(UN')$
+
+time, where
+
+$U\leq 2.5\cdot 10^5$
+
+and
+
+$N' \leq 10^4$
+
+. So this should not
+actually be fast enough.
+
+Let's consider the test function again, which takes
+
+$O(N')$
+
+time in the worst
+case. However,  note that in order for the function to not return after 4
+iterations (and so only take
+
+$O(1)$
+
+time), among
+
+$a_1\bmod L, a_2\bmod L, a_3\bmod L, a_4\bmod L$
+
+, there are at most
+
+$3$
+
+distinct
+values.
+
+This implies that
+
+$L$
+
+divides one of
+
+$(a_2 - a_1, a_3 - a_1, a_4 - a_1, a_3 - a_2, a_4 - a_2, a_4 - a_3)$
+
+. Now, if we
+let
+
+$n(A)$
+
+denote the maximum number of divisors that a number at most
+
+$A$
+
+can
+have, then we see that for all but at most
+
+$6n(10^6)$
+
+values of
+
+$L$
+
+,  we break
+after 4 loop iterations. So, we can bound the runtime of this step by
+
+$O(U + n(10^6)\cdot N')$
+
+, where we run the loop
+
+$O(U)$
+
+times, and only run past
+4 iterations
+
+$O(n(10^6))$
+
+times. Since
+
+$n(10^6) \leq 2\cdot 10^3$
+
+(here, note
+that any positive integer
+
+$x$
+
+has at most
+
+$2\sqrt x$
+
+divisors),  this will run
+in time.
+
+General Case (
+
+$a_i \leq 4\cdot 10^9$
+
+):
+
+Now,
+
+$U$
+
+can be up to
+
+$10^9$
+
+, so the preceding algorithm is too slow. On the
+other hand,
+
+$n(4\cdot 10^9)$
+
+is actually
+
+$2000$
+
+, so we just need to speed up the
+
+$O(U)$
+
+step. To do this, instead of checking
+
+every
+
+possible value of
+
+$L$
+
+and seeing if it breaks after trying the first four
+
+$a_i$
+
+, we will instead
+explicitly only consider
+
+$L$
+
+that would not have broken. The only such values of
+
+$L$
+
+are those that divide one of
+
+$(a_2 - a_1, a_3 - a_1, a_4 - a_1, a_3 - a_2, a_4 - a_2, a_4 - a_3)$
+
+. So, we can
+just compute these divisors.  We can compute the divisors of
+
+$A$
+
+in
+
+$O(\sqrt A)$
+
+time, so the total runtime of this is
+
+$O(\sqrt{\max a_i} + n(4\cdot 10^9) \cdot N')$
+
+, which runs in time.
+
+Here is an implementation:
+
+N = input()
+S = list(set([int(x) for x in input().split()]))
+
+U = min(S) // 4
+if len(S) < 4:
+    print(U*(U+1)//2)
+    exit()
+
+divs = set()
+for i, s in enumerate(S[:4]):
+    for _, r in enumerate(S[i:4]):
+        diff = abs(s-r)
+        for t in range(1, int(diff**(0.5) + 1)):
+            if diff%t == 0:
+                divs.add(t)
+                divs.add(diff//t)
+
+def test(L):
+    if L > U:
+        return False
+    mods = set()
+    for a in S:
+        mods.add(a%L)
+        if len(mods) >= 4:
+            return False
+    return True
+
+print(sum([L for L in divs if test(L)]))
+
+Danny Mittal's implementation:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.StringTokenizer;
+ 
+public class Cowlendar {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        Set<Long> months = new HashSet<>();
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        long maxWeekLength = Integer.MAX_VALUE;
+        for (; n > 0; n--) {
+            long month = Long.parseLong(tokenizer.nextToken());
+            months.add(month);
+            maxWeekLength = Math.min(maxWeekLength, month / 4L);
+        }
+        if (months.size() <= 3) {
+            System.out.println((maxWeekLength * (maxWeekLength + 1L)) / 2L);
+        } else {
+            Set<Long> candidates = new HashSet<>();
+            Long[] distinctMonths = months.toArray(new Long[0]);
+            for (int j = 0; j < 4; j++) {
+                for (int k = 0; k < j; k++) {
+                    long diff = Math.abs(distinctMonths[k] - distinctMonths[j]);
+                    for (long x = 1; x <= 100000; x++) {
+                        if (diff % x == 0L) {
+                            candidates.add(x);
+                            candidates.add(diff / x);
+                        }
+                    }
+                }
+            }
+ 
+            long answer = 0;
+            for (long candidate : candidates) {
+                if (candidate <= maxWeekLength) {
+                    Set<Long> seen = new HashSet<>();
+                    for (long month : distinctMonths) {
+                        seen.add(month % candidate);
+                    }
+                    if (seen.size() <= 3) {
+                        answer += candidate;
+                    }
+                }
+            }
+            System.out.println(answer);
+        }
+    }
+}

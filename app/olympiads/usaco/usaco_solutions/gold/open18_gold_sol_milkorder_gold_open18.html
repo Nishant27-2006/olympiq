@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+We first need to find the maximal X such that it is possible to find an ordering
+consistent with the first X observations. If we do a binary search on X, we can
+reduce this just to the question of whether a given set of observations is
+possible. The observations form a graph, and we just need to check if the graph
+is cyclic. To do that, we can see if it is possible to construct a topological
+sort, which takes linear time. The binary search takes O(E log M) where E is the
+maximum possible number of edges.
+<p>After finding the right X, we need to output the lexicographically earliest
+topological sort for the given graph. We can&apos;t do this in linear time, though.
+The easiest way to do do this is to maintain a priority queue of all the cows
+that are allowed to be next. Initialize the queue with all the cows that have no
+predecessors in the graph. Choose the cow of minimal ID to put into the array,
+and remove it from the queue; then check all the successors of that cow, and for
+each, add it to the priority queue if all its predecessors are already in the
+array. This takes O(E + N log N) time.
+<p>To save time while implementing this solution, we can skip coding the linear
+time topological sort and just use the lexicographic topological sort for both
+parts. The resulting runtime will be O((E + N log N) log M) which is still good
+enough.
+<p><pre class='prettyprint'>#include &lt;cstdio&gt;
+#include &lt;queue&gt;
+#include &lt;vector&gt;
+#include &lt;cassert&gt;
+using namespace std;
+
+#define NMAX 100000
+#define MMAX 50000
+
+// entry i is the list of edges implied
+// by observation i
+vector&lt;pair&lt;int, int&gt;&gt; edges[MMAX];
+
+// For each cow, list of successors of that cow
+// in the graph constructed from some set of the
+// observations.
+vector&lt;int&gt; succ[NMAX];
+
+// For each cow, the number of precessors
+// in the graph.
+int pred[NMAX];
+
+// Resulting lexicographically earliest topological sort.
+int result[NMAX];
+
+// Check if topological sort is doable, for the first
+// k observations, and if so, put the answer
+// in the `result` array.
+bool doable(int n, int k) {
+  // Setup the graph from the first k observations.
+  for (int i = 0; i &lt; n; i++) {
+    succ[i].clear();
+    pred[i] = 0;
+  }
+  for (int i = 0; i &lt; k; i++) {
+    for (auto p : edges[i]) {
+      succ[p.first].push_back(p.second);
+      pred[p.second]++;
+    }
+  }
+
+  // Initialize the queue with cows that can be first.
+  priority_queue&lt;int&gt; q;
+  for (int i = 0; i &lt; n; i++) {
+    if (pred[i] == 0) {
+      // Use the negative of the ID because we want
+      // to get the min when we pop, but priority_queue
+      // returns the max.
+      q.push(-i);
+    }
+  }
+
+  for (int i = 0; i &lt; n; i++) {
+    if (q.empty()) {
+      // Nothing in queue - topological sort is impossible.
+      return false;
+    }
+    int v = -q.top();
+    q.pop();
+
+    result[i] = v;
+    for (int next : succ[v]) {
+      pred[next]--;
+      if (pred[next] == 0) {
+        q.push(-next);
+      }
+    }
+  }
+
+  return true;
+}
+
+int main() {
+  int n, m;
+  scanf(&quot;%d&quot;, &amp;n);
+  scanf(&quot;%d&quot;, &amp;m);
+  assert(1 &lt;= m &amp;&amp; m &lt;= MMAX);
+  assert(1 &lt;= n &amp;&amp; n &lt;= NMAX);
+
+  for (int i = 0; i &lt; m; i++) {
+    int d;
+    scanf(&quot;%d&quot;, &amp;d);
+    int last;
+    for (int j = 0; j &lt; d; j++) {
+      int e;
+      scanf(&quot;%d&quot;, &amp;e);
+      e--;
+      if (j &gt; 0) {
+        edges[i].push_back(make_pair(last, e));
+      }
+      last = e;
+    }
+  }
+
+  // Binary search
+  // Invariant: lo &lt;= ans &lt; hi
+  int lo = 0;
+  int hi = m+1;
+  while (hi &gt; lo+1) {
+    int mid = (lo + hi) / 2;
+    if (doable(n, mid)) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+
+  int ans = lo;
+
+  // Run this again, to get the answer
+  // into the `result` array.
+  doable(n, ans);
+
+  for (int i = 0; i &lt; n; i++) {
+    printf(&quot;%d%c&quot;, result[i] + 1, i == n-1 ? &apos;\n&apos; : &apos; &apos;);
+  }
+}</pre>
+<p></body></html>

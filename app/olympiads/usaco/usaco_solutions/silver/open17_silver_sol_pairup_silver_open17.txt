@@ -1,0 +1,121 @@
+Solution ID: sol_pairup_silver_open17
+Contest: OPEN17
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_pairup_silver_open17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+by Nathan Pinsker
+
+Let's start with a small case, to get a feel for the problem. If we have 4 cows
+with values 1, 2, 3, and 4, then we can either pair up cow 1 with cow 2, 3, or
+4.
+
+If we pair up cow 1 with cow 2, then milking will take 7 units of time total. If
+we pair up cow 1 with cow 3, milking will take 6 units. Finally, if we pair up
+cow 1 with cow 4, milking will take 5 units, which is the best we can do.
+
+More generally, if we have 4 cows with values
+
+$A < B < C < D$
+
+, and we've paired
+off A with B and C with D, then it's always beneficial to swap B and D. This is
+because
+
+$min(A + D, B + C) < C + D$
+
+, since
+
+$A < C$
+
+and
+
+$B < D$
+
+.
+
+Similarly, if we've paired off A with C and B with D, then we should swap C and
+D. This is because
+
+$min(A + D, B + C) < B + D$
+
+for similar reasons.
+
+It follows directly that we should always pair the cow that takes the least
+amount of time with the cow that takes the most amount of time, and remove these
+two from the pool. We can then repeat this with the fastest and slowest cows to
+milk from the new set, and continue in this fashion until we have paired off all
+the cows.
+
+One final wrinkle is that there can be a gigantic number of cows. To deal with
+this, we instead keep track of each possible (unique) time to milk each cow, as
+well as the number of such cows. If there are
+
+$A$
+
+cows that take the minimum
+amount of time to milk and
+
+$B$
+
+cows that take the maximum amount of time to
+milk, then we can pair off
+
+$min(A, B)$
+
+cows with each other in a single step to
+make our algorithm more efficient. This guarantees that we eliminate either
+
+$A$
+
+or
+
+$B$
+
+cows, decreasing the number of unique values of milk output by one. The
+overall algorithm is thus
+
+$O(n)$
+
+.
+
+Here's Brian Dean's solution:
+
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+typedef pair<int,int> pii;
+vector<pii> V;
+int N;
+
+int main(void)
+{
+  ifstream fin ("pairup.in");
+  ofstream fout ("pairup.out");
+  fin >> N;
+  for (int i=0; i<N; i++) {
+    int x, y;
+    fin >> x >> y;
+    V.push_back(pii(y,x));
+  }
+  sort(V.begin(), V.end());
+  int M = 0, i=0, j=N-1;
+  while (i <= j) {
+    int x = min(V[i].second, V[j].second);
+    if (i==j) x /= 2;
+    M = max(M, V[i].first + V[j].first);
+    V[i].second -= x;
+    V[j].second -= x;
+    if (V[i].second == 0) i++;
+    if (V[j].second == 0) j--;
+  }
+  fout << M << "\n";
+  return 0;
+}

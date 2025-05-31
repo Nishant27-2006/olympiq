@@ -1,0 +1,106 @@
+Solution ID: sol_timeline_gold_feb20
+Contest: FEB20
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_timeline_gold_feb20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+For each constraint
+
+$(a,b,x)$
+
+draw a directed edge from
+
+$a$
+
+to
+
+$b$
+
+with weight
+
+$x$
+
+. Note that there cannot be a cycle in this graph or else no solution would
+exist. Thus, we'll process the sessions in order of the topological sort.
+
+Without loss of generality suppose that the topological sort is
+
+$1,2,\ldots,N,$
+
+meaning that all edges satisfy
+
+$a<b$
+
+. Then for each directed edge in increasing
+order of
+
+$a$
+
+, it suffices to set
+
+$S_b=\max(S_b,S_a+x)$
+
+. After all of these edges
+are processed, the resulting
+
+$S_1,S_2,\ldots,S_N$
+
+are the lowest possible values
+that satisfy all the edge conditions (assuming all of them are less than or
+equal to
+
+$M$
+
+).  This can be implemented in
+
+$O(N+M)$
+
+time.
+
+#include "bits/stdc++.h"
+
+using namespace std;
+
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+".in").c_str(),"r",stdin);
+	freopen((s+".out").c_str(),"w",stdout);
+}
+
+#define f first
+#define s second
+
+const int MX = 1e5+5;
+
+int N,M,C,S[MX],in[MX];
+bool vis[MX];
+vector<pair<int,int>> adj[MX];
+queue<int> q;
+ 
+int main() {
+	setIO("timeline");
+	cin >> N >> M >> C; 
+	for (int i = 1; i <= N; ++i) cin >> S[i];
+	for (int i = 0; i < C; ++i) {
+		int a,b,x; cin >> a >> b >> x;
+		adj[a].push_back({b,x}); in[b] ++;
+	}
+	for (int i = 1; i <= N; ++i) if (!in[i]) q.push(i);
+	while (q.size()) {
+		int x = q.front(); q.pop(); // process x in order of topological sort
+		vis[x] = 1; assert(S[x] <= M);
+		for (auto& t: adj[x]) {
+			S[t.f] = max(S[t.f],S[x]+t.s);
+			if (!(--in[t.f])) q.push(t.f);
+		}
+	}
+	for (int i = 1; i <= N; ++i) {
+		assert(vis[i]);
+		cout << S[i] << "\n";
+	}
+}

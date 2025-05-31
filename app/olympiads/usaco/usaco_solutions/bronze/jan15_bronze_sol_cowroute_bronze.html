@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type='text/x-mathjax-config'>
+MathJax.Hub.Config({
+  "HTML-CSS": {
+    preferredFont: "TeX",
+    availableFonts: ["STIX","TeX"],
+    linebreaks: {
+      automatic: true
+    },
+    EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+  },
+  tex2jax: {
+    inlineMath: [
+      ["$", "$"],
+    ],
+    displayMath: [
+      ["$$","$$"],
+    ],
+    processEscapes: true,
+    ignoreClass: ".*",
+    processClass: "math"
+  },
+  TeX: {
+    noUndefined: {
+      attributes: {
+        mathcolor: "red",
+        mathbackground: "#FFEEEE",
+        mathsize: "90%"
+      }
+    },
+  },
+  messageStyle: "none"
+});
+</script>
+<script src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full'></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<html>
+<p>(Analysis by Mark Gordon)</p><p>
+
+This problem asks us to find the minimum cost route that allows us to fly from city A to city B.  This is a relatively straightforward problem and can be solved simply by testing if city A appears before city B in each route and taking the minimum cost over all such routes.</p><p>
+
+We can do this by using a boolean flag to indicate if we have already seen city A in the route.  If we see city B when that flag is set then it must be possible to go from A to B using that route.  In fact, there&apos;s no need to even store the route in an array!</p><p>
+
+</p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+#define INF (int)1e9
+
+int main() {
+  freopen(&quot;cowroute.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;cowroute.out&quot;, &quot;w&quot;, stdout);
+
+  int A, B, N;
+  cin &gt;&gt; A &gt;&gt; B &gt;&gt; N;
+
+  int result = INF;
+  for (int i = 0; i &lt; N; i++) {
+    int cost, sz;
+    cin &gt;&gt; cost &gt;&gt; sz;
+
+    /* Loop over the route. */
+    bool found = false;
+    for (int j = 0; j &lt; sz; j++) {
+      int city;
+      cin &gt;&gt; city;
+      if (city == A) {
+        /* Note that we&apos;ve seen city A. */
+        found = true;
+      }
+      if (found &amp;&amp; city == B) {
+        /* If we visit city B after city A then this flight is usable. */
+        result = min(result, cost);
+      }
+    }
+  }
+
+  /* Output the min cost ticket or report that no ticket is suitable. */
+  if (result == INF) {
+    cout &lt;&lt; &quot;-1\n&quot;;
+  } else {
+    cout &lt;&lt; result &lt;&lt; &apos;\n&apos;;
+  }
+
+  return 0;
+}
+</pre><p></p>
+</html>

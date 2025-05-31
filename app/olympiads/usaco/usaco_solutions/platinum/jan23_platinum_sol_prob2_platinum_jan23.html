@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Spencer Compton)
+<p>We begin by considering the structure of optimal solutions for a particular
+query <span class='math'>$q$</span> where you must end at mana pool <span class='math'>$e_q$</span> after <span class='math'>$s_q$</span> seconds. Let us
+characterize a journey by an ordered list
+<span class='math'>$(p_1, t_2), (p_2, t_2), \dots, (p_k, t_k)$</span>, where <span class='math'>$(p_i, t_i)$</span> represents
+Bessie last visiting pool <span class='math'>$p_i$</span> at time <span class='math'>$t_i$</span> and collecting all of its
+available mana. By definition, a <em>valid</em> journey for query <span class='math'>$q$</span> must end at
+<span class='math'>$e_q$</span> (meaning <span class='math'>$p_k=e_q$</span>) and end after <span class='math'>$s_q$</span> seconds (meaning <span class='math'>$t_k = s_q$</span>). The
+mana collected in such a proposed journey is then 
+<span class='math'>$\sum_{i=1}^k m_{p_i} \cdot t_{i}$</span>. Of course, some journeys we describe are
+infeasible. More formally, we will consider a journey <em>feasible</em> if and
+only if <span class='math'>$t_1 \ge 0$</span> and <span class='math'>$t_{i+1} \le t_i + D[p_i][p_{i+1}]$</span> for all
+<span class='math'>$i \in \{1,\dots,k-1\}$</span>, and where <span class='math'>$D[a][b]$</span> represents the shortest path from
+pool <span class='math'>$a$</span> to pool <span class='math'>$b$</span> (note that <span class='math'>$D$</span> can be pre-computed  with the
+<a href='https://usaco.guide/gold/shortest-paths?lang=cpp#floyd-warshall'>Floyd-Warshall
+algorithm</a> in <span class='math'>$O(N^3)$</span> time). With this in mind, what is the optimal feasible
+and valid journey for any fixed <span class='math'>$p_1, \dots, p_k$</span>? It can be shown with an
+inductive proof or exchange argument that it is optimal to wait as long as
+possible. More concretely, this means the optimal times <span class='math'>$t^*$</span> are:
+<p><ul><li><span class='math'>$t_k^* = s_q$</span></li><li><span class='math'>$t_{k-1}^* = s_q - D[p_{k-1}][p_{k}]$</span></li><li><span class='math'>$t_{k-2}^* = s_q - D[p_{k-1}][p_{k}] - D[p_{k-2}][p_{k-1}]$</span></li><li><span class='math'>$\dots$</span></li><li><span class='math'>$t_1^* = s_q- \sum_{i=1}^{k-1} D[p_{i}][p_{i+1}]$</span></li></ul>
+<p>Note how if <span class='math'>$t_1^* &lt; 0$</span> then no journey with pools <span class='math'>$p_1,\dots,p_k$</span> is feasible.
+For the first subtask, it is sufficient to find the optimal solution by
+exhaustively enumerating over all  <span class='math'>$O(N!)$</span> possible choices of <span class='math'>$p_1,\dots,p_k$</span>
+and calculate the corresponding  <span class='math'>$t_1^*,\dots,t_k^*$</span> for each query in
+<span class='math'>$O(N! \cdot (N+Q))$</span> total time.
+<p>For the second subtask, we can no longer afford to iterate over each query for
+each possible journey. We look for some structure of similarity that eliminates
+the need for this iteration. For simplicity of presentation, we will only
+consider journeys and queries ending at some  fixed pool <span class='math'>$e$</span>, as we can handle
+other journey/queries separately.  Based on our closed-form for <span class='math'>$t^*$</span>, the
+journey will be feasible and valid for some query if and only if
+<span class='math'>$\sum_{i=1}^{k-1}D[p_{i}][p_{i+1}] \le s_q$</span>. Moreover, the total mana gained
+will be equal to
+<span class='math'>$\sum_{i=1}^k m_{p_i} \cdot t^*_{i} = \sum_{i=1}^{k} m_{p_{i}} \cdot 
+\left( s_q- \sum_{j=i}^{k-1} D[p_{j}][p_{j+1}] \right) = \left( \sum_{i=1}^{k} m_{p_{i}} \right)
+ \cdot s_q - \left( \sum_{i=1}^{k} \left(m_{p_{i}} \cdot 
+\sum_{j=i}^{k-1} D[p_{j}][p_{j+1}]\right) \right)$</span>.
+<p>We see how this expression takes the form of a function linear in <span class='math'>$s_q$</span>. In
+particular, we can determine that a journey <span class='math'>$J$</span> is feasible if and only if
+<span class='math'>$s_q \ge T_J$</span>,  and then journey <span class='math'>$J$</span> gains mana
+<span class='math'>$f_J(s_q) \triangleq slope_J \cdot s_q + add_J$</span> where:
+<p><ul><li><span class='math'>$T_J = \sum_{i=1}^{k-1}D[p_{i}][p_{i+1}]$</span></li><li><span class='math'>$slope_J = \sum_{i=1}^{k} m_{p_{i}}$</span></li><li><span class='math'>$add_J = \sum_{i=1}^{k} \left(m_{p_{i}} \cdot 
+\sum_{j=i}^{k-1} D[p_{j}][p_{j+1}]\right)$</span></li></ul>
+<p>This immediately implies that the answer for a query <span class='math'>$q$</span> is the maximum over a
+collection of linear functions
+<span class='math'>$\max\limits_{J \textrm{ s.t. } T_J \le s_q} f_J(s_q)$</span>. If not for the condition
+that <span class='math'>$T_J \le s_q$</span>, queries regarding the maximum of linear functions at a
+particular point can be answered efficiently with a data structure using 
+<a href='https://usaco.guide/plat/convex-hull-trick?lang=cpp'>Convex Hull Trick
+(CHT)</a>  or
+<a href='https://usaco.guide/adv/line-container?lang=cpp'>LineContainer</a>. To handle
+the condition that <span class='math'>$T_J \le s_q$</span>, we can  sort queries by <span class='math'>$s_q$</span> and journeys by
+<span class='math'>$T_J$</span>, and incrementally add lines to our data structure such that when we
+answer query <span class='math'>$q$</span>, the journeys with <span class='math'>$T_J \le s_q$</span> are exactly the set of
+journeys in our data structure. Accordingly, we can enumerate over all <span class='math'>$O(N!)$</span>
+possible choices of <span class='math'>$J = p_1,\dots,p_k$</span>, calculate the  corresponding <span class='math'>$T_J$</span> and
+<span class='math'>$f_J$</span>, and then answer queries using our data structure in total time
+<span class='math'>$O(N! \cdot N \cdot \log(N) + Q \log(Q))$</span> for the second subtask.
+<p>For the remaining subtasks, it is too slow to enumerate over all <span class='math'>$O(N!)$</span>
+possibilities for <span class='math'>$J = p_1, \dots, p_k$</span>. We make two structural observations:
+<p>First, the condition that <span class='math'>$T_J \le s_q$</span> is surprisingly unimportant,  because
+<span class='math'>$\max\limits_{J \textrm{ s.t. } T_J \le s_q} f_J(s_q) = \max\limits_{J} f_J(s_q)$</span>.
+We will show this with a proof by contradiction. Suppose, for sake of
+contradiction, that some job <span class='math'>$J&apos;$</span> with <span class='math'>$T_{J&apos;} &gt; s_q$</span> obtains the optimal amount
+of mana.  Recall how
+<span class='math'>$f_{J&apos;}(s_q) = \sum_{i=1}^{k} m_{p_{i}} \cdot 
+\left( s_q- \sum_{j=i}^{k-1} D[p_{j}][p_{j+1}] \right)$</span>.
+If <span class='math'>$T_{J&apos;} &gt; s_q$</span>, then the summand corresponding to <span class='math'>$p_1$</span> must be negative, and
+thus the journey corresponding to  <span class='math'>$p_2, \dots, p_k$</span> would be strictly better,
+and we have proven a contradiction. Accordingly, we can ignore the <span class='math'>$T_J$</span>
+constraint and simply optimize for <span class='math'>$\max\limits_{J} f_J(s_q)$</span>.
+<p>Second, all journeys with the same unordered set of pools <span class='math'>$p_1,\dots,p_k$</span> have
+the same slope (see the definition of <span class='math'>$slope_J$</span> above). More concretely, let 
+<span class='math'>$\mathcal{P} \subseteq \{ 1, \dots, N \}$</span> denote some subset of pools to visit,
+and let <span class='math'>$P_J$</span> denote the unordered set of pools that a journey <span class='math'>$J$</span> visits. All
+journeys <span class='math'>$J$</span> with <span class='math'>$P_J = \mathcal{P}$</span> satisfy <span class='math'>$slope_J = \sum_{p \in P} m_p$</span>.
+<p>Our first observation shows how the only aspects of a line that matter are
+<span class='math'>$slope_J$</span> and <span class='math'>$add_J$</span> (not <span class='math'>$T_J$</span>). Our second observation notes that <span class='math'>$slope_J$</span>
+is completely determined by the unordered set of pools <span class='math'>$J$</span> visits. Combining our
+two observations, we  conclude that we can optimize over subsets of pools to
+visit, and for each fixed subset <span class='math'>$\mathcal{P}$</span> the only meaningful degree of
+freedom is <span class='math'>$add_J$</span>,  so we can just consider the line with the best <span class='math'>$add_J$</span>
+among those that visit <span class='math'>$\mathcal{P}$</span>. More formally:
+<span class='math'>$\max\limits_{J \textrm{ s.t. } T_J \le s_q} f_J(s_q) = \max\limits_{J} f_J(s_q)
+= \max\limits_{J} slope_J \cdot s_q + add_J = 
+\max\limits_{\mathcal{P}} \left( \sum_{p \in P} m_p \right) \cdot s_q 
++ \left(\max\limits_{J \textrm{s.t. } P_J = \mathcal{P}} add_J \right)$</span>.
+<p>This closed-form is also a function linear in <span class='math'>$s_q$</span>. We can then define our
+optimization as  over linear functions for each subset as
+<span class='math'>$g_{\mathcal{P}}(s_q) \triangleq slope_{\mathcal{P}} \cdot s_q + add_{\mathcal{P}}$</span>.
+Where:
+<p><ul><li><span class='math'>$slope_{\mathcal{P}} = \sum_{p \in \mathcal{P}} m_{p}$</span></li><li><span class='math'>$add_{\mathcal{P}} = \max\limits_{J \textrm{s.t. } P_J = \mathcal{P}} add_J $</span></li></ul>
+<p>Our hope is to optimize over <span class='math'>$\max\limits_{\mathcal{P}} g_{\mathcal{P}}(s_q)$</span>.
+All that remains is being able to compute each <span class='math'>$add_{\mathcal{P}}$</span>. We compute
+all <span class='math'>$add_{\mathcal{P}}$</span> by a dynamic programming solution where the state
+<span class='math'>$dp[now][rem]$</span> represents the set <span class='math'>$rem$</span> of  remaining nodes to visit (going
+backwards in the ordering), and the current location <span class='math'>$now$</span>.  Recall how
+<span class='math'>$add_J = \sum_{i=1}^{k} \left(m_{p_{i}} \cdot 
+\sum_{j=i}^{k-1} D[p_{j}][p_{j+1}]\right)$</span>.
+Accordingly, if we decide to transition to the next location <span class='math'>$next \in rem$</span>,
+then the summands in <span class='math'>$add_J$</span> for each <span class='math'>$p \in rem$</span> will increase by
+<span class='math'>$m_{p} \cdot D[next][now]$</span>. This formulation is sufficient to design a dynamic
+program with <span class='math'>$O(2^N \cdot N)$</span> states, <span class='math'>$O(N)$</span> transitions, and <span class='math'>$O(2^N \cdot N^2)$</span>
+total running time. 
+<p>Combining all steps, for each query we output 
+<span class='math'>$\max\limits_{\mathcal{P}} g_{\mathcal{P}}(s_q)$</span>, where we compute the
+coefficients for the <span class='math'>$O(2^N \cdot N)$</span> lines <span class='math'>$g_{\mathcal{P}}$</span> by dynamic
+programming in <span class='math'>$O(2^N \cdot N^2)$</span> time.  We then use CHT to evaluate
+<span class='math'>$\max\limits_{\mathcal{P}} g_{\mathcal{P}}(s_q)$</span> for each query. There is some
+flexibility in implementation. For example, one could sort the lines and queries
+and then use a vector/deque for a total runtime of
+<span class='math'>$O(2^N \cdot N^2 + Q \log(Q))$</span> (as is done in the code below). Or, one could
+prepare the CHT data structure over the lines beforehand and then evaluate the
+queries without sorting them for a total runtime of <span class='math'>$O(2^N \cdot N^2 + QN)$</span>.
+<p>It is possible to get the third subtask by utilizing the above dynamic program
+but enumerating over all queries (instead of using CHT) for a
+<span class='math'>$O(2^N \cdot (N^2 + Q))$</span> time algorithm.  The fourth and fifth subtask of <span class='math'>$N=16$</span>
+and <span class='math'>$N=17$</span> exist to potentially give partial credit for  slightly suboptimal
+solutions, or those needing constant factor optimization.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+typedef long long ll;
+#define f first
+#define s second
+vector&lt;ll&gt; rates;
+ll dist[19][19];
+ll inf = 1e9+1;
+ll inf2 = 2e18;
+int N, Q;
+ll maskDeriv[1&lt;&lt;18];
+ll dp[18][1&lt;&lt;18];
+vector&lt;pair&lt;ll, ll&gt; &gt; hull[18];
+vector&lt;ll&gt; hull_pt;
+ 
+ll go(int now, int rem){
+    // computing optimal add_J that ends at now, and visits everything remaining in rem
+    if(rem == 0){
+        return 0LL;
+    }
+    if(dp[now][rem] &lt;= 0LL){
+        return dp[now][rem];
+    }
+    ll ret = -inf2;
+    for(int i = 0; i&lt;N; i++){
+        if((rem&amp;(1&lt;&lt;i))!=0){
+            ret = max(ret,go(i,rem-(1&lt;&lt;i)) - maskDeriv[rem] * dist[i][now]);
+        }
+    }
+    dp[now][rem] = ret;
+    return ret;
+}
+ 
+ll overcome(pair&lt;ll, ll&gt; a, pair&lt;ll, ll&gt; b){
+    // when does line &quot;a&quot; with slope a.f and add a.s, take over line &quot;b&quot; with slope b.f and add b.s
+    assert((a.f &gt; b.f) &amp;&amp; (a.s &lt; b.s));
+    ll slopeDif = a.f - b.f;
+    ll addDif = b.s - a.s;
+    ll addOne = ((addDif%slopeDif)!=0)?1:0;
+    return addDif/slopeDif + addOne;
+}
+ 
+void ins(int loc, ll slope, ll add){
+    // insert a line to the hull
+    // corresponds to a journey ending at loc
+    auto cur = make_pair(slope,add);
+    if(hull[loc].size()&gt;0 &amp;&amp; (hull[loc].back().f == slope) &amp;&amp; hull[loc].back().s &gt;= add){
+        return;
+    }
+    while(true){
+        int sz = (int)(hull[loc].size());
+        if(sz==0){
+            break;
+        }
+        auto bef = hull[loc][sz-1];
+        // if the previous line has worse slope and add than the new line, delete it
+        if(bef.s &lt;= add){
+            hull[loc].pop_back();
+            continue;
+        }
+        if(sz == 1){
+            break;
+        }
+        auto grandBef = hull[loc][sz-2];
+        // if the new line overcomes the second-newest before the second-newest overcomes the third-newest
+        // then the second-newest is never on the hull, so we delete it
+        if(overcome(bef,grandBef) &gt;= overcome(cur,bef)){
+            hull[loc].pop_back();
+            continue;
+        }
+        break;
+    }
+    hull[loc].push_back(cur);
+}
+ 
+ll query(int loc, ll t){
+    // query the hull for ending location loc at time t
+    int sz = (int)(hull[loc].size());
+    while(hull_pt[loc]+1&lt;sz){
+        auto it = hull[loc].begin();
+        auto val1 = hull[loc][hull_pt[loc]];
+        it++;
+        auto val2 = hull[loc][hull_pt[loc]+1];
+        if(overcome(val2,val1) &gt; t){
+            break;
+        }
+        hull_pt[loc]++;
+    }
+    auto val = (hull[loc][hull_pt[loc]]);
+    return t * val.f + val.s;
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    int m;
+    cin &gt;&gt; N &gt;&gt; m;
+    hull_pt.resize(N);
+    for(int i = 0; i&lt;N; i++){
+        ll x;
+        cin &gt;&gt; x;
+        rates.push_back(x);
+    }
+    for(int i = 0; i&lt;=N; i++){
+        for(int j = 0; j&lt;=N; j++){
+            dist[i][j] = inf;
+        }
+    }
+    for(int i = 0; i&lt;m; i++){
+        int a, b;
+        ll t;
+        cin &gt;&gt; a &gt;&gt; b &gt;&gt; t;
+        a--;
+        b--;
+        dist[a][b] = t;
+    }
+    // compute shortest paths
+    for(int k = 0; k&lt;N; k++){
+        for(int i = 0; i&lt;N; i++){
+            for(int j = 0; j&lt;N; j++){
+                dist[i][j] = min(dist[i][j],dist[i][k] + dist[k][j]);
+            }
+        }
+    }
+    // compute the total rate of all masks
+    maskDeriv[0] = 0L;
+    for(int mask = 1; mask&lt;(1&lt;&lt;N); mask++){
+        for(int i = 0; i&lt;N; i++){
+            if((mask&amp;(1&lt;&lt;i))!=0){
+                maskDeriv[mask] = maskDeriv[mask - (1&lt;&lt;i)] + rates[i];
+                break;
+            }
+        }
+    }
+    for(int i = 0; i&lt;(1&lt;&lt;N); i++){
+        for(int j = 0; j&lt;N; j++){
+            dp[j][i] = 1LL;
+        }
+    }
+    int all = (1&lt;&lt;N) - 1;
+    vector&lt;pair&lt;ll, pair&lt;ll, int&gt; &gt; &gt; lines;
+    for(int mask = 0; mask&lt;(1&lt;&lt;N); mask++){
+        for(int j = 0; j&lt;N; j++){
+            if((mask&amp;(1&lt;&lt;j))==0){
+                // considers the line for a journey ending at location j
+                // maskDeriv[mask|(1&lt;&lt;j)] is slope
+                // go(j,mask) is add
+                lines.push_back(make_pair(maskDeriv[mask|(1&lt;&lt;j)],make_pair(go(j,mask),j)));
+            }
+            
+        }
+    }
+    sort(lines.begin(),lines.end());
+    // insert lines into hull in order of slope
+    for(auto x: lines){
+        ins(x.s.s, x.f,x.s.f);
+    }
+    cin &gt;&gt; Q;
+    vector&lt;ll&gt; ans(Q);
+    vector&lt;pair&lt;ll, pair&lt;int, int&gt; &gt; &gt; queries;
+    for(int i = 0; i&lt;Q; i++){
+        ll s;
+        int e;
+        cin &gt;&gt; s &gt;&gt; e;
+        e--;
+        // consider query i for ending at e after s seconds
+        queries.push_back(make_pair(s,make_pair(e,i)));
+    }
+    // consider queries in order of time
+    sort(queries.begin(),queries.end());
+    for(int i = 0; i&lt;Q; i++){
+        ll t = queries[i].f;
+        int loc = queries[i].s.f;
+        int id = queries[i].s.s;
+        // query the relevant hull at the relevant time
+        ans[id] = query(loc,t);
+    }
+    for(int i = 0; i&lt;Q; i++){
+        cout &lt;&lt; ans[i] &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p></body></html>

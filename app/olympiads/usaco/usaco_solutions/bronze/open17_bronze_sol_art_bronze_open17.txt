@@ -1,0 +1,109 @@
+Solution ID: sol_art_bronze_open17
+Contest: OPEN17
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_art_bronze_open17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+by Nathan Pinsker
+
+Intuitively, the larger our rectangles are, the more likely they are to overlap
+other rectangles. Since we want to maximize the number of rectangles that can
+have been drawn first, we want as few overlaps as possible, since knowing that
+two rectangles overlap means that one of them cannot possibly have been drawn
+first. This means it is always to our advantage to assume, when we can, that an
+overlap doesn't occur, and so we will try to assume that each rectangle is as
+small as it can possibly be. In particular, for each rectangle of a certain
+color, we will always assume that the leftmost grid square of that color is its
+left border, the topmost grid square of that color is its top border, etc.
+
+Now that we know the bounds of our rectangles, it is very straightforward to
+determine whether two rectangles overlap. But when two rectangles overlap, how
+do we know which one can be on top? Can either of them be on top? Consider the
+area formed when two rectangles of colors C and D overlap. Clearly it cannot
+contain squares of both colors C and D. If it contains either C or D, then the
+corresponding rectangle of that color must have been painted later. (Otherwise,
+the later rectangle would have painted over the color that shows up.) If it
+contains neither, then we can assume either rectangle was painted first, as we
+have no way to tell the difference.
+
+This means that a rectangle R could have been painted first if, and only if,
+there is no other rectangle S such that there's a grid square of color R within
+the area of S.
+
+Since N is very small (at most 10), we can compute for each pair of rectangles R
+and S whether S is on top of R using brute-force. Whenever we find a rectangle
+that does not
+
+have
+
+to have any other rectangle on top of it, we can add
+it to our overall count.
+
+Here's Brian Dean's code:
+
+#include <iostream>
+#include <fstream>
+#include <cmath>
+using namespace std;
+#define MAX_N 10
+
+int N, B[MAX_N][MAX_N];
+
+bool color_appears(int c)
+{
+  for (int i=0; i<N; i++) 
+    for (int j=0; j<N; j++)
+      if (B[i][j] == c) return true;
+  return false;
+}
+
+// Is c1 "on top of c2" -- i.e., does c1 appear within the bounding box of c2?
+bool on_top_of(int c1, int c2)
+{
+  // Find c2's bounding box
+  int top=N, bottom=0, left=N, right=0;
+  for (int i=0; i<N; i++) 
+    for (int j=0; j<N; j++)
+      if (B[i][j] == c2) {
+	top = min(top, i);
+	bottom = max(bottom, i);
+	left = min(left, j);
+	right = max(right, j);
+      }
+  
+  // Does c1 fall within it?
+  for (int i=top; i<=bottom; i++) 
+    for (int j=left; j<=right; j++)
+      if (B[i][j] == c1) return true;
+  
+  return false;
+}
+
+int main(void)
+{
+  ifstream fin ("art.in");
+  ofstream fout ("art.out");
+  fin >> N;
+  for (int i=0; i<N; i++) {
+    string s;
+    fin >> s;
+    for (int j=0; j<N; j++)
+      B[i][j] = s[j] - '0';
+  }
+
+  int answer = 0;
+  for (int i=1; i<=9; i++)
+    if (color_appears(i)) {
+      bool could_be_first = true;
+      for (int j=1; j<=9; j++)
+	if (j!=i && color_appears(j) && on_top_of(i,j))
+	  could_be_first = false;
+      if (could_be_first) answer++;
+    }
+  
+  fout << answer << "\n";
+  return 0;
+}

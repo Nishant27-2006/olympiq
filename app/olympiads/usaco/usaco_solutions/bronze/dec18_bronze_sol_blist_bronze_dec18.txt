@@ -1,0 +1,184 @@
+Solution ID: sol_blist_bronze_dec18
+Contest: DEC18
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_blist_bronze_dec18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Nathan Pinsker )
+
+The key to this problem is realizing that the IDs of the buckets aren't relevant
+to solving it. Every bucket is interchangeable with every bucket, because the
+only thing we want to know is the maximum number of buckets that will be in use
+at some time.
+
+One straightforward way to figure this out is to simply iterate over all
+possible times, from
+
+$1$
+
+to
+
+$1,000$
+
+, and check for each interval whether it
+contains that time. This will be around
+
+$1,000 * 100$
+
+operations, which is fast
+enough to get full credit.
+
+Here's a solution implementing this method:
+
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+
+using namespace std;
+ 
+int N;
+int S[101], T[101], B[101];
+ 
+int main(void) {
+  ifstream fin ("blist.in");
+  fin >> N;
+  for (int i=1; i<=N; i++) {
+    fin >> S[i] >> T[i] >> B[i];
+  }
+
+  int max_buckets = 0;
+  for (int time=1; time<=1000; time++) {
+    int buckets_at_this_time = 0;
+    for (int i=1; i<=N; i++) {
+      if (S[i] <= time && time <= T[i]) {
+        buckets_at_this_time += B[i];
+      }
+    }
+    max_buckets = max(max_buckets, buckets_at_this_time);
+  }
+  
+  ofstream fout ("blist.out");
+  fout << max_buckets << "\n";
+  
+  return 0;
+}
+
+Note that this will end up being a lot of unnecessary
+work -- two times right next to each other will almost always have the same
+number of buckets needed, so it would be nice to not repeat all that work.  If the 
+limits for this problem were higher (e.g., for a "silver" level version of the
+problem), we would need to use a more sophisticated approach.  Luckily, we can do better: we can simulate each "event" (either the start of
+stop of a milking) in the order that they occurred. We start by adding the
+points
+
+$s_i$
+
+and
+
+$t_i$
+
+to a big array for each interval
+
+$i$
+
+. Then, we sort the
+array, and consider the points in increasing order. We keep track of the number
+of buckets currently being used, starting with zero. For each point, we check
+whether it's a start or end point: if it's a start point
+
+$s_i$
+
+, we add
+
+$b_i$
+
+to
+the number of buckets in use, and if it's an end point
+
+$t_i$
+
+, we subtract
+
+$b_i$
+
+.
+(This technique is called a "sweep", because if you think of all the points on a
+horizontal number line, we are "sweeping" across the line, processing each point
+that we come across.)
+
+We process each start point and each end point exactly once, so we will end up
+having around
+
+$2 * N = 200$
+
+operations in total, a substantial improvement over
+the more straightforward method. More generally, the runtime of this algorithm
+is
+
+$O(N \log N)$
+
+(the log comes from our needing to sort the array), while the
+runtime of the previous algorithm is
+
+$O(N * T)$
+
+(where
+
+$T$
+
+is the maximum
+possible time).
+
+Here is Brian's code, implementing this second method. Note that he does not sort
+the array, and instead puts the start and end points directly into an array of
+size
+
+$1,000$
+
+. This gives him a runtime of
+
+$O(N + T)$
+
+rather than
+
+$O(N \log N)$
+
+, but the basic idea is the same.
+
+#include <iostream>
+#include <fstream>
+using namespace std;
+ 
+int N;
+int S[101], T[101], B[101];
+int start[1001], finish[1001];
+ 
+int solve(void)
+{
+  int buckets_needed = 0, b = 0;
+  for (int t=1; t<=1000; t++) {
+    if (start[t]) b += B[start[t]];
+    buckets_needed = max(buckets_needed, b);
+    if (finish[t]) b -= B[finish[t]];
+  }
+  return buckets_needed;
+}
+ 
+int main(void)
+{
+  ifstream fin ("blist.in");
+  fin >> N;
+  for (int i=1; i<=N; i++) {
+    fin >> S[i] >> T[i] >> B[i];
+    start[S[i]] = i;
+    finish[T[i]] = i;
+  }
+  
+  ofstream fout ("blist.out");
+  fout << solve() << "\n";
+  
+  return 0;
+}

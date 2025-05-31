@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Observe that the edges <span class='math'>$i\to a_i$</span> induce a directed graph where every vertex 
+has out-degree 1. This is known as a 
+<a href='https://usaco.guide/silver/func-graphs'>functional graph</a>. We can solve the
+problem for each connected component of the graph independently, so for the
+remainder of the analysis, we will assume the graph consists of a single
+connected component.
+<p>Call cow <span class='math'>$i$</span> <em>inactive</em> if it contributes <span class='math'>$0$</span> to the collective pleasure
+value rather than <span class='math'>$v_i$</span>. From the sample case, among those cows on a simple
+cycle, it is easy to see that at least one of the cows must be inactive.
+Consider the cow <span class='math'>$c$</span> in the cycle that occurs latest in <span class='math'>$p$</span>. Then either <span class='math'>$a_c$</span>
+either has not departed her farm already (in which case <span class='math'>$a_c$</span> is inactive) or
+she has (in which case <span class='math'>$c$</span> is inactive).
+<p>As a connected component in a functional graph always contains exactly one
+simple cycle,  the answer must be at most the sum of all <span class='math'>$v_i$</span> minus the minimum
+<span class='math'>$v_i$</span> among that cycle. Furthermore, we can always construct <span class='math'>$p$</span> that achieves
+this bound. The construction is as follows:
+<p><ol><li>Let cow <span class='math'>$c$</span> be the cow corresponding to the minimum <span class='math'>$v_i$</span> along the
+cycle.</li><li>Any permutation <span class='math'>$p$</span> such that <span class='math'>$i$</span> appears earlier than <span class='math'>$a_i$</span> in <span class='math'>$p$</span> for all 
+<span class='math'>$i\neq c$</span> suffices.</li><li>After removing edge <span class='math'>$c\to a_c$</span> from the component, the component no longer
+contains a cycle. Therefore, the remaining edges form a directed tree rooted at
+<span class='math'>$c$</span>. So it is always possible to construct <span class='math'>$p$</span> (ex. DFS backward through the
+tree and add each node to the front of <span class='math'>$p$</span> when it&apos;s traversed for the first
+time).</li></ol>
+<p>In the code below, for each connected component I use
+<a href='https://usaco.guide/silver/func-graphs?lang=cpp#floyds-algorithm'>Floyd&apos;s
+algorithm</a> to detect a vertex along the cycle. After that, I mark every
+vertex in the connected component as visited. As each connected component is
+processed in time proportional to its size, the runtime is <span class='math'>$O(N)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+vector&lt;int&gt; a, v;
+vector&lt;vector&lt;int&gt;&gt; child;
+vector&lt;bool&gt; done;
+
+void mark_as_done(int x) {
+	if (done[x]) return;
+	done[x] = true;
+	for (int c : child[x]) mark_as_done(c);
+}
+
+int solve(int start) {
+	int x = start, y = start;
+	do {
+		x = a[x], y = a[a[y]];
+	} while (x != y);
+	int min_along_cycle = INT_MAX;
+	do {
+		min_along_cycle = min(min_along_cycle, v[x]);
+		x = a[x];
+	} while (x != y);
+	mark_as_done(x);
+	return min_along_cycle;
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	a.resize(N + 1);
+	v.resize(N + 1);
+	child.resize(N + 1);
+	int64_t ans = 0;
+	for (int i = 1; i &lt;= N; ++i) {
+		cin &gt;&gt; a[i] &gt;&gt; v[i];
+		ans += v[i];
+		child[a[i]].push_back(i);
+	}
+	done.resize(N + 1);
+	for (int i = 1; i &lt;= N; ++i)
+		if (!done[i]) ans -= solve(i);
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Alternatively, if you are familiar with Gold topics, the answer is just the
+weight of a maximum spanning forest of the graph (treating the edges as
+undirected), which can be computed with
+<a href='https://usaco.guide/gold/mst'>Kruskal&apos;s algorithm</a>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+struct DSU {
+	vector&lt;int&gt; e;
+	void init(int N) { e = vector&lt;int&gt;(N, -1); }
+	int get(int x) { return e[x] &lt; 0 ? x : e[x] = get(e[x]); }
+	bool unite(int x, int y) {
+		x = get(x), y = get(y);
+		if (x == y) return 0;
+		if (e[x] &gt; e[y]) swap(x, y);
+		e[x] += e[y];
+		e[y] = x;
+		return 1;
+	}
+};
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	vector&lt;tuple&lt;int, int, int&gt;&gt; edges;
+	for (int i = 1; i &lt;= N; ++i) {
+		int a, v;
+		cin &gt;&gt; a &gt;&gt; v;
+		edges.push_back({v, i, a});
+	}
+	sort(edges.rbegin(), edges.rend());
+	DSU D;
+	D.init(N + 1);
+	int64_t ans = 0;
+	for (auto [v, x, y] : edges)
+		if (D.unite(x, y)) ans += v;
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Bonus: Solve the problem when the <span class='math'>$v_i$</span> can be negative.
+<p></body></html>

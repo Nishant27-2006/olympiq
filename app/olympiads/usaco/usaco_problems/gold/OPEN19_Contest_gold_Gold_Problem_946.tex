@@ -1,0 +1,103 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: OPEN19 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Farmer John wants to divide his $N$ cows $(N \leq 7500)$, conveniently 
+numbered $1 \ldots N$, into $K$ non-empty
+groups ($2 \leq K \leq N$) such that no two cows from two different groups can
+interact with each other without walking some number of miles.  Cow $x$ and Cow $y$ (where
+$1 \leq x < y \leq N$) are willing to walk
+$(2019201913x + 2019201949y)\text{ mod } 2019201997$ miles to see each other. 
+
+Given a division of the $N$ cows into $K$ non-empty groups, let $M$ be the
+minimum of the number of miles any two cows in two different groups are willing
+to walk to see each other.   To test the cows' devotion to each other, Farmer
+John wants to optimally divide the $N$ cows into $K$ groups such that $M$ is as
+large as possible. 
+
+The memory limit for this problem is set to 512MB, above
+the usual 256MB limit.
+
+INPUT FORMAT (file walk.in):
+The input is just one line, containing $N$ and $K$, separated by a space.
+
+OUTPUT FORMAT (file walk.out):
+Print out $M$ in an optimal solution. 
+SAMPLE INPUT:
+3 2
+SAMPLE OUTPUT: 
+2019201769
+
+In this example, Cow 1 and Cow 2 are willing to walk 2019201817 miles to see
+each other.  Cow 2 and Cow 3 are willing to walk 2019201685 miles. And Cow 1 and
+Cow 3 are  willing to walk 2019201769 miles. Thus, by grouping the cows such
+that  1 is by herself and 2 and 3 are grouped together,
+$M = \min(2019201817,2019201769) = 2019201769$ (which is the best we can do
+here).
+
+
+Problem credits: Brian Dean
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (file walk.out):Print out $M$ in an optimal solution.SAMPLE INPUT:3 2SAMPLE OUTPUT:2019201769In this example, Cow 1 and Cow 2 are willing to walk 2019201817 miles to see
+each other.  Cow 2 and Cow 3 are willing to walk 2019201685 miles. And Cow 1 and
+Cow 3 are  willing to walk 2019201769 miles. Thus, by grouping the cows such
+that  1 is by herself and 2 and 3 are grouped together,
+$M = \min(2019201817,2019201769) = 2019201769$ (which is the best we can do
+here).Problem credits: Brian Dean
+
+\section*{Output Format}
+SAMPLE INPUT:3 2SAMPLE OUTPUT:2019201769In this example, Cow 1 and Cow 2 are willing to walk 2019201817 miles to see
+each other.  Cow 2 and Cow 3 are willing to walk 2019201685 miles. And Cow 1 and
+Cow 3 are  willing to walk 2019201769 miles. Thus, by grouping the cows such
+that  1 is by herself and 2 and 3 are grouped together,
+$M = \min(2019201817,2019201769) = 2019201769$ (which is the best we can do
+here).Problem credits: Brian Dean
+
+\section*{Sample Input}
+\begin{verbatim}
+3 2
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+2019201769
+
+In this example, Cow 1 and Cow 2 are willing to walk 2019201817 miles to see
+each other.  Cow 2 and Cow 3 are willing to walk 2019201685 miles. And Cow 1 and
+Cow 3 are  willing to walk 2019201769 miles. Thus, by grouping the cows such
+that  1 is by herself and 2 and 3 are grouped together,
+$M = \min(2019201817,2019201769) = 2019201769$ (which is the best we can do
+here).Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=946
+
+\section*{Source}
+USACO OPEN19 Contest, Gold Division, Problem ID: 946
+
+\end{document}

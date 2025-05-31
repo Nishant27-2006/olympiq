@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>We list out two dynamic programming approaches here, one that is <span class='math'>$O(NMK)$</span> and
+one that is <span class='math'>$O((N+M)K^2)$</span>.
+<p>We first note that there is an <span class='math'>$O(N^2 M^2 K)$</span> dynamic programming algorithm. Let
+<span class='math'>$f(N, M, K)$</span> be the number of ways to match <span class='math'>$K$</span> pairs first <span class='math'>$N$</span> of Farmer John&apos;s
+cows and first <span class='math'>$M$</span> of Farmer Paul&apos;s cows such that Farmer John wins. We can
+reduce <span class='math'>$K$</span> by one if we fix the highest scoring cow that both Farmer John and
+Farmer Paul use. With <span class='math'>$O(NM)$</span> transitions and <span class='math'>$O(NMK)$</span> states, we get an
+<span class='math'>$O(N^2 M^2 K)$</span> algorithm.
+<p>Instead of iterating over all <span class='math'>$O(NM)$</span> transitions, if we maintain a prefix sum,
+we can compute <span class='math'>$f(N, M, K)$</span> in <span class='math'>$O(1)$</span> time. My Java code does this as below.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class team {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;team.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;team.out&quot;)));
+		final int MOD = 1000000009;
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int m = Integer.parseInt(st.nextToken());
+		int k = Integer.parseInt(st.nextToken());
+		int[] a = new int[n];
+		int[] b = new int[m];
+		st = new StringTokenizer(br.readLine());
+		for(int i = 0; i &lt; n; i++) {
+			a[i] = Integer.parseInt(st.nextToken());
+		}
+		st = new StringTokenizer(br.readLine());
+		for(int i = 0; i &lt; m; i++) {
+			b[i] = Integer.parseInt(st.nextToken());
+		}
+		long[][] dp = new long[n+1][m+1];
+		for(int i = 0; i &lt; dp.length; i++) {
+			Arrays.fill(dp[i], 1);
+		}
+		Arrays.sort(a);
+		Arrays.sort(b);
+		while(k-- &gt; 0) {
+			long[][] next = new long[n+1][m+1];
+			for(int i = 0; i &lt; a.length; i++) {
+				for(int j = 0; j &lt; b.length; j++) {
+					if(a[i] &lt;= b[j]) continue;
+					next[i+1][j+1] += dp[i][j];
+				}
+			}
+			dp = next;
+			for(int i = 0; i &lt; dp.length; i++) {
+				for(int j = 0; j &lt; dp[i].length; j++) {
+					if(i &gt; 0) {
+						dp[i][j] += dp[i-1][j];
+					}
+					if(j &gt; 0) {
+						dp[i][j] += dp[i][j-1];
+						if(i &gt; 0) {
+							dp[i][j] -= dp[i-1][j-1];
+						}
+					}
+					dp[i][j] %= MOD;
+					dp[i][j] += MOD;
+					dp[i][j] %= MOD;
+				}
+			}
+		}
+		pw.println(dp[n][m] % MOD);
+		pw.close();
+	}
+}
+</pre>
+<p>Another way to reduce the state space is to leverage the fact that <span class='math'>$K$</span> is small.
+<p>Instead of explicitly pairing the highest-scoring cows that Farmer John and
+Farmer Paul use, we will instead iterate over the cows from lowest score to
+highest score. We keep track of how many cows from Farmer John we have allocated
+and how many cows from Farmer John we have allocated. We require that we have
+never allocated more cows from Farmer John than from Farmer Paul (otherwise
+Farmer John would have selected a cow that will not win).
+<p>This DP has <span class='math'>$O((N+M)K^2)$</span> states and <span class='math'>$O(1)$</span> transitions. Here is Travis Hance&apos;s C++
+solution.
+<p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+struct Node {
+    int value;
+    bool isFj;
+
+    bool operator&lt;(Node const&amp; other) const {
+        if (value == other.value) {
+            return isFj &amp;&amp; !other.isFj;
+        }
+        return value &lt; other.value;
+    }
+};
+
+#define NMAX 1000
+#define KMAX 10
+
+#define MOD 1000000009
+
+unsigned int dp[2 * NMAX + 1][KMAX + 1][KMAX + 1];
+
+int main() {
+    int n, m, k;
+    scanf(&quot;%d&quot;, &amp;n);
+    scanf(&quot;%d&quot;, &amp;m);
+    scanf(&quot;%d&quot;, &amp;k);
+
+    vector&lt;Node&gt; nodes;
+    for (int i = 0; i &lt; n; i++) {
+        Node n;
+        scanf(&quot;%d&quot;, &amp;n.value);
+        n.isFj = true;
+        nodes.push_back(n);
+    }
+    for (int i = 0; i &lt; m; i++) {
+        Node n;
+        scanf(&quot;%d&quot;, &amp;n.value);
+        n.isFj = false;
+        nodes.push_back(n);
+    }
+
+    sort(nodes.begin(), nodes.end());
+
+    for (int i = 0; i &lt;= k; i++) {
+        for (int j = 0; j &lt;= k; j++) {
+            dp[nodes.size()][i][j] = (i == 0 &amp;&amp; j == 0 ? 1 : 0);
+        }
+    }
+
+    for (int pos = nodes.size() - 1; pos &gt;= 0; pos--) {
+        for (int i = 0; i &lt;= k; i++) {
+            for (int j = 0; j &lt;= k; j++) {
+                if (j &gt; i) {
+                    dp[pos][i][j] = 0;
+                } else {
+                    if (nodes[pos].isFj) {
+                        dp[pos][i][j] = (dp[pos+1][i][j] + (i &gt; 0 ? dp[pos+1][i-1][j] : 0)) % MOD;
+                    } else {
+                        dp[pos][i][j] = (dp[pos+1][i][j] + (j &gt; 0 ? dp[pos+1][i][j-1] : 0)) % MOD;
+                    }
+                }
+            }
+        }
+    }
+
+    printf(&quot;%d\n&quot;, dp[0][k][k]);
+}
+</pre>
+</body></html>

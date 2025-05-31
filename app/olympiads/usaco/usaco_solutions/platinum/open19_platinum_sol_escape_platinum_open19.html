@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Travis Hance)
+<p>Since <span class='math'>$K$</span> is very small and <span class='math'>$N$</span> can be very large, this suggests trying to find
+a solution which is linear in <span class='math'>$N$</span> and possibly exponential in <span class='math'>$K$</span>. This suggests
+a dynamic programming approach where we proceed one row at a time, building a
+minimum spanning tree as we go. In general, this partially constructed MST will
+be a forest, and we must keep track of which nodes are in the same component of
+the forest. If two nodes are in the same component, we cannot add a <em>new</em>
+edge which connects them; conversely, if two nodes are not in the same
+component, then they must eventually be connected.
+<p>For our first attempt, our DP state can be <span class='math'>$(i,r)$</span> where <span class='math'>$1 \le i \le N$</span> is the
+row that we have built our forest up to, and <span class='math'>$r$</span> is a state which represents
+which of the <span class='math'>$K$</span> nodes in this row are connected to each other by the partially
+constructed tree. For each state, the value we will track will be the total
+weight of the minimum forest in the first <span class='math'>$i$</span> rows such that:
+<ul><li> the forest connects every node in the first <span class='math'>$i$</span> rows to at least one node
+in row <span class='math'>$i$</span> </li><li> the nodes in row <span class='math'>$i$</span> are divided into components according
+to <span class='math'>$r$</span> </li></ul>
+And of course, we also track the total number of such forests with that exact
+weight.
+<p>One way to represent <span class='math'>$r$</span> is by a sequence of <span class='math'>$k$</span> integers, where each integer
+represents a component. For example, <span class='math'>$[1,2,3,4,5,6]$</span> represents a row where all
+nodes are in different components, and <span class='math'>$[1,1,1,1,1,1]$</span> represents a row where
+each node is connected. After accounting for many of these states being
+equivalent, and accounting for the fact that some, like <span class='math'>$[1,2,1,2]$</span> are
+impossible (because the graph must be planar), we count a total of <span class='math'>$132$</span> states
+for <span class='math'>$K=6$</span>. It is easiest to pre-compute all of these states before beginning the
+DP. In general, the number of states are gives by the
+<a href='https://en.wikipedia.org/wiki/Catalan_number'>Catalan sequence</a> <span class='math'>$C_K$</span>.
+<p>To transition from one row to the other, we have to consider every possible
+subset of edges between the two rows that we could include in the forest, then
+consider how the state is transformed by those edges. This gives <span class='math'>$2^{2K-1}$</span>
+possible ways to transition any state (there are <span class='math'>$N$</span> edges between two rows and
+<span class='math'>$N-1$</span> edges in the next row). This row-by-row approach gives a runtime
+<span class='math'>$O(NKC_K 2^{2K-1})$</span>.
+<p>We can do better by not trying to transition the entire row at once. In fact,
+this approach is not just quicker, but it is likely simpler, simply because
+there are only a constant number of transitions fore each state. Our state is
+now <span class='math'>$(i, j, r)$</span>, which now corresponds to the first <span class='math'>$i$</span> rows plus the leftmost
+<span class='math'>$j$</span> nodes of row <span class='math'>$i+1$</span>. There are two ways to transition from <span class='math'>$(i, K, r)$</span> to
+<span class='math'>$(i+1, 1, *)$</span> (there is one edge, which can choose to take or not), and there
+are four ways to transition from <span class='math'>$(i, j, r)$</span> to <span class='math'>$(i, j+1, *)$</span> (there are two
+edges to choose from). This gives a runtime of <span class='math'>$O(NKC_K)$</span>.
+<p></body></html>

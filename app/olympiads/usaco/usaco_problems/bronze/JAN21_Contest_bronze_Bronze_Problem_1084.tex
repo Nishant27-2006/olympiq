@@ -1,0 +1,128 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN21 Contest - Bronze Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Farmer John is yet again trying to take a photograph of his $N$ cows
+($2 \leq N \leq 1000$).
+
+Each cow has an integer "breed ID" number in the range $1 \ldots 100$.  Farmer
+John has a very peculiar idea in mind for his photo: he wants to partition all
+the cows into disjoint groups (in other words, place each cow in exactly one group) and then
+line up the groups so the sum of the breed IDs of  the cows in the first group
+is even, the sum of the IDs in the second group is odd, and so on, alternating
+between even and odd.  
+
+What is the maximum possible number of groups Farmer John can form?  
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line of input contains $N$.  The next line contains $N$ 
+space-separated integers giving the breed IDs of the $N$ cows.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+The maximum possible number of groups in Farmer John's photo. It can be shown
+that at least one feasible grouping exists.
+
+SAMPLE INPUT:
+7
+1 3 5 7 9 11 13
+SAMPLE OUTPUT: 
+3
+
+In this example, one way to form the maximum number of three groups is as
+follows. Place 1 and 3 in the first group, 5, 7, and 9 in the second group, and
+11 and 13 in the third group.
+
+SAMPLE INPUT:
+7
+11 2 17 13 1 15 3
+SAMPLE OUTPUT: 
+5
+
+In this example, one way to form the maximum number of five groups is as
+follows. Place 2 in the first group, 11 in the second group, 13 and 1 in the
+third group, 15 in the fourth group, and 17 and 3 in the fifth group.
+
+
+Problem credits: Nick Wu
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (print output to the terminal / stdout):The maximum possible number of groups in Farmer John's photo. It can be shown
+that at least one feasible grouping exists.SAMPLE INPUT:7
+1 3 5 7 9 11 13SAMPLE OUTPUT:3In this example, one way to form the maximum number of three groups is as
+follows. Place 1 and 3 in the first group, 5, 7, and 9 in the second group, and
+11 and 13 in the third group.SAMPLE INPUT:7
+11 2 17 13 1 15 3SAMPLE OUTPUT:5In this example, one way to form the maximum number of five groups is as
+follows. Place 2 in the first group, 11 in the second group, 13 and 1 in the
+third group, 15 in the fourth group, and 17 and 3 in the fifth group.Problem credits: Nick Wu
+
+\section*{Output Format}
+SAMPLE INPUT:7
+1 3 5 7 9 11 13SAMPLE OUTPUT:3In this example, one way to form the maximum number of three groups is as
+follows. Place 1 and 3 in the first group, 5, 7, and 9 in the second group, and
+11 and 13 in the third group.SAMPLE INPUT:7
+11 2 17 13 1 15 3SAMPLE OUTPUT:5In this example, one way to form the maximum number of five groups is as
+follows. Place 2 in the first group, 11 in the second group, 13 and 1 in the
+third group, 15 in the fourth group, and 17 and 3 in the fifth group.Problem credits: Nick Wu
+
+\section*{Sample Input}
+\begin{verbatim}
+7
+1 3 5 7 9 11 13
+
+7
+11 2 17 13 1 15 3
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+3
+
+In this example, one way to form the maximum number of three groups is as
+follows. Place 1 and 3 in the first group, 5, 7, and 9 in the second group, and
+11 and 13 in the third group.SAMPLE INPUT:7
+11 2 17 13 1 15 3SAMPLE OUTPUT:5In this example, one way to form the maximum number of five groups is as
+follows. Place 2 in the first group, 11 in the second group, 13 and 1 in the
+third group, 15 in the fourth group, and 17 and 3 in the fifth group.Problem credits: Nick Wu
+
+SAMPLE INPUT:7
+11 2 17 13 1 15 3SAMPLE OUTPUT:5In this example, one way to form the maximum number of five groups is as
+follows. Place 2 in the first group, 11 in the second group, 13 and 1 in the
+third group, 15 in the fourth group, and 17 and 3 in the fifth group.Problem credits: Nick Wu
+
+5
+
+In this example, one way to form the maximum number of five groups is as
+follows. Place 2 in the first group, 11 in the second group, 13 and 1 in the
+third group, 15 in the fourth group, and 17 and 3 in the fifth group.Problem credits: Nick Wu
+
+Problem credits: Nick Wu
+
+Problem credits: Nick Wu
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1084
+
+\section*{Source}
+USACO JAN21 Contest, Bronze Division, Problem ID: 1084
+
+\end{document}

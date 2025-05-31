@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>We start by presenting an <span class='math'>$O(N^2)$</span> brute force algorithm - for a given cow, we
+can scan over all the other cows and count the number of cows taller than the
+given cow on both sides and then determine if the cow is unbalanced.
+<p>One possible improvement we could do is sort the cows in decreasing order of
+height. If we process the cows in that order, then we can maintain the indices
+of all the taller cows. This only improves the performance of the algorithm by a
+constant factor. However, we will use this change in algorithm to present an
+<span class='math'>$O(N \log N)$</span> solution.
+<p>When we maintain the indices of all the taller cows, we would like to be able to
+efficiently query for how many indices are less than a given index, and to also
+be able to insert an index into this collection. More precisely, our data
+structure needs to efficiently support the following operations:
+<p><span class='math'>$Insert(x)$</span>: Insert <span class='math'>$x$</span> into the data structure.
+<p><span class='math'>$LessThan(x)$</span>: Count how many numbers in the data structure are less than <span class='math'>$x$</span>.
+<p>We will use a data structure known as a Fenwick tree, or a binary indexed tree,
+to support these two operations. A Fenwick tree operates on an internal array of
+integers <span class='math'>$a_1, \dots, a_N$</span> and supports two operations in <span class='math'>$O(\log N)$</span>:
+<p><span class='math'>$Update(x, v)$</span>: Increase <span class='math'>$a_x$</span> by <span class='math'>$v$</span>.
+<p><span class='math'>$Query(x)$</span>: Return <span class='math'>$\displaystyle\sum_{i=1}^x a_i$</span>.
+<p>Our approach is as follows: Imagine that we have sorted the cows in decreasing
+height, and initialize a sequence <span class='math'>$a_1$</span> through <span class='math'>$a_N$</span> to be zero everywhere.
+Imagine that we are considering the <span class='math'>$k$</span>th tallest cow which is at index <span class='math'>$i$</span>. We
+compute <span class='math'>$L_k = Query(i)$</span> and <span class='math'>$R_k = k-1-L_k$</span>. If
+<span class='math'>$\displaystyle\frac{\max(L_k, R_k)}{\min(L_k, R_k)} &gt; 2$</span>, then we assert that
+cow <span class='math'>$k$</span> is unbalanced. Finally, we set <span class='math'>$a_i = 1$</span> by calling <span class='math'>$Update(i, 1)$</span>.
+<p>In this approach, we maintain the invariant that <span class='math'>$a_i = 1$</span> if and only if every
+cow being considered from the moment <span class='math'>$a_i$</span> is set to 1 is shorter than the cow
+at index <span class='math'>$i$</span>. The Fenwick tree lets us efficiently query for the number of cows
+to the left of the given cow that are taller than it.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class bphoto {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;bphoto.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;bphoto.out&quot;)));
+		int n = Integer.parseInt(br.readLine());
+		State[] l = new State[n];
+		for(int i = 0; i &lt; n; i++) {
+			l[i] = new State(Integer.parseInt(br.readLine()), i);
+		}
+		Arrays.sort(l);
+		int ret = 0;
+		int seen = 0;
+		BIT bit = new BIT(n);
+		for(State curr: l) {
+			int lhs = bit.query(curr.index);
+			int rhs = seen - lhs;
+			if(Math.max(lhs, rhs) &gt; 2 * Math.min(lhs, rhs)) {
+				ret++;
+			}
+			bit.update(curr.index, 1);
+			seen++;
+		}
+		pw.println(ret);
+		pw.close();
+	}
+	
+	static class State implements Comparable&lt;State&gt; {
+		public int height, index;
+
+		public State(int height, int index) {
+			super();
+			this.height = height;
+			this.index = index;
+		}
+		public int compareTo(State s) {
+			return s.height - height;
+		}
+	}
+	
+	static class BIT {
+		public int[] tree;
+		public BIT(int n) {
+			tree = new int[n+5];
+		}
+		public void update(int index, int val) {
+			index++;
+			while(index &lt; tree.length) {
+				tree[index] += val;
+				index += index &amp; -index;
+			}
+		}
+		public int query(int index) {
+			int ret = 0;
+			index++;
+			while(index &gt; 0) {
+				ret += tree[index];
+				index -= index &amp; -index;
+			}
+			return ret;
+		}
+	}
+	
+}
+</pre>
+</body></html>

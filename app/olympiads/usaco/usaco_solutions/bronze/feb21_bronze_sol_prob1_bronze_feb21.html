@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Spencer Compton)
+<p>To solve this problem, we will implement a process that can figure out when a
+cow was born, given a phrase about when it was born in relation to another cow
+whose time of birth we already know.
+<p>As specified in the problem statement, each phrase will tell us when a new cow
+was born in relation to a previously mentioned cow. We will use this information
+to figure out exactly when the new cow was born in relation to Bessie. Since we
+do this, whenever we receive a phrase we can assume we have already figured out
+when the previously mentioned cow was born in relation to Bessie. 
+<p>Now, we figure out how to determine when a cow was born given a phrase. Suppose
+we are told &quot;Mildred born in next Dragon year from Bessie&quot;, how can we figure
+out exactly when Mildred was born? We can start by setting Mildred&apos;s birth year
+to one later than Bessie&apos;s birth year. Then, we can continue to increase
+Mildred&apos;s birth year until it is a Dragon year! We could use a similar approach
+if we were told Mildred was born in some previous year (we would decrease
+repeatedly instead of increase repeatedly). 
+<p>The main remaining challenge is to implement some function that lets us check
+what type of year  a particular year is. There are a few ways we can do this. One way
+is to look at the difference between the year and Bessie&apos;s birth year modulo 12
+and check if it matches what it should be for the type of year mentioned in the
+phrase. Another way is to start at Bessie&apos;s birth year and change it one year at
+a time (keeping track of what type of year it is) until it is the given year, and
+then checking what type of year it is (as is done in the code below).
+<p>Brian Dean&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;string&gt;
+using namespace std;
+ 
+string animals[12] = {&quot;Ox&quot;, &quot;Tiger&quot;, &quot;Rabbit&quot;, &quot;Dragon&quot;, &quot;Snake&quot;, &quot;Horse&quot;, &quot;Goat&quot;, &quot;Monkey&quot;, &quot;Rooster&quot;, &quot;Dog&quot;, &quot;Pig&quot;, &quot;Rat&quot;};
+ 
+map&lt;string,int&gt; when_born;
+ 
+string get_animal(int year)
+{
+  int a = 0, y = 2021;
+  while (y &lt; year) { y++; a++; if (a == 12) a = 0; }
+  while (y &gt; year) { y--; a--; if (a == -1) a = 11; }
+  return animals[a];
+}
+ 
+int main(void)
+{
+  int N;
+  when_born[&quot;Bessie&quot;] = 2021;
+  cin &gt;&gt; N;
+  string cowa, born, in, relation, animal, year, from, cowb;
+  for (int i=0; i&lt;N; i++) {
+    cin &gt;&gt; cowa &gt;&gt; born &gt;&gt; in &gt;&gt; relation &gt;&gt; animal &gt;&gt; year &gt;&gt; from &gt;&gt; cowb;
+    when_born[cowa] = when_born[cowb];
+    do {
+      if (relation == &quot;previous&quot;) when_born[cowa]--;
+      else when_born[cowa]++;
+    } while (get_animal(when_born[cowa]) != animal);
+  }
+  int diff = when_born[&quot;Bessie&quot;] - when_born[&quot;Elsie&quot;];
+  if (diff &lt; 0) diff = -diff;
+  cout &lt;&lt; diff &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

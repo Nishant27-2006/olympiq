@@ -1,0 +1,444 @@
+Solution ID: sol_prob3_gold_open23
+Contest: OPEN23
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_open23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal, Benjamin Qi)
+
+Subtask:
+
+The initial and final trees have the same number of leaves.
+
+Note that this condition implies that the set of leaves in the initial tree
+equals the set of leaves in the final tree.
+
+Say that two nodes in the initial tree are in the same component if they end up
+being merged into the same node in the final tree. For this subtask only,  the
+components may be uniquely determined. Note the following two rules:
+
+If
+
+$a$
+
+is present in the final tree and is not the root, the parents of
+
+$a$
+
+in the initial and final trees are in the same component.
+
+If
+
+$a$
+
+and
+
+$b$
+
+are in the same component, then the parents of
+
+$a$
+
+and
+
+$b$
+
+in
+the initial tree are in the same component.
+
+More concisely,
+
+par2(a) != 0 -> same_comp(par1(a), par2(a))
+same_comp(a, b) -> same_comp(par1(a), par1(b))
+
+We can figure out which nodes are in the same components by first applying all
+rules of the first type, and then applying all rules of the second type while
+iterating over the nodes in decreasing order of depth. After this, we can
+iterate over the tree in increasing order of depth to merge all nodes in the
+same component into one. The time complexity is
+
+$\mathcal O(N)$
+
+, or
+
+$\mathcal O(N\alpha(N))$
+
+if
+DSU is used.
+
+Ben's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+struct DSU {
+    vector<int> e;
+    void init(int N) { e = vector<int>(N, -1); }
+    int get(int x) { return e[x] < 0 ? x : e[x] = get(e[x]); }
+    void unite(int x, int y) {  // min(x,y) now points to max(x,y)
+        x = get(x), y = get(y);
+        if (x == y) return;
+        if (x > y) swap(x, y);
+        e[x] = y;
+    }
+};
+
+void dfs1(vector<vector<int>> &with_depth, const vector<vector<int>> &child,
+          int x, int d) {
+    with_depth[d].push_back(x);
+    for (int c : child.at(x)) dfs1(with_depth, child, c, d + 1);
+}
+
+void solve() {
+    int N;
+    cin >> N;
+    DSU D;
+    D.init(N + 1);
+    vector<int> par1(N + 1);
+    vector<vector<int>> child1(N + 1);
+    for (int i = 1; i < N; ++i) {
+        int v, p;
+        cin >> v >> p;
+        par1[v] = p;
+        child1[p].push_back(v);
+    }
+    int root = 1;
+    while (par1[root]) ++root;
+    vector<vector<int>> with_depth(N);
+    dfs1(with_depth, child1, root, 0);
+    int M;
+    cin >> M;
+    for (int i = 1; i < M; ++i) {
+        int v, p;
+        cin >> v >> p;
+        D.unite(p, par1[v]);  // type 1
+    }
+    for (int d = N - 1; d >= 0; --d)  // type 2
+        for (int x : with_depth[d]) D.unite(par1[x], par1[D.get(x)]);
+    cout << N - M << "\n";
+    for (int d = 1; d < N; ++d) {
+        for (int x : with_depth[d])
+            if (D.get(x) != x) cout << x << " " << D.get(x) << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin >> T;
+    while (T--) solve();
+}
+
+Full Credit:
+
+Call a node
+
+extant
+
+if its value is in the final tree. We will calculate a
+DP
+
+$dp(a, b)$
+
+with boolean value equal to whether node
+
+$a$
+
+can validly merge
+into node
+
+$b$
+
+by the end; that is,
+
+$dp(a, b)$
+
+is true iff
+
+$b$
+
+is extant and, if
+at some point
+
+$a$
+
+and
+
+$b$
+
+are children of the same node, we can merge
+
+$a$
+
+into
+
+$b$
+
+and be able to successfully obtain the final tree we desire.
+
+In order for
+
+$dp(a, b)$
+
+to be true, we need the following conditions to be
+satisfied:
+
+$b$
+
+is extant
+
+The value of
+
+$a$
+
+should be at most the value of
+
+$b$
+
+;
+otherwise, the value of
+
+$b$
+
+would disappear even though it appears in the final
+tree (because
+
+$b$
+
+is extant)
+
+If
+
+$a$
+
+is extant,
+
+$a = b$
+
+For
+each child
+
+$c$
+
+of
+
+$a$
+
+in the original tree, there should exist a child
+
+$d$
+
+of
+
+$b$
+
+in the final tree such that
+
+$dp(c, d)$
+
+is true; otherwise, we won't be able
+to merge
+
+$c$
+
+in a way to end up with the final tree
+
+By computing the values of
+
+$dp(a, b)$
+
+in decreasing order of the depth of
+
+$a$
+
+,
+we can check these conditions straightforwardly. The runtime of this checking is
+
+$$\sum_a \sum_b (\text{# of children of $a$}) \cdot (\text{# of children of $b$}).$$
+
+Since each node is the child of at most one other node, this is
+
+$\mathcal O(N^2)$
+
+.
+
+Given the DP, we can choose for each node
+
+$a$
+
+what extant node it is merged into
+by iterating through nodes
+
+$a$
+
+in increasing order of depth, and, given that
+
+$a$
+
+'s parent was merged into the extant node
+
+$b$
+
+, checking through each child
+
+$c$
+
+of
+
+$b$
+
+and choosing any
+
+$c$
+
+such that
+
+$dp(a, c)$
+
+is true, because that means
+that it is valid to merge
+
+$a$
+
+into
+
+$c$
+
+. We can then output the actual merge of
+
+$a$
+
+into
+
+$c$
+
+at the same time (assuming
+
+$a \neq c$
+
+), because we will already
+have merged
+
+$a$
+
+'s parent into
+
+$b$
+
+and so
+
+$a$
+
+and
+
+$c$
+
+will currently be siblings.
+
+The DP computation step is
+
+$\mathcal O(N^2)$
+
+. The computation of merges is also
+
+$\mathcal O(N^2)$
+
+because for each node we loop through the children of another
+node. Therefore, the algorithm is
+
+$\mathcal O(N^2)$
+
+overall.
+
+Danny's code (note that this code is actually
+
+$\mathcal O(N^3)$
+
+because it searches
+through all nodes to find children):
+
+import java.util.Scanner;
+ 
+public class TreeMerging {
+ 
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        for (int t = in.nextInt(); t > 0; t--) {
+            int n = in.nextInt();
+            int root = (n * (n + 1)) / 2;
+            int[] oldParent = new int[n + 1];
+            for (int edges = n - 1; edges > 0; edges--) {
+                int a = in.nextInt();
+                int p = in.nextInt();
+                oldParent[a] = p;
+                root -= a;
+            }
+            int m = in.nextInt();
+            int[] newParent = new int[n + 1];
+            boolean[] extant = new boolean[n + 1];
+            extant[root] = true;
+            for (int edges = m - 1; edges > 0; edges--) {
+                int a = in.nextInt();
+                int p = in.nextInt();
+                newParent[a] = p;
+                extant[a] = true;
+            }
+            int[] depth = new int[n + 1];
+            for (int iteration = n; iteration > 0; iteration--) {
+                for (int a = 1; a <= n; a++) {
+                    if (a != root) {
+                        depth[a] = depth[oldParent[a]] + 1;
+                    }
+                }
+            }
+            boolean[][] canMerge = new boolean[n + 1][n + 1];
+            for (int d = n; d > 0; d--) {
+                for (int a = 1; a <= n; a++) {
+                    if (depth[a] == d) {
+                        if (extant[a]) {
+                            canMerge[a][a] = true;
+                        } else {
+                            for (int b = a; b <= n; b++) {
+                                if (extant[b]) {
+                                    canMerge[a][b] = true;
+                                    for (int c = 1; c <= n; c++) {
+                                        if (oldParent[c] == a) {
+                                            boolean works = false;
+                                            for (int cn = 1; cn <= n; cn++) {
+                                                if (newParent[cn] == b && canMerge[c][cn]) {
+                                                    works = true;
+                                                }
+                                            }
+                                            canMerge[a][b] &= works;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            System.out.println(n - m);
+            int[] representative = new int[n + 1];
+            representative[root] = root;
+            for (int d = 1; d <= n; d++) {
+                for (int a = 1; a <= n; a++) {
+                    if (depth[a] == d) {
+                        for (int b = 1; b <= n; b++) {
+                            if (newParent[b] == representative[oldParent[a]] && canMerge[a][b]) {
+                                representative[a] = b;
+                            }
+                        }
+                        if (representative[a] != a) {
+                            System.out.println(a + " " + representative[a]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+
+</head>
+<p>(Analysis by Mark Gordon)</p><p>
+
+Two cows must be in different lanes if one cow overtakes the other at
+some point (or at the very end) in the jog.  Viewed this way we can
+greedily assign all cows that are not overtaken by another cow during
+the jog to lane 1.  We can then remove these cows and repeat the
+algorithm to assign cows to the remaining lanes.</p><p>
+
+To prove this is optimal suppose we assign $k$ lanes in total; then
+there is some cow, $c_k$, in lane $k$ that is overtaken during the jog by
+a cow in lane $k - 1$, $c_{k-1}$ (otherwise we would have assigned it to
+lane $k - 1$ instead).  We can repeat this and find $c_{k-2}$ as the cow
+that overtakes $c_{k-1}$ in lane k-2 all the way down to $c_1$.
+Crucially, because the overtakes relation is transitive, it follows
+that $c_i$ overtakes $c_j$ for $i < j$.  Therefore none of these cows can
+be in the same lane and $k$ lanes are therefore required (and the greedy
+algorithm mentioned achieves this).</p><p>
+
+Efficiently implementing a solution based on this can be done in a
+number of ways.  One way is to realize that the end positions of the
+cows in $c$ are non-increasing while the start positions are
+increasing.  Therefore we can simply compute the longest
+non-increasing subsequence of the array.  This is a small adaptation
+of the well known <a href='https://en.wikipedia.org/wiki/Longest_increasing_subsequence'>Longest Increasing Subsequence</a> algorithm.</p><p>
+
+</p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+
+using namespace std;
+
+int main() {
+  int N, T;
+  cin &gt;&gt; N &gt;&gt; T;
+
+  vector&lt;long long&gt; A;
+  for (int i = 0; i &lt; N; i++) {
+    long long x, s;
+    cin &gt;&gt; x &gt;&gt; s;
+    x = -(x + s * T);
+
+    if (A.empty() || x &gt;= A.back()) {
+      A.push_back(x);
+    } else {
+      *upper_bound(A.begin(), A.end(), x) = x;
+    }
+  }
+
+  cout &lt;&lt; A.size() &lt;&lt; endl;
+  return 0;
+}
+</pre><p></p>
+</html>

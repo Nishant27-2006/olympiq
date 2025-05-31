@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Mythreya Dharani)
+<p>Notice that the number of conditioners is low, motivating us to think about a
+brute force solution.
+<p>Let&apos;s count how many distinct sets of conditioners FJ can use to cool down the
+cows. For every conditioner, we have <span class='math'>$2$</span> choices: use it or don&apos;t use it.
+Therefore, over all <span class='math'>$M$</span> conditioners, there are <span class='math'>$2^M$</span> sets of conditioners FJ can
+use, which happens to be relatively small at around 1000 subsets.
+<p>Thus, we can just generate all possible subsets of conditioners we can use, and
+for each one, check if it makes all cows comfortable. If it does, and the total
+cost is less than what our answer was, we update our answer.
+<p>Some implementation notes: 
+<ul><li>When we generate our subsets, we do it recursively, storing it as a binary
+string. The <span class='math'>$i$</span>th character being a <span class='math'>$1$</span> means that we use the <span class='math'>$i$</span>th conditioner.
+Note that this can also be done iteratively.</li><li>For each subset, we go
+through all points from <span class='math'>$1$</span> to <span class='math'>$100$</span>, calculating its &quot;coldness&quot; by iterating
+through the conditioners we are using. Then, we check and update the answer
+accordingly.</li></ul>
+<p>The overall time complexity of this solution is
+<span class='math'>$\mathcal{O}(2^M\cdot (M+N) \cdot 100)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+vector&lt;pair&lt;int, int&gt;&gt; cowlocs;
+vector&lt;int&gt; comfort;
+vector&lt;pair&lt;int, int&gt;&gt; conditioners;
+vector&lt;int&gt; cost;
+vector&lt;int&gt; power;
+int ans = 1e9;
+
+int check(string subset) {
+	vector&lt;int&gt; cold(101); // generate coldness of all points
+	for (int i = 1; i &lt;= 100; i++) {
+		for (int j = 0; j &lt; conditioners.size(); j++) {
+			if (subset[j] == &apos;1&apos; &amp;&amp; conditioners[j].first &lt;= i &amp;&amp;
+				conditioners[j].second &gt;= i) {
+				cold[i] += power[j];
+			}
+		}
+	}
+	bool works = true;
+	for (int i = 0; i &lt; cowlocs.size(); i++) {
+		for (int j = cowlocs[i].first; j &lt;= cowlocs[i].second; j++) {
+			if (cold[j] &lt; comfort[i]) works = false; // check if comfortable
+		}
+	}
+	int price = 0;
+	for (int i = 0; i &lt; subset.size(); i++) {
+		if (subset[i] == &apos;1&apos;)
+			price += cost[i]; // calculate price of conditioners used
+	}
+	if (works) return price;
+	return 1e9; // does not work
+}
+
+void build_subset(string curr, int m) {
+	if (curr.size() == m) {
+		// full subset of conditioners
+		ans = min(ans, check(curr));
+	} else {
+		build_subset(curr + &quot;1&quot;, m); // use conditioner
+		build_subset(curr + &quot;0&quot;, m); // skip it
+	}
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+
+	int n, m;
+	cin &gt;&gt; n &gt;&gt; m;
+
+	for (int i = 0; i &lt; n; i++) {
+		int s, t, c;
+		cin &gt;&gt; s &gt;&gt; t &gt;&gt; c;
+		cowlocs.push_back({s, t});
+		comfort.push_back(c);
+	}
+	for (int i = 0; i &lt; m; i++) {
+		int a, b, p, c;
+		cin &gt;&gt; a &gt;&gt; b &gt;&gt; p &gt;&gt; c;
+		conditioners.push_back({a, b});
+		power.push_back(p);
+		cost.push_back(c);
+	}
+
+	build_subset(&quot;&quot;, m);
+
+	cout &lt;&lt; ans &lt;&lt; endl;
+}
+</pre>
+<p>Here are some solutions that don&apos;t use recursion:
+<p>Nick Wu&apos;s Python code:
+<p><pre class='prettyprint'>
+n, m = (int(x) for x in input().split())
+regions = []
+for _ in range(n):
+  regions.append([int(x) for x in input().split()])
+acs = []
+for _ in range(m):
+  acs.append([int(x) for x in input().split()])
+ret = sum([x[3] for x in acs])
+for used in range(2**m):
+  cool = [0] * 101
+  cost = 0
+  for i in range(m):
+    if used &amp; (2 ** i):
+      cost += acs[i][3]
+      for x in range(acs[i][0], acs[i][1] + 1):
+        cool[x] += acs[i][2]
+  valid = True
+  for i in range(n):
+    valid = valid and all([cool[x] &gt;= regions[i][2] for x in range(regions[i][0], regions[i][1] + 1)])
+  if valid:
+    ret = min(ret, cost)
+print(ret)
+</pre>
+<p>Danny Mittal&apos;s Java code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class AirCownditioningII {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        CowInterval[] cowIntervals = new CowInterval[n];
+        for (int j = 0; j &lt; n; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int from = Integer.parseInt(tokenizer.nextToken());
+            int to = Integer.parseInt(tokenizer.nextToken());
+            int requiredCoolness = Integer.parseInt(tokenizer.nextToken());
+            cowIntervals[j] = new CowInterval(from, to, requiredCoolness);
+        }
+        AirCownditioner[] airCownditioners = new AirCownditioner[m];
+        for (int j = 0; j &lt; m; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int from = Integer.parseInt(tokenizer.nextToken());
+            int to = Integer.parseInt(tokenizer.nextToken());
+            int power = Integer.parseInt(tokenizer.nextToken());
+            int money = Integer.parseInt(tokenizer.nextToken());
+            airCownditioners[j] = new AirCownditioner(from, to, power, money);
+        }
+        int answer = m*1000;
+        for (int mask = 0; mask &lt; 1 &lt;&lt; m; mask++) {
+            int[] numberLine = new int[101];
+            int totalCost = 0;
+            for (int j = 0; j &lt; m; j++) {
+                if ((mask &amp; (1 &lt;&lt; j)) != 0) {
+                    totalCost += airCownditioners[j].money;
+                    AirCownditioner airCownditioner = airCownditioners[j];
+                    for (int x = airCownditioner.from; x &lt;= airCownditioner.to; x++) {
+                        numberLine[x] += airCownditioner.power;
+                    }
+                }
+            }
+            boolean works = true;
+            for (int j = 0; j &lt; n; j++) {
+                CowInterval cowInterval = cowIntervals[j];
+                for (int x = cowInterval.from; x &lt;= cowInterval.to; x++) {
+                    if (numberLine[x] &lt; cowInterval.requiredCoolness) {
+                        works = false;
+                    }
+                }
+            }
+            if (works) {
+                answer = Math.min(answer, totalCost);
+            }
+        }
+        System.out.println(answer);
+    }
+ 
+    static class CowInterval {
+        final int from;
+        final int to;
+        final int requiredCoolness;
+ 
+        CowInterval(int from, int to, int requiredCoolness) {
+            this.from = from;
+            this.to = to;
+            this.requiredCoolness = requiredCoolness;
+        }
+    }
+ 
+    static class AirCownditioner {
+        final int from;
+        final int to;
+        final int power;
+        final int money;
+ 
+        public AirCownditioner(int from, int to, int power, int money) {
+            this.from = from;
+            this.to = to;
+            this.power = power;
+            this.money = money;
+        }
+    }
+}
+</pre>
+<p></body></html>

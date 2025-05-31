@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Let&apos;s ignore the sample case by subtracting one from <span class='math'>$T$</span> (at the end, we&apos;ll add
+one back to the answer). Then the probability of Bessie&apos;s solution solving
+exactly <span class='math'>$i$</span> test cases out of <span class='math'>$T$</span> is precisely <span class='math'>$p_i=\frac{\binom{T}{i}}{2^T}.$</span>
+<p>Define <span class='math'>$E_x$</span> to be the expected value given at most <span class='math'>$x$</span> submissions, where
+<span class='math'>$E_0=0$</span>. The goal is to compute <span class='math'>$E_K$</span>. If we have already computed <span class='math'>$E_x$</span> then
+<span class='math'>$E_{x+1}$</span> may be computed as follows:
+<p><ul><li>Suppose that Bessie&apos;s first submission scores <span class='math'>$i$</span> out of <span class='math'>$T$</span> test cases.
+</li><li>Bessie now has two choices: either she can stop submitting and end up with a
+final score of <span class='math'>$i$</span>, or she will end up with expected score <span class='math'>$E_x$</span> if she submits
+at least one more time and uses her remaining <span class='math'>$x$</span> submissions optimally.</li><li>Therefore, her strategy is as follows:
+<p><ul><li>If <span class='math'>$i&gt;E_x$</span>, then stop submitting.</li><li>If <span class='math'>$i\le E_{x},$</span> then continue submitting.</li></ul>
+</li></ul>
+<p>In equations,
+<p><div class='math'>$$\begin{align*}
+E_{x+1}&amp;=\sum_{i=0}^Tp_i\cdot \mathbb{E}[\text{Bessie&apos;s strategy given that her first submission scored }i] \\
+&amp;=\sum_{i=0}^Tp_i\cdot \max(i,E_x) \\
+&amp;=E_x\cdot \sum_{i=0}^{\lfloor E_{x}\rfloor}p_i+\sum_{i=\lfloor E_{x}\rfloor+1}^Tip_i.
+\end{align*}$$</div>
+<p><strong>Subtask 1:</strong> The above equations can be simulated in <span class='math'>$O(TK)$</span> time.
+<p>The solution below uses Python&apos;s
+<a href='https://docs.python.org/3/library/decimal.html'>decimal</a> module for
+increased precision (though it was not necessary to do so).
+<p><pre class='prettyprint'>
+from decimal import *
+getcontext().prec = 100
+ 
+T, K = map(int, input().split())
+T -= 1
+ 
+prob = [Decimal(1)]
+for _ in range(T):
+	prob = [(x+y)/2 for x, y in zip([Decimal(0)]+prob, prob+[Decimal(0)])]
+ 
+E = Decimal(T)/2
+K -= 1
+ 
+while K &gt; 0:
+	K -= 1
+	next_E = 0
+	for i in range(T+1):
+		next_E += prob[i]*max(i,E)
+	E = next_E
+
+getcontext().prec = 20
+print(E+1)
+</pre>
+<p><strong>Subtask 2:</strong> Let <span class='math'>$a=\sum_{i=0}^{\lfloor E_{x}\rfloor}p_i$</span> and
+<span class='math'>$b=\sum_{i=\lfloor E_{x}\rfloor+1}^Tip_i,$</span> such that <span class='math'>$E_{x+1}=aE_{x}+b.$</span> 
+Observe that when <span class='math'>$\lfloor E_{x+1}\rfloor=\lfloor E_x\rfloor$</span>, we do not need to
+recalculate <span class='math'>$a$</span> and <span class='math'>$b$</span>.
+<p>The runtime of the solution below is <span class='math'>$O(T^2+K)$</span>.
+<p><pre class='prettyprint'>
+T, K = map(int, input().split())
+T -= 1
+ 
+prob = [1]
+for _ in range(T):
+	prob = [(x+y)/2 for x, y in zip([0]+prob, prob+[0])]
+ 
+E = T/2
+K -= 1
+
+for f in range(T):
+	a, b = 0, 0
+	for i in range(T+1):
+		if i &lt;= f:
+			a += prob[i]
+		else:
+			b += prob[i]*i
+	while K &gt; 0 and E &lt; f+1:
+		E = a*E+b
+		K -= 1
+
+print(E+1)
+</pre>
+<p><strong>Full Credit:</strong> For a solution without a factor of <span class='math'>$O(K)$</span>, we need to be
+able to advance <span class='math'>$x$</span> multiple submissions forward at once.
+<p>Under this assumption, we can write
+<p><div class='math'>$$E_{x+q}=a^qE_x+b\cdot \sum_{i=0}^{q-1}a^i=a^qE_x+b\cdot \frac{1-a^q}{1-a}$$</div>
+<p>by the geometric series formula. It remains to either determine that
+<span class='math'>$\lfloor E_{K}\rfloor=\lfloor E_x\rfloor$</span>, or find the smallest <span class='math'>$q\le K-x$</span> such
+that <span class='math'>$\lfloor E_{x+q}\rfloor&gt;\lfloor E_x\rfloor.$</span> 
+<p>After finding <span class='math'>$q$</span> via one of the two methods below, we may simulate
+<span class='math'>$\min(q,K-x)$</span> submissions at once and then update
+<span class='math'>$x \mathrel{{+}{=}} \min(q,K-x)$</span>. If we now have <span class='math'>$x=K$</span>, then we&apos;re done.
+Otherwise, we know that <span class='math'>$\lfloor E_x\rfloor$</span> has increased by one.
+<span class='math'>$\lfloor E_x\rfloor$</span>  can increase a total of at most <span class='math'>$T$</span> times, which is a lot
+smaller than <span class='math'>$K$</span>. 
+<p><strong>Method 1:</strong> Binary search on <span class='math'>$q$</span>. 
+<p>My code follows. The total number of calls to <span class='math'>$\texttt{pow}$</span> is <span class='math'>$O(T\log K)$</span>.
+<p><pre class='prettyprint'>
+from decimal import *
+getcontext().prec = 100
+ 
+T, K = map(int, input().split())
+T -= 1
+ 
+prob = [Decimal(1)]
+for _ in range(T):
+	prob = [(x+y)/2 for x, y in zip([Decimal(0)]+prob, prob+[Decimal(0)])]
+ 
+E = Decimal(T)/2
+K -= 1
+
+for f in range(T):
+	if K == 0:
+		break
+	if E // 1 &gt; f:
+		continue
+	a, b = Decimal(0), Decimal(0)
+	for i in range(T+1):
+		if i &lt;= f:
+			a += prob[i]
+		else:
+			b += prob[i]*i
+
+	def next_E(q): # value of E after q timesteps
+		return pow(a,q)*E+(1-pow(a,q))/(1-a)*b
+
+	# binary search on q
+	q_lo = 1
+	while 2*q_lo &lt;= K and next_E(q_lo*2) &lt; f+1:
+		q_lo *= 2
+	q_hi = 2*q_lo
+	while q_lo &lt; q_hi:
+		q_mid = (q_lo+q_hi)//2
+		if next_E(q_mid) &lt; f+1:
+			q_lo = q_mid+1
+		else:
+			q_hi = q_mid
+
+	# advance q submissions
+	q_lo = min(q_lo, K)
+	K -= q_lo
+	E = next_E(q_lo)
+ 
+getcontext().prec = 20
+print(E+1)
+</pre>
+<p><strong>Method 2:</strong> We can rewrite <span class='math'>$\lfloor E_{x+q}\rfloor&gt;\lfloor E_x\rfloor$</span> as
+follows:
+<p><div class='math'>$$\begin{align*}
+&amp; a^q \cdot E_x + \frac{b}{1-a} \cdot \left(1-a^q\right) \ge \lfloor E_x\rfloor + 1 \\
+\implies &amp; a^q \left(\frac{b}{1-a} - E_x\right) \le \frac{b}{1-a} - \left(\lfloor E_x\rfloor + 1\right) \\
+\implies &amp; a^q \le \frac{\frac{b}{1-a} - \left(\lfloor E_x\rfloor + 1\right)}{\frac{b}{1-a} - E_x}. \\
+\end{align*}$$</div>
+<p>Then we can take the natural logarithm of both sides to get
+<p><div class='math'>$$q\ge \frac{\log \left(\frac{\frac{b}{1-a} - \left(\lfloor E_x\rfloor + 1\right)}{\frac{b}{1-a} - E_x}\right)}{\log a}.$$</div>
+<p>The runtime of the solution below is <span class='math'>$O(T^2)$</span>. <span class='math'>$a$</span> corresponds to
+<span class='math'>$\texttt{probabilityLower}$</span> and <span class='math'>$\frac{b}{1-a}$</span> corresponds to
+<span class='math'>$\texttt{expectedHigher}$</span>.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class CowCamp {
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int t = Integer.parseInt(tokenizer.nextToken()) - 1;
+        int k = Integer.parseInt(tokenizer.nextToken());
+        double[][] probability = new double[t + 1][t + 1];
+        probability[0][0] = 1.0;
+        for (int a = 1; a &lt;= t; a++) {
+            probability[a][0] = probability[a - 1][0] / 2.0;
+            for (int b = 1; b &lt;= t; b++) {
+                probability[a][b] = (probability[a - 1][b - 1] + probability[a - 1][b]) / 2.0;
+            }
+        }
+        double expected = .0;
+        int attempts = 0;
+        for (int score = 1; score &lt;= t; score++) {
+            double probabilityLower = .0;
+            for (int lower = 0; lower &lt; score; lower++) {
+                probabilityLower += probability[t][lower];
+            }
+            double expectedHigher = .0;
+            for (int higher = score; higher &lt;= t; higher++) {
+                expectedHigher += probability[t][higher] * ((double) higher);
+            }
+            expectedHigher /= 1.0 - probabilityLower;
+            double difference = expectedHigher - expected;
+            double differenceToAchieve = expectedHigher - ((double) score);
+            double attemptsNeeded = Math.log(differenceToAchieve / difference) / Math.log(probabilityLower);
+            boolean doneHere = attemptsNeeded &gt; k - attempts;
+            int attemptsToUse = doneHere ? (k - attempts) : (int) Math.round(Math.ceil(attemptsNeeded));
+            difference *= Math.pow(probabilityLower, attemptsToUse);
+            expected = expectedHigher - difference;
+            attempts += attemptsToUse;
+            if (attempts == k) {
+                break;
+            }
+        }
+        System.out.println(1.0 + expected);
+    }
+}
+</pre>
+<p></body></html>

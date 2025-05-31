@@ -1,0 +1,139 @@
+Solution ID: sol_palpath_bronze
+Contest: OPEN15
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_palpath_bronze.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Our first thought is to try all possible paths that Bessie can take. For small
+
+$N$
+
+, this works out well, but it turns out that for a grid of size
+
+$N$
+
+, the
+number of different paths is
+
+$\frac{(2N-2)!}{(N-1)!^2}$
+
+. When
+
+$N$
+
+is 18, this
+quantity is way too big.
+
+However, we are looking for palindromes, namely, strings where the first half of
+the string is the reverse of the second half of the string.
+
+If we look at the grid more carefully, we note that every palindrome has its
+middle character on the diagonal starting at the top-right corner of the grid
+and ending at the bottom-left corner of the grid.
+
+Therefore, for a given square on that diagonal, we can keep track of all
+possible strings that we can generate going from the top-left corner to that
+square going only right and down, as well as all strings that we can generate
+from the bottom-right corner going to that square going only up and left. If,
+for a given square, a string appears in both of those sets, then that string is
+a prefix to a valid palindrome.
+
+The total number of paths from a corner to the diagonal is
+
+$2^{N-1}$
+
+, when
+
+$N=18$
+
+, this is
+
+$131072$
+
+. We therefore generate only
+
+$262144$
+
+strings of length
+
+$17$
+
+in the worst case, which is fast enough.
+
+Here is my Java code simulating this process:
+
+import java.io.*;
+import java.util.*;
+public class palpathB {
+  static int n;
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader("palpath.in"));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("palpath.out")));
+    n = Integer.parseInt(br.readLine());
+    char[][] grid = new char[n][n];
+    // rows1[a] stores all strings from the top-left corner to
+    // the square on the diagonal at row a
+    rows1 = new HashSet[n];
+    // rows2[a] stores all strings from the bottom-right corner to
+    // the square on the diagonal at row a
+    rows2 = new HashSet[n];
+    for(int a = 0; a < n; a++) {
+      rows1[a] = new HashSet<String>();
+      rows2[a] = new HashSet<String>();
+    }
+    for(int i = 0; i < n; i++) {
+      String s = br.readLine();
+      for(int j = 0; j < n; j++) {
+        grid[i][j] = s.charAt(j);
+      }
+    }
+
+    // by rotating the grid twice, I could reuse the dfs function
+    // instead of having to write a second one that goes up and left
+    dfs(grid, 0, 0, rows1, "");
+    transpose(grid);
+    dfs(grid, 0, 0, rows2, "");
+    
+    Set<String> ans = new HashSet<String>();
+    for(int a = 0; a < n; a++) {
+      for(String s: rows1[a]) {
+        // check if a string can be generated from both corners
+        if(rows2[a].contains(s)) {
+          ans.add(s);
+        }
+      }
+    }
+    pw.println(ans.size());
+    pw.close();
+  }
+  
+  public static void dfs(char[][] grid, int x, int y, Set<String>[] sets, String curr) {
+    if(x + y == n-1) {
+      sets[x].add(curr + grid[x][y]);
+    }
+    else {
+      dfs(grid, x+1, y, sets, curr + grid[x][y]);
+      dfs(grid, x, y+1, sets, curr + grid[x][y]);
+    }
+  }
+  
+  // this makes column n of the grid row (n+1-i)
+  public static void transpose(char[][] grid) {
+    for(int i = 0; i < n; i++) {
+      for(int j = 0; j < n; j++) {
+        if(i + j >= n-1) continue;
+        char t = grid[i][j];
+        grid[i][j] = grid[n-1-j][n-1-i];
+        grid[n-1-j][n-1-i] = t;
+      }
+    }
+  }
+  
+  static Set<String>[] rows1, rows2;
+  
+}

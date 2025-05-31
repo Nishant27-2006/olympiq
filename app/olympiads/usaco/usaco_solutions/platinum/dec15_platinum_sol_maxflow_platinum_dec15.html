@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we&apos;re given a set of paths on a tree and want to compute the
+maximum number of paths some node in the tree is on.
+<p>The naive solution to this problem would be, for each path, to manually
+increment the number of paths each node on the path is on by one. This will be
+<span class='math'>$O(N^2)$</span> and is therefore too slow.
+<p>Let&apos;s first solve the easier case where the tree is actually a linked list. In
+this case, we can solve the problem in linear time by maintaining a prefix sum
+on the list - for the parent node in the list we increment a counter by 1, for
+the child node we decrement a counter by 1, and then when we&apos;ve done this for
+all the paths we can iterate over the list and accumulate the prefix sums,
+maintaining the maximum.
+<p>Using this as inspiration, we can apply this prefix sum technique to a generic
+tree as follows - start by rooting the tree arbitrarily. For a path from node X
+to node Y, increment a &quot;prefix&quot; value at X and Y by 1. Decrement the prefix of
+the lowest common ancestor (LCA) of X and Y by 1, and decrement the prefix of
+the parent of the LCA by 1. Note that for a given node, the sum of the prefix
+values for every node in the given node&apos;s subtree is the number of paths that
+that node is on. We can compute the sum of the prefix values for all subtrees in
+linear time by processing the nodes in decreasing order of depth. Now, it
+remains to figure out how to compute the LCA of two nodes in sublinear time.
+There are several ways to do this --- for example we could use <a href="https://en.wikipedia.org/wiki/Tarjan's_off-line_lowest_common_ancestors_algorithm">Tarjan's off-line LCA algorithm</a>.  The approach we use in this solution is as follows:
+<p>Given that the tree is rooted, let the &quot;depth&quot; of a node be the distance from
+the root to that node, and assume for simplicity that we want to find the LCA of
+two nodes X and Y which are the same depth. The following linear-time algorithm
+will find the LCA:
+<p><pre class='prettyprint'>
+while X and Y are different:
+  X = parent(X)
+  Y = parent(Y)
+</pre>
+<p>If we could binary search on the depth of the number of parent calls we need to
+make, we could make this run in <span class='math'>$O(\log N)$</span>. We will simulate binary search as
+follows:
+<p>Let <span class='math'>$f(N, S) = Z$</span> be the ancestor of <span class='math'>$N$</span> such that <span class='math'>$depth(Z) + 2^S = depth(N)$</span>.
+If we root the tree, then we can compute <span class='math'>$f(N, 0)$</span> directly for every node in
+the tree, and then <span class='math'>$f(N, S) = f(f(N, S-1), S-1)$</span>. Since the depth of the tree is
+<span class='math'>$O(N)$</span>, <span class='math'>$S$</span> can only take on <span class='math'>$O(\log N)$</span> values and therefore there are
+<span class='math'>$O(N \log N)$</span> distinct tuples for <span class='math'>$f$</span> that need to be computed.
+<p>We can now use <span class='math'>$f$</span> to search for the highest ancestors of <span class='math'>$X$</span> and <span class='math'>$Y$</span> that are
+not common ancestors to both <span class='math'>$X$</span> and <span class='math'>$Y$</span> in <span class='math'>$O(\log N)$</span> time as follows by
+finding the largest <span class='math'>$S$</span> such that <span class='math'>$f(X, S) \neq f(Y, S)$</span>. Now, replace <span class='math'>$X$</span> and
+<span class='math'>$Y$</span> with <span class='math'>$f(X, S)$</span> and <span class='math'>$f(Y, S)$</span> and repeat this process until no such <span class='math'>$S$</span>
+exists. Once that&apos;s the case, it must be true that either <span class='math'>$X = Y$</span> or the parent
+of <span class='math'>$X$</span> and <span class='math'>$Y$</span> are identical.
+<p>Note that as we iterate on <span class='math'>$S$</span>, note that the values for <span class='math'>$S$</span> must be
+monotonically decreasing - they clearly cannot be increasing, and if we pick the
+same value for <span class='math'>$S$</span> twice in a row, we should have used <span class='math'>$S+1$</span> instead. Therefore,
+if we iterate over <span class='math'>$S$</span> in decreasing order, this procedure takes <span class='math'>$O(\log N)$</span>
+time.
+<p>Therefore, after we root the tree, we can pre-compute <span class='math'>$f$</span> in <span class='math'>$O(N \log N)$</span> time,
+and then for each path, we do a single LCA query, so updating the prefix sums
+runs in <span class='math'>$O(K \log N)$</span>. The final accumulation of prefix sums by iterating on the
+nodes in decreasing order of depth takes <span class='math'>$O(N)$</span> time, so this solution is
+<span class='math'>$O((N+K) \log N)$</span>.
+<p>Here is my code demonstrating this solution:
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class maxflow {
+	static int[] p;
+	static int[] depth;
+	static int[][] anc;
+	static int[] amt;
+	static LinkedList&lt;Integer&gt;[] edges;
+	static LinkedList&lt;Integer&gt; revOrder;
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;maxflow.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;maxflow.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int k = Integer.parseInt(st.nextToken());
+		p = new int[n+1];
+		amt = new int[n+1];
+		depth = new int[n+1];
+		Arrays.fill(p, -1);
+		p[0] = p[1] = 0;
+		anc = new int[n+1][17];
+		edges = new LinkedList[n+1];
+		revOrder = new LinkedList&lt;Integer&gt;();
+		for(int i = 0; i &lt; edges.length; i++) {
+			edges[i] = new LinkedList&lt;Integer&gt;();
+		}
+		for(int a = 1; a &lt; n; a++) {
+			st = new StringTokenizer(br.readLine());
+			int x = Integer.parseInt(st.nextToken());
+			int y = Integer.parseInt(st.nextToken());
+			edges[x].add(y);
+			edges[y].add(x);
+		}
+		bfs();
+		genLCA();
+		for(int i = 0; i &lt; k; i++) {
+			st = new StringTokenizer(br.readLine());
+			int x = Integer.parseInt(st.nextToken());
+			int y = Integer.parseInt(st.nextToken());
+			int lca = lca(x, y);
+			amt[x]++;
+			amt[y]++;
+			amt[lca]--;
+			amt[p[lca]]--;
+		}
+		compute();
+		int ret = 0;
+		for(int i = 1; i &lt;= n; i++) {
+			ret = Math.max(ret, amt[i]);
+		}
+		pw.println(ret);
+		pw.close();
+	}
+	public static void compute() {
+		while(!revOrder.isEmpty()) {
+			int curr = revOrder.removeFirst();
+			amt[p[curr]] += amt[curr];
+		}
+	}
+	public static int lca(int a, int b) {
+		if(depth[a] &gt; depth[b]) {
+			return lca(b, a);
+		}
+		if(depth[a] &lt; depth[b]) {
+			b = getP(b, depth[a]);
+		}
+		for(int k = 16; k &gt; 0; k--) {
+			while(anc[a][k] != anc[b][k]) {
+				a = anc[a][k];
+				b = anc[b][k];
+			}
+		}
+		while(a != b) {
+			a = p[a];
+			b = p[b];
+		}
+		return a;
+	}
+	public static int getP(int curr, int wantedD) {
+		for(int k = 16; depth[curr] != wantedD; k--) {
+			while(depth[curr] - (1&lt;&lt;k) &gt;= wantedD) {
+				curr = anc[curr][k];
+			}
+		}
+		return curr;
+	}
+	public static void genLCA() {
+		for(int i = 1; i &lt; p.length; i++) {
+			anc[i][0] = p[i];
+		}
+		for(int j = 1; j &lt; anc[0].length; j++) {
+			for(int i = 1; i &lt; p.length; i++) {
+				anc[i][j] = anc[anc[i][j-1]][j-1];
+			}
+		}
+	}
+	public static void bfs() {
+		LinkedList&lt;Integer&gt; q = new LinkedList&lt;Integer&gt;();
+		q.add(1);
+		while(!q.isEmpty()) {
+			int curr = q.removeFirst();
+			revOrder.addFirst(curr);
+			for(int child: edges[curr]) {
+				if(p[child] == -1) {
+					p[child] = curr;
+					depth[child] = 1 + depth[curr];
+					q.add(child);
+				}
+			}
+		}
+	}
+}
+</pre>
+<p> Additional analysis by Jesse van Dobben: Alternatively, the
+problem can be solved by using a two-pass depth first search along
+with a one-dimensional range query data structure. (For instance, you
+can use a Fenwick tree. I chose to reuse the tree I constructed in the
+solution to the third problem, Counting Haybales.) The algorithm works
+as follows: first we do a simple depth-first search where we label the
+vertices in the order in which we encounter them (that is, by starting
+time). Now a subtree corresponds to an interval of starting
+times. This is the most important idea behind this solution: the
+amount of flow going into a subtree can now be calculated by range
+query.
+
+Note that the answer does not change if we invert the direction of
+some of the $K$ flows. Thus, we may orient all the flows from lower to
+higher starting time. In the second DFS we will count for every vertex
+$v$ the amount of flow going into $v$, plus the amount of flow
+originating at $v$. We say a flow is "active" at a certain point
+during the second DFS if we have already started processing its first
+endpoint and have not yet completed processing its second endpoint.
+
+Whenever we go into a subtree during the second DFS, the amount of
+flow going into that subtree can be calculated as the number of
+currently active flows for which the destination lies within that
+subtree, so we query for the time interval of that subtree. Similarly,
+whenever we return from a subtree, the amount of flow coming back from
+that subtree can be calculated as the number of currently active flows
+for which the source lies within that subtree, which again corresponds
+to a time interval. This way we can compute the total amount of flow
+going into the current vertex using two one-dimensional range query
+data structures (one to list the active flows by their source and one
+to list the active flows by their destination). Don't forget to add
+the amount of flow originating at the current vertex, and we are done.
+
+I have rewritten the code for the sake of readability. (For instance,
+in my original solution I reused the data structure I wrote for the
+third problem, which was already quite a mess.)
+
+<p><pre class='prettyprint'>
+#include &lt;fstream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+
+using namespace std;
+
+const int MAX_N = 50000;
+
+ifstream fin("maxflow.in");
+ofstream fout("maxflow.out");
+
+struct partialSumTree {
+  // data structure for changing and querying partial sums of a sequence
+  // consiting of R - L elements, indexed L through R - 1.
+  int L, R, half, sum;
+  partialSumTree *left, *right;
+  partialSumTree(int l, int r) : L(l), R(r), half((L + R)/2), sum(0) {
+    if (half == L) {
+      left = right = NULL;
+    }
+    else {
+      left = new partialSumTree(L, half);
+      right = new partialSumTree(half, R);
+    }
+  }
+  void updateValue(int idx, int delta) {
+    if (idx &lt; L || idx &gt;= R) return;
+    sum += delta;
+    if (half != L) {
+      (idx &lt; half ? left : right)-&gt;updateValue(idx, delta);
+    }
+  }
+  // get partial sum from A to B - 1
+  int getSum(int A, int B) {
+    if (A &gt;= R || B &lt;= L) return 0;
+    if (A &lt;= L && B &gt;= R) return sum;
+    return left-&gt;getSum(A, B) + right-&gt;getSum(A, B);
+  }
+};
+
+vector&lt;int&gt; neighbours[MAX_N];
+int startTime[MAX_N];
+int endTime[MAX_N];
+
+int firstPassDFS(int curNode, int curTime) {
+  if (startTime[curNode] != -1) return curTime;
+  startTime[curNode] = curTime++;
+  for (vector&lt;int&gt;::iterator it = neighbours[curNode].begin(); it != neighbours[curNode].end(); it++) {
+    curTime = firstPassDFS(*it, curTime);
+  }
+  return endTime[curNode] = curTime;
+}
+
+vector&lt;int&gt; beginPath[MAX_N], endPath[MAX_N];
+int ans = -1;
+partialSumTree *bySource, *byDestination;
+
+int secondPassDFS(int curNode, int curTime) {
+  if (startTime[curNode] != curTime) return curTime;
+  curTime++;
+  int passingThrough = byDestination-&gt;getSum(startTime[curNode], endTime[curNode]);
+  for (vector&lt;int&gt;::iterator it = beginPath[curNode].begin(); it != beginPath[curNode].end(); it++) {
+    // unpack all paths starting at curNode
+    bySource-&gt;updateValue(startTime[curNode], 1);
+    byDestination-&gt;updateValue(startTime[*it], 1);
+    passingThrough++;
+  }
+  for (vector&lt;int&gt;::iterator it = neighbours[curNode].begin(); it != neighbours[curNode].end(); it++) {
+    int prevTime = curTime;
+    curTime = secondPassDFS(*it, curTime);
+    // add all paths that were started but not stopped in the subtree rooted at *it
+    passingThrough += bySource-&gt;getSum(prevTime, curTime);
+  }
+  for (vector&lt;int&gt;::iterator it = endPath[curNode].begin(); it != endPath[curNode].end(); it++) {
+    // remove all paths ending at curNode
+    bySource-&gt;updateValue(startTime[*it], -1);
+    byDestination-&gt;updateValue(startTime[curNode], -1);
+  }
+  ans = max(ans, passingThrough);
+  return curTime;
+}
+
+int main() {
+  int N, K;
+  fin &gt;&gt; N &gt;&gt; K;
+  for (int i = 1; i &lt; N; i++) {
+    int x, y;
+    fin &gt;&gt; x &gt;&gt; y;
+    x--; y--;
+    neighbours[x].push_back(y);
+    neighbours[y].push_back(x);
+  }
+  fill(startTime, startTime + N, -1);
+  fill(endTime, endTime + N, -1);
+  firstPassDFS(0, 0);
+  bySource = new partialSumTree(0, N);
+  byDestination = new partialSumTree(0, N);
+  for (int i = 0; i &lt; K; i++) {
+    int s, t;
+    fin &gt;&gt; s &gt;&gt; t;
+    s--; t--;
+    if (startTime[s] &gt; startTime[t]) swap(s, t);
+    beginPath[s].push_back(t);
+    endPath[t].push_back(s);
+  }
+  secondPassDFS(0, 0);
+  fout &lt;&lt; ans &lt;&lt; endl;
+  return 0;
+}
+</pre>
+
+<p></body></html>

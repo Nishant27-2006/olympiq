@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we&apos;re given a list of <span class='math'>$N$</span> integers, with the guarantee that
+removing exactly one of them can result in a sorted array. 
+<p>Because removing one of them can result in a sorted array, if we consider
+the elements that are not in the right order, those must form a sequence that
+is almost sorted, except that either the minimum element is in the rightmost
+slot or the maximum element is in the leftmost slot. Consequently, if there are <span class='math'>$K$</span>
+elements that are out of order, it will take <span class='math'>$K-1$</span> swaps to fix them, since every swap
+except for the last one can only fix the location of one such element.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class outofplace {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;outofplace.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;outofplace.out&quot;)));
+
+		int n = Integer.parseInt(br.readLine());
+		int[] height = new int[n];
+		int[] sorted = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			height[i] = Integer.parseInt(br.readLine());
+			sorted[i] = height[i];
+		}
+		Arrays.sort(sorted);
+		int swaps = -1;
+		for(int a = 0; a &lt; n; a++) {
+			if(sorted[a] != height[a]) {
+				swaps++;
+			}
+		}
+		swaps = Math.max(0, swaps);
+		pw.println(swaps);
+		pw.close();
+	}
+	
+}
+</pre></body></html>

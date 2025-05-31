@@ -1,0 +1,10 @@
+Solution ID: sol_prob1_bronze_open23
+Contest: OPEN23
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_open23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+Link

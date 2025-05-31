@@ -1,0 +1,293 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: OPEN25 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+**Note: The time limit for this problem is 3s, 1.5x the default.**
+Farmer John has $N$ ($2 \leq N \leq 2 \cdot 10^5$) cows numbered from $1$ to
+$N$. An election is being held in FJ's farm to determine the two new head cows
+in his farm. Initially, it is known that cow $i$ will vote for cow $a_i$
+($1 \leq a_i \leq N$).
+
+To determine the two head cows, FJ will hold his election in the following
+process:
+
+ Choose an arbitrary subset $S$ of his cows that contains at least one cow
+but not all cows. FJ is able to choose cow $x$ as the first head cow if its
+votes appear most frequently among all votes cast by cows in $S$.
+ FJ is able to choose cow $y$ as the second head cow if its votes appear
+most frequently among votes cast by cows not in $S$.
+
+For a fixed subset $S$, FJ denotes the  diversity  between his head cows
+as $|x - y|$. As FJ does not like having leaders with similar numbers, he  wants
+to choose $S$ such that the  diversity  is maximized. Note that if FJ is
+not able to choose two distinct head cows, then the diversity is $0$.
+
+However, some cows keep changing their minds, and FJ may have to rerun the
+election many times! Therefore, he asks you $Q$ ($1 \leq Q \leq 10^5$) queries.
+In each query, a cow changes their vote. After each query, he asks you for the
+maximum possible diversity among his new head cows. 
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$ and $Q$.
+
+The following line contains $a_1, a_2, \ldots, a_N$.
+
+The following $Q$ lines contain two integers $i$ and $x$, representing the
+update $a_i = x$ ($1 \leq i, x \leq N$).
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Output $Q$ lines, the $i$'th of which is the maximum possible  diversity 
+after the first $i$ queries.
+
+SAMPLE INPUT:
+5 3
+1 2 3 4 5
+3 4
+1 2
+5 2
+SAMPLE OUTPUT: 
+4
+3
+2
+
+After the first query, $a = [1, 2, 4, 4, 5]$. At the first step of the election,
+FJ can make $S = \{1, 3\}$. Here, cow $1$ receives one vote and cow $4$ receives
+one vote.  Therefore, FJ can choose either cow $1$ or cow $4$ as its first head
+cow. 
+
+For all cows not in the election, cow $2$ receives one vote, cow $4$ receives
+one vote, and cow $5$ also receives one vote. Therefore, FJ can choose any one
+of cows $2$, $4$, or $5$ to be its second head cow. 
+
+To obtain the maximum diversity, FJ can choose cow $1$ as the first head cow and
+cow $5$ as the second head cow. Therefore, the diversity is $|1-5| = 4$.
+
+After the second query, $a=[2,2,4,4,5]$ and FJ can make $S = \{4, 5\}$. Then, he
+can choose $5$ as the first head cow and cow $2$ as the second head cow. The
+maximum possible diversity is
+$|5 - 2| = 3$.
+
+SAMPLE INPUT:
+8 5
+8 1 4 2 5 4 2 3
+7 4
+8 4
+4 1
+5 8
+8 4
+SAMPLE OUTPUT: 
+4
+4
+4
+7
+7
+
+SCORING:
+Inputs 3-4: $N, Q \leq 100$Inputs 5-7: $N, Q \leq 3000$Inputs 8-15:  No additional constraints.
+
+
+Problem credits: Chongtian Ma and Haokai Ma
+
+
+
+\section*{Input Format}
+The following line contains $a_1, a_2, \ldots, a_N$.The following $Q$ lines contain two integers $i$ and $x$, representing the
+update $a_i = x$ ($1 \leq i, x \leq N$).
+
+The following $Q$ lines contain two integers $i$ and $x$, representing the
+update $a_i = x$ ($1 \leq i, x \leq N$).
+
+OUTPUT FORMAT (print output to the terminal / stdout):Output $Q$ lines, the $i$'th of which is the maximum possiblediversityafter the first $i$ queries.SAMPLE INPUT:5 3
+1 2 3 4 5
+3 4
+1 2
+5 2SAMPLE OUTPUT:4
+3
+2After the first query, $a = [1, 2, 4, 4, 5]$. At the first step of the election,
+FJ can make $S = \{1, 3\}$. Here, cow $1$ receives one vote and cow $4$ receives
+one vote.  Therefore, FJ can choose either cow $1$ or cow $4$ as its first head
+cow.For all cows not in the election, cow $2$ receives one vote, cow $4$ receives
+one vote, and cow $5$ also receives one vote. Therefore, FJ can choose any one
+of cows $2$, $4$, or $5$ to be its second head cow.To obtain the maximum diversity, FJ can choose cow $1$ as the first head cow and
+cow $5$ as the second head cow. Therefore, the diversity is $|1-5| = 4$.After the second query, $a=[2,2,4,4,5]$ and FJ can make $S = \{4, 5\}$. Then, he
+can choose $5$ as the first head cow and cow $2$ as the second head cow. The
+maximum possible diversity is
+$|5 - 2| = 3$.SAMPLE INPUT:8 5
+8 1 4 2 5 4 2 3
+7 4
+8 4
+4 1
+5 8
+8 4SAMPLE OUTPUT:4
+4
+4
+7
+7SCORING:Inputs 3-4: $N, Q \leq 100$Inputs 5-7: $N, Q \leq 3000$Inputs 8-15:  No additional constraints.Problem credits: Chongtian Ma and Haokai Ma
+
+\section*{Output Format}
+SAMPLE INPUT:5 3
+1 2 3 4 5
+3 4
+1 2
+5 2SAMPLE OUTPUT:4
+3
+2After the first query, $a = [1, 2, 4, 4, 5]$. At the first step of the election,
+FJ can make $S = \{1, 3\}$. Here, cow $1$ receives one vote and cow $4$ receives
+one vote.  Therefore, FJ can choose either cow $1$ or cow $4$ as its first head
+cow.For all cows not in the election, cow $2$ receives one vote, cow $4$ receives
+one vote, and cow $5$ also receives one vote. Therefore, FJ can choose any one
+of cows $2$, $4$, or $5$ to be its second head cow.To obtain the maximum diversity, FJ can choose cow $1$ as the first head cow and
+cow $5$ as the second head cow. Therefore, the diversity is $|1-5| = 4$.After the second query, $a=[2,2,4,4,5]$ and FJ can make $S = \{4, 5\}$. Then, he
+can choose $5$ as the first head cow and cow $2$ as the second head cow. The
+maximum possible diversity is
+$|5 - 2| = 3$.SAMPLE INPUT:8 5
+8 1 4 2 5 4 2 3
+7 4
+8 4
+4 1
+5 8
+8 4SAMPLE OUTPUT:4
+4
+4
+7
+7SCORING:Inputs 3-4: $N, Q \leq 100$Inputs 5-7: $N, Q \leq 3000$Inputs 8-15:  No additional constraints.Problem credits: Chongtian Ma and Haokai Ma
+
+\section*{Sample Input}
+\begin{verbatim}
+5 3
+1 2 3 4 5
+3 4
+1 2
+5 2
+
+8 5
+8 1 4 2 5 4 2 3
+7 4
+8 4
+4 1
+5 8
+8 4
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+4
+3
+2
+
+After the first query, $a = [1, 2, 4, 4, 5]$. At the first step of the election,
+FJ can make $S = \{1, 3\}$. Here, cow $1$ receives one vote and cow $4$ receives
+one vote.  Therefore, FJ can choose either cow $1$ or cow $4$ as its first head
+cow.For all cows not in the election, cow $2$ receives one vote, cow $4$ receives
+one vote, and cow $5$ also receives one vote. Therefore, FJ can choose any one
+of cows $2$, $4$, or $5$ to be its second head cow.To obtain the maximum diversity, FJ can choose cow $1$ as the first head cow and
+cow $5$ as the second head cow. Therefore, the diversity is $|1-5| = 4$.After the second query, $a=[2,2,4,4,5]$ and FJ can make $S = \{4, 5\}$. Then, he
+can choose $5$ as the first head cow and cow $2$ as the second head cow. The
+maximum possible diversity is
+$|5 - 2| = 3$.SAMPLE INPUT:8 5
+8 1 4 2 5 4 2 3
+7 4
+8 4
+4 1
+5 8
+8 4SAMPLE OUTPUT:4
+4
+4
+7
+7SCORING:Inputs 3-4: $N, Q \leq 100$Inputs 5-7: $N, Q \leq 3000$Inputs 8-15:  No additional constraints.Problem credits: Chongtian Ma and Haokai Ma
+
+For all cows not in the election, cow $2$ receives one vote, cow $4$ receives
+one vote, and cow $5$ also receives one vote. Therefore, FJ can choose any one
+of cows $2$, $4$, or $5$ to be its second head cow.To obtain the maximum diversity, FJ can choose cow $1$ as the first head cow and
+cow $5$ as the second head cow. Therefore, the diversity is $|1-5| = 4$.After the second query, $a=[2,2,4,4,5]$ and FJ can make $S = \{4, 5\}$. Then, he
+can choose $5$ as the first head cow and cow $2$ as the second head cow. The
+maximum possible diversity is
+$|5 - 2| = 3$.SAMPLE INPUT:8 5
+8 1 4 2 5 4 2 3
+7 4
+8 4
+4 1
+5 8
+8 4SAMPLE OUTPUT:4
+4
+4
+7
+7SCORING:Inputs 3-4: $N, Q \leq 100$Inputs 5-7: $N, Q \leq 3000$Inputs 8-15:  No additional constraints.Problem credits: Chongtian Ma and Haokai Ma
+
+To obtain the maximum diversity, FJ can choose cow $1$ as the first head cow and
+cow $5$ as the second head cow. Therefore, the diversity is $|1-5| = 4$.After the second query, $a=[2,2,4,4,5]$ and FJ can make $S = \{4, 5\}$. Then, he
+can choose $5$ as the first head cow and cow $2$ as the second head cow. The
+maximum possible diversity is
+$|5 - 2| = 3$.SAMPLE INPUT:8 5
+8 1 4 2 5 4 2 3
+7 4
+8 4
+4 1
+5 8
+8 4SAMPLE OUTPUT:4
+4
+4
+7
+7SCORING:Inputs 3-4: $N, Q \leq 100$Inputs 5-7: $N, Q \leq 3000$Inputs 8-15:  No additional constraints.Problem credits: Chongtian Ma and Haokai Ma
+
+After the second query, $a=[2,2,4,4,5]$ and FJ can make $S = \{4, 5\}$. Then, he
+can choose $5$ as the first head cow and cow $2$ as the second head cow. The
+maximum possible diversity is
+$|5 - 2| = 3$.SAMPLE INPUT:8 5
+8 1 4 2 5 4 2 3
+7 4
+8 4
+4 1
+5 8
+8 4SAMPLE OUTPUT:4
+4
+4
+7
+7SCORING:Inputs 3-4: $N, Q \leq 100$Inputs 5-7: $N, Q \leq 3000$Inputs 8-15:  No additional constraints.Problem credits: Chongtian Ma and Haokai Ma
+
+SAMPLE INPUT:8 5
+8 1 4 2 5 4 2 3
+7 4
+8 4
+4 1
+5 8
+8 4SAMPLE OUTPUT:4
+4
+4
+7
+7SCORING:Inputs 3-4: $N, Q \leq 100$Inputs 5-7: $N, Q \leq 3000$Inputs 8-15:  No additional constraints.Problem credits: Chongtian Ma and Haokai Ma
+
+4
+4
+4
+7
+7
+
+SCORING:Inputs 3-4: $N, Q \leq 100$Inputs 5-7: $N, Q \leq 3000$Inputs 8-15:  No additional constraints.Problem credits: Chongtian Ma and Haokai Ma
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1522
+
+\section*{Source}
+USACO OPEN25 Contest, Gold Division, Problem ID: 1522
+
+\end{document}

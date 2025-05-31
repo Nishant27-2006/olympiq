@@ -1,0 +1,223 @@
+Solution ID: sol_prob2_silver_dec21
+Contest: DEC21
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_dec21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+To solve the first subtask, we can brute force all possible pairs of edges to
+add. This solution has complexity
+
+$\mathcal{O}(N^4(N+M))$
+
+.
+
+To solve the second subtask, we need to be more disciplined in what edges we
+consider adding. We can start by computing the connected components of the barns
+- that is, maximal collections of barns where one can reach any barn from any
+other barn in the collection.
+
+There are therefore two cases to consider here. We can either add an edge from
+the connected component containing barn 1 to the connected component containing
+barn
+
+$N$
+
+, or we pick an intermediate connected component, add one edge from it
+to the connected component containing barn
+
+$1$
+
+, and add another edge from it to
+the connected component containing barn
+
+$N$
+
+.
+
+This observation on its own only reduces the number of pairs of edges to
+consider in the worst case by a constant factor. However, we now have two
+independent instances of the same subproblem to solve - given two connected
+components, what is the minimum cost needed to connect them with a single edge?
+
+We can naively brute force this for all pairs of components we care about, for
+an
+
+$\mathcal{O}(N^2)$
+
+algorithm.
+
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <vector>
+
+using namespace std;
+
+void dfs(const vector<vector<int>>& edges, vector<int>& component, const int currv, const int id) {
+  for(int child: edges[currv]) {
+    if(component[child] != id) {
+      component[child] = id;
+      dfs(edges, component, child, id);
+    }
+  }
+}
+
+void solve() {
+  int n, m;
+  cin >> n >> m;
+  vector<vector<int>> edges(n);
+  for(int i = 0; i < m; i++) {
+    int a, b;
+    cin >> a >> b;
+    a--; b--;
+    edges[a].push_back(b);
+    edges[b].push_back(a);
+  }
+  vector<int> component(n);
+  iota(component.begin(), component.end(), 0);
+  for(int i = 0; i < n; i++) {
+    if(component[i] == i) {
+      dfs(edges, component, i, i);
+    }
+  }
+  if(component[0] == component[n-1]) {
+    cout << "0\n";
+    return;
+  }
+  vector<vector<int>> componentToVertices(n);
+  for(int i = 0; i < n; i++) {
+    componentToVertices[component[i]].push_back(i);
+  }
+  long long ans = 1e18;
+  vector<long long> srccost(n, 1e9);
+  vector<long long> dstcost(n, 1e9);
+  for(int i: componentToVertices[component[0]]) {
+    for(int j = 0; j < n; j++) {
+      srccost[component[j]] = min(srccost[component[j]], (long long)abs(i - j));
+    }
+  }
+  for(int i: componentToVertices[component[n-1]]) {
+    for(int j = 0; j < n; j++) {
+      dstcost[component[j]] = min(dstcost[component[j]], (long long)abs(i - j));
+    }
+  }
+  for(int i = 0; i < n; i++) ans = min(ans, srccost[i]*srccost[i] + dstcost[i]*dstcost[i]);
+  cout << ans << "\n";
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(NULL);
+  int t;
+  cin >> t;
+  for(int i = 0; i < t; i++) {
+    solve();
+  }
+  return 0;
+}
+
+To optimize this to
+
+$\mathcal{O}(M+N)$
+
+time, we have to take advantage of the
+cost function.
+
+For a given barn and a given connected component we want to connect it to, we
+only care about the smallest integer in the connected component greater than it,
+as well as the largest integer in the component less than it.
+
+There are a couple ways to find these integers. One way would be to use binary
+search. It is also possible to do this in linear time by maintaining the pair of
+indices we consider and considering adding edges from vertex
+
+$i$
+
+in increasing
+order of
+
+$i$
+
+. The pair of indices we consider will be nondecreasing, so we only
+consider a linear number of edges.
+
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <vector>
+ 
+using namespace std;
+ 
+void dfs(const vector<vector<int>>& edges, vector<int>& component, const int currv, const int id) {
+  for(int child: edges[currv]) {
+    if(component[child] != id) {
+      component[child] = id;
+      dfs(edges, component, child, id);
+    }
+  }
+}
+ 
+void solve() {
+  int n, m;
+  cin >> n >> m;
+  vector<vector<int>> edges(n);
+  for(int i = 0; i < m; i++) {
+    int a, b;
+    cin >> a >> b;
+    a--; b--;
+    edges[a].push_back(b);
+    edges[b].push_back(a);
+  }
+  vector<int> component(n);
+  iota(component.begin(), component.end(), 0);
+  for(int i = 0; i < n; i++) {
+    if(component[i] == i) {
+      dfs(edges, component, i, i);
+    }
+  }
+  if(component[0] == component[n-1]) {
+    cout << "0\n";
+    return;
+  }
+  vector<vector<int>> componentToVertices(n);
+  for(int i = 0; i < n; i++) {
+    componentToVertices[component[i]].push_back(i);
+  }
+  long long ans = 1e18;
+  vector<long long> srccost(n, 1e9);
+  vector<long long> dstcost(n, 1e9);
+  int srcidx = 0;
+  int dstidx = 0;
+  for(int i = 0; i < n; i++) {
+    while(srcidx < componentToVertices[component[0]].size()) {
+      srccost[component[i]] = min(srccost[component[i]], (long long)abs(i - componentToVertices[component[0]][srcidx]));
+      if(componentToVertices[component[0]][srcidx] < i) srcidx++;
+      else break;
+    }
+    if(srcidx) srcidx--;
+    while(dstidx < componentToVertices[component[n-1]].size()) {
+      dstcost[component[i]] = min(dstcost[component[i]], (long long)abs(i - componentToVertices[component[n-1]][dstidx]));
+      if(componentToVertices[component[n-1]][dstidx] < i) dstidx++;
+      else break;
+    }
+    if(dstidx) dstidx--;
+  }
+  for(int i = 0; i < n; i++) ans = min(ans, srccost[i]*srccost[i] + dstcost[i]*dstcost[i]);
+  cout << ans << "\n";
+}
+ 
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(NULL);
+  int t;
+  cin >> t;
+  for(int i = 0; i < t; i++) {
+    solve();
+  }
+  return 0;
+}

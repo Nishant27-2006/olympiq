@@ -1,0 +1,227 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN25 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+**Note: The time limit for this problem is 4s, twice the default.**
+Farmer John has a binary tree with $N$ nodes  where the nodes are numbered from
+$1$ to $N$ ($1 \leq N < 2\cdot 10^5$ and $N$ is odd). For $i>1$, the parent of
+node $i$  is $\lfloor i/2\rfloor$. Each node has an initial integer value $a_i$,
+and a cost $c_i$ to change the initial value to any other integer value
+($0\le a_i,c_i\le 10^9$).
+
+He has been tasked by the Federal Bovine Intermediary (FBI) with finding an
+approximate median value within this tree, and has devised a clever algorithm to
+do so.
+
+He starts at the last node $N$ and works his way backward. At every step of the
+algorithm, if a node would not be the median of it and its two children, he
+swaps the values of the current node and the child value that would be the
+median. At the end of this algorithm, the value at node $1$ (the root) is the
+median approximation.
+
+The FBI has also given Farmer John a list of $Q$ $(1 \leq Q \leq 2\cdot 10^5)$
+independent queries each specified by a target value $m$ ($0\le m\le 10^9$). For
+each query, FJ will first change some of the node's initial values, and then
+execute the median approximation algorithm. For each query, determine the
+minimum possible total cost for FJ to make the output of the algorithm equal to
+$m$.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line of input contains $N$.
+
+The next $N$ lines each contain two integers $a_i$ and $c_i$.
+
+The next line contains $Q$.
+
+The next $Q$ lines each contain a target value $m$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Output $Q$ lines, the minimum possible total cost for each target value $m$.
+
+SAMPLE INPUT:
+5
+10 10000
+30 1000
+20 100
+50 10
+40 1
+11
+55
+50
+45
+40
+35
+30
+25
+20
+15
+10
+5
+SAMPLE OUTPUT: 
+111
+101
+101
+100
+100
+100
+100
+0
+11
+11
+111
+
+To make the median approximation equal $40$, FJ can change the value at node 3
+to $60$. This costs $c_3=100$.
+
+To make the median approximation equal $45$, FJ can change the value at node 3
+to $60$ and the value at node 5 to $45$. This costs $c_3+c_5=100+1=101$.
+
+SCORING:
+Inputs 2-4: $N,Q\le 50$Inputs 5-7: $N,Q\le 1000$Inputs 8-16: No additional constraints
+
+
+Problem credits: Suhas Nagar and Benjamin Qi
+
+
+
+\section*{Input Format}
+The next $N$ lines each contain two integers $a_i$ and $c_i$.The next line contains $Q$.The next $Q$ lines each contain a target value $m$.
+
+The next line contains $Q$.The next $Q$ lines each contain a target value $m$.
+
+The next $Q$ lines each contain a target value $m$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):Output $Q$ lines, the minimum possible total cost for each target value $m$.SAMPLE INPUT:5
+10 10000
+30 1000
+20 100
+50 10
+40 1
+11
+55
+50
+45
+40
+35
+30
+25
+20
+15
+10
+5SAMPLE OUTPUT:111
+101
+101
+100
+100
+100
+100
+0
+11
+11
+111To make the median approximation equal $40$, FJ can change the value at node 3
+to $60$. This costs $c_3=100$.To make the median approximation equal $45$, FJ can change the value at node 3
+to $60$ and the value at node 5 to $45$. This costs $c_3+c_5=100+1=101$.SCORING:Inputs 2-4: $N,Q\le 50$Inputs 5-7: $N,Q\le 1000$Inputs 8-16: No additional constraintsProblem credits: Suhas Nagar and Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:5
+10 10000
+30 1000
+20 100
+50 10
+40 1
+11
+55
+50
+45
+40
+35
+30
+25
+20
+15
+10
+5SAMPLE OUTPUT:111
+101
+101
+100
+100
+100
+100
+0
+11
+11
+111To make the median approximation equal $40$, FJ can change the value at node 3
+to $60$. This costs $c_3=100$.To make the median approximation equal $45$, FJ can change the value at node 3
+to $60$ and the value at node 5 to $45$. This costs $c_3+c_5=100+1=101$.SCORING:Inputs 2-4: $N,Q\le 50$Inputs 5-7: $N,Q\le 1000$Inputs 8-16: No additional constraintsProblem credits: Suhas Nagar and Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+5
+10 10000
+30 1000
+20 100
+50 10
+40 1
+11
+55
+50
+45
+40
+35
+30
+25
+20
+15
+10
+5
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+111
+101
+101
+100
+100
+100
+100
+0
+11
+11
+111
+
+To make the median approximation equal $40$, FJ can change the value at node 3
+to $60$. This costs $c_3=100$.To make the median approximation equal $45$, FJ can change the value at node 3
+to $60$ and the value at node 5 to $45$. This costs $c_3+c_5=100+1=101$.SCORING:Inputs 2-4: $N,Q\le 50$Inputs 5-7: $N,Q\le 1000$Inputs 8-16: No additional constraintsProblem credits: Suhas Nagar and Benjamin Qi
+
+To make the median approximation equal $45$, FJ can change the value at node 3
+to $60$ and the value at node 5 to $45$. This costs $c_3+c_5=100+1=101$.SCORING:Inputs 2-4: $N,Q\le 50$Inputs 5-7: $N,Q\le 1000$Inputs 8-16: No additional constraintsProblem credits: Suhas Nagar and Benjamin Qi
+
+SCORING:Inputs 2-4: $N,Q\le 50$Inputs 5-7: $N,Q\le 1000$Inputs 8-16: No additional constraintsProblem credits: Suhas Nagar and Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1473
+
+\section*{Source}
+USACO JAN25 Contest, Gold Division, Problem ID: 1473
+
+\end{document}

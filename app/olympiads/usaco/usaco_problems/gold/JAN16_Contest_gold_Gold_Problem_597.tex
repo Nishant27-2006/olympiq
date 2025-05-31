@@ -1,0 +1,128 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN16 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Bessie the cow has designed what she thinks will be the next big hit video game:
+"Angry Cows".  The premise,  which she believes is completely original, is that
+the player shoots a cow with a slingshot  into a one-dimensional scene
+consisting of a set of hay bales located at various points on a number line; the
+cow lands with sufficient force to detonate the hay bales in close proximity to
+her landing site, which in turn might set of a chain reaction that causes 
+additional hay bales to explode.  The goal is to use a single cow to start a
+chain reaction that detonates all the hay bales.
+
+There are $N$ hay bales located at distinct integer positions
+$x_1, x_2, \ldots, x_N$ on the number line.  If a cow is launched with power $R$
+landing at position $x$, this will causes a blast of "radius $R$", engulfing all
+hay bales within the range $x-R \ldots x+R$.  These hay bales then themselves
+explode (all simultaneously), each with a blast radius of $R-1$.  Any
+not-yet-exploded bales caught in these blasts then all explode (all
+simultaneously) with blast radius $R-2$, and so on.
+
+Please determine the minimum amount of power $R$ with which a single cow may be
+launched so that, if it lands at an appropriate location, it will cause
+subsequent detonation of every single hay bale in the scene.
+
+INPUT FORMAT (file angry.in):
+The first line of input contains $N$ ($2 \leq N \leq 50,000$).  The remaining
+$N$ lines all  contain integers $x_1 \ldots x_N$ (each in the range
+$0 \ldots 1,000,000,000$).
+
+OUTPUT FORMAT (file angry.out):
+Please output the minimum power $R$ with which a cow must be launched in order
+to detonate all the hay bales.  Answers should be rounded and printed to exactly
+1 decimal point.
+
+SAMPLE INPUT:
+5
+8
+10
+3
+11
+1
+SAMPLE OUTPUT: 
+3.0
+
+In this example, a cow launched with power 3 at, say, location 5, will cause
+immediate detonation of  hay bales at positions 3 and 8.  These then explode
+(simultaneously) each with blast radius 2, engulfing bales at positions 1 and
+10, which next explode (simultaneously) with blast radius 1, engulfing the final
+bale at position 11, which finally explodes with blast radius 0.
+
+Problem credits: Brian Dean
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (file angry.out):Please output the minimum power $R$ with which a cow must be launched in order
+to detonate all the hay bales.  Answers should be rounded and printed to exactly
+1 decimal point.SAMPLE INPUT:5
+8
+10
+3
+11
+1SAMPLE OUTPUT:3.0In this example, a cow launched with power 3 at, say, location 5, will cause
+immediate detonation of  hay bales at positions 3 and 8.  These then explode
+(simultaneously) each with blast radius 2, engulfing bales at positions 1 and
+10, which next explode (simultaneously) with blast radius 1, engulfing the final
+bale at position 11, which finally explodes with blast radius 0.Problem credits: Brian Dean
+
+\section*{Output Format}
+SAMPLE INPUT:5
+8
+10
+3
+11
+1SAMPLE OUTPUT:3.0In this example, a cow launched with power 3 at, say, location 5, will cause
+immediate detonation of  hay bales at positions 3 and 8.  These then explode
+(simultaneously) each with blast radius 2, engulfing bales at positions 1 and
+10, which next explode (simultaneously) with blast radius 1, engulfing the final
+bale at position 11, which finally explodes with blast radius 0.Problem credits: Brian Dean
+
+\section*{Sample Input}
+\begin{verbatim}
+5
+8
+10
+3
+11
+1
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+3.0
+
+In this example, a cow launched with power 3 at, say, location 5, will cause
+immediate detonation of  hay bales at positions 3 and 8.  These then explode
+(simultaneously) each with blast radius 2, engulfing bales at positions 1 and
+10, which next explode (simultaneously) with blast radius 1, engulfing the final
+bale at position 11, which finally explodes with blast radius 0.Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=597
+
+\section*{Source}
+USACO JAN16 Contest, Gold Division, Problem ID: 597
+
+\end{document}

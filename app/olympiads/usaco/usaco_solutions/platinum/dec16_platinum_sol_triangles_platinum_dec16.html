@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nathan Pinsker)
+<p>The naive solution for this problem would be to iterate over all possible
+<span class='math'>$\binom{n}{3}$</span> lots, then count the number of points that fall within each lot.
+However, this solution takes <span class='math'>$O(n^4)$</span> time, which is a bit too slow.
+<p>Since <span class='math'>$n$</span> is fairly small, we need only improve this solution by a factor of <span class='math'>$n$</span>
+to get full credit. One way we can do this is by simplifying the last step,
+where we count the number of points contained in each lot. Intuitively, a point
+is contained within a lot if, and only if, it is directly &quot;below&quot; one line
+making up the boundary of the lot and directly &quot;above&quot; another line. More
+specifically, we can think of each lot as being divided up as in the following
+picture:
+<p><figure><img src='fig_triangles_platinum_dec16.png'/><figcaption></figcaption></figure>
+<p>This helps us because the number of points in the green triangle is equal to the
+number of points below the top line, minus the number of points below the bottom
+two lines. Since there are <span class='math'>$O(n^3)$</span> different possible lots but <span class='math'>$O(n^2)$</span>
+possible lines, this suggests a faster solution. For any line that can make up
+one side of a lot, we can precompute the number of points below this line in
+<span class='math'>$O(n^2 \cdot n)$</span> time. We can then iterate over each possible lot as before.
+However, we can now  compute the number of points faster than <span class='math'>$O(n)$</span> per lot: we do so
+by iterating clockwise around the lines that make up the triangle. For each
+line, we either add or subtract the number of points under the line, depending
+on whether the line is a top or bottom edge of the triangle.
+<p>This subprocedure is <span class='math'>$O(1)$</span>, so the second iteration over all lots is <span class='math'>$O(n^3)$</span>
+as well. The algorithm as a whole is therefore also <span class='math'>$O(n^3)$</span>, which is fast
+enough to receive full credit.
+<p>Richard Peng&apos;s solution is below:
+<p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+#include &lt;cstdlib&gt;
+#include &lt;algorithm&gt;
+#include &lt;complex&gt;
+using namespace std;
+
+#define FR(i, a, b) for(int i = (a); i &lt; (b); ++i)
+#define FOR(i, n) FR(i, 0, n)
+#define MP make_pair
+#define A first
+#define B second
+
+typedef long long ll;
+typedef complex&lt;ll&gt; pnt;
+
+const int MAXN = 400;
+
+#define X real
+#define Y imag
+
+pnt lis[MAXN];
+int n;
+int num[MAXN][MAXN];
+int ans[MAXN];
+
+ll cross(pnt a, pnt b) {
+  return imag(conj(a) * b);
+}
+
+pnt getPoint() {
+  int x, y;
+  scanf(&quot;%d%d&quot;, &amp;x, &amp;y);
+  return pnt(x, y);
+}
+
+int below(int i, int j) {
+  return (X(lis[i]) == X(lis[j])) &amp;&amp; (Y(lis[i]) &lt; Y(lis[j]));
+}
+
+int betweenBelow(int i, int j, int x) {
+  if (X(lis[i]) &lt; X(lis[j])) {
+    return X(lis[i]) &lt; X(lis[x])  &amp;&amp; X(lis[x]) &lt; X(lis[j]) &amp;&amp;
+      cross(lis[j] - lis[i], lis[x] - lis[i]) &lt; 0;
+  } else {
+    return X(lis[j]) &lt; X(lis[x])  &amp;&amp; X(lis[x]) &lt; X(lis[i]) &amp;&amp;
+      cross(lis[i] - lis[j], lis[x] - lis[j]) &lt; 0;
+  }
+}
+
+int main() {
+  scanf(&quot;%d&quot;, &amp;n);
+  FOR(i, n) {
+    lis[i] = getPoint();
+  }
+
+  memset(num, 0, sizeof(num));
+  FOR(i, n) {
+    FOR(j, n) if(X(lis[i]) &lt; X(lis[j])){
+      FOR(k, n) if(k != i &amp;&amp; k != j) {
+        if(below(k, i)) num[i][j]++;
+        if(below(k, j)) num[i][j]++;
+        if(betweenBelow(i, j, k)) {
+          num[i][j] += 2;
+        }
+      }  
+      num[j][i] = -num[i][j];
+    }
+  }
+  
+  memset(ans, 0, sizeof(ans));
+  FOR(i, n) FOR(j, i) FOR(k, j) {
+    int temp = abs(num[i][j] + num[j][k] + num[k][i]) / 2;
+    temp -= betweenBelow(i, j, k);
+    temp -= betweenBelow(j, k, i);
+    temp -= betweenBelow(k, i, j);
+    ans[temp]++; 
+  }
+
+  FOR(i, n - 2) {
+    printf(&quot;%d\n&quot;, ans[i]);
+  }
+  return 0;
+}
+</pre>
+<p></body></html>

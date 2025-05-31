@@ -1,0 +1,403 @@
+Solution ID: sol_prob3_gold_open22
+Contest: OPEN22
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Say that
+
+$i$
+
+and
+
+$j$
+
+are related if
+
+$i$
+
+is an ancestor of
+
+$j$
+
+or vice versa. Let
+
+$\texttt{ans}$
+
+denote the minimum possible imbalance.
+
+Part 1:
+
+$l_i=r_i$
+
+Here
+
+$w_i$
+
+is fixed for all
+
+$i$
+
+. To calculate
+
+$\texttt{ans}$
+
+, we can compute for
+every node
+
+$i$
+
+the minimum
+
+$w_j$
+
+and maximum
+
+$w_j$
+
+over all ancestors
+
+$j$
+
+of
+
+$i$
+
+as well as
+
+$j=i$
+
+. This can be done in
+
+$O(N)$
+
+time.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int T, B;
+	cin >> T >> B;
+	while (T--) {
+		int N;
+		cin >> N;
+		vector<int> P(N + 1), L(N + 1), R(N + 1);
+		for (int i = 2; i <= N; ++i) {
+			cin >> P[i];
+		}
+		int ans = 0;
+		vector<pair<int, int>> bounds(N + 1);
+		for (int i = 1; i <= N; ++i) {
+			cin >> L[i] >> R[i];
+			assert(L[i] == R[i]);
+			bounds[i] = {L[i], L[i]};
+			if (i > 1) {
+				bounds[i].first = min(bounds[i].first, bounds[P[i]].first);
+				bounds[i].second = max(bounds[i].second, bounds[P[i]].second);
+			}
+			ans = max(ans, bounds[i].second - bounds[i].first);
+		}
+		cout << ans << "\n";
+		if (B == 1) {
+			for (int i = 1; i <= N; ++i) {
+				if (i > 1) cout << " ";
+				cout << L[i];
+			}
+			cout << "\n";
+		}
+	}
+}
+
+Part 2:
+
+$B=0$
+
+Let's start by lower bounding the answer. If
+
+$i$
+
+and
+
+$j$
+
+are related then the
+answer must be at least
+
+$l_i-r_j$
+
+. Furthermore, for any pair of vertices
+
+$i$
+
+and
+
+$j$
+
+(not necessarily related),
+
+$\frac{l_i-r_j}{2}$
+
+is a lower bound on the
+answer (consider the path
+
+$i\leftrightarrow 1\leftrightarrow j$
+
+).
+
+So we know that
+
+$$\texttt{ans}\ge \max\left(\max_{i,j\text{ related}}(l_i-r_j),\left\lceil\frac{\max_il_i-\min_ir_i}{2}\right\rceil\right).$$
+
+As described in part 3, the
+
+$w_i$
+
+can be chosen in such a way that equality
+holds, so printing the right-hand side of the above inequality is sufficient for
+half credit.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int T, B;
+	cin >> T >> B;
+	while (T--) {
+		int N;
+		cin >> N;
+		vector<int> P(N + 1), L(N + 1), R(N + 1);
+		for (int i = 2; i <= N; ++i) {
+			cin >> P[i];
+		}
+		int ans = 0;
+		vector<pair<int, int>> bounds(N + 1);
+		pair<int, int> all_bounds{INT_MAX, INT_MIN};
+		for (int i = 1; i <= N; ++i) {
+			cin >> L[i] >> R[i];
+			bounds[i] = {R[i], L[i]};
+			all_bounds.first = min(all_bounds.first, bounds[i].first);
+			all_bounds.second = max(all_bounds.second, bounds[i].second);
+			if (i > 1) {
+				bounds[i].first = min(bounds[i].first, bounds[P[i]].first);
+				bounds[i].second = max(bounds[i].second, bounds[P[i]].second);
+			}
+			ans = max(ans, bounds[i].second - bounds[i].first);
+		}
+		ans = max(ans, (all_bounds.second - all_bounds.first + 1) / 2);
+		cout << ans << "\n";
+		if (B == 1) {
+			for (int i = 1; i <= N; ++i) {
+				if (i > 1) cout << " ";
+				cout << L[i];
+			}
+			cout << "\n";
+		}
+	}
+}
+
+Part 3:
+
+$B=1$
+
+Define
+
+$\texttt{minR}=\min_{1\le i\le N}r_i$
+
+,
+
+$\texttt{maxL}=\max_{1\le i\le N}l_i$
+
+, and
+
+$\texttt{mid}=\left\lfloor\frac{\texttt{minR}+\texttt{maxL}}{2}\right\rfloor$
+
+.
+Then setting
+
+$w_i=\max\left(\min\left(\texttt{mid},r_i\right),l_i\right)$
+
+for all
+
+$i$
+
+suffices.
+
+Why does this work? If
+
+$\texttt{minR}\ge \texttt{maxL}$
+
+then the answer is
+
+$0$
+
+.
+Otherwise, observe that
+
+$\left|w_i-\texttt{mid}\right|\le \left\lceil\frac{\texttt{maxL}-\texttt{minR}}{2}\right\rceil$
+
+for all
+
+$i$
+
+. Then for all
+
+$(i,j)$
+
+such that
+
+$i$
+
+and
+
+$j$
+
+are related,
+
+If
+
+$\max(w_i,w_j)\le \texttt{mid}$
+
+, then
+
+$|w_i-w_j|\le \left\lceil\frac{\texttt{maxL}-\texttt{minR}}{2}\right\rceil\le\texttt{ans}$
+
+by the observation.
+
+Similar reasoning applies when
+
+$\min(w_i,w_j)\ge \texttt{mid}$
+
+.
+
+The final case is when
+
+$w_i> \texttt{mid}$
+
+and
+
+$w_j< \texttt{mid}$
+
+. This means that
+
+$w_i=l_i$
+
+and
+
+$w_j=r_j$
+
+, so
+
+$|w_i-w_j|=l_i-r_j\le\texttt{ans}$
+
+.
+
+Surprisingly, the complete solution ends up being only a few lines longer than the solution for part 1.
+
+My code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int T, B;
+	cin >> T >> B;
+	while (T--) {
+		int N;
+		cin >> N;
+		vector<int> P(N + 1), L(N + 1), R(N + 1);
+		for (int i = 2; i <= N; ++i) {
+			cin >> P[i];
+		}
+		int ans = 0;
+		vector<pair<int, int>> bounds(N + 1);
+		pair<int, int> all_bounds{INT_MAX, INT_MIN};
+		for (int i = 1; i <= N; ++i) {
+			cin >> L[i] >> R[i];
+			bounds[i] = {R[i], L[i]};
+			all_bounds.first = min(all_bounds.first, bounds[i].first);
+			all_bounds.second = max(all_bounds.second, bounds[i].second);
+			if (i > 1) {
+				bounds[i].first = min(bounds[i].first, bounds[P[i]].first);
+				bounds[i].second = max(bounds[i].second, bounds[P[i]].second);
+			}
+			ans = max(ans, bounds[i].second - bounds[i].first);
+		}
+		ans = max(ans, (all_bounds.second - all_bounds.first + 1) / 2);
+		int mid = (all_bounds.first + all_bounds.second) / 2;
+		cout << ans << "\n";
+		if (B == 1) {
+			for (int i = 1; i <= N; ++i) {
+				if (i > 1) cout << " ";
+				cout << max(min(mid, R[i]), L[i]);
+			}
+			cout << "\n";
+		}
+	}
+}
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringJoiner;
+import java.util.StringTokenizer;
+ 
+public class BalancingARootedTreeSimpler {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int t = Integer.parseInt(tokenizer.nextToken());
+        boolean needConstruction = tokenizer.nextToken().equals("1");
+        while (t > 0) {
+            --t;
+            tokenizer = new StringTokenizer(in.readLine());
+            int n = Integer.parseInt(tokenizer.nextToken());
+            int[] parent = new int[n + 1];
+            tokenizer = new StringTokenizer(in.readLine());
+            for (int a = 2; a <= n; a++) {
+                parent[a] = Integer.parseInt(tokenizer.nextToken());
+            }
+            int[] l = new int[n + 1];
+            int[] r = new int[n + 1];
+            int minR = Integer.MAX_VALUE;
+            int maxL = 0;
+            for (int a = 1; a <= n; a++) {
+                tokenizer = new StringTokenizer(in.readLine());
+                l[a] = Integer.parseInt(tokenizer.nextToken());
+                r[a] = Integer.parseInt(tokenizer.nextToken());
+                minR = Math.min(minR, r[a]);
+                maxL = Math.max(maxL, l[a]);
+            }
+            int answer = 0;
+            StringJoiner joiner = new StringJoiner(" ");
+            int[] minChoice = new int[n + 1];
+            int[] maxChoice = new int[n + 1];
+            for (int a = 1; a <= n; a++) {
+                int choice = Math.min(r[a], Math.max(l[a], (minR + maxL) / 2));
+                minChoice[a] = a == 1 ? choice : Math.min(minChoice[parent[a]], choice);
+                maxChoice[a] = a == 1 ? choice : Math.max(maxChoice[parent[a]], choice);
+                answer = Math.max(answer, maxChoice[a] - minChoice[a]);
+                joiner.add("" + choice);
+            }
+            System.out.println(answer);
+            if (needConstruction) {
+                System.out.println(joiner);
+            }
+ 
+        }
+    }
+}

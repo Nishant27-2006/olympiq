@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by David Hu)
+<p>Suppose Bessie&apos;s oven ends up taking <span class='math'>$x$</span> units of time to produce a cookie and
+<span class='math'>$y$</span> units of time to produce an oven. Each of the <span class='math'>$N$</span> cows can be viewed as a
+constraint <span class='math'>$a_i \cdot x + b_i \cdot y \leq c_i$</span>.
+<p>Note that for all <span class='math'>$0 \leq w &lt; t_C + t_M - 2$</span>, if is possible to spend <span class='math'>$i$</span>
+moonies and satisfy all the cows, then it is possible to spend <span class='math'>$w + 1$</span> moonies.
+So we can binary search  on the number of moonies Bessie will spend. 
+<p>Suppose we would like to check if it is possible to spend <span class='math'>$w$</span> moonies, where
+<span class='math'>$0\le w\le t_C+t_M-2$</span>. The answer is yes if and only if there exists an integer
+solution <span class='math'>$(x, y)$</span> to the following system of inequalities:
+<p><span class='math'>$1 \leq x \leq t_C$</span>
+<p><span class='math'>$1 \leq y \leq t_M$</span>
+<p><span class='math'>$x + y = t_C + t_M - w$</span>
+<p><span class='math'>$a_i \cdot x + b_i \cdot y \leq c_i$</span> (for all <span class='math'>$i$</span>).
+<p>By combining the last two inequalities, we can obtain that for any <span class='math'>$i$</span>, we must
+have:
+<p><span class='math'>$(a_i-b_i) \cdot x \leq c_i - b_i \cdot (t_C + t_M - w)$</span>
+<p>Dividing through by <span class='math'>$a_i - b_i$</span>, we find that these inequalities are bounds on
+the range of possible values that <span class='math'>$x$</span> can take. It can also be seen that the
+first two inequalities are also bounds on the possible values <span class='math'>$x$</span> can take. So
+we can maintain lower and upper bounds on the possible values of <span class='math'>$x$</span> in our
+binary search and return yes if these bounds produce a nonempty range for the
+possible values of
+<span class='math'>$x$</span>.
+<p>Make sure to handle the case <span class='math'>$a_i = b_i$</span> correctly.
+<p>The overall time complexity is <span class='math'>$O(N \log (t_C + t_M))$</span>.
+<p>My Python code:
+<p><pre class='prettyprint'>
+TC = int(input())
+ 
+for tc in range(TC):
+    _ = input()
+ 
+    N, X, Y = map(int, input().split())
+    
+    A, B, C = [0 for i in range(N)], [0 for i in range(N)], [0 for i in range(N)]
+    
+    for i in range(N):
+        A[i], B[i], C[i] = map(int, input().split())
+    
+    def check(w):
+        #1 &lt;= x &lt;= X
+        #1 &lt;= y &lt;= Y
+        #x + y = X + Y - w
+        #x = X + Y - y - w
+        lx, hx = max(1, X - w), min(X + Y - w - 1, X)
+        for i in range(N):
+            a, b, c = A[i], B[i], C[i]
+            d = X + Y - w
+            #a * x + b * y &lt;= c
+            #x + y = d = (X + Y - w)
+            #-b * x - b * y &lt;= -b * d
+            #(a-b) * x &lt;= c - b * d
+            if (b - a &gt; 0):
+                lx = max(lx, (-c + b * d + (b - a - 1)) // (b - a))
+            elif (a - b &gt; 0):
+                hx = min(hx, (c - b * d) // (a - b))
+            else:
+                if (a * d &gt; c):
+                    return False
+        return (lx &lt;= hx)
+    
+    lo = 0
+    hi = X + Y - 2
+    
+    while(hi &gt; lo):
+        mid = (lo + hi) // 2
+        if (check(mid)):
+            hi = mid
+        else:
+            lo = mid + 1
+    
+    print(lo)
+</pre>
+<p></body></html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Sort the segments by left coordinate, and try placing the segments into a subset
+in this order. The only information we need to store about the collection of
+segments that are members of the subset is the rightmost coordinate in this
+collection.
+<p>For each <span class='math'>$0\le i\le 2N$</span>, <span class='math'>$dp[i]$</span> will store information about collections with
+rightmost coordinate <span class='math'>$i$</span>. Suppose that collection <span class='math'>$c$</span> contains exactly <span class='math'>$a_c$</span>
+segments in this union. Then for each <span class='math'>$0\le j\le K$</span> we&apos;ll store 
+<div class='math'>$$dp[i][j]=\sum_{c}a_c^j.$$</div>
+So <span class='math'>$dp[i][0]$</span> stores the number of collections with rightmost coordinate <span class='math'>$i$</span>, 
+<span class='math'>$dp[i][1]$</span> stores the sum of the number of segments in the union of each
+collection with rightmost coordinate <span class='math'>$i$</span>, and so on. 
+<p>If we add a segment <span class='math'>$[l,r]$</span> to a collection <span class='math'>$c$</span> with rightmost coordinate <span class='math'>$i$</span>,
+<p><ol><li>If <span class='math'>$i&lt;l$</span> then <span class='math'>$a_c$</span> increases by one and the rightmost coordinate becomes
+<span class='math'>$r$</span>.</li><li>Otherwise if <span class='math'>$i&lt;r$</span> then <span class='math'>$a_c$</span> remains unchanged and the rightmost coordinate
+becomes <span class='math'>$r$</span>.</li><li>Otherwise <span class='math'>$a_c$</span> and the rightmost coordinate remain unchanged.</li></ol>
+<p>To account for case 1, we need to find the updated value of <span class='math'>$dp[i]$</span> after adding
+one to each <span class='math'>$a_c$</span>. Call the result <span class='math'>$adv(dp[i]).$</span> By the binomial theorem,
+<div class='math'>$$adv(dp[i])[j]=\sum_c(a_c+1)^j=\sum_{k=0}^j\binom{j}{k}a_c^k=\sum_{k=0}^j\binom{j}{k}dp[i][k].$$</div>
+This update can be performed in <span class='math'>$O(K^2)$</span> time, giving a DP solution that runs in
+<span class='math'>$O(N^2K^2)$</span> or <span class='math'>$O(N^2+NK^2)$</span> time. 
+<p>To receive full credit, use a lazy segment tree that supports point updates,
+range sum queries, and range multiplication updates.
+<p><ol><li>For case 1, add <span class='math'>$adv\left(\sum_{i=0}^{l-1}dp[i]\right)$</span> to <span class='math'>$dp[r]$</span>.</li><li>For case 2, add <span class='math'>$\sum_{i=l}^{r-1}dp[i]$</span> to <span class='math'>$dp[r]$</span>.</li><li>For case 3, multiply <span class='math'>$dp[i]$</span> by two for each <span class='math'>$i&gt;r$</span>.</li></ol>
+<p>After the above operations are performed for each segment, the final answer 
+will be <span class='math'>$\sum_{i=0}^{2N}dp[i][K]$</span>. This can be done in <span class='math'>$O(NK^2+NK\log N)$</span> time;
+the first term is for calculating <span class='math'>$adv()$</span> and the second is for the range
+updates and queries. (In fact, it&apos;s possible to remove the <span class='math'>$NK^2$</span> term, but I won&apos;t describe the
+method here.)
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+#define f first
+#define s second
+
+const int MOD = 1e9+7; 
+
+void setIO(string s) {
+  ios_base::sync_with_stdio(0); cin.tie(0); 
+  freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+  freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+ 
+struct mi {
+  int v; explicit operator int() const { return v; }
+  mi(ll _v) : v(_v%MOD) { v += (v&lt;0)*MOD; }
+  mi() : mi(0) {}
+};
+mi operator+(mi a, mi b) { return mi(a.v+b.v); }
+mi operator-(mi a, mi b) { return mi(a.v-b.v); }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+ 
+vector&lt;pair&lt;int,int&gt;&gt; v;
+mi res;
+int N,K;
+
+typedef array&lt;mi,11&gt; T;
+mi cum[11][11];
+ 
+T adv(T p) {
+  for (int i = K; i &gt;= 0; --i) for (int j = i; j &lt;= K; ++j)
+    cum[i][j] = (i == j ? p[i] : cum[i][j-1]+cum[i+1][j]);
+  T res; for (int i = 0; i &lt;= K; ++i) res[i] = cum[0][i];
+  return res;
+}
+ 
+T seg[1&lt;&lt;18];
+mi lazy[1&lt;&lt;18];
+ 
+vector&lt;int&gt; y = {0};
+ 
+void push(int ind, int L, int R) {
+  if (lazy[ind].v == 1) return;
+  for (int i = 0; i &lt;= K; ++i) seg[ind][i] = seg[ind][i]*lazy[ind];
+  if (L != R) {
+    lazy[2*ind] = lazy[2*ind]*lazy[ind];
+    lazy[2*ind+1] = lazy[2*ind+1]*lazy[ind];
+  }
+  lazy[ind] = 1;
+}
+ 
+void mul(int pos, int ind, int L, int R) {
+  push(ind,L,R);
+  if (pos &gt; R) return;
+  if (pos &lt;= L) {
+    lazy[ind] = 2;
+    push(ind,L,R);
+    return;
+  }
+  int M = (L+R)/2;
+  mul(pos,2*ind,L,M); mul(pos,2*ind+1,M+1,R);
+  for (int i = 0; i &lt;= K; ++i) seg[ind][i] = seg[2*ind][i]+seg[2*ind+1][i];
+}
+ 
+void upd(int pos, const T&amp; val, int ind, int L, int R) {
+  push(ind,L,R);
+  if (pos &lt; L || pos &gt; R) return;
+  for (int i = 0; i &lt;= K; ++i) seg[ind][i] = seg[ind][i]+val[i];
+  if (L == R) return;
+  int M = (L+R)/2;
+  if (pos &lt;= M) upd(pos,val,2*ind,L,M);
+  else upd(pos,val,2*ind+1,M+1,R);
+}
+ 
+void query(int lo, int hi, T&amp; t, int ind, int L, int R) {
+  push(ind,L,R);
+  if (hi &lt; L || lo &gt; R) return;
+  if (lo &lt;= L &amp;&amp; R &lt;= hi) { 
+    for (int i = 0; i &lt;= K; ++i) t[i] = t[i]+seg[ind][i]; 
+    return; 
+  }
+  int M = (L+R)/2;
+  query(lo,hi,t,2*ind,L,M); query(lo,hi,t,2*ind+1,M+1,R);
+}
+ 
+void ad(int a, int b) {
+  auto i1 = lower_bound(begin(y),end(y),a)-begin(y)-1;
+  auto i2 = lower_bound(begin(y),end(y),b)-begin(y);
+  T A = T(); query(0,i1,A,1,0,N); A = adv(A);
+  T B = T(); query(i1+1,i2,B,1,0,N); 
+  for (int i = 0; i &lt;= K; ++i) A[i] = A[i]+B[i];
+  upd(i2,A,1,0,N);
+  mul(i2+1,1,0,N);
+}
+ 
+int main() {
+  setIO(&quot;help&quot;);
+  for (int i = 1; i &lt; (1&lt;&lt;18); ++i) lazy[i] = 1;
+  cin &gt;&gt; N &gt;&gt; K; v.resize(N); 
+  for (auto&amp; t: v) {
+    cin &gt;&gt; t.f &gt;&gt; t.s;
+    y.push_back(t.s);
+  }
+  sort(begin(v),end(v)); sort(begin(y),end(y));
+  T ori = T(); ori[0] = 1;
+  upd(0,ori,1,0,N);
+  for (auto t: v) ad(t.f,t.s);
+  T res = T(); query(0,N,res,1,0,N);
+  cout &lt;&lt; res[K].v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

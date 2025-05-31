@@ -1,0 +1,431 @@
+Solution ID: sol_prob2_bronze_dec21
+Contest: DEC21
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_dec21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi and Nick Wu)
+
+We'll start by defining
+
+$d_i=p_i-t_i$
+
+for all
+
+$i$
+
+in
+
+$1\ldots N$
+
+. Note that
+
+$d_i$
+
+is therefore  the amount the temperature needs to change for cow
+
+$i$
+
+to be
+happy. Now, instead of making
+
+$p_i = t_i$
+
+, we can focus on making
+
+$d_i$
+
+zero.
+Note that, just as we can increase or decrease all values in some subsegment of
+
+$t$
+
+by 1, we can increase or decrease all values in some subsegment of
+
+$d$
+
+by
+
+$1$
+
+.
+
+How do we make
+
+$d$
+
+zero everywhere making as few changes as possible?
+Intuitively, we want to avoid increasing values of
+
+$d$
+
+that are already positive
+or decreasing values of
+
+$d$
+
+that are already negative. We also don't want to
+touch values of
+
+$d$
+
+that are zero.
+
+One strategy that we might try therefore is as follows - assuming that
+
+$d_N$
+
+is
+positive, find the smallest
+
+$j$
+
+such that
+
+$d_j$
+
+through
+
+$d_N$
+
+are all positive,
+and then decrease all those numbers by one. If
+
+$d_N$
+
+is negative, we apply
+similar logic except we increase as many negative numbers as possible by one. In
+other words, find the longest suffix where all numbers are positive or all
+numbers are negative, and then adjust all of them towards zero.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
+public class Solution {
+	public static void main(String[] args) throws IOException {
+		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		ArrayList<Integer> d = new ArrayList<>();
+		{
+			int n = Integer.parseInt(in.readLine());
+			int[] p = new int[n];
+			StringTokenizer st = new StringTokenizer(in.readLine());
+			for(int i = 0; i < n; i++) p[i] = Integer.parseInt(st.nextToken());
+			int[] t = new int[n];
+			st = new StringTokenizer(in.readLine());
+			for(int i = 0; i < n; i++) t[i] = Integer.parseInt(st.nextToken());
+			for(int i = 0; i < n; i++) d.add(p[i] - t[i]);
+		}
+		int ans = 0;
+		while(!d.isEmpty()) {
+			if(d.get(d.size()-1) == 0) {
+				d.remove(d.size()-1);
+				continue;
+			}
+			boolean positive = d.get(d.size()-1) > 0;
+			int amtChange = 1;
+			while(amtChange < d.size()) {
+				if(d.get(d.size()-1-amtChange) == 0) break;
+				if((d.get(d.size()-1-amtChange) > 0) != positive) break;
+				amtChange++;
+			}
+			ans++;
+			for(int i = 0; i < amtChange; i++) {
+				if(d.get(d.size()-1-i) > 0) {
+					d.set(d.size()-1-i, d.get(d.size()-1-i) - 1);
+				}
+				else {
+					d.set(d.size()-1-i, d.get(d.size()-1-i) + 1);	
+				}
+			}
+		}
+		System.out.println(ans);
+	}
+}
+
+Ben's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	int N;
+	cin >> N;
+	vector<int> p(N), t(N), d(N);
+	for (int i = 0; i < N; ++i)
+		cin >> p[i];
+	for (int i = 0; i < N; ++i)
+		cin >> t[i];
+	for (int i = 0; i < N; ++i)
+		d[i] = p[i] - t[i];
+	int first_nonzero = 0, ans = 0;
+	while (true) {
+		while (first_nonzero < N && d[first_nonzero] == 0)
+			++first_nonzero;
+		if (first_nonzero == N)
+			break;
+		int r = first_nonzero;
+		auto sgn = [&](int x) {
+			if (x < 0)
+				return -1;
+			if (x > 0)
+				return 1;
+			return 0;
+		};
+		while (r + 1 < N && sgn(d[r + 1]) == sgn(d[first_nonzero]))
+			++r;
+		for (int i = first_nonzero; i <= r; ++i) {
+			if (d[i] < 0)
+				++d[i];
+			else
+				--d[i];
+		}
+		++ans;
+	}
+	cout << ans << "\n";
+}
+
+These two solutions are
+
+$\mathcal{O}(N \cdot V)$
+
+, where
+
+$V$
+
+is the maximum possible
+value in
+
+$d$
+
+. Under the given bounds though, the answer can be as large as one billion, so we
+need to do better than simulating this step by step.
+
+One thing worth trying that does pass all test cases is, instead of just
+incrementing or decrementing by one, doing as many increments/decrements as
+possible until some element becomes zero.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
+public class Solution {
+	public static void main(String[] args) throws IOException {
+		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		ArrayList<Integer> d = new ArrayList<>();
+		{
+			int n = Integer.parseInt(in.readLine());
+			int[] p = new int[n];
+			StringTokenizer st = new StringTokenizer(in.readLine());
+			for(int i = 0; i < n; i++) p[i] = Integer.parseInt(st.nextToken());
+			int[] t = new int[n];
+			st = new StringTokenizer(in.readLine());
+			for(int i = 0; i < n; i++) t[i] = Integer.parseInt(st.nextToken());
+			for(int i = 0; i < n; i++) d.add(p[i] - t[i]);
+		}
+		int ans = 0;
+		while(!d.isEmpty()) {
+			if(d.get(d.size()-1) == 0) {
+				d.remove(d.size()-1);
+				continue;
+			}
+			boolean positive = d.get(d.size()-1) > 0;
+			int amtChange = 1;
+			int delta = Math.abs(d.get(d.size()-1));
+			while(amtChange < d.size()) {
+				if(d.get(d.size()-1-amtChange) == 0) break;
+				if((d.get(d.size()-1-amtChange) > 0) != positive) break;
+				delta = Math.min(delta, Math.abs(d.get(d.size()-1-amtChange)));
+				amtChange++;
+			}
+			ans += delta;
+			for(int i = 0; i < amtChange; i++) {
+				if(d.get(d.size()-1-i) > 0) {
+					d.set(d.size()-1-i, d.get(d.size()-1-i) - delta);
+				}
+				else {
+					d.set(d.size()-1-i, d.get(d.size()-1-i) + delta);	
+				}
+			}
+		}
+		System.out.println(ans);
+	}
+}
+
+This code also runs in
+
+$\mathcal{O}(N \cdot V)$
+
+, but it does significantly better
+on test cases where the answer is large compared to the first two solutions.
+
+We can do provably better though - in particular, we can solve this problem
+in
+
+$\mathcal{O}(N)$
+
+.
+
+We'll add a zero to the beginning and end of
+
+$d$
+
+- specifically, we'll define
+
+$d_0 = d_{N+1} = 0$
+
+. This does not change the answer, as we never need to change
+any zeroes.  We'll also define
+
+$e_i = |d_{i+1} - d_i|$
+
+- that is, the difference
+between adjacent values of
+
+$d_i$
+
+. Why is
+
+$e_i$
+
+important? If
+
+$e_i$
+
+is zero, then
+
+$d_i$
+
+and
+
+$d_{i+1}$
+
+are the same and any operation we do to
+
+$d_i$
+
+should also be
+done to
+
+$d_{i+1}$
+
+. However, if
+
+$e_i$
+
+is large, then the two values are very
+different, and there must be at least
+
+$e_i$
+
+operations that take place on one of
+
+$d_i$
+
+and
+
+$d_{i+1}$
+
+but not the other.
+
+More specifically, when we increase the range of values
+
+$d_i$
+
+through
+
+$d_j$
+
+,
+note that
+
+$e_{i-1}$
+
+and
+
+$e_j$
+
+change by one each, and all other values in
+
+$e$
+
+remain unchanged. This motivates the following claim.
+
+Claim:
+
+The answer is
+
+$\frac{\sum_{i=0}^N e_i}{2}$
+
+, or half the sum of all
+the values in
+
+$e$
+
+.
+
+Proof:
+
+The sum of all values of
+
+$e$
+
+equals zero if and only if all
+
+$d_i$
+
+are zero. Furthermore, every command changes this quantity by at most
+
+$2$
+
+. This
+shows that the answer is at least
+
+$\frac{\sum_{i=0}^N e_i}{2}$
+
+.
+
+To show that this answer is attainable, any number of greedy strategies suffice.
+One valid strategy is the one we had above - find the longest suffix of all
+positive or all negative integers, and adjust them towards zero by one.
+
+We can evaluate the formula mentioned above in
+
+$\mathcal O(N)$
+
+time. Ben's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	int N;
+	cin >> N;
+	vector<int> p(N + 1), t(N + 1), d(N + 2);
+	for (int i = 1; i <= N; ++i)
+		cin >> p[i];
+	for (int i = 1; i <= N; ++i)
+		cin >> t[i];
+	for (int i = 1; i <= N; ++i)
+		d[i] = p[i] - t[i];
+	int ans = 0;
+	for (int i = 0; i <= N; ++i)
+		ans += abs(d[i] - d[i + 1]);
+	cout << ans / 2;
+}
+
+In Python:
+
+N = int(input())
+P = list(map(int,input().split()))
+T = list(map(int,input().split()))
+ 
+difs = [x-y for x,y in zip(P,T)]
+print(sum(abs(x-y) for x,y in zip(difs+[0],[0]+difs))//2)

@@ -1,0 +1,148 @@
+Solution ID: sol_breedflip_bronze_feb20
+Contest: FEB20
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_breedflip_bronze_feb20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Jonathan Paulson, Benjamin Qi)
+
+This is a greedy problem. There's not an obvious brute force to try; there are
+too many ways to flip different substrings in different orders. But if you just
+play around with a few examples, it's pretty easy to solve them by hand. To
+solve the problem, you need to guess a rule for how to solve them, convince
+yourself that it's right, and then code it. Greedy problems can be dangerous,
+because it can be easy to convince yourself something is right even if it
+actually doesn't work. The reward is that they're usually easier to code.
+
+In this case, I first simplified the problem by observing that it doesn't matter
+what order you flip substrings in. All that matters is how many times each cow
+gets flipped. So let's assume we do the flips from left to right (sorted by the
+first cow they flip).
+
+Now imagine scanning through the string from left to right. Whenever you find a
+mismatch, you have to fix it right now (because we just said we won't go
+backwards). So we definitely have to start a flip at this cow. Where should we
+end the flip? We should definitely keep going as long as there's mismatches,
+since it's free to fix these in the same flip. But once we get to a
+currently-matching cow, we should stop. Why? Because if we flip that cow, we'll
+immediately need to flip it again on the very next move. And any useful flip we
+wanted to do as part of this move, we could've just done as part of that move.
+So it never saves us any moves to keep going.
+
+This gives us a pretty simple solution; just flip all the ranges of mismatching
+cows. We can count how many ranges there are with one pass through the strings -
+just count the number of positions that *start* a mismatch.
+
+Video Solution
+
+C++ code (from Jonathan Paulson):
+
+#include <iostream>
+#include <string>
+using namespace std;
+using ll = long long;
+
+int main() {
+  freopen("breedflip.in", "r", stdin);
+  freopen("breedflip.out", "w", stdout);
+  ll n;
+  cin >> n;
+  string A;
+  string B;
+  cin >> A >> B;
+  ll ans = 0;
+  bool mismatched = false;
+  for(ll i=0; i<n; i++) {
+    if(A[i] != B[i]) {
+      if(!mismatched) {
+        mismatched = true;
+        ans++;
+      }
+    } else {
+      mismatched = false;
+    }
+  }
+  cout << ans << endl;
+}
+
+Java code (from Nick Wu). The Java code follows a different rule than the one
+described above. It works just as well though. See if you can work out why.
+
+import java.io.*;
+import java.util.*;
+public class Solution {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader("breedflip.in"));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("breedflip.out")));
+    int n = Integer.parseInt(br.readLine());
+    char[] a = br.readLine().toCharArray();
+    char[] b = br.readLine().toCharArray();
+    int ret = 0;
+    while(!new String(a).equals(new String(b))) {
+      ret++;
+      int lhs = 0;
+      while(a[lhs] == b[lhs]) lhs++;
+      int rhs = n-1;
+      while(a[rhs] == b[rhs]) rhs--;
+      for(int i = lhs; i <= rhs; i++) {
+        if(a[i] == 'G') a[i] = 'H';
+        else a[i] = 'G';
+      }
+    }
+    pw.println(ret);
+    pw.close();
+  }
+}
+
+Another way to view the problem:
+
+Place additional H's before and after both strings. Now define
+
+$$A_{dif}[i]=\begin{cases}
+1 & A[i] \neq A[i+1] \\
+0 & \text{otherwise} \\
+\end{cases}$$
+
+and define
+
+$B_{dif}$
+
+similarly. We want to convert
+
+$B_{dif}$
+
+to
+
+$A_{dif}$
+
+, and
+each modification to
+
+$B$
+
+changes exactly two elements of
+
+$B_{dif}$
+
+. Thus, the
+answer is just the number of indices
+
+$i$
+
+such that
+
+$A_{dif}[i]\neq B_{dif}[i]$
+
+divided by two (as the numbers of ones in
+
+$A_{dif}$
+
+and
+
+$B_{dif}$
+
+are always
+even, this is guaranteed to be an integer).

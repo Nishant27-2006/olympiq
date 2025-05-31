@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>This problem is relatively straightforward -- we need to choose between three
+alternatives:
+<p>- If Farmer John drives directly from <span class='math'>$a$</span> to <span class='math'>$b$</span> without teleporting, he travels a distance of <span class='math'>$|a - b|$</span>.
+<p>- Farmer John could travel from <span class='math'>$a$</span> to <span class='math'>$x$</span>, teleport to <span class='math'>$y$</span>, then travel to <span class='math'>$b$</span>, for a distance of <span class='math'>$|a-x| + |b-y|$</span>.
+<p>- Farmer John could travel from <span class='math'>$a$</span> to <span class='math'>$y$</span>, teleport to <span class='math'>$x$</span>, then travel to <span class='math'>$b$</span>, for a distance of <span class='math'>$|a-y| + |b-x|$</span>.
+<p>Taking the smallest of these three yields the answer.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+int main(void)
+{
+  int a, b, X[8], Y[8], x, y;
+  cin &gt;&gt; a &gt;&gt; b;
+  cin &gt;&gt; x &gt;&gt; y;
+  int answer = abs(a-b); // no teleport
+  answer = min(answer, abs(a-x) + abs(b-y));
+  answer = min(answer, abs(a-y) + abs(b-x));
+  cout &lt;&lt; answer &lt;&lt; "\n";
+  return 0;
+}
+</pre>
+</body></html>
+
+

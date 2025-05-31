@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><em>Note:</em> I used the first sample case as a problem in a math competition a
+while ago.
+<p>First, add one to <span class='math'>$K$</span> and change <span class='math'>$\le$</span> to <span class='math'>$&lt;$</span>. Then define <span class='math'>$P$</span> to be the
+smallest power of two greater than <span class='math'>$K$</span>. Every triangle must satisfy 
+<div class='math'>$$\left\lfloor \frac{x}{P}\right\rfloor=\left\lfloor \frac{y}{P}\right\rfloor=\left\lfloor \frac{z}{P}\right\rfloor.$$</div>
+<p><strong>Case 1:</strong>
+<span class='math'>$\left\lfloor \frac{x}{P/2}\right\rfloor=\left\lfloor \frac{y}{P/2}\right\rfloor=\left\lfloor \frac{z}{P/2}\right\rfloor$</span>
+<p>Then <span class='math'>$x$</span>, <span class='math'>$y$</span>, and <span class='math'>$z$</span> definitely form a triangle. Accounting for this case
+alone is sufficient for test cases 5 and 6.
+<p><strong>Case 2:</strong> <span class='math'>$x,y,z$</span> form a triangle but the condition
+<span class='math'>$\left\lfloor \frac{x}{P/2}\right\rfloor=\left\lfloor \frac{y}{P/2}\right\rfloor=\left\lfloor \frac{z}{P/2}\right\rfloor$</span>
+is not satisfied. WLOG assume that
+<span class='math'>$\left\lfloor \frac{x}{P/2}\right\rfloor&lt;\left\lfloor \frac{y}{P/2}\right\rfloor=\left\lfloor \frac{z}{P/2}\right\rfloor$</span>.
+Clearly <span class='math'>$y\oplus z&lt;K$</span> holds, so we only need to check that both <span class='math'>$x\oplus y&lt;K$</span>
+and <span class='math'>$x\oplus z&lt;K$</span> hold. 
+<p>So for all <span class='math'>$t\ge 0$</span> and each <span class='math'>$x\in [Pt,Pt+P/2)$</span>, we must add
+<span class='math'>$\binom{\{y:y\in [Pt+P/2,Pt+P)\text{ and }x\oplus y&lt;K\}}{2}$</span> to the answer. This
+is what the recursive function <span class='math'>$\texttt{add_to_answer}$</span> in my code below
+accounts for (read it for more details).
+<p>The number of times <span class='math'>$\texttt{add_to_answer}$</span> is called and the overall running
+time are <span class='math'>$\mathcal{O}(N\log_2K)$</span>. <span class='math'>$\mathcal{O}(N\cdot (\log_2 K)^2)$</span> or 
+<span class='math'>$\mathcal{O}(N\cdot (\log_2 K)^3)$</span> solutions with reasonable constant factors
+should also receive full credit.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+const int MOD = 1e9+7; // 998244353;
+
+template&lt;class T&gt; bool ckmin(T&amp; a, const T&amp; b) {
+	return b &lt; a ? a = b, 1 : 0; } // set a = min(a,b)
+template&lt;class T&gt; bool ckmax(T&amp; a, const T&amp; b) {
+	return a &lt; b ? a = b, 1 : 0; }
+
+/**
+ * Description: modular arithmetic operations
+ * Source:
+	* KACTL
+	* https://codeforces.com/blog/entry/63903
+	* https://codeforces.com/contest/1261/submission/65632855 (tourist)
+	* https://codeforces.com/contest/1264/submission/66344993 (ksun)
+	* also see https://github.com/ecnerwala/cp-book/blob/master/src/modnum.hpp (ecnerwal)
+ * Verification:
+	* https://open.kattis.com/problems/modulararithmetic
+ */
+
+template&lt;int MOD, int RT&gt; struct mint {
+	static const int mod = MOD;
+	int v; explicit operator int() const { return v; } // explicit -&gt; don&apos;t silently convert to int
+	mint() { v = 0; }
+	mint(long long _v) { v = int((-MOD &lt; _v &amp;&amp; _v &lt; MOD) ? _v : _v % MOD);
+		if (v &lt; 0) v += MOD; }
+	friend bool operator==(const mint&amp; a, const mint&amp; b) {
+		return a.v == b.v; }
+	friend bool operator!=(const mint&amp; a, const mint&amp; b) {
+		return !(a == b); }
+	friend bool operator&lt;(const mint&amp; a, const mint&amp; b) {
+		return a.v &lt; b.v; }
+	friend string to_string(mint a) { return to_string(a.v); }
+
+	mint&amp; operator+=(const mint&amp; m) {
+		if ((v += m.v) &gt;= MOD) v -= MOD;
+		return *this; }
+	mint&amp; operator-=(const mint&amp; m) {
+		if ((v -= m.v) &lt; 0) v += MOD;
+		return *this; }
+	mint&amp; operator*=(const mint&amp; m) {
+		v = int((long long)v*m.v%MOD); return *this; }
+	mint&amp; operator/=(const mint&amp; m) { return (*this) *= inv(m); }
+	friend mint pow(mint a, long long p) {
+		mint ans = 1; assert(p &gt;= 0);
+		for (; p; p /= 2, a *= a) if (p&amp;1) ans *= a;
+		return ans; }
+	friend mint inv(const mint&amp; a) { assert(a.v != 0);
+		return pow(a,MOD-2); }
+
+	mint operator-() const { return mint(-v); }
+	mint&amp; operator++() { return *this += 1; }
+	mint&amp; operator--() { return *this -= 1; }
+	friend mint operator+(mint a, const mint&amp; b) { return a += b; }
+	friend mint operator-(mint a, const mint&amp; b) { return a -= b; }
+	friend mint operator*(mint a, const mint&amp; b) { return a *= b; }
+	friend mint operator/(mint a, const mint&amp; b) { return a /= b; }
+};
+
+vector&lt;vector&lt;mint&lt;MOD,5&gt; &gt; &gt; scmb; // small combinations, 5 is primitive root for both common mods
+void genComb(int SZ) {
+	scmb.assign(SZ,vector&lt;mint&lt;MOD,5&gt; &gt; (SZ)); scmb[0][0] = 1;
+	for(int i=1; i&lt;SZ; ++i) for(int j = 0; j&lt;i+1; ++j)
+		scmb[i][j] = scmb[i-1][j]+(j?scmb[i-1][j-1]:0);
+}
+
+int N,K,P = 1;
+
+mint&lt;MOD,5&gt; i2 = mint&lt;MOD,5&gt; (1)/2, i6 = mint&lt;MOD,5&gt; (1)/6;
+mint&lt;MOD,5&gt; c2(mint&lt;MOD,5&gt; x) { return mint&lt;MOD,5&gt; ((long long)x.v*(x.v-1)/2); }
+mint&lt;MOD,5&gt; c3(mint&lt;MOD,5&gt; x) { return x*(x-1)*(x-2)*i6; }
+
+mint&lt;MOD,5&gt; ans = 0;
+
+int total_length(const vector&lt;pair&lt;int,int&gt; &gt;&amp; v) { // total length of intervals
+	int len = 0; for (auto&amp; t: v) len += t.second-t.first+1;
+	return len;
+}
+
+// a and b are sets of intervals in [0,block)
+// for each x in a, we want to add the following quantity to the answer:
+	// \binom{cur+size({y | y in b and x^y &lt; (block-1)&amp;K})}{2}
+
+void add_to_answer(const vector&lt;pair&lt;int,int&gt; &gt;&amp; a, const vector&lt;pair&lt;int,int&gt; &gt;&amp; b, int block, mint&lt;MOD,5&gt; cur) {
+	// base cases
+	if (!int((a).size())) return;
+	if (!int((b).size())) {
+		ans += total_length(a)*c2(cur);
+		return;
+	}
+	vector&lt;pair&lt;int,int&gt; &gt; des{{0,block-1}};
+	if (b == des) { // b = [0,block)
+		cur += (block-1)&amp;K;
+		ans += total_length(a)*c2(cur);
+		return;
+	}
+	// otherwise recurse
+	vector&lt;pair&lt;int,int&gt; &gt; A[2], B[2];
+	auto ad = [&amp;](vector&lt;pair&lt;int,int&gt; &gt;&amp; v, pair&lt;int, int&gt; p) {
+		ckmax(p.first,0), ckmin(p.second,block/2-1);
+		if (p.first &gt; p.second) return;
+		v.push_back(p);
+	};
+	for (auto&amp; t: a) ad(A[0],t), ad(A[1],{t.first-block/2,t.second-block/2});
+	for (auto&amp; t: b) ad(B[0],t), ad(B[1],{t.first-block/2,t.second-block/2});
+	if (K&amp;(block/2)) {
+		for(int i=0; i&lt;2; ++i) add_to_answer(A[i],B[i^1],block/2,cur+total_length(B[i]));
+	} else {
+		for(int i=0; i&lt;2; ++i) add_to_answer(A[i],B[i],block/2,cur);
+	}
+}
+
+void deal(vector&lt;pair&lt;int,int&gt; &gt; v) { // [0,P)
+	int P2 = P/2;
+	vector&lt;pair&lt;int,int&gt; &gt; tot[2];
+	for (auto&amp; t: v) {
+		if (t.first/P2 &lt; t.second/P2) {
+			tot[0].push_back({t.first,P2-1});
+			tot[1].push_back({0,t.second-P2});
+		} else {
+			tot[t.first/P2].push_back({t.first%P2,t.second%P2});
+		}
+	}
+	for(int i=0; i&lt;2; ++i) {
+		ans += c3(total_length(tot[i])); // case 1
+		add_to_answer(tot[i],tot[i^1],P2,0); // case 2
+	}
+}
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	cin &gt;&gt; N &gt;&gt; K;
+	++ K; while (P &lt;= K) P *= 2; // P &gt; K
+	K = K-P/2; assert(0 &lt;= K &amp;&amp; K &lt; P/2);
+	mint&lt;MOD,5&gt; sing = P*c2(K)+2*c3(P/2); // answer for interval covering [0,P)
+	map&lt;int,vector&lt;pair&lt;int,int&gt; &gt; &gt; todo;
+	for(int i=0; i&lt;N; ++i) {
+		int L,R; cin &gt;&gt; L &gt;&gt; R;
+		int LL = L/P, RR = R/P;
+		if (LL != RR) {
+			ans += (RR-LL-1)*sing;
+			todo[LL].push_back({L%P,P-1});
+			todo[RR].push_back({0,R%P});
+		} else {
+			todo[LL].push_back({L%P,R%P});
+		}
+	}
+	for (auto&amp; t: todo) deal(t.second);
+	cout &lt;&lt; to_string(ans) &lt;&lt; endl;
+}
+
+</pre>
+<p>A similar approach (with the same time complexity) involves writing a modified
+bitwise trie that supports  the following operations on an array <span class='math'>$a[\cdot]$</span>
+(where all additions come before all queries, although it is possible to support
+interleaved additions and queries).
+<p><ul><li><span class='math'>$\texttt{add}(x,y)$</span>: For each <span class='math'>$i\in [0,x]$</span> and <span class='math'>$j\in [0,K)$</span>, add <span class='math'>$y$</span> to
+<span class='math'>$a[i\oplus j]$</span>.</li><li><span class='math'>$\texttt{query}(x)$</span>: Output <span class='math'>$\sum_{i=0}^{x}\binom{a_i}{2}$</span>.</li></ul>
+<p></body></html>

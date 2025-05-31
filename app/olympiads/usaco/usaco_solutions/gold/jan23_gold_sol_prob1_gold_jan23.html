@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Andi Qu)
+<p>A natural data structure to represent the string <span class='math'>$S$</span> is a binary tree where each
+leaf node contains an individual character and an operation involves replacing
+some leaf nodes with subtrees. For instance, the tree corresponding to the
+example input would evolve like so:
+<p><figure><img src='fig1_fr_gold_jan23.png' width=50%/><figcaption></figcaption></figure>
+<p>This data structure is helpful for printing out the answer because we can easily
+and efficiently prune large branches off the tree until we&apos;re only left with
+what we want. We can do this by storing the size of each subtree in its root
+node.
+<p>However, the final string may be upwards of <span class='math'>$2^{100000}$</span> characters long, so
+constructing the tree explicitly is out of the question. It helps to take a step
+back and ask, how can the string get so long? In this case, <span class='math'>$S$</span> gets long when
+it contains many occurrences of one letter that get replaced with a longer
+string <span class='math'>$s$</span>. This results in <span class='math'>$s$</span> appearing many times in <span class='math'>$S$</span> and, as a result,
+many identical subtrees being appended to the tree.
+<p>Storing all of these identical subtrees explicitly would be extremely
+inefficient; a better idea would be to store only one instance of the subtree
+and then replace the affected leaves with pointers to that instance. We can
+illustrate this using the example input again:
+<p><figure><img src='fig2_fr_gold_jan23.png' width=50%/><figcaption></figcaption></figure>
+<p>This solves the problem of fitting everything into the available memory, but we
+still have another problem to deal with. Iterating through each occurrence of
+some letter in <span class='math'>$S$</span> and pointing each to the new subtree is also quite
+inefficient and difficult to implement.
+<p>To address this problem, we can try to construct the final tree from the leaves
+up. To do this, we must iterate through the operations in reverse order, as
+strange as that may seem. Instead of starting with a single tree representing
+the string &quot;<span class='math'>$\texttt{a}$</span>&quot;, we store <span class='math'>$26$</span> trees. The <span class='math'>$i$</span>-th tree represents the
+final string if we started with only the <span class='math'>$i$</span>-th lowercase character. This allows
+us to merge large trees together efficiently when processing each operation.
+<p>Using these two ideas, we can construct an efficient, linear-time solution. The
+analysis of the runtime is as follows:
+<p>Constructing all the trees can be done in linear time because merging two trees
+happens in constant time, and we merge two trees each time we process a single
+character in the input. Let <span class='math'>$M = r - l + 1$</span> and <span class='math'>$N$</span> be the number of operations.
+When we traverse the binary tree, there are three categories of nodes we
+encounter:
+<ol><li>Nodes whose entire subtree lies in <span class='math'>$S_{l\dots r}$</span>.</li><li>Nodes whose
+subtree partially contains <span class='math'>$S_{l\dots r}$</span>.</li><li>Nodes whose subtree doesn&apos;t
+contain any of <span class='math'>$S_{l\dots r}$</span>.</li></ol>
+The number of nodes in a binary tree is equal to twice the number of leaves
+minus 1. This means the union of the subtrees of nodes in the first category
+contains at most <span class='math'>$2M - 1$</span> nodes. The contribution from those nodes is then
+<span class='math'>$\mathcal O(M)$</span>. There are at most 2 nodes in the second category at each depth
+of the tree, and the tree has depth <span class='math'>$\mathcal O(N)$</span>. Similarly, there are at
+most 2 nodes in the third category at each depth of the tree. The contribution
+from those nodes is then <span class='math'>$\mathcal O(N)$</span>. The overall runtime is, therefore,
+<span class='math'>$\mathcal O(N + M)$</span>.
+<p>To prevent integer overflow in languages like C++ and Java, we need to
+cap subtree sizes at <span class='math'>$10^{18}$</span>. This works because we never care about the
+contents of <span class='math'>$S$</span> beyond the <span class='math'>$10^{18}$</span>-th character.
+<p>My C++ code:
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;utility&gt;
+typedef long long ll;
+using namespace std;
+
+const ll INF = 1e18;
+
+struct Node {
+    char value;
+    ll size;
+    Node *l, *r;
+
+    void print_substring(ll start, ll end) {
+        start = max(start, 1ll);
+        end = min(end, size);
+        if (start &gt; end) {
+            return;
+        }
+        if (value != &apos;.&apos;) {
+            cout &lt;&lt; value;
+        } else {
+            l-&gt;print_substring(start, end);
+            r-&gt;print_substring(start - l-&gt;size, end - l-&gt;size);
+        }
+    }
+};
+
+Node* current[26];
+pair&lt;char, string&gt; operations[200000];
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    ll l, r;
+    int n;
+    cin &gt;&gt; l &gt;&gt; r &gt;&gt; n;
+    for (int i = n - 1; i &gt;= 0; i--) {
+        cin &gt;&gt; operations[i].first &gt;&gt; operations[i].second;
+    }
+
+    for (char c = &apos;a&apos;; c &lt;= &apos;z&apos;; c++) {
+        current[c - &apos;a&apos;] = new Node{c, 1};
+    }
+    for (int i = 0; i &lt; n; i++) {
+        Node* result = nullptr;
+        for (char c : operations[i].second) {
+            Node* to_merge = current[c - &apos;a&apos;];
+            if (result == nullptr) {
+                result = to_merge;
+            } else {
+                result = new Node{
+                    &apos;.&apos;,
+                    min(INF, result-&gt;size + to_merge-&gt;size),
+                    result,
+                    to_merge
+                };
+            }
+        }
+        current[operations[i].first - &apos;a&apos;] = result;
+    }
+
+    current[0]-&gt;print_substring(l, r);
+    cout &lt;&lt; &apos;\n&apos;;
+    return 0;
+}
+</pre>
+<p>Note that it&apos;s very important that leaf nodes only contain individual letters
+and not empty strings. Changing the one line
+<p><pre class='prettyprint'>
+Node* result = nullptr;
+</pre>
+<p>to
+<p><pre class='prettyprint'>
+Node* result = new Node();
+</pre>
+<p>results in an <span class='math'>$\mathcal O(NM)$</span> solution instead because the empty string gets
+repeated many times in <span class='math'>$S$</span> but doesn&apos;t count toward its length.
+<p>Danny Mittal&apos;s Java code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.StringTokenizer;
+ 
+public class FindAndReplace {
+    public static final long MAXVAL = 1000000000000000000L;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        long l = Long.parseLong(tokenizer.nextToken());
+        long r = Long.parseLong(tokenizer.nextToken());
+        int amtOperations = Integer.parseInt(tokenizer.nextToken());
+        List&lt;Operation&gt; operations = new ArrayList&lt;&gt;();
+        for (; amtOperations &gt; 0; amtOperations--) {
+            tokenizer = new StringTokenizer(in.readLine());
+            char before = tokenizer.nextToken().charAt(0);
+            char[] after = tokenizer.nextToken().toCharArray();
+            operations.add(new Operation(before, after));
+        }
+ 
+        BigString[] currs = new BigString[26];
+        for (char chara = &apos;a&apos;; chara &lt;= &apos;z&apos;; chara++) {
+            currs[chara - &apos;a&apos;] = new BigString(true, chara, null, 1);
+        }
+        Collections.reverse(operations);
+        for (Operation operation : operations) {
+            if (operation.after.length == 1) {
+                currs[operation.before - &apos;a&apos;] = currs[operation.after[0] - &apos;a&apos;];
+            } else {
+                BigString[] elements = new BigString[operation.after.length];
+                long length = 0;
+                for (int j = 0; j &lt; elements.length; j++) {
+                    elements[j] = currs[operation.after[j] - &apos;a&apos;];
+                    length += elements[j].length;
+                    length = Math.min(length, MAXVAL);
+                }
+                currs[operation.before - &apos;a&apos;] = new BigString(false, &apos;\0&apos;, elements, length);
+            }
+        }
+ 
+        StringBuilder out = new StringBuilder();
+        currs[0].append(l, r, out);
+        System.out.println(out);
+    }
+ 
+    static class Operation {
+        final char before;
+        final char[] after;
+ 
+        Operation(char before, char[] after) {
+            this.before = before;
+            this.after = after;
+        }
+    }
+ 
+    static class BigString {
+        final boolean isSingleton;
+        final char chara;
+        final BigString[] elements;
+        final long length;
+ 
+        BigString(boolean isSingleton, char chara, BigString[] elements, long length) {
+            this.isSingleton = isSingleton;
+            this.chara = chara;
+            this.elements = elements;
+            this.length = length;
+        }
+ 
+        void append(long from, long to, StringBuilder builder) {
+            from = Math.max(from, 1);
+            to = Math.min(to, length);
+            if (from &lt;= to) {
+                if (isSingleton) {
+                    builder.append(chara);
+                } else {
+                    long curr = 0;
+                    for (BigString element : elements) {
+                        element.append(from - curr, to - curr, builder);
+                        curr += element.length;
+                        curr = Math.min(curr, MAXVAL);
+                    }
+                }
+            }
+        }
+    }
+}
+</pre>
+</body></html>

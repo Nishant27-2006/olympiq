@@ -1,0 +1,692 @@
+Solution ID: sol_prob2_platinum_open25
+Contest: OPEN25
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_open25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Suhas Nagar)
+
+In order for the final array to be equivalent to the result of sorting the first
+array, we know that there are two implicit conditions that must be true.
+
+The final array must be in sorted order
+
+The elements in the final
+array must be the same as the elements in the starting array
+
+The first condition is guaranteed regardless of the specific values. If this
+were not true, this  would imply that at the end of the lazy sort process, there
+exists some index
+
+$i < N-1$
+
+where
+
+$a_i > a_{i+1}$
+
+, but if this were true, the
+lazy sort process would still continue forming a contradiction.
+
+Thus the second condition is the only necessary one, so we need to determine how
+this condition restricts our array. Suppose a cow holding
+
+$A$
+
+boxes hands a box
+to a cow with
+
+$B$
+
+boxes during the lazy sort process. There are two cases for
+what can happen.
+
+Case 1:
+
+$B = A-1$
+
+:
+
+In this case, the transaction can be viewed as a
+swap, meaning that the elements of the array after this swap will be the same as
+it was before, so we can call this type of transaction idempotent.
+
+Case 2:
+
+$B < A-1$
+
+:
+
+In this case, the value
+
+$A$
+
+becomes
+
+$A-1 \neq B$
+
+and
+the value
+
+$B$
+
+becomes
+
+$B+1 \neq A$
+
+. Since we have "lost" an occurrence of
+
+$A$
+
+,
+we must recover this value. The only way to recover this is to have a cow with
+value
+
+$A-1$
+
+be donated to by a cow
+
+$j$
+
+with value
+
+$a_j \geq A+1$
+
+(since the
+transaction must not be idempotent) or to have a cow with value
+
+$A+1$
+
+donate to
+another cow
+
+$j$
+
+with value
+
+$a_j \leq A-1$
+
+. In other words, to recover
+
+$A$
+
+we
+must "lose" an occurrence of some value larger than
+
+$A$
+
+.  Inductively, we will
+reach a point where there is no larger to value to recover the current one. This
+means that if this case ever arises, the values in our array cannot be
+preserved.
+
+More formally, a value can only be lost if at some point,
+
+$a_i = k$
+
+and
+
+$a_{i+1} \leq k-2$
+
+.  This leads us to the condition that for all
+
+$j > i$
+
+,
+
+$a_j \geq a_i-1$
+
+.
+
+This condition also gives us a tight bound on the values that we can fill the
+array with. Since the last element of our sequence is constrained to
+
+$v_i$
+
+, any
+element
+
+$a_j$
+
+prior where
+
+$j < i$
+
+must satisfy
+
+$a_j \leq v_i+1$
+
+.
+
+Subtasks 1 and 2 (
+
+$N \le 100$
+
+and
+
+$v_i \leq 10^6$
+
+):
+
+For these subtasks, we can run dynamic programming. We can let
+
+$dp[i][v]$
+
+be the
+number of ways to construct a sequence of length
+
+$i$
+
+where the maximum element
+was
+
+$v$
+
+.
+
+For a given state
+
+$dp[i][v]$
+
+, there are two ways to transition to
+
+$dp[i+1][v]$
+
+(by placing
+
+$v-1$
+
+or
+
+$v$
+
+at the next spot). Alternatively, we can place any
+value
+
+$k > v$
+
+to transition to
+
+$dp[i+1][k]$
+
+. Here, we can treat the values that
+Farmer John remembers as forced transitions. This is sufficient for subtask
+
+$1$
+
+as our time complexity is
+
+$O(N(\max v_i)^2)$
+
+.
+
+To improve this to subtask
+
+$2$
+
+, we can use prefix sums to reduce the time
+complexity to
+
+$O(N\max v_i )$
+
+.
+
+Full Solution:
+
+The full credit solution will be described below, where subtasks award partial
+credit based on how accelerated certain parts of the solution are. These will be
+clearly indicated.
+
+Suppose we were only given the start and end values (
+
+$Q = 2$
+
+) and we wanted to
+count the  number of ways to fill in the values in between. When we built the
+array in subtask 1, we saw that if our maximum value placed so far was
+
+$a_i$
+
+,
+every future element
+
+$a_j$
+
+where
+
+$j > i$
+
+either satisfies
+
+$a_j \geq a_i$
+
+or
+
+$a_j = a_i-1$
+
+. In other words, if
+
+$a_j$
+
+is not greater than or equal to
+
+$a_i$
+
+,
+its value is deterministic from the previous elements.
+
+This leads us to the observation that we need to count the number of ways to
+place some non-decreasing subsequence in our empty spaces, and the rest of the
+elements will be filled in deterministically based on the placed elements. This
+forms a bijection, since we can take any sequence that works, eliminate the
+elements that are not prefix maximums, and we are left with a unique
+non-decreasing subsequence.
+
+Suppose we have
+
+$N$
+
+empty spots and we want to use values from
+
+$1$
+
+to
+
+$V$
+
+. To
+compute the number of non-decreasing subsequences of length
+
+$k$
+
+which we can
+denote as
+
+$NDS_k$
+
+, we can use stars and bars. If we have
+
+$k$
+
+stars and
+
+$V-1$
+
+bars, we can determine what numbers to use in our sequence, and there is a
+unique ordering that is non-decreasing, so
+
+$NDS_k = {k+V-1\choose k}$
+
+.  This
+means that we can count the total number of ways to place all subsequences in
+our empty spaces by computing
+
+$\sum_{k=0}^N {N \choose k}NDS_k$
+
+.
+
+Now when
+
+$Q > 2$
+
+, we can use the query constraints and count the ways to fill in
+the  values in between.
+
+We can construct a
+
+$Q\times 2$
+
+array
+
+$dp[i][j]$
+
+. If
+
+$j=1$
+
+then that means the
+first
+
+$i$
+
+cows ended using a value that was
+
+$v_i+1$
+
+, and otherwise the sequence
+ends with
+
+$v_i$
+
+. This matters  because it is legal to use values
+
+$v_i-1$
+
+if we
+are transitioning from
+
+$dp[i][0]$
+
+and it is illegal otherwise.
+
+Let
+
+$arr_v[l]$
+
+be the number of
+
+$l$
+
+-length non-decreasing subsequences that end
+in
+
+$v$
+
+and
+
+$arr_{<v}[l]$
+
+be the number of
+
+$l$
+
+-length non-decreasing subsequences
+that end in
+
+$<v$
+
+. Note that this is sufficient since computing sequences with
+values from
+
+$A$
+
+to
+
+$B$
+
+can be transformed to computing sequences with values
+from
+
+$1$
+
+to
+
+$B-A+1$
+
+.
+
+If we are trying to compute the dp recurrence for
+
+$i+1$
+
+then we can let
+
+$k = c_{i+1}-c_i-1$
+
+and
+
+$v = v_{i+1}-v_i+1$
+
+.
+
+We have 4 different cases to consider:
+
+$dp[i][0] \rightarrow dp[i+1][0]$
+
+: In this case, we can use any values in
+
+$[v_i-1,v_{i+1}]$
+
+. We can define
+
+$s_{00} = \sum_{j=0}^k arr_{<v+1}[j]*{k \choose j}$
+
+$dp[i][0] \rightarrow dp[i+1][1]$
+
+: In this case, we can use any values in
+
+$[v_i-1,v_{i+1}+1]$
+
+but we must use
+
+$v_{i+1}+1$
+
+. We can define
+
+$s_{01} = \sum_{j=0}^k arr_{v+1}[j]*{k \choose j}$
+
+$dp[i][1] \rightarrow dp[i+1][0]$
+
+: In this case, we can use any values in
+
+$[v_i,v_{i+1}]$
+
+. We can define
+
+$s_{10} = \sum_{j=0}^k arr_{<v}[j]*{k \choose j}$
+
+$dp[i][1] \rightarrow dp[i+1][1]$
+
+: In this case, we can use any values in
+
+$[v_i,v_{i+1}+1]$
+
+but we must use
+
+$v_{i+1}+1$
+
+. We can define
+
+$s_{11} = \sum_{j=0}^k arr_{v}[j]*{k \choose j}$
+
+However, in certain cases, some of these transitions are combined into others.
+For example, if
+
+$v = 0$
+
+then
+
+$s_{01} = s_{01}+s_{11}+s_{10}$
+
+and
+
+$s_{11} = s_{10} = s_{00} = 0$
+
+. This is because we must transition into a state
+where our running max is
+
+$v_{i+1}+1$
+
+.
+
+Similarly, if
+
+$v=1$
+
+, then any
+
+$1 \rightarrow 0$
+
+transition is a
+
+$1 \rightarrow 1$
+
+transition so
+
+$s_{11} = s_{11} + s_{10}$
+
+and
+
+$s_{10} = 0$
+
+.
+
+From here, our transitions are the following:
+
+$$dp[i+1][0] = dp[i][0]*s_{00}+dp[i][1]*s_{10}$$
+
+$$dp[i+1][1] = dp[i][0]*s_{01}+dp[i][1]*s_{11}$$
+
+To get full credit on subtask 3, we can precompute factorials and inverse
+factorials up to
+
+$10^6$
+
+and compute all of the values directly.
+
+For future subtasks, since values can go up to
+
+$10^9$
+
+, we need to exploit the
+iterative nature of our calculation. Since we perform stars and bars where the
+number of  stars increases from
+
+$0$
+
+, we will always be computing some
+
+${n \choose k}$
+
+after computing
+
+${n-1 \choose k-1}$
+
+. This means we can build the
+following recurrence:
+
+$${n \choose k} = {n-1 \choose k-1} \cdot \frac{n}{k} = {n-1\choose k-1}\cdot (n) \cdot \text{modInv}(k)$$
+
+This means we only need to compute modular inverses for the bound on
+
+$k$
+
+, which
+is bounded by
+
+$N$
+
+and thus precomputable. Depending on your implementation, this
+precomputation might be too slow and only pass up to subtask 4. Suppose we have
+the following pseudocode:
+
+for i in N:
+    inverseFactorial[i] = modularInverse(i)*inverseFactorial[i-1]
+
+With Euclidean Algorithm modular inverse code, this would take
+
+$N\log MOD$
+
+to
+compute which can be very expensive. Instead, we can utilize the
+
+following equation
+
+to compute these modular inverses in
+
+$O(N)$
+
+instead. With
+all of these optimizations, a full credit solution of
+
+$O(N)$
+
+is possible.
+
+My Java Code:
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Scanner;
+
+public class LazySort {
+    public static long[] invN;
+    static long mod = 1000000007;
+    static void precomputeInverses(int maxN) {
+        invN = new long[maxN+1];
+        invN[1] = 1;
+        for (int i = 2; i <= maxN; i++) {
+            invN[i] = (mod - (mod / i) * invN[(int) (mod % i)] % mod) % mod;
+        }
+    }
+    public static long arr_eq(int v, int i, long current){
+        if (i == 0) return 0;
+        if (i == 1) return 1;
+        return getNextBinomial(v + i - 2, i - 1, current);
+    }
+    public static long arr_less(int v, int i, long current){
+        if (i == 0) return 1;
+        return getNextBinomial(v + i - 2, i, current);
+    }
+    // Recursively computes nCk from (n-1)C(k-1)
+    public static long getNextBinomial(int n, int k, long current){
+        long num = (current * n)%mod;
+        return (num*invN[k])%mod;
+    }
+    static class pair {
+        long a, b;
+        public pair(long a, long b) {
+            this.a = a;
+            this.b = b;
+        }
+    }
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        long mod = 1000000007;
+        int n = sc.nextInt();
+        int q = sc.nextInt();
+        pair[] arr = new pair[q];
+        for (int i = 0; i < q; i++){
+            long a = sc.nextInt() - 1;
+            long b = sc.nextInt();
+            arr[i] = new pair(a, b);
+        }
+        precomputeInverses(5000005);
+        long[][] dp = new long[q][2];
+        dp[0][0] = 1;
+        for (int i = 0; i < q-1; i++){
+            long s00 = 0;
+            long s01 = 0;
+            long s10 = 0;
+            long s11 = 0;
+            int k = (int) (arr[i + 1].a - arr[i].a - 1);
+            int v = (int) (arr[i + 1].b - arr[i].b + 1);
+            if (v < 0) continue;
+            long arr_eq_v = 1;
+            long arr_less_v = 1;
+            long arr_eq_vp1 = 1;
+            long arr_less_vp1 = 1;
+            long k_choose_j = 1;
+            for (int j = 0; j <= k; j++){
+                arr_eq_v = arr_eq(v,j, arr_eq_v);
+                arr_eq_vp1 = arr_eq(v + 1, j, arr_eq_vp1);
+                arr_less_v = arr_less(v, j, arr_less_v);
+                arr_less_vp1 = arr_less(v + 1, j, arr_less_vp1);
+                s11 = (s11 + (arr_eq_v * k_choose_j) % mod) % mod;
+                s10 = (s10 + (arr_less_v * k_choose_j) % mod) % mod;
+                s01 = (s01 + (arr_eq_vp1 * k_choose_j) % mod) % mod;
+                s00 = (s00 + (arr_less_vp1 * k_choose_j) % mod) % mod;
+                //kCj+1 = (k-j)*kCj/(j+1)
+                k_choose_j = (((k_choose_j*(k-j))%mod)*invN[j+1])%mod;
+            }
+            if (v == 0){
+                s01 = s01 + s11 + s10;
+                s11 = 0;
+                s10 = 0;
+                s00 = 0;
+            }else if (v == 1){
+                s11 = s11 + s10;
+                s10 = 0;
+            }
+            dp[i + 1][0] = (dp[i + 1][0] + (dp[i][0] * s00) % mod) % mod;
+            dp[i + 1][0] = (dp[i + 1][0] + (dp[i][1] * s10) % mod) % mod;
+            dp[i + 1][1] = (dp[i + 1][1] + (dp[i][0] * s01) % mod) % mod;
+            dp[i + 1][1] = (dp[i + 1][1] + (dp[i][1] * s11) % mod) % mod;
+        }
+        long sum = dp[q - 1][0] + dp[q - 1][1];
+        sum %= mod;
+        System.out.println(sum);
+    }
+}

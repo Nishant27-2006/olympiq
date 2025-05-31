@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brandon Wang, Richard Qi, Benjamin Qi)
+<p>In all solutions, the overall time complexity will be <span class='math'>$Q$</span> times the time
+complexity to answer a single query.
+<p>First, let <span class='math'>$I$</span> be the set of infected cows and let <span class='math'>$T$</span> be the number of nights
+in a given query. We first analyze whether or not <span class='math'>$I$</span> is even a valid
+configuration. Note that a cow <span class='math'>$v$</span> can start out infected if and only if the set
+<span class='math'>$B_T(v) = \{u \colon d(u, v) \leq T\}$</span> is  contained entirely in <span class='math'>$I$</span>. Let <span class='math'>$S$</span> be
+the set of cows that can start out infected. Then, <span class='math'>$I$</span> is a valid configuration
+if and only if <span class='math'>$I = \bigcup_{v\in S} B_T(v)$</span>. Furthermore, when <span class='math'>$I$</span> is a valid
+configuration, we want to find the smallest possible subset <span class='math'>$S&apos;\subseteq S$</span> 
+such that <span class='math'>$\bigcup_{v\in S&apos;} B_T(v) = I$</span>.
+<p>To compute the set <span class='math'>$S$</span>, we need to know the shortest distance from each cow to
+its closest non-infected cow. This can be done in <span class='math'>$O(N)$</span> time by starting a
+multisource BFS from all non-infected cows.
+<p><strong>Subtask 1 (<span class='math'>$N = 10$</span>):</strong>
+<p>For this case, we can just brute force through all subsets <span class='math'>$S&apos;$</span> of <span class='math'>$S$</span>. For each
+<span class='math'>$v\in S&apos;$</span>, we can do a BFS to find <span class='math'>$B_T(v)$</span>, and check if the resulting sets
+cover <span class='math'>$I$</span>. This takes <span class='math'>$O(2^N \cdot N^2)$</span> time per query.
+<p>Brandon&apos;s code:
+<p><pre class='prettyprint'>
+N = int(input())
+infected = [c == &apos;1&apos; for c in input()]
+adj = [[] for _ in range(N)]
+
+for _ in range(1, N):
+    u, v = [int(x) for x in input().split()]
+    adj[u-1].append(v-1)
+    adj[v-1].append(u-1)
+
+dist = []
+
+for u in range(N):
+    dist.append([N+1 for _ in range(N)])
+    bfs_queue = []
+    dist[u][u] = 0
+    bfs_queue.append(u)
+    bfs_queue_idx = 0
+    while len(bfs_queue) != bfs_queue_idx:
+        v = bfs_queue[bfs_queue_idx]
+        for w in adj[v]:
+            if dist[u][w] &gt; dist[u][v] + 1:
+                dist[u][w] = dist[u][v] + 1
+                bfs_queue.append(w)
+        bfs_queue_idx += 1
+
+def works(Sprime, T):
+    infected_by_Sprime = [False for _ in range(N)]
+    for u in Sprime:
+        for v in range(N):
+            if dist[u][v] &lt;= T:
+                infected_by_Sprime[v] = True
+    for u in range(N):
+        if infected_by_Sprime[u] != infected[u]:
+            return False
+    return True
+
+def query(T):
+    S = []
+    for u in range(N):
+        u_works = True
+        for v in range(N):
+            if dist[u][v] &lt;= T and not infected[v]:
+                u_works = False
+        if u_works:
+            S.append(u)
+    
+    if not works(S, T):
+        return -1
+    ans = len(S)
+    for i in range(2**len(S)):
+        Sprime = []
+        for j in range(len(S)):
+            if i // (2**j) % 2 == 1:
+                Sprime.append(S[j])
+        if works(Sprime, T):
+            ans = min(ans, len(Sprime))
+    return ans
+
+Q = int(input())
+for _ in range(Q):
+    T = int(input())
+    print(query(T))
+</pre>
+<p><strong>Subtask 2 (all cows infected):</strong>
+<p>We can answer each query in <span class='math'>$O(N)$</span> time using a greedy strategy. First, some
+definitions: 
+<p><ul><li>&quot;Choosing&quot; a cow means that we set it to be initially infected.</li><li>A cow is &quot;covered&quot; if it is within a distance <span class='math'>$T$</span> of some chosen cow.</li></ul> 
+<p>Our goal in this subtask is to choose the minimum number of cows so that all
+cows are covered.
+<p>Root the tree at any cow (the solution code roots the tree at the first cow). 
+The following greedy procedure covers all the cows in <span class='math'>$c$</span>&apos;s subtree at a
+distance at least <span class='math'>$T$</span> away from <span class='math'>$c$</span>:
+<p><ol><li>Recursively apply the procedure to the subtrees of <span class='math'>$c$</span>&apos;s children.</li><li>Compute the distance from <span class='math'>$c$</span> to its farthest uncovered descendant
+(guaranteed to be at most <span class='math'>$T$</span>).</li><li>If the distance in step 2 is exactly <span class='math'>$T$</span>, choose cow <span class='math'>$c$</span>. Now, all cows in
+<span class='math'>$c$</span>&apos;s subtree are covered.</li><li>Special case: If <span class='math'>$c$</span> is the root and there is an uncovered descendant of
+<span class='math'>$c$</span>, choose <span class='math'>$c$</span>.</li><li>Return the distance from <span class='math'>$c$</span> to its farthest uncovered descendant if such a
+descendant exists (such a descendant will later be covered by some cow outside
+of <span class='math'>$c$</span>&apos;s subtree), or otherwise the distance from <span class='math'>$c$</span> to its closest chosen
+descendant (this descendant has the potential to cover cows outside of <span class='math'>$c$</span>&apos;s
+subtree).</li></ol>
+<p>In addition, this procedure constructs an optimal solution because 
+<p><ol><li>If the distance from step 2 is less than <span class='math'>$T$</span>, and <span class='math'>$c$</span> is not the root of the
+tree, it is always at least as good to choose the parent of <span class='math'>$c$</span> instead of <span class='math'>$c$</span>,
+since choosing the parent of <span class='math'>$c$</span> will cover all the uncovered cows inside of
+<span class='math'>$c$</span>&apos;s subtree and more cows outside of <span class='math'>$c$</span>&apos;s subtree. Thus, we should not choose
+<span class='math'>$c$</span>.</li><li>If the distance from step 2 is exactly <span class='math'>$T$</span> and we have already fixed which
+cows to choose in each of the child subtrees, then cow <span class='math'>$c$</span> is the only cow that
+can cover the uncovered descendant, so we must choose <span class='math'>$c$</span>.</li></ol>
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef vector&lt;int&gt; vi;
+typedef pair&lt;int, int&gt; pi;
+
+#define mp make_pair
+#define f first
+#define s second
+
+#define sz(x) int((x).size())
+#define rsz resize
+#define pb push_back
+#define FOR(i, a, b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+#define rep(a) F0R(_, a)
+
+vector&lt;vi&gt; adj;
+string infected;
+int N;
+
+int n, ans;
+
+// state:
+// dist d to closest chosen: {1, d}
+// dist d to farthest uncovered: {-1, d}
+
+pi comb(pi a, pi b) {
+	if (a &gt; b) swap(a, b);
+	if (b.f == -1) return max(a, b);
+	if (a.f == 1) return min(a, b);
+	assert(a.f == -1 &amp;&amp; b.f == 1);
+	if (a.s + b.s &gt; n) return a;  // uncovered
+	return b;                     // covered
+}
+
+pi dfs(int x, int p) {  // cover x&apos;s subtree
+	pi best{-1, 0};
+	for (int y : adj[x])
+		if (y != p) {
+			pi d = dfs(y, x);
+			++d.s;
+			best = comb(best, d);
+		}
+	if (best.f == -1 &amp;&amp; (best.s == n || x == 0)) {  // need to choose x
+		best = {1, 0};
+		++ans;
+	}
+	return best;
+}
+
+int query() {
+	ans = 0;
+	dfs(0, -1);
+	return ans;
+}
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	cin &gt;&gt; N;
+	cin &gt;&gt; infected;
+	adj.rsz(N);
+	rep(N - 1) {
+		int a, b;
+		cin &gt;&gt; a &gt;&gt; b;
+		--a, --b;
+		adj.at(a).pb(b), adj.at(b).pb(a);
+	}
+	int Q;
+	cin &gt;&gt; Q;
+	rep(Q) {
+		cin &gt;&gt; n;
+		cout &lt;&lt; query() &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p><strong>Subtask 3 (<span class='math'>$N\leq 400$</span>) Solution 1 (DP):</strong>
+<p>Our approach for the remaining subtasks will be to use a tree-dp type approach. 
+As in the subtask 2 solution, root the tree arbitrarily. Unfortunately, just
+making the DP state &quot;min # of originally infected cows to cover subtree of <span class='math'>$v$</span>&quot; 
+does not provide enough info, because we can cover infected nodes in a subtree
+via starting cows outside the subtree.
+<p>Instead, for each <span class='math'>$0 \leq t \leq T$</span>, we store the following:
+<ul><li> The min number of nodes we need to pick in the subtree such that all
+infected cows with distance <span class='math'>$\ge t$</span> from the subtree root are covered, and </li><li> The min number of nodes we need to pick in the subtree such that all
+infected cows are covered, plus our coverage extends distance <span class='math'>$t$</span> outside the
+tree as well.</li></ul>
+<p>We can compute each of these in <span class='math'>$O(\# \text{children})$</span> time given the
+children&apos;s DP states,  so this takes a total of <span class='math'>$O(TN)$</span> per query. Since
+<span class='math'>$T\leq N$</span>, this takes <span class='math'>$O(N^2)$</span>, which runs in time.
+<p><strong>Subtask 3 Solution 2 (Greedy):</strong>
+<p>We will describe an algorithm where initially we start with no chosen cows,  and
+we greedily choose cows in <span class='math'>$S$</span> until every infected cow is covered. 
+<p>Define <span class='math'>$U$</span> to be the set of nodes that have not been covered yet. Root the tree
+arbitrarily and consider the highest depth infected cow <span class='math'>$c \in U$</span>, where depth
+is defined as distance from the root. 
+<p>Let <span class='math'>$S_c$</span> be all elements of <span class='math'>$S$</span> that are distance within <span class='math'>$T$</span> of <span class='math'>$c$</span>. Clearly,
+we must choose some element <span class='math'>$s \in S_c$</span>.
+<p>We claim that we can greedily choose the lowest depth node <span class='math'>$s&apos; \in S_c$</span>. 
+Consider some other node <span class='math'>$s \in S_c$</span>. For our greedy to be correct, it suffices
+to show that for all nodes <span class='math'>$u \in U$</span>, if <span class='math'>$s$</span> covers <span class='math'>$u$</span>, then <span class='math'>$s&apos;$</span> also covers
+<span class='math'>$u$</span>.
+<p>This is easy to prove if <span class='math'>$s$</span> and <span class='math'>$s&apos;$</span> are both ancestors of <span class='math'>$c$</span>. Now, suppose
+one of them is not an ancestor of <span class='math'>$c$</span>. Define <span class='math'>$l = lca(c, s)$</span> and
+<span class='math'>$l&apos; = lca(c, s&apos;)$</span>. Notice that <span class='math'>$s$</span> covers all uncovered nodes <span class='math'>$u \in U$</span> that are
+also in the subtree rooted at <span class='math'>$l$</span> because <span class='math'>$c$</span> is the highest depth uncovered
+node, and similarly <span class='math'>$s&apos;$</span> covers all uncovered nodes in the subtree rooted at
+<span class='math'>$l&apos;$</span>. From this, one can prove that <span class='math'>$s$</span> covers the same uncovered nodes as the
+unique node with the same depth as <span class='math'>$s$</span> which is also an ancestor of <span class='math'>$c$</span>.
+Combining this with the proof for the case where <span class='math'>$s$</span> and <span class='math'>$s&apos;$</span> are both ancestors
+of <span class='math'>$c$</span>, the greedy is proven.
+<p>So, the algorithm is to repeatedly find the highest depth node <span class='math'>$c$</span> that has not
+been covered, and choose the lowest depth node in <span class='math'>$S_c$</span> to cover it. This can be
+done naively in <span class='math'>$O(N^2)$</span> per query (though on most test cases, it runs much
+faster than this worst-case bound would suggest).
+<p>Richard&apos;s code: 
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int MOD = 1e9+7;
+const int mx = 100005;
+ 
+int N;
+int dist_to_nonsick[mx];
+vector&lt;int&gt; adj[mx];
+int depth[mx];
+vector&lt;int&gt; sorted_by_depth;
+string sick;
+int k;
+ 
+void genDepth(int node, int p = -1, int d = 0){
+	depth[node] = d;
+	for(auto u: adj[node]){
+		if(u == p) continue;
+		genDepth(u, node, d+1);
+	}
+}
+ 
+int dist_to_coverer[mx];
+ 
+int searchForCoverer(int node, int p = -1, int d = 0){
+	pair&lt;int, int&gt; res = make_pair(MOD, -1);
+	if(dist_to_nonsick[node] &gt; k){
+		res = min(res, make_pair(depth[node], node));
+	}
+ 
+	if(d+1 &lt;= k){
+		for(auto u: adj[node]){
+			if(u == p) continue;
+			int other_res = searchForCoverer(u, node, d+1);
+			if(other_res != -1){
+				//keep track of minimum depth node within distance k
+				res = min(res, make_pair(depth[other_res], other_res));
+			}
+		}
+	}
+	
+	return res.second;
+}
+ 
+void setCoverer(int node, int d = 0){
+	if(dist_to_coverer[node] &lt;= d){
+		return;
+	}
+	dist_to_coverer[node] = d;
+	
+	for(auto u: adj[node]){
+		setCoverer(u, d+1);
+	}
+}
+ 
+void solve(int _k){
+	k = _k;
+	for(int i = 1; i &lt;= N; i++){
+		dist_to_coverer[i] = k+1; //minimum distance to a coverer
+	}
+ 
+	int ans = 0;
+	for(int i = int(sorted_by_depth.size())-1; i &gt;= 0; i--){ //start with highest depth nodes
+		int to_cover = sorted_by_depth[i];
+		if(sick[to_cover] == &apos;0&apos;) continue;
+		if(dist_to_coverer[to_cover] &lt;= k) continue;
+ 
+		//this node must be covered
+		ans++;
+		int coverer = searchForCoverer(to_cover);
+ 
+		if(coverer == -1){ //can&apos;t be covered
+			ans = -1;
+			break;
+		}
+ 
+		//update dist_to_coverer
+		setCoverer(coverer);
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+ 
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	cin &gt;&gt; N;
+	cin &gt;&gt; sick; sick = &quot;?&quot; + sick;
+	for(int i = 1; i &lt;= N-1; i++){
+		int a, b; cin &gt;&gt; a &gt;&gt; b;
+		adj[a].push_back(b);
+		adj[b].push_back(a);
+	}
+ 
+	// Compute minimum distance to a cow that is not sick with BFS
+	for(int i = 1; i &lt;= N; i++){
+		dist_to_nonsick[i] = MOD;
+	}
+	queue&lt;pair&lt;int, int&gt;&gt; nonsick_q;
+	for(int i = 1; i &lt;= N; i++){
+		if(sick[i] == &apos;0&apos;){
+			nonsick_q.push(make_pair(i, 0));
+			dist_to_nonsick[i] = 0;
+		}
+	}
+ 
+	while(nonsick_q.size()){
+		pair&lt;int, int&gt; a = nonsick_q.front(); nonsick_q.pop();
+		int node = a.first;
+		int d = a.second;
+		if(dist_to_nonsick[node] &lt; d) continue;
+		for(auto u: adj[node]){
+			if(dist_to_nonsick[u] &gt; d+1){
+				dist_to_nonsick[u] = d+1;
+				nonsick_q.push(make_pair(u, dist_to_nonsick[u]));
+			}
+		}
+	}
+ 
+	genDepth(1);
+ 
+	//sort nodes by depth
+	for(int i = 1; i &lt;= N; i++) sorted_by_depth.push_back(i);
+	sort(begin(sorted_by_depth), end(sorted_by_depth), [&amp;](int a, int b){
+		return depth[a] &lt; depth[b];
+	});
+ 
+	int Q; cin &gt;&gt; Q;
+	for(int i = 1; i &lt;= Q; i++){
+		int nights; cin &gt;&gt; nights;
+		solve(nights);
+	}
+}
+</pre>
+<p><strong>Full Solution 1:</strong>
+<p>We will answer each query in <span class='math'>$O(N)$</span>. This solution follows from  generalizing
+the subtask 2 greedy solution or removing unnecessary states from the subtask 3
+DP solution (it turns out that we need to keep at most two states for each
+subtree). For a node <span class='math'>$v$</span>, let <span class='math'>$closest_S(v)$</span> denote the distance from <span class='math'>$v$</span> to its
+closest node in
+<span class='math'>$S$</span>.
+<p>For any vertex <span class='math'>$v$</span>, let <span class='math'>$I_v$</span> be the set of infected cows in <span class='math'>$v$</span>&apos;s subtree, and
+let <span class='math'>$S_v$</span> be the set of source cows in <span class='math'>$v$</span>&apos;s subtree. In addition, let <span class='math'>$I_v&apos;$</span> be
+the set of infected cows in <span class='math'>$v$</span>&apos;s subtree that are distance greater than
+<span class='math'>$T-closest_S(parent_v)$</span> away from <span class='math'>$parent_v$</span>. When all cows are infected, <span class='math'>$I_v&apos;$</span>
+is precisely the set of all cows in <span class='math'>$v$</span>&apos;s subtree distance at least <span class='math'>$T$</span> away
+from <span class='math'>$v$</span>.  Observe that every node in <span class='math'>$I_v&apos;$</span> <em>must</em> be covered by some node
+inside <span class='math'>$v$</span>&apos;s subtree, and every node in <span class='math'>$I_v\setminus I_v&apos;$</span> would be covered by
+choosing the closest cow to <span class='math'>$parent_v$</span>. Intuitively, <span class='math'>$I_v\setminus I_v&apos;$</span> is the
+set of all cows in <span class='math'>$v$</span>&apos;s subtree that might be covered by some node outside of
+<span class='math'>$v$</span>&apos;s subtree (though they might instead be covered by some node inside <span class='math'>$v$</span>&apos;s
+subtree).
+<p>Let <span class='math'>$f(v)$</span> be the smallest number of nodes in <span class='math'>$S_v$</span> we need to pick so that
+every node in <span class='math'>$I_v&apos;$</span> is covered. Clearly <span class='math'>$f(v) \geq \sum_{u\in C_v} f(u)$</span>. In
+fact the following is also true:
+<p><em>Lemma:</em> <span class='math'>$f(v) \leq 1 + \sum_{u\in C_v} f(u)$</span>.
+<p><em>Proof:</em> We will show that all of <span class='math'>$I_v$</span> can be covered by at most
+<span class='math'>$1 + \sum_{u\in C_v} f(u)$</span> source nodes (one of which need not be in <span class='math'>$v$</span>&apos;s
+subtree). Choosing all of these source nodes (excluding any outside of <span class='math'>$v$</span>&apos;s
+subtree) would cover <span class='math'>$I_v&apos;$</span>.
+<p>Suppose that, in each subtree, we pick <span class='math'>$f(u)$</span> sources in <span class='math'>$S_u$</span> that cover
+<span class='math'>$I_u&apos;$</span>, and also we are in the best possible DP state (states are defined in the
+solution above). Here, &quot;every infected node in <span class='math'>$u$</span>&apos;s subtree is covered, as is
+everything distance <span class='math'>$T$</span> outside of <span class='math'>$u$</span>&quot; is the best case, followed by &quot;every
+infected node in <span class='math'>$u$</span>&apos;s subtree is covered, as is everything distance <span class='math'>$T-1$</span>
+outside of <span class='math'>$u$</span>&quot;, etc.,  and then &quot;every infected node <span class='math'>$u$</span>&apos;s subtree is covered,
+but nothing outside the subtree is&quot; is better than  &quot;every infected node in
+<span class='math'>$u$</span>&apos;s subtree is covered except <span class='math'>$u$</span>&quot;, which is better than &quot;the deepest
+uncovered infected node is at depth 1&quot;, which is better than &quot;the deepest
+uncovered infected node is at depth 2&quot;, etc.
+<p>Now, suppose <span class='math'>$u_1, \ldots, u_k$</span> are the children such that
+<span class='math'>$I_{u_1}, \ldots, I_{u_k}$</span> are not fully covered. Suppose their deepest
+uncovered children are at depth <span class='math'>$d_1, \ldots, d_k$</span>, respectively with respect to
+<span class='math'>$v$</span>.  Without loss of generality suppose <span class='math'>$d_1 = \max(d_1, \ldots, d_k)$</span>. By
+assumption,  there exists some source node <span class='math'>$w$</span> such that
+<span class='math'>$d(w, parent_{u_1})=d(w,v) \leq T - d_1$</span>. Then, <span class='math'>$d(w, v) \leq T-d_i$</span> for every
+<span class='math'>$i$</span>, so adding <span class='math'>$w$</span> to the set of sources covers all of <span class='math'>$I_v$</span>. This completes the
+proof (note that <span class='math'>$w$</span> covers <span class='math'>$v$</span> if needed also). <span class='math'>$\Box$</span>
+<p>Since the answer to the query is just <span class='math'>$f(\text{root})$</span>, we just need to figure
+out when the difference <span class='math'>$f(v) - \sum_{u\in C_v} f(u)$</span> is <span class='math'>$0$</span> or <span class='math'>$1$</span>. To do this,
+when computing the DP, we additionally store what the &quot;best case&quot; is. We can do
+this in <span class='math'>$O(\#\text{children})$</span> for each node with some preprocessing. Then, the
+difference is one precisely when there is an uncovered node in <span class='math'>$I_v&apos;$</span>, in which
+case we can choose the closest node in <span class='math'>$S$</span> to <span class='math'>$v$</span>. This newly chosen node is
+guaranteed to cover all uncovered nodes in <span class='math'>$I_v$</span> (any nodes in <span class='math'>$v$</span>&apos;s subtree not
+covered by this new node are part of <span class='math'>$I_c&apos;$</span> for some child <span class='math'>$c$</span> of <span class='math'>$v$</span>, which
+should have been covered already). Note that due to our earlier observation
+about <span class='math'>$I_v&apos;$</span>, this node will be in <span class='math'>$v$</span>&apos;s subtree.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef vector&lt;int&gt; vi;
+typedef pair&lt;int, int&gt; pi;
+
+#define mp make_pair
+#define f first
+#define s second
+
+#define sz(x) int((x).size())
+#define rsz resize
+#define pb push_back
+#define FOR(i, a, b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+#define rep(a) F0R(_, a)
+
+vector&lt;vi&gt; adj;
+string infected;
+vi closest_not_infected;
+int N;
+
+vi closest_ok;
+int n, ans;
+
+// state:
+// dist d to closest chosen: {1, d}
+// dist d to farthest uncovered: {-1, d}
+// nothing: {0, 0}
+
+pi comb(pi a, pi b) {
+	if (a &gt; b) swap(a, b);
+	if (a.f == 0) return b;
+	if (b.f == 0) return a;
+	if (b.f == -1) return max(a, b);
+	if (a.f == 1) return min(a, b);
+	assert(a.f == -1 &amp;&amp; b.f == 1);
+	if (a.s + b.s &gt; n) return a;  // uncovered
+	return b;                     // covered
+}
+
+pi dfs(int x, int p) {  // cover x&apos;s subtree
+	pi best{infected.at(x) == &apos;1&apos; ? -1 : 0, 0};
+	for (int y : adj[x])
+		if (y != p) {
+			pi d = dfs(y, x);
+			if (d.f != 0) ++d.s;
+			best = comb(best, d);
+		}
+	if (best.f == -1) {
+		// check that choosing closest node in S to x would cover everything in
+		// x&apos;s subtree
+		assert(best.s + closest_ok.at(x) &lt;= n);
+		if (p == -1 || best.s + 1 + closest_ok[p] &gt; n) {
+			// there&apos;s something that must be covered by something in x&apos;s
+			// subtree
+			// choose closest node in S to x, which will be in x&apos;s
+			// subtree
+			++ans;
+			best = {1, closest_ok.at(x)};
+		}
+	}
+	return best;
+}
+
+vi multi_bfs(const vi &amp;sources) {
+	vi ret(N, N + 1);
+	queue&lt;int&gt; q;
+	for (int i : sources) {
+		ret.at(i) = 0;
+		q.push(i);
+	}
+	while (sz(q)) {
+		int x = q.front();
+		q.pop();
+		for (int y : adj.at(x))
+			if (ret.at(x) + 1 &lt; ret.at(y)) {
+				ret.at(y) = ret.at(x) + 1;
+				q.push(y);
+			}
+	}
+	return ret;
+}
+
+int query() {
+	vi origins;  // S in the analysis
+	F0R(i, N) if (closest_not_infected.at(i) &gt; n) origins.pb(i);
+	// distance from each node to closest element of S
+	closest_ok = multi_bfs(origins);
+	F0R(i, N)
+	if (infected.at(i) == &apos;1&apos; &amp;&amp; closest_ok.at(i) &gt; n)
+		return -1;  // i can&apos;t be covered by anything in S
+	ans = 0;
+	dfs(0, -1);
+	return ans;
+}
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	cin &gt;&gt; N;
+	cin &gt;&gt; infected;
+	adj.rsz(N);
+	rep(N - 1) {
+		int a, b;
+		cin &gt;&gt; a &gt;&gt; b;
+		--a, --b;
+		adj.at(a).pb(b), adj.at(b).pb(a);
+	}
+	vi sources;
+	F0R(i, N) if (infected.at(i) == &apos;0&apos;) sources.pb(i);
+	closest_not_infected = multi_bfs(sources);
+	int Q;
+	cin &gt;&gt; Q;
+	rep(Q) {
+		cin &gt;&gt; n;
+		cout &lt;&lt; query() &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p><strong>Full Solution 2:</strong>
+<p>We can use <a href='https://usaco.guide/plat/centroid'>centroid decomposition</a> in 
+the subtask 3 greedy solution to answer queries in <span class='math'>$O(N\log{N})$</span>.
+<p>Specifically, using centroid decomposition, we can do the following tasks.
+<p><ol><li>In <span class='math'>$O(N\log N)$</span> time, for every node <span class='math'>$v$</span>, find the minimum depth node  <span class='math'>$s$</span>
+within distance <span class='math'>$T$</span> of <span class='math'>$v$</span> satisfying <span class='math'>$s \in S$</span>.</li><li>In <span class='math'>$O(\log N)$</span> time, mark a node as chosen.</li><li>In <span class='math'>$O(\log N)$</span> time, compute the distance from a node to its nearest chosen
+node.</li></ol>
+<p>We leave the details as an exercise to the reader.
+<p></body></html>

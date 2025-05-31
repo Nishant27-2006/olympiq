@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Andi Qu)
+<p>Although the problem does not state what happens when two particles of the same
+type meet, this event will never occur in Bessie&apos;s experiment setup. This is due
+to three reasons:
+<ol><li>Particles meet in pairs.</li><li>And two particles cannot meet each other
+until all particles between them are gone.</li><li>But particles of the same
+type start with an <strong>odd</strong> number of particles between them.</li></ol>
+So meetings will only ever occur between mootrinos and antimootrinos.
+<p><strong>Subtask 1:</strong> <span class='math'>$O(1)$</span> for a single pair of particles
+<p>The two particles meet only when they are moving toward each other. Because the
+particles start off moving toward each other, Bessie must observe their
+disappearance on an <strong>odd</strong> observation.
+<p>On the <span class='math'>$k$</span>-th odd observation, the mootrino will be <span class='math'>$k \cdot s_1$</span> units to the
+right of its initial position. Likewise, the antimootrino will be <span class='math'>$k \cdot s_2$</span>
+units to the left of its initial position. Therefore, Bessie will observe their
+disappearance on the <span class='math'>$\left\lceil\frac{p_2 - p_1}{s_1 + s_2}\right\rceil$</span>-th odd
+observation.
+<p>We can generalize this solution somewhat by considering what happens if the
+leftmost particle is an antimootrino instead. In this case, Bessie will observe
+the particles&apos; disappearance on the
+<span class='math'>$\left\lceil\frac{p_2 - p_1}{s_1 + s_2}\right\rceil$</span>-th
+<strong>even</strong> observation.
+<p>Putting it together, we get the following function:
+<p><pre class='prettyprint'>
+long long compute_meeting_time(int a, int b) {
+    long long dist = p[b] - p[a];
+    long long speed_sum = s[a] + s[b];
+    return 2 * ((dist + speed_sum - 1) / speed_sum) - (a % 2 == 0);
+}
+</pre>
+<p>which we will use in the subsequent subtasks.
+<p><strong>Subtask 2:</strong> <span class='math'>$O(N \cdot \max\{p_i\})$</span>
+<p>Simulating the movement of the particles is sufficient for this subtask.
+<p><strong>Subtask 3:</strong> <span class='math'>$O(N^2)$</span>
+<p>The problem with brute-force simulation is that there may be long stretches of
+observations where nothing happens. (For example, if the particles are all
+spaced very far apart but all have very low speeds.)
+<p>A more efficient algorithm works as follows:
+<ul><li>Iterate through all pairs of adjacent particles and compute when they meet
+using the function from Subtask 1.</li><li>Choose the pair that meets earliest,
+breaking ties arbitrarily.</li><li>Store the answer for that pair and remove
+them from the line of particles.</li><li>Repeat until all particles have been
+removed.</li></ul>
+<p>This algorithm runs in <span class='math'>$O(N^2)$</span> because we repeat the steps <span class='math'>$\frac{N}{2}$</span> times,
+and each step takes <span class='math'>$O(N)$</span> time to execute.
+<p><strong>Full credit:</strong> <span class='math'>$O(N \log N)$</span>
+<p>We can improve this algorithm further by noticing that the list of particle
+pairs to consider only changes by at most <span class='math'>$4$</span> pairs each iteration. Suppose
+particles <span class='math'>$o_1$</span>, <span class='math'>$o_2$</span>, <span class='math'>$o_3$</span>, and <span class='math'>$o_4$</span> are next to each other (in that order).
+When we remove the pair <span class='math'>$(o_2, o_3)$</span> from the line:
+<ul><li>We no longer need to consider the three pairs <span class='math'>$(o_1, o_2)$</span>, <span class='math'>$(o_2, o_3)$</span>,
+and <span class='math'>$(o_3, o_4)$</span>.</li><li>But we now need to consider the pair
+<span class='math'>$(o_1, o_4)$</span>.</li></ul>
+<p>With this in mind, we can use a <strong>priority queue</strong> to store the list of
+adjacent pairs, sorted by meeting time.
+<p>We can also use a <strong>linked list</strong> to help determine which new pairs to add
+to the priority queue. For each still-existing particle, this linked list would
+store the indices of the still-existing particle(s) directly adjacent to it.
+<p>These improvements bring the time complexity down to <span class='math'>$O(N \log N)$</span> because each
+step now modifies the priority queue <span class='math'>$O(1)$</span> times, and each modification takes
+<span class='math'>$O(\log N)$</span> time.
+<p>C++ code implementing this solution:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;queue&gt;
+#include &lt;utility&gt;
+typedef long long ll;
+using namespace std;
+ 
+ll p[200000], s[200000], ans[200000];
+pair&lt;int, int&gt; adj[200000];
+ 
+ll compute_meeting_time(int a, int b) {
+    ll dist = p[b] - p[a], speed_sum = s[a] + s[b];
+    return 2 * ((dist + speed_sum - 1) / speed_sum) - (a % 2 == 0);
+}
+ 
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int t;
+    cin &gt;&gt; t;
+    while (t--) {
+        int n;
+        cin &gt;&gt; n;
+        for (int i = 0; i &lt; n; i++)
+            cin &gt;&gt; p[i];
+        for (int i = 0; i &lt; n; i++)
+            cin &gt;&gt; s[i];
+ 
+        for (int i = 0; i &lt; n; i++) {
+            adj[i] = {i - 1, i + 1};
+            ans[i] = 0;
+        }
+        priority_queue&lt;pair&lt;ll, pair&lt;int, int&gt;&gt;&gt; pq;
+        for (int i = 1; i &lt; n; i++)
+            pq.push({-compute_meeting_time(i - 1, i), {i - 1, i}});
+ 
+        while (pq.size()) {
+            pair&lt;ll, pair&lt;int, int&gt;&gt; next_meeting = pq.top();
+            pq.pop();
+            ll meeting_time = next_meeting.first;
+            pair&lt;int, int&gt; cows = next_meeting.second;
+            if (ans[cows.first] || ans[cows.second])
+                continue;
+            ans[cows.first] = ans[cows.second] = -meeting_time;
+            if (cows.first != 0 &amp;&amp; cows.second != n - 1) {
+                int prv = adj[cows.first].first, nxt = adj[cows.second].second;
+                adj[prv].second = nxt;
+                adj[nxt].first = prv;
+                pq.push({-compute_meeting_time(prv, nxt), {prv, nxt}});
+            }
+        }
+ 
+        for (int i = 0; i &lt; n; i++)
+            cout &lt;&lt; ans[i] &lt;&lt; &quot; \n&quot;[i == n - 1];
+    }
+    return 0;
+}
+</pre>
+<p></body></html>

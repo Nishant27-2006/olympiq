@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>There&apos;s a fairly simple quadratic-time solution: let every cow be the vertex of
+a graph, and say that there is a directed edge of weight <span class='math'>$|i-j|$</span> from cow <span class='math'>$i$</span> to
+cow <span class='math'>$j$</span> if cow <span class='math'>$i$</span> is willing to talk to cow <span class='math'>$j$</span>. Then the cost of the shortest
+path from cow <span class='math'>$1$</span> to cow <span class='math'>$N$</span> is precisely the answer, and we can find it with
+e.g. Dijkstra&apos;s algorithm. However, since the graph has <span class='math'>$O(N^2)$</span> edges, this is
+too slow.
+<p>That approach uses none of the structure of the original problem: that the edge
+weights are linear, or that the number of types of cows is very small. Let&apos;s try
+to use this structure to make a different graph with fewer edges that has the
+same shortest-path costs.
+<p>The physical intuition for a cost of <span class='math'>$|i-j|$</span> to transmit a message from cow <span class='math'>$i$</span>
+to <span class='math'>$j$</span> is that the message travels <span class='math'>$1$</span> cow per unit time. Leveraging this
+intuition, let&apos;s make a graph where each vertex encodes the location of the
+message. Then in one timestep, the message can either move left by one, or right
+by one. So we no longer have a quadratic number of edges.
+<p>Of course, the location of the message is not quite enough information to
+determine where it could go next. If we knew the cow who most recently sent the
+message, that would be enough information: in one unit time, a message sent by
+cow <span class='math'>$i$</span> can either move one unit away from cow <span class='math'>$i$</span>; or it can be &quot;received&quot; by
+the cow at its current location if cow <span class='math'>$i$</span> is happy to talk to this cow. The
+former edge updates the message&apos;s location, and the latter edge updates the
+message&apos;s sender. Thus, this graph has <span class='math'>$O(N^2)$</span> vertices (for every
+location/sender pair) and <span class='math'>$O(N^2)$</span> edges (<span class='math'>$2$</span> per vertex).
+<p>Despite appearances, that is progress: we used the specifically chosen edge
+weights to lower the degree of the graph to <span class='math'>$O(1)$</span>. It remains to decrease the
+number of vertices, using the other symmetry of the problem: the small number of
+cow breeds. The key is that we don&apos;t need to remember the sender, just the
+sender&apos;s breed. Now we only have <span class='math'>$O(NK)$</span> vertices and <span class='math'>$O(NK)$</span> edges. Every edge
+has weight either <span class='math'>$0$</span> or <span class='math'>$1$</span> (cost <span class='math'>$1$</span> to move left or right; cost <span class='math'>$0$</span> to be
+received by the cow at the current location, if the breed matches the sending
+breed). The shortest path from (cow <span class='math'>$1$</span>, breed of cow <span class='math'>$1$</span>) to (cow <span class='math'>$N$</span>, breed of
+cow <span class='math'>$N$</span>) in this graph is (almost) the answer we need, and can be found by 0-1
+BFS or Dijkstra&apos;s algorithm.
+<p>There is one more catch: if the first and last cows are the same breed, this
+graph will always output <span class='math'>$N-1$</span> as the shortest path, which may be incorrect if
+this breed doesn&apos;t talk to itself. There are a number of ways to resolve this,
+e.g. by changing the breed of cow <span class='math'>$N$</span> to a fake breed <span class='math'>$0$</span>, and remembering which
+breeds of cows are willing to talk to cow <span class='math'>$N$</span>.
+<p>Here is Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.StringTokenizer;
+ 
+public class TelephoneCorrect {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int[] breeds = new int[n + 1];
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 1; j &lt;= n; j++) {
+            breeds[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        boolean[][] adj = new boolean[k + 1][k + 1];
+        for (int b = 1; b &lt;= k; b++) {
+            String line = &quot; &quot; + in.readLine();
+            for (int c = 1; c &lt;= k; c++) {
+                adj[b][c] = line.charAt(c) == &apos;1&apos;;
+            }
+            adj[b][0] = adj[b][breeds[n]];
+        }
+        breeds[n] = 0;
+        int[][] dist = new int[k + 1][n + 1];
+        for (int b = 0; b &lt;= k; b++) {
+            Arrays.fill(dist[b], -1);
+        }
+        dist[breeds[1]][1] = 0;
+        LinkedList&lt;Integer&gt; q = new LinkedList&lt;&gt;();
+        q.add(breeds[1]);
+        q.add(1);
+        while (!q.isEmpty()) {
+            int b = q.remove();
+            int j = q.remove();
+            if (j &gt; 1 &amp;&amp; dist[b][j - 1] == -1) {
+                dist[b][j - 1] = dist[b][j] + 1;
+                q.add(b);
+                q.add(j - 1);
+            }
+            if (j &lt; n &amp;&amp; dist[b][j + 1] == -1) {
+                dist[b][j + 1] = dist[b][j] + 1;
+                q.add(b);
+                q.add(j + 1);
+            }
+            if (adj[b][breeds[j]] &amp;&amp; dist[breeds[j]][j] == -1) {
+                dist[breeds[j]][j] = dist[b][j];
+                q.addFirst(j);
+                q.addFirst(breeds[j]);
+            }
+        }
+        System.out.println(dist[0][n]);
+    }
+}
+</pre>
+<p>Additional note (thanks to Justin Wu for suggesting that this be included): As
+an alternative means of simplifying the graph, we can note that if the solution
+includes a transition from a cow at index <span class='math'>$i$</span> to another cow (say,
+of breed <span class='math'>$b$</span>), then without loss of generality we can assume this other cow is
+one of the two cows of breed <span class='math'>$b$</span> closest to index <span class='math'>$i$</span> --- either the one
+closest on the left or closest on the right (the only exception here is the transition to the final cow in the
+last position).  
+<p>One can argue this by taking an optimal path and noting that if any of its
+transitions (except the last) do not fit this pattern, they can be modified
+without penalty to fit the pattern. E.g., if the optimal solution goes from
+index <span class='math'>$1$</span> to <span class='math'>$i$</span> to <span class='math'>$j$</span> to <span class='math'>$N$</span> and there is another cow of the same breed as the
+one at position <span class='math'>$i$</span> between 1 and <span class='math'>$i$</span> (say at <span class='math'>$i&apos;$</span>), we loose nothing by
+changing the first leg of the path so it moves from 1 to <span class='math'>$i&apos;$</span> (so now we have an
+optimal solution that moves from <span class='math'>$1$</span> to <span class='math'>$i&apos;$</span> to <span class='math'>$j$</span> to <span class='math'>$n$</span>);  we then adjust the
+next leg of the path the same way, and so on.
+<p></body></html>

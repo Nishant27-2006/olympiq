@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>A naive solution runs in <span class='math'>$O(N^2C)$</span> time and is too slow to pass any inputs aside
+from the sample.
+<p>ChatGPT&apos;s code:
+<p><pre class='prettyprint'>
+# read input
+C, N = map(int, input().split())
+teams = [input() for _ in range(N)]
+ 
+# compute maximum difference for each team
+for team in teams:
+    max_diff = 0
+    for other_team in teams:
+        # compute difference between current team and other team
+        diff = sum(1 for a, b in zip(team, other_team) if a != b)
+        # update maximum difference if necessary
+        max_diff = max(max_diff, diff)
+    print(max_diff)
+</pre>
+<p><strong>Subtask 1:</strong> We can speed up the solution above by iterating over all pairs
+of <em>distinct</em> teams, since the number of distinct teams is at most <span class='math'>$2^C$</span>.
+<p><strong>Subtask 2:</strong> We first observe that &quot;farthest team from <span class='math'>$x$</span>&quot; is the same as
+&quot;closest team to <span class='math'>$y$</span>,&quot; where <span class='math'>$y$</span> is the team constructed by flipping the breeds
+of all cows in <span class='math'>$x$</span>. If we treat <span class='math'>$x$</span> as a binary string of length <span class='math'>$C$</span> with the
+<span class='math'>$i$</span>th bit set if the <span class='math'>$i$</span>th cow in <span class='math'>$x$</span> is a Holstein, then we can compactly
+express <span class='math'>$y$</span> as <span class='math'>$y=(2^C-1)\oplus x$</span>, where <span class='math'>$\oplus$</span> denotes
+<a href='https://en.wikipedia.org/wiki/Bitwise_operation#XOR'>bitwise XOR</a>. 
+<p>For this subtask, we are given that the closest team to <span class='math'>$y$</span> is within distance
+<span class='math'>$3$</span>  of <span class='math'>$y$</span>. We can first iterate over all teams within distance <span class='math'>$2$</span> of <span class='math'>$y$</span>, and
+return the distance to the closest such team if it exists. If no such team
+exists, then we return <span class='math'>$3$</span>. The overall time complexity is <span class='math'>$O(2^C+NC^2)$</span>.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+C, N = map(int, input().split())
+to_bin = lambda s: sum(1 &lt;&lt; i for i in range(C) if s[i] == &quot;H&quot;)
+nums = [to_bin(input()) for _ in range(N)]
+exists = [0] * (1 &lt;&lt; C)
+for x in nums:
+    exists[x] = 1
+
+def dist_closest(y):
+    if exists[y]:
+        return 0
+    for i in range(C):
+        if exists[y ^ (1 &lt;&lt; i)]:
+            return 1
+    for i in range(C):
+        for j in range(i + 1, C):
+            if exists[y ^ (1 &lt;&lt; i) ^ (1 &lt;&lt; j)]:
+                return 2
+    return 3
+
+for x in nums:
+    y = x ^ ((1 &lt;&lt; C) - 1)
+    print(C - dist_closest(y))
+</pre>
+<p><strong>Subtask 3:</strong> Let <span class='math'>$dist[y]$</span> equal <span class='math'>$dist\_closest(y)$</span> from the above code. 
+For this subtask, we will compute the values of <span class='math'>$dist[y]$</span> for all <span class='math'>$y$</span> in
+<span class='math'>$O(2^CC+NC)$</span> time. We know that
+<div class='math'>$$dist[y]=\begin{cases}
+0 &amp; exists[y]=1 \\
+1+\min_{i\in [0,C-1]}dist[y\oplus (1\ll i)] &amp; exists[y]=0
+\end{cases}.$$</div>
+That is, there either exists a team with bitmask <span class='math'>$y$</span> (in which case the distance
+is <span class='math'>$0$</span>), or it is possible to change a bit of <span class='math'>$y$</span> to make <span class='math'>$y$</span> one bit closer to
+some team. We can compute these distance values using the following procedure:
+<p><ol><li>Initialize <span class='math'>$dist[x]=0$</span> for all <span class='math'>$x$</span> such that there exists a team with
+bitmask <span class='math'>$x$</span> and <span class='math'>$dist[x]=\infty$</span> for all other bitmasks.</li><li>Iterate over all the bits <span class='math'>$i\in [0,C-1]$</span> in any order and update
+<span class='math'>$dist[x\oplus (1\ll i)]=\min(dist[x\oplus (1\ll i)], dist[x]+1)$</span> for all <span class='math'>$x$</span>.</li></ol>
+<p>To see that the computed distance values are correct, note that 
+<ul><li>The computed values of <span class='math'>$dist[x]$</span> can never decrease below their true
+values.</li><li>If there exists a path from <span class='math'>$x$</span> to some team with bitmask <span class='math'>$y$</span> with length
+<span class='math'>$k$</span>, then it may be shown that <span class='math'>$dist[x]\le k$</span> at the end.</li></ul>
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+C, N = map(int, input().split())
+to_bin = lambda s: sum(1 &lt;&lt; i for i in range(C) if s[i] == &quot;H&quot;)
+nums = [to_bin(input()) for _ in range(N)]
+dist = [C] * (1 &lt;&lt; C)
+for x in nums:
+    dist[x] = 0
+for j in range(C):
+    for i in range(1 &lt;&lt; C):
+        dist[i ^ (1 &lt;&lt; j)] = min(dist[i ^ (1 &lt;&lt; j)], dist[i] + 1)
+for x in nums:
+    print(C - dist[x ^ ((1 &lt;&lt; C) - 1)])
+</pre>
+<p><strong>Subtask 3 (Alternative 1):</strong>
+<p>Another closely related way to solve this problem would be to  construct a graph
+on vertex set <span class='math'>$[0,2^C-1]$</span> where two bitmasks are connected by an edge if they
+differ by one bit. Then we can execute a multisource
+<a href='https://usaco.guide/gold/unweighted-shortest-paths'>BFS</a> on this graph with
+the source set consisting of the bitmasks of all teams. The time complexity is
+the same as that of the solution above.
+<p>Danny&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.StringTokenizer;
+ 
+public class FieldDay {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int c = Integer.parseInt(tokenizer.nextToken());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int[] teams = new int[n];
+        LinkedList&lt;Integer&gt; queue = new LinkedList&lt;&gt;();
+        int[] dists = new int[1 &lt;&lt; c];
+        Arrays.fill(dists, -1);
+        for (int j = 0; j &lt; n; j++) {
+            teams[j] = Integer.parseInt(in.readLine().replace(&apos;G&apos;, &apos;0&apos;).replace(&apos;H&apos;, &apos;1&apos;), 2);
+            queue.add(teams[j]);
+            dists[teams[j]] = 0;
+        }
+        while (!queue.isEmpty()) {
+            int mask = queue.remove();
+            for (int d = 0; d &lt; c; d++) {
+                int newMask = mask ^ (1 &lt;&lt; d);
+                if (dists[newMask] == -1) {
+                    dists[newMask] = dists[mask] + 1;
+                    queue.add(newMask);
+                }
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int j = 0; j &lt; n; j++) {
+            out.append(c - dists[((1 &lt;&lt; c) - 1) ^ teams[j]]).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p>In Python:
+<p><pre class='prettyprint'>
+from collections import deque
+import sys
+ 
+def main():
+    c, n = map(int, sys.stdin.readline().split())
+    teams = []
+    queue = deque()
+    dists = [-1] * (1 &lt;&lt; c)
+    for j in range(n):
+        team = sys.stdin.readline().strip().replace(&apos;G&apos;, &apos;0&apos;).replace(&apos;H&apos;, &apos;1&apos;)
+        teams.append(int(team, 2))
+        queue.append(teams[j])
+        dists[teams[j]] = 0
+    while queue:
+        mask = queue.popleft()
+        for d in range(c):
+            new_mask = mask ^ (1 &lt;&lt; d)
+            if dists[new_mask] == -1:
+                dists[new_mask] = dists[mask] + 1
+                queue.append(new_mask)
+    out = []
+    for j in range(n):
+        out.append(str(c - dists[((1 &lt;&lt; c) - 1) ^ teams[j]]) + &apos;\n&apos;)
+    sys.stdout.write(&apos;&apos;.join(out))
+ 
+if __name__ == &apos;__main__&apos;:
+    main()
+</pre>
+<p><strong>Subtask 3 (Alternative 2):</strong>
+<p>It was also possible to solve this problem in <span class='math'>$O(N2^{C/2}+2^C)$</span> time using
+<a href='https://usaco.guide/gold/meet-in-the-middle'>Meet in the Middle.</a> We
+maintain a data structure that supports
+<p><ul><li>Inserting a number in the range <span class='math'>$[0,2^C)$</span> in <span class='math'>$O(2^{C/2})$</span> time.</li><li>Querying the closest (in terms of the number of bits needed to flip)  number
+in the data structure to a number in the range <span class='math'>$[0,2^C)$</span>  in <span class='math'>$O(2^{C/2})$</span>
+time.</li></ul>
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+void ckmin(int &amp;a, int b) { a = min(a, b); }
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	int C, N;
+	cin &gt;&gt; C &gt;&gt; N;
+	vector&lt;int&gt; bin;
+	vector&lt;int&gt; dist(1 &lt;&lt; C, C);
+	vector&lt;int&gt; stor_pct(1 &lt;&lt; ((C + 1) / 2));
+	for (int i = 0; i &lt; stor_pct.size(); ++i)
+		stor_pct[i] = __builtin_popcount(i);
+	for (int _ = 0; _ &lt; N; ++_) {
+		string s;
+		cin &gt;&gt; s;
+		int mask = 0;
+		for (int i = 0; i &lt; C; ++i) mask ^= (s[i] - &apos;G&apos;) &lt;&lt; i;
+		for (int i = 0; i &lt; (1 &lt;&lt; (C / 2)); ++i)  // update data structure
+			ckmin(dist[mask ^ i], stor_pct[i]);
+		bin.push_back(mask);
+	}
+	for (int x : bin) {
+		x = (1 &lt;&lt; C) - 1 - x;
+		int ret = C;
+		for (int i = 0; i &lt; (1 &lt;&lt; (C - C / 2)); ++i)  // query data structure
+			ckmin(ret, dist[x ^ (i &lt;&lt; (C / 2))] + stor_pct[i]);
+		cout &lt;&lt; C - ret &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p></body></html>

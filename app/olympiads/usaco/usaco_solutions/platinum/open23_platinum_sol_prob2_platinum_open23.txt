@@ -1,0 +1,1187 @@
+Solution ID: sol_prob2_platinum_open23
+Contest: OPEN23
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_open23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi, Reviewed by Richard Qi)
+
+Note:
+
+The model solutions for all subtasks are very short, though
+understanding why they work is not easy.
+
+Suppose we are trying to compute the answer for
+
+$A=a$
+
+and
+
+$B=b$
+
+.
+
+Subtask 2:
+
+$O((a+b)^2)$
+
+Let
+
+$s=\texttt{gen_string}(a,b)$
+
+. For each prefix of
+
+$s$
+
+, count the number of 0s
+and 1s (let these be
+
+$c$
+
+and
+
+$d$
+
+, respectively), and then check whether
+
+$\texttt{gen_string}(c, d)$
+
+is a prefix of
+
+$s$
+
+.
+
+Subtask 3:
+
+$O(a+b)$
+
+The first step is to treat each bit string as a path on the upper-right quadrant
+of a 2D grid (all lattice points
+
+$(x,y)$
+
+satisfying
+
+$x\ge 0$
+
+and
+
+$y\ge 0$
+
+).
+Henceforth,  we use "point" as shorthand for "lattice point." Starting at the
+point
+
+$(0,0)$
+
+,  we repeatedly move right if we are on or above the line
+
+$y=b/a\cdot x$
+
+, and up otherwise, until we reach the point
+
+$(a,b)$
+
+. This is
+equivalent to the function provided in the problem statement  because the
+condition
+
+$ia * b \le ib * a$
+
+compares the slope of the line  from the origin to
+
+$(ia, ib)$
+
+with the slope of the line from the origin to
+
+$(a, b)$
+
+.
+
+Definition:
+
+Say that a point
+
+$(x,y)$
+
+with
+
+$0<x\le a$
+
+and
+
+$0<y\le b$
+
+is
+
+good
+
+if
+
+$\texttt{gen_string}(x,y)$
+
+is a prefix of
+
+$\texttt{gen_string}(a,b)$
+
+.
+
+Our goal is to count the number of good points.
+
+Condition:
+
+A point
+
+$(x,y)$
+
+is good if and only if  every point
+
+$(x_p,y_p)$
+
+in the upper-right quadrant satisfying
+
+$0\le x_p<x$
+
+or
+
+$0\le y_p<y$
+
+is on the same side of the  lines through the origin with slopes
+
+$y/x$
+
+and
+
+$b/a$
+
+. Specifically,
+
+$(x_p,y_p)$
+
+is either above or on both lines, or below both
+lines.
+
+Proof:
+
+Consider pairing the steps of
+
+$\texttt{gen_string}(x,y)$
+
+and the
+first
+
+$x+y$
+
+steps of
+
+$\texttt{gen_string}(a,b)$
+
+. The  given condition is
+sufficient to ensure that every pair of steps moves in the same direction. For
+the other direction, observe if both steps in a pair move  from
+
+$(c,d)$
+
+to
+
+$(c,d+1)$
+
+, then every point
+
+$(x_p,y_p)$
+
+with
+
+$y_p=d$
+
+and
+
+$x_p\ge c$
+
+is below
+the line, while if both steps in a pair move from
+
+$(c,d)$
+
+to
+
+$(c+1,d)$
+
+, then
+every point
+
+$(x_p,y_p)$
+
+with
+
+$x_p=c$
+
+and
+
+$y_p\ge d$
+
+is above on or on the line.
+Necessity follows from taking the union of these statements for all
+
+$(c,d)$
+
+along the path from
+
+$(0,0)$
+
+to
+
+$(x,y)$
+
+.
+
+$\blacksquare$
+
+This condition isn't immediately useful because it tells us to check an infinite
+number of points to see whether
+
+$(x,y)$
+
+is good. The following corollary tells
+us that actually, we only need to check a finite number of points.
+
+Corollary:
+
+A point
+
+$(x,y)$
+
+is good if and only if  every point
+
+$(x_p,y_p)\neq (x,y)$
+
+in the upper-right quadrant satisfying
+
+$0\le x_p\le x$
+
+and
+
+$0\le y_p\le y$
+
+is on the same side of the  lines through the origin
+with slopes
+
+$y/x$
+
+and
+
+$b/a$
+
+. We call this set of points the
+
+bounding
+rectangle
+
+associated with
+
+$(x,y)$
+
+.
+
+We use this corollary to separately count good points below the ray from the
+origin through
+
+$(a,b)$
+
+and good points on or above this ray.
+
+A point
+
+$(x,y)$
+
+below the ray through
+
+$(a,b)$
+
+is good if and only if
+
+$(x-1,y)$
+
+is not strictly below the ray through
+
+$(a,b)$
+
+, and there exist no
+points with smaller y-coordinate that lie on or above the ray through
+
+$(x,y)$
+
+and below the ray through
+
+$(a,b)$
+
+.
+
+A point
+
+$(x,y)$
+
+on or above the ray through
+
+$(a,b)$
+
+is good if and only if
+
+$(x,y-1)$
+
+is not on or above the ray through
+
+$(a,b)$
+
+, and there exist no points
+with smaller x-coordinate that lie on or above the ray through
+
+$(a,b)$
+
+and below
+the ray through
+
+$(x,y)$
+
+.
+
+To count good points of the first form, note that for every y-coordinate, there
+is at most one point with that y-coordinate that can potentially be good.
+Iterate over all y-coordinates from
+
+$1$
+
+to
+
+$b-1$
+
+in increasing order and find 
+the leftmost point with that y-coordinate that is below the ray through
+
+$(a,b)$
+
+.
+If the last good point we found is on or above the ray through the current
+point, then the current point cannot be good. Otherwise, the current point
+produces the greatest slope through the origin out of all points below the ray
+with y-coordinate less than or equal to the current y-coordinate, so it is good.
+Counting good points of the  second form can be done similarly.
+
+Implementation Note:
+
+We can check whether a point lies above a ray
+without division using the
+
+cross
+product
+
+operation.
+
+#include <iostream>
+#include <utility>
+using namespace std;
+ 
+int64_t cross(pair<int64_t, int64_t> p1, pair<int64_t, int64_t> p2) {
+	int64_t x1 = p1.first, y1 = p1.second;
+	int64_t x2 = p2.first, y2 = p2.second;
+	return x1 * y2 - x2 * y1;
+}
+ 
+int64_t solve(int64_t a, int64_t b) {
+	int64_t ans = 0;
+	pair<int64_t, int64_t> best = {1, 0};
+	for (int64_t y = 1; y < b; ++y) {  // below
+		int64_t x = y * a / b + 1;
+		if (cross(best, {x, y}) > 0) {
+			best = {x, y};
+			ans += 1;
+		}
+	}
+	best = {0, 1};
+	for (int64_t x = 1; x <= a; ++x) {  // above or on
+		int64_t y = (x * b + a - 1) / a;
+		if (cross({x, y}, best) >= 0) {
+			best = {x, y};
+			ans += 1;
+		}
+	}
+	return ans;
+}
+ 
+int main() {
+	int64_t T;
+	cin >> T;
+	for (int64_t i = 0; i < T; ++i) {
+		int64_t a, b;
+		cin >> a >> b;
+		cout << solve(a, b) << endl;
+	}
+	return 0;
+}
+
+Equivalent Python code (though this isn't fast enough to pass the subtask):
+
+def cross(p1, p2):
+    x1, y1 = p1
+    x2, y2 = p2
+    return x1 * y2 - x2 * y1
+
+
+def solve(a, b):
+    ans = 0
+    best = (1, 0)
+    for y in range(1, b):  # below
+        x = y * a // b + 1
+        if cross(best, (x, y)) > 0:
+            best = (x, y)
+            ans += 1
+    best = (0, 1)
+    for x in range(1, a + 1):  # above or on
+        y = (x * b + a - 1) // a
+        if cross((x, y), best) >= 0:
+            best = (x, y)
+            ans += 1
+    return ans
+
+
+T = int(input())
+for _ in range(T):
+    a, b = map(int, input().split())
+    print(solve(a, b))
+
+Subtask 4:
+
+$O(answer)$
+
+Suppose that we want to generate the good pairs in increasing order of  size. If
+we look at the good pairs from the sample explanation, we can see that every one
+of them is the sum of two previous good pairs (if we treat
+
+$(1,0)$
+
+and
+
+$(0,1)$
+
+as good). For example,
+
+$(1, 2)+(1, 3)=(2, 5)$
+
+and
+
+$(1, 2)+(2, 5)=(3,7)$
+
+.  Why is
+this happening?
+
+To show this, let's make some additional observations. Let
+
+$f_1=(a_1,b_1)$
+
+and
+
+$f_2=(a_2,b_2)$
+
+be any two points in the upper-right quadrant satisfying
+
+$cross(f_1,f_2)=a_1b_2-a_2b_1=1$
+
+. Note that this implies
+
+$b_1/a_1<b_2/a_2$
+
+, as
+we can divide both sides by
+
+$a_1a_2$
+
+(here we assume
+
+$1/0=\infty$
+
+). 
+Furthermore, by
+
+Pick's
+theorem
+
+, no point lies strictly within the triangle with
+
+$(0,0)$
+
+,
+
+$f_1$
+
+, and
+
+$f_2$
+
+as vertices (this triangle has
+
+$A=cross(f_1,f_2)/2=1/2, i=0, b=3$
+
+).
+
+Fact:
+
+A point
+
+$f'=(a',b')$
+
+lies on or between the rays from the origin
+through
+
+$f_1$
+
+and
+
+$f_2$
+
+(
+
+$b_1/a_1\le b'/a'\le b_2/a_2$
+
+) if and only if
+
+$f'$
+
+can
+be written as a non-negative integer multiple of
+
+$f_1$
+
+plus a non-negative
+integer multiple of
+
+$f_2$
+
+.
+
+Proof:
+
+The "if" direction is obvious. For the "only if" direction, we may
+write
+
+$f'=cross(f_1, f')\cdot f_2 + cross(f', f_2)\cdot f_1$
+
+. Equality holds
+because
+
+$$\begin{align*}
+&cross(f_1,cross(f_1, f')\cdot f_2 + cross(f', f_2)\cdot f_1)\\
+&=cross(f_1, cross(f_1, f')\cdot f_2)+cross(f_1, cross(f', f_2)\cdot f_1)\\
+&=cross(f_1, f')\cdot cross(f_1,f_2)+cross(f',f_2)\cdot cross(f_1,f_1)\\
+&=cross(f_1,f'),
+\end{align*}$$
+
+where we have used that the cross product is bilinear (linear in each of its
+arguments), and similarly,
+
+$cross(f',f_2)=cross(cross(f_1, f')\cdot f_2 + cross(f', f_2)\cdot f_1, f_2).$
+
+Both
+
+$cross(f_1, f')$
+
+and
+
+$cross(f',f_2)$
+
+are non-negative integers because
+
+$f'$
+
+lies on or between the rays. Alternatively, we can loop the following steps
+until termination occurs with
+
+$f_2=(a'/\gcd(a',b'), b'/\gcd(a',b'))$
+
+.
+
+If
+
+$f'$
+
+is a multiple of either
+
+$f_1$
+
+or
+
+$f_2$
+
+, we're done.
+
+Otherwise, let
+
+$f_3=f_1+f_2$
+
+. Note that
+
+$cross(f_1,f_3)=cross(f_3,f_2)=1$
+
+by
+bilinearity.
+
+If
+
+$cross(f_3, f')>0$
+
+, set
+
+$f_1=f_3$
+
+.
+
+Otherwise, set
+
+$f_2=f_3$
+
+.
+
+$\blacksquare$
+
+One easy consequence of the Fact is that for
+
+$(a_1,b_1)$
+
+and
+
+$(a_2,b_2)$
+
+satisfying the preconditions of the Fact, the "smallest" point (by either x- or
+y-coordinate)  strictly in between the rays through these points is
+
+$(a_1+a_2,b_1+b_2)$
+
+. For example,
+
+$cross((1,2),(1,3))=1$
+
+, the smallest point
+between
+
+$(1,2)$
+
+and
+
+$(1,3)$
+
+is
+
+$(1+1, 2+3)=(2,5)$
+
+,
+
+$cross((1,2),(2,5))=1$
+
+, and
+the smallest  point between
+
+$(1,2)$
+
+and
+
+$(2,5)$
+
+is
+
+$(1+2,2+5)=(3,7)$
+
+. This
+partially explains  our observation from the start of this subtask.
+
+The solution to this subtask is essentially the loop from the Fact starting at
+
+$f_1=(1,0)$
+
+,
+
+$f_2=(0,1)$
+
+, and
+
+$f'=(a,b)$
+
+, modified to maintain a counter
+
+$ans$
+
+. 
+Initially,
+
+$ans=0$
+
+. At every step of the loop, we will ensure that
+
+All good points below or on the ray through
+
+$f_1$
+
+, or strictly above the 
+ray through
+
+$f_2$
+
+, have been added to
+
+$ans$
+
+.
+
+All good points strictly in between the rays through
+
+$f_1$
+
+and
+
+$f_2$
+
+have
+not been added to
+
+$ans$
+
+yet.
+
+The multiples of
+
+$f_2$
+
+that we know satisfy the Corollary have been added to
+
+$ans$
+
+. There may be additional multiples of
+
+$f_2$
+
+that we will add to
+
+$ans$
+
+later, but we haven't yet verified that the Corollary holds.
+
+More details: If
+
+$cross(f_3, f')>0$
+
+, then
+
+$f_3$
+
+lies below the ray through
+
+$f'$
+
+.
+
+$f_3$
+
+is good; no point strictly between the rays through
+
+$f_3$
+
+and
+
+$f_2$
+
+lie in the bounding rectangle of
+
+$f_3$
+
+by the Fact, so the Corollary holds.
+
+No other integer multiples
+
+$m$
+
+of
+
+$f_3$
+
+are good because
+
+$f_3$
+
+will be on 
+different sides of the rays through
+
+$m$
+
+and
+
+$f'$
+
+.
+
+No points
+
+$p$
+
+strictly in between the rays
+
+$f_1$
+
+and
+
+$f_3$
+
+are good because
+
+$f_3$
+
+will lie in the bounding rectangle of
+
+$p$
+
+by the Fact, and
+
+$f_3$
+
+will be
+on opposite sides of the rays through
+
+$p$
+
+and
+
+$f'$
+
+.
+
+If
+
+$f_2\neq (0,1)$
+
+, then
+
+$f_2$
+
+plus the last good multiple  of
+
+$f_2$
+
+found
+so far satisfies the Corollary, and therefore must be good. Call this point
+
+$m$
+
+.
+To check that
+
+$m$
+
+satisfies the Corollary, note that
+
+$m$
+
+lies in the bounding
+rectangle of
+
+$f_2+f_3$
+
+and any point lying strictly between the rays through
+
+$f_3$
+
+and the ray through
+
+$f_2$
+
+must equal
+
+$f_2+f_3$
+
+or contain
+
+$f_2+f_3$
+
+in its
+bounding rectangle by the Fact, so no point in the bounding rectangle of
+
+$m$
+
+lies on opposite sides of the rays through
+
+$f'$
+
+and
+
+$m$
+
+.
+
+The reasoning for
+
+$cross(f_3, f')\le 0$
+
+is similar;
+
+$f_3$
+
+is good, no additional
+multiples of
+
+$f_3$
+
+are good, and no points strictly in between the rays
+
+$f_3$
+
+and
+
+$f_2$
+
+are good. One difference is that in this case, no additional multiples
+of
+
+$f_2$
+
+are good.
+
+The loop terminates with
+
+$f_2=(a/\gcd(a,b),b/\gcd(a,b))$
+
+,
+
+$cross(f',f_2)=0$
+
+,
+
+$f_1$
+
+in the bounding rectangle of
+
+$f_2$
+
+, and
+
+$cross(f_1,f')=\gcd(a,b)$
+
+. Add
+
+$2(cross(f_1,f')-1)$
+
+to the answer and return. This additional contribution
+comes from good points that are formed by adding a multiple of
+
+$f_2$
+
+to
+
+$(0,0)$
+
+or
+
+$f_1$
+
+.
+
+Implementation Note:
+
+It is not necessary to maintain the values of
+
+$f_1$
+
+and
+
+$f_2$
+
+.  The code below only maintains
+
+$crs\_below=cross(f_1, f')$
+
+and
+
+$crs\_above=cross(f', f_2)$
+
+. When we set
+
+$f_1=f_1+f_2$
+
+, we update
+
+$crs\_below=cross(f_1,f')-cross(f_2,f')=crs\_below-crs\_above$
+
+. When we set
+
+$f_2=f_1+f_2$
+
+, we update
+
+$crs\_above=cross(f', f_2)-cross(f_1,f')=crs\_above-crs\_below$
+
+.
+
+def solve(a, b):
+    crs_below, crs_above = b, a  # cross(f_1, f'), cross(f', f_2)
+    ans = 0
+    on_y_axis = True
+    while True:
+        if crs_below > crs_above:  # f_1 = f_1 + f_2
+            crs_below -= crs_above
+            ans += 1 + (not on_y_axis)
+        else:  # f_2 = f_1 + f_2
+            crs_above -= crs_below
+            on_y_axis = False
+            ans += 1
+        if crs_above == 0:
+            break
+    return ans + 2 * (crs_below - 1)
+
+
+T = int(input())
+for _ in range(T):
+    a, b = map(int, input().split())
+    print(solve(a, b))
+
+Here is a version that prints the good multiples:
+
+def add(a, b):
+    return (a[0] + b[0], a[1] + b[1])
+
+
+def solve(a, b):
+    crs_below, crs_above = b, a  # cross(f_1, f'), cross(f', f_2)
+    ans = 0
+    on_y_axis = True
+    f1 = (1, 0)
+    f2 = (0, 1)
+    lst_rep = None
+    lst = None
+    while True:
+        print("f3 =", add(f1, f2), "(good)")
+        if crs_below > crs_above:  # f_1 = f_1 + f_2
+            print("f1 = f3")
+            crs_below -= crs_above
+            ans += 1 + (not on_y_axis)
+            if not on_y_axis:
+                if lst_rep != f2:
+                    lst_rep = f2
+                    lst = f2
+                lst = add(lst, f2)
+                print(lst, "(good: multiple of f2)")
+            f1 = add(f1, f2)
+        else:  # f_2 = f_1 + f_2
+            print("f2 = f3")
+            crs_above -= crs_below
+            on_y_axis = False
+            ans += 1
+            f2 = add(f1, f2)
+        if crs_above == 0:
+            print("terminating soon ... (a, b) is multiple of f2")
+            lst = f2
+            for _ in range(crs_below - 1):
+                print(add(f1, lst), "(good: f1 + multiple of f2)")
+                lst = add(lst, f2)
+                print(lst, "(good: multiple of f2)")
+            break
+    return ans + 2 * (crs_below - 1)
+
+
+T = int(input())
+for _ in range(T):
+    a, b = map(int, input().split())
+    print(solve(a, b))
+
+And here is the output of the program above for the last test case of the sample
+input:
+
+f3 = (1, 1) (good)
+f2 = f3
+f3 = (2, 1) (good)
+f1 = f3
+(2, 2) (good: multiple of f2)
+f3 = (3, 2) (good)
+f1 = f3
+(3, 3) (good: multiple of f2)
+f3 = (4, 3) (good)
+f1 = f3
+(4, 4) (good: multiple of f2)
+f3 = (5, 4) (good)
+f2 = f3
+f3 = (9, 7) (good)
+f2 = f3
+terminating soon ... (a, b) is multiple of f2
+(13, 10) (good: f1 + multiple of f2)
+(18, 14) (good: multiple of f2)
+(22, 17) (good: f1 + multiple of f2)
+(27, 21) (good: multiple of f2)
+
+Full Solution:
+
+To speed up the above solution, we modify the loop to
+quickly process many steps corresponding to the same branch of the  while loop.
+This runs in
+
+$O(\log (a+b))$
+
+time because it is equivalent to the
+
+Euclidean
+algorithm
+
+.
+
+Implementation:
+
+def solve(a, b):
+    crs_below, crs_above = b, a  # cross(f_1, f'), cross(f', f_2)
+    ans = 0
+    on_y_axis = True
+    while True:
+        if crs_below > crs_above:  # f_1 = f_1 + f_2
+            mul = (crs_below - 1) // crs_above
+            ans += mul * (1 + (not on_y_axis))
+            crs_below -= mul * crs_above
+        else:  # f_2 = f_1 + f_2
+            mul = crs_above // crs_below
+            ans += mul
+            crs_above -= mul * crs_below
+            on_y_axis = False
+        if crs_above == 0:
+            break
+    return ans + 2 * (crs_below - 1)
+
+
+T = int(input())
+for _ in range(T):
+    a, b = map(int, input().split())
+    print(solve(a, b))
+
+Note 1:
+
+This problem was inspired by
+
+this
+Hacker Cup problem,
+
+though I don't know the intended solution. The only
+solution that passed in-contest runs in
+
+$O(N^2)$
+
+time (with
+
+$N=10^6$
+
+).
+
+Note 2:
+
+This problem is related to
+
+continued
+fractions
+
+and
+
+Farey
+sequences.

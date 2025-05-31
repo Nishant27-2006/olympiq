@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Note: I index the cows as <span class='math'>$0\ldots N-1$</span> rather than <span class='math'>$1\ldots N$</span>.
+<p>To solve this problem in <span class='math'>$\mathcal{O}(N^2)$</span> time, fix <span class='math'>$r$</span> and count the number
+of <span class='math'>$l$</span> such that both cows and <span class='math'>$l$</span> and <span class='math'>$r$</span> can be leaders. We do this by
+iterating over all possible <span class='math'>$l$</span> in decreasing order. 
+<p><ul><li>If <span class='math'>$B_l=B_r$</span>, then cow <span class='math'>$r$</span> cannot be a leader in <span class='math'>$l\ldots r$</span>. Break.</li><li>Otherwise, if <span class='math'>$B_l$</span> is unique in the range <span class='math'>$l\ldots r$</span>, then we increment
+the answer by one.</li></ul>
+<p>My code:
+<p><pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main() {
+	int N; cin &gt;&gt; N;
+	vector&lt;int&gt; B(N); for (int&amp; b: B) cin &gt;&gt; b;
+	int64_t ans = 0;
+	for (int r = 0; r &lt; N; ++r) {
+		vector&lt;bool&gt; occ(N+1);
+		for (int l = r-1; l &gt;= 0; --l) {
+			if (B[l] == B[r]) break;
+			if (!occ[B[l]]) {
+				++ans;
+				occ[B[l]] = 1;
+			}
+		}
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>To solve this problem in <span class='math'>$\mathcal{O}(N\log N)$</span> time, for each <span class='math'>$l\le r$</span> define
+<span class='math'>$\texttt{active}_r[l]$</span> to equal <span class='math'>$1$</span> if cow <span class='math'>$l$</span>&apos;s breed is unique in the range
+<span class='math'>$l\ldots r$</span>, and <span class='math'>$0$</span> otherwise. Also let <span class='math'>$\texttt{prev_oc}[j]$</span> equal the maximum
+index <span class='math'>$i&lt;j$</span> such that <span class='math'>$B_i=B_j$</span>.
+<p>For each <span class='math'>$r$</span>, we need to sum <span class='math'>$\texttt{active}_r[l]$</span> over all
+<span class='math'>$l\in [\texttt{prev_oc}[r]+1,r-1]$</span>. Note that
+<span class='math'>$\texttt{active}_r[l]=\texttt{active}_{r-1}[l]$</span> for almost all <span class='math'>$l$</span>, aside from
+for <span class='math'>$l=r$</span> and <span class='math'>$l=\texttt{prev_oc}[r]$</span>. Therefore, when  transitioning from <span class='math'>$r-1$</span>
+to <span class='math'>$r$</span>, we need to make up to two point updates while allowing range sum queries
+over <span class='math'>$\texttt{active}$</span>. This can be done using a data structure such as a
+<a href='https://usaco.guide/gold/PURS'>binary indexed tree</a>.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class PairsOfCows {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int[] last = new int[n + 1];
+        long answer = 0;
+        BinaryIndexTree bit = new BinaryIndexTree(n);
+        for (int j = 1; j &lt;= n; j++) {
+            int k = Integer.parseInt(tokenizer.nextToken());
+            if (last[k] != 0) {
+                bit.update(last[k], -1L);
+            }
+            answer += bit.query(j) - bit.query(last[k]);
+            last[k] = j;
+            bit.update(j, 1L);
+        }
+        System.out.println(answer);
+    }
+ 
+    static class BinaryIndexTree {
+        final int n;
+        final long[] bit;
+ 
+        BinaryIndexTree(int n) {
+            this.n = n;
+            this.bit = new long[n + 1];
+        }
+ 
+        void update(int j, long delta) {
+            for (; j &lt;= n; j += j &amp; -j) {
+                bit[j] += delta;
+            }
+        }
+ 
+        long query(int j) {
+            long res = 0;
+            for (; j &gt; 0; j -= j &amp; -j) {
+                res += bit[j];
+            }
+            return res;
+        }
+    }
+}
+</pre>
+<p>Alternatively, use an order statistic tree (also mentioned in the link above).
+<p>My code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#include &lt;ext/pb_ds/assoc_container.hpp&gt;
+using namespace __gnu_pbds;
+template &lt;class T&gt; using Tree = tree&lt;T, null_type, less&lt;T&gt;,
+	rb_tree_tag, tree_order_statistics_node_update&gt;;
+ 
+int main() {
+	int N; cin &gt;&gt; N;
+	Tree&lt;int&gt; T;
+	vector&lt;int&gt; last_oc(N+1,-1);
+	int64_t ans = 0;
+	for (int i = 0; i &lt; N; ++i) {
+		int b; cin &gt;&gt; b;
+		ans += T.size()-T.order_of_key(last_oc[b]+1);
+		T.insert(i);
+		if (last_oc[b] != -1) T.erase(last_oc[b]);
+		last_oc[b] = i;
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

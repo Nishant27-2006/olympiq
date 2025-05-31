@@ -1,0 +1,150 @@
+Solution ID: sol_walk_gold_open19
+Contest: OPEN19
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_walk_gold_open19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brian Dean)
+
+There are a few ways to approach this problem.  Probably the most
+straightforward is a  binary search on the answer (say,
+
+$x$
+
+), where in each step
+we preserve only the edges of cost
+
+$<x$
+
+in our graph and count the number of
+connected components.  If the number is less than
+
+$K$
+
+, then our guess for
+
+$x$
+
+was too high.  Unfortunately, the running time here is
+
+$O(N^2)$
+
+to find
+connected components, times the number of steps in the  binary search, which is
+the log of 2019201997 --- about 33.  This will likely time  out on large input
+cases.
+
+The key structural insight is that the answer to this problem comes from a
+minimum spanning tree (MST) of our graph.  If you want to split into
+
+$K=2$
+
+clusters, you can do this by finding an MST and removing its highest-weight
+edge, thereby splitting it into two pieces that  represent two sides of our
+partition.  More generally, to split into
+
+$K$
+
+clusters, you just remove the
+
+$K-1$
+
+highest-weight edges from the MST.  This makes sense if you think of the
+operation of Kruskal's MST algorithm: consider the state of the algorithm when
+it  has built up
+
+$K$
+
+connected components and is about to add an edge of weight
+
+$x$
+
+to join the next pair of components together --- at this point, each
+component is internally connected by a  spanning tree containing edges of weight
+at most
+
+$x$
+
+, and running between these components are only edges of weight at
+least
+
+$x$
+
+(otherwise components would have been joined earlier in the process).
+
+So we see that we can answer this question by taking the
+
+$(K-1)$
+
+th largest edge
+weight in an MST, which means all we need to do is compute an MST.  There are
+many MST algorithms out there, but unfortunately many of them (e.g., Kruskal,
+Boruvka) run in
+
+$O(N^2 \log N)$
+
+time  for this problem since it involves a dense
+graph.  Kruskal's algorithm can be modified to run in a dense graph in
+
+$O(N^2)$
+
+time (left as an exercise to the reader), or we can note that the sorting step
+is really the bottleneck with Kruskal, so we can sort the edges quickly (e.g.,
+with something like a two-pass radix sort in linear time), after which Kruskal's
+algorithm runs in nearly linear time.  Probably even better, however, would be 
+to instead use Jarnik's algorithm (perhaps more commonly known as Prim's
+algorithm, which is also pretty much equivalent to Dijkstra's shortest path
+algorithm --- in the MST context, I prefer to call it Jarnik's algorithm since Jarnik's publication
+pre-dated Prim's by a substantial amount).  This gives a simple way to build the
+MST in just
+
+$O(N^2)$
+
+time.
+
+Some mathematically enterprising students even managed to reverse-engineer our
+"random" edge weight function to solve the problem without using algorithmic
+methods --- although this was not the intent of the problem (and indeed, such
+solutions would break if a different edge weight function was used), these
+solutions were still awarded full marks.
+
+Here is my C++ code.  It basically runs Jarnik's algorithm to find an MST, then 
+sorts the MST edges to find the right one.
+
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+using namespace std;
+#define MAX_N 7500
+
+int N, K, visited[MAX_N+1];
+long long D[MAX_N+1];
+
+// Prim/Jarnik MST algorithm
+void jarnik(int source)
+{
+   for (int i=1; i<=N; i++) D[i] = 2019201997;
+   for (int iter=0; iter<N; iter++) {
+      int min_i = 0;
+      for (int i=1; i<=N; i++) 
+         if (!visited[i] && (min_i==0 || D[i] < D[min_i])) min_i = i;
+      visited[min_i] = 1;
+      for (int j=1; j<=N; j++)
+         if (!visited[j]) 
+            D[j] = min(D[j], (2019201913LL*min(min_i,j)+2019201949LL*max(min_i,j)) % 2019201997LL);
+   }
+}
+
+int main(void)
+{
+   ifstream fin ("walk.in");
+   fin >> N >> K;
+   ofstream fout ("walk.out");
+   jarnik(1);
+   sort (D+1,D+N+1);
+   fout << D[N+1-K] << "\n";
+   return 0;
+}

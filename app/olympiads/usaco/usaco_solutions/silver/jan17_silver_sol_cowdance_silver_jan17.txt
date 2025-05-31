@@ -1,0 +1,153 @@
+Solution ID: sol_cowdance_silver_jan17
+Contest: JAN17
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_cowdance_silver_jan17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+There are two parts to solving this problem. Firstly, we need to be able to
+efficiently verify whether a given value of
+
+$K$
+
+is valid. Secondly, we need to
+efficiently find the minimum value of
+
+$K$
+
+that is valid.
+
+We start by determining whether a given value of
+
+$K$
+
+is valid. We need to
+simulate the process of having cows dance on the stage and then leaving the
+stage. Whenever
+
+$K$
+
+cows are on the stage and we want to figure out when the
+next cow can join, we want to know the earliest time when a cow can leave the
+stage. This motivates the idea of using a priority queue, which supports
+efficient insertion as well as efficient removal of the minimum element stored
+within (both in
+
+$O(\log K)$
+
+time). The process of checking if a given value of
+
+$K$
+
+is correct therefore
+takes
+
+$O(N \log K)$
+
+time.
+
+It remains to efficiently determine the minimum value of
+
+$K$
+
+that is valid.
+Because
+
+$N$
+
+is at most
+
+$10^4$
+
+, it is possible to iterate
+
+$K$
+
+from
+
+$1$
+
+to
+
+$N$
+
+to
+find such a value for an
+
+$O(N^2 \log N)$
+
+algorithm. We can do better though!
+
+We are guaranteed that
+
+$K=N$
+
+is a valid value. Given the structure of the
+problem, note that if
+
+$K$
+
+is a valid value, then
+
+$K+1$
+
+is a valid value - this
+is because having an extra spot cannot make cows dance later than they
+originally would. Therefore, we can binary search for the minimum valid value of
+
+$K$
+
+, giving us an
+
+$O(N \log^2 N)$
+
+algorithm.
+
+import java.io.*;
+import java.util.*;
+public class cowdance {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("cowdance.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("cowdance.out")));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int maxT = Integer.parseInt(st.nextToken());
+		int[] l = new int[n];
+		for(int i = 0; i < n; i++) {
+			l[i] = Integer.parseInt(br.readLine());
+		}
+		int min = 1;
+		int max = n;
+		while(min != max) {
+			int mid = (min+max)/2;
+			if(possible(l, mid, maxT)) {
+				max = mid;
+			}
+			else {
+				min = mid+1;
+			}
+		}
+		pw.println(min);
+		pw.close();
+	}
+	
+	public static boolean possible(int[] l, int k, int t) {
+		int lastTime = 0;
+		PriorityQueue<Integer> q = new PriorityQueue<Integer>();
+		for(int i = 0; i < l.length; i++) {
+			if(q.size() == k) {
+				lastTime = q.poll();
+			}
+			if(lastTime + l[i] > t) {
+				return false;
+			}
+			q.add(lastTime + l[i]);
+		}
+		return true;
+	}
+	
+}

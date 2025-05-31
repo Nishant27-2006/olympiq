@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>Let us formalize the problem. We are given <span class='math'>$N$</span> slingshots, where slingshot <span class='math'>$i$</span>
+has parameters <span class='math'>$(x_i, y_i, t_i)$</span>; we are also <span class='math'>$M$</span> queries. Query <span class='math'>$j$</span> has
+parameters <span class='math'>$(a_i, b_i)$</span>, and we are asked to determine
+<div class='math'>$$\min_i |a_j - x_i| + |b_j - y_i| + t_i.$$</div> Here we are ignoring the case where
+a pile may be transported without using any slingshots at all, but it is easy to
+check this case in a single final pass through the queries. So from here on, we
+assume that exactly one slingshot must be used in each query, and as a result we
+obtain the above expression.
+<p>Fix some query <span class='math'>$j$</span>. There are four cases for the location of the best slingshot
+<span class='math'>$i$</span>. It may satisfy:
+<ul><li> <span class='math'>$a_j &gt; x_i$</span> and <span class='math'>$b_j &gt; y_i$</span>, </li><li> <span class='math'>$a_j \leq x_i$</span> and <span class='math'>$b_j &gt; y_i$</span>,
+</li><li> <span class='math'>$a_j &gt; x_i$</span> and <span class='math'>$b_j \leq y_i$</span>, or </li><li> <span class='math'>$a_j \leq x_i$</span> and
+<span class='math'>$b_j \leq y_i$</span>.
+</li></ul>
+<p>Each case corresponds to a &quot;quadrant&quot; relative to the query. If we can find, for
+each quadrant, the minimum cost of query <span class='math'>$j$</span> if we use a slingshot in that
+quadrant, then the answer for query <span class='math'>$j$</span> is simply the minimum of the four
+quadrant-specific minima.
+<p>Consider some slingshot <span class='math'>$i$</span> which falls into the first case, for query <span class='math'>$j$</span>. Then
+the cost of using slingshot <span class='math'>$i$</span> for query <span class='math'>$j$</span> is
+<div class='math'>$$a_j + b_j + t_i - x_i - y_i.$$</div>
+Therefore the first-quadrant minimum for query <span class='math'>$j$</span> is
+<div class='math'>$$a_j + b_j + \min_i (t_i - x_i - y_i),$$</div> where <span class='math'>$i$</span> ranges over all slingshots
+satisfying <span class='math'>$a_j &gt; x_i$</span> and <span class='math'>$b_j &gt; y_i$</span>.
+<p>To compute this quantity for all queries, sweep left-to-right. Then when a query
+is encountered, we wish to find the minimum <span class='math'>$t_i - x_i - y_i$</span> over all
+slingshots which have been encountered already and satisfy <span class='math'>$b_j &gt; y_i$</span>. Such
+queries can be answered efficiently by maintaining a segment tree; whenever a
+slingshot is encountered by the sweepline, the value <span class='math'>$t_i - x_i - y_i$</span> is
+inserted with index <span class='math'>$y_i$</span>. Then the desired minimum can be obtained by a range
+minimum query.
+<p>The other three cases are analogous. Note that the coordinates <span class='math'>$y_i$</span> must be
+compressed so that they can be used as indices into the segment tree.
+<p>Overall time complexity is <span class='math'>$O((N+M) \log (N+M))$</span>.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MAXN 100000
+#define SEG (1&lt;&lt;18)
+#define INF 1000000000000000LL
+ 
+int N,Q;
+long long x[MAXN], y[MAXN], t[MAXN];
+int cx[MAXN],cy[MAXN];
+int cid[MAXN];
+ 
+long long qx[MAXN],qy[MAXN],qt[MAXN];
+int qcx[MAXN],qcy[MAXN];
+int qid[MAXN];
+ 
+class SegTree
+{
+public:
+	long long seg[2*SEG];
+	int l[2*SEG],r[2*SEG];
+	int low,high;
+	
+	void init()
+	{
+		for(int i=SEG;i&lt;2*SEG;i++)
+		{
+			seg[i] = -INF;
+			l[i] = r[i] = i-SEG;
+		}
+		for(int i=SEG-1;i&gt;0;i--)
+		{
+			seg[i] = -INF;
+			l[i] = l[2*i], r[i] = r[2*i+1];
+		}
+	}
+	void update(int i,long long v)
+	{
+		i += SEG;
+		for(;i&gt;0;i/=2)
+			seg[i] = max(seg[i],v);
+	}
+	long long getMax(int i)
+	{
+		if((l[i]&gt;high)||(r[i]&lt;low)) return -INF;
+		if((l[i]&gt;=low)&amp;&amp;(r[i]&lt;=high)) return seg[i];
+		return max(getMax(2*i),getMax(2*i+1));
+	}
+};
+ 
+bool cmp(int a,int b)
+{
+	return x[a]&lt;x[b];
+}
+ 
+bool qcmp(int a,int b)
+{
+	return qx[a]&lt;qx[b];
+}
+ 
+long long ansLeft[MAXN];
+long long ansRight[MAXN];
+ 
+int main()
+{
+	cin &gt;&gt; N &gt;&gt; Q;
+	vector&lt;long long&gt; vx,vy;
+	for(int i=0;i&lt;N;i++)
+	{
+		cin &gt;&gt; x[i] &gt;&gt; y[i] &gt;&gt; t[i];
+		vx.push_back(x[i]);
+		vy.push_back(y[i]);
+		cid[i] = i;
+	}
+	sort(cid,cid+N,cmp);
+	for(int i=0;i&lt;Q;i++)
+	{
+		cin &gt;&gt; qx[i] &gt;&gt; qy[i];
+		vx.push_back(qx[i]);
+		vy.push_back(qy[i]);
+		qid[i] = i;
+	}
+	sort(qid,qid+Q,qcmp);
+	
+	sort(vx.begin(),vx.end());
+	sort(vy.begin(),vy.end());
+	vx.resize(distance(vx.begin(),unique(vx.begin(),vx.end())));
+	vy.resize(distance(vy.begin(),unique(vy.begin(),vy.end())));
+	for(int i=0;i&lt;N;i++)
+	{
+		cx[i] = lower_bound(vx.begin(),vx.end(),x[i]) - vx.begin();
+		cy[i] = lower_bound(vy.begin(),vy.end(),y[i]) - vy.begin();
+	}
+	for(int i=0;i&lt;Q;i++)
+	{
+		qcx[i] = lower_bound(vx.begin(),vx.end(),qx[i]) - vx.begin();
+		qcy[i] = lower_bound(vy.begin(),vy.end(),qy[i]) - vy.begin();		
+	}
+	
+	SegTree up, down;
+	up.init();
+	down.init();
+	int j = 0;
+	for(int i=0;i&lt;Q;i++)
+	{
+		int cur = qid[i];
+		while(j &lt; N &amp;&amp; x[cid[j]] &lt;= qx[cur])
+		{
+			down.update(cy[cid[j]], x[cid[j]]+y[cid[j]]-t[cid[j]]);
+			up.update(cy[cid[j]], x[cid[j]]-y[cid[j]]-t[cid[j]]);
+			j++;
+		}
+		down.low = 0, down.high = qcy[cur];
+		up.low = qcy[cur], up.high = vy.size()-1;
+		ansLeft[cur] = min(qx[cur] + qy[cur] - down.getMax(1), qx[cur] - qy[cur] - up.getMax(1));
+	}
+	up.init();
+	down.init();
+	j = N-1;
+	for(int i=Q-1;i&gt;=0;i--)
+	{
+		int cur = qid[i];
+		while(j&gt;=0 &amp;&amp; x[cid[j]] &gt;= qx[cur])
+		{
+			down.update(cy[cid[j]], -x[cid[j]]+y[cid[j]]-t[cid[j]]);
+			up.update(cy[cid[j]], -x[cid[j]]-y[cid[j]]-t[cid[j]]);
+			j--;			
+		}
+		down.low = 0, down.high = qcy[cur];
+		up.low = qcy[cur], up.high = vy.size()-1;
+		ansRight[cur] = min(-qx[cur] + qy[cur] - down.getMax(1), -qx[cur] - qy[cur] - up.getMax(1));
+	}
+	for(int i=0;i&lt;Q;i++)
+		cout &lt;&lt; min(min(ansLeft[i],ansRight[i]),(long long)abs(qx[i]-qy[i])) &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

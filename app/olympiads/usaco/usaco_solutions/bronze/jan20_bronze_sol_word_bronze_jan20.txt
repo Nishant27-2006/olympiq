@@ -1,0 +1,41 @@
+Solution ID: sol_word_bronze_jan20
+Contest: JAN20
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_word_bronze_jan20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Just simulate the described process. Maintain the number of non-space characters
+on your current line (denoted by
+
+$w$
+
+in the code below). If adding the next word
+would cause the number of non-space characters to exceed
+
+$K$
+
+, then place it on a
+new line.
+
+Dhruv Rohatgi's code (modified by Ben):
+
+with open("word.in","r") as fin:
+	L = list(fin)
+	N,K = map(int,L[0].split())
+	with open("word.out","w") as fout:
+		w = 0 # current length of line
+		for c in L[1].split(): # go through each word
+			if w+len(c) > K: # place on new line
+				fout.write("\n"+c)
+				w = len(c)
+			else: # place on current line
+				if w > 0:
+					fout.write(" ")
+				fout.write(c)
+				w += len(c)
+		fout.write("\n")

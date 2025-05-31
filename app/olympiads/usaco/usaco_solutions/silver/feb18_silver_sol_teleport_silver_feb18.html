@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>The goal of this problem is to minimize a function <span class='math'>$f(y)$</span> describing the total
+cost of manure transport if the teleporter endpoint is located at position <span class='math'>$y$</span>.
+Since <span class='math'>$f(y)$</span> has a piecewise linear structure, we do this by scaning <span class='math'>$y$</span> forward
+and tracing out <span class='math'>$f(y)$</span>, pausing at each breakpoint to adjust the current slope 
+of <span class='math'>$f(y)$</span> in an appropriate way, and maintaining a running minimum as we go.
+There are only <span class='math'>$O(N)$</span> breakpoints so after sorting them in <span class='math'>$O(N \log N)$</span> time we
+can scan through and trace out <span class='math'>$f(y)$</span> in just <span class='math'>$O(N)$</span> time.  
+<p>Although the high-level algorithmic picture above is relatively straightforward,
+it takes a bit of mathematical effort to figure out where all the breakpoints in
+<span class='math'>$f(y)$</span> need to go -- that is, at which value of <span class='math'>$y$</span>, and how much the slope
+changes at each breakpoint.  Note that the total transport distance <span class='math'>$f(y)$</span> can
+be broken down into the transport distance for each pile <span class='math'>$i$</span>,
+<p><span class='math'>$f(y) = \sum_{i=1}^N f_i(y)$</span>,
+<p>where <span class='math'>$f_i(y) = \min(|a_i - b_i|, |a_i - 0| + |b_i - y|)$</span> represents the cost
+incurred only for transporting pile <span class='math'>$i$</span> (the first part represents the
+transportation cost if moved directly, and the second part if teleported).  Each
+of the <span class='math'>$f_i$</span>&apos;s are reasonably simple functions of <span class='math'>$y$</span>.  After a bit of
+mathematical  wrangling, we can deduce that the <span class='math'>$f_i$</span>&apos;s have the following
+shapes:
+<p><img src="https://usaco.org/current/data/fig_teleport_silver_feb18.png" width="40%" height="40%"/>
+<p>In terms of breakpoints these functions contribute to <span class='math'>$f(y)$</span>, for example if
+<span class='math'>$|a_i|
+\geq |a_i - b_i|$</span>, then there are no breakpoints in <span class='math'>$f_i(y)$</span> at all --
+the entire contribution of <span class='math'>$f_i(y)$</span> is to shift <span class='math'>$f(y)$</span> up by <span class='math'>$|a_i - b_i|$</span>.  In
+another example case, if <span class='math'>$a_i &lt; 0$</span> and <span class='math'>$a_i \geq b_i$</span>, then <span class='math'>$f_i$</span> has three
+breakpoints which contribute to <span class='math'>$f(y)$</span>: at <span class='math'>$y = 0$</span> the slope of <span class='math'>$f_i(y)$</span> (and
+hence also of <span class='math'>$f$</span>) decreases by 1, at <span class='math'>$y = b$</span> it increases by +2, and at 
+<span class='math'>$y = 2b$</span> it decreases by 1.
+<p>My code below uses a map to store the slope changes at all the different
+breakpoints of <span class='math'>$f$</span>, after which it scans across these in sorted order of <span class='math'>$y$</span> and
+simply traces out <span class='math'>$f(y)$</span>, keeping track of the minimum value it attains.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;map&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+     
+int N;
+map&lt;int,int&gt; slopechg;   // slopechg[t] is how much the slope of f(y) changes when y=t
+     
+int main(void)
+{
+   ifstream fin (&quot;teleport.in&quot;);
+   ofstream fout (&quot;teleport.out&quot;);
+
+   long long current_f = 0, slope_f = 0, current_y = -2000000000;
+
+   fin &gt;&gt; N;
+   for (int i=0; i&lt;N; i++) {
+      int a, b;
+      fin &gt;&gt; a &gt;&gt; b;
+      current_f += abs(a-b);
+      
+      // Now add any slope change breakpoints...      
+      if (abs(a) &gt; abs(a-b)) continue;
+      slopechg[b]+=2;
+      if (a&lt;b &amp;&amp; a&lt;0)   { slopechg[0]--; slopechg[2*b]--; }
+      if (a&lt;b &amp;&amp; a&gt;=0)  { slopechg[2*b-2*a]--; slopechg[2*a]--; }
+      if (a&gt;=b &amp;&amp; a&lt;0)  { slopechg[2*b-2*a]--; slopechg[2*a]--; }
+      if (a&gt;=b &amp;&amp; a&gt;=0) { slopechg[0]--; slopechg[2*b]--; }
+   }      
+
+   // Now scan y forward and apply slope changes to trace out f(y), keeping track of min
+   long long min_f = current_f;
+   for (auto p : slopechg) {
+      int new_y = p.first, delta_slope = p.second;
+      current_f += slope_f * (new_y - current_y);
+      current_y = new_y;
+      slope_f += delta_slope;
+      min_f = min(min_f, current_f);
+   }
+
+   fout &lt;&lt; min_f &lt;&lt; &quot;\n&quot;;
+   return 0;
+}
+</pre>
+<p></body></html>

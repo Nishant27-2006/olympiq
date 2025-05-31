@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Slow Solution:</strong> We can repeatedly find the smallest haybale that can be
+moved to the beginning and move it. This runs in <span class='math'>$\mathcal O(N^2)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, K; cin &gt;&gt; N &gt;&gt; K;
+	vector&lt;int&gt; h(N); for (int&amp; i: h) cin &gt;&gt; i;
+	for (int i = 0; i &lt; N; ++i) {
+		int min_so_far = INT_MAX, max_so_far = INT_MIN;
+		int best_cand = i;
+		for (int j = i; j &lt; N; ++j) {
+			min_so_far = min(min_so_far, h[j]);
+			max_so_far = max(max_so_far, h[j]);
+			if (min_so_far &gt;= h[j]-K &amp;&amp; max_so_far &lt;= h[j]+K &amp;&amp; h[j] &lt; h[best_cand])
+				best_cand = j; // h[best_cand] can be moved to beginning
+		}
+		// move h[best_cand] to the beginning
+		rotate(begin(h)+i, begin(h)+best_cand, begin(h)+best_cand+1);
+		cout &lt;&lt; h[i] &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p>There are many full solutions, all running in <span class='math'>$O(N\log N)$</span> time.
+<p><strong>Solution 1:</strong> As suggested
+<a href='https://codeforces.com/blog/entry/99358?#comment-883158'>here</a>, we can
+accelerate the process of finding the smallest haybale that can be moved to the
+beginning using a <a href='https://usaco.guide/plat/RURQ'>lazy segment tree</a>. The segment tree stores the haybales in
+order of height, and for each one keeps track of the number of haybales to the
+left of it whose height differs from its height by more than <span class='math'>$K$</span> (in other
+words, the number of haybales it is &quot;blocked&quot; by). 
+<p>The smallest haybale <span class='math'>$h_i$</span> which can be brought to the beginning corresponds to
+the smallest haybale in the segment tree that is blocked by no haybales at all.
+Removing it can be implemented by increasing its number of blocking haybales to
+<span class='math'>$\infty$</span> and subtracting one from the number of blocking haybales for every
+<span class='math'>$h_j$</span> satisfying <span class='math'>$|h_j-h_i|&gt;K$</span> (since these are precisely the haybales that
+<span class='math'>$h_i$</span> blocks). This corresponds to three range updates in the segment tree.
+<p>Initially counting the number of blocking haybales for every haybale can be done
+with an indexed set (or any data structure supporting
+<a href='https://usaco.guide/gold/PURS'>point update range sum</a>).
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define all(x) begin(x), end(x)
+
+// A set with support for finding the n&apos;th element, 
+// and finding the index of an element.
+
+#include &lt;ext/pb_ds/assoc_container.hpp&gt;
+using namespace __gnu_pbds;
+template&lt;class T&gt; using Tree = tree&lt;T, null_type, less&lt;T&gt;, 
+	rb_tree_tag, tree_order_statistics_node_update&gt;; 
+#define ook order_of_key
+
+// Lazy Segment Tree: supports range increment, 
+// maintains minimum across each range
+
+namespace seg {
+
+int lazy[1&lt;&lt;18], range_min[1&lt;&lt;18];
+
+void push(int ind, int L, int R) {
+	range_min[ind] += lazy[ind];
+	if (L != R) for (int i: {2*ind,2*ind+1}) lazy[i] += lazy[ind];
+	lazy[ind] = 0;
+}
+
+void pull(int ind) {
+	range_min[ind] = min(range_min[2*ind],range_min[2*ind+1]);
+}
+
+void upd(int lo, int hi, int inc, int ind, int L, int R) {
+	push(ind,L,R);
+	if (hi &lt; L || R &lt; lo) return;
+	if (lo &lt;= L &amp;&amp; R &lt;= hi) {
+		lazy[ind] = inc;
+		push(ind,L,R);
+		return;
+	}
+	int M = (L+R)/2;
+	upd(lo,hi,inc,2*ind,L,M);
+	upd(lo,hi,inc,2*ind+1,M+1,R);
+	pull(ind);
+}
+
+// finds first element in range == 0, given everything is &gt;= 0
+int walk(int ind, int L, int R) {
+	push(ind,L,R);
+	if (range_min[ind] &gt; 0) return -1;
+	if (L == R) return L;
+	int M = (L+R)/2;
+	int res = walk(2*ind,L,M); if (res != -1) return res;
+	return walk(2*ind+1,M+1,R);
+}
+
+}
+
+template&lt;class T, class U&gt; T fstTrue(T lo, T hi, U f) {
+	++hi; assert(lo &lt;= hi); // assuming f is increasing
+	while (lo &lt; hi) { // find first index such that f is true 
+		T mid = lo+(hi-lo)/2;
+		f(mid) ? hi = mid : lo = mid+1; 
+	} 
+	return lo;
+}
+template&lt;class T, class U&gt; T lstTrue(T lo, T hi, U f) {
+	--lo; assert(lo &lt;= hi); // assuming f is decreasing
+	while (lo &lt; hi) { // find last index such that f is true 
+		T mid = lo+(hi-lo+1)/2;
+		f(mid) ? lo = mid : hi = mid-1;
+	} 
+	return lo;
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, K; cin &gt;&gt; N &gt;&gt; K;
+	vector&lt;int&gt; h(N); for (int&amp; i: h) cin &gt;&gt; i;
+	vector&lt;int&gt; by_h(N); iota(all(by_h), 0);
+	sort(all(by_h),[&amp;h](int x, int y) { return h[x] &lt; h[y]; });
+	vector&lt;int&gt; location(N);
+	for (int i = 0; i &lt; N; ++i) location[by_h[i]] = i;
+	Tree&lt;pair&lt;int,int&gt;&gt; heights_so_far;
+	for (int i = 0; i &lt; N; ++i) { // count number of haybales h_i is blocked by
+		heights_so_far.insert({h[i],i});
+		int num_before = heights_so_far.ook({h[i]-K,-1});
+		num_before += heights_so_far.size()-heights_so_far.ook({h[i]+K+1,-1});
+		seg::upd(location[i],location[i],num_before,1,0,N-1);
+	}
+	for (int rep = 0; rep &lt; N; ++rep) {
+		// repeatedly find smallest haybale
+		// that can be moved to front and remove it
+		int x = seg::walk(1,0,N-1);
+		assert(x != -1);
+		int i = by_h[x];
+		cout &lt;&lt; h[i] &lt;&lt; &quot;\n&quot;;
+		seg::upd(0,lstTrue(0,N-1,[&amp;](int p) {
+			return h[by_h[p]] &lt; h[i]-K;
+		}),-1,1,0,N-1);
+		seg::upd(x,x,N,1,0,N-1);
+		seg::upd(fstTrue(0,N-1,[&amp;](int p) {
+			return h[by_h[p]] &gt; h[i]+K;
+		}),N-1,-1,1,0,N-1);
+	}
+}
+</pre>
+<p><strong>Solution 2:</strong> Similarly to &quot;Counting Haybales,&quot; consider a graph <span class='math'>$G$</span> with 
+vertices labeled <span class='math'>$1\ldots N$</span> and a directed edge from <span class='math'>$i$</span> to <span class='math'>$j$</span> if <span class='math'>$i&lt;j$</span> and 
+<span class='math'>$|h_i-h_j|&gt;K$</span>. The goal is to find the lexicographically minimum topological 
+sort of <span class='math'>$G$</span>. Unfortunately, <span class='math'>$G$</span> could potentially have <span class='math'>$\Theta(N^2)$</span> edges. We
+can reduce the number of added edges by introducing auxiliary vertices and
+edges.  Both of the following solutions run in <span class='math'>$O(N\log N)$</span> time and memory
+(though the constant factors aren&apos;t great, hence the increased time and memory
+limits).
+<p>One way to do this is to apply divide and conquer to add all edges between the
+vertices in ranges <span class='math'>$[L,M)$</span> and <span class='math'>$[M,R)$</span>. Naively, this would require adding
+<span class='math'>$(M-L)\cdot (R-M)$</span> edges. However, this may be reduced to <span class='math'>$O(R-L)$</span> edges plus
+some auxiliary vertices.
+<p>Specifically, suppose that <span class='math'>$h_L\le h_{L+1}\le \cdots \le h_{M-1}$</span> and 
+<span class='math'>$h_M\le h_{M+1}\le \cdots \le h_{R-1}$</span>, and that we want to add an edge from <span class='math'>$i$</span>
+to <span class='math'>$j$</span> if <span class='math'>$i\in [L,M), j\in [M,R)$</span>, and <span class='math'>$h_i+K&lt;h_j$</span>. Then we may introduce <span class='math'>$R-L$</span>
+auxiliary vertices <span class='math'>$a_L, a_{L+1}, \ldots, a_{M-1}, b_M, \ldots, b_{R-1}$</span> and the
+following edges:
+<p><ul><li><span class='math'>$h_i\to a_i$</span></li><li><span class='math'>$a_i\to a_{i+1}$</span></li><li><span class='math'>$b_i\to b_{i+1}$</span></li><li><span class='math'>$b_i\to h_i$</span></li><li><span class='math'>$a_i\to b_j$</span> where <span class='math'>$j$</span> is the minimum index such that <span class='math'>$h_j&gt;h_i+K$</span></li></ul>
+<p><span class='math'>$a_i$</span> represents the prefix of heights <span class='math'>$h_M,\ldots,h_i$</span> while <span class='math'>$b_i$</span> represents
+the suffix of heights <span class='math'>$h_i,\ldots,h_{R-1}$</span>.
+<p>Edges of the form <span class='math'>$h_i-K&gt;h_j$</span> can be processed similarly.
+<p>Daniel Zhang&apos;s code:
+<p><pre class='prettyprint'>
+//Kahn&apos;s topsort with priority queue to get lex min
+//Sparsified graph with O(nlogn) edges
+//Use queue for auxiliary vertices so priority queue only used O(n) times
+//Overall O(nlogn)
+#include &lt;cstdio&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+#include &lt;numeric&gt;
+ 
+int as[200005];
+ 
+int inds[200005];
+ 
+std::vector&lt;int&gt; to[200005*20*2];
+int deg[200005*20*2];
+ 
+int hang[200005];
+ 
+int num_nodes;
+ 
+int N,K;
+ 
+void add_edge(int i,int j){
+  if(i==-1||j==-1) return;
+  to[i].push_back(j);
+  deg[j]++;
+}
+ 
+void build(int L,int R){
+  if(R-L==1) return;
+  int M=(L+R)/2;
+  build(L,M);
+  build(M,R);
+  for(int rev=0;rev&lt;2;rev++){
+    for(int i=L;i&lt;M;i++){
+      hang[i]=num_nodes++;
+      add_edge(inds[i],hang[i]);
+    }
+    for(int i=M;i&lt;R;i++){
+      hang[i]=num_nodes++;
+      add_edge(hang[i],inds[i]);
+    }
+    int i=L,j=M;
+    int end=-1;
+    while(i&lt;M||j&lt;R){
+      if(i==M||(j&lt;R&amp;&amp;as[inds[j]]&lt;=as[inds[i]]+(rev?-K:K))){
+	if(rev){
+	  add_edge(hang[j],end);
+	}else{
+	  add_edge(end,hang[j]);
+	}
+	end=hang[j];
+	j++;
+      }else{
+	if(rev){
+	  add_edge(hang[i],end);
+	}else{
+	  add_edge(end,hang[i]);
+	}
+	end=hang[i];
+	i++;
+      }
+    }
+  }
+  std::inplace_merge(inds+L,inds+M,inds+R,[](int i,int j){return as[i]&lt;as[j];});
+}
+ 
+int main(){
+  scanf(&quot;%d %d&quot;,&amp;N,&amp;K);
+  for(int i=0;i&lt;N;i++){
+    scanf(&quot;%d&quot;,&amp;as[i]);
+  }
+  num_nodes=N;
+  std::iota(inds,inds+N,0);
+  build(0,N);
+  std::priority_queue&lt;std::pair&lt;int,int&gt; &gt; q;
+  std::queue&lt;int&gt; z;//fast queue for auxiliary vertices, so only n operations on priority queue
+  for(int i=0;i&lt;num_nodes;i++){
+    if(deg[i]==0){
+      if(i&lt;N){
+	q.emplace(-as[i],i);
+      }else{
+	z.emplace(i);
+      }
+    }
+  }
+  std::vector&lt;int&gt; out;
+  while(!z.empty()||!q.empty()){
+    int i;
+    if(!z.empty()){
+      i=z.front();
+      z.pop();
+    }else{
+      out.push_back(-q.top().first);
+      i=q.top().second;
+      q.pop();
+    }
+    for(int j:to[i]){
+      if(--deg[j]==0){
+	if(j&lt;N){
+	  q.emplace(-as[j],j);
+	}else{
+	  z.push(j);
+	}
+      }
+    }
+  }
+  for(int v:out){
+    printf(&quot;%d\n&quot;,v);
+  }
+}
+</pre>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class HaybalesLexmin {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int[] heights = new int[n + 1];
+        Integer[] haybalesSorted = new Integer[n + 1];
+        haybalesSorted[0] = 0;
+        for (int j = 1; j &lt;= n; j++) {
+            heights[j] = Integer.parseInt(in.readLine());
+            haybalesSorted[j] = j;
+        }
+        int[] locations = new int[n + 1];
+        Arrays.sort(haybalesSorted, Comparator.comparingInt(j -&gt; heights[j]));
+        TreeMap&lt;Integer, Integer&gt; treeMap = new TreeMap&lt;&gt;();
+        for (int j = 1; j &lt;= n; j++) {
+            locations[haybalesSorted[j]] = j;
+            treeMap.put(heights[haybalesSorted[j]], j);
+        }
+        treeMap.put(Integer.MIN_VALUE, 0);
+        int[] lowerLimit = new int[n + 1];
+        int[] upperLimit = new int[n + 1];
+        for (int j = 1; j &lt;= n; j++) {
+            lowerLimit[j] = treeMap.lowerEntry(heights[j] - k).getValue();
+            upperLimit[j] = treeMap.floorEntry(heights[j] + k).getValue() + 1;
+        }
+        PriorityQueue&lt;Integer&gt; pq = new PriorityQueue&lt;&gt;();
+        SegmentTree segTree = new SegmentTree(n, pq);
+        for (int j = n; j &gt; 0; j--) {
+            segTree.addHaybale(locations[j]);
+            segTree.addRoadblock(j, 1, lowerLimit[j]);
+            segTree.addRoadblock(j, upperLimit[j], n);
+        }
+        segTree.alertAll();
+        StringJoiner joiner = new StringJoiner(&quot;\n&quot;);
+        while (!pq.isEmpty()) {
+            int haybale = haybalesSorted[pq.remove()];
+            joiner.add(heights[haybale] + &quot;&quot;);
+            segTree.used[haybale] = true;
+            segTree.alert(1, lowerLimit[haybale]);
+            segTree.alert(upperLimit[haybale], n);
+        }
+        System.out.println(joiner);
+    }
+ 
+    static class SegmentTree {
+        final int n;
+        final ArrayDeque&lt;Integer&gt;[] stacks = new ArrayDeque[300000];
+        public final boolean[] used;
+        final int[] roadblocks;
+        final PriorityQueue&lt;Integer&gt; priorityQueue;
+ 
+        SegmentTree(int n, PriorityQueue&lt;Integer&gt; priorityQueue) {
+            this.n = n;
+            this.used = new boolean[n + 1];
+            this.roadblocks = new int[n + 1];
+            this.priorityQueue = priorityQueue;
+        }
+ 
+        public void addRoadblock(int haybale, int from, int to) {
+            addRoadblock(haybale, from, to, 1, 1, n);
+        }
+ 
+        void addRoadblock(int haybale, int from, int to, int node, int segFrom, int segTo) {
+            if (from &lt;= segFrom &amp;&amp; segTo &lt;= to) {
+                if (stacks[node] == null) {
+                    stacks[node] = new ArrayDeque&lt;&gt;();
+                }
+                stacks[node].push(haybale);
+            } else if (to &lt; segFrom || segTo &lt; from) {
+ 
+            } else {
+                int mid = (segFrom + segTo) / 2;
+                addRoadblock(haybale, from, to, 2 * node, segFrom, mid);
+                addRoadblock(haybale, from, to, (2 * node) + 1, mid + 1, segTo);
+            }
+        }
+ 
+        public void addHaybale(int location) {
+            addHaybale(location, 1, 1, n);
+        }
+ 
+        void addHaybale(int location, int node, int segFrom, int segTo) {
+            if (stacks[node] == null) {
+                stacks[node] = new ArrayDeque&lt;&gt;();
+            }
+            stacks[node].push(-location);
+            roadblocks[location]++;
+            if (segFrom &lt; segTo) {
+                int mid = (segFrom + segTo) / 2;
+                if (location &lt;= mid) {
+                    addHaybale(location, 2 * node, segFrom, mid);
+                } else {
+                    addHaybale(location, (2 * node) + 1, mid + 1, segTo);
+                }
+            }
+        }
+ 
+        public void alertAll() {
+            alertAll(1, 1, n);
+        }
+ 
+        void alertAll(int node, int segFrom, int segTo) {
+            if (stacks[node] != null) {
+                while (!stacks[node].isEmpty() &amp;&amp; stacks[node].peek() &lt; 0) {
+                    int location = -stacks[node].pop();
+                    roadblocks[location]--;
+                    if (roadblocks[location] == 0) {
+                        priorityQueue.add(location);
+                    }
+                }
+            }
+            if (segFrom &lt; segTo) {
+                int mid = (segFrom + segTo) / 2;
+                alertAll(2 * node, segFrom, mid);
+                alertAll((2 * node) + 1, mid + 1, segTo);
+            }
+        }
+ 
+        public void alert(int from, int to) {
+            alert(from, to, 1, 1, n);
+        }
+ 
+        void alert(int from, int to, int node, int segFrom, int segTo) {
+            if (from &lt;= segFrom &amp;&amp; segTo &lt;= to) {
+                if (stacks[node] != null) {
+                    while (!stacks[node].isEmpty() &amp;&amp; (stacks[node].peek() &lt; 0 || used[stacks[node].peek()])) {
+                        int location = -stacks[node].pop();
+                        if (location &gt; 0) {
+                            roadblocks[location]--;
+                            if (roadblocks[location] == 0) {
+                                priorityQueue.add(location);
+                            }
+                        }
+                    }
+                }
+            } else if (to &lt; segFrom || segTo &lt; from) {
+ 
+            } else {
+                int mid = (segFrom + segTo) / 2;
+                alert(from, to, 2 * node, segFrom, mid);
+                alert(from, to, (2 * node) + 1, mid + 1, segTo);
+            }
+        }
+    }
+}
+</pre>
+<p><strong>Solution 3:</strong> An alternative <span class='math'>$O(N^2)$</span> solution involves finding the
+lexicographically minimum permutation of every prefix of the heights. When
+adding a new height to the right of the prefix, we find the leftmost position it
+can reach and then insert it into the optimal one.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N, K; cin &gt;&gt; N &gt;&gt; K;
+	vector&lt;int&gt; h(N); for (int&amp; i: h) cin &gt;&gt; i;
+	for (int i = 1; i &lt; N; ++i) {
+		int j = i;
+		while (j &amp;&amp; abs(h[i]-h[j-1]) &lt;= K) --j;
+		while (j &lt; i &amp;&amp; h[j] &lt;= h[i]) ++j;
+		rotate(begin(h)+j, begin(h)+i, begin(h)+i+1);
+	}
+	for (int i: h) cout &lt;&lt; i &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>To speed this up, we can use a balanced binary search tree (BBST) such as a 
+<a href='https://usaco.guide/adv/treaps?lang=cpp'>treap</a> to solve this in
+<span class='math'>$O(N\log N)$</span>. The BBST needs to maintain minimum and maximum heights across each
+subtree and support insertions at arbitrary positions.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#define f first
+#define s second
+
+void ckmin(int&amp; a, int b) { a = min(a,b); }
+void ckmax(int&amp; a, int b) { a = max(a,b); }
+
+mt19937 rng;
+using pt = struct tnode*;
+
+struct tnode {
+	int mn, mx, val; // subtree min, subtree max, value at current node
+	pt c[2];
+	uint32_t pri{rng()};
+	tnode(int _val): mn(_val), mx(_val), val(_val) {}
+	pt pull() {
+		mn = mx = val;
+		for (int i = 0; i &lt; 2; ++i) if (c[i]) {
+			ckmin(mn,c[i]-&gt;mn);
+			ckmax(mx,c[i]-&gt;mx);
+		}
+		return this;
+	}
+	pair&lt;int,int&gt; left_subtree() {
+		int mn = val, mx = val;
+		if (c[0]) {
+			ckmin(mn,c[0]-&gt;mn);
+			ckmax(mx,c[0]-&gt;mx);
+		}
+		return {mn,mx};
+	}
+	pair&lt;int,int&gt; right_subtree() {
+		int mn = val, mx = val;
+		if (c[1]) {
+			ckmin(mn,c[1]-&gt;mn);
+			ckmax(mx,c[1]-&gt;mx);
+		}
+		return {mn,mx};
+	}
+	void tour() {
+		if (c[0]) c[0]-&gt;tour();
+		cout &lt;&lt; val &lt;&lt; &quot;\n&quot;;
+		if (c[1]) c[1]-&gt;tour();
+	}
+};
+ 
+int K;
+ 
+pair&lt;pt,pt&gt; split_right(pt p, int v) {
+	if (!p) return {p,p};
+	pair&lt;int,int&gt; info = p-&gt;right_subtree();
+	if (info.f &gt;= v-K &amp;&amp; info.s &lt;= v+K) {
+		auto [l,r] = split_right(p-&gt;c[0],v);
+		p-&gt;c[0] = r;
+		return {l, p-&gt;pull()};
+	} else {
+		auto [l,r] = split_right(p-&gt;c[1],v);
+		p-&gt;c[1] = l;
+		return {p-&gt;pull(),r};
+	}
+}
+ 
+pair&lt;pt,pt&gt; split_right_2(pt p, int v) {
+	if (!p) return {p,p};
+	pair&lt;int,int&gt; info = p-&gt;left_subtree();
+	if (info.s &lt;= v) {
+		auto [l,r] = split_right_2(p-&gt;c[1],v);
+		p-&gt;c[1] = l;
+		return {p-&gt;pull(),r};
+	} else {
+		auto [l,r] = split_right_2(p-&gt;c[0],v);
+		p-&gt;c[0] = r;
+		return {l,p-&gt;pull()};
+	}
+}
+ 
+pt merge(pt l, pt r) {
+	if (!l || !r) return l ?: r;
+	if (l-&gt;pri &gt; r-&gt;pri) {
+		l-&gt;c[1] = merge(l-&gt;c[1],r);
+		return l-&gt;pull();
+	} else {
+		r-&gt;c[0] = merge(l,r-&gt;c[0]);
+		return r-&gt;pull();
+	}
+}
+ 
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N; cin &gt;&gt; N &gt;&gt; K;
+	pt root = nullptr;
+	while (N--) {
+		int h; cin &gt;&gt; h;
+		auto [l,r] = split_right(root,h);
+		auto [r1,r2] = split_right_2(r,h);
+		root = merge(l,merge(r1,merge(new tnode(h),r2)));
+	}
+	root-&gt;tour();
+}
+</pre>
+<p><strong>Solution 4:</strong> If you are not familiar with BBSTs, a simpler alternative
+approach is to use square root  decomposition instead. The runtime is
+<span class='math'>$O(N\sqrt N)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int N,K;
+ 
+struct Block { // maintains a contiguous range of haybales
+	int mn = INT_MAX, mx = INT_MIN;
+	vector&lt;int&gt; el;
+	Block() {}
+	Block(const vector&lt;int&gt;&amp; el_): el(el_) {
+		for (int t: el) mn = min(mn,t), mx = max(mx,t);
+	}
+	// whether x can move over all haybales in this block
+	bool can_pass_over(int x) const {
+		return x-K &lt;= mn &amp;&amp; mx &lt;= x+K;
+	}
+	void push_back(int x) {
+		mn = min(mn,x);
+		mx = max(mx,x);
+		el.push_back(x);
+		int j = (int)size(el)-1;
+		while (j &amp;&amp; abs(x-el[j-1]) &lt;= K) --j;
+		while (j &lt; (int)size(el)-1 &amp;&amp; el[j] &lt;= el.back()) ++j;
+		rotate(begin(el)+j,end(el)-1,end(el));
+	}
+	bool should_push(int x) {
+		for (int i = (int)size(el)-1; i &gt;= 0; --i) {
+			if (abs(el[i]-x) &gt; K) return 0;
+			if (el[i] &gt; x) return 1;
+		}
+		return 0;
+	}
+};
+ 
+vector&lt;Block&gt; blocks;
+ 
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	cin &gt;&gt; N &gt;&gt; K;
+	blocks.emplace_back();
+	for (int i = 0; i &lt; N; ++i) {
+		int cur; cin &gt;&gt; cur;
+		int j = (int)size(blocks)-1;
+		while (j &amp;&amp; blocks[j].can_pass_over(cur)) --j;
+		if (j &lt; (int)size(blocks)-1 &amp;&amp; !blocks[j].should_push(cur)) ++j;
+		while (j &lt; (int)size(blocks)-1 &amp;&amp; blocks[j].mx &lt;= cur) ++j;
+		blocks[j].push_back(cur);
+		if (int(size(blocks[j].el)*size(blocks[j].el)) &gt; N) {
+			// block is too big, split it into two
+			const int mid = (int)size(blocks[j].el)/2;
+			vector&lt;int&gt; a(begin(blocks[j].el),begin(blocks[j].el)+mid);
+			vector&lt;int&gt; b(begin(blocks[j].el)+mid,end(blocks[j].el));
+			blocks[j] = Block(b);
+			blocks.insert(begin(blocks)+j,Block(a));
+		}
+	}
+	for (Block&amp; b: blocks)
+		for (int h: b.el) cout &lt;&lt; h &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

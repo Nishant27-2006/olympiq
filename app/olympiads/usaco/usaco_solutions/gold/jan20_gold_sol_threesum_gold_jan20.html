@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>For each pair <span class='math'>$(i,k)$</span> satisfying <span class='math'>$i&lt;k$</span> let <span class='math'>$num[i][k]$</span> equal the number of <span class='math'>$j$</span>
+such that <span class='math'>$i&lt;j&lt;k$</span> and <span class='math'>$A_i+A_j+A_k=0$</span>. Then if <span class='math'>$ans[i][k]$</span> denotes the answer
+for  <span class='math'>$(A_i,A_{i+1},\ldots,A_k)$</span>, we can write
+<div class='math'>$$ans[i][k]=num[i][k]+ans[i][k-1]+ans[i+1][k]-ans[i+1][k-1].$$</div>
+After generating <span class='math'>$ans$</span>, each query can be answered in constant time.
+<p>Now I&apos;ll describe a way to compute <span class='math'>$num[i][i+1],\ldots, num[i][N]$</span> in <span class='math'>$O(N)$</span>
+time. For each <span class='math'>$k$</span> from <span class='math'>$i+1,\ldots N$</span> in increasing order, consider a hashmap
+(unordered_map in C++) that allows you to query the number of occurrences of any
+integer among <span class='math'>$A_{i+1},\ldots,A_{k-1}$</span>. Then <span class='math'>$num[i][k]$</span> is equal to the number
+of occurrences of <span class='math'>$-A_i-A_k$</span> in this map. When <span class='math'>$k$</span> is incremented by one the
+only change to the map is a single insertion. As hashmap operations run in
+<span class='math'>$O(1)$</span> time, this solution runs in <span class='math'>$O(N^2)$</span> time overall.
+<p>However, due to the high constant factor of hashmap, this solution does not earn
+full points. Because all entries of <span class='math'>$A$</span> are in the range <span class='math'>$[-10^6,10^6],$</span> we can
+replace the hashmap with an array of size <span class='math'>$2\cdot 10^6+1,$</span> greatly improving the
+runtime.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+ 
+public class threesum {
+	public static void main(String[] args) throws IOException {
+		BufferedReader in = new BufferedReader(new FileReader(&quot;threesum.in&quot;));
+		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(&quot;threesum.out&quot;)));
+		String[] line = in.readLine().split(&quot; &quot;);
+		int N = Integer.parseInt(line[0]);
+		int Q = Integer.parseInt(line[1]);
+		line = in.readLine().split(&quot; &quot;);
+		int[] A = new int[N]; 
+		long[][] ans = new long[N][N];
+		for (int i = 0; i &lt; N; ++i) A[i] = Integer.parseInt(line[i]);
+		int[] z = new int[2000001];
+		for (int i = N-1; i &gt;= 0; --i) {
+			for (int j = i+1; j &lt; N; ++j) {
+				int ind = 1000000-A[i]-A[j];
+				if (ind &gt;= 0 &amp;&amp; ind &lt;= 2000000) ans[i][j] = z[ind];
+				z[1000000+A[j]] ++;
+			}
+			for (int j = i+1; j &lt; N; ++j) {
+				z[1000000+A[j]] --;
+			}
+		}
+		for (int i = N-1; i &gt;= 0; --i) 
+			for (int j = i+1; j &lt; N; ++j)
+				ans[i][j] += ans[i+1][j]+ans[i][j-1]-ans[i+1][j-1];
+		for (int i = 0; i &lt; Q; ++i) {
+			line = in.readLine().split(&quot; &quot;);
+			int a = Integer.parseInt(line[0]);
+			int b = Integer.parseInt(line[1]);
+			out.println(ans[a-1][b-1]);
+		}
+		out.close();
+	}
+}
+</pre>
+<p>Of course, it was still possible to pass without replacing the hashmap by an
+array. Although this wasn&apos;t intended, I&apos;ll include two additional solutions for
+the sake of completeness. 
+<p>In C++, gp_hash_table is somewhat faster than unordered_map, especially if you
+specify an initial capacity. See
+<a href='https://codeforces.com/blog/entry/60737'>here</a> for more information.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+void setIO(string name) {
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    freopen((name+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+    freopen((name+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+#include &lt;ext/pb_ds/assoc_container.hpp&gt; // for gp_hash_table
+using namespace __gnu_pbds;
+
+int N,Q;
+long long ans[5000][5000];
+vector&lt;int&gt; A;
+ 
+int main() {
+	setIO(&quot;threesum&quot;);
+	cin &gt;&gt; N &gt;&gt; Q;
+	A.resize(N); for (int i = 0; i &lt; N; ++i) cin &gt;&gt; A[i];
+	for (int i = 0; i &lt; N; ++i) {
+		gp_hash_table&lt;int,int&gt; g({},{},{},{},{1&lt;&lt;13}); 
+		// initialize with capacity that is a power of 2
+		for (int j = i+1; j &lt; N; ++j) {
+			int res = -A[i]-A[j];
+			auto it = g.find(res); 
+			if (it != end(g)) ans[i][j] = it-&gt;second;
+			g[A[j]] ++;
+		}
+	}
+	for (int i = N-1; i &gt;= 0; --i) for (int j = i+1; j &lt; N; ++j)
+		ans[i][j] += ans[i+1][j]+ans[i][j-1]-ans[i+1][j-1];
+	for (int i = 0; i &lt; Q; ++i) {
+		int a,b; cin &gt;&gt; a &gt;&gt; b;
+		cout &lt;&lt; ans[a-1][b-1] &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p>In Java, a hashmap solution passes if StreamTokenizer is used to take care of input, although it uses much more memory
+than I would expect. (If anyone knows how to reduce the memory usage, could you
+let me know?)
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+ 
+public class threesum {
+	static StreamTokenizer in;
+	static int nextInt() throws IOException {
+		in.nextToken();
+		return (int)in.nval;
+	}
+	public static void main(String[] args) throws IOException {
+		in = new StreamTokenizer(new BufferedReader(new FileReader(&quot;threesum.in&quot;)));
+		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(&quot;threesum.out&quot;)));
+		int N = nextInt(); int Q = nextInt();
+		int[] A = new int[N]; 
+		long[][] ans = new long[N][N];
+		for (int i = 0; i &lt; N; ++i) A[i] = nextInt();
+		Map&lt;Integer,Integer&gt; z = new HashMap&lt;&gt;();
+		for (int i = N-1; i &gt;= 0; --i) {
+			z.clear();
+			for (int j = i+1; j &lt; N; ++j) {
+				int ind = -A[i]-A[j];
+				ans[i][j] = z.getOrDefault(ind,0);
+				z.put(A[j],z.getOrDefault(A[j],0)+1);
+			}
+		}
+		for (int i = N-1; i &gt;= 0; --i) 
+			for (int j = i+1; j &lt; N; ++j)
+				ans[i][j] += ans[i+1][j]+ans[i][j-1]-ans[i+1][j-1];
+		for (int i = 0; i &lt; Q; ++i) 
+			out.println(ans[nextInt()-1][nextInt()-1]);
+		out.close();
+	}
+}
+</pre>
+<p></body></html>

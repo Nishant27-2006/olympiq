@@ -1,0 +1,117 @@
+Solution ID: sol_prob3_gold_feb25
+Contest: FEB25
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_feb25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by William Lin)
+
+Notice that if there is no edge between
+
+$(A, B)$
+
+and no edge between
+
+$(B, C)$
+
+,
+there cannot be an edge
+
+$(A, C)$
+
+. From now on, we will only consider the
+complement of the graph, and if edges
+
+$(A, B)$
+
+and
+
+$(B, C)$
+
+exist, then
+
+$(A, C)$
+
+also exists. We can use this to prove by induction that any two nodes connected
+with a path also share an edge, which means that every connected component is a
+clique.
+
+We can do DP on all subsets of nodes, where our transitions are adding cliques
+to the graph. All edges will be removed in the beginning and we can precalculate
+how much it costs to add each clique to the graph in
+
+$O(N^2 2^N)$
+
+. The DP itself
+is
+
+$O(3^N)$
+
+.
+
+Daniel Zhang's solution code:
+
+#include <algorithm>
+#include <cstdio>
+ 
+const int INF = 1e9 + 7;
+ 
+int adj[16][16];
+ 
+int dp[1 << 16];
+int N, M;
+ 
+int flip[1 << 16];  // change to cost if subset is flipped
+ 
+int main() {
+	scanf("%d %d", &N, &M);
+	for (int i = 0; i < M; i++) {
+		int U, V;
+		scanf("%d %d", &U, &V);
+		U--, V--;
+		adj[U][V] = adj[V][U] = 1;
+	}
+	for (int mask = 0; mask < (1 << N); mask++) {
+		for (int i = 0; i < N; i++) {
+			for (int j = i + 1; j < N; j++) {
+				if ((mask & (1 << i)) && (mask & (1 << j))) {
+					if (adj[i][j]) {
+						flip[mask]++;
+					} else {
+						flip[mask]--;
+					}
+				}
+			}
+		}
+	}
+	dp[0] = N * (N - 1) / 2 - M;
+	for (int mask = 1; mask < (1 << N); mask++) {
+		dp[mask] = INF;
+		for (int sub = mask; sub; sub = (sub - 1) & mask) {
+			dp[mask] = std::min(dp[mask], dp[mask & ~sub] + flip[sub]);
+		}
+	}
+	printf("%d\n", dp[(1 << N) - 1]);
+}
+
+Possible partial solutions:
+
+A naively implemented DP that iterates through all pairs of subsets of nodes would be
+
+$O(4^N)$
+
+.
+
+The number of possible graphs is given by the
+
+Bell numbers
+
+which are
+sufficiently small for
+
+$N \le 13$
+
+.

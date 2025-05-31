@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Spencer Compton )
+<p>Let&apos;s think about what happens to our list of cows as FJ continues to yell
+our chosen subset. Every time a cow chooses to swap position with an
+adjacent cow, the number of inversions in our list decreases by exactly
+one. This shows us that eventually the process must stop. 
+<p>What can we say about our list of cows when the process finishes? We can be
+certain that no two adjacent cows are both in our subset and in the wrong 
+order. Otherwise, we would simply swap their positions with another iteration
+of the process. Another thing we know is that all cows not in our set
+have the same relative order as they originally did. This is because no two 
+such cows will ever swap positions. It&apos;s then clear that it is necessary for 
+all cows not in our set to make an increasing subsequence in our original list. 
+<p>Now we think about what we can say about the final state of our list when the
+complement of our set forms an increasing subsequence. We already know any
+two adjacent cows in our set will be in the correct order. From this, we can
+conclude that any contiguous segment of cows that are all in our set must be
+in the correct order. We can visualize the structure of our final array as
+sorted segments of cows in our set with cows not in our set sandwiched between
+these segments. With this visualization, it is easy to see that any of these
+segments will have cows with IDs strictly in the range of the two cows not
+in our set that sandwich the segment. We now see that any segment to the left
+of another segment must have IDs that are all strictly smaller than the segment
+to the right. It is now clear that all pairs of &quot;types&quot; of cows must be in order.
+Meaning, any two cows that are in our set must be in the correct order, any two
+cows not in our set must be in the correct order (by definition), and we can also
+see that there won&apos;t be pair of a cow in our set and a cow not in our set that are
+out of order. Thus, if the cows not in our set are an increasing subsequence then
+eventually our list will be sorted.
+<p>How do we choose the smallest set where its complement is an increasing sequence?
+We choose a set where its complement is a Longest Increasing Subsequence (LIS).
+Finding the length of the LIS is a classic problem and can be done in <span class='math'>$O(N\log{N})$</span>
+time. What about finding the <span class='math'>$K$</span>-th lexicographically smallest set? We use the 
+complement of the <span class='math'>$K$</span>-th lexicographically largest LIS. 
+<p>How do we find the <span class='math'>$K$</span>-th lexicographically largest LIS? Let <span class='math'>$lis[i]$</span> denote the
+largest increasing subsequence starting with the cow who is at position <span class='math'>$i$</span>. Let
+<span class='math'>$a[i]$</span> denote the ID of the cow at position <span class='math'>$i$</span>. To calculate <span class='math'>$lis[i]$</span> it is 
+<span class='math'>$1 + lis[j]$</span> where <span class='math'>$j$</span> is the maximal <span class='math'>$lis[j]$</span> given <span class='math'>$i&lt;j$</span> and <span class='math'>$a[i] &lt; a[j]$</span>. This
+can be calculated in a manner similar to computing LIS with a segment tree. From
+this formulation, consider two cows at position <span class='math'>$i$</span> and <span class='math'>$j$</span> where <span class='math'>$i&lt;j$</span> and
+<span class='math'>$lis[i]=lis[j]$</span>. 
+<p>Now we will compute <span class='math'>$dp[i]$</span> which is the number of LIS that are of length <span class='math'>$lis[i]$</span>
+and start at position <span class='math'>$i$</span>. We can see that <span class='math'>$dp[i]$</span> is equal to the sum of all <span class='math'>$dp[j]$</span>
+where <span class='math'>$i&lt;j$</span>, <span class='math'>$a[i] &lt; a[j]$</span>, and <span class='math'>$lis[j] = lis[i]-1$</span>. To calculate <span class='math'>$dp[i]$</span> we can make
+a separate segment tree for each group of elements that have the same value of <span class='math'>$lis[i]$</span>
+and then calculate the answer using a sweep similar to that of calculating the LIS.
+Note that <span class='math'>$dp[i]$</span> can be very large, so we will just store the minimum of <span class='math'>$dp[i]$</span> and 
+<span class='math'>$K+1$</span> for the value held in each <span class='math'>$dp[i]$</span> and in our segment tree&apos;s nodes.
+<p>Once we have all <span class='math'>$dp[i]$</span>, we just need to reconstruct the <span class='math'>$K$</span>-th largest LIS. To
+determine the <span class='math'>$x$</span>-th element (0-indexed) of the LIS, we process nodes where <span class='math'>$lis[i] = $</span>
+(length of the LIS) <span class='math'>$- x$</span> in decreasing order of ID. Let <span class='math'>$i$</span> be the position of the 
+<span class='math'>$x-1$</span>-th element in the LIS we&apos;re building and let <span class='math'>$j$</span> be the position of the element
+we are considering. We will ignore the element if <span class='math'>$j&lt;i$</span> or <span class='math'>$a[j] &lt; a[i]$</span>. Otherwise, 
+if <span class='math'>$dp[j]&lt;K$</span>, then the <span class='math'>$K$</span>-th LIS does not use this element. We will subtract <span class='math'>$dp[j]$</span>
+from <span class='math'>$K$</span> and continue. If <span class='math'>$dp[j] \geq K$</span> then we will use that element and continue
+onto considering the <span class='math'>$X+1$</span>-th element of our LIS.
+<p>Once we have computed the <span class='math'>$K$</span>-th lexicographically largest LIS we will simply take
+its complement.
+<p><pre class='prettyprint'>
+
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+typedef long long ll;
+ll inf = 1000000000000000000LL;
+class Node{
+public:
+	Node *l, *r;
+	int s, e;
+	ll sum, maxi;
+	Node(int a, int b){
+		s = a;
+		e = b;
+		maxi = 0LL;
+		sum = 0LL;
+		if(s!=e){
+			l = new Node(s,(s+e)/2);
+			r = new Node((s+e)/2+1,e);
+		}
+	}
+	void pull(){
+		if(s==e){
+			return;
+		}
+		sum = l-&gt;sum + r-&gt;sum;
+		sum = min(sum,inf);
+		maxi = max(l-&gt;maxi,r-&gt;maxi);
+	}
+	void add(int ind, ll val){
+		if(s==ind &amp;&amp; e==ind){
+			sum += val;
+			sum = min(sum,inf);
+			maxi = sum;
+			return;
+		}
+		if(ind&lt;=(s+e)/2){
+			l-&gt;add(ind,val);
+		}
+		else{
+			r-&gt;add(ind,val);
+		}
+		pull();
+	}
+	ll gsum(int st, int en){
+		if(st&lt;=s &amp;&amp; e&lt;=en){
+			return sum;
+		}
+		ll ret = 0LL;
+		if(st&lt;=(s+e)/2){
+			ret += l-&gt;gsum(st,en);
+		}
+		if(en&gt;(s+e)/2){
+			ret += r-&gt;gsum(st,en);
+		}
+		ret = min(ret,inf);
+		return ret;
+	}
+	ll getmax(int st, int en){
+		if(st&lt;=s &amp;&amp; e&lt;=en){
+			return maxi;
+		}
+		ll ret = 0;
+		if(st&lt;=(s+e)/2){
+			ret = max(ret,l-&gt;getmax(st,en));
+		}
+		if(en&gt;(s+e)/2){
+			ret = max(ret,r-&gt;getmax(st,en));
+		}
+		return ret;
+	}
+};
+ 
+int main(){
+	ifstream in(&quot;itout.in&quot;);
+	ofstream out(&quot;itout.out&quot;);
+	int n;
+	ll k;
+	in &gt;&gt; n &gt;&gt; k;
+	int a[n];
+	for(int i = 0; i&lt;n; i++){
+		in &gt;&gt; a[i];
+	}
+	Node *t = new Node(1,n);
+	int lis[n];
+	int best = 0;
+	//lis starting with this node
+	for(int i = n-1; i&gt;=0; i--){
+		lis[i] = 1 + t-&gt;getmax(a[i],n);
+		t-&gt;add(a[i],lis[i]);
+		best = max(best,lis[i]);
+	}
+	vector&lt;ll&gt; dp[best];
+	vector&lt;Node*&gt; seg;
+	vector&lt;int&gt; nums[best];
+	vector&lt;int&gt; loc[best];
+	vector&lt;int&gt; point;
+	int id[n];
+	for(int i = n-1; i&gt;=0; i--){
+		lis[i]--;
+		id[i] = nums[lis[i]].size();
+		nums[lis[i]].push_back(a[i]);
+		loc[lis[i]].push_back(i);
+		dp[lis[i]].push_back(0LL);
+	}
+	for(int i = 0; i&lt;best; i++){
+		point.push_back(0);
+		seg.push_back(new Node(0,(int)nums[i].size()));
+	}
+	for(int i = n-1; i&gt;=0; i--){
+		if(lis[i]==0){
+			dp[lis[i]][id[i]] = 1LL;
+			seg[lis[i]]-&gt;add(id[i],1LL);
+			continue;
+		}
+		ll cur = 0LL;
+		while(point[lis[i]]&lt;nums[lis[i]-1].size() &amp;&amp; a[i] &gt; nums[lis[i]-1][point[lis[i]]]){
+			point[lis[i]]++;
+		}
+		cur = seg[lis[i]-1]-&gt;gsum(point[lis[i]],nums[lis[i]-1].size());
+		dp[lis[i]][id[i]] = cur;
+		seg[lis[i]]-&gt;add(id[i],cur);
+	}
+	ll rem = k;
+	bool inAns[n+1];
+	for(int i = 1; i&lt;=n; i++){
+		inAns[i] = true;
+	}
+	int prev = -1;
+	for(int i = best-1; i&gt;=0; i--){
+		int use = nums[i].size()-1;
+		while(loc[i][use]&lt;prev){
+			use--;
+		}
+		while(dp[i][use]&lt;rem){
+			rem -= dp[i][use--];
+		}
+		prev = loc[i][use];
+		inAns[nums[i][use]] = false;
+	}
+	int sz = 0;
+	for(int i = 1; i&lt;=n; i++){
+		if(inAns[i]){
+			sz++;
+		}
+	}
+	out &lt;&lt; sz &lt;&lt; endl;
+	for(int i = 1; i&lt;=n; i++){
+		if(inAns[i]){
+			out &lt;&lt; i &lt;&lt; endl;
+		}
+	}
+	return 0;
+}
+
+</pre>
+<p></body></html>

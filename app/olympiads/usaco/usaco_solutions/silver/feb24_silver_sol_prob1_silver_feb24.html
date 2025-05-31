@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Anand John)
+<p><strong>Subtask 1:</strong>
+<p>The first observation we can make is that the upper right vertex of any target 
+can only be shot by an arrow with a negative slope, and the lower right vertex
+can only be shot by an arrow with a positive slope. Otherwise, the arrow would
+go through the target. Therefore, there needs to be at  least <span class='math'>$N$</span> arrows of both
+positive and negative slopes. We can see that there are no such  restrictions
+for the vertices on the left side of the target. Thus, the cows will  always
+fail if and only if there are less than <span class='math'>$N$</span> positive or negative slopes.
+<p>For this subtask, since the magnitude of all the slopes are the same, it doesn&apos;t
+matter whether a vertex on the left side of the target is shot by an arrow with
+negative or positive slope since the <span class='math'>$y$</span>-intercepts of the trajectories are
+within the <span class='math'>$y$</span>-intercepts of the trajectories of the arrows that shoot the
+vertices on the right side of the target. Therefore, we can now just calculate
+what the distance is between the furthest cows in this scenario based on
+assigning the positive and negative slopes as we described above. This runs in
+<span class='math'>$O(N)$</span>.
+<p>Brandon Wang&apos;s Python Implementation:
+<pre class='prettyprint'>
+T = int(input())
+ 
+for _ in range(T):
+    N, X = (int(x) for x in input().split())
+    y1s = []
+    y2s = []
+    x2s = []
+    for _ in range(N):
+        y1, y2, x2 = (int(x) for x in input().split())
+        y1s.append(y1)
+        y2s.append(y2)
+        x2s.append(x2)
+    S = [int(x) for x in input().split()]
+    nn = sum([x &lt; 0 for x in S])
+    s = abs(S[0])
+    if nn &lt; N or nn &gt; 3*N:
+        print(-1)
+        continue
+    print(max([y2+x2*s for x2, y2 in zip(x2s, y2s)]) - min([y1-x2*s for x2, y1 in zip(x2s, y1s)]))
+</pre>
+<p><strong>Subtask 2:</strong>
+<p>Now, let&apos;s look at the vertices on the left side of each
+target. Let&apos;s say we have two vertices with the same <span class='math'>$x$</span>-coordinate, and the
+lower one (lower <span class='math'>$y$</span>-coordinate) is targeted by an arrow with a positive slope,
+and the upper one is targeted by an arrow with a negative slope. In this case,
+we can see that the cow who shoots the arrow with the positive slope is below
+(lower <span class='math'>$y$</span>-coordinate) the cow with the negative slope. Now if we swap the
+vertices the cows are shooting at, we find that the cow with the negative slope
+relocates farther down the y-axis and the cow with the positive slope will
+relocate farther up the y-axis. This makes the cows closer together. Since our
+goal is to have all the cows as close together as possible, this means that if
+we have two vertices in such a situation, it&apos;s always beneficial to swap the
+cows&apos; target vertices if we can since it may decrease the distance between the
+furthest cows. Since the leftmost vertices of each target share the same
+<span class='math'>$x$</span>-value, we can assign the leftmost vertices with the lowest overall
+<span class='math'>$y$</span>-values negative slopes and the rest positive slopes.
+<p>Summarizing, the slope we should have on each vertex of a target is:
+<ul><li> Upper Right: negative </li><li> Lower Right: positive </li><li> Leftmost
+vertices: Sort these from smallest to largest based on <span class='math'>$y$</span>-value, and assign the
+lowest points negative slopes and the rest positive slopes </li></ul>
+<p>We now know for each vertex whether it will be targeted by a positive slope or
+by a negative slope. Now, let&apos;s think of each cow as the <span class='math'>$y$</span>-intercept of a line
+and each trajectory that an arrow follows as a line. We can see that our goal is
+to minimize the maximum <span class='math'>$y$</span>-intercept of a line with a negative slope and
+maximize the minimum <span class='math'>$y$</span>-intercept of a line with a positive slope as this
+minimizes the range of cow positions. So, let&apos;s split this problem into a
+negative slope case and a positive slope case. Note that these two cases are
+symmetric, so we can deal with them in the same way. For the rest of the
+editorial, we will describe only the solution to the positive slope case.
+<p>We can notice that for any given point, the smaller the slope of the line that
+targets it, the higher the corresponding <span class='math'>$y$</span>-intercept of the line. This means
+that if we have two points and the <span class='math'>$y$</span>-intercept of the line with larger slope
+would be higher if it targeted the other point, it would always be better to
+switch which points the slopes are targeting so that it targets that point. This
+motivates the following greedy solution: Go through the positive slopes from
+greatest to least. For each slope, target the point that results in the highest
+corresponding <span class='math'>$y$</span>-intercept out of all the points that have not been targeted so
+far. This runs in <span class='math'>$O(N^2)$</span> and passes the subtask.
+<p>Ben Qi&apos;s Python Implementation:
+<pre class='prettyprint'>
+def solve_min(needs_pos, pos): # positive slope case
+    pos.sort(reverse=True)
+    ans = float(&apos;inf&apos;)
+    for s in pos:
+        best_y = (-float(&apos;inf&apos;), -1)
+        for i, (x, y) in enumerate(needs_pos):
+            best_y = max(best_y, (y - x * s, i))
+        ans = min(ans, best_y[0])
+        # Remove chosen point from further consideration
+        needs_pos = needs_pos[:best_y[1]] + needs_pos[best_y[1]+1:]
+    return ans
+ 
+def solve_max(needs_neg, neg): # negative slope case
+    return -solve_min([(x, -y) for x, y in needs_neg], [-s for s in neg])
+ 
+def solve():
+    N, x1 = map(int, input().split())
+    with_x1 = []
+    needs_pos = []
+    needs_neg = []
+    for _ in range(N):
+        y1, y2, x2 = map(int, input().split())
+        with_x1.append(y1)
+        with_x1.append(y2)
+        needs_pos.append((x2, y1))
+        needs_neg.append((x2, y2))
+    slopes = list(map(int, input().split()))
+    assert len(slopes) == 4*N
+    neg, pos = [], []
+    for s in slopes:
+        if s &lt; 0:
+            neg.append(s)
+        else:
+            pos.append(s)
+    if len(neg) &lt; N or len(pos) &lt; N:
+        print(-1)
+        return
+    with_x1.sort()
+    for y in with_x1: # split leftmost vertices into negative and positive slopes
+        if len(needs_neg) &lt; len(neg):
+            needs_neg.append((x1, y))
+        else:
+            needs_pos.append((x1, y))
+    assert len(needs_neg) == len(neg)
+    assert len(needs_pos) == len(pos)
+    # solve for upper and lower bounds of range
+    y_min = solve_min(needs_pos, pos)
+    y_max = solve_max(needs_neg, neg)
+    print(y_max - y_min)
+ 
+T = int(input())
+for _ in range(T): solve()
+</pre>
+<p><strong>Subtask 3:</strong>
+<p>The key observation is that we can binary search on the space of <span class='math'>$y$</span>-intercepts
+to find the maximum minimum <span class='math'>$y$</span>-intercept. We can see that the maximum possible
+<span class='math'>$y$</span>-intercept is <span class='math'>$\max{y}$</span> and the minimum possible <span class='math'>$y$</span>-intercept is
+<span class='math'>$-\max{x}\cdot \max{s_i}$</span>. By the constraints of the problem, this is an integer
+bounded between <span class='math'>$10^9$</span> and <span class='math'>$-10^{18}$</span> so it&apos;s possible to binary search over to
+find our value for a maximum minimum <span class='math'>$y$</span>-intercept. To check if a given minimum
+<span class='math'>$y$</span>-intercept is possible, we start by finding, for each vertex, the maximum
+possible slope of a line that can target it without its intersection with the
+y-axis going below the minimum <span class='math'>$y$</span>-intercept. For a single vertex, this can be
+done in <span class='math'>$O(1)$</span> by rearranging the equation of the line: <span class='math'>$y = mx+b$</span>. Once we find
+this, we then sort these slopes from greatest to least and denote the <span class='math'>$i$</span>-th
+largest as <span class='math'>$m_i$</span>. Then, a given minimum <span class='math'>$y$</span>-intercept is only feasible if
+<span class='math'>$m_i \geq p_i$</span> for all <span class='math'>$i$</span> where <span class='math'>$p_i$</span> is the <span class='math'>$i$</span>-th largest positive slope.
+Otherwise, we would have to target a vertex with a slope that would result in a
+<span class='math'>$y$</span>-intercept less than our current assumption.
+<p>In total, this algorithm runs in
+<span class='math'>$O(N\log{N}\log{(\max{|Y|}+ \max{x} \cdot \max{|s_i|})})$</span>.  The <span class='math'>$N\log{N}$</span> comes
+from the sorting needed to check the feasibility of a value in  the binary
+search and the second term comes from the bound on the possible minimum
+<span class='math'>$y$</span>-intercepts  for the binary search.
+<p>Ben Qi&apos;s Python Implementation:
+<pre class='prettyprint'>
+def solve_min(needs_pos, pos): #positive slope case
+    pos.sort()
+ 
+    def ok(min_y):
+        max_slope = []
+        for x, y in needs_pos:
+            max_slope.append((y - min_y) // x) # calculate what the max slope can be for each vertex
+        max_slope.sort()
+        return all(a &lt;= b for a, b in zip(pos, max_slope)) # check if these slopes are possible
+ 
+    min_y = min(y for x, y in needs_pos)
+    hi = min_y
+    lo = min_y - pos[-1] * max(x for x, y in needs_pos)
+    assert ok(lo)
+    while lo &lt; hi: # binary search over minimum y-intercept
+        mid = (lo + hi + 1) // 2
+        if ok(mid):
+            lo = mid
+        else:
+            hi = mid - 1
+    return lo
+ 
+def solve_max(needs_neg, neg): # negative slope case
+    return -solve_min([(x, -y) for x, y in needs_neg], [-s for s in neg]) # convert this to a positive slope case
+ 
+def solve():
+    N, x1 = map(int, input().split())
+    with_x1 = []
+    needs_pos = []
+    needs_neg = []
+    for _ in range(N):
+        y1, y2, x2 = map(int, input().split())
+        with_x1.append(y1)
+        with_x1.append(y2)
+        needs_pos.append((x2, y1))
+        needs_neg.append((x2, y2))
+    slopes = list(map(int, input().split()))
+    assert len(slopes) == 4*N
+    neg, pos = [], []
+    for s in slopes:
+        if s &lt; 0:
+            neg.append(s)
+        else:
+            pos.append(s)
+    if len(neg) &lt; N or len(pos) &lt; N:
+        print(-1)
+        return
+    with_x1.sort()
+    for y in with_x1: # split leftmost vertices into negative and positive slopes
+        if len(needs_neg) &lt; len(neg):
+            needs_neg.append((x1, y))
+        else:
+            needs_pos.append((x1, y))
+    assert len(needs_neg) == len(neg)
+    assert len(needs_pos) == len(pos)
+    # solve for upper and lower bounds of range
+    y_min = solve_min(needs_pos, pos)
+    y_max = solve_max(needs_neg, neg)
+    print(y_max - y_min)
+ 
+T = int(input())
+for _ in range(T): solve()
+</pre>
+</body></html>

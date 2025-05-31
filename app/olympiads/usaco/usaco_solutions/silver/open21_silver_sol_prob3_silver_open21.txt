@@ -1,0 +1,207 @@
+Solution ID: sol_prob3_silver_open21
+Contest: OPEN21
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_open21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+Sort the citation counts largest-to-smallest, and consider a bar graph where bar
+
+$i$
+
+has width
+
+$1$
+
+and height
+
+$c_i$
+
+. The
+
+$h$
+
+-index of the papers before the
+surveys is simply the dimension of the largest square that fits under this bar
+graph. We want to determine how much we can increase the
+
+$h$
+
+-index with
+
+$K$
+
+surveys each citing
+
+$L$
+
+distinct papers.
+
+Let's binary search on the final
+
+$h$
+
+-index. Then we just need a way to check
+whether it's possible to achieve a given
+
+$h$
+
+-index
+
+$h$
+
+.
+
+It's clearly optimal to work only with the
+
+$h$
+
+papers that start off with the
+largest citation counts. Note that we have
+
+$KL$
+
+total citations to allocate to
+these papers. If the total citation count of these papers is less than
+
+$h^2 - KL$
+
+, then we cannot hope to achieve
+
+$h$
+
+. This is one failure mode.
+
+Unfortunately, it's not the only failure mode. That is, the converse of the
+above statement is not true, because we have an added restriction that no survey
+can cite a paper twice. So for example if
+
+$h=3$
+
+,
+
+$K = 1$
+
+, and
+
+$L = 2$
+
+, and the
+top three papers initially have citation counts
+
+$(3, 3, 1)$
+
+, then we cannot
+raise the third paper to citation count
+
+$3$
+
+since we only have one survey. This
+illuminates another possible failure mode: if there is a paper with less than
+
+$h-K$
+
+citations initially, then we cannot achieve
+
+$h$
+
+.
+
+It turns out that these are the only two failure modes. We can prove this by
+induction on
+
+$K$
+
+. If
+
+$K=0$
+
+then every paper already has at least
+
+$h$
+
+citations,
+so we're certainly happy. Suppose
+
+$K>0$
+
+. Every paper needs at most
+
+$K$
+
+more
+citations. There is some set of papers which need exactly
+
+$K$
+
+more citations. By
+the assumption on the sum of citation counts, this set has size at most
+
+$L$
+
+, so
+with one survey we can cite all these papers (plus some others, until we've hit
+
+$L$
+
+citations or this survey has cited every paper). Now we're in a situation
+with
+
+$K-1$
+
+remaining surveys, but every paper needs at most
+
+$K-1$
+
+more
+citations. Moreover, it can be checked that the total number of needed citations
+is now at most
+
+$(K-1)L$
+
+. So we can indeed induct, completing the proof.
+
+Below is Danny Mittal's code, implementing the above idea.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.StringTokenizer;
+ 
+public class AcowdemiaSilver {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int l = Integer.parseInt(tokenizer.nextToken());
+        Integer[] publications = new Integer[n];
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 0; j < n; j++) {
+            publications[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        Arrays.sort(publications, Comparator.reverseOrder());
+        int upper = n;
+        int lower = 0;
+        while (upper > lower) {
+            int mid = (upper + lower + 1) / 2;
+            long needed = 0;
+            for (int j = 0; j < mid; j++) {
+                needed += (long) Math.max(0, mid - publications[j]);
+            }
+            if (needed <= ((long) k) * ((long) l) && publications[mid - 1] + k >= mid) {
+                lower = mid;
+            } else {
+                upper = mid - 1;
+            }
+        }
+        System.out.println(upper);
+    }
+}

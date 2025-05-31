@@ -1,0 +1,948 @@
+Solution ID: sol_prob3_platinum_feb21
+Contest: FEB21
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_feb21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal, Benjamin Qi)
+
+If the graph is bipartite, then the answer is simply the amount of ways for each
+node to have a nonzero amount of edges to nodes closer by
+
+$1$
+
+edge to the
+source. Clearly, no other kinds of edges can be allowed. Letting
+
+$f_d$
+
+be the
+amount of nodes at a distance
+
+$d$
+
+from the source, this yields the answer
+
+$$\prod_{d = 1}^{n - 1} \left(2^{f_{d - 1}} - 1\right)^{f_d}.$$
+
+If the graph is not bipartite, then, as in Minimizing Edges from this contest
+and Counting Graphs from January, define
+
+$$h(i)=(a_i,b_i)=(\min(dist_{even}(i),dist_{odd}(i)),\max(dist_{even}(i),dist_{odd}(i))).$$
+
+For convenience, define
+
+$s(a, b)$
+
+to be the set of all nodes
+
+$i$
+
+with
+
+$h(i) = (a, b)$
+
+.
+
+A graph having
+
+$f_G$
+
+equivalent to that of the given graph must have edges
+adjacent to vertex
+
+$i$
+
+satisfying at least one of the following conditions for
+each
+
+$2\le i\le N$
+
+(the condition is slightly different for vertex
+
+$1$
+
+since
+
+$a_1=0$
+
+).
+
+$i$
+
+is adjacent to a vertex in
+
+$s(a_i-1,b_i-1)$
+
+. Call this an edge of type
+A.
+
+If
+
+$a_i+1<b_i$
+
+, then
+
+$i$
+
+is adjacent to a vertex in
+
+$s(a_i-1,b_i+1)$
+
+and a
+vertex in
+
+$s(a_i+1,b_i-1)$
+
+. Call these edges of type B.
+
+If
+
+$a_i+1=b_i$
+
+, then
+
+$i$
+
+is adjacent to a vertex in
+
+$s(a_i-1,b_i+1)$
+
+and a
+vertex in
+
+$s(a_i,b_i)$
+
+(possibly
+
+$i$
+
+itself). Call an edge from
+
+$i$
+
+to a vertex
+in
+
+$s(a_i, b_i)$
+
+an edge of type C.
+
+First observe that edges that are not type A, B, or C edges cannot exist in the
+graph. The problem is then to count the amount of ways to include edges of these
+types so that at least one of the above conditions is satisfied for each vertex.
+
+As in Minimizing Edges, we can look at each layer (vertices with a fixed
+
+$a_i+b_i$
+
+) independently, as edges of type A are only relevant to the vertex in
+the higher layer, and edges of type B and C are between vertexes in the same
+layer.
+
+We will then compute the answer for each layer using DP, similarly to the
+
+$\mathcal O(N^2)$
+
+approach in Minimizing Edges.
+
+We will define
+
+$dp_{a, b}(x)$
+
+to be the amount of ways to choose edges in layer
+
+$a + b$
+
+considering only the nodes
+
+$j$
+
+in said layer with
+
+$a_j \leq a$
+
+such that
+
+$x$
+
+of the nodes in
+
+$s(a, b)$
+
+do not yet have one of the above conditions
+satisfied. Our answer will be the product over all layers
+
+$l$
+
+of
+
+$dp_{\frac {l - 1} 2, \frac {l + 1} 2}(0)$
+
+.
+
+For each
+
+$(a, b)$
+
+, we will compute
+
+$dp_{a, b}$
+
+in two steps. The first step will
+be to compute an intermediate DP
+
+$dp_{int}$
+
+, where we consider type B edges to
+nodes in
+
+$s(a - 1, b + 1)$
+
+but don't yet consider type A edges to nodes in
+
+$s(a - 1, b - 1)$
+
+.
+
+$dp_{int}(x)$
+
+will be defined similarly to above, except that
+here
+
+$x$
+
+represents the amount of nodes in
+
+$s(a, b)$
+
+with no edges at all yet,
+so that the other nodes in
+
+$s(a, b)$
+
+aren't fully satisfied either but do at
+least have a type B edge to a node in
+
+$s(a - 1, b + 1)$
+
+.
+
+To compute
+
+$dp_{int}(x)$
+
+for all
+
+$x = 0, \ldots, |s_{a, b}|$
+
+, we transition from
+each
+
+$dp_{a - 1, b + 1}(y)$
+
+for each
+
+$y = 0, \ldots, |s_{a - 1, b + 1}|$
+
+,
+considering how to add type B edges between nodes in
+
+$s(a - 1, b + 1)$
+
+and nodes
+in
+
+$s(a, b)$
+
+. For a given
+
+$x, y$
+
+, we have
+
+$y$
+
+nodes in
+
+$s(a - 1, b + 1)$
+
+which
+we
+
+must
+
+add a type B edge to (we can, but don't have to, add type B edges
+to the other nodes in
+
+$s(a - 1, b + 1)$
+
+). Additionally, we have
+
+$|s(a, b)| - x$
+
+nodes in
+
+$s(a, b)$
+
+which we
+
+must
+
+add type B edges to and
+
+$x$
+
+nodes in
+
+$s(a, b)$
+
+which we
+
+cannot
+
+add type B edges to.
+
+We can compute the amount of ways to transition using PIE (the principle of
+inclusion-exclusion). Consider the nodes in
+
+$s(a, b)$
+
+which need an edge. We
+first add the amount of ways to add edges from each of these nodes to the nodes
+in
+
+$s(a - 1, b + 1)$
+
+so that each of the nodes has at least one edge. This is
+
+$\left(2^{|s(a - 1, b + 1)|} - 1\right)^{|s(a, b)| - x}$
+
+. Noting that we must
+force the
+
+$y$
+
+nodes in
+
+$s(a - 1, b + 1)$
+
+to also have an edge, we then subtract
+the amount of ways that explicitly excludes one of these
+
+$y$
+
+nodes. This is
+
+$y(2^{|s(a - 1, b + 1)| - 1} - 1)^{|s(a, b)| - x}$
+
+. Continuing with this PIE, we
+find that the amount of transitions is
+
+$$\sum_{k = 0}^y (-1)^k \binom y k \left(2^{|s(a - 1, b + 1)|-k} - 1\right)^{|s(a, b)| - x}.$$
+
+We perform this transition for each
+
+$y$
+
+. At the end, we also need to choose
+which
+
+$x$
+
+nodes in
+
+$s(a, b)$
+
+we're talking about, so we multiply our result by
+
+$\binom {|s(a, b)|} x$
+
+. This yields the overall formula
+
+$$dp_{int}(x) = \binom {|s(a, b)|} x \sum_{y = 0}^{|s(a - 1, b + 1)|} dp_{a - 1, b + 1}(y) \sum_{k = 0}^y (-1)^k \binom y k \left(2^{|s(a - 1, b + 1)|-k} - 1\right)^{|s(a, b)| - x}.$$
+
+The second step will be to finally compute
+
+$dp_{a, b}$
+
+based on
+
+$dp_{int}$
+
+.
+Consider transitioning to
+
+$dp_{a, b}(x)$
+
+from
+
+$dp_{int}(y)$
+
+. The
+
+$y$
+
+nodes in
+
+$s(a, b)$
+
+, since they didn't get a type B edge to a node in
+
+$s(a - 1, b + 1)$
+
+,
+now
+
+urgently require
+
+a type A edge to a node in
+
+$s(a - 1, b - 1)$
+
+.
+Therefore, the
+
+$x$
+
+nodes that don't get a type A edge and hence will not yet be
+satisfied must come from the other
+
+$|s(a, b)| - y$
+
+nodes. We first choose these
+nodes, which we can do in
+
+$\binom {|s(a, b)| - y} x$
+
+ways. Then, each of the
+other
+
+$|s(a, b) - x|$
+
+nodes needs a nonzero amount of type A edges to nodes in
+
+$s(a - 1, b - 1)$
+
+. For each such node, we can choose these edges in
+
+$2^{|s(a - 1, b - 1)|} - 1$
+
+ways. Hence, the amount of transitions is
+
+$$\binom {|s(a, b)| - y} x \left(2^{|s(a - 1, b - 1)|} - 1\right)^{|s(a, b)| - x},$$
+
+and so our overall formula is
+
+$$dp_{a, b}(x) = \sum_{y = 0}^{|s(a, b)|} dp_{int}(y) \binom {|s(a, b)| - y} x \left(2^{|s(a - 1, b - 1)|} - 1\right)^{|s(a, b)| - x}.$$
+
+There are two special cases:
+
+$a = 0$
+
+and
+
+$a + 1 = b$
+
+. In the former case, we
+essentially don't do either step. In the latter case, we need a third step to
+calculate the actual value of
+
+$dp_{a, a + 1}(0)$
+
+, which must take into account
+type C edges. This can be done using PIE similarly to the first step,
+considering which of the
+
+$x$
+
+nodes you explicitly exclude from having type C
+edges. The exact formula is left as an exercise to the reader.
+
+The overall runtime of this algorithm is
+
+$\mathcal O(N^3)$
+
+due to the first
+step, though solutions running in
+
+$\mathcal O(N^4)$
+
+time with a good constant
+factor  were sufficient for full credit.
+
+Here is Ben's code (which uses the exact same formulas as described above):
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MOD = 1e9+7;
+
+using ll = long long;
+
+#define f first
+#define s second
+
+struct mi {
+ 	int v; 
+ 	explicit operator int() const { return v; } 
+	mi() { v = 0; }
+	mi(ll _v):v(int(_v%MOD)) { v += (v<0)*MOD; }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+mi pow(mi a, ll p) { assert(p >= 0); // asserts are important! 
+	return p==0?1:pow(a*a,p/2)*(p&1?a:1); }
+
+using vi = vector<int>;
+using vmi = vector<mi>;
+
+int N,M;
+vector<vi> adj;
+ 
+vector<array<int,2>> gen_dist() { // BFS
+	vector<array<int,2>> dist(N,{MOD,MOD});
+	queue<pair<int,int>> q;
+	auto ad = [&](int a, int b) {
+		if (dist[a][b%2] != MOD) return;
+		dist[a][b%2] = b; q.push({a,b});
+	};
+	ad(0,0);
+	while (!q.empty()) {
+		pair<int,int> p = q.front(); q.pop();
+		for (int t: adj[p.f]) ad(t,p.s+1);
+	}
+	return dist;
+}
+
+mi comb[105][105]; // comb[x][y] = (x choose y)
+vmi p2; // stores powers of 2
+
+void solve() {
+	cin >> N >> M;
+	adj = vector<vi>(N);
+	for (int i = 0; i < M; ++i) {
+		int a,b; cin >> a >> b; --a,--b;
+		adj[a].push_back(b), adj[b].push_back(a);
+	}
+	vector<array<int,2>> dists = gen_dist();
+	for (array<int,2>& t: dists) 
+		if (t[0] > t[1]) swap(t[0],t[1]);
+	if (dists[0][1] == MOD) { // bipartite
+		vi num_at_dist(N);
+		for (int i = 0; i < N; ++i) 
+			++num_at_dist[min(dists[i][0],dists[i][1])];
+		mi ans = 1;
+		for (int i = 1; i < N; ++i)
+			ans *= pow(p2[num_at_dist[i-1]]-1,num_at_dist[i]);
+		cout << (int)ans << "\n";
+		return;
+	}
+	vector<vi> S(4*N,vi(4*N));
+	for (array<int,2> t: dists) ++S[t[0]][t[1]];
+	mi ans = 1;
+	for (int sum = 1; sum < 4*N; sum += 2) {
+		vmi dp(S[0][sum]+1); dp.back() = 1;
+		for (int a = 1; a <= sum/2; ++a) { // solve in increasing order of a
+			int b = sum-a, num = S[a][b];
+			vmi dp_int(num+1);
+			{ // deal with s_{a-1,b+1} to s_{a,b}
+				int prev_num = S[a-1][b+1];
+				for (int x = 0; x <= num; ++x) { // x in s_{a,b} with no edges at all, num-x that receive edges
+					for (int y = 0; y <= prev_num; ++y) { // y nodes in s_{a-1,b+1} that need an edge
+						mi tot_mul = 0;
+						for (int k = 0; k <= y; ++k) { // suppose that k out of y didn't actually get an edge
+							mi mul = comb[y][k]*pow(p2[prev_num-k]-1,num-x);
+							if (k&1) tot_mul -= mul;
+							else tot_mul += mul;
+						}
+						dp_int[x] += tot_mul*dp[y];
+					}
+					dp_int[x] *= comb[num][x];
+				}
+			}
+			{ // deal with s_{a-1,b-1} to s_{a,b}
+				dp = vmi(num+1);
+				int lower_num = S[a-1][b-1];
+				for (int x = 0; x <= num; ++x) { // x will not be part of such an edge
+					for (int y = 0; x+y <= num; ++y) { // y urgently need an edge, num-y don't
+						mi mul = comb[num-y][x]*pow(p2[lower_num]-1,num-x);
+						dp[x] += mul*dp_int[y];
+					}
+				}
+			}
+		}
+		// finally, deal with clique edges
+		mi ans_for_layer = 0;
+		int num = S[sum/2][sum/2+1];
+		for (int y = 0; y <= num; ++y) { // how many ways to complete if y need an edge
+			mi tot_mul = 0;
+			for (int k = 0; k <= y; ++k) {
+				mi mul = comb[y][k]*p2[(num-k)*(num-k+1)/2];
+				if (k&1) tot_mul -= mul;
+				else tot_mul += mul;
+			}
+			ans_for_layer += tot_mul*dp[y];
+		}
+		ans *= ans_for_layer;
+	}
+	cout << (int)ans << "\n";
+}
+ 
+int main() {
+	comb[0][0] = 1;
+	for (int i = 1; i < 105; ++i) {
+		comb[i][0] = 1;
+		for (int j = 1; j <= i; ++j) 
+			comb[i][j] = comb[i-1][j]+comb[i-1][j-1];
+	}
+	p2 = {1}; 
+	for (int _ = 0; _ < 10000; ++_) 
+		p2.push_back(2*p2.back());
+	int TC; cin >> TC;
+	while (TC--) solve();
+}
+
+Danny's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class CountingGraphs4FixedBounds {
+    public static final long MOD = 1000000007L;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int t = Integer.parseInt(in.readLine());
+        for (int tc = 1; tc <= t; tc++) {
+            in.readLine();
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int n = Integer.parseInt(tokenizer.nextToken());
+            int m = Integer.parseInt(tokenizer.nextToken());
+            List<Integer>[] adj = new List[(2 * n) + 1];
+            for (int a = 1; a <= 2 * n; a++) {
+                adj[a] = new ArrayList<>();
+            }
+            for (int j = 1; j <= m; j++) {
+                tokenizer = new StringTokenizer(in.readLine());
+                int a = Integer.parseInt(tokenizer.nextToken());
+                int b = Integer.parseInt(tokenizer.nextToken());
+                adj[a].add(b + n);
+                adj[b + n].add(a);
+                adj[a + n].add(b);
+                adj[b].add(a + n);
+            }
+            int[] dist = new int[(2 * n) + 1];
+            Arrays.fill(dist, -1);
+            dist[1] = 0;
+            LinkedList<Integer> q = new LinkedList<>();
+            q.add(1);
+            while (!q.isEmpty()) {
+                int a = q.remove();
+                for (int b : adj[a]) {
+                    if (dist[b] == -1) {
+                        dist[b] = dist[a] + 1;
+                        q.add(b);
+                    }
+                }
+            }
+            long[] pow2 = new long[(n * n) + 1];
+            pow2[0] = 1;
+            for (int j = 1; j <= n * n; j++) {
+                pow2[j] = (2L * pow2[j - 1]) % MOD;
+            }
+            long[][] powMersenne = new long[n + 1][n + 1];
+            for (int a = 0; a <= n; a++) {
+                powMersenne[a][0] = 1L;
+                for (int j = 1; j <= n; j++) {
+                    powMersenne[a][j] = ((pow2[a] - 1L) * powMersenne[a][j - 1]) % MOD;
+                }
+            }
+            long[][] choose = new long[n + 1][n + 1];
+            for (int a = 0; a <= n; a++) {
+                choose[a][0] = 1;
+                for (int b = 1; b <= a; b++) {
+                    choose[a][b] = (choose[a - 1][b - 1] + choose[a - 1][b]) % MOD;
+                }
+            }
+            long answer = 1;
+            if (dist[n + 1] == -1) {
+                int[] freq = new int[n];
+                for (int a = 1; a <= n; a++) {
+                    freq[Math.max(dist[a], dist[n + a])]++;
+                }
+                for (int d = 1; d < n; d++) {
+                    answer *= powMersenne[freq[d - 1]][freq[d]];
+                    answer %= MOD;
+                }
+            } else {
+                int[][] freq = new int[2 * n][2 * n];
+                for (int a = 1; a <= n; a++) {
+                    freq[Math.min(dist[a], dist[n + a])][Math.max(dist[a], dist[n + a])]++;
+                }
+                for (int s = 1; s <= (4 * n) - 2; s += 2) {
+                    long[] dp = new long[0];
+                    for (int j = s / 2, k = j + 1; j >= 0 && k < 2 * n; j--, k++) {
+                        long[] dp1 = new long[freq[j][k] + 1];
+                        if (j == s / 2) {
+                            for (int a = 0; a <= freq[j][k]; a++) {
+                                for (int b = 0; b <= a; b++) {
+                                    dp1[a] += (a % 2 == b % 2 ? 1L : -1L) * choose[a][b] * pow2[(b * (b + 1)) / 2];
+                                    dp1[a] %= MOD;
+                                }
+                                dp1[a] *= choose[freq[j][k]][a];
+                                dp1[a] %= MOD;
+                            }
+                        } else {
+                            for (int a = 0; a <= freq[j + 1][k - 1]; a++) {
+                                for (int b = 0; b <= freq[j][k]; b++) {
+                                    long ways = 0;
+                                    for (int c = 0; c <= freq[j + 1][k - 1] - a; c++) {
+                                        ways += ((freq[j + 1][k - 1] - a) % 2 == c % 2 ? 1L : -1L) * choose[freq[j + 1][k - 1] - a][c] * powMersenne[a + c][b];
+                                        ways %= MOD;
+                                    }
+                                    dp1[b] += ((choose[freq[j][k]][b] * dp[a]) % MOD) * ways;
+                                    dp1[b] %= MOD;
+                                }
+                            }
+                        }
+                        if (j == 0) {
+                            dp = dp1;
+                        } else {
+                            long[] dp2 = new long[freq[j][k] + 1];
+                            for (int a = 0; a <= freq[j][k]; a++) {
+                                for (int b = freq[j][k] - a; b <= freq[j][k]; b++) {
+                                    dp2[b] += ((choose[a][b - (freq[j][k] - a)] * powMersenne[freq[j - 1][k - 1]][b]) % MOD) * dp1[a];
+                                    dp2[b] %= MOD;
+                                }
+                            }
+                            dp = dp2;
+                        }
+                    }
+                    answer *= dp[dp.length - 1];
+                    answer %= MOD;
+                }
+            }
+            answer += MOD;
+            answer %= MOD;
+            System.out.println(answer);
+        }
+    }
+}
+
+In fact, the PIE can be simplified to give a
+
+$\mathcal{O}(N^2)$
+
+solution as
+demonstrated by Andrew He's code
+
+here
+
+. It helps to
+think of the number of
+
+edge
+covers
+
+of a set of vertices
+
+$S$
+
+as
+
+$$\sum_{T\subseteq S}(-1)^T2^{(\#\text{ of edges within }T)}.$$
+
+Here is the code from the first solution above, slightly modified to run in
+
+$\mathcal{O}(N^2)$
+
+:
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MOD = 1e9+7;
+
+using ll = long long;
+
+#define f first
+#define s second
+
+struct mi {
+ 	int v; 
+ 	explicit operator int() const { return v; } 
+	mi() { v = 0; }
+	mi(ll _v):v(int(_v%MOD)) { v += (v<0)*MOD; }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+mi pow(mi a, ll p) { assert(p >= 0); // asserts are important! 
+	return p==0?1:pow(a*a,p/2)*(p&1?a:1); }
+
+using vi = vector<int>;
+using vmi = vector<mi>;
+
+int N,M;
+vector<vi> adj;
+ 
+vector<array<int,2>> gen_dist() { // BFS
+	vector<array<int,2>> dist(N,{MOD,MOD});
+	queue<pair<int,int>> q;
+	auto ad = [&](int a, int b) {
+		if (dist[a][b%2] != MOD) return;
+		dist[a][b%2] = b; q.push({a,b});
+	};
+	ad(0,0);
+	while (!q.empty()) {
+		pair<int,int> p = q.front(); q.pop();
+		for (int t: adj[p.f]) ad(t,p.s+1);
+	}
+	return dist;
+}
+
+mi comb[105][105]; // comb[x][y] = (x choose y)
+vmi p2; // stores powers of 2
+
+void solve() {
+	cin >> N >> M;
+	adj = vector<vi>(N);
+	for (int i = 0; i < M; ++i) {
+		int a,b; cin >> a >> b; --a,--b;
+		adj[a].push_back(b), adj[b].push_back(a);
+	}
+	vector<array<int,2>> dists = gen_dist();
+	for (array<int,2>& t: dists) 
+		if (t[0] > t[1]) swap(t[0],t[1]);
+	if (dists[0][1] == MOD) { // bipartite
+		vi num_at_dist(N);
+		for (int i = 0; i < N; ++i) 
+			++num_at_dist[min(dists[i][0],dists[i][1])];
+		mi ans = 1;
+		for (int i = 1; i < N; ++i)
+			ans *= pow(p2[num_at_dist[i-1]]-1,num_at_dist[i]);
+		cout << (int)ans << "\n";
+		return;
+	}
+	vector<vi> S(4*N,vi(4*N));
+	for (array<int,2> t: dists) ++S[t[0]][t[1]];
+	mi ans = 1;
+	for (int sum = 1; sum < 4*N; sum += 2) {
+		vmi dp(S[0][sum]+1); dp.back() = 1;
+		for (int a = 1; a <= sum/2; ++a) { // solve in increasing order of a
+			int b = sum-a, num = S[a][b];
+			vmi dp_int(num+1);
+			{ // deal with s_{a-1,b+1} to s_{a,b}
+				int prev_num = S[a-1][b+1];
+				for (int y = prev_num; y >= 0; --y)
+					for (int y2 = y+1; y2 <= prev_num; ++y2) {
+						// only y nodes from s_{a-1,b+1} need edges to s_{a,b}
+						// say y2 >= y nodes from s_{a-1,b+1} actually have edges to s_{a,b}
+						dp[y2] += comb[prev_num-y][y2-y]*dp[y];
+					}
+				// now, dp[y] -> y nodes from s_{a-1,b+1} that must have edges to s_{a,b}, 
+				// rest of nodes from s_{a-1,b-1} don't
+
+				for (int y = 0; y <= prev_num; ++y) 
+					for (int x = 0; x <= num; ++x)
+						dp_int[x] += dp[y]*pow(p2[x]-1,y); 
+				// now, dp_int[x] stores the number of ways to satisfy all nodes from s_{a-1,b+1}
+				// by drawing edges to x nodes in s_{a,b}
+
+				// can replace the three lines above with the commented out lines below instead
+					// which in turn can be done in O(N log N) with Chirp-Z Transform
+					// (https://cp-algorithms.com/algebra/polynomial.html)
+				// for (int y = 0; y <= prev_num; ++y)
+				// 	for (int y2 = 0; y2 < y; ++y2) {
+				// 		mi bad = comb[y][y2]*dp[y];
+				// 		if ((y-y2)&1) dp[y2] -= bad;
+				// 		else dp[y2] += bad;
+				// 	}
+				// for (int y = 0; y <= prev_num; ++y) 
+				// 	for (int x = 0; x <= num; ++x)
+				// 		dp_int[x] += dp[y]*pow(p2[x],y);
+
+				for (int x = num; x >= 0; --x) // apply PIE again
+					for (int xx = x-1; xx >= 0; --xx) {
+						mi bad = dp_int[xx]*comb[x][xx];
+						if ((x-xx)&1) dp_int[x] -= bad;
+						else dp_int[x] += bad;
+					}
+				reverse(begin(dp_int),end(dp_int));
+				for (int x = 0; x <= num; ++x) dp_int[x] *= comb[num][x];
+			}
+			{ // deal with s_{a-1,b-1} to s_{a,b}
+				dp = vmi(num+1);
+				int lower_num = S[a-1][b-1];
+				for (int x = 0; x <= num; ++x) { // x will not be part of such an edge
+					for (int y = 0; x+y <= num; ++y) { // y urgently need an edge, num-y don't
+						mi mul = comb[num-y][x]*pow(p2[lower_num]-1,num-x);
+						dp[x] += mul*dp_int[y];
+					}
+				}
+			}
+		}
+		// finally, deal with clique edges
+		mi ans_for_layer = 0;
+		int num = S[sum/2][sum/2+1];
+		for (int y = 0; y <= num; ++y) { // how many ways to complete if y need an edge
+			mi tot_mul = 0;
+			for (int k = 0; k <= y; ++k) {
+				mi mul = comb[y][k]*p2[(num-k)*(num-k+1)/2];
+				if (k&1) tot_mul -= mul;
+				else tot_mul += mul;
+			}
+			ans_for_layer += tot_mul*dp[y];
+		}
+		ans *= ans_for_layer;
+	}
+	cout << (int)ans << "\n";
+}
+ 
+int main() {
+	comb[0][0] = 1;
+	for (int i = 1; i < 105; ++i) {
+		comb[i][0] = 1;
+		for (int j = 1; j <= i; ++j) 
+			comb[i][j] = comb[i-1][j]+comb[i-1][j-1];
+	}
+	p2 = {1}; 
+	for (int _ = 0; _ < 10000; ++_) 
+		p2.push_back(2*p2.back());
+	int TC; cin >> TC;
+	while (TC--) solve();
+}
+
+In fact, this can be sped up to
+
+$\mathcal O(N\log N)$
+
+using
+
+FFT
+
+to quickly multiply
+polynomials.

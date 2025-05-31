@@ -1,0 +1,753 @@
+Solution ID: sol_prob2_platinum_dec20
+Contest: DEC20
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_dec20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal)
+
+Subtask 1
+
+(
+
+$K \leq 5$
+
+)
+
+We can do this via bitmask DP. Our states will be pairs
+
+$(\mu, r)$
+
+where
+
+$\mu$
+
+is a bitmask of length
+
+$K$
+
+and
+
+$r$
+
+is a room. The bitmask
+
+$\mu$
+
+represents all
+sequences of button presses such that iff the
+
+$j$
+
+th bit in
+
+$\mu$
+
+is on, Bessie
+has pressed button
+
+$j$
+
+at least once and has not pressed any button with a
+higher number than
+
+$j$
+
+since the last time she pressed button
+
+$j$
+
+. The state
+
+$(\mu, r)$
+
+then represents all sequences of button presses and rooms beginning
+in room
+
+$s$
+
+by pressing button
+
+$b_s$
+
+, ending in room
+
+$r$
+
+, and satisfying the
+conditions to correspond to mask
+
+$\mu$
+
+.
+
+A transition in our DP is then moving to another (possibly the same) room as
+well as pressing another button. Bessie can move to room
+
+$râ$
+
+iff there is an
+edge from
+
+$r$
+
+to
+
+$râ$
+
+. Additionally, Bessie can press button
+
+$j$
+
+iff the
+
+$j$
+
+th
+bit in the current mask
+
+$\mu$
+
+is off â otherwise, she would press button
+
+$j$
+
+twice without pressing a button with a higher number in between.
+
+We then must also consider how pressing a button changes
+
+$\mu$
+
+. It clearly sets
+the
+
+$j$
+
+th bit to be on. Additionally, all lower bits are set off now that a
+higher button has been pressed. All higher bits are unaffected. It is important
+to note that the way this modification works implies that we always increase the
+numerical value of our bitmask when transitioning, meaning that there are no
+circular relations in our DP and that we should consider bitmasks in order of
+increasing numerical value.
+
+Our DP then has
+
+$O(2^KN)$
+
+states, from each of which we perform
+
+$O(KN)$
+
+transitions, meaning that our DP runs in
+
+$O(K2^KN^2)$
+
+.
+
+To compute the answer for each query, we simply take the sum of the DP values of
+
+$(t, \mu)$
+
+over all bitmasks
+
+$\mu$
+
+such that the
+
+$b_t$
+
+th bit is on and all lower
+bits are off, as these correspond precisely to the sequences where we end by
+pressing button
+
+$b_t$
+
+. This takes
+
+$O(2^K)$
+
+time, so that our final computations
+take
+
+$O(2^KQ)$
+
+time overall and thus our overall solution takes
+
+$O(2^K(KN^2 + Q))$
+
+.
+
+Subtask 2
+
+(
+
+$b_s = K - 1$
+
+and
+
+$b_t = K$
+
+for each query)
+
+First note that as Bessie always presses button
+
+$K$
+
+at the end, she cannot press
+button
+
+$K$
+
+before then, as there would be no higher button that she could press
+in between (as button
+
+$K$
+
+is the highest button). This also means that she
+cannot press button
+
+$K - 1$
+
+after the beginning as she could never press button
+
+$K$
+
+, the only higher button. Thus, any sequence of button presses that Bessie
+takes, excluding the first and last button, uses buttons with numbers at most
+
+$K - 2$
+
+.
+
+We can then solve this using DP.
+
+$dp_{a, b, x}$
+
+will be the number of sequences
+of rooms and button presses which start at room
+
+$a$
+
+, end at room
+
+$b$
+
+, and only
+involve pressing buttons with numbers at most
+
+$x$
+
+. We can compute transitions as
+follows. First, we add all of
+
+$dp_{a, b, x - 1}$
+
+to
+
+$dp_{a, b, x}$
+
+, as a
+sequence only using buttons with numbers at most
+
+$x - 1$
+
+will clearly also only
+use buttons with numbers at most
+
+$x$
+
+.
+
+We then consider the case where we do press button
+
+$x$
+
+. Note that as we never
+press any higher buttons, we must only press button
+
+$x$
+
+once. Letâs then fix
+the room
+
+$r$
+
+that Bessie is in when she presses button
+
+$x$
+
+, and consider in
+isolation the part of the sequence before pressing button
+
+$x$
+
+(the left side)
+and after pressing button
+
+$x$
+
+(the right side). The left side, if it is not
+empty, starts at some room
+
+$a$
+
+, ends at some room
+
+$b$
+
+such that there is an edge
+from
+
+$b$
+
+to
+
+$r$
+
+, and only presses buttons with number at most
+
+$x - 1$
+
+.
+Similarly, the right side, if it is not empty, starts at some room
+
+$c$
+
+such that
+there is an edge from
+
+$r$
+
+to
+
+$c$
+
+, ends at some room
+
+$d$
+
+, and only presses
+buttons with number at most
+
+$x - 1$
+
+.
+
+The number of left sides is then
+
+$dp_{a, b, x - 1}$
+
+for each
+
+$a, b$
+
+and the
+number of right sides is
+
+$dp_{c, d, x - 1}$
+
+for each
+
+$c, d$
+
+. We only care about
+the endpoints
+
+$a$
+
+and
+
+$d$
+
+, so for each
+
+$a$
+
+, we compute the sum over all
+
+$dp_{a, b, x - 1}$
+
+such that there is an edge from
+
+$b$
+
+to
+
+$r$
+
+, and similarly for
+each
+
+$d$
+
+. Note that we should account for the left side possibly being empty by
+adding
+
+$1$
+
+to our calculation for
+
+$a = r$
+
+, as in that case our overall left
+endpoint will just be
+
+$r$
+
+(and similarly for the right side). Finally, for each
+
+$a, d$
+
+, we can simply multiply these quantities together and add the result to
+
+$dp_{a, d, x}$
+
+.
+
+Each of these three computations is
+
+$O(N^2)$
+
+, so as we do them for each maximum
+number
+
+$x$
+
+and âmiddleâ room
+
+$r$
+
+, our DP computation is
+
+$O(N^3K)$
+
+overall.
+
+Given this DP, for each query to compute the answer, given that we want to start
+at room
+
+$s$
+
+and end at room
+
+$t$
+
+, we loop through all second rooms
+
+$a$
+
+(such that
+there is an edge from
+
+$s$
+
+to
+
+$a$
+
+) and second-to-last rooms
+
+$b$
+
+(such that there
+is an edge from
+
+$b$
+
+to
+
+$t$
+
+) and add
+
+$dp_{a, b, K - 2}$
+
+to our answer. This is
+
+$O(N^2)$
+
+for each query, making our overall algorithm
+
+$O(N^3K + QN^2)$
+
+.
+
+Subtask 3
+
+(
+
+$N, K, Q \leq 20$
+
+)
+
+We can solve this subtask by modifying our solution for the previous subtask.
+First note that our constraints are now low enough to allow computing our
+
+$O(N^3K)$
+
+DP for each query. Given this, we can simply modify our DP as follows.
+
+$dp_{a, b, k}$
+
+will be defined as usual, except that
+
+$a$
+
+can also take a special
+value
+
+$\alpha$
+
+which will indicate that we are counting sequences which start at
+room
+
+$s$
+
+but must also start by pressing button
+
+$b_s$
+
+. Similarly,
+
+$b$
+
+can take a
+special value
+
+$\beta$
+
+which will indicate that we are counting sequences which
+end at room
+
+$t$
+
+but must also end by pressing button
+
+$b_t$
+
+.
+
+These special values
+
+$\alpha$
+
+and
+
+$\beta$
+
+then essentially function as normal
+rooms during our DP. There are only two differences: ones is that in our above
+loops through all
+
+$a, b$
+
+and
+
+$c, d$
+
+, the rooms
+
+$b$
+
+and
+
+$c$
+
+are not allowed to be
+
+$\alpha$
+
+or
+
+$\beta$
+
+as that would lead to overcounting; the other is that we
+must properly account for the left side being empty by also adding
+
+$1$
+
+to our
+calculation for
+
+$a = \alpha$
+
+if we are currently at
+
+$r = s$
+
+and
+
+$x = b_s$
+
+, and
+similarly for the right side.
+
+Our answer is then simply
+
+$dp_{\alpha, \beta, K}$
+
+. These modifications do not
+affect the asymptotic runtime of our DP, but we do now do it for each query,
+giving the overall algorithm a runtime of
+
+$O(QN^3K)$
+
+.
+
+Subtask 4
+
+(original constraints)
+
+Our solution for this is essentially the same as for the previous subtask,
+noting that we donât actually really need to compute this DP for each query.
+We can compute this DP just once by, instead of having the two special values
+
+$\alpha$
+
+and
+
+$\beta$
+
+, having values
+
+$\alpha_j$
+
+and
+
+$\beta_j$
+
+for each
+
+$1 \leq j \leq Q$
+
+such that
+
+$\alpha_j$
+
+corresponds to
+
+$(s, b_s)$
+
+for the
+
+$j$
+
+th
+query and
+
+$\beta_j$
+
+corresponds to
+
+$(t, b_t)$
+
+for the
+
+$j$
+
+th query. The answer to
+the
+
+$j$
+
+th query is then
+
+$dp_{\alpha_j, \beta_j, K}$
+
+.
+
+Considering the additional states, the runtime of our algorithm is now
+
+$O(N(N + Q)^2K)$
+
+, which is still fast enough.
+
+Danny's code:
+
+import java.util.Scanner;
+ 
+public class LevelGraph {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int k = in.nextInt();
+        int q = in.nextInt();
+        boolean[][] adj = new boolean[n][n];
+        for (int a = 0; a < n; a++) {
+            String line = in.next();
+            for (int b = 0; b < n; b++) {
+                adj[a][b] = line.charAt(b) == '1';
+            }
+        }
+        int[] xs = new int[q];
+        int[] froms = new int[q];
+        int[] ys = new int[q];
+        int[] tos = new int[q];
+        for (int j = 0; j < q; j++) {
+            xs[j] = in.nextInt() - 1;
+            froms[j] = in.nextInt() - 1;
+            ys[j] = in.nextInt() - 1;
+            tos[j] = in.nextInt() - 1;
+        }
+        long[][][] dp = new long[k][n + q][n + q];
+        for (int h = 0; h < k; h++) {
+            if (h > 0) {
+                for (int a = 0; a < n + q; a++) {
+                    for (int b = 0; b < n + q; b++) {
+                        dp[h][a][b] = dp[h - 1][a][b];
+                    }
+                }
+            }
+            for (int c = 0; c < n; c++) {
+                long[] left = new long[n + q];
+                left[c] = 1;
+                for (int j = 0; j < q; j++) {
+                    if (h == xs[j] && froms[j] == c) {
+                        left[n + j] = 1;
+                    }
+                }
+                if (h > 0) {
+                    for (int a = 0; a < n + q; a++) {
+                        for (int b = 0; b < n; b++) {
+                            if (adj[b][c]) {
+                                left[a] += dp[h - 1][a][b];
+                                left[a] %= MOD;
+                            }
+                        }
+                    }
+                }
+                long[] right = new long[n + q];
+                right[c] = 1;
+                for (int j = 0; j < q; j++) {
+                    if (h == ys[j] & tos[j] == c) {
+                        right[n + j] = 1;
+                    }
+                }
+                if (h > 0) {
+                    for (int a = 0; a < n; a++) {
+                        for (int b = 0; b < n + q; b++) {
+                            if (adj[c][a]) {
+                                right[b] += dp[h - 1][a][b];
+                                right[b] %= MOD;
+                            }
+                        }
+                    }
+                }
+                for (int a = 0; a < n + q; a++) {
+                    for (int b = 0; b < n + q; b++) {
+                        dp[h][a][b] += left[a] * right[b];
+                        dp[h][a][b] %= MOD;
+                    }
+                }
+            }
+        }
+        for (int j = 0; j < q; j++) {
+            System.out.println(dp[k - 1][n + j][n + j]);
+        }
+    }
+}

@@ -1,0 +1,401 @@
+Solution ID: sol_prob3_gold_jan23
+Contest: JAN23
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_jan23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Claire Zhang and Brandon Wang)
+
+Let's annotate each character in the route with a subscript that indicates which
+
+$i.5$
+
+point it passes. That is, we denote
+
+$i+1\to i$
+
+moves by
+
+$L_i$
+
+, and
+
+$i\to i+1$
+
+moves by
+
+$R_i$
+
+. Then, our string must contain exactly
+
+$B_i = \frac{A_i}{2}$
+
+$L_i$
+
+'s, and
+
+$B_i$
+
+$R_i$
+
+'s. In any route with minimal
+turns, we must have:
+
+If
+
+$B_i \geq B_{i+1}$
+
+, then any
+
+$L_{i+1}$
+
+must be followed by a
+
+$L_i$
+
+. 
+Furthermore, exactly
+
+$B_{i+1}$
+
+$R_i$
+
+'s are followed by
+
+$R_{i+1}$
+
+'s, and the
+other
+
+$B_i - B_{i+1}$
+
+are followed by
+
+$L_i$
+
+'s.
+
+If
+
+$B_i \leq B_{i+1}$
+
+,
+then any
+
+$R_i$
+
+must be followed by a
+
+$R_{i+1}$
+
+.  Furthermore, exactly
+
+$B_i$
+
+$L_{i+1}$
+
+'s are followed by
+
+$L_i$
+
+'s, and the other
+
+$B_{i+1} - B_i$
+
+are followed
+by
+
+$R_{i+1}$
+
+'s.
+
+In addition, we note that in any route, the final
+
+$L_{i+1}$
+
+must be followed by
+an
+
+$L_i$
+
+(and not an
+
+$R_{i+1}$
+
+)  since otherwise Bessie would not have a way to
+return to
+
+$0$
+
+.
+
+We claim that this is the only restriction. That is, to count the number of
+paths, for each
+
+$i = 0, 1, \ldots, N-2$
+
+it suffices to count the number of ways
+to pick which
+
+$R_i$
+
+'s that are followed by
+
+$R_{i+1}$
+
+'s if
+
+$B_i \geq B_{i+1}$
+
+, 
+or which
+
+$L_{i+1}$
+
+'s followed by
+
+$L_i$
+
+'s if
+
+$B_i \leq B_{i+1}$
+
+(such that the
+last
+
+$L_{i+1}$
+
+is followed by an
+
+$L_i$
+
+).  Then, any such assignment will produce
+a unique valid path.
+
+Uniqueness is clear, but to show validity, suppose we construct the route by
+following the assignments, where the route ends when the last
+
+$L_0$
+
+is reached
+(and all previous
+
+$L_0$
+
+'s are followed by
+
+$R_0$
+
+'s). We need to check that all of
+the
+
+$L_i$
+
+'s and
+
+$R_i$
+
+'s are actually used; since the number of
+
+$R_i$
+
+'s and
+
+$L_i$
+
+'s is the same, we need to check that this path visits
+
+$B_i$
+
+$L_i$
+
+'s.
+
+We will do this by induction, where
+
+$L_0$
+
+is true by assumption. For the
+inductive step, suppose
+
+$B_i$
+
+$L_i$
+
+'s appear in the path. Then, if
+
+$B_i \geq B_{i+1}$
+
+, then
+
+$B_i-B_{i+1}$
+
+$L_i$
+
+'s are preceded by
+
+$R_i$
+
+'s, and
+
+$B_{i+1}$
+
+of them are preceded by
+
+$L_{i+1}$
+
+'s. So, in order for all the
+
+$L_i$
+
+'s
+to appear, all the
+
+$L_{i+1}$
+
+'s must also appear. Conversely, if
+
+$B_i \leq B_{i+1}$
+
+, then since the last
+
+$L_{i+1}$
+
+is immediately followed by an
+
+$L_i$
+
+,  if not all
+
+$L_{i+1}$
+
+'s appear then not all
+
+$L_i$
+
+'s can appear,
+contradicting the inductive hypothesis. So, the constructed path contains
+
+$B_i$
+
+$L_i$
+
+'s for each
+
+$i$
+
+, and thus crosses
+
+$i.5$
+
+exactly
+
+$2B_i = A_i$
+
+times.
+Minimality (i.e. the fact that exactly
+
+$(B_0 - 1) + \left(\sum_{i=0}^{n-2} |B_i - B_{i+1}|\right) + (B_{n-1})$
+
+turns are made) follows by the
+construction.
+
+Now, if
+
+$B_i \geq B_{i+1}$
+
+, then the number of assignments is just
+
+$\binom{B_i}{B_{i+1}}$
+
+. In the second the other case, since the last
+
+$L_{i+1}$
+
+must be followed by
+
+$L_i$
+
+, the answer is
+
+$\binom{B_{i+1}-1}{B_i-1}$
+
+.
+
+Thus we obtain our answer as a product of binomial coefficients:
+
+$$
+\prod_{i=0}^{N-2} \begin{cases} \binom{B_i}{B_{i+1}} & \text{ if } B_i \geq B_{i+1} \\
+\binom{B_{i+1}-1}{B_i-1} & \text{ otherwise } \end{cases}
+$$
+
+Let
+
+$T = \max_i A_i$
+
+. We can precompute factorials in
+
+$O(T)$
+
+time. We can
+compute inverse factorials by first computing the modular inverse of
+
+$T!$
+
+(e.g.,
+by raising it to
+
+$MOD-2$
+
+with binary exponentiation). Then we can obtain all
+smaller inverse factorials in decreasing order. Now we can compute each binomial
+coefficient in the desired expression in
+
+$O(1)$
+
+time, for a total runtime of
+
+$O(\log(MOD) + T+N)$
+
+.
+
+Python solution:
+
+P = int(1e9+7)
+MAX_A = int(1e6+1)
+ 
+# computes a^n mod P
+def exp(a, n):
+    if n == 0:
+        return 1
+    base = exp((a*a)%P, n // 2)
+    return base if n%2 == 0 else (a*base)%P
+ 
+# initialize
+facts = [1]
+for i in range(1, MAX_A):
+    facts.append((facts[-1] * i)%P)
+inv_facts = [exp(facts[-1], P-2)]
+for i in range(MAX_A-1, 0, -1):
+    inv_facts.append((inv_facts[-1] * i)%P)
+inv_facts.reverse()
+ 
+# binom(n, m) = n!/(m!(n-m)!)
+binom = lambda n, m : (inv_facts[m] * (facts[n] * inv_facts[n-m])%P)%P
+ 
+N = int(input())
+A = [int(x) for x in input().split()]
+B = [a // 2 for a in A]
+ 
+ans = 1
+for i in range(N-1):
+    if B[i] >= B[i+1]:
+        ans *= binom(B[i], B[i+1])
+    else:
+        ans *= binom(B[i+1]-1, B[i]-1)
+    ans %= P
+ 
+print(ans)

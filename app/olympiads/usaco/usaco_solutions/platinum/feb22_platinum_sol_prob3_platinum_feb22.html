@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Richard Qi)
+<p>First, we consider an easier problem. Suppose our task was to verify whether
+some string <span class='math'>$T$</span> could have been a string Bessie was trying to type, and let <span class='math'>$S$</span>
+be the input string.
+<p>We can solve this easier task using a simple linear time DP.  Process each digit
+of <span class='math'>$T$</span> one at a time. Say that a string of digits s can be &quot;rearranged&quot; to t if
+Bessie can type t while trying to type s, and let <span class='math'>$dp[i]$</span> be a boolean value
+which is True if <span class='math'>$S[1 \cdots i]$</span> can be rearranged to <span class='math'>$T[1 \cdots i]$</span>. Our goal
+is to check whether <span class='math'>$dp[N] = True$</span>, where <span class='math'>$N=|S|$</span>.  Notice that <span class='math'>$dp[i] = True$</span>
+iff <span class='math'>$dp[i-j]$</span> is true for some <span class='math'>$1 \leq j \leq 4$</span>, and the substring
+<span class='math'>$S[i-j+1 \cdots i]$</span> can be rearranged to <span class='math'>$T[i-j+1 \cdots i]$</span>. For checking these
+rearrangements of size at most <span class='math'>$4$</span>, it suffices to check whether the substrings
+<span class='math'>$S[i-j+1 \cdots i]$</span> and <span class='math'>$T[i-j+1 \cdots i]$</span> are both permutations of a single
+digit, are both permutations of two digits that share a side, or are both
+permutations of four digits that form a square.
+<p>Now, our motivation for solving the original problem is as follows. Suppose we
+listed out all <span class='math'>$9^i$</span> possible strings of length <span class='math'>$i$</span> (<span class='math'>$T_1, T_2, T_3, \cdots $</span>),
+and computed all <span class='math'>$dp$</span> values up to <span class='math'>$dp[i]$</span> for each of these strings. Then, we
+could continue this process for <span class='math'>$i+1$</span> by copying each of the <span class='math'>$9^i$</span> strings and
+their <span class='math'>$dp$</span> values <span class='math'>$9$</span> times, and then continuing each of these copies with a
+distinct digit from <span class='math'>$1-9$</span>, and finally computing <span class='math'>$dp[i+1]$</span> for each of the new
+<span class='math'>$9^{i+1}$</span> strings using the previous <span class='math'>$dp[i]$</span> values. Then, at the end, we count
+all strings which end with <span class='math'>$dp[N] = True$</span>. Clearly, this gives the correct
+answer, but is way too slow. However, as we show next, we can simulate this
+process using only linear time, as it is not necessary to write out all the dp
+values and all the strings. To do this, we will continually improve this
+extremely slow process until it can be done in linear time.
+<p>First, after computing <span class='math'>$dp[i]$</span>, we may discard <span class='math'>$dp[i-j]$</span> for all <span class='math'>$j \geq 4$</span>. In
+other words, we could continue computing all dp values for strings of length <span class='math'>$N$</span>
+up to <span class='math'>$dp[N]$</span> using only the dp values <span class='math'>$dp[i-j]$</span> for <span class='math'>$0 \leq j \leq 3$</span>. This can
+easily be seen by observing our original dp algorithm for checking whether a
+string can be rearranged to another string; to compute <span class='math'>$dp[i+1]$</span>, we only need
+<span class='math'>$dp[i-j]$</span> for <span class='math'>$j \leq 3$</span>. This saves quite a bit of time as we no longer need to
+copy the entire dp sequences.
+<p>Next, by the same reasoning, notice that we don&apos;t need to copy the entire length
+<span class='math'>$i$</span> strings; we only need to copy the last <span class='math'>$3$</span> digits <span class='math'>$T[i-2], T[i-1], T[i]$</span> for
+each of the <span class='math'>$9^i$</span> strings <span class='math'>$T$</span>.
+<p>Now, if we were to simulate the exponential process initially described, it has
+sped up significantly. We are still creating <span class='math'>$9^i$</span> strings and dp sequences at
+each timestep <span class='math'>$i$</span>, but these strings and dp sequences are of constant length.
+<p>Additionally, we can remove any strings and dp sequences in the list at any
+point in time if they definitely will not result in a final dp value of <span class='math'>$N$</span> (for
+example, if the last <span class='math'>$4$</span> recorded dp values are False). 
+<p>Here is the key insight: Now that the <span class='math'>$9^i$</span> strings and dp sequences are of
+constant length, there cannot be more than a constant number of distinct
+(string, dp sequence) pairs. So, rather than listing them all out, we can store
+key value pairs of the form ((string, dp sequence), count), where count
+represents the number of the <span class='math'>$9^i$</span> strings in the original exponential process
+that correspond to a specified string and dp sequence. Thus, transitioning from
+<span class='math'>$i$</span> to <span class='math'>$i+1$</span> can be done in constant time as there are only a constant number of
+unique (string, dp sequence) pairs. To recover the final answer, we sum the
+counts of all (string, dp sequence) pairs that have <span class='math'>$dp[N] = True$</span>. Thus, the
+original problem can now be done in <span class='math'>$\mathcal O(N)$</span> time, but with large
+constant factor. 
+<p>A naive implementation of the currently described algorithm is enough for 
+<span class='math'>$N\le 100$</span>. Also, if the phone numbers don&apos;t contain some digits, one can prove
+that there are less states to keep track of at each timestep, which could allow
+a naive implementation to pass some of these subtasks.
+<p>Richard&apos;s Code: <span class='math'>$(dp[i-3\ldots i], S[i-2\ldots i])$</span> pairs are stored in a map
+with an integer that is a bitmask representing the dp sequence, and a vector
+which is the last <span class='math'>$3$</span> digits of the sequence. In the code, &quot;bars&quot; is the bitmask
+representing whether <span class='math'>$dp[i-j] = True$</span> for all <span class='math'>$0 \leq j \leq 3$</span>. For each
+possible digit from <span class='math'>$1$</span> to <span class='math'>$9$</span>,  the string and dp sequence change, which are
+the variables &quot;new_nums&quot; and &quot;new_bars&quot;, respectively.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using ll = long long;
+using str = string;
+
+using pi = pair&lt;int, int&gt;;
+#define mp make_pair
+#define f first
+#define s second
+
+using vi = vector&lt;int&gt;;
+
+#define sz(x) int((x).size())
+#define all(x) begin(x), end(x)
+#define sor(x) sort(all(x))
+#define pb push_back
+#define bk back()
+#define ins insert
+
+const int MOD = 1e9 + 7;
+
+/**
+ * Description: Modular arithmetic.
+ * Source: KACTL
+ * Verification: https://open.kattis.com/problems/modulararithmetic
+ */
+
+struct mi {
+  int v;
+  explicit operator int() const { return v; }
+  mi() : v(0) {}
+  mi(ll _v) : v(int(_v % MOD)) { v += (v &lt; 0) * MOD; }
+};
+mi &amp;operator+=(mi &amp;a, mi b) {
+  if ((a.v += b.v) &gt;= MOD)
+    a.v -= MOD;
+  return a;
+}
+mi operator+(mi a, mi b) { return a += b; }
+
+vi sliceVI(vi v, int l, int r) {
+  assert(l &gt;= 0 &amp;&amp; l &lt;= r &amp;&amp; r &lt;= sz(v));
+  vi res;
+  for (int i = l; i &lt; r; i++) {
+    res.pb(v[i]);
+  }
+  return res;
+}
+
+vector&lt;vi&gt; good_subs;
+
+void genGoodSubs() { // put all good subsets into good_subs (good subsets are
+                     // those which bessie types with one tap)
+  for (int i = 1; i &lt;= 9; i++) {
+    good_subs.pb({i});
+  }
+  for (int i = 1; i + 3 &lt;= 9; i++) {
+    good_subs.pb({i, i + 3});
+  }
+
+  for (int i = 1; i &lt;= 2; i++) {
+    for (int j = 0; j &lt;= 6; j += 3) {
+      int first_val = i + j;
+      good_subs.pb({first_val, first_val + 1});
+    }
+  }
+
+  for (int i = 1; i &lt;= 2; i++) {
+    for (int j = 0; j &lt;= 3; j += 3) {
+      vi v;
+      for (int k = 0; k &lt;= 1; k++) {
+        for (int l = 0; l &lt;= 3; l += 3) {
+          v.pb(i + j + k + l);
+        }
+      }
+      sor(v);
+      good_subs.pb(v);
+    }
+  }
+}
+
+bool isGoodSubset(vi v) {
+  sor(v);
+  for (auto u : good_subs) {
+    if (u == v)
+      return true;
+  }
+  return false;
+}
+
+void solve() {
+  string S_inp;
+  cin &gt;&gt; S_inp;
+  vi S;
+  S.pb(-100);
+  for (auto u : S_inp) {
+    S.pb(u - &apos;0&apos;);
+  }
+
+  int N = sz(S) - 1;
+
+  auto isSubsetOf = [&amp;](vi v, int r, int l) {
+    set&lt;int&gt; S_elements;
+    for (int i = r; i &gt;= l; i--) {
+      if (i &lt; sz(S) &amp;&amp; i &gt; 0) {
+        S_elements.ins(S[i]);
+      }
+    }
+
+    for (auto u : v) {
+      if (!S_elements.count(u))
+        return false;
+    }
+    return true;
+  };
+
+  map&lt;pair&lt;int, vi&gt;, mi&gt; dp;
+  dp[mp(1, vi{1, 1, 1})] = mi(1);
+
+  for (int i = 1; i &lt;= N; i++) {
+    // before the ith element to after processing the ith
+    map&lt;pair&lt;int, vi&gt;, mi&gt; ndp;
+    for (auto u : dp) {
+      int bars = u.f.f;
+      vi nums = u.f.s;
+      mi ways = u.s;
+      for (int new_dig = 1; new_dig &lt;= 9; new_dig++) {
+        // generate new nums
+        vi new_nums{new_dig, nums[0], nums[1]};
+        // generate new bars
+        int new_bars = 0;
+        for (int old_bar = 0; old_bar &lt; 4; old_bar++) {
+          if (!((bars &gt;&gt; old_bar) &amp; 1))
+            continue;
+
+          if (old_bar + 1 &lt; 4) {
+            // transition from old bar going left (adding 1)
+            // check whether the stuff after the bar in constructed string is a
+            // subset of the 4 things of actual string after the bar
+            vi right_of_constructed_bar = sliceVI(new_nums, 0, old_bar + 1);
+            if (isSubsetOf(right_of_constructed_bar, i - (old_bar) + 3,
+                           i - (old_bar))) {
+              new_bars |= (1 &lt;&lt; (old_bar + 1));
+            }
+          }
+
+          // transition from old bar going to 0 bar
+          vi all_nums = new_nums;
+          all_nums.pb(nums.bk); // 4 numbers
+          vi right_of_constructed_bar = sliceVI(all_nums, 0, old_bar + 1);
+          if (isGoodSubset(right_of_constructed_bar) &amp;&amp;
+              isSubsetOf(right_of_constructed_bar, i,
+                         i - sz(right_of_constructed_bar) + 1)) {
+            new_bars |= 1;
+          }
+        }
+
+        if (new_bars == 0)
+          continue;
+
+        ndp[mp(new_bars, new_nums)] += ways;
+      }
+    }
+
+    swap(dp, ndp);
+  }
+
+  mi ans = 0;
+  for (auto u : dp) {
+    if ((u.f.f &gt;&gt; 0) &amp; 1) {
+      ans += u.s;
+    }
+  }
+
+  cout &lt;&lt; ans.v &lt;&lt; &quot;\n&quot;;
+}
+
+int main() {
+  cin.tie(0)-&gt;sync_with_stdio(0);
+  genGoodSubs();
+  int T;
+  cin &gt;&gt; T;
+  for (int t = 1; t &lt;= T; t++) {
+    solve();
+  }
+}
+</pre>
+<p>Many optimizations can be done to speed up the naive solution and receive full
+points. These include:
+<p><ul><li> Representing a state as a single integer instead of a (bitmask, vector)
+pair. </li><li> Storing the states in an array instead of a map for <span class='math'>$O(1)$</span> update and
+retrieval.
+</li><li> Precomputing information about the original string to quickly determine the
+new state given the old state and a new digit, such as a bitmask for every
+substring of length at most <span class='math'>$4$</span>. </li><li> Moving as much computation outside of inner loops as possible during the
+transition computations. </li><li> Precomputing whether a string of length at most <span class='math'>$4$</span> could have been typed
+by Bessie in one tap. </li><li> Using stronger conditions on when to terminate a state that will never be
+able to reach <span class='math'>$dp[N] = True$</span>, for example by considering digits
+<span class='math'>$S[i+1], S[i+2], S[i+3]$</span>. </li><li>Not storing digits that don&apos;t affect the answer. For example, if
+<span class='math'>$dp[i-3]=0$</span>, then we don&apos;t need to store digit <span class='math'>$S[i-2]$</span>. In the code below we
+account for this by setting <span class='math'>$S[i-2]=0$</span>.</li></ul>
+<p>These optimizations are implemented in the code below:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using ll = long long;
+
+using pi = pair&lt;int, int&gt;;
+#define mp make_pair
+#define f first
+#define s second
+
+using vi = vector&lt;int&gt;;
+#define sz(x) int((x).size())
+#define all(x) begin(x), end(x)
+#define sor(x) sort(all(x))
+#define pb push_back
+#define bk back()
+
+const int MOD = 1e9 + 7;
+
+template &lt;class T&gt; void remDup(vector&lt;T&gt; &amp;v) { // sort and remove duplicates
+  sort(all(v));
+  v.erase(unique(all(v)), end(v));
+}
+
+/**
+ * Description: Modular arithmetic.
+ * Source: KACTL
+ * Verification: https://open.kattis.com/problems/modulararithmetic
+ */
+
+struct mi {
+  int v;
+  explicit operator int() const { return v; }
+  mi() : v(0) {}
+  mi(ll _v) : v(int(_v % MOD)) { v += (v &lt; 0) * MOD; }
+};
+mi &amp;operator+=(mi &amp;a, mi b) {
+  if ((a.v += b.v) &gt;= MOD)
+    a.v -= MOD;
+  return a;
+}
+mi operator+(mi a, mi b) { return a += b; }
+
+const int HASHMAX = 16 * 1000;
+struct Table {
+  mi vals[HASHMAX];
+  bitset&lt;HASHMAX&gt; visited;
+  vi keys;
+  void addTo(int key, mi v) {
+    if (visited[key] == 0) {
+      visited[key] = 1;
+      keys.pb(key);
+    }
+    vals[key] += v;
+  }
+  void reset() {
+    for (const auto &amp;u : keys) {
+      vals[u] = 0;
+      visited[u] = 0;
+    }
+    keys.clear();
+  }
+};
+
+vector&lt;vi&gt; good_subs;
+bool is_good_new_set[100005];
+
+void genGoodSubs() {
+  for (int i = 1; i &lt;= 9; i++) {
+    good_subs.pb({i});
+  }
+  for (int i = 1; i + 3 &lt;= 9; i++) {
+    good_subs.pb({i, i + 3});
+  }
+
+  for (int i = 1; i &lt;= 2; i++) {
+    for (int j = 0; j &lt;= 6; j += 3) {
+      int first_val = i + j;
+      good_subs.pb({first_val, first_val + 1});
+    }
+  }
+
+  for (int i = 1; i &lt;= 2; i++) {
+    for (int j = 0; j &lt;= 3; j += 3) {
+      vi v;
+      for (int k = 0; k &lt;= 1; k++) {
+        for (int l = 0; l &lt;= 3; l += 3) {
+          v.pb(i + j + k + l);
+        }
+      }
+      sor(v);
+      good_subs.pb(v);
+    }
+  }
+
+  for (auto u : good_subs) {
+    int mask = 0;
+    for (auto x : u) {
+      mask += 1 &lt;&lt; x;
+    }
+    is_good_new_set[mask] = 1;
+  }
+}
+
+void solve() {
+  string S_inp;
+  cin &gt;&gt; S_inp;
+  vi S{-100};
+  for (auto u : S_inp) {
+    S.pb(u - &apos;0&apos;);
+  }
+
+  int N = sz(S) - 1;
+
+  vector&lt;vi&gt; S_masks = vector&lt;vi&gt;(N + 1, vi(5));
+  // (i, j) -&gt; mask starting at i, ending at i+j
+  for (int i = 1; i &lt;= N; i++) {
+    for (int j = 0; j &lt;= 4; j++) {
+      for (int k = 0; k &lt;= j; k++) {
+        S_masks[i][j] |= (1 &lt;&lt; S[i + k]);
+      }
+    }
+  }
+
+  Table *dp = new Table();
+  Table *ndp = new Table();
+
+  dp-&gt;addTo(1 + 111 * 16, mi(1));
+
+  for (int i = 1; i &lt;= N; i++) {
+    // before the ith element to after processing the ith
+    // assert(sz(dp-&gt;keys) &lt;= 50);
+    vi cand_new_digs;
+    for (int j = -3; j &lt;= 3; j++) {
+      if (i + j &gt;= 1 &amp;&amp; i + j &lt;= N) {
+        cand_new_digs.pb(S[i + j]);
+      }
+    }
+    remDup(cand_new_digs);
+
+    ndp-&gt;reset();
+    for (auto u : dp-&gt;keys) {
+      int bars = u % 16;
+      int nums = u / 16;
+      int max_bars = 0;
+      for (int j = 0; j &lt; 4; j++) {
+        if ((bars &gt;&gt; j) &amp; 1) {
+          max_bars = j;
+        }
+      }
+      mi ways = dp-&gt;vals[u];
+      for (int new_dig : cand_new_digs) {
+        // generate new nums
+        array&lt;int, 4&gt; all_nums_arr{new_dig, nums % 10, (nums / 10) % 10,
+                                   (nums / 100) % 10};
+        // generate new bars
+        int new_bars = 0;
+        int bar_2_set = 0;
+        for (int old_bar = 0; old_bar &lt;= max_bars; old_bar++) {
+          int bar_2_set_dig = all_nums_arr[old_bar];
+          if ((bar_2_set &gt;&gt; bar_2_set_dig) &amp; 1) {
+            break;
+          } else {
+            bar_2_set |= 1 &lt;&lt; bar_2_set_dig;
+            if ((bars &gt;&gt; old_bar) &amp; 1) {
+              if ((bar_2_set &amp; S_masks[i - old_bar][3]) == bar_2_set) {
+                if (is_good_new_set[bar_2_set] &amp;&amp;
+                    bar_2_set == S_masks[i - old_bar][old_bar]) {
+                  new_bars |= 1;
+                }
+                if (old_bar &lt; 3) {
+                  new_bars |= 1 &lt;&lt; (old_bar + 1);
+                }
+              }
+            }
+          }
+        }
+        if (new_bars == 0)
+          continue;
+        // optional optimization: zero out digits that don&apos;t matter
+        for (int j = 3; j; --j) {
+          if (new_bars &amp; (1 &lt;&lt; j)) {
+            break;
+          }
+          all_nums_arr[j - 1] = 0;
+        }
+        int new_nums =
+            all_nums_arr[0] + 10 * all_nums_arr[1] + 100 * all_nums_arr[2];
+        ndp-&gt;addTo(new_bars + 16 * new_nums, ways);
+      }
+    }
+
+    swap(dp, ndp);
+  }
+
+  mi ans = 0;
+  for (int u : dp-&gt;keys) {
+    if (((u % 16) &gt;&gt; 0) &amp; 1) {
+      ans += dp-&gt;vals[u];
+    }
+  }
+
+  cout &lt;&lt; ans.v &lt;&lt; &quot;\n&quot;;
+}
+
+int main() {
+  cin.tie(0)-&gt;sync_with_stdio(0);
+  genGoodSubs();
+  int T;
+  cin &gt;&gt; T;
+  for (int t = 1; t &lt;= T; t++) {
+    solve();
+  }
+}
+</pre>
+<p>The number of distinct states stored in the hash table can be bounded above by
+<span class='math'>$4\cdot 3\cdot 2\cdot 2^3+4\cdot 3\cdot 2^2+4\cdot 2+1=249$</span>, corresponding to
+the cases where the first <span class='math'>$j\ge i-3$</span> such that <span class='math'>$dp[j]=1$</span> are <span class='math'>$j=i-3,i-2,i-1,i$</span>
+respectively. Though in the test data, the number of states never exceeds <span class='math'>$50$</span>.
+<p>Bonus: Try to prove a better bound on the number of distinct states or generate
+a test case with more than <span class='math'>$50$</span> distinct states.
+<p></body></html>

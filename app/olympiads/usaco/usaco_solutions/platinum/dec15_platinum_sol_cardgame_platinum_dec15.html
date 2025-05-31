@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Mark Gordon)
+<p>In the simple case where high card always wins one optimal strategy that Bessie
+can take is to always answer FJ&apos;s plays with her lowest card that is still
+higher than FJ&apos;s card (or her lowest card in the case she can&apos;t beat FJ). This
+works because if we can take something we should; otherwise the best that the
+card we didn&apos;t end up using can gain us is 1 trick so there can be no net gain.
+<p>This strategy informs the more complicated scenario where we switch from high
+card wins to low card wins at some point.  In this case we should always
+allocate our highest cards to the section where high card wins and are lowest
+cards to the latter section.  Then this reduces to the simpler case.
+<p>To solve this problem where we need to determine the best switch point we can
+make use a segment tree data structure that will enable us to solve the online
+version of the simple case.  We will be able to insert a card for each player
+and determine the max score Bessie could achieve.  Using this data structure we
+can determine how many points Bessie will get from the high card wins and low
+card wins part of each game and output the switch point that yields the highest
+overall score.
+<p>Building this data structure can be done by tracking for each segment in the
+tree the number of available cards in this segment that Bessie could play over
+lower cards, the number of coverable cards that FJ has played in this segment
+that haven&apos;t been covered, and the number of points we can score in this
+segment.  Combining two segments is then done by summing the points and awarding
+points based on the min of coverables on the left and coverers on the right. 
+The other fields are updated similarly (see comb() in my code below).  The rest
+is a standard segment tree implementation.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cstdio&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstring&gt;
+#include &lt;algorithm&gt;
+
+using namespace std;
+
+#define MAXN (1 &lt;&lt; 17)
+
+struct node {
+  int covers;
+  int coverables;
+  int points;
+};
+
+node comb(node x, node y) {
+  node r;
+  int ep = min(x.coverables, y.covers);
+  r.points = x.points + y.points + ep;
+  r.covers = x.covers + y.covers - ep;
+  r.coverables = x.coverables + y.coverables - ep;
+  return r;
+}
+
+node H[MAXN * 2];
+
+void fix(int x) {
+  while (x != 1) {
+    x /= 2;
+    H[x] = comb(H[x * 2 + 0], H[x * 2 + 1]);
+  }
+}
+
+vector&lt;int&gt; solve(const vector&lt;int&gt;&amp; A, const vector&lt;int&gt;&amp; B) {
+  int N = A.size();
+  vector&lt;int&gt; R(N + 1);
+  memset(H, 0, sizeof(H));
+
+  for (int i = 0; i &lt; N; i++) {
+    H[MAXN + B[i]].covers = 1;
+    H[MAXN + A[i]].coverables = 1;
+    fix(MAXN + B[i]);
+    fix(MAXN + A[i]);
+    R[i + 1] = H[1].points;
+  }
+
+  return R;
+}
+
+int main() {
+  freopen(&quot;cardgame.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;cardgame.out&quot;, &quot;w&quot;, stdout);
+
+  ios_base::sync_with_stdio(false);
+  int N; cin &gt;&gt; N;
+
+  vector&lt;bool&gt; used(2 * N);
+  vector&lt;int&gt; A(N);
+  for (int i = 0; i &lt; N; i++) {
+    cin &gt;&gt; A[i];
+    A[i]--;
+    used[A[i]] = true;
+  }
+
+  vector&lt;int&gt; B;
+  for (int i = 2 * N - 1; i &gt;= 0; i--) {
+    if (!used[i]) {
+      B.push_back(i);
+    }
+  }
+
+  vector&lt;int&gt; r0 = solve(A, B);
+  reverse(A.begin(), A.end());
+  reverse(B.begin(), B.end());
+  for (int i = 0; i &lt; N; i++) {
+    A[i] = 2 * N - 1 - A[i];
+    B[i] = 2 * N - 1 - B[i];
+  }
+  vector&lt;int&gt; r1 = solve(A, B);
+
+  int res = 0;
+  for (int i = 0; i &lt;= N; i++) {
+    res = max(res, r0[i] + r1[N - i]);
+  }
+  cout &lt;&lt; res &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+
+<p> Many other participants submitted alternative solutions to this problem that were quite
+insightful.  For example, here is a solution from Avichal Goel:
+
+<p> Part 1: Insert all of Bessie's cards into a set.  Iterate through all of Elsie's cards, and remove the lowest card that is greater than Elsie's current card (or nothing if you can't beat it).  Keep track of the number of points, or "cards beaten so far" in a prefix array.  
+
+<p> Part 2: Replace all of Bessie's cards (I used a 2nd set).  Iterate through Elsie's cards in reverse order, beating each of her cards with your greatest card that is still lower than Elsie's card.  Keep track of points earned in a separate suffix array
+
+<p> Part 3: Loop through the possible times that Bessie can switch, and store the greatest prefix[i]+suffix[i+1].
+
+<p> The reasoning for why this "greedy" solution works is as follows.
+Let's assume that some card is used twice (in both Part 1 and Part 2,
+since we did replace all the cards in between those steps). Since
+Bessie and Elsie have the same number of cards, if Bessie used one of
+her cards twice, then there must be some other card which she did not
+use at all. Since every card has a distinct value, the unused card
+must either be greater than or less than the card which was used
+twice.  If the unused card is greater than the card which was used
+twice, replace it before Bessie switches the rules (use it instead of
+the duplicate card). Otherwise, use it after Bessie switches the rules
+instead of the duplicate card. In either case, Bessie will still earn
+the same number of points as before.
+
+
+<p></body></html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>The <span class='math'>$N$</span> hay bales define <span class='math'>$N-1$</span> intervals that Bessie can be inside. Let&apos;s
+consider answering for a given interval, whether Bessie can escape if she starts
+inside that interval.
+<p>We can, in fact, ask a more general question - if Bessie is trapped between
+haybale <span class='math'>$i$</span> and haybale <span class='math'>$j$</span>, can she escape? Clearly, if Bessie can break
+through haybale <span class='math'>$i$</span>, it is to her advantage to do so immediately - she then
+gains more distance and can possibly break through haybale <span class='math'>$j$</span>. However, if
+Bessie can break through neither haybale <span class='math'>$i$</span> nor haybale <span class='math'>$j$</span>, then she is
+trapped.
+<p>We can then simulate this process as follows. Start by having Bessie be trapped
+between haybale <span class='math'>$i$</span> and haybale <span class='math'>$i+1$</span>. While she still has a haybale to her left
+and a haybale to her right, see if she can break either one. Keep on breaking
+haybales until either she doesn&apos;t have one to her left or one to her right, or
+she can&apos;t break through either one. If she can&apos;t break through the haybales to
+her left and to her right, then take the distance of the original interval and
+add to that a running total. Repeat this simulation for all adjacent pairs of
+haybales.
+<p>Here is my Java code simulating this process.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class trappedB {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader(&quot;trapped.in&quot;));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;trapped.out&quot;)));
+    int n = Integer.parseInt(br.readLine());
+    Haybale[] bales = new Haybale[n];
+    for(int i = 0; i &lt; n; i++) {
+      StringTokenizer st = new StringTokenizer(br.readLine());
+      int size = Integer.parseInt(st.nextToken());
+      int position = Integer.parseInt(st.nextToken());
+      bales[i] = new Haybale(size, position);
+    }
+    // sort haybales by location
+    Arrays.sort(bales);
+    int ans = 0;
+    for(int i = 0; i &lt; n-1; i++) {
+      int areaOfInterval = bales[i+1].position - bales[i].position;
+      int leftmostBale = i;
+      int rightmostBale = i+1;
+      // while Bessie could still be trapped
+      while(leftmostBale &gt;= 0 &amp;&amp; rightmostBale &lt;= n-1) {
+        boolean broke = false;
+        int currDist = bales[rightmostBale].position - bales[leftmostBale].position;
+        if(currDist &gt; bales[leftmostBale].size) {
+          leftmostBale--;
+          broke = true;
+        }
+        if(currDist &gt; bales[rightmostBale].size) {
+          rightmostBale++;
+          broke = true;
+        }
+        // Bessie couldn&apos;t break through either the left or the right bale, so stop
+        if(!broke) {
+          break;
+        }
+      }
+      // Bessie couldn&apos;t break out
+      if(leftmostBale &gt;= 0 &amp;&amp; rightmostBale &lt;= n-1) {
+        ans += areaOfInterval;
+      }
+    }
+    pw.println(ans);
+    pw.close();
+  }
+    
+  static class Haybale implements Comparable&lt;Haybale&gt; {
+    public int position, size;
+    public Haybale(int sizeIn, int positionIn) {
+      size = sizeIn;
+      position = positionIn;
+    }
+    public int compareTo(Haybale h) {
+      // this will sort haybales from left to right
+      return position - h.position;
+    }
+  }
+  
+}
+</pre>
+<p></body></html>

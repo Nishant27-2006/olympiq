@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Eric Wei)
+<p>First, note that it is sometimes possible to change a letter to a different one
+in faster time than what is originally given. To deal with this, we run
+Floyd-Warshall on the letters to determine the actual shortest amount of time to
+change each letter to any other letter.
+<p>We can now store the fastest time the letter in each index <span class='math'>$i$</span> can be changed to
+a different letter <span class='math'>$j$</span>, which we represent in a cost matrix, <span class='math'>$cst[i][j]$</span>. After
+this, we can now utilize prefix sums to speed up future computation. We store
+this in <span class='math'>$ps[i][j]$</span>, representing the sum of all <span class='math'>$cst[k][j]$</span> for <span class='math'>$k \le i$</span>.
+<p>Finally, we can use DP. Let <span class='math'>$dp[i][j]$</span> represent the smallest amount of time
+needed so that the first <span class='math'>$i$</span> letters create a âvalid comboâ and the last
+letter is <span class='math'>$j$</span> (so the last <span class='math'>$K$</span> letters are all <span class='math'>$j$</span>). We also create an array,
+<span class='math'>$dpmin[i]$</span>, which represents the minimum value of all <span class='math'>$dp[i][j]$</span> across all
+possible <span class='math'>$j$</span>. The transition is as follows:
+<p><pre>
+dp[i][j] = min(ps[i][j]-ps[i-K][j]+dpmin[i-K],dp[i-1][j]+cst[i][j]);
+</pre>
+<p>There are two possibilities we must consider: either the rightmost streak is
+exactly <span class='math'>$K$</span> letters long, or it is more than that, corresponding to these two
+possibilities. Calculating <span class='math'>$dpmin$</span> is easy from this, and the final answer is
+simply <span class='math'>$dpmin[N]$</span>. The runtime is <span class='math'>$O(M^3+N\cdot M)$</span>. My code follows:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define FOR(i, a, b) for (int i=(a); i&lt;=(signed)(b); i++)
+#define F0R(i, a) for (int i=0; i&lt;(signed)(a); i++)
+ 
+#define MN 100005
+#define MA 26
+int n, m, k;
+string s;
+int d[MA][MA];
+int cst[MN][MA];
+int ps[MN][MA];
+int dp[MN][MA];
+int mn[MN];
+ 
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    freopen(&quot;cowmbat.in&quot;, &quot;r&quot;, stdin);
+    freopen(&quot;cowmbat.out&quot;, &quot;w&quot;, stdout);
+ 
+    cin &gt;&gt; n &gt;&gt; m &gt;&gt; k &gt;&gt; s;
+    F0R(i, m) F0R(j, m) cin &gt;&gt; d[i][j];
+    F0R(c, m) F0R(a, m) F0R(b, m)
+        d[a][b] = min(d[a][b], d[a][c]+d[c][b]);
+ 
+    FOR(i, 1, n){
+        F0R(j, m){
+            cst[i][j] = d[s[i-1]-&apos;a&apos;][j];
+            ps[i][j] = ps[i-1][j]+cst[i][j];
+            //cout &lt;&lt; i &lt;&lt; &quot; &quot; &lt;&lt; j &lt;&lt; &quot; &quot; &lt;&lt; cst[i][j] &lt;&lt; &quot;\n&quot;;
+        }
+    }
+    memset(dp, 0x3f, sizeof dp);
+    memset(mn, 0x3f, sizeof mn);
+    mn[0] = 0;
+ 
+    FOR(i, 1, n){
+        F0R(j, m){
+            dp[i][j] = min(dp[i][j], dp[i-1][j]+cst[i][j]);
+            if (i &gt;= k) dp[i][j] = min(dp[i][j], ps[i][j]-ps[i-k][j]+mn[i-k]);
+            //cout &lt;&lt; &quot;dp &quot; &lt;&lt; i &lt;&lt; &quot; &quot; &lt;&lt; j &lt;&lt; &quot; &quot; &lt;&lt; dp[i][j] &lt;&lt; &quot;\n&quot;;
+            mn[i] = min(mn[i], dp[i][j]);
+        }
+    }
+
+    cout &lt;&lt; mn[n] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have two rectangles drawn on a grid and want to draw a
+square that covers both of the original rectangles and is as small as possible.
+<p>Instead of trying to compute the number directly, let&apos;s reword the question
+slightly. Let&apos;s instead ask the similar question: is it possible to draw a
+square with side length <span class='math'>$s$</span> that covers both rectangles?
+<p>For some values of <span class='math'>$s$</span>, the answer is obviously no. Take the example given in
+the problem: we know that the square must stretch from <span class='math'>$x=1$</span> all the way over to
+<span class='math'>$x=8$</span>. This means that the side length of the square must be at least <span class='math'>$8-1$</span>, or
+<span class='math'>$7$</span>. Similarly, the square must stretch from <span class='math'>$y=6$</span> to <span class='math'>$y=9$</span>, so the side length
+of the square must also be at least <span class='math'>$9-6$</span>, or <span class='math'>$3$</span>.
+<p>In the example given, the answer happened to be <span class='math'>$7^2$</span>. Is the answer always the
+square of the distance that the square is required to stretch?
+<p>It turns out the answer to that question is yes. If we look back at that
+example, we already know exactly how far the square has to stretch: it must
+stretch <span class='math'>$7$</span> units in the <span class='math'>$x$</span>-direction and <span class='math'>$3$</span> units in the <span class='math'>$y$</span>-direction. That
+means that if we make the square <span class='math'>$7$</span> units long and place it directly inside the
+column from <span class='math'>$x=1$</span> to <span class='math'>$x=8$</span>, we can slide  it until it covers the desired
+horizontal region from <span class='math'>$y=6$</span> and <span class='math'>$y=9$</span>.
+<p>Therefore, what we need to do is compute the distance the square must stretch in
+both the <span class='math'>$x$</span>-direction and the <span class='math'>$y$</span>-direction, take the maximum of those, and
+print out the square of that result.
+<p>Here is my Java code:
+<pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class square {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader(&quot;square.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;square.out&quot;)));
+
+		// track the bottom, top, left, and rightmost points that need to be covered 
+		int smallestX = 10;
+		int largestX = 0;
+		int smallestY = 10;
+		int largestY = 0;
+
+		// read in two lines, store corners of the pastures
+		for(int i = 0; i &lt; 2; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			int xLow = Integer.parseInt(st.nextToken());
+			int yLow = Integer.parseInt(st.nextToken());
+			int xHigh = Integer.parseInt(st.nextToken());
+			int yHigh = Integer.parseInt(st.nextToken());
+			
+			if(xLow &lt; smallestX) {
+				smallestX = xLow;
+			}
+			if(xHigh &gt; largestX) {
+				largestX = xHigh;
+			}
+			if(yLow &lt; smallestY) {
+				smallestY = yLow;
+			}
+			if(yHigh &gt; largestY) {
+				largestY = yHigh;
+			}
+		}
+		
+		// compute the desired side length of the square
+		int desiredSideLength = largestX - smallestX;
+		if(largestY - smallestY &gt; largestX - smallestX) {
+			desiredSideLength = largestY - smallestY; 
+		}
+		
+		// print the answer
+		pw.println(desiredSideLength * desiredSideLength);
+		pw.close();
+	}
+}
+</pre>
+</body></html>

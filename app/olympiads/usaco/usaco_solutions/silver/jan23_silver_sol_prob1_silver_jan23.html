@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Given an input string <span class='math'>$s$</span> and an output string <span class='math'>$t$</span>, construct a directed graph
+on vertex set <span class='math'>$\{\texttt{a}\dots\texttt{z}\}\cup \{\texttt{A}\dots\texttt{Z}\}$</span>.
+For every two characters <span class='math'>$x$</span> and <span class='math'>$y$</span>, add a directed edge from <span class='math'>$x$</span> to <span class='math'>$y$</span>  if
+there exists at least one index <span class='math'>$i$</span> such that <span class='math'>$s_i=x$</span>  and <span class='math'>$t_i=y$</span>.
+<p>First, let&apos;s figure out when it is impossible to transform <span class='math'>$s$</span> into <span class='math'>$t$</span>. If
+there is a vertex in our directed graph with more than one out-edge, the answer
+is <span class='math'>$-1$</span>. The answer is also <span class='math'>$-1$</span> whenever <span class='math'>$s\neq t$</span> and <span class='math'>$t$</span> contains all <span class='math'>$52$</span>
+distinct characters; any replacement will cause <span class='math'>$s$</span> to contain fewer than <span class='math'>$52$</span>
+distinct characters.
+<p>In all other cases, it is possible to transform <span class='math'>$s$</span> to <span class='math'>$t$</span>. A single keystroke
+allows us to take any edge <span class='math'>$x\to y$</span> and replace it with an edge <span class='math'>$z\to y$</span> as long
+as <span class='math'>$z$</span> does not have out-degree greater than one afterward. Any keystroke can
+remove at most one edge from our directed graph, so the number of required
+keystrokes is at least the number of edges in the directed graph excluding
+self-loops. Also, suppose that we treat the edges as undirected and divide the
+graph into connected components. Then every connected component of size greater than one
+that is a cycle increases the answer by one (for example, consider
+the cycle  <span class='math'>$\texttt{A}\to \texttt{B}\to \texttt{A}$</span>  in the last test case of
+the sample). Note that cycles within larger connected components don&apos;t increase
+the answer by one. For example, if the edges in the directed graph are 
+<span class='math'>$\texttt{A}\to \texttt{B}, \texttt{B}\to \texttt{A}, \texttt{C}\to \texttt{B}$</span>,
+then the answer is three, because we can use the first keystroke to replace
+<span class='math'>$\texttt{A}$</span> with <span class='math'>$\texttt{C}$</span>, which breaks the cycle.
+<p>Thus, the answer is equal to the following quantity: the number of edges in the
+graph excluding self-loops  plus the number of connected components with size
+greater than one that are cycles. To prove that this is correct,  it suffices to check that in all cases
+where the answer is not <span class='math'>$-1$</span>, any keystroke  will decrease this quantity by at
+most one, and that there exists a keystroke that decreases this quantity by one.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+ 
+public class FindAndReplaceSilverFixed {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int t = Integer.parseInt(in.readLine()); t &gt; 0; t--) {
+            String before = in.readLine();
+            String after = in.readLine();
+            int[] becomes = new int[52];
+            Arrays.fill(becomes, -1);
+            boolean possible = true;
+            Set&lt;Character&gt; set = new HashSet&lt;&gt;();
+            for (int j = 0; j &lt; before.length(); j++) {
+                int b = letterToNode(before.charAt(j));
+                int a = letterToNode(after.charAt(j));
+                set.add(after.charAt(j));
+                if (becomes[b] != -1 &amp;&amp; becomes[b] != a) {
+                    possible = false;
+                }
+                becomes[b] = a;
+            }
+ 
+            if (set.size() == 52) {
+                possible = false;
+            }
+            if (before.equals(after)) {
+                possible = true;
+            }
+ 
+            int answer = 0;
+            if (possible) {
+                int[] inDegree = new int[52];
+                for (int a = 0; a &lt; 52; a++) {
+                    if (becomes[a] != -1 &amp;&amp; becomes[a] != a) {
+                        inDegree[becomes[a]]++;
+                    }
+                }
+ 
+                for (int a = 0; a &lt; 52; a++) {
+                    if (becomes[a] != -1 &amp;&amp; becomes[a] != a) {
+                        answer++;
+                    }
+                }
+ 
+                int[] seen = new int[52];
+                for (int r = 0; r &lt; 52; r++) {
+                    if (seen[r] == 0) {
+                        int a = r;
+                        while (a != -1 &amp;&amp; seen[a] == 0) {
+                            seen[a] = r + 1;
+                            a = becomes[a];
+                        }
+                        if (a != -1 &amp;&amp; a != becomes[a] &amp;&amp; seen[a] == r + 1) {
+                            int s = a;
+                            boolean freePass = false;
+                            do {
+                                seen[a] = 2;
+                                if (inDegree[a] &gt; 1) {
+                                    freePass = true;
+                                }
+                                a = becomes[a];
+                            } while (a != s);
+                            if (!freePass) {
+                                answer++;
+                            }
+                        }
+                    }
+                }
+            } else {
+                answer = -1;
+            }
+ 
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+ 
+    static int letterToNode(char letter) {
+        if (&apos;a&apos; &lt;= letter &amp;&amp; letter &lt;= &apos;z&apos;) {
+            return letter - &apos;a&apos;;
+        } else {
+            return 26 + (letter - &apos;A&apos;);
+        }
+    }
+}
+</pre>
+<p>Andi Qu&apos;s code:
+<p><pre class='prettyprint'>
+ALPHABET = &apos;abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&apos;
+ 
+t = int(input())
+for test_case in range(t):
+    before = input()
+    after = input()
+ 
+    becomes = {}
+    possible = True
+    for i in range(len(before)):
+        if before[i] in becomes and becomes[before[i]] != after[i]:
+            possible = False
+        becomes[before[i]] = after[i]
+    if len(set(after)) == 52 and before != after:
+        possible = False
+ 
+    answer = 0
+    if possible:
+        in_degree = {}
+        for r in ALPHABET:
+            if r in becomes and becomes[r] != r:
+                in_degree[becomes[r]] = in_degree.get(becomes[r], 0) + 1
+                answer += 1
+        seen = {}
+        for r in ALPHABET:
+            if r not in seen:
+                a = r
+                while a not in seen:
+                    seen[a] = r
+                    a = becomes.get(a, a)
+                if a in becomes and a != becomes[a] and seen[a] == r:
+                    s = a
+                    cycle = True
+                    while True:
+                        seen[a] = &apos;moo&apos;
+                        if in_degree.get(a, 0) &gt; 1:
+                            cycle = False
+                        a = becomes[a]
+                        if a == s:
+                            break
+                    if cycle:
+                        answer += 1
+        print(answer)
+    else:
+        print(-1)
+</pre>
+<p></body></html>

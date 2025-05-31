@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi) 
+<p>For <span class='math'>$N\le 20,$</span> any reasonable polynomial-time solution should work. One possible
+approach is to calculate the result for all <span class='math'>$n\le N, k\le \binom{n}{2}$</span> in
+<span class='math'>$O(N^7).$</span>
+<p>For additional points, we should find a way to compute <span class='math'>$d_i(a)$</span> without
+explicitly constructing the tree. The key condition is that <span class='math'>$j$</span> is an ancestor
+of <span class='math'>$i$</span> if <span class='math'>$a[j]=\min(a[i\ldots j]),$</span> so it follows that
+<div class='math'>$$d_i(a)=1+\sum_{1\le j&lt;i}(a[j] == \min(a[j\ldots i]))+\sum_{i&lt;j\le n}(a[j] == \min(a[i\ldots j])).$$</div>
+Let&apos;s focus on counting the number of permutations <span class='math'>$a$</span> such that
+<span class='math'>$a[j] == \min(a[i\ldots j])$</span> for some fixed pair <span class='math'>$(i,j)$</span> satisfying <span class='math'>$i&lt;j.$</span> We&apos;ll
+do this by constructing <span class='math'>$a$</span> one element at a time.
+<p>First, we start with a sequence consisting of <span class='math'>$a[i]$</span> only. Then <span class='math'>$a[i+1]$</span> can be
+either greater than <span class='math'>$a[i]$</span> or less than <span class='math'>$a[i],$</span> contributing <span class='math'>$0$</span> or <span class='math'>$1$</span>
+inversion. Then <span class='math'>$a[i+2]$</span> can take on any of three different values relative to
+<span class='math'>$a[i]$</span> and <span class='math'>$a[i+1],$</span> contributing anywhere from <span class='math'>$0$</span> to <span class='math'>$2$</span> inversions.
+Continuing in this fashion, the possible numbers of inversions in the
+sub-permutation <span class='math'>$a[i\ldots j-1]$</span> can be represented by the polynomial product
+<div class='math'>$$\prod_{t=1}^{j-i}\left(\sum_{u=0}^{t-1}x^u\right).$$</div>
+This is known as a <strong>generating function</strong> because we are encoding a sequence
+using a polynomial. If we expand it and group together the terms with the same
+power of <span class='math'>$x,$</span> then a term in the form <span class='math'>$cx^d$</span> means that there are exactly <span class='math'>$c$</span>
+permutations with <span class='math'>$d$</span> inversions.
+<p>Adding <span class='math'>$a[j]$</span> contributes <span class='math'>$j-i$</span> inversions regardless of how many inversions
+<span class='math'>$a[i\ldots j-1]$</span> has. Then we should add the remaining elements of the
+permutation, each of which can go anywhere in the sorted order. Thus, the final
+result is given by the generating function
+<div class='math'>$$\prod_{t=1}^{n}\left(\sum_{u=0}^{t-1}x^u\right)\cdot \frac{1}{\sum_{u=0}^{j-i}x^u}\cdot x^{j-i}.$$</div>
+The first part of this product does not depend on <span class='math'>$i$</span> or <span class='math'>$j,$</span> and we can
+calculate it in <span class='math'>$O(N^3)$</span> time with prefix sums. We can divide it by
+<span class='math'>$\sum_{u=0}^{j-i}x^u$</span> in <span class='math'>$O(N^2)$</span> time by reversing the process we used to
+multiply.
+<p>After dividing, all we need is the coefficient of <span class='math'>$x^{k-(j-i)}.$</span> Since the
+product depends only on <span class='math'>$j-i,$</span> we only need to do <span class='math'>$N$</span> different divisions.
+Alternatively, we can maintain prefix and suffix products without needing to do
+division. The process for <span class='math'>$i&gt;j$</span> is almost exactly the same, except <span class='math'>$a[j]$</span>
+contributes <span class='math'>$0$</span> inversions rather than <span class='math'>$i-j.$</span>
+<p>The whole solution runs in <span class='math'>$O(N^3)$</span> time and <span class='math'>$O(N^2)$</span> memory. My code follows. It turns out that <span class='math'>$M$</span>
+being prime is irrelevant ...
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+typedef vector&lt;int&gt; vi; 
+ 
+#define FOR(i,a,b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i,a) FOR(i,0,a)
+#define ROF(i,a,b) for (int i = (b)-1; i &gt;= (a); --i)
+#define R0F(i,a) ROF(i,0,a)
+#define trav(a,x) for (auto&amp; a: x)
+ 
+#define pb push_back
+#define rsz resize
+#define sz(x) int(x.size())
+ 
+void setIO(string name) {
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	freopen((name+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((name+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+int MOD;
+int n,k;
+
+typedef int T;
+struct mi {
+	T val; 
+	mi() { val = 0; }
+	mi(const ll&amp; v) { 
+		val = (-MOD &lt;= v &amp;&amp; v &lt;= MOD) ? v : v % MOD;
+		if (val &lt; 0) val += MOD;
+	}
+	mi&amp; operator+=(const mi&amp; m) { 
+		if ((val += m.val) &gt;= MOD) val -= MOD; 
+		return *this; }
+	mi&amp; operator-=(const mi&amp; m) { 
+		if ((val -= m.val) &lt; 0) val += MOD; 
+		return *this; }
+};
+typedef vector&lt;mi&gt; vmi;
+ 
+void ad(vmi&amp; a, int b) { // multiply by (x^0+x^1+...+x^{b-1})
+	a.rsz(sz(a)+b-1);
+	R0F(i,sz(a)-b) a[i+b] -= a[i];
+	FOR(i,1,sz(a)) a[i] += a[i-1];
+}
+void sub(vmi&amp; a, int b) {
+	ROF(i,1,sz(a)) a[i] -= a[i-1];
+	F0R(i,sz(a)-b) a[i+b] += a[i];
+	a.rsz(sz(a)-b+1); 
+}
+mi get(vmi&amp; a, int b) {
+	if (b &lt; 0 || b &gt;= sz(a)) return 0;
+	return a[b];
+}
+ 
+int main() {
+	setIO(&quot;treedepth&quot;); 
+	cin &gt;&gt; n &gt;&gt; k &gt;&gt; MOD;
+	vmi v = {1}; FOR(i,1,n+1) ad(v,i);
+	vmi ans(n,v[k]);
+	FOR(dif,1,n) {
+		sub(v,dif+1);
+		mi x = get(v,k-dif), y = get(v,k);
+		ad(v,dif+1);
+		F0R(a,n-dif) {
+			ans[a] += x;
+			ans[a+dif] += y;
+		}
+	}
+	F0R(i,n) cout &lt;&lt; ans[i].val &lt;&lt; &apos; &apos;;
+}
+</pre>
+<p></body></html>

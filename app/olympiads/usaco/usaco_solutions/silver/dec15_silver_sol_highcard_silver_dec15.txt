@@ -1,0 +1,132 @@
+Solution ID: sol_highcard_silver_dec15
+Contest: DEC15
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_highcard_silver_dec15.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, Bessie and Elsie each have
+
+$N$
+
+unique integers ranging from 1
+to
+
+$2N$
+
+. Over
+
+$N$
+
+rounds, Bessie and Elsie will each select a different integer
+and the cow who selected the larger integer wins a point. Bessie knows what
+integers Elsie will select and wants to maximize her (Bessie's) score.
+
+Because Bessie knows the exact order in which Elsie will select her integers,
+Bessie can determine her exact strategy beforehand, choosing to win points on
+certain rounds and not win points on other rounds.
+
+Assume without loss of generality that Bessie is able to earn
+
+$K$
+
+points using
+some strategy. We claim that there exists a strategy where Bessie wins points
+exactly when Elsie picks her
+
+$K$
+
+smallest integers. The intuition for this is as
+follows - if there are two integers
+
+$x$
+
+and
+
+$y$
+
+where
+
+$x<y$
+
+, Elsie picks
+
+$x$
+
+and
+Bessie loses, and Elsie picks
+
+$y$
+
+and Bessie wins, then Bessie can swap the two
+moves - Bessie will win when Elsie picks
+
+$x$
+
+and lose when she picks
+
+$y$
+
+.
+
+Therefore, it remains to see how many of Elsie's smallest integers Bessie can
+beat.
+
+Bessie can start by trying to beat Elsie's smallest integer. If none of Bessie's integers
+are larger than that one, Bessie can't win any points. Otherwise, Bessie needs to pick
+an integer to beat Elsie's smallest integer. Intuitively, the best choice is to pick the smallest
+integer that can beat it - the reason for this is that we want to save bigger integers for later on.
+
+After beating Elsie's smallest integer, Bessie can then try to beat her second smallest one, and
+continue beating Elsie's integers in order until she can no longer beat one.
+
+To efficiently find the smallest such integer that can beat a given one from Elsie, we can consider
+Bessie's integers in order. If one of her integers can't beat Elsie's smallest unbeaten integer,
+it will never be usable and we can ignore it. Otherwise, we use that integer to beat Elsie's
+integer.
+
+Here is my code illustrating this:
+
+import java.io.*;
+import java.util.*;
+public class highcard {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("highcard.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("highcard.out")));
+		int n = Integer.parseInt(br.readLine());
+		boolean[] elsieOwns = new boolean[2*n+1];
+		for(int i = 0; i < n; i++) {
+			elsieOwns[Integer.parseInt(br.readLine())] = true;
+		}
+		ArrayList<Integer> bessie = new ArrayList<Integer>();
+		ArrayList<Integer> elsie = new ArrayList<Integer>();
+		int points = 0;
+		// because we loop over the values in increasing order, the two lists will be in sorted order
+		for(int i = 1; i <= 2*n; i++) {
+			if(elsieOwns[i]) {
+				elsie.add(i);
+			}
+			else {
+				bessie.add(i);
+			}
+		}
+		int bessieIndex = 0;
+		int elsieIndex = 0;
+		while(bessieIndex < n && elsieIndex < n) {
+			if(bessie.get(bessieIndex) > elsie.get(elsieIndex)) {
+				points++;
+				bessieIndex++;
+				elsieIndex++;
+			}
+			else {
+				bessieIndex++;
+			}
+		}
+		pw.println(points);
+		pw.close();
+	}
+}

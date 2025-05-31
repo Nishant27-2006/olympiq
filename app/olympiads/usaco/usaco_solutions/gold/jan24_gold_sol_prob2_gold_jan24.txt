@@ -1,0 +1,447 @@
+Solution ID: sol_prob2_gold_jan24
+Contest: JAN24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_jan24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Suhas Nagar and Andi Qu)
+
+Let
+
+$c_i$
+
+be the
+
+$i$
+
+-th cowmpetency value in the sequence. We can think of each
+
+$c_i$
+
+as a free variable (i.e., we can adjust its value as we see fit) and each
+pair
+
+$(a_i, h_i)$
+
+as a constraint on the free variables. Specifically, each
+constraint dictates that:
+
+$$
+\max_{a_i < k < h_i}(c_k) \le \max_{k \le a_i}(c_k) < c_{h_i}
+$$
+
+Subtask 1:
+
+$O(NQC^N)$
+
+For this subtask, it works to iterate over all
+
+$C^N$
+
+sequences and check each
+one against the list of constraints.
+
+Subtasks 2 and 3:
+
+$O(NC^2)$
+
+Like many other problems involving counting something modulo a large number,
+this problem's full solution involves dynamic programming (DP). Let
+
+$dp[i][j]$
+
+be the number of ways to satisfy the constraints when you only consider the
+first
+
+$i$
+
+cows and have
+
+$\max_{k \le i}(c_k) = j$
+
+.
+
+There are two different contributions to
+
+$dp[i][j]$
+
+:
+
+Case 1:
+
+$c_i \le \max_{k < i}(c_k) \implies c_i \le j$
+
+. This case is only
+possible if no constraint has
+
+$h_k = i$
+
+. If so, there are
+
+$j$
+
+options for
+
+$c_i$
+
+in this case, so this case contributes
+
+$j \cdot dp[i - 1][j]$
+
+.
+
+Case 2:
+
+$c_i > \max_{k < i}(c_k) \implies c_i = j$
+
+. This case is only
+possible if no constraint has
+
+$a_k \le i < h_k$
+
+. If so, there is
+
+$1$
+
+option for
+
+$c_i$
+
+in this case, so this case contributes
+
+$\sum_{k = 1}^{j - 1} dp[i - 1][k]$
+
+.
+
+Computing these two contributions naively takes
+
+$O(C)$
+
+time for each
+
+$dp[i][j]$
+
+,
+so this approach runs in
+
+$O(NC^2)$
+
+time overall. Slower solutions that run in
+
+$O(NC(C + Q))$
+
+time may also pass both subtasks, but more likely pass only
+Subtask 2.
+
+Python code:
+
+MOD = int(1e9 + 7)
+n, q, c = map(int, input().split())
+
+i_start = [False for i in range(n + 1)]
+i_end = [False for i in range(n + 1)]
+for i in range(q):
+    a, h = map(int, input().split())
+    i_start[a] = True
+    i_end[h] = True
+
+dp = [[0 for j in range(c + 1)] for i in range(n + 1)]
+dp[0][0] = 1
+restrict = False
+for i in range(1, n + 1):
+    if i_end[i]:
+        restrict = False
+    for j in range(1, c + 1):
+        if not i_end[i]:
+            dp[i][j] = j * dp[i - 1][j] % MOD
+        if not restrict:
+            for k in range(j):
+                dp[i][j] += dp[i - 1][k]
+                if dp[i][j] >= MOD:
+                    dp[i][j] -= MOD
+    if i_start[i]:
+        restrict = True
+
+print(sum(dp[n]) % MOD)
+
+Subtask 4:
+
+$O(NC)$
+
+We can speed up the above solution by using a prefix sum array to compute Case
+2. This optimization improves the time complexity by a factor of
+
+$C$
+
+.
+
+Python code:
+
+MOD = int(1e9 + 7)
+n, q, c = map(int, input().split())
+
+i_start = [False for i in range(n + 1)]
+i_end = [False for i in range(n + 1)]
+for i in range(q):
+    a, h = map(int, input().split())
+    i_start[a] = True
+    i_end[h] = True
+
+dp = [[0 for j in range(c + 1)] for i in range(n + 1)]
+pref = [[0 for j in range(c + 1)] for i in range(n + 1)]
+dp[0][0] = 1
+pref[0] = [1 for j in range(c + 1)]
+restrict = False
+for i in range(1, n + 1):
+    if i_end[i]:
+        restrict = False
+    for j in range(1, c + 1):
+        if not i_end[i]:
+            dp[i][j] = j * dp[i - 1][j] % MOD
+        if not restrict:
+            dp[i][j] += pref[i - 1][j - 1]
+            if dp[i][j] >= MOD:
+                dp[i][j] -= MOD
+    pref[i][0] = dp[i][0]
+    for j in range(1, c + 1):
+        pref[i][j] = pref[i][j - 1] + dp[i][j]
+        if pref[i][j] >= MOD:
+            pref[i][j] -= MOD
+    if i_start[i]:
+        restrict = True
+
+print(pref[n][c])
+
+Full Credit:
+
+$O(QC \log N)$
+
+Consider each constraint
+
+$(a_i, h_i)$
+
+as a range
+
+$[a_i, h_i - 1]$
+
+on a number
+line. Because the problem guarantees that the number of valid sequences is not
+
+$0$
+
+, two of these ranges (say
+
+$i$
+
+and
+
+$j$
+
+) can intersect only if
+
+$h_i = h_j$
+
+.
+For any two such intersecting ranges, only the one with the smaller
+
+$a$
+
+value
+affects the answer.
+
+From this observation, the list of constraints splits the sequence into
+
+$Q$
+
+disjoint ranges. Because each free variable in a given range is essentially
+identical, we can compute the answer more efficiently by iterating over
+
+constraints
+
+(after sorting them) instead of
+
+cows
+
+.
+
+Now, let
+
+$dp[i][j]$
+
+be the number of ways to satisfy up to the first
+
+$i$
+
+constraints and have
+
+$c_{h_i} = j$
+
+. Additionally, let
+
+$w_i$
+
+be the number of
+free variables in constraint
+
+$i$
+
+'s range, and
+
+$u_i$
+
+be the number of free
+variables between constraint
+
+$i$
+
+'s range and constraint
+
+$i - 1$
+
+'s range.
+
+There are three different contributions to
+
+$dp[i][j]$
+
+:
+
+Case 1:
+
+Any sequence counted in
+
+$dp[i][j-1]$
+
+can also count toward
+
+$dp[i][j]$
+
+by changing
+
+$c_{h_i}$
+
+from
+
+$j-1$
+
+to
+
+$j$
+
+.
+
+Case 2:
+
+Any sequence counted in
+
+$dp[i-1][j-1]$
+
+can also count toward
+
+$dp[i][j]$
+
+if all
+
+$w_i + u_i$
+
+free variables under consideration are assigned
+values between
+
+$1$
+
+to
+
+$j-1$
+
+.
+
+Case 3:
+
+Any sequence counted in
+
+$dp[i-1][k]$
+
+where
+
+$k < j-1$
+
+can also
+count toward
+
+$dp[i][j]$
+
+if at least one of the
+
+$w_i$
+
+free variables in
+constraint
+
+$i$
+
+'s range is equal to
+
+$j - 1$
+
+and the rest are no more than
+
+$j - 1$
+
+. There are
+
+$((j-1)^{w_i} - (j-2)^{w_i}) \cdot j^{u_i}$
+
+ways to do this
+assignment.
+
+Putting it all together, our DP recurrence is:
+
+$$dp[i][j] = dp[i][j-1]+dp[i-1][j-1] \cdot (j-1)^{w_i+u_i}+\sum_{k = 0}^{j-2} dp[i-1][k] \cdot ((j-1)^{w_i}-(j-2)^{w_i}) \cdot j^{u_i}$$
+
+We can compute each term in
+
+$O(\log N)$
+
+time using a running sum and
+
+binary
+exponentiation
+
+.
+
+Python code:
+
+MOD = int(1e9 + 7)
+
+
+def expo(base, pow):
+    if pow == 0:
+        return 1
+    x = expo(base * base % MOD, pow // 2)
+    return base * x % MOD if pow % 2 == 1 else x
+
+
+n, q, c = map(int, input().split())
+
+pairs_dict = {0: 0}
+for i in range(q):
+    a, h = map(int, input().split())
+    pairs_dict[h] = min(a, pairs_dict.get(h, h))
+pairs = sorted((a, h) for h, a in pairs_dict.items())
+q = len(pairs_dict) - 1
+
+dp = [[0 for j in range(c + 1)] for i in range(q + 1)]
+dp[0][0] = 1
+for i in range(1, q + 1):
+    gap1 = pairs[i][0] - pairs[i - 1][1]
+    gap2 = pairs[i][1] - pairs[i][0] - 1
+    pref_sum = 0
+    for j in range(1, c + 1):
+        dp[i][j] = (dp[i][j - 1] + dp[i - 1][j - 1] * expo(j - 1, gap1 + gap2) +
+                    pref_sum * (expo(j - 1, gap1) - expo(j - 2, gap1)) * expo(j - 1, gap2)) % MOD
+        pref_sum = (pref_sum + dp[i - 1][j - 1]) % MOD
+
+print(sum(dp[q]) * expo(c, n - pairs[q][1]) % MOD)

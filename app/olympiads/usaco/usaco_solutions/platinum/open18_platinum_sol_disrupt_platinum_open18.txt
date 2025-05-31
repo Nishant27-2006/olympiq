@@ -1,0 +1,339 @@
+Solution ID: sol_disrupt_platinum_open18
+Contest: OPEN18
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_disrupt_platinum_open18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+This problem involves finding so-called "replacement edges" for a spanning tree,
+a problem that is closely linked with the minimum spanning tree problem.  There 
+are several nice ways to approach it, varying quite a bit in terms of complexity
+of implementation.  Below is one particularly nice solution, from coach Matt
+Fontaine,  running in
+
+$O(n \log m + m \log^2 m)$
+
+time.
+
+First we need a priority queue data structure -- capable of adding a new
+element, removing an element, and querying for the minimum element.  Depending
+on language, there are several suitable choices here (Matt uses a hash table
+plus a priority queue in Java; a C++ set would probably also suffice).
+
+For each candidate replacement edge, put a candidate "token" on each of its two
+endpoint nodes, with value equal to the weight of the edge.  We then traverse
+the tree (say, with a post-order traversal), and for each of its  subtrees we
+compute the minimum value of all the tokens appearing exactly once in the
+subtree (since these tell us the weights of the edges with exactly one endpoint
+in the subtree, and one endpoint outside the subtree).  Our priority queue
+maintains the set of tokens appearing exactly once in the current subtree.
+Whenever we try to add the second token for the same edge to the priority queue,
+we instead remove the existing token, since now both edges lie within the same
+subtree.
+
+As the traversal works its way up the tree, we need to "merge" the priority
+queue contents of subtrees together.  E.g., suppose we have finished traversing
+subtrees rooted at nodes
+
+$x$
+
+and
+
+$y$
+
+and now we move up to the parent
+
+$p$
+
+of
+
+$x$
+
+and
+
+$y$
+
+.  At this point, we have a separate priority queue for the contents of
+
+$x$
+
+'s subtree and for that  of
+
+$y$
+
+'s subtree.  To merge these together to get a
+single priority queue reflecting the contents of
+
+$p$
+
+'s subtree, we take all the
+elements in the smaller of
+
+$x$
+
+'s  and
+
+$y$
+
+'s priority queues and insert these
+into the larger.  Using this relatively common "merge the smaller into the
+larger" trick, we get good amortized performance since each element participates
+in at most
+
+$\log m$
+
+inserts, since each time it is inserted it finds that it is
+part of a priority queue of at least twice the size as before.  Since each
+insert takes
+
+$O(\log m)$
+
+time, this is where we get the running time of
+
+$O(\log^2 m)$
+
+per potential replacement edge.
+
+Matt's code is below; note that a good chunk of it is a pre-built I/O class, so
+the solution code is actually quite concise.
+
+Final note: in theory, the problem has a rather sophisticated
+
+$O(m\alpha(n))$
+
+solution on a graph with
+
+$n$
+
+nodes and
+
+$m$
+
+edges, where
+
+$\alpha()$
+
+denotes the 
+inverse Ackermann function, although this solution is well beyond the scope of 
+what would be expected in a contest setting.
+
+import java.util.*;                                                                                                    
+import java.io.*;                                                                                                      
+
+public class dis
+{
+   public static void main(String[] args) throws Exception
+   {
+      FastScanner in = new FastScanner(new FileInputStream("disrupt.in"));                                             
+      PrintWriter out = new PrintWriter(new File("disrupt.out"));                                                      
+      new dis(in, out);                                                                                                
+      out.close();                                                                                                     
+   }
+
+   int N;                                                                                                              
+   ArrayList<Edge>[] adj;                                                                                              
+   Blob[] blobs;                                                                                                       
+   int[] res;                                                                                                          
+
+   void dfs(int i, int p)
+   {
+      for (Edge e : adj[i]) if (e.j != p)
+      {
+         dfs(e.j, i);                                                                                                  
+         res[e.id] = blobs[e.j].min();                                                                                 
+         blobs[i] = blobs[i].merge(blobs[e.j]);                                                                        
+      }
+   }
+
+   public dis(FastScanner in, PrintWriter out)
+   {
+      N = in.nextInt();                                                                                                
+      int M = in.nextInt();                                                                                            
+      res = new int[N-1];                                                                                              
+      blobs = new Blob[N];                                                                                             
+      for (int i=0; i<N; i++)                                                                                          
+         blobs[i] = new Blob();                                                                                        
+      adj = new ArrayList[N];                                                                                          
+      for (int i=0; i<N; i++)                                                                                          
+         adj[i] = new ArrayList<>();                                                                                   
+      for (int x=0; x<N-1; x++)                                                                                        
+      {
+         int i = in.nextInt()-1;                                                                                       
+         int j = in.nextInt()-1;                                                                                       
+         adj[i].add(new Edge(j, x));                                                                                   
+         adj[j].add(new Edge(i, x));                                                                                   
+      }
+
+      for (int x=0; x<M; x++)                                                                                          
+      {
+         int i = in.nextInt()-1;                                                                                       
+         int j = in.nextInt()-1;                                                                                       
+         int w = in.nextInt();                                                                                         
+         blobs[i].add(new Node(x, w));                                                                                 
+         blobs[j].add(new Node(x, w));                                                                                 
+      }
+
+      dfs(0,0);                                                                                                        
+      for (int rr : res)
+         out.println(rr);                                                                                              
+   }
+}
+
+class Blob
+{
+   PriorityQueue<Node> q;                                                                                              
+   HashSet<Integer> active;                                                                                            
+
+   Blob()
+   {
+      q = new PriorityQueue<>();                                                                                       
+      active = new HashSet<>();                                                                                        
+   }
+
+   void mergeInto(Blob rhs)
+   {
+      for (Node n : rhs.q)
+         if (rhs.active.contains(n.id))
+            add(n);                                                                                                    
+   }
+
+   Blob merge(Blob rhs)
+   {
+      if (active.size() > rhs.active.size())
+      {
+         mergeInto(rhs);                                                                                               
+         return this;                                                                                                  
+      }
+      else
+      {
+         rhs.mergeInto(this);                                                                                          
+         return rhs;                                                                                                   
+      }
+   }
+
+   void add(Node n)
+   {
+      if (active.contains(n.id))
+      {
+         active.remove(n.id);                                                                                          
+      }
+      else
+      {
+         active.add(n.id);                                                                                             
+         q.add(n);                                                                                                     
+      }
+   }
+
+   int min()
+   {
+      while (q.size() > 0 && !active.contains(q.peek().id))
+         q.poll();                                                                                                     
+      return q.size() > 0 ? q.peek().w : -1;                                                                           
+   }
+}
+
+class Node implements Comparable<Node>
+{
+   int id, w;                                                                                                          
+
+   Node(int id, int w)
+   {
+      this.id = id;                                                                                                    
+      this.w = w;                                                                                                      
+   }
+
+   public int compareTo(Node rhs)
+   {
+      return Integer.compare(w, rhs.w);                                                                                
+   }
+}
+
+class Edge
+{
+   int j, id;                                                                                                          
+
+   Edge(int jj, int ii)
+   {
+      j=jj; id=ii;                                                                                                     
+   }
+}
+
+class FastScanner{
+   private InputStream stream;                                                                                         
+   private byte[] buf = new byte[1024];                                                                                
+   private int curChar;                                                                                                
+   private int numChars;                                                                                               
+
+   public FastScanner(InputStream stream)
+   {
+      this.stream = stream;                                                                                            
+   }
+
+   int read()
+   {
+      if (numChars == -1)
+         throw new InputMismatchException();                                                                           
+      if (curChar >= numChars){
+         curChar = 0;                                                                                                  
+         try{
+            numChars = stream.read(buf);                                                                               
+         } catch (IOException e) {
+            throw new InputMismatchException();                                                                        
+         }
+         if (numChars <= 0)
+            return -1;                                                                                                 
+      }
+      return buf[curChar++];                                                                                           
+   }
+
+   boolean isSpaceChar(int c)
+   {
+      return c==' '||c=='\n'||c=='\r'||c=='\t'||c==-1;                                                                 
+   }
+
+   boolean isEndline(int c)
+   {
+      return c=='\n'||c=='\r'||c==-1;                                                                                  
+   }
+
+   int nextInt()
+   {
+      return Integer.parseInt(next());                                                                                 
+   }
+
+   long nextLong()
+   {
+      return Long.parseLong(next());                                                                                   
+   }
+
+   double nextDouble()
+   {
+      return Double.parseDouble(next());                                                                               
+   }
+
+   String next(){
+      int c = read();                                                                                                  
+      while (isSpaceChar(c))
+         c = read();                                                                                                   
+      StringBuilder res = new StringBuilder();                                                                         
+      do{
+         res.appendCodePoint(c);                                                                                       
+         c = read();                                                                                                   
+      }while(!isSpaceChar(c));                                                                                         
+      return res.toString();                                                                                           
+   }
+
+   String nextLine(){
+      int c = read();                                                                                                  
+      while (isEndline(c))
+         c = read();                                                                                                   
+      StringBuilder res = new StringBuilder();                                                                         
+      do{
+         res.appendCodePoint(c);                                                                                       
+         c = read();                                                                                                   
+      }while(!isEndline(c));                                                                                           
+      return res.toString();                                                                                           
+   }
+}

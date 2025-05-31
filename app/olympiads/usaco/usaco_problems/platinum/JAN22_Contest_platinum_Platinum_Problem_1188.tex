@@ -1,0 +1,159 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN22 Contest - Platinum Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Bessie is bored and yet again causing trouble in Farmer John's barn. FJ has $N$
+($1\leq N \leq 10^5$) stacks of haybales. For each $i\in [1,N]$, the $i$th stack
+has $h_i$ ($1\le h_i\le 10^9$) haybales. Bessie does not want any haybales to
+fall, so the only operation she can perform is as follows:
+
+If two adjacent stacks' heights differ by at most $K$ ($1\le K\le 10^9$),
+she can swap the two stacks.
+
+What is the lexicographically minimum sequence of heights that Bessie can obtain
+after some sequence of these operations?
+
+**Note: the time and memory limits for this problem are 4s and 512MB, twice
+the defaults.**
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line of input contains $N$ and $K$. The $i+1$-st line contains the
+height of the $i$-th haybale.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Please print out $N$ lines, the $i$-th containing the height of the $i$-th
+haybale in the solution.
+
+
+SAMPLE INPUT:
+5 3
+7
+7
+3
+6
+2
+SAMPLE OUTPUT: 
+6
+7
+7
+2
+3
+
+One way that Bessie can swap the stacks is as follows:
+
+
+   7 7 3 6 2
+-> 7 7 6 3 2
+-> 7 7 6 2 3
+-> 7 6 7 2 3
+-> 6 7 7 2 3
+
+SCORING:
+In 10% of all input cases, $N\le 100$In another 20% of all input cases, $N\le 5000$In the remaining 70% of input cases, there are no additional
+constraints
+
+
+Problem credits: Daniel Zhang and Benjamin Qi
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (print output to the terminal / stdout):Please print out $N$ lines, the $i$-th containing the height of the $i$-th
+haybale in the solution.SAMPLE INPUT:5 3
+7
+7
+3
+6
+2SAMPLE OUTPUT:6
+7
+7
+2
+3One way that Bessie can swap the stacks is as follows:7 7 3 6 2
+-> 7 7 6 3 2
+-> 7 7 6 2 3
+-> 7 6 7 2 3
+-> 6 7 7 2 3SCORING:In 10% of all input cases, $N\le 100$In another 20% of all input cases, $N\le 5000$In the remaining 70% of input cases, there are no additional
+constraintsProblem credits: Daniel Zhang and Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:5 3
+7
+7
+3
+6
+2SAMPLE OUTPUT:6
+7
+7
+2
+3One way that Bessie can swap the stacks is as follows:7 7 3 6 2
+-> 7 7 6 3 2
+-> 7 7 6 2 3
+-> 7 6 7 2 3
+-> 6 7 7 2 3SCORING:In 10% of all input cases, $N\le 100$In another 20% of all input cases, $N\le 5000$In the remaining 70% of input cases, there are no additional
+constraintsProblem credits: Daniel Zhang and Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+5 3
+7
+7
+3
+6
+2
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+6
+7
+7
+2
+3
+
+One way that Bessie can swap the stacks is as follows:7 7 3 6 2
+-> 7 7 6 3 2
+-> 7 7 6 2 3
+-> 7 6 7 2 3
+-> 6 7 7 2 3SCORING:In 10% of all input cases, $N\le 100$In another 20% of all input cases, $N\le 5000$In the remaining 70% of input cases, there are no additional
+constraintsProblem credits: Daniel Zhang and Benjamin Qi
+
+7 7 3 6 2
+-> 7 7 6 3 2
+-> 7 7 6 2 3
+-> 7 6 7 2 3
+-> 6 7 7 2 3SCORING:In 10% of all input cases, $N\le 100$In another 20% of all input cases, $N\le 5000$In the remaining 70% of input cases, there are no additional
+constraintsProblem credits: Daniel Zhang and Benjamin Qi
+
+7 7 3 6 2
+-> 7 7 6 3 2
+-> 7 7 6 2 3
+-> 7 6 7 2 3
+-> 6 7 7 2 3
+
+SCORING:In 10% of all input cases, $N\le 100$In another 20% of all input cases, $N\le 5000$In the remaining 70% of input cases, there are no additional
+constraintsProblem credits: Daniel Zhang and Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1188
+
+\section*{Source}
+USACO JAN22 Contest, Platinum Division, Problem ID: 1188
+
+\end{document}

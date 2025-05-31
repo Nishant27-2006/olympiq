@@ -1,0 +1,230 @@
+Solution ID: sol_team_platinum_dec16
+Contest: DEC16
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_team_platinum_dec16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+We list out two dynamic programming approaches here, one that is
+
+$O(NMK)$
+
+and
+one that is
+
+$O((N+M)K^2)$
+
+.
+
+We first note that there is an
+
+$O(N^2 M^2 K)$
+
+dynamic programming algorithm. Let
+
+$f(N, M, K)$
+
+be the number of ways to match
+
+$K$
+
+pairs first
+
+$N$
+
+of Farmer John's
+cows and first
+
+$M$
+
+of Farmer Paul's cows such that Farmer John wins. We can
+reduce
+
+$K$
+
+by one if we fix the highest scoring cow that both Farmer John and
+Farmer Paul use. With
+
+$O(NM)$
+
+transitions and
+
+$O(NMK)$
+
+states, we get an
+
+$O(N^2 M^2 K)$
+
+algorithm.
+
+Instead of iterating over all
+
+$O(NM)$
+
+transitions, if we maintain a prefix sum,
+we can compute
+
+$f(N, M, K)$
+
+in
+
+$O(1)$
+
+time. My Java code does this as below.
+
+import java.io.*;
+import java.util.*;
+public class team {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("team.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("team.out")));
+		final int MOD = 1000000009;
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int m = Integer.parseInt(st.nextToken());
+		int k = Integer.parseInt(st.nextToken());
+		int[] a = new int[n];
+		int[] b = new int[m];
+		st = new StringTokenizer(br.readLine());
+		for(int i = 0; i < n; i++) {
+			a[i] = Integer.parseInt(st.nextToken());
+		}
+		st = new StringTokenizer(br.readLine());
+		for(int i = 0; i < m; i++) {
+			b[i] = Integer.parseInt(st.nextToken());
+		}
+		long[][] dp = new long[n+1][m+1];
+		for(int i = 0; i < dp.length; i++) {
+			Arrays.fill(dp[i], 1);
+		}
+		Arrays.sort(a);
+		Arrays.sort(b);
+		while(k-- > 0) {
+			long[][] next = new long[n+1][m+1];
+			for(int i = 0; i < a.length; i++) {
+				for(int j = 0; j < b.length; j++) {
+					if(a[i] <= b[j]) continue;
+					next[i+1][j+1] += dp[i][j];
+				}
+			}
+			dp = next;
+			for(int i = 0; i < dp.length; i++) {
+				for(int j = 0; j < dp[i].length; j++) {
+					if(i > 0) {
+						dp[i][j] += dp[i-1][j];
+					}
+					if(j > 0) {
+						dp[i][j] += dp[i][j-1];
+						if(i > 0) {
+							dp[i][j] -= dp[i-1][j-1];
+						}
+					}
+					dp[i][j] %= MOD;
+					dp[i][j] += MOD;
+					dp[i][j] %= MOD;
+				}
+			}
+		}
+		pw.println(dp[n][m] % MOD);
+		pw.close();
+	}
+}
+
+Another way to reduce the state space is to leverage the fact that
+
+$K$
+
+is small.
+
+Instead of explicitly pairing the highest-scoring cows that Farmer John and
+Farmer Paul use, we will instead iterate over the cows from lowest score to
+highest score. We keep track of how many cows from Farmer John we have allocated
+and how many cows from Farmer John we have allocated. We require that we have
+never allocated more cows from Farmer John than from Farmer Paul (otherwise
+Farmer John would have selected a cow that will not win).
+
+This DP has
+
+$O((N+M)K^2)$
+
+states and
+
+$O(1)$
+
+transitions. Here is Travis Hance's C++
+solution.
+
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Node {
+    int value;
+    bool isFj;
+
+    bool operator<(Node const& other) const {
+        if (value == other.value) {
+            return isFj && !other.isFj;
+        }
+        return value < other.value;
+    }
+};
+
+#define NMAX 1000
+#define KMAX 10
+
+#define MOD 1000000009
+
+unsigned int dp[2 * NMAX + 1][KMAX + 1][KMAX + 1];
+
+int main() {
+    int n, m, k;
+    scanf("%d", &n);
+    scanf("%d", &m);
+    scanf("%d", &k);
+
+    vector<Node> nodes;
+    for (int i = 0; i < n; i++) {
+        Node n;
+        scanf("%d", &n.value);
+        n.isFj = true;
+        nodes.push_back(n);
+    }
+    for (int i = 0; i < m; i++) {
+        Node n;
+        scanf("%d", &n.value);
+        n.isFj = false;
+        nodes.push_back(n);
+    }
+
+    sort(nodes.begin(), nodes.end());
+
+    for (int i = 0; i <= k; i++) {
+        for (int j = 0; j <= k; j++) {
+            dp[nodes.size()][i][j] = (i == 0 && j == 0 ? 1 : 0);
+        }
+    }
+
+    for (int pos = nodes.size() - 1; pos >= 0; pos--) {
+        for (int i = 0; i <= k; i++) {
+            for (int j = 0; j <= k; j++) {
+                if (j > i) {
+                    dp[pos][i][j] = 0;
+                } else {
+                    if (nodes[pos].isFj) {
+                        dp[pos][i][j] = (dp[pos+1][i][j] + (i > 0 ? dp[pos+1][i-1][j] : 0)) % MOD;
+                    } else {
+                        dp[pos][i][j] = (dp[pos+1][i][j] + (j > 0 ? dp[pos+1][i][j-1] : 0)) % MOD;
+                    }
+                }
+            }
+        }
+    }
+
+    printf("%d\n", dp[0][k][k]);
+}

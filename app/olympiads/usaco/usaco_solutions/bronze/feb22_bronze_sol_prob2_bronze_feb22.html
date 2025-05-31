@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Observation:</strong> Consider two cows <span class='math'>$a_i$</span> and <span class='math'>$a_j$</span> such that <span class='math'>$a_i$</span> is to the
+left of <span class='math'>$a_j$</span> in <span class='math'>$a$</span> but to the right of <span class='math'>$a_j$</span> in <span class='math'>$b$</span> (for example, <span class='math'>$a_3=3$</span> and
+<span class='math'>$a_4=2$</span> in sample 2). Then Farmer John must choose cow <span class='math'>$a_j$</span> at least once.
+<p><strong>Proof:</strong> If cow <span class='math'>$a_i$</span> is to the left of cow <span class='math'>$a_j$</span>, then any modification 
+FJ performs that does not involve choosing cow <span class='math'>$a_j$</span> preserves the relative
+order of cows <span class='math'>$a_i$</span> and <span class='math'>$a_j$</span>. So if FJ never chooses cow <span class='math'>$a_j$</span> then <span class='math'>$a_i$</span> will
+still be to the left of <span class='math'>$a_j$</span> at the end, contradiction.
+<p><strong>Claim:</strong> The answer is equal to the number of cows <span class='math'>$a_j$</span> in <span class='math'>$a$</span> such that
+there exists <span class='math'>$a_i$</span> such that <span class='math'>$(a_i,a_j)$</span> satisfy the observation above. This
+will be proven later in the analysis.
+<p>This claim leads to a solution in <span class='math'>$O(N^3)$</span>. Go through all pairs of cows
+<span class='math'>$(a_i,a_j)$</span> such that <span class='math'>$i&lt;j$</span> and check if cow <span class='math'>$j$</span> must be moved according to the
+observation above. Then print the total number of cows that need to be moved.
+<p>My code:
+<p><pre class='prettyprint'>
+N = int(input())
+A = list(map(int, input().split()))
+B = list(map(int, input().split()))
+ 
+need_to_move = [0]*N
+ 
+def pos_in_B(x):
+	for i in range(N):
+		if B[i] == x:
+			return i
+ 
+for i in range(N):
+	for j in range(i+1,N):
+		if pos_in_B(A[i]) &gt; pos_in_B(A[j]):
+			need_to_move[j] = 1
+ 
+print(sum(need_to_move))
+</pre>
+<p>One simplification we can make is by relabeling the cows so that cow <span class='math'>$b_i$</span>
+becomes cow <span class='math'>$i$</span>. For example, we may rephrase the second sample case, 
+<p><pre>
+a = [5 1 3 2 4] -&gt; a = [2 4 5 3 1]
+b = [4 5 2 1 3] -&gt; b = [1 2 3 4 5]
+</pre>
+<p>Then we may rephrase the problem as sorting the cows in increasing order  of
+label. Now we can rephrase the observation as checking for each <span class='math'>$j$</span>, whether
+there exists <span class='math'>$i&lt;j$</span> such that <span class='math'>$a_i&gt;a_j$</span>. Here is a solution running in <span class='math'>$O(N^2)$</span>:
+<p>My code:
+<p><pre class='prettyprint'>
+N = int(input())
+A = list(map(int, input().split()))
+B = list(map(int, input().split()))
+
+pos_in_B = [0]*(N+1)
+for i in range(N):
+	pos_in_B[B[i]] = i+1
+
+A = [pos_in_B[v] for v in A]
+# now assume B=1...N
+
+ans = 0
+for j in range(N):
+	need_to_move_j = False
+	for i in range(j):
+		if A[i] &gt; A[j]:
+			need_to_move_j = True
+	if need_to_move_j:
+		ans += 1
+print(ans)
+</pre>
+<p>We can optimize this to <span class='math'>$O(N)$</span> time by maintaining the quantity
+<span class='math'>$\texttt{max_so_far}=\max(a_1,a_2,\ldots,a_{j-1})$</span>. If
+<span class='math'>$\texttt{max_so_far}&gt;a_j$</span>, then we should to move cow <span class='math'>$a_j$</span> to the left while
+there is a cow with greater label than <span class='math'>$a_j$</span> to the left of cow <span class='math'>$a_j$</span>.
+Otherwise, cow <span class='math'>$a_j$</span> has greater label than all cows to the left of it, and we
+set <span class='math'>$\texttt{max_so_far}=a_j$</span>. In either case, the first <span class='math'>$j$</span> cows in <span class='math'>$a$</span> will be
+in the same order as they are in <span class='math'>$b$</span>. It follows that when <span class='math'>$j=N$</span>, <span class='math'>$a=b$</span>.
+<p>My code:
+<p><pre class='prettyprint'>
+N = int(input())
+A = list(map(int, input().split()))
+B = list(map(int, input().split()))
+
+pos_in_B = [0]*(N+1)
+for i in range(N):
+	pos_in_B[B[i]] = i+1
+
+A = [pos_in_B[v] for v in A]
+# now assume B=1...N
+
+max_so_far = 0
+ans = 0
+ 
+for a in A:
+	if a &gt; max_so_far:
+		max_so_far = a
+	else:  # max_so_far remains the same
+		ans += 1
+ 
+print(ans)
+</pre>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class MovingLeft {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        StringTokenizer tokenizerA = new StringTokenizer(in.readLine());
+        StringTokenizer tokenizerB = new StringTokenizer(in.readLine());
+        int[] a = new int[n];
+        int[] b = new int[n];
+        for (int j = 0; j &lt; n; j++) {
+            a[j] = Integer.parseInt(tokenizerA.nextToken());
+            b[j] = Integer.parseInt(tokenizerB.nextToken());
+        }
+        int answer = 0;
+        boolean[] moved = new boolean[n + 1];
+        int k = 0;
+        for (int j = 0; j &lt; n; j++) {
+            while (moved[a[k]]) {
+                k++;
+            }
+            if (b[j] == a[k]) {
+                k++;
+            } else {
+                answer++;
+                moved[b[j]] = true;
+            }
+        }
+        System.out.println(answer);
+    }
+}
+</pre>
+<p></body></html>

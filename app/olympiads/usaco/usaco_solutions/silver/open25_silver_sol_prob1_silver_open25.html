@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Weiming Zhou)
+<p><div class='prob-section'><h4> Subtask 1:</h4>
+<p>We can enumerate all the arrays that sum to <span class='math'>$M$</span> in <span class='math'>$O(M2^M)$</span> time and check if
+any of them satisfy the conditions in the problem statement.
+<p>My C++ code:
+<p><pre class='prettyprint'>
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+using namespace std;
+
+int flag;
+
+vector&lt;int&gt; ans;
+
+int popcount(int x){
+	if(x == 1 || x == 2 || x == 4) return 1;
+	if(x == 7) return 3;
+	return 2;
+}
+
+void dfs(int m, int k){
+	if(m == 0 &amp;&amp; k == 0){
+		flag = 1;
+		return ;
+	}
+	if(!flag){
+		for(int i = 1; i&lt;=m; i++){
+			ans.push_back(i);
+			dfs(m - i, k^popcount(i));
+			if(flag) break ;
+			ans.pop_back();
+		}
+	}
+}
+
+int main(){
+	int T; cin &gt;&gt; T;
+	for(int i = 0; i&lt;T; i++){
+		int m, k;
+		cin &gt;&gt; m &gt;&gt; k;
+		flag = 0;
+		ans.clear();
+		dfs(m, k);
+		if(flag){
+			cout &lt;&lt; ans.size() &lt;&lt; &quot;\n&quot;;
+			for(int x : ans){
+				cout &lt;&lt; x &lt;&lt; &quot; &quot;;
+			}	cout &lt;&lt; &quot;\n&quot;;
+		}else{
+			cout &lt;&lt; &quot;-1\n&quot;;
+		}
+	}
+}
+
+
+
+</pre>
+<p></div>
+<p><div class='prob-section'><h4> Subtask 2:</h4>
+<p>As <span class='math'>$M$</span> is large relative to <span class='math'>$K$</span>, we will employ a strategy as follows:
+<p><ul><li> First, we will let <span class='math'>$x=2^K-1$</span> such that <span class='math'>$\text{popcount}(x) = K$</span>.</li><li> Then, we will find an array that sums to <span class='math'>$d = M - x$</span> with popcount xor
+equal to <span class='math'>$0$</span>. Notably, <span class='math'>$d \geq 2$</span> as <span class='math'>$M &gt; 2^K &gt; x = 2^K - 1$</span>. <ul><li> If <span class='math'>$d$</span> is even, we can use the array <span class='math'>$[\frac{d}{2}, \frac{d}{2}]$</span>. This
+sums to <span class='math'>$d$</span> and has popcount xor equal to <span class='math'>$0$</span>.</li><li> Otherwise, <span class='math'>$d$</span> is odd and at least three. Ideally, we can reduce it to the
+even case, and it turns out, we can! We will try to make <span class='math'>$d$</span> an even number by
+making an array with a small odd sum and popcount xor equal to <span class='math'>$0$</span>. For
+instance, we can decrease <span class='math'>$d$</span> by <span class='math'>$3$</span> by use the array <span class='math'>$[1, 2]$</span> that has sum <span class='math'>$3$</span>
+and popcount <span class='math'>$0$</span>.  So our array with sum <span class='math'>$d$</span> and popcount xor equal to <span class='math'>$0$</span> is
+<span class='math'>$[1, 2, \frac{d-3}{2}, \frac{d-3}{2}]$</span>.
+</li></ul>
+</li></ul>
+<p>My C++ code:
+<p><pre class='prettyprint'>
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+using namespace std;
+
+int main(){
+	int T; cin &gt;&gt; T;
+	while(T--){
+		int m, k;
+		cin &gt;&gt; m &gt;&gt; k;
+		int x = (1 &lt;&lt; k) - 1;
+		int d = m - x;
+		vector&lt;int&gt; ans;	
+		if(d%2 == 0){
+			ans = {x, d/2, d/2};
+		}else{
+			ans = {x, 1, 2, (d - 3)/2, (d - 3)/2};
+		}
+		//for this subtask, a solution always exists!
+		cout &lt;&lt; ans.size() &lt;&lt; &quot;\n&quot;;
+		for(int i = 0; i&lt;ans.size(); i++){
+			cout &lt;&lt; ans[i] &lt;&lt; &quot; &quot;;
+		} 
+		cout &lt;&lt; &quot;\n&quot;;
+	}
+}
+
+</pre>
+<p></div>
+<p><div class='prob-section'><h4> Full solution</h4>
+<p>We now have to improve our solution for when <span class='math'>$M$</span> is smaller relative to <span class='math'>$K$</span>. We
+will still use the same strategy as before of finding two arrays <span class='math'>$a$</span> and <span class='math'>$b$</span>
+where <span class='math'>$a$</span> has popcount xor equal to <span class='math'>$K$</span> and <span class='math'>$b$</span> has popcount xor equal to <span class='math'>$0$</span>.
+From a greedy standpoint, we should aim to minimize the sum of elements in <span class='math'>$a$</span>
+to give more leeway for constructing <span class='math'>$b$</span>.
+<p>For each bit <span class='math'>$i$</span> on in <span class='math'>$K$</span>, we will add <span class='math'>$2^{2^i} - 1$</span> to <span class='math'>$a$</span>. Notably
+<span class='math'>$2^{2^i} - 1$</span> is the smallest integer with popcount <span class='math'>$2^i$</span>. For instance if
+<span class='math'>$K = 5$</span>, we would take <span class='math'>$a = [1, 15]$</span> or if <span class='math'>$K = 12$</span> we would take
+<span class='math'>$a = [15, 255]$</span>.
+<p><span class='math'>$a$</span> has the minimal sum of any array with popcount xor equal to <span class='math'>$K$</span>. We will
+prove this with a contradiction. 
+<p>Suppose <span class='math'>$a$</span> was not of the form above. Consider any element <span class='math'>$x$</span> in <span class='math'>$a$</span> not of
+the form <span class='math'>$2^{2^i}-1$</span>, and suppose it has popcount <span class='math'>$c$</span>.
+<p><ul><li> If <span class='math'>$c$</span> is a power of <span class='math'>$2$</span>, we can just take <span class='math'>$2^{2^c}-1$</span> instead of <span class='math'>$x$</span>.
+<span class='math'>$2^{2^c}-1$</span> is smaller than <span class='math'>$x$</span> and has the same popcount. </li><li> Otherwise,
+suppose the lowest bit in <span class='math'>$c$</span> is <span class='math'>$2^j$</span>. We can replace <span class='math'>$x$</span> with <span class='math'>$2^{2^j}-1$</span> and
+<span class='math'>$2^{2^{c - 2^j}}-1$</span>. As in general, <span class='math'>$2^{s + t} - 1 &gt; 2^{s} -1 + 2^{t} - 1$</span> (we
+use <span class='math'>$s = j$</span> and <span class='math'>$t = c - j$</span> here).</li></ul>
+<p>Our new array has the same popcount xor, but a smaller sum, thus our original
+<span class='math'>$a$</span> could not have the minimal sum. 
+<p>For instance, if our <span class='math'>$a$</span> with popcount xor equal to <span class='math'>$7$</span> was <span class='math'>$[1, 63]$</span>. We could
+replace <span class='math'>$63$</span> (with popcount <span class='math'>$6$</span>) with <span class='math'>$[2^{2^1} - 1, 2^{2^2}-1] = [3, 15]$</span> to
+get a new <span class='math'>$a$</span> with a smaller sum and popcount xor equal to <span class='math'>$7$</span>.
+<p>Let <span class='math'>$d = M - \sum a_i$</span>. If <span class='math'>$d &lt; 0$</span>, no such array exists, as we cannot make an
+array <span class='math'>$a$</span> with smaller sum and popcount xor equal to <span class='math'>$K$</span>. 
+<p>If <span class='math'>$d \geq 2$</span>, we can use our idea from the previous subtask. 
+<p><ul><li> If <span class='math'>$d$</span> is even, we have <span class='math'>$b = [\frac{d}{2}, \frac{d}{2}]$</span>.</li><li> If <span class='math'>$d$</span>
+is odd, we have <span class='math'>$b = [1, 2, \frac{d-3}{2}, \frac{d-3}{2}]$</span> </li></ul>
+<p>If <span class='math'>$d = 0$</span>, we can have <span class='math'>$b$</span> be empty.
+<p>Finally, we just have to solve when <span class='math'>$d = 1$</span>. In other words, we need to increase
+the sum of <span class='math'>$a$</span> by <span class='math'>$1$</span> without changing the xor of its popcounts. This is only
+possible when <span class='math'>$a$</span> contains <span class='math'>$1$</span>, and we would replace that occurrence of <span class='math'>$1$</span> with
+a <span class='math'>$2$</span>. There is no other way to change the array <span class='math'>$a$</span> into any other array with
+sum <span class='math'>$M$</span> and popcount xor equal to <span class='math'>$K$</span> as <span class='math'>$a$</span>, as defined above, has minimal sum.
+<p>Our final complexity is <span class='math'>$O(\log K)$</span> per test case.
+<p>My C++ code:
+<p><pre class='prettyprint'>
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+using namespace std;
+
+int main(){
+	cin.tie(0) -&gt; sync_with_stdio(0);
+	int T; cin &gt;&gt; T;
+	while(T--){
+		int m, k; cin &gt;&gt; m &gt;&gt; k;
+		vector&lt;int&gt; a;
+		int x = 0;
+		for(int i = 0; i&lt;5; i++){
+			if(k&amp;(1 &lt;&lt; i)){
+				a.push_back((1 &lt;&lt; (1 &lt;&lt; i)) - 1);
+				x += a.back();
+			}
+		}
+
+		int d = m - x;
+		vector&lt;int&gt; b;
+		int flag = 0; 
+		if(d &lt; 0){
+			flag = 1;
+		}else if(d &gt;= 2){
+			if(d%2 == 0){
+				b = {d/2, d/2};
+			}else{
+				b = {1, 2, (d-3)/2, (d-3)/2};
+			}
+		}else if(d == 0){
+			b = {};
+		}else{
+			if(a[0] == 1){
+				a[0] = 2;
+			}else{
+				flag = -1;
+			}
+		}
+
+		if(flag){
+			cout &lt;&lt; &quot;-1\n&quot;;
+		}else{
+			cout &lt;&lt; a.size() + b.size() &lt;&lt; &quot;\n&quot;;
+			for(int i : a) 
+				cout &lt;&lt; i &lt;&lt; &quot; &quot;;
+			for(int i : b)
+				cout &lt;&lt; i &lt;&lt; &quot; &quot; ;
+			cout &lt;&lt; &quot;\n&quot;;
+		}
+	}
+}
+
+
+</pre>
+<p></div>
+<p></body></html>

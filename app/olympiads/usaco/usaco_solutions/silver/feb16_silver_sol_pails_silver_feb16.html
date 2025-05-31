@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have two buckets and we can either fill them, empty them, or
+pour one into the other until we fill a bucket or empty one. We want to compute
+how close we can get to having M units of milk after K of these operations.
+<p>It&apos;s hard to answer the question: Can we end up with exactly M units of milk in
+these two buckets after at most K operations? It&apos;s easier to answer the
+question: Can we end up with A units of milk in the size X bucket and B units of
+milk in the size Y bucket after at most K operations?
+<p>Imagine that we have A units of milk in the size X bucket and B units of milk in
+the size Y bucket after at most L operations. With this information, there are
+several possible states that are attainable after at most L+1 operations. For
+example, just by emptying or filling buckets, we can get the following four
+states:
+<p><ul><li>X units of milk in the size X bucket and B units of milk in the size Y
+bucket.</li><li>0 units of milk in the size X bucket and B units of milk in the
+size Y bucket.</li><li>A units of milk in the size X bucket and Y units of milk
+in the size Y bucket.</li><li>A units of milk in the size X bucket and 0 units
+of milk in the size Y bucket.</li></ul>
+<p>We can also pour milk from one of the buckets to the other.
+<p>We maintain all attainable states as we increase the number of operations we
+attempt.
+<p>Here is my Java code.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class pails {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;pails.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;pails.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int x = Integer.parseInt(st.nextToken());
+		int y = Integer.parseInt(st.nextToken());
+		int k = Integer.parseInt(st.nextToken());
+		int m = Integer.parseInt(st.nextToken());
+		boolean[][] can = new boolean[x+1][y+1];
+		can[0][0] = true;
+		for(int operationNum = 0; operationNum &lt; k; operationNum++) {
+			// if can[A][B] is true, then after at most operationNum operations,
+			// it is possible to end with A units of milk in the size X bucket
+			// and B units of milk in the size Y bucket.
+			boolean[][] next = new boolean[x+1][y+1];
+			for(int i = 0; i &lt; can.length; i++) {
+				for(int j = 0; j &lt; can[i].length; j++) {
+					if(!can[i][j]) continue;
+					// we can always maintain the same state
+					next[i][j] = true;
+					// empty size X bucket
+					next[0][j] = true;
+					// fill size X bucket
+					next[x][j] = true;
+					// empty size Y bucket
+					next[i][0] = true;
+					// fill size Y bucket
+					next[i][y] = true;
+					// pour from size X bucket to size Y bucket
+					int moveRight = Math.min(i, y - j);
+					next[i-moveRight][j+moveRight] = true;
+					// pour from size Y bucket to size X bucket
+					int moveLeft = Math.min(x - i, j);
+					next[i+moveLeft][j-moveLeft] = true;
+				}
+			}
+			can = next;
+		}
+		int ret = Integer.MAX_VALUE;
+		for(int i = 0; i &lt; can.length; i++) {
+			for(int j = 0; j &lt; can[i].length; j++) {
+				if(!can[i][j]) continue;
+				ret = Math.min(ret, Math.abs(i+j-m));
+			}
+		}
+		pw.println(ret);
+		pw.close();
+	}
+}
+</pre>
+</body></html>

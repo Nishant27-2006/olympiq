@@ -1,0 +1,273 @@
+Solution ID: sol_prob3_silver_feb25
+Contest: FEB25
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_feb25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Tina Wang)
+
+Let us define our current state
+
+$(x, y)$
+
+as having
+
+$x$
+
+bales in the first pile
+and
+
+$y$
+
+bales in the second pile.
+
+Subtask 1:
+
+$\max(c, d) \le 20 \cdot\min(a, b)$
+
+We can recurse on our current state
+
+$(x, y)$
+
+: at each step, we can choose to add
+
+$y$
+
+bales to the first pile or
+
+$x$
+
+bales to the second pile. Thus, our recursion
+is as follows:
+
+Starting state:
+
+$(a, b)$
+
+Transition:
+
+$(a, b) \rightarrow (a + b, b), (a, a + b)$
+
+Final state:
+
+$(c, d)$
+
+Notice that once we exceed
+
+$c$
+
+for the first pile or
+
+$d$
+
+for the second pile, we
+can never go back, so recursion can stop immediately after.
+
+Time Complexity:
+
+$O( (\frac{\max(c, d)}{\min(a, b)})^2)$
+
+per test
+
+Subtask 2:
+
+$T \leq 10$
+
+and
+
+$a, b, c, d \leq 10^6$
+
+We notice that a given state
+
+$(x, y)$
+
+is either the base case
+
+$(a, b)$
+
+or came
+from
+
+$(x - y, y)$
+
+,
+
+$(x, y - x)$
+
+. Only one of these is feasible as only one of
+
+$x - y, y - x$
+
+can be positive.
+
+More specifically,
+
+If
+
+$x > y$
+
+, then
+
+$(x - y, y) \rightarrow (x, y)$
+
+If
+
+$x < y$
+
+, then
+
+$(x, y - x) \rightarrow (x, y)$
+
+This motivates a greedy solution where we start at
+
+$(c, d)$
+
+and take any
+feasible subtraction to reach
+
+$(a, b)$
+
+.
+
+Time Complexity:
+
+$O(\frac{\max(c, d)}{\min(a, b)})$
+
+per test
+
+Full Solution:
+
+We observe that instead of doing each transition
+
+$(x - y, y) \rightarrow (x, y)$
+
+one by one, we can batch the same type of transition together.
+
+More specifically, note that is
+
+$x - y > y$
+
+as well, then
+
+$(x - 2y, y) \rightarrow (x - y, y) \rightarrow (x, y)$
+
+.
+
+The number of operations we can batch is then
+
+$\lfloor\frac{x - a}{y}\rfloor$
+
+if
+
+$x > y$
+
+$\lfloor\frac{y - b}{x}\rfloor$
+
+if
+
+$x \leq y$
+
+If
+
+$x < a$
+
+or
+
+$y < b$
+
+, it is impossible as described above.
+
+My C++ code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+     
+ll solve() {
+    ll a, b, c, d;
+    cin >> a >> b >> c >> d;
+    if(a == c && b == d) return 0;
+    
+    ll ans = 0;
+    while(a != c || b != d) {
+        if(c < a || d < b) return -1;
+        if(c > d) {
+            ans += max(1LL, (c - a) / d);
+            c -= max(1LL, (c - a) / d) * d;
+        } else if (d > c) {
+            ans += max(1LL, (d - b) / c);
+            d -= max(1LL, (d - b) / c) * c;
+        } else return -1;
+    }
+    return ans;
+}
+     
+int main() {
+    setIO();
+     
+    int T;
+    cin >> T;
+    while(T--) {
+        cout << solve() << "\n";
+    }
+ 
+    return 0;
+}
+
+Benjamin Qi's Python code:
+
+def solve():
+    a, b, c, d = map(int, input().split())
+    ops = 0
+    while True:
+        if a == c and b == d:
+            return ops
+        if c < d:
+            a, b = b, a
+            c, d = d, c
+        if a > c or b > d or d == 0:
+            return -1
+        if b == d and (c - a) % d == 0:
+            ops += (c - a) // d
+            return ops
+        ops += c // d
+        c %= d
+    return ops
+
+
+T = int(input())
+for _ in range(T):
+    print(solve())
+
+Time Complexity:
+
+$O(\log\frac{\max(c, d)}{\min(a, b)})$
+
+per test, since after
+every batch transition either
+
+$c$
+
+or
+
+$d$
+
+is reduced by at least a factor of 2.
+
+Note: The operations we perform on
+
+$c$
+
+and
+
+$d$
+
+are equivalent to those in the
+
+Euclidean algorithm
+
+for computing GCD.

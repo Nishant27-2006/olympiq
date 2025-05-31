@@ -1,0 +1,114 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: OPEN16 Contest - Platinum Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Farmer John is building a nicely-landscaped garden, and needs to move a large
+amount of dirt in the process.
+
+The garden consists of a sequence of $N$ flowerbeds ($1 \leq N \leq 100,000$),
+where flowerbed $i$ initially contains $A_i$ units of dirt.  Farmer John would
+like to re-landscape the garden so that each flowerbed $i$ instead contains
+$B_i$ units of dirt.  The $A_i$'s and $B_i$'s are all integers in the range
+$0 \ldots 10$.
+
+To landscape the garden, Farmer John has several options: he can purchase one
+unit of dirt and place it in a flowerbed of his choice for $X$ units of money. 
+He can remove one unit of dirt from a flowerbed of his choice and have it 
+shipped away for $Y$ units of money.  He can also transport one unit of dirt
+from  flowerbed $i$ to flowerbed $j$ at a cost of $Z$ times $|i-j|$.  Please
+compute the minimum  total cost for Farmer John to complete his landscaping
+project.
+
+INPUT FORMAT (file landscape.in):
+The first line of input contains $N$, $X$, $Y$, and $Z$
+($0 \leq X, Y \le 10^8; 0 \le Z \leq 1000$).  Line $i+1$ contains the integers $A_i$ and $B_i$.
+
+OUTPUT FORMAT (file landscape.out):
+Please print the minimum total cost FJ needs to spend on landscaping.
+
+SAMPLE INPUT:
+4 100 200 1
+1 4
+2 3
+3 2
+4 0
+SAMPLE OUTPUT: 
+210
+
+Note that this problem has been asked in a previous USACO contest,
+at the silver level; however, the limits in the present version have
+been raised considerably, so one should not expect many points from
+the solution to the previous, easier version. 
+
+
+Problem credits: Brian Dean
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (file landscape.out):Please print the minimum total cost FJ needs to spend on landscaping.SAMPLE INPUT:4 100 200 1
+1 4
+2 3
+3 2
+4 0SAMPLE OUTPUT:210Note that this problem has been asked in a previous USACO contest,
+at the silver level; however, the limits in the present version have
+been raised considerably, so one should not expect many points from
+the solution to the previous, easier version.Problem credits: Brian Dean
+
+\section*{Output Format}
+SAMPLE INPUT:4 100 200 1
+1 4
+2 3
+3 2
+4 0SAMPLE OUTPUT:210Note that this problem has been asked in a previous USACO contest,
+at the silver level; however, the limits in the present version have
+been raised considerably, so one should not expect many points from
+the solution to the previous, easier version.Problem credits: Brian Dean
+
+\section*{Sample Input}
+\begin{verbatim}
+4 100 200 1
+1 4
+2 3
+3 2
+4 0
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+210
+
+Note that this problem has been asked in a previous USACO contest,
+at the silver level; however, the limits in the present version have
+been raised considerably, so one should not expect many points from
+the solution to the previous, easier version.Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=650
+
+\section*{Source}
+USACO OPEN16 Contest, Platinum Division, Problem ID: 650
+
+\end{document}

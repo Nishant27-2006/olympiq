@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Nathan Pinsker )
+<p>Let <span class='math'>$f^*(k)$</span> be the optimal payment outcome given that Bessie starts at the point
+<span class='math'>$k$</span>. We know that <span class='math'>$f^*(k) = \max\left(f(k), \frac{f^*(k-1) + f^*(k+1)}{2}\right)$</span>. However,
+the most straightforward ways of solving such a system require inverting
+matrices, which takes <span class='math'>$O(n^3)$</span> time, nowhere near fast enough. We need to find a
+faster way by understanding the structure of the problem better.
+<p>Let&apos;s consider another straightforward algorithm:
+<ul><li>Initialize <span class='math'>$g(k) = f(k)$</span> for every <span class='math'>$k$</span>.</li><li>Repeat as long as we can:
+Find a <span class='math'>$k$</span> such that <span class='math'>$g(k) &lt; \frac{g(k-1) + g(k+1)}{2}$</span>, and set
+<span class='math'>$g(k) =
+\frac{g(k-1) + g(k+1)}{2}$</span>.</li></ul>
+<p>After we&apos;re finished (we can&apos;t find any more <span class='math'>$k$</span> to improve), we simply output
+the value of <span class='math'>$g(k)$</span> for each <span class='math'>$k$</span>.
+<p>In other words, we are defining <span class='math'>$g(k)$</span> to be the best payment outcome starting
+at position <span class='math'>$k$</span> that we can find, so far. The question is, after this process is
+finished, can we guarantee that each <span class='math'>$g(k) = f^*(k)$</span>?
+<p>The key insight is to visualize this problem on a 2D coordinate axis. If we plot
+each point as <span class='math'>$(k, f(k))$</span>, then this process will give us the upper convex hull of
+all these points. Taking into the properties of convex hulls, it becomes
+more clear that this process always gives the correct answer: the value of
+<span class='math'>$f^*(k)$</span> for any <span class='math'>$k$</span> is always equal to the weighted average of points within
+the hull, and so this value must also be within the upper hull.
+<p>Using our favorite
+convex hull algorithm, we simply find the upper hull of all the points
+<span class='math'>$(k, f(k))$</span>, and output the y-value along the hull for each possible value of
+<span class='math'>$k$</span> from <span class='math'>$1$</span> to <span class='math'>$N$</span>. This takes <span class='math'>$O(N \log N)$</span> time overall.
+<p>Here&apos;s Dhruv&apos;s code. Note that the computation is done entirely in integers, to
+avoid precision issues:
+<p><pre class='prettyprint'>
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+#include &lt;cstdio&gt;
+using namespace std;
+#define MAXN 100000
+ 
+int N;
+long long f[MAXN+2];
+int l[MAXN+2];
+int r[MAXN+2];
+ 
+int main()
+{
+	cin &gt;&gt; N;
+	for(int i=1;i&lt;=N;i++)
+		cin &gt;&gt; f[i];
+	f[0] = f[N+1] = 0;
+	vector&lt;int&gt; hull;
+	hull.push_back(0);
+	for(int k=1;k&lt;=N+1;k++)
+	{
+		while(hull.size() &gt;= 2)
+		{
+			int i = hull[hull.size()-2];
+			int j = hull[hull.size()-1];
+			if((k-i)*f[j] &lt; (j-i)*f[k] + (k-j)*f[i])
+				hull.pop_back();
+			else
+				break;
+		}
+		hull.push_back(k);
+	}
+	for(int j=0;j&lt;hull.size()-1;j++)
+	{
+		for(int i=hull[j]+1;i&lt;hull[j+1];i++)
+		{
+			l[i] = hull[j];
+			r[i] = hull[j+1];
+		}
+		l[hull[j]] = r[hull[j]] = hull[j];
+	}
+	l[N+1] = r[N+1] = N+1;
+	for(int i=1;i&lt;=N;i++)
+	{
+		if(l[i]==r[i]) cout &lt;&lt; 100000LL*f[i] &lt;&lt; &apos;\n&apos;;
+                else cout &lt;&lt; (100000ULL*(((unsigned long long)(r[i]-i))*((unsigned long long)f[l[i]]) + ((unsigned long long)(i - l[i]))*((unsigned long long)f[r[i]])))/((unsigned long long)(r[i]-l[i])) &lt;&lt; &apos;\n&apos;;
+        }
+	return 0;
+}
+
+</pre>
+<p></body></html>

@@ -1,0 +1,405 @@
+Solution ID: sol_prob1_silver_feb25
+Contest: FEB25
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_feb25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Chongtian Ma)
+
+Observation
+
+: We will add cow
+
+$c$
+
+to the back of line
+
+$b$
+
+if and only if
+
+$a_c = \max(a_c, a_{c+1}, \ldots, a_N)$
+
+.
+
+Proof: Suppose we have already considered cows
+
+$a_1, a_2, \ldots, a_{c-1}$
+
+and
+temporarily constructed an array
+
+$b_1, b_2 \ldots b_{k-1}$
+
+. Let's say
+
+$a_c = \max(a_c, a_{c+1}, \ldots, a_N)$
+
+and we want to consider if adding it to
+the back of
+
+$b$
+
+is optimal. It's important to note that:
+
+The maximum possible value of
+
+$b_k$
+
+is exactly
+
+$\max(a_c,\ldots, a_N)$
+
+.
+
+To ensure
+
+$b$
+
+is the lexicographically
+greatest, we must add a cow labeled
+
+$\max(a_c,\ldots, a_N)$
+
+as
+
+$b_k$
+
+.
+
+It cannot worsen
+
+$b$
+
+to add the first such occurrence of
+
+$\max(a_c,\ldots, a_N)$
+
+.  If we instead add some other cow that has a label of
+
+$\max(a_c,\ldots, a_N)$
+
+, we can just replace
+
+$b_k$
+
+with
+
+$a_c$
+
+, and our
+
+$b$
+
+effectively remains the same.
+
+Therefore, it is optimal add
+
+$a_c$
+
+as
+
+$b_k$
+
+if and only if
+
+$a_c = \max(a_c,\ldots, a_N)$
+
+.
+
+Subtask
+
+$1$
+
+:
+
+$N \leq 100$
+
+It suffices to fix the position of the old and new positions of the cow we will
+remove to the front, and recompute
+
+$b$
+
+every time. This runs in
+
+$\mathcal{O}(N^3)$
+
+.
+
+Full Credit
+
+Let's consider the preliminary array
+
+$b$
+
+, constructed before the operation is
+performed. Let's denote another array
+
+$p_i$
+
+that represents the position where
+
+$b_i$
+
+is taken from
+
+$a$
+
+.
+
+Consider an index
+
+$j$
+
+such that
+
+$b_j > b_{j+1}$
+
+. Note that it is pointless to
+move
+
+$b_{j+1}$
+
+before
+
+$p_j$
+
+, since
+
+$b_{j+1}$
+
+will no longer be a suffix maximum
+of
+
+$a$
+
+.  Therefore, the only way we can improve
+
+$b$
+
+is through inserting new
+elements after
+
+$p_{j+1}$
+
+, and these new elements must be new suffix maximums
+that appear after we move
+
+$b_{j+1}$
+
+forwards.
+
+To maximize the number of candidate suffix maximums, it is optimal to move
+
+$b_{j+1}$
+
+right before index
+
+$p_j+1$
+
+. Why? Consider element
+
+$a_k$
+
+where
+
+$p_j < k < p_{j+1}$
+
+,
+
+$a_k < b_j$
+
+and there is no other element after index
+
+$p_{j+1}$
+
+that is greater than
+
+$a_k$
+
+. After moving
+
+$b_{j+1}$
+
+to a position
+before
+
+$k$
+
+,
+
+$a_k$
+
+will become a suffix maximum if there is no position
+
+$l \in [k+1, p_{j+1}-1]$
+
+where
+
+$a_l > a_k$
+
+. To maximize the number of candidates
+for
+
+$a_k$
+
+, we want the number of elements between
+
+$p_{j+1}$
+
+after the move and
+
+$p_{j+2}$
+
+to be as large as possible.  Any element between those two indices can
+potentially be a new suffix maximum.
+
+What other elements can we insert in
+
+$b$
+
+after the move?  Consider a
+non-increasing subsequence
+
+$s_1, s_2, \ldots, s_m$
+
+formed by elements indexed
+within
+
+$[p_j+1, p_{j+2}-1$
+
+], excluding
+
+$p_{j+1}$
+
+. If
+
+$s_1 < b_{j+1}$
+
+and
+
+$s_m \geq b_{j+2}$
+
+, then all of those elements can be inserted behind
+
+$b_{j+1}$
+
+,
+as they will all become suffix maximums, since
+
+$b_j$
+
+is moved before
+
+$p_j+1$
+
+.
+
+Note that we will also need to consider
+
+$j$
+
+where
+
+$b_j = b_{j+1}$
+
+. Even if we
+move
+
+$b_{j+1}$
+
+before
+
+$p_j$
+
+, it is still a suffix maximum. However, this move
+will not improve the number of candidate suffix maximums, as it the upper bound
+for the suffix maximums will be
+
+$b_j$
+
+, which is equivalent to
+
+$b_{j+1}$
+
+.
+
+It is pointless to consider moving cows not in
+
+$b$
+
+, since more suffix maximums
+can't be produced. Additionally, since you may want to move an element before
+the start of the array, it may be useful to denote
+
+$b_0 = \infty$
+
+.
+
+Finally, to obtain the lexicographically greatest result, it is optimal to
+consider the first index
+
+$j$
+
+such that a non-empty subsequence of suffix
+maximums can be newly inserted behind
+
+$b_{j+1}$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+	int T; cin >> T;
+	while(T--){
+		int N; cin >> N;
+		vector<int> a(N);
+		for(int i = 0; i < N; i++) cin >> a[i];
+		
+		// build array b without the operation
+		// the second element in the pair is the index taken from a
+		vector<pair<int, int>> b;
+		int suff_max = -1;
+		for(int i = N - 1; i >= 0; i--){
+			suff_max = max(suff_max, a[i]);
+			if(suff_max == a[i]) b.push_back({a[i], i});
+		}
+		reverse(b.begin(), b.end());
+		
+		b.insert(b.begin(), {N + 1, -1}); // append arbitrary large number to start of b
+		b.push_back({-1, N}); // append arbitrary small number to end of b
+		
+		for(int i = 1; i < (int) b.size() - 1; i++){
+			vector<pair<int, int>> add;
+			suff_max = b[i+1].first;
+			for(int j = b[i+1].second - 1; j > b[i-1].second; j--){
+				if(b[i].second == j) continue;
+				suff_max = max(suff_max, a[j]);
+				if(suff_max == a[j]) add.push_back({a[j], j});
+			}
+			reverse(add.begin(), add.end());
+			if(!add.empty()){
+				b.insert(b.begin() + i + 1, add.begin(), add.end());
+				break;
+			}
+		}
+		
+		for(int i = 1; i < (int) b.size() - 1; i++){
+			cout << b[i].first << " \n"[i + 2 == (int) b.size()];
+		}
+	}
+}
+// Bessie says hi vvv
+
+/*
+\|/          (__)    
+     `\------(oo)
+       ||    (__)
+       ||w--||     \|/
+   \|/
+*/

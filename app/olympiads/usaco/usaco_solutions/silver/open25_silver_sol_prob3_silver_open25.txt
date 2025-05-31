@@ -1,0 +1,445 @@
+Solution ID: sol_prob3_silver_open25
+Contest: OPEN25
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_open25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brandon Wang)
+
+Phrased in graph theoretic terms, this problem is asking us the following:  We
+are given a rooted tree with each edge being labeled with a difficulty
+
+$d$
+
+and
+an enjoyment
+
+$e$
+
+. For any given query
+
+$(s, c)$
+
+, we want to find the maximum
+total enjoyment path  among all paths from the root satisfying the following
+condition: At most
+
+$c$
+
+of the edges can have difficulty greater than
+
+$s$
+
+.
+
+Note that trying all vertices would take
+
+$O(M \sum \delta_i)$
+
+, where
+
+$\delta_i$
+
+is the depth of node
+
+$i$
+
+, which would take too long  as it could be up to
+
+$O(MN^2)$
+
+.
+
+Subtask 1 (
+
+$N, M \leq 1000$
+
+):
+
+In this case, let
+
+$E_i$
+
+be the total enjoyment on the path starting from node
+
+$i$
+
+. We can compute
+
+$E_i$
+
+via the following dfs (all code snippets will assume
+we have shifted the nodes to be
+
+$0$
+
+-indexed):
+
+def precompute_E(p, e):
+    E[0] = 0
+    
+    for i in range(1, N):
+        E[i] := E[p[i]] + e[i]
+
+    return E
+
+Similarly, we need to precompute the top 11 difficulty edges on the path from
+
+$i$
+
+. We can do this by first computing collecting all the difficulties, and
+checking the top 11.
+
+def precompute_top_11(p, d):
+    all_difficulties[0] = []
+    top_11_difficulties[0] = []
+
+    for i in range(1, N):
+        all_weights[i] := all_weights[p[i]] + [d[i]]
+        top_11_difficulties[i] = sorted(all_weights[i])[-11:]  # In practice, we'll need to pad these
+
+Then, for any query
+
+$s$
+
+,
+
+$c$
+
+, we need to find the maximum
+
+$E_i$
+
+over all nodes
+
+$i$
+
+whose
+
+$c+1$
+
+th difficulty is at most
+
+$s$
+
+.
+
+Here is a C++ implementation. The precomputation takes
+
+$O(N^2\log N)$
+
+and
+processing queries takes
+
+$O(N)$
+
+, giving a runtime of
+
+$O(N^2\log N + MN)$
+
+.
+
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+using namespace std;
+ 
+int main() {
+    int N; 
+    cin >> N;
+    int p[N], d[N], e[N];
+ 
+    for (int i = 1; i < N; i++) {
+        cin >> p[i] >> d[i] >> e[i];
+        p[i]--;
+    }
+ 
+    long long E[N];
+    E[0] = 0;
+    for (int i = 1; i < N; i++) {
+        E[i] = E[p[i]] + e[i];
+    }
+ 
+    vector<int> difficulties[N], top_11[N];
+    // pad with -1s, so that paths with k < 11 weights will
+    // have their remaining 11-k elements filled with -1
+    difficulties[0] = vector<int>(11, -1);
+    top_11[0] = vector<int>(11, -1);
+    for (int i = 1; i < N; i++) {
+        difficulties[i] = difficulties[p[i]];
+        difficulties[i].push_back(d[i]);
+        top_11[i] = difficulties[i];
+        sort(top_11[i].begin(), top_11[i].end(), greater<int>());
+        top_11[i].resize(11);
+    }
+ 
+    int M;
+    cin >> M;
+ 
+    for (int i = 0; i < M; i++) {
+        int S, C;
+        cin >> S >> C;
+        long long ans = 0;
+        for (int j = 0; j < N; j++) {
+            if (top_11[j][C] <= S) {
+                ans = max(ans, E[j]);
+            }
+        }
+        cout << ans << "\n";
+    }
+}
+
+Alternatively, we can answer each query independently with a depth-first search
+in
+
+$O(MN)$
+
+time overall, though this doesn't naturally extend to the remaining
+subtasks.
+
+Subtask 2 (
+
+$c = 0$
+
+):
+
+Here, we make two observations:
+
+We only need to maintain the max weight in any path. We can do this with a
+DFS in
+
+$O(N)$
+
+.
+
+Let
+
+$D_i$
+
+be the maximum difficulty on the path from
+
+$i$
+
+. We can sort all the vertices in increasing order of
+
+$i$
+
+. Then, if (after
+sorting) we have
+
+$D_1 \leq D_2 \leq \cdots \leq D_N$
+
+, then for any query if we have
+
+$$D_1 \leq \cdots \le D_i \le s < D_{i+1} \leq \cdots D_N,$$
+
+then we know that the answer is
+
+$\max(E_1, \ldots, E_i)$
+
+. Thus, we can answer
+queries with binary search.
+
+By preprocessing the array
+
+$D$
+
+and sorting by
+
+$D$
+
+, as well as maintaining
+cumulative maximum (i.e. precomputing
+
+$\max(E_1, \ldots, E_i)$
+
+for each
+
+$i$
+
+), 
+we can answer queries in
+
+$O(\log N)$
+
+with
+
+$O(N\log N)$
+
+preprocessing, giving an
+
+$O(N\log N + M\log N)$
+
+runtime.
+
+Here is a C++ implementation:
+
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+using namespace std;
+ 
+int main() {
+    int N;
+    cin >> N;
+    int p[N], d[N], e[N];
+ 
+    for (int i = 1; i < N; i++) {
+        cin >> p[i] >> d[i] >> e[i];
+        p[i]--;
+    }
+ 
+    pair<int, long long> DE[N];
+    DE[0] = {-1, 0};
+    for (int i = 1; i < N; i++) {
+        int Dpi = DE[p[i]].first;
+        long long Epi = DE[p[i]].second;
+        DE[i] = {max(Dpi, d[i]), Epi + e[i]};
+    }
+ 
+    sort(DE, DE + N);
+    for (int i = 1; i < N; i++) {
+        DE[i].second = max(DE[i].second, DE[i-1].second);
+    }
+ 
+    int M, S, C;
+    cin >> M;
+ 
+    for (int i = 0; i < M; i++) {
+        cin >> S >> C;
+        int idx = lower_bound(DE, DE + N, make_pair(S+1, -1LL)) - DE;
+        cout << DE[idx-1].second << "\n";
+    }
+}
+
+Full Solution:
+
+Note that observation 2 from Subtask 2 applies in general. If we can compute the
+top 11 difficulties array,  then we can sort by
+
+$c$
+
+th difficulty for each
+
+$c = 1, 2, \ldots, 11$
+
+.
+
+To compute the top 11 difficulties quickly, note that we can compute the top 11
+difficulties for a given vertex
+
+$i$
+
+given the top 11 from
+
+$p_i$
+
+and
+
+$d_i$
+
+. This
+is because anything difficulty that is not in the top 11 for
+
+$p_i$
+
+won't be in
+the top 11 for
+
+$i$
+
+. This gives the following improvement:
+
+def precompute_top_11(p, d):
+    top_11_difficulties[0] = []
+
+    for i in range(1, N):
+        relevant_weights = top_11_difficulties[p[i]] + [d[i]]
+        top_11_difficulties[i] = sorted(relevant_weights)[-11:]
+
+(Note: You can remove the sorting here by inserting
+
+$d_i$
+
+into the appropriate
+position.  Depending on how you implement this, it will take either
+
+$O(C)$
+
+or
+
+$O(\log C)$
+
+per step, which is a slight improvement from
+
+$O(C\log C)$
+
+per step
+shown here.)
+
+Putting it all together, we get a solution that runs in
+
+$O(NC\log N + M\log N)$
+
+.
+Here is a C++ implementation:
+
+#include <algorithm>
+#include <iostream>
+#include <vector>
+ 
+const int MAXC = 11;
+ 
+using namespace std;
+ 
+int main() {
+    int N; 
+    cin >> N;
+    int p[N], d[N], e[N];
+ 
+    for (int i = 1; i < N; i++) {
+        cin >> p[i] >> d[i] >> e[i];
+        p[i]--;
+    }
+ 
+    long long E[N];
+    E[0] = 0;
+    for (int i = 1; i < N; i++) {
+        E[i] = E[p[i]] + e[i];
+    }
+ 
+    vector<int> topC[N];
+    topC[0] = vector<int>(MAXC, -1);
+    for (int i = 1; i < N; i++) {
+        topC[i] = topC[p[i]];
+        topC[i].push_back(d[i]);
+        sort(topC[i].begin(), topC[i].end(), greater<int>());
+        topC[i].resize(MAXC);
+    }
+    
+    pair<int, long long> DE[MAXC][N];
+    for (int c = 0; c < MAXC; c++) {
+        for (int i = 0; i < N; i++) {
+            DE[c][i] = {topC[i][c], E[i]};
+        }
+        sort(DE[c], DE[c] + N);
+        for (int i = 1; i < N; i++) {
+            DE[c][i].second = max(DE[c][i].second, DE[c][i-1].second);
+        }
+    }
+ 
+    int M;
+    cin >> M;
+ 
+    for (int i = 0; i < M; i++) {
+        int S, C;
+        cin >> S >> C;
+        int idx = lower_bound(DE[C], DE[C] + N, make_pair(S+1, -1LL)) - DE[C];
+        cout << DE[C][idx-1].second << endl;
+    }
+}

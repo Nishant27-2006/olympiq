@@ -1,0 +1,299 @@
+Solution ID: sol_prob3_silver_open22
+Contest: OPEN22
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brian Dean)
+
+Since
+
+$N$
+
+and
+
+$Q$
+
+are both large, we are motivated to look for way to
+characterize the answer to any query that can be evaluated very quickly.
+
+Let
+
+$C$
+
+,
+
+$O$
+
+, and
+
+$W$
+
+be the counts of their respective characters in a  query
+substring.  We can evaluate these in constant time for any query using a
+difference of two pre-computed prefix sums -- e.g. the number of
+
+$C$
+
+'s in the
+query window
+
+$i \ldots j$
+
+is the cumulative number of
+
+$C$
+
+'s  up to index
+
+$j$
+
+minus the cumulative number up to index
+
+$i-1$
+
+(as in
+
+Breed
+Counting
+
+).
+
+We claim the answer to a query is YES if and only if
+
+$O+W$
+
+has even parity and
+
+$C+O$
+
+has odd parity (this is equivalent to saying
+
+$O+W$
+
+is even and
+
+$C+W$
+
+is
+odd).  Note that any modification of our string has no impact on  the parity of
+any sum of two of
+
+$C$
+
+,
+
+$O$
+
+, and
+
+$W$
+
+like
+
+$O+W$
+
+.
+
+The answer to a query is clearly NO if
+
+$O+W$
+
+is odd, since in this case
+
+$O+W$
+
+stays odd as an invariant, and we can never reduce it to zero.  The answer is
+also clearly NO if
+
+$C+O$
+
+(or
+
+$C+W$
+
+) is even, since in this case we can't ever
+get down to a single
+
+$C$
+
+without also having
+
+$O$
+
+'s or
+
+$W$
+
+'s.  All that remains
+is showing that the answer is always YES when
+
+$O+W$
+
+is even and
+
+$C+O$
+
+is odd. 
+There are several ways to do this.  For example, starting with an arbitrary
+query,  first get rid of all the
+
+$W$
+
+'s.  Then reduce any run of more than one of
+the same character to just one of that character.  This leaves a string of
+alternating
+
+$C$
+
+'s and
+
+$O$
+
+'s.  You can transform
+
+$OCO$
+
+into
+
+$C$
+
+, so we can
+further reduce the string down to the point where it has at most one
+
+$O$
+
+, and
+since
+
+$O+W$
+
+must be even, it most actually have no
+
+$O$
+
+'s, and hence just one
+
+$C$
+
+.  Here is another way: first, note that you can always convert any adjacent two characters in a string into at most one.
+Either theyâre the same and you can directly apply the first operation to remove them, or if theyâre different, you can convert the first one into the not-present character followed by the second one, and then delete the two adjacent occurrences of the second character.  This way any string can be reduced to a string with at most one character, and if O + W is even and C + O is odd the only such string is âCâ.
+
+Benjamin Qi's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	vector<array<int, 3>> prefix_counts{{}};
+	string s;
+	cin >> s;
+	for (char c : s) {
+		prefix_counts.push_back(prefix_counts.back());
+		if (c == 'C') ++prefix_counts.back()[0];
+		if (c == 'O') ++prefix_counts.back()[1];
+		if (c == 'W') ++prefix_counts.back()[2];
+	}
+	int Q;
+	cin >> Q;
+	string ans;
+	while (Q--) {
+		int l, r;
+		cin >> l >> r;
+		array<int, 3> query_counts;
+		for (int i = 0; i < 3; ++i) {
+			query_counts[i] = prefix_counts[r][i] - prefix_counts[l - 1][i];
+		}
+		ans += ((query_counts[1] + query_counts[2]) % 2 == 0 &&
+		        (query_counts[0] + query_counts[1]) % 2 == 1)
+		           ? 'Y'
+		           : 'N';
+	}
+	cout << ans << "\n";
+}
+
+An elegant take on this solution is as follows. Since two adjacent equal characters can be removed and two adjacent different characters can be converted into single instance of the other character, we can identify each of the letters C, O, W with 1, 2, 3 and an empty string with 0. Then the XOR operation has exactly the same effect when combining two numbers, so for any substring we can calculate its XOR using prefix "XOR sums", then check whether this XOR is equal to 1.
+
+Ray Bai's code:
+
+import java.util.*;
+import java.io.*;
+ 
+public class COW
+{
+    public static void main(String omkar[]) throws Exception
+    {
+        int[] map = new int[420];
+        map['C'] = 1;
+        map['O'] = 2;
+        map['W'] = 3;
+        BufferedReader infile = new BufferedReader(new InputStreamReader(System.in));
+        char[] arr = infile.readLine().toCharArray();
+        int N = arr.length;
+        int[] prefix = new int[N+1];
+        for(int i=1; i <= N; i++)
+            prefix[i] = prefix[i-1]^map[arr[i-1]];
+        StringBuilder sb = new StringBuilder();
+        int Q = Integer.parseInt(infile.readLine());
+        while(Q-->0)
+        {
+            StringTokenizer st = new StringTokenizer(infile.readLine());
+            int L = Integer.parseInt(st.nextToken());
+            int R = Integer.parseInt(st.nextToken());
+            if((prefix[R]^prefix[L-1]) == 1)
+                sb.append("Y");
+            else
+                sb.append("N");
+        }
+        System.out.println(sb);
+    }
+}
+
+Interestingly, including GCC optimization pragmas allows an
+
+$O(N^2)$
+
+solution to
+pass. See
+
+this CodeForces blog
+
+for details.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#pragma GCC optimize("O3,unroll-loops")
+
+unsigned char xo[200005];
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	string s;
+	cin >> s;
+	s = "?" + s;
+	for (int i = 0; i < (int)size(s); ++i) {
+		if (s[i] == 'C') xo[i] = 1;
+		if (s[i] == 'O') xo[i] = 2;
+		if (s[i] == 'W') xo[i] = 3;
+	}
+	int Q;
+	cin >> Q;
+	string ans;
+	while (Q--) {
+		int l, r;
+		cin >> l >> r;
+		unsigned char acc = 0;
+		for (int j = l; j <= r; j++) {
+			acc ^= xo[j];
+		}
+		ans += acc == 1 ? 'Y' : 'N';
+	}
+	cout << ans << "\n";
+}

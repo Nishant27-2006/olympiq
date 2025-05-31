@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>Even though the provided string is infinite, the string has a very particular
+structure. Let&apos;s analyze the example, specifically <span class='math'>$\text{COWWCO}$</span> to
+<span class='math'>$\text{COWWCOOCOWWC}$</span>. In particular, note that the index 7 maps to index 6, but
+indices 8 through 12 map to indices 1 through 5.
+<p>For notational convenience, let <span class='math'>$F^k(s) = F(F^{k-1}(s))$</span>, and define <span class='math'>$F^0(s) = s$</span>. 
+<p>We can compute the smallest <span class='math'>$k$</span> such that <span class='math'>$F^k(s)$</span> contains the given index.
+If <span class='math'>$k=0$</span>, then we are looking at the original string and can therefore return
+the character directly. Otherwise, take <span class='math'>$F^k(s)$</span> and split it into two halves.
+The desired index must be in the second half of <span class='math'>$F^k(s)$</span>. If it is the first character
+in the second half, then we want to return the last character in <span class='math'>$F^{k-1}(s)$</span>. Otherwise,
+due to the rotation, we decrease the index by 1 and return that character in <span class='math'>$F^{k-1}(s)$</span>.
+<p>Applying that approach directly gives us an <span class='math'>$O(\log^2 N)$</span> algorithm, which is fast enough
+for our purposes. It can also be improved to <span class='math'>$O(\log N)$</span>.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class cowcode {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;cowcode.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;cowcode.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		String s = st.nextToken();
+		long index = Long.parseLong(st.nextToken());
+		pw.println(parse(s, index-1));
+		pw.close();
+	}
+
+	public static char parse(String s, long index) {
+		if(index &lt; s.length()) {
+			return s.charAt((int)index);
+		}
+		long length = s.length();
+		while(2*length &lt;= index) {
+			length *= 2;
+		}
+		if(length == index) {
+			return parse(s, length-1);
+		}
+		return parse(s, index - length - 1);
+	}
+}
+</pre>
+<p></body></html>

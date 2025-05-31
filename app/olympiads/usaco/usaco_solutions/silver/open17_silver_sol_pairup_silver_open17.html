@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+by Nathan Pinsker
+<p>Let&apos;s start with a small case, to get a feel for the problem. If we have 4 cows
+with values 1, 2, 3, and 4, then we can either pair up cow 1 with cow 2, 3, or
+4.
+<p>If we pair up cow 1 with cow 2, then milking will take 7 units of time total. If
+we pair up cow 1 with cow 3, milking will take 6 units. Finally, if we pair up
+cow 1 with cow 4, milking will take 5 units, which is the best we can do.
+<p>More generally, if we have 4 cows with values <span class='math'>$A &lt; B &lt; C &lt; D$</span>, and we&apos;ve paired
+off A with B and C with D, then it&apos;s always beneficial to swap B and D. This is
+because <span class='math'>$min(A + D, B + C) &lt; C + D$</span>, since <span class='math'>$A &lt; C$</span> and <span class='math'>$B &lt; D$</span>.
+<p>Similarly, if we&apos;ve paired off A with C and B with D, then we should swap C and
+D. This is because <span class='math'>$min(A + D, B + C) &lt; B + D$</span> for similar reasons.
+<p>It follows directly that we should always pair the cow that takes the least
+amount of time with the cow that takes the most amount of time, and remove these
+two from the pool. We can then repeat this with the fastest and slowest cows to
+milk from the new set, and continue in this fashion until we have paired off all
+the cows.
+<p>One final wrinkle is that there can be a gigantic number of cows. To deal with
+this, we instead keep track of each possible (unique) time to milk each cow, as
+well as the number of such cows. If there are <span class='math'>$A$</span> cows that take the minimum
+amount of time to milk and <span class='math'>$B$</span> cows that take the maximum amount of time to
+milk, then we can pair off <span class='math'>$min(A, B)$</span> cows with each other in a single step to
+make our algorithm more efficient. This guarantees that we eliminate either <span class='math'>$A$</span>
+or <span class='math'>$B$</span> cows, decreasing the number of unique values of milk output by one. The
+overall algorithm is thus <span class='math'>$O(n)$</span>.
+<p>Here&apos;s Brian Dean&apos;s solution:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;cmath&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+typedef pair&lt;int,int&gt; pii;
+vector&lt;pii&gt; V;
+int N;
+
+int main(void)
+{
+  ifstream fin (&quot;pairup.in&quot;);
+  ofstream fout (&quot;pairup.out&quot;);
+  fin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++) {
+    int x, y;
+    fin &gt;&gt; x &gt;&gt; y;
+    V.push_back(pii(y,x));
+  }
+  sort(V.begin(), V.end());
+  int M = 0, i=0, j=N-1;
+  while (i &lt;= j) {
+    int x = min(V[i].second, V[j].second);
+    if (i==j) x /= 2;
+    M = max(M, V[i].first + V[j].first);
+    V[i].second -= x;
+    V[j].second -= x;
+    if (V[i].second == 0) i++;
+    if (V[j].second == 0) j--;
+  }
+  fout &lt;&lt; M &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+<p></body></html>

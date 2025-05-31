@@ -1,0 +1,248 @@
+Solution ID: sol_prob1_silver_open22
+Contest: OPEN22
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Observe that the edges
+
+$i\to a_i$
+
+induce a directed graph where every vertex 
+has out-degree 1. This is known as a
+
+functional graph
+
+. We can solve the
+problem for each connected component of the graph independently, so for the
+remainder of the analysis, we will assume the graph consists of a single
+connected component.
+
+Call cow
+
+$i$
+
+inactive
+
+if it contributes
+
+$0$
+
+to the collective pleasure
+value rather than
+
+$v_i$
+
+. From the sample case, among those cows on a simple
+cycle, it is easy to see that at least one of the cows must be inactive.
+Consider the cow
+
+$c$
+
+in the cycle that occurs latest in
+
+$p$
+
+. Then either
+
+$a_c$
+
+either has not departed her farm already (in which case
+
+$a_c$
+
+is inactive) or
+she has (in which case
+
+$c$
+
+is inactive).
+
+As a connected component in a functional graph always contains exactly one
+simple cycle,  the answer must be at most the sum of all
+
+$v_i$
+
+minus the minimum
+
+$v_i$
+
+among that cycle. Furthermore, we can always construct
+
+$p$
+
+that achieves
+this bound. The construction is as follows:
+
+Let cow
+
+$c$
+
+be the cow corresponding to the minimum
+
+$v_i$
+
+along the
+cycle.
+
+Any permutation
+
+$p$
+
+such that
+
+$i$
+
+appears earlier than
+
+$a_i$
+
+in
+
+$p$
+
+for all
+
+$i\neq c$
+
+suffices.
+
+After removing edge
+
+$c\to a_c$
+
+from the component, the component no longer
+contains a cycle. Therefore, the remaining edges form a directed tree rooted at
+
+$c$
+
+. So it is always possible to construct
+
+$p$
+
+(ex. DFS backward through the
+tree and add each node to the front of
+
+$p$
+
+when it's traversed for the first
+time).
+
+In the code below, for each connected component I use
+
+Floyd's
+algorithm
+
+to detect a vertex along the cycle. After that, I mark every
+vertex in the connected component as visited. As each connected component is
+processed in time proportional to its size, the runtime is
+
+$O(N)$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+#define all(x) begin(x), end(x)
+
+vector<int> a, v;
+vector<vector<int>> child;
+vector<bool> done;
+
+void mark_as_done(int x) {
+	if (done[x]) return;
+	done[x] = true;
+	for (int c : child[x]) mark_as_done(c);
+}
+
+int solve(int start) {
+	int x = start, y = start;
+	do {
+		x = a[x], y = a[a[y]];
+	} while (x != y);
+	int min_along_cycle = INT_MAX;
+	do {
+		min_along_cycle = min(min_along_cycle, v[x]);
+		x = a[x];
+	} while (x != y);
+	mark_as_done(x);
+	return min_along_cycle;
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin >> N;
+	a.resize(N + 1);
+	v.resize(N + 1);
+	child.resize(N + 1);
+	int64_t ans = 0;
+	for (int i = 1; i <= N; ++i) {
+		cin >> a[i] >> v[i];
+		ans += v[i];
+		child[a[i]].push_back(i);
+	}
+	done.resize(N + 1);
+	for (int i = 1; i <= N; ++i)
+		if (!done[i]) ans -= solve(i);
+	cout << ans << "\n";
+}
+
+Alternatively, if you are familiar with Gold topics, the answer is just the
+weight of a maximum spanning forest of the graph (treating the edges as
+undirected), which can be computed with
+
+Kruskal's algorithm
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+struct DSU {
+	vector<int> e;
+	void init(int N) { e = vector<int>(N, -1); }
+	int get(int x) { return e[x] < 0 ? x : e[x] = get(e[x]); }
+	bool unite(int x, int y) {
+		x = get(x), y = get(y);
+		if (x == y) return 0;
+		if (e[x] > e[y]) swap(x, y);
+		e[x] += e[y];
+		e[y] = x;
+		return 1;
+	}
+};
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin >> N;
+	vector<tuple<int, int, int>> edges;
+	for (int i = 1; i <= N; ++i) {
+		int a, v;
+		cin >> a >> v;
+		edges.push_back({v, i, a});
+	}
+	sort(edges.rbegin(), edges.rend());
+	DSU D;
+	D.init(N + 1);
+	int64_t ans = 0;
+	for (auto [v, x, y] : edges)
+		if (D.unite(x, y)) ans += v;
+	cout << ans << "\n";
+}
+
+Bonus: Solve the problem when the
+
+$v_i$
+
+can be negative.

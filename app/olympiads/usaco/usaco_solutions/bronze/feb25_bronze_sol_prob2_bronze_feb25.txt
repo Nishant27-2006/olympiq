@@ -1,0 +1,185 @@
+Solution ID: sol_prob2_bronze_feb25
+Contest: FEB25
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob2_bronze_feb25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+For the mex of
+
+$a$
+
+to equal an integer
+
+$i$
+
+,
+
+No element of
+
+$a$
+
+must equal
+
+$i$
+
+.
+
+All of
+
+$0,1,\dots,i-1$
+
+must appear in
+
+$a$
+
+.
+
+So the number of changes we need to make is at least the maximum of the
+following two quantities:
+
+the number of elements of
+
+$a$
+
+equal to
+
+$i$
+
+(since we must change each
+element to a different value)
+
+the number of non-negative integers less than
+
+$i$
+
+that do not appear in
+
+$a$
+
+(for each such integer, we must change an element to equal it).
+
+Conversely, it can be seen that as long as
+
+$0\le i\le N$
+
+, the answer is exactly
+equal to the maximum of these two quantities. We can show this via the following
+strategy.
+
+While there are changes left to make, prioritize selecting an element equal to
+
+$i$
+
+to change if such an element exists, or else any element other than those
+less than
+
+$i$
+
+that appear exactly once in
+
+$a$
+
+. Then prioritize changing it to a
+non-negative integer less than
+
+$i$
+
+that doesn't already appear in
+
+$a$
+
+if such an
+integer exists, or else any integer greater than
+
+$i$
+
+. This strategy is
+guaranteed to decrease both quantities by one if they are positive or leave them
+at zero otherwise.
+
+To compute the first quantity, we can maintain an array of length
+
+$N+1$
+
+storing
+the count of each value from
+
+$0$
+
+to
+
+$N$
+
+. To compute the second quantity
+(
+
+$\texttt{missing_lt_i}$
+
+in the code), we can loop
+
+$i$
+
+from
+
+$0$
+
+up to
+
+$N$
+
+and
+increment it as necessary. The runtime is
+
+$O(N)$
+
+.
+
+Python code:
+
+N = int(input())
+a = list(map(int, input().split()))
+
+cnt = [0] * (N + 1)
+for x in a:
+    cnt[x] += 1
+
+missing_lt_i = 0
+for i in range(N + 1):
+    print(max(cnt[i], missing_lt_i))
+    missing_lt_i += cnt[i] == 0
+
+C++ code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int N; cin >> N;
+    vector<int> A(N);
+    for (int i = 0; i < N; i++) cin >> A[i];
+
+    // cnt[i] = # of times the number `i` appears in A
+    vector<int> cnt(N+1);
+    for (int x : A) {
+        cnt[x]++;
+    }
+
+    // missing_lt_i = how many numbers in [0..i) are missing from A?
+    int missing_lt_i = 0;
+
+    for (int i = 0; i <= N; i++) {
+        cout << max(cnt[i], missing_lt_i) << "\n";
+        bool is_i_missing_from_A = cnt[i] == 0;
+        if (is_i_missing_from_A) {
+            missing_lt_i++;
+        }
+    }
+}

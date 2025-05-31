@@ -1,0 +1,210 @@
+Solution ID: sol_prob2_silver_feb25
+Contest: FEB25
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_feb25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+If
+
+$p_j=i$
+
+, say that
+
+$j$
+
+is a child of
+
+$i$
+
+and
+
+$i$
+
+is a parent of
+
+$j$
+
+. Let's
+first compute the length and number of children for each word
+
+$i$
+
+.
+
+When Bessie chooses a word
+
+$w_i$
+
+to read from the word bank, what she actually
+reads will be some word
+
+$x_i$
+
+that is a prefix of
+
+$w_i$
+
+. We will initialize
+
+$x_i=w_i$
+
+and then repeatedly replace
+
+$x_i$
+
+with its parent while
+
+$w_i$
+
+can
+still be uniquely identified from
+
+$x_i$
+
+. Specifically,
+
+If
+
+$x_i=0$
+
+or
+
+$p_{x_i}$
+
+has more than one child, we should stop (
+
+$w_i$
+
+can't
+be uniquely identified from
+
+$p_{x_i}$
+
+).
+
+Otherwise,
+
+$x_i$
+
+is the only child of
+
+$p_{x_i}$
+
+, so reading
+
+$p_{x_i}$
+
+is
+enough to uniquely identify
+
+$x_i$
+
+and therefore
+
+$w_i$
+
+. Thus, we can repeatedly
+set
+
+$x_i=p_{x_i}$
+
+until the first case holds.
+
+When
+
+$x_i$
+
+has been determined, print its length. Then
+
+$w_i$
+
+is removed from the
+word bank, so all words from
+
+$x_i$
+
+to
+
+$w_i$
+
+inclusive can be ignored going
+forward.  We also decrease the number of children of
+
+$p_{x_i}$
+
+by one to account
+for ignoring
+
+$x_i$
+
+.
+
+The number of operations performed for
+
+$w_i$
+
+is proportional to a constant plus
+the number of ignored words. As the total number of ignored words cannot exceed
+the total number of words, the overall time complexity is
+
+$O(N)$
+
+.
+
+Python code:
+
+N = int(input())
+P = [0] + list(map(int, input().split()))
+num_child = [0] * (N+1)
+length = [0]*(N+1)
+for i in range(1,N+1):
+    length[i] = length[P[i]]+1
+    num_child[P[i]] += 1
+ 
+M = sum(x == 0 for x in num_child)
+for _ in range(M):
+    x = int(input())
+    while True:
+        assert num_child[x] == 0
+        if x == 0:
+            print(0)
+            break
+        if num_child[P[x]] == 1:
+            x = P[x]
+            num_child[x] = 0
+            continue
+        print(length[x])
+        num_child[P[x]] -= 1
+        break
+
+Bonus: The above solution may take proportional to
+
+$N$
+
+time to process a single
+
+$w_i$
+
+.  Write a solution that preprocesses the
+
+$p_i$
+
+in
+
+$O(N)$
+
+time, and then 
+processes each
+
+$w_i$
+
+in
+
+$O(1)$
+
+time.

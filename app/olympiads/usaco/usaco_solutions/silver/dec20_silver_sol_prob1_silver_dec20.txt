@@ -1,0 +1,176 @@
+Solution ID: sol_prob1_silver_dec20
+Contest: DEC20
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_dec20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+Consider any "optimal" sequence of events: a minimum-length sequence of moves or
+doublings that causes every farm to have a sick cow. Observe that if an infected
+cow at any time moves from some farm
+
+$i$
+
+to an adjacent farm
+
+$j$
+
+which already
+has an infected cow, we can replace this event with a superspreader event at
+farm
+
+$j$
+
+. This replacement causes an equally optimal sequence of events, because
+it doesn't decrease the ensuing number of infected cows at either farm. So
+without loss of generality, we can assume that in the optimal solution, an
+infected cow never moves to a farm with another infected cow.
+
+Additionally, suppose that at some point in time, a farm
+
+$i$
+
+has exactly one
+infected cow, and this cow moves to an adjacent farm
+
+$j$
+
+. Then there'll be no
+infected cow in farm
+
+$i$
+
+, so at some later time, some infected cow has to move
+*into* farm
+
+$i$
+
+. Let's insert into the event sequence a superspreader event at
+farm
+
+$i$
+
+, right before the infected cow leaves farm
+
+$i$
+
+. If we keep the rest of
+the sequence the same, farm
+
+$i$
+
+will subsequently always have at least one more
+cow than in the original sequence. So we can cut out the event where an infected
+cow moves back into farm
+
+$i$
+
+. This produces an optimal sequence without increasing the number of moves.
+So once again, we can assume without loss of generality that the described event
+never happens.
+
+This means that if we look at the set of *infected farms*, i.e. farms which have
+an infected cow, this set never shrinks, and every time a move event happens,
+the set expands by exactly one. Essentially, the set forms an ever-expanding
+subtree around farm
+
+$1$
+
+.
+
+So our (specifically constructed) optimal sequence of events has exactly
+
+$n-1$
+
+move events, one for each farm besides farm
+
+$1$
+
+: the event where this farm
+enters the infected set. How many superspreader events do we need?
+
+Root the tree at farm
+
+$1$
+
+and consider any subtree rooted at farm
+
+$i$
+
+.
+Eventually there will be exactly one infected cow in farm
+
+$i$
+
+(and none yet in
+its subtree). If the farm has
+
+$d(i)$
+
+children, then we can do
+
+$\lceil \log_2 (d(i)+1) \rceil$
+
+consecutive superspreader events at farm
+
+$i$
+
+,
+and then move one infected cow to each child. It's always better to do all the
+superspreader events at farm
+
+$i$
+
+before moving cows out to the children, so this
+is optimal.
+
+As a result, the total number of superspreader events needed is
+
+$\sum_i \lceil \log_2 (d(i)+1) \rceil$
+
+(summing over all farms with at least one
+child) and the minimum number of events needed to infect all farms is this
+quantity plus
+
+$n-1$
+
+.
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+#define MAXN 100000
+
+int N;
+int d[MAXN];
+
+int main()
+{
+	cin >> N;
+	int a,b;
+	for(int i=0;i<N-1;i++)
+	{
+		cin >> a >> b;
+		a--,b--;
+		d[a]++, d[b]++;
+	}
+	int ans = N-1; // number of move events
+	for(int i=0;i<N;i++)
+		if(d[i] > 1 || i == 0)	// check that i is not leaf node in tree
+		{
+			int children = d[i];
+			if(i!=0) children--;
+			// compute ceil(log(children + 1))
+			int log_children = 0;
+			int pow = 1;
+			while(pow < children + 1)
+				log_children++, pow *= 2;
+			ans += log_children;
+		}
+	cout << ans << '\n';
+}

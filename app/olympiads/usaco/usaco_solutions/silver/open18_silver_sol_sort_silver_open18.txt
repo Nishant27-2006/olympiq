@@ -1,0 +1,143 @@
+Solution ID: sol_sort_silver_open18
+Contest: OPEN18
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_sort_silver_open18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+If we experimentally play around with bubble sort, we find that elements
+"bubble" to the right very quickly, but "bubble" to the left very slowly.
+Consider, for example, this permutation:
+
+1 9 7 5 4
+1 7 5 4 9
+1 5 4 7 9
+1 4 5 7 9
+
+The 9 moved to the right very quickly, but the 4 moved to the left very slowly.
+
+In general, a single element can move left at most once per iteration of bubble
+sort.
+
+Let's "normalize" the input array to be a permutation of 0 ... n-1, so that the
+value of each array element indices the index where that element should go in
+the sorted array:
+
+1 9 7 5 4
+    |
+    v
+0 4 3 2 1
+
+For any
+
+$i$
+
+, the value
+
+$i - a_i$
+
+is therefore a lower
+bound on the total number of bubble passes that need to occur before the array
+is sorted. (If positive, it means the element needs to move left by that amount.
+If negative, it's
+
+definitely
+
+a lower bound.)
+
+Now, can we say that
+
+$\max_i(i - a_i)$
+
+is actually the answer?
+Indeed, we can! However, to prove this requires some subtlety, since of course
+some elements can move right, thus some elements have increasing values of
+
+$i - a_i$
+
+.
+
+To see why this is actually true, consider any element
+
+$a_i$
+
+which
+has a positive value of
+
+$i - a_i$
+
+(i.e., that element is to the right
+of where it should be). Then there must be some element to the left which is
+greater; then we can check from the way bubble sort operates that our element
+
+$a_i$
+
+must move left. So
+
+$i - a_i$
+
+decreases by 1.
+
+Next, consider any element
+
+$a_i$
+
+where
+
+$i - a_i = 0$
+
+(that
+is, the element is in exactly the correct position.) It may or may not move
+left, but it certainly will not move right: for it to move to the right, the
+element just right of it must be smaller, but then some element to its left must
+be greater than it, and in that case the element will move left instead.
+
+Therefore,
+
+$\max_i(i - a_i)$
+
+, if positive, will decrease by 1 in a
+bubble sort iteration.
+
+Note that after counting the number of bubbles needed to reach the sorted array,
+we need to add 1 to account for the final iteration of the algorithm in the
+given pseudocode.
+
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+struct Entry {
+  int index;
+  int value;
+};
+
+Entry entries[100000];
+
+int main() {
+  int n;
+  scanf("%d", &n);
+
+  for (int i = 0; i < n; i++) {
+    entries[i].index = i;
+    scanf("%d", &entries[i].value);
+  }
+
+  sort(entries, entries + n, [](Entry a, Entry b) {
+    // Break ties by making the smaller element be whichever
+    // element was first in the array originally.
+    return a.value < b.value || (a.value == b.value && a.index < b.index);
+  });
+
+  int answer = 0;
+  for (int j = 0; j < n; j++) {
+    // In terms of the notation from the above analysis, we have,
+    // entries[j].index = i
+    // j = a_i
+    answer = max(answer, entries[j].index - j);
+  }
+
+  printf("%d\n", answer + 1);
+}

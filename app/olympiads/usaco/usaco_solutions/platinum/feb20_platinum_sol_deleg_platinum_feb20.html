@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi) 
+<p>Root the tree at <span class='math'>$1$</span>. We will do DP on subtrees. 
+<p>It suffices to binary search on <span class='math'>$K.$</span> We should write a function <span class='math'>$DFS(x)$</span> which
+partitions the subtree corresponding to vertex <span class='math'>$x$</span> into paths of length at least
+<span class='math'>$K$</span> and possibly an extra one with one endpoint at <span class='math'>$x$</span> which might have length
+less than <span class='math'>$K$</span>. If the subtree can be partitioned, this function will return the
+maximum possible length of the extra path. Otherwise, the function will return
+<span class='math'>$-1$</span>, meaning that it is impossible to divide the tree.
+<p>First, we should call <span class='math'>$DFS(t)$</span> for all children <span class='math'>$t$</span> of <span class='math'>$x.$</span> If any of these
+return <span class='math'>$-1,$</span>  then <span class='math'>$DFS(x)$</span> should also return <span class='math'>$-1.$</span> Otherwise, we have a path
+of length <span class='math'>$DFS(t)+1$</span> with one endpoint at <span class='math'>$x.$</span> 
+<p>Suppose that we want to check whether we can pair up all the child paths of <span class='math'>$x$</span>
+such that all paths have length at least <span class='math'>$K$</span>. To do this, sort the path lengths
+in increasing order and repeatedly pair the least and the greatest lengths. If
+there are an odd number of path lengths, we should add <span class='math'>$0$</span> to the beginning of
+this list before pairing.
+<p>Otherwise, one child path will be left unpaired, and we would like to maximize
+the length of this path. Note that if it is possible to end up with an extra
+path of length <span class='math'>$x,$</span> then  for all <span class='math'>$y&lt;x$</span> it is also possible to end up with an
+extra path of length <span class='math'>$y.$</span> Thus, we can binary search again to find the maximum
+possible <span class='math'>$x.$</span>
+<p>In summary, <span class='math'>$DFS(x)$</span> will return the maximum possible length of an extra path if
+possible. Otherwise, if we can pair up all child paths, <span class='math'>$DFS(x)$</span> will return
+<span class='math'>$0.$</span> Otherwise, it is not possible to generate paths such that all have length
+at least <span class='math'>$K,$</span> so <span class='math'>$DFS(x)$</span> should return  <span class='math'>$-1.$</span> 
+<p>This solution runs in <span class='math'>$O(N\log^2N)$</span> time.
+<p><pre class='prettyprint'>
+#include &quot;bits/stdc++.h&quot;
+
+using namespace std;
+
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+#define f first
+#define s second
+
+const int MOD = 1e9+7;
+const int MX = 1e5+5;
+
+int N,K;
+vector&lt;int&gt; adj[MX];
+bool bad = 0;
+ 
+bool ok(const vector&lt;int&gt;&amp; V, int mid) {
+	int l = 0, r = (int)V.size()-1;
+	for (int i = 0; i &lt; V.size()/2; ++i) {
+		if (l == mid) l ++;
+		if (r == mid) r --;
+		if (V[l]+V[r] &lt; K) return 0;
+		l ++, r --;
+	}
+	return 1;
+}
+ 
+int DFS(int x, int y) {
+	if (bad) return -1;
+	vector&lt;int&gt; v; 
+	for (auto t: adj[x]) if (t != y) {
+		int d = DFS(t,x)+1; if (bad) return -1;
+		v.push_back(min(K,d));
+	}
+	sort(begin(v),end(v));
+	bool al = 1;
+	int mx = -MOD;
+	{
+		auto V = v; if (V.size()&amp;1) V.insert(V.begin(),0);
+		al = ok(V,-1);
+	}
+	{
+		auto V = v; if (!(V.size()&amp;1)) V.insert(V.begin(),0);
+		int lo = -1, hi = V.size()-1;
+		while (lo &lt; hi) {
+			int mid = (lo+hi+1)/2;
+			if (ok(V,mid)) lo = mid;
+			else hi = mid-1;
+		}
+		if (lo &gt;= 0) mx = V[lo];
+	}
+	if (x == 1) {
+		if (!al) bad = 1;
+		return -1;
+	}
+	if (mx != -MOD) return mx;
+	if (al) return 0;
+	bad = 1; return -1;
+}
+ 
+bool SOLVE(int k) {
+	K = k; bad = 0; DFS(1,0);
+	return !bad;
+}
+ 
+void SOLVE() {
+	int lo = 1, hi = N-1;
+	while (lo &lt; hi) {
+		int mid = (lo+hi+1)/2;
+		if (SOLVE(mid)) lo = mid;
+		else hi = mid-1;
+	}
+	cout &lt;&lt; lo &lt;&lt; &quot;\n&quot;;
+}
+ 
+int main() {
+	// setIO(); 
+	cin &gt;&gt; N;
+	for (int i = 1; i &lt; N; ++i) {
+		int a,b; cin &gt;&gt; a &gt;&gt; b;
+		adj[a].push_back(b), adj[b].push_back(a);
+	}
+	SOLVE();
+}
+</pre>
+<p></body></html>

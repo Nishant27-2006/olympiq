@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+
+</head>
+<p>(Analysis by Jonathan Paulson - <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="274d484946534f46495746524b54484967404a464e4b0944484a">[email&#160;protected]</a>)</p><p>
+
+The first step is to see that we can break Bessie and Elsie&apos;s trip into two parts: the start until they meet and piggyback, and then piggybacking to the end (if they never piggyback, that&apos;s the same as meeting at the end and then piggybacking for 0 distance).</p><p>
+
+If we knew where they met, the problem would be easy. Suppose they meet at field <span class='math'>$X$</span>. Then from <span class='math'>$X$</span>, we can use a BFS to calculate the fastest paths to all the other fields. Then if it takes <span class='math'>$D_i$</span> edges to travel from field <span class='math'>$X$</span> to field <span class='math'>$i$</span>, the answer is <span class='math'>$B*D_1 + E*D_2 + P*D_N$</span>.</p><p>
+
+This already gives us an <span class='math'>$O(N^2)$</span> solution; just try out each <span class='math'>$X$</span>. To speed it up to <span class='math'>$O(N)$</span>, notice that we always want the distances from fields <span class='math'>$1$</span>, <span class='math'>$2$</span>, and <span class='math'>$N$</span>. So if we precompute those distances, it takes <span class='math'>$O(1)$</span> time to try out each <span class='math'>$X$</span>.</p><p>
+
+Here&apos;s my C++ code for that solution:
+</p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;vector&gt;
+#include &lt;queue&gt;
+
+#define PB push_back
+
+using namespace std;
+
+typedef long long ll;
+
+vector&lt;ll&gt; D(ll st, const vector&lt;vector&lt;ll&gt;&gt;&amp; E) {
+  vector&lt;ll&gt; D(E.size(), -1);
+
+  deque&lt;ll&gt; Q;
+  D[st] = 0;
+  Q.PB(st);
+  while(!Q.empty()) {
+    ll x = Q.front(); Q.pop_front();
+    for(ll y : E[x]) {
+      if(D[y] == -1) {
+        D[y] = D[x]+1;
+        Q.PB(y);
+      }
+    }
+  }
+  return D;
+}
+
+int main() {
+  ll b, e, p, n, m;
+  scanf(&quot;%lld %lld %lld %lld %lld&quot;, &amp;b, &amp;e, &amp;p, &amp;n, &amp;m);
+  vector&lt;vector&lt;ll&gt;&gt; E(n, vector&lt;ll&gt;());
+  for(ll i=0; i&lt;m; i++) {
+    ll x, y;
+    scanf(&quot;%lld %lld&quot;, &amp;x, &amp;y);
+    x--; y--;
+    E[x].PB(y);
+    E[y].PB(x);
+  }
+
+  vector&lt;ll&gt; D0 = D(0, E);
+  vector&lt;ll&gt; D1 = D(1, E);
+  vector&lt;ll&gt; Dn = D(n-1, E);
+
+  ll ans = ll(1000)*1000*1000*1000;
+  for(ll meet=0; meet&lt;n; meet++) {
+    ans = min(ans, D0[meet]*b + D1[meet]*e + Dn[meet]*p);
+  }
+  printf(&quot;%lld\n&quot;, ans);
+}
+</pre><p></p>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></html>

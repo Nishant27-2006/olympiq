@@ -1,0 +1,663 @@
+Solution ID: sol_circus_platinum_open20
+Contest: OPEN20
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_circus_platinum_open20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+In the following tree diagrams, - and | denote edges of the tree, * denotes an 
+unoccupied vertex, and ? denotes an occupied vertex.
+
+For
+
+$K=N$
+
+the answer is always
+
+$N!.$
+
+Now let's consider the case
+
+$K<N.$
+
+Say that a state is in "normalized" if the cows occupy vertices
+
+$1\ldots K$
+
+.
+Clearly any state can be normalized via a series of moves. Call two normalized
+states "friends" if one is reachable from the other. The number of friends for
+each state must be the same. The answer will equal
+
+$K!$
+
+over the number of
+friends of any normalized state with
+
+$K$
+
+cows has.
+
+For any two cows
+
+$x$
+
+and
+
+$y$
+
+in the normalized state, we wish to know whether we
+can swap
+
+$x$
+
+and
+
+$y$
+
+while leaving all other cows in the same vertices. The goal
+is to move until the tree contains the following as a subgraph:
+
+*
+   |
+   |
+x--*--y
+
+Then you can swap
+
+$x$
+
+and
+
+$y$
+
+and undo all the moves made up to this point to
+re-normalize the state.
+
+Consider the following method that moves
+
+$x$
+
+and
+
+$y$
+
+into the above state if
+possible, or otherwise states that it is impossible to swap
+
+$x$
+
+and
+
+$y$
+
+.
+
+First, move all cows aside from
+
+$x$
+
+as far away from
+
+$x$
+
+is possible. Then
+the union of the current vertex of
+
+$x$
+
+and all unoccupied vertices forms a
+connected subgraph; call this subgraph "admissible."
+
+Repeat the following steps until the process terminates:
+
+Let
+
+$z$
+
+be the next occupied vertex on the path from
+
+$x$
+
+to
+
+$y$
+
+.
+
+Case 1:
+
+Suppose that the admissible subgraph is a line
+
+$v_1,v_2,\ldots,v_k$
+
+with
+
+$dist(v_i,y)=dist(v_{i+1},y)+1$
+
+for all
+
+$1\le i<k$
+
+.
+
+Consider the degrees
+
+$d_1,d_2,\ldots,d_k$
+
+of
+
+$v_1,\ldots,v_k$
+
+.
+
+Let
+
+$j$
+
+be the largest integer less than
+
+$k$
+
+such that
+
+$d_j>2$
+
+. If
+
+$j>2$
+
+then it's possible to move some cow such that the admissible subgraph is no
+longer a line satisfying this property. Go to case 2. In the diagram below,
+
+$j=3$
+
+.
+
+x--*--*--*--z--y    ?--*--*--*--z--y
+      |          ->       |
+      |                   |
+      ?                   x
+
+Otherwise, it is impossible to swap
+
+$x$
+
+and
+
+$y$
+
+. Terminate.
+
+x--*--*--z--y   
+   |
+   |          
+   ?
+
+Case 2:
+
+The admissible subgraph is not covered by case 1.
+
+If
+
+$z=y$
+
+, then we can successfully swap
+
+$x$
+
+and
+
+$y$
+
+(as in the diagram
+above).
+
+Otherwise, we can move
+
+$z$
+
+and
+
+$x$
+
+such that
+
+$z$
+
+does not lie on the path
+from
+
+$x$
+
+to
+
+$y$
+
+.
+
+*               z
+   |               |
+   |         ->    |
+*--x--z--y      x--*--*--y
+
+Let's further examine the case where it is impossible to swap
+
+$x$
+
+and
+
+$y$
+
+. Call
+a vertex "intermediate" if it has degree 2.  Move
+
+$x$
+
+such that is adjacent to
+
+$z$
+
+, and suppose that the shortest path with non-intermediate endpoints that
+contains edge
+
+$x\leftrightarrow z$
+
+at the time of termination is
+
+$(a,b)$
+
+; call
+this the
+
+extension
+
+of
+
+$x\leftrightarrow z$
+
+.
+
+Let
+
+$A$
+
+be the size of the subtree of
+
+$a$
+
+when the tree is rooted at
+
+$b$
+
+and
+define
+
+$B$
+
+similarly. We can show that if
+
+$x$
+
+and
+
+$y$
+
+can't be swapped, then
+
+$K\ge (A-1)+(B-1).$
+
+In fact, there will be
+
+$$K-(A-1)-(B-1)=(\text{# of vertices on extension})+K-N$$
+
+vertices that always remain on the
+
+$(a,b)$
+
+path (and their relative order on the
+path can never change). Plus, cows that are in the subtree of
+
+$a$
+
+rooted at
+
+$b$
+
+excluding
+
+$a$
+
+can never reach the subtree of
+
+$b$
+
+rooted at
+
+$a$
+
+excluding
+
+$b$
+
+,
+and vice versa. For example, consider the following
+
+$(a,b)$
+
+extension:
+
+.     .
+|     |
+|     |
+a--.--b
+|     |
+|     |
+.     .
+|
+|
+.
+
+In the following situation,
+
+$K=(A-1)+(B-1)$
+
+, so none of
+
+$\{1,2,3\}$
+
+can swap
+with any of
+
+$\{4,5\}$
+
+.
+
+1     4
+|     |
+|     |
+*--*--*
+|     |
+|     |
+2     5
+|
+|
+3
+
+In the following situation,
+
+$K=(A-1)+(B-1)+1$
+
+, so
+
+$6$
+
+cannot leave the
+
+$a\leftrightarrow b$
+
+path.
+
+1     4
+|     |
+|     |
+6--*--*
+|     |
+|     |
+2     5
+|
+|
+3
+
+Call every edge on each such extension "saturated," and the cows that are
+constrained to some extension "stuck."
+
+Now consider each connected component that remains after removing all saturated
+edges. Suppose that connected component
+
+$c$
+
+contains exactly
+
+$x$
+
+unsaturated
+edges and is adjacent to exactly
+
+$y$
+
+saturated edges. To compute the number of
+non-stuck cows within
+
+$c$
+
+, we should start with
+
+$K$
+
+and then subtract some
+quantity for each adjacent saturated edge.
+
+For the extension
+
+$(a,b)$
+
+of each adjacent saturated edge, let
+
+$a$
+
+be the vertex
+outside the component and
+
+$b$
+
+be the vertex inside the component. Then number of
+vertices removed from the component by this edge is equal to
+
+$$\begin{align*}
+K-(B-1)&=(A-1)+(\text{# of vertices on extension})+K-N\\
+&=(\text{# of edges outside subtree of }b)+K-N+1.
+\end{align*}$$
+
+If we sum this over all adjacent saturated edges, the result will be
+
+$$(\text{# of edges outside component})+(K-N+1)y=(N-1-x)+(K-N+1)y.$$
+
+The number of cows in
+
+$c$
+
+is
+
+$K$
+
+minus this expression, or
+
+$s_c=(N-1-K)(y-1)+x$
+
+.
+Note that when
+
+$y=0,$
+
+all of the vertices are in the same connected component
+and
+
+$s_c=K-(N-1)+(N-1)=K,$
+
+which makes sense since no cows are stuck.
+
+For any friend, the stuck cows must remain in the same relative positions.
+However, the unstuck cows in each component mentioned above can permute
+themselves arbitrarily. So the number of friends of each state is
+
+$\prod_c s_c!$
+
+and the answer will be
+
+$\frac{K!}{\prod_c s_c!}.$
+
+We can compute this expression for all
+
+$K$
+
+in decreasing order. For each path
+that transitions from saturated to unsaturated when
+
+$K$
+
+is decremented, we can
+update
+
+$x$
+
+and
+
+$y$
+
+for the resulting combined component with the "Disjoint Set
+Union" data structure. Furthermore, the sum of the number of components over all
+
+$1\le K<N$
+
+is equal to
+
+$$N-1+\sum_{\text{path}}(1+\text{length}(\text{path}))=2N-2+(\#\text{ of paths})\le 3N-3=O(N),$$
+
+so we can afford to iterate over all of the components for each
+
+$K$
+
+to compute
+
+$\prod_c s_c!$
+
+. This solution runs in
+
+$O(N\log N)$
+
+or
+
+$O(N\alpha(N)),$
+
+depending
+on the implementation.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define f first
+#define s second
+
+typedef long long ll;
+const int MOD = 1e9+7;
+const int MX = 1e5+5;
+
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+".in").c_str(),"r",stdin);
+	freopen((s+".out").c_str(),"w",stdout);
+}
+
+struct mi {
+ 	int v; explicit operator int() const { return v; } 
+	mi() { v = 0; }
+	mi(ll _v):v(_v%MOD) { v += (v<0)*MOD; }
+};
+mi& operator+=(mi& a, mi b) { 
+	if ((a.v += b.v) >= MOD) a.v -= MOD; 
+	return a; }
+mi& operator-=(mi& a, mi b) { 
+	if ((a.v -= b.v) < 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi& operator*=(mi& a, mi b) { return a = a*b; }
+
+vector<int> invs, fac, ifac;
+void genFac(int SZ) {
+	invs.resize(SZ), fac.resize(SZ), ifac.resize(SZ); 
+	invs[1] = fac[0] = ifac[0] = 1; 
+	for (int i = 2; i < SZ; ++i) invs[i] = MOD-(ll)MOD/i*invs[MOD%i]%MOD;
+	for (int i = 1; i < SZ; ++i) {
+		fac[i] = (ll)fac[i-1]*i%MOD;
+		ifac[i] = (ll)ifac[i-1]*invs[i]%MOD;
+	}
+}
+ll comb(int a, int b) {
+	if (a < b || b < 0) return 0;
+	return (ll)fac[a]*ifac[b]%MOD*ifac[a-b]%MOD;
+}
+ 
+int N, par[MX];
+vector<int> adj[MX];
+mi ans[MX];
+pair<int,int> cur[MX];
+vector<pair<int,pair<int,int>>> ed;
+set<int> con;
+ 
+struct DSU {
+	vector<int> e; void init(int n) { e = vector<int>(n,-1); }
+	int get(int x) { return e[x] < 0 ? x : e[x] = get(e[x]); } 
+	bool unite(int len, int x, int y) { // union-by-rank
+		x = get(x), y = get(y); assert(x != y);
+		if (e[x] > e[y]) swap(x,y);
+		e[x] += e[y]; e[y] = x; 
+		assert(con.count(y)); con.erase(y);
+		cur[x].f += cur[y].f-2; cur[x].s += cur[y].s+len;
+		return 1;
+	}
+};
+DSU D;
+ 
+void dfs(int x) {
+	for (int t: adj[x]) if (t != par[x]) {
+		par[t] = x;
+		dfs(t);
+	}
+}
+ 
+void dfs(int x, int lst, int d) {
+	if (adj[x].size() != 2) {
+		if (lst) ed.push_back({d,{x,lst}});
+		d = 0; lst = x;
+	}
+	for (int y: adj[x]) if (y != par[x]) {
+		par[y] = x;
+		dfs(y,lst,d+1);
+	}
+}
+ 
+int main() {
+	setIO("circus");
+	cin >> N; genFac(N+1);
+	for (int i = 0; i < N-1; ++i) {
+		int a,b; cin >> a >> b;
+		adj[a].push_back(b), adj[b].push_back(a);
+	}
+	int root = 1; while (adj[root].size() == 2) root ++;
+	dfs(root,0,0);
+	sort(begin(ed),end(ed));
+	for (int i = 1; i <= N; ++i) if (adj[i].size() != 2) {
+		cur[i] = {adj[i].size(),0};
+		con.insert(i);
+	}
+	ans[N] = fac[N];
+	int ind = 0;
+	D.init(N+1);
+	for (int k = N-1; k > 0; --k) {
+		while (ind < ed.size() && N-1-ed[ind].f > k) {
+			D.unite(ed[ind].f,ed[ind].s.f,ed[ind].s.s);
+			ind ++;
+		}
+		mi ret = fac[k];
+		for (int t: con) ret *= ifac[(N-1-k)*(cur[t].f-1)+cur[t].s];
+		ans[k] = ret;
+	}
+	for (int i = 1; i <= N; ++i) cout << ans[i].v << "\n";
+}

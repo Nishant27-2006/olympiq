@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>In this problem, we are asked to analyze the &quot;complexity&quot; of the following
+sorting algorithm: run bubblesort passes on an array until there are partition
+points, and then recurse on the subarrays defined by these partition points. 
+<p>The complexity of a single bubblesort pass is defined as the length of the
+subarray on which the bubblesort pass is run. So each element of the subarray on
+which the pass is run contributes one unit of complexity. This suggests that we
+find the number of units of complexity contributed by each element, and add
+everything up.
+<p>When a bubblesort pass is run on several consecutive subarrays which have
+already been separated by a partition point, this is equivalent (in outcome and
+in complexity) to running a single bubblesort pass on all of the subarrays. The
+only issue is that if a subarray has size <span class='math'>$1$</span>, it subsequently does not
+contribute any complexity. So we can replace the recursive quicksort algorithm
+with the following algorithm: bubblesort the entire array until sorted. An
+element contributes one unit of complexity in each pass until it is partitioned
+from its neighbors on both sides. 
+<p>Now, for each element we need to find the number of passes until it is
+partitioned from its neighbors on both sides. If we can calculate for each of
+the <span class='math'>$N-1$</span> partition points, the number of bubblesort passes after which the
+array is partitioned at that partition point, then the count for a specific
+element is the maximum of the counts of its neighboring partition points.
+<p>Fix some partition point, say between elements <span class='math'>$i-1$</span> and <span class='math'>$i$</span>. For this to
+partition the array, the smallest <span class='math'>$i$</span> elements must be located in the first <span class='math'>$i$</span>
+slots of the array. Let <span class='math'>$j$</span> be the initially maximum index of any of the
+smallest <span class='math'>$i$</span> elements. Then it&apos;s not hard to see that the number of bubblesort
+passes required before the array is partitioned between <span class='math'>$i-1$</span> and <span class='math'>$i$</span> is exactly
+<span class='math'>$j+1-i$</span>: in each pass, the maximum index will decrease by exactly <span class='math'>$1$</span>.
+<p>After sorting the array (and breaking ties by index), we can compute the maximum
+index of any of the smallest <span class='math'>$i$</span> elements for each <span class='math'>$i$</span>, in a single pass.
+<p>When computing the complexity contributed by each element as the maximum of the
+counts of its neighboring partition points, slight care must be taken to address
+the case where an element is already partitioned from its neighbors, before any
+bubblesort passes have taken place. Since the algorithm uses a do-while loop,
+the element will nonetheless contribute one unit of complexity in the first
+pass (unless the array consists of a single element).
+<p>Therefore the overall runtime is <span class='math'>$O(N \log N)$</span> due to sorting.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+int N;
+int A[100000];
+int cid[100000];
+int preq[100000];
+ 
+bool cmp(int a,int b)
+{
+	if(A[a]==A[b]) return a&lt;b;
+	return A[a]&lt;A[b];
+}
+ 
+int main()
+{
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;N;i++)
+	{
+		cin &gt;&gt; A[i];
+		cid[i] = i;
+	}
+	sort(cid,cid+N,cmp);
+	int mx = 0;
+	int high = 0;
+	for(int i=1;i&lt;N;i++)
+	{
+		mx = max(mx, cid[i-1]);
+		preq[i] = mx + 1 - i;
+		high = max(high, preq[i]);
+	}
+	long long ans = 0;
+	for(int i=0;i&lt;N;i++)
+	{
+		int tDone = 0;
+		if(i &gt; 0) tDone = max(tDone, preq[i]);
+		if(i &lt; N-1) tDone = max(tDone, preq[i+1]);
+		if(tDone == 0 &amp;&amp; N &gt; 1) tDone++;
+		ans += tDone;
+	}
+	cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

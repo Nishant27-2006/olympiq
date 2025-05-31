@@ -1,0 +1,319 @@
+Solution ID: sol_triangles_platinum_feb20
+Contest: FEB20
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_triangles_platinum_feb20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Note: Whenever I refer to a valid triangle below I mean one that is equilateral.
+
+Here are some approaches with different time complexities.
+
+$O(N^6)$
+
+(~1 test case): Go through all triples of squares and check whether
+they form a valid triangle.
+
+$O(N^5)$
+
+(~3 test cases): Fix the lower-left-most square
+
+$a$
+
+of the  triangle.
+For each remaining square
+
+$p$
+
+, place
+
+$p$
+
+into a bucket labeled
+
+$dist(a,p)$
+
+.  To
+check whether
+
+$a$
+
+forms a valid triangle with two squares
+
+$b$
+
+and
+
+$c$
+
+in bucket
+
+$i$
+
+just verify that
+
+$dist(b,c)=i.$
+
+$O(N^4)$
+
+(~9 test cases). Consider the smallest rectangle with sides parallel to
+the coordinates axes that contains the triangle. At least one and at most two of
+the vertices of the triangle are also corners of this bounding rectangle.
+
+Let the vertices of the triangle be
+
+$a=(a_0,a_1),b=(b_0,b_1),c=(c_0,c_1).$
+
+First, consider a corner of the triangle which is also a corner of the
+rectangle. Without loss of generality, suppose that the corner is
+
+$(a_0,a_1)$
+
+and
+
+$a_0\le \min(b_0,c_0), a_1\le \min(b_1,c_1).$
+
+Also suppose that
+
+$dist(a,b)=dist(b,c)=dist(c,a)=r$
+
+(
+
+$r$
+
+even). Then both
+
+$b$
+
+and
+
+$c$
+
+lie on the
+diagonal consisting of all
+
+$(x,y)$
+
+satisfying
+
+$x+y=a_0+a_1+r$
+
+. Furthermore,
+
+$b-c=\pm \left(\frac{r}{2},-\frac{r}{2}\right).$
+
+For a fixed
+
+$a$
+
+and
+
+$r$
+
+, we can
+count the number of pairs
+
+$(b,c)$
+
+in
+
+$O(N)$
+
+.
+
+Regarding each of the three other possible orientations of the triangle  (ex.
+
+$a_0\ge \max(b_0,c_0), a_1\ge \max(b_1,c_1)$
+
+), just keep rotating the original
+square by 90 degrees and running the solution. Make sure not to overcount the
+case where two vertices of the triangle are corners of the bounding rectangle!
+
+$O(N^3):$
+
+Let's try to make the above solution faster. Again focus on the case
+
+$a_0\le \min(b_0,c_0), a_1\le \min(b_1,c_1).$
+
+For a fixed
+
+$r$
+
+note that the
+pairs
+
+$(b,c)$
+
+which could possibly make a triangle with
+
+$a=(a_0,a_1)$
+
+are almost
+exactly the same as those which could make a triangle with
+
+$a'=(a_0+1,a_1-1)$
+
+,
+so we can transition between the two in
+
+$O(1)$
+
+time.
+
+#include "bits/stdc++.h"
+using namespace std;
+
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+".in").c_str(),"r",stdin);
+	freopen((s+".out").c_str(),"w",stdout);
+}
+ 
+int N;
+bool G[300][300],GG[300][300];
+long long ans;
+ 
+void rot() { // rotate 90 degrees
+	for (int i = 0; i < N; ++i) 
+		for (int j = 0; j < N; ++j) 
+			GG[N-1-j][i] = G[i][j];
+	for (int i = 0; i < N; ++i) 
+		for (int j = 0; j < N; ++j) 
+			G[i][j] = GG[i][j];
+}
+void solve() { // corner in diagonal with sum a, other two vertices in diagonal with sum b
+	for (int a = 0; a < 2*N-1; ++a) 
+		for (int b = a+2; b < 2*N-1; b += 2) {
+			int dif = (b-a)/2, st = max(0,a-(N-1)), en = min(a,N-1);
+			int cur = 0;
+			for (int i = st; i <= en; ++i) { 
+				if (i == st) // consider (i,a-i) -> stuff in row b
+					for (int j = max(i,b-(N-1)); j < min(i+dif,N-dif); ++j) 
+						cur += G[j][b-j] && G[j+dif][b-j-dif];
+				if (G[i][a-i]) ans += cur;
+				if (i+2*dif < N && b-(i+dif) < N) 
+					cur += G[i+dif][b-i-dif] && G[i+2*dif][b-i-2*dif];
+				if (i+dif < N && b-i < N) 
+					cur -= G[i][b-i] && G[i+dif][b-i-dif];
+			}
+		}
+}
+int main() {
+	setIO("triangles"); 
+	cin >> N;
+	for (int i = 0; i < N; ++i) 
+		for (int j = 0; j < N; ++j) {
+			char c; cin >> c;
+			G[i][j] = c == '*';
+		}
+	for (int i = 0; i < 4; ++i) solve(), rot(); 
+	cout << ans << "\n";
+}
+
+As suggested by Dorijan Lendvaj, it is also possible to solve the problem in
+
+$O(N^4)$
+
+with bitset. Again, consider the case where
+
+$a_0\le \min(b_0,c_0), a_1\le \min(b_1,c_1).$
+
+Let
+
+$(x,y)=(b_0-a_0,b_1-a_1)$
+
+and
+assume that
+
+$b_0<c_0$
+
+,
+
+$x\le y$
+
+, and
+
+$x+y$
+
+is divisible by two. This means that
+
+$$(c_0,c_1)=(a_0,a_1)+(x,y)+((x+y)/2,-(x+y)/2).$$
+
+If we fix
+
+$x$
+
+,
+
+$y$
+
+, and
+
+$a_0$
+
+, then the number of
+
+$a_1$
+
+such that
+
+$(a_0,a_1)$
+
+,
+
+$(b_0,b_1)$
+
+, and
+
+$(c_0,c_1)$
+
+all contain cows is equal to the number of bits set
+in the bitwise AND of three bitsets. This solution runs about as quickly as the
+one above.
+
+#include "bits/stdc++.h"
+ 
+using namespace std;
+ 
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+".in").c_str(),"r",stdin);
+	freopen((s+".out").c_str(),"w",stdout);
+}
+ 
+int N;
+bool G[300][300],GG[300][300];
+long long res = 0;
+
+void rot() {
+	for (int i = 0; i < N; ++i) for (int j = 0; j < N; ++j) GG[N-1-j][i] = G[i][j];
+	for (int i = 0; i < N; ++i) for (int j = 0; j < N; ++j) G[i][j] = GG[i][j];
+}
+
+void solve() {
+	bitset<300> mask[300];
+	for (int i = 0; i < N; ++i) for (int j = 0; j < N; ++j) 
+		mask[i][j] = G[i][j];
+	for (int i = 0; i < N; ++i)
+		for (int x = 1; x < N; ++x) 
+			for (int y = x; y < N; y += 2) {
+				int x2 = x+(x+y)/2; if (i+x2 >= N) break;
+				int y2 = (y-x)/2;
+				res += (mask[i]&(mask[i+x]>>y)&(mask[i+x2]>>y2)).count();
+			}
+}
+
+int main() {
+	setIO("triangles"); 
+	cin >> N;
+	for (int i = 0; i < N; ++i) for (int j = 0; j < N; ++j) {
+		char c; cin >> c;
+		G[i][j] = c == '*';
+	}
+	for (int i = 0; i < 4; ++i) { solve(); rot(); }
+	cout << res << "\n";
+}

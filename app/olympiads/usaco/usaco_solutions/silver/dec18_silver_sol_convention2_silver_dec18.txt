@@ -1,0 +1,150 @@
+Solution ID: sol_convention2_silver_dec18
+Contest: DEC18
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_convention2_silver_dec18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Nathan Pinsker )
+
+At its core, this is a simulation problem. There are two types of events we must
+process:
+
+A cow arrives at the pasture
+
+A cow finishes grazing at the
+pasture
+
+Each type of event should also be handled differently depending on whether a cow
+is currently grazing, so we actually have a total of four distinct outcomes to
+process. Luckily, they each don't require that much code to implement.
+
+When a cow
+
+$i$
+
+arrives at the pasture and it is empty, the cow immediately
+starts grazing (its waiting time is 0), and we add a "cow leaving" event
+
+$t_i$
+
+units in the future. However, if the pasture is occupied, then the cow should go
+into a "queue" of waiting cows, ordered by seniority. We use a
+
+priority queue
+
+to
+keep track of these waiting cows. A priority queue does exactly what we want
+here: it enables us to insert keys, and then find the lowest key in the queue
+extremely quickly. Therefore, we'll insert each cow into the priority queue with
+a key equal to
+
+$-1$
+
+times its seniority. This means we can simply take out the
+first element of the priority queue to figure out which cow can graze next. When
+we insert a cow into the priority queue, we also keep track of the time it
+arrived, so we know how long it spent waiting (which we use to output the final
+answer).
+
+When a cow leaves the pasture, if there is no cow in the queue, we just process
+the next event. If there is a cow
+
+$i$
+
+in the queue, then that cow gets to graze
+now, meaning we must add another "cow leaving" event
+
+$t_i$
+
+units in the future.
+Since we are dynamically adding events and then removing the event with the
+lowest timestamp, this means we need another priority queue to keep track of all
+the events.
+
+Our overall algorithm is: Add all "cow arriving" events to a priority queue.
+Process events until the queue is empty, keeping track of each cow's waiting
+time as described above. Finally, output the maximum over all cow's waiting
+times.
+
+Brian's solution is below. If you're a C++ programmer, note Brian's use of
+
+$\texttt{pair}$
+
+to keep track of waiting cows -- it's an incredibly useful
+structure for programming contests, usually letting you avoid having to create a
+structure or a class. If you sort
+
+$\texttt{pair}$
+
+s, C++ will order them in
+increasing order of their first element, and tiebreak by second element.
+
+(Note from Brian: indeed, although pairs of pairs don't always make for the
+most readable code, so this is one style that you sometimes see in competitive 
+programming that you may want to think carefully about using in your 
+"real world" programming down the road...)
+
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <set>
+#include <vector>
+#include <map>
+using namespace std;
+ 
+int N;
+typedef long long LL;
+typedef pair<LL,LL> pll; 
+// .first=arrival, .second.first=seniority, .second.second=duration
+vector<pair<int, pll>> cows;
+ 
+// .first=priority, .second=cow index
+set<pll> waiting;  
+ 
+LL solve(void)
+{
+  LL answer = 0, current_finished;
+  int next_cow_to_arrive = 1;
+  sort(cows.begin(), cows.end());
+  current_finished = cows[0].first + cows[0].second.second;
+  while (next_cow_to_arrive < N || waiting.size() > 0) {
+    while (next_cow_to_arrive < N &&
+	   cows[next_cow_to_arrive].first <= current_finished) {
+      waiting.insert(make_pair(cows[next_cow_to_arrive].second.first,
+			       next_cow_to_arrive));
+      next_cow_to_arrive++;
+    }
+    if (waiting.size() == 0 && next_cow_to_arrive < N) {
+      // Idle time; schedule next cow...
+      current_finished = cows[next_cow_to_arrive].first +
+	cows[next_cow_to_arrive].second.second;
+      next_cow_to_arrive++;
+    } else if (waiting.size() > 0) {
+      // Next-most-senior cow in waiting list scheduled next
+      set<pll>::iterator most_senior = waiting.begin();
+      answer = max(answer, current_finished - cows[most_senior->second].first);
+      current_finished = current_finished + 
+	cows[most_senior->second].second.second;
+      waiting.erase(most_senior);
+    }
+  }
+  return answer;
+}
+ 
+int main(void)
+{
+  int a, t;
+  ifstream fin ("convention2.in");
+  fin >> N;
+  for (int i=0; i<N; i++) {
+    fin >> a >> t;
+    cows.push_back(make_pair(a,make_pair(i,t)));
+  }
+ 
+  ofstream fout ("convention2.out");
+  fout << solve() << "\n";
+  return 0;
+}

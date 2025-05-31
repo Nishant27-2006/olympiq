@@ -1,0 +1,203 @@
+Solution ID: sol_prob2_gold_jan25
+Contest: JAN25
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_jan25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by William Lin)
+
+As we are counting the number of pairs of reachable nodes, we are allowed to
+modify the graph structure as long as the connectivity of the nodes do not
+change. Intuitively, for
+
+$s_t=1$
+
+nodes, we should actually keep this node in the
+graph for the purposes of checking connectivity, but not include it when
+counting pairs of reachable nodes.
+
+We can formalize a new problem as follows. Initially, all nodes are active. At
+time
+
+$t$
+
+,
+
+If
+
+$s_t=0$
+
+, node
+
+$t$
+
+is deactivated and disconnected from all of its
+neighbors.
+
+If
+
+$s_t=1$
+
+, node
+
+$t$
+
+is deactivated.
+
+Note that a node is active in our implicit graph iff it still exists in the real
+graph. We now want to count the number of pairs of active nodes that can reach
+each other just before each of timesteps
+
+$1\ldots N$
+
+.
+
+We can prove by induction on
+
+$t$
+
+that there is an edge
+
+$(u, v)$
+
+in the real
+graph iff there is a path from
+
+$u$
+
+to
+
+$v$
+
+that only passes through deactivated
+nodes in the implicit graph. This implies that the connectivity of active nodes
+in both graphs are the same. Initially, no nodes are deactivated so the only
+valid paths are the real edges.
+
+If
+
+$s_t=0$
+
+, the adjacent edges of
+
+$t$
+
+in the real graph disappear, similarly the
+paths from
+
+$t$
+
+in the implicit graph are no longer valid.
+
+If
+
+$s_t=1$
+
+, for each pair of neighbors
+
+$(u, v)$
+
+of
+
+$t$
+
+,
+
+$(u, v)$
+
+is added as an
+edge in the real graph.
+
+$(u, t)$
+
+and
+
+$(t, v)$
+
+were edges, so in the implicit
+graph there were paths
+
+$u\to x_1 \to \dots \to x_k \to t$
+
+and
+
+$t \to x_{k+1} \to \dots \to v$
+
+, where all
+
+$x_i$
+
+are deactivated. Since
+
+$t$
+
+gets
+deactivated,
+
+$u\to x_1 \to \dots \to x_k \to t \to x_{k+1} \to \dots \to v$
+
+is
+now a path that only passes through deactivated nodes.
+
+As our only graph-modifying operations are removing edges, we simulate this process
+in reverse, so that our operations are adding edges and activating nodes. We use a DSU that can also maintain the number of active nodes in each
+connected component.
+
+Solution code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define ll long long
+const int mxN=2e5;
+int n, m, p[mxN], s[mxN];
+string a;
+vector<int> adj[mxN];
+bool b[mxN];
+ll ca, ans[mxN];
+ 
+int find(int x) {
+	return p[x]=x^p[x]?find(p[x]):x;
+}
+ 
+void join(int x, int y) {
+	if((x=find(x))==(y=find(y)))
+		return;
+	ca+=(ll)s[x]*s[y];
+	p[x]=y;
+	s[y]+=s[x];
+}
+ 
+void act(int i) {
+	b[i]=1;
+	for(int j : adj[i])
+		if(b[j])
+			join(i, j);
+}
+ 
+int main() {
+	ios::sync_with_stdio(0);
+	cin.tie(0);
+	
+	cin >> n >> m >> a;
+	for(int i=0, u, v; i<m; ++i) {
+		cin >> u >> v, --u, --v;
+		adj[u].push_back(v);
+		adj[v].push_back(u);
+	}
+	iota(p, p+n, 0);
+	for(int i=0; i<n; ++i)
+		if(a[i]&1)
+			act(i);
+	for(int i=n-1; ~i; --i) {
+		if(a[i]&1^1)
+			act(i);
+		ca+=s[find(i)]++;
+		ans[i]=ca;
+	}
+	for(int i=0; i<n; ++i)
+		cout << ans[i] << "\n";
+}

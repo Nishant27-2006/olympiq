@@ -1,0 +1,123 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB17 Contest - Silver Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Farmer John's cows are trying to learn to cross the road effectively. 
+Remembering the old "why did the chicken cross the road?" joke, they figure the
+chickens must be experts on crossing the road, and go off in search of chickens
+to help them.
+
+As it turns out, chickens are very busy creatures and have limited time to help
+the cows.  There are $C$ chickens on the farm ($1 \leq C \leq 20,000$), 
+conveniently numbered $1 \ldots C$, and each chicken $i$ is only willing to help
+a cow at precisely time $T_i$.  The cows, never in a hurry, have more
+flexibility in their schedules.  There are  $N$ cows on the farm
+($1 \leq N \leq 20,000$), conveniently numbered $1 \ldots N$, where cow $j$ is
+able to cross the road between time $A_j$ and time $B_j$. Figuring the "buddy
+system" is the best way to proceed, each cow $j$ would ideally like to find a
+chicken $i$ to help her cross the road; in order for their  schedules to be
+compatible, $i$ and $j$ must satisfy $A_j \leq T_i \leq B_j$.
+
+If each cow can be paired with at most one chicken and each chicken with at most
+one cow, please help compute the maximum number of cow-chicken pairs that can be
+constructed.
+
+INPUT FORMAT (file helpcross.in):
+The first line of input contains $C$ and $N$.  The next $C$ lines contain
+$T_1 \ldots T_C$, and the next $N$ lines contain $A_j$ and $B_j$ ($A_j \leq B_j$) for
+$j = 1 \ldots N$.  The $A$'s, $B$'s, and $T$'s are all non-negative integers
+(not necessarily distinct) of size at most 1,000,000,000.  
+
+OUTPUT FORMAT (file helpcross.out):
+Please compute the maximum possible number of cow-chicken pairs.
+
+SAMPLE INPUT:
+5 4
+7
+8
+6
+2
+9
+2 5
+4 9
+0 3
+8 13
+SAMPLE OUTPUT: 
+3
+
+
+Problem credits: Brian Dean
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (file helpcross.out):Please compute the maximum possible number of cow-chicken pairs.SAMPLE INPUT:5 4
+7
+8
+6
+2
+9
+2 5
+4 9
+0 3
+8 13SAMPLE OUTPUT:3Problem credits: Brian Dean
+
+\section*{Output Format}
+SAMPLE INPUT:5 4
+7
+8
+6
+2
+9
+2 5
+4 9
+0 3
+8 13SAMPLE OUTPUT:3Problem credits: Brian Dean
+
+\section*{Sample Input}
+\begin{verbatim}
+5 4
+7
+8
+6
+2
+9
+2 5
+4 9
+0 3
+8 13
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+3
+
+Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=714
+
+\section*{Source}
+USACO FEB17 Contest, Silver Division, Problem ID: 714
+
+\end{document}

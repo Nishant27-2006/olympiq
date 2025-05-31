@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>The subtasks in this problem motivate starting by solving the problem when <span class='math'>$K=1$</span>
+and then going from there to solving the problem when <span class='math'>$K=2$</span> and then <span class='math'>$K=3$</span>. As a
+result, this editorial will go through solving each of these in order.
+<p><span class='math'>$K = 1$</span>: If Bessie can only turn once, she must turn at either the top-right
+corner or the bottom-left corner. Therefore, it suffices to check that the top
+row and right column are empty and that the bottom row and left column are
+empty.
+<p><span class='math'>$K = 2$</span>: If Bessie is to make exactly two turns, then either she walks along the
+top row, turns right and walks all the way to the bottom and then turns left, or
+she walks along the left column, turns left, and walks all the way to the right
+and then turns right. In the former case, we can brute force all columns Bessie
+would select. In the latter case, we can brute force all rows Bessie would
+select.
+<p><span class='math'>$K = 3$</span>: If Bessie is to make exactly three turns, then Bessie ends up turning
+in the middle of the grid in some square that is not in the top row, bottom row,
+left column, or right column. We can brute force all inner squares that Bessie
+would select.
+<p>The runtime for a single test case is <span class='math'>$\mathcal{O}(N^3)$</span> - there are
+<span class='math'>$\mathcal{O}(N^2)$</span> paths that Bessie can consider, and there are
+<span class='math'>$\mathcal{O}(N)$</span> squares on each path to validate as being empty.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+
+using namespace std;
+
+void solve() {
+  int n, k;
+  cin &gt;&gt; n &gt;&gt; k;
+  vector&lt;string&gt; g(n);
+  for(int i = 0; i &lt; n; i++) cin &gt;&gt; g[i];
+  int ret = 0;
+  if(k &gt;= 1) {
+    bool urcorner = true;
+    bool dlcorner = true;
+    for(int i = 0; i &lt; n; i++) {
+      if(g[0][i] == &apos;H&apos; || g[i][n-1] == &apos;H&apos;) urcorner = false;
+      if(g[i][0] == &apos;H&apos; || g[n-1][i] == &apos;H&apos;) dlcorner = false;
+    }
+    ret += urcorner;
+    ret += dlcorner;
+  }
+  if(k &gt;= 2) {
+    // use column j
+    for(int j = 1; j &lt; n-1; j++) {
+      bool valid = true;
+      for(int i = 0; i &lt; n; i++) {
+        if(g[i][j] == &apos;H&apos;) valid = false;
+        if(i &lt; j &amp;&amp; g[0][i] == &apos;H&apos;) valid = false;
+        if(i &gt; j &amp;&amp; g[n-1][i] == &apos;H&apos;) valid = false;
+      }
+      ret += valid;
+    }
+    // use row i
+    for(int i = 1; i &lt; n-1; i++) {
+      bool valid = true;
+      for(int j = 0; j &lt; n; j++) {
+        if(g[i][j] == &apos;H&apos;) valid = false;
+        if(j &lt; i &amp;&amp; g[j][0] == &apos;H&apos;) valid = false;
+        if(j &gt; i &amp;&amp; g[j][n-1] == &apos;H&apos;) valid = false;
+      }
+      ret += valid;
+    }
+  }
+  if(k &gt;= 3) {
+    for(int i = 1; i &lt; n-1; i++) {
+      for(int j = 1; j &lt; n-1; j++) {
+        // RDRD
+        bool valid = g[i][j] == &apos;.&apos;;
+        for(int a = 0; a &lt; n; a++) {
+          if(a &lt;= i &amp;&amp; g[a][j] == &apos;H&apos;) valid = false;
+          if(a &gt;= i &amp;&amp; g[a][n-1] == &apos;H&apos;) valid = false;
+          if(a &lt;= j &amp;&amp; g[0][a] == &apos;H&apos;) valid = false;
+          if(a &gt;= j &amp;&amp; g[i][a] == &apos;H&apos;) valid = false;
+        }
+        ret += valid;
+        valid = g[i][j] == &apos;.&apos;;
+        // DRDR
+        for(int a = 0; a &lt; n; a++) {
+          if(a &lt;= i &amp;&amp; g[a][0] == &apos;H&apos;) valid = false;
+          if(a &gt;= i &amp;&amp; g[a][j] == &apos;H&apos;) valid = false;
+          if(a &lt;= j &amp;&amp; g[i][a] == &apos;H&apos;) valid = false;
+          if(a &gt;= j &amp;&amp; g[n-1][a] == &apos;H&apos;) valid = false;
+        }
+        ret += valid;
+      }
+    }
+  }
+  cout &lt;&lt; ret &lt;&lt; &quot;\n&quot;;
+}
+int main() {
+  int t;
+  cin &gt;&gt; t;
+  while(t--) solve();
+}
+</pre>
+<p>We can also solve this problem in <span class='math'>$\mathcal{O}(N^2K)$</span> time by storing for each square,
+each possible number of turns (up to <span class='math'>$K$</span>), and each of the directions D and R, the number 
+of ways for  Bessie to reach that square using exactly that number of turns such that
+the last direction in which she walked was that direction. However, this is outside of the
+scope of both Bronze and Silver.</body></html>

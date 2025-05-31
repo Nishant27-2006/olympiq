@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>Let&apos;s start by tackling a problem that we&apos;ll need to solve if we want to solve
+the original problem - given that haybale <span class='math'>$i$</span> is the rightmost haybale we&apos;ll
+eat, what is the rightmost leftmost haybale we need to eat to guarantee a total
+flavor of <span class='math'>$M$</span>?
+<p>We can solve this problem in linear time for all choices of rightmost haybale
+using two pointers. If we maintain a rightmost pointer that starts at the
+leftmost haybale and only moves to the right, along with a leftmost pointer that
+also starts at the leftmost haybale, we can advance the leftmost pointer if the
+haybales between those pointers sum to a total flavor of at least <span class='math'>$M$</span>. Both
+pointers only advance to the right, and we can maintain a running total of the
+sum between the two pointers.
+<p>With this in place, we now need to be able to efficiently query for the minimum
+value in an array in these subintervals. There are several different approaches
+to do this efficiently. One of the simplest approaches is keeping all of the
+values between the two entries into a balanced binary search tree. We can
+insert, remove, and query for the maximum value in <span class='math'>$O(\log N)$</span>, giving us an
+<span class='math'>$O(N \log N)$</span> algorithm.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class haybale {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		long need = Long.parseLong(st.nextToken());
+		long[] f = new long[n];
+		long[] s = new long[n];
+		for(int i = 0; i &lt; n; i++) {
+			st = new StringTokenizer(br.readLine());
+			f[i] = Long.parseLong(st.nextToken());
+			s[i] = Long.parseLong(st.nextToken());
+		}
+		int left = 0;
+		long ret = Long.MAX_VALUE;
+		TreeMap&lt;Long, Integer&gt; seen = new TreeMap&lt;Long, Integer&gt;();
+		long flavor = 0;
+		for(int i = 0; i &lt; n; i++) {
+			flavor += f[i];
+			update(seen, s[i], 1);
+			while(flavor - f[left] &gt;= need) {
+				update(seen, s[left], -1);
+				flavor -= f[left++];
+			}
+			if(flavor &gt;= need) {
+				ret = Math.min(ret, seen.lastKey());
+			}
+		}
+		pw.println(ret);
+		pw.close();
+	}
+	private static void update(Map&lt;Long, Integer&gt; m, long k, int v) {
+		if(!m.containsKey(k)) {
+			m.put(k, 0);
+		}
+		int nv = m.get(k) + v;
+		if(nv == 0) {
+			m.remove(k);
+		}
+		else {
+			m.put(k, nv);
+		}
+	}
+}
+</pre>
+</body></html>

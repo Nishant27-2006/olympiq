@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by William Lin)
+<p>Notice that if there is no edge between <span class='math'>$(A, B)$</span> and no edge between <span class='math'>$(B, C)$</span>,
+there cannot be an edge <span class='math'>$(A, C)$</span>. From now on, we will only consider the
+complement of the graph, and if edges <span class='math'>$(A, B)$</span> and <span class='math'>$(B, C)$</span> exist, then <span class='math'>$(A, C)$</span>
+also exists. We can use this to prove by induction that any two nodes connected
+with a path also share an edge, which means that every connected component is a
+clique.
+<p>We can do DP on all subsets of nodes, where our transitions are adding cliques
+to the graph. All edges will be removed in the beginning and we can precalculate
+how much it costs to add each clique to the graph in <span class='math'>$O(N^2 2^N)$</span>. The DP itself
+is <span class='math'>$O(3^N)$</span>.
+<p>Daniel Zhang&apos;s solution code:
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+ 
+const int INF = 1e9 + 7;
+ 
+int adj[16][16];
+ 
+int dp[1 &lt;&lt; 16];
+int N, M;
+ 
+int flip[1 &lt;&lt; 16];  // change to cost if subset is flipped
+ 
+int main() {
+	scanf(&quot;%d %d&quot;, &amp;N, &amp;M);
+	for (int i = 0; i &lt; M; i++) {
+		int U, V;
+		scanf(&quot;%d %d&quot;, &amp;U, &amp;V);
+		U--, V--;
+		adj[U][V] = adj[V][U] = 1;
+	}
+	for (int mask = 0; mask &lt; (1 &lt;&lt; N); mask++) {
+		for (int i = 0; i &lt; N; i++) {
+			for (int j = i + 1; j &lt; N; j++) {
+				if ((mask &amp; (1 &lt;&lt; i)) &amp;&amp; (mask &amp; (1 &lt;&lt; j))) {
+					if (adj[i][j]) {
+						flip[mask]++;
+					} else {
+						flip[mask]--;
+					}
+				}
+			}
+		}
+	}
+	dp[0] = N * (N - 1) / 2 - M;
+	for (int mask = 1; mask &lt; (1 &lt;&lt; N); mask++) {
+		dp[mask] = INF;
+		for (int sub = mask; sub; sub = (sub - 1) &amp; mask) {
+			dp[mask] = std::min(dp[mask], dp[mask &amp; ~sub] + flip[sub]);
+		}
+	}
+	printf(&quot;%d\n&quot;, dp[(1 &lt;&lt; N) - 1]);
+}
+</pre>
+<p>Possible partial solutions:
+<p><ul><li>A naively implemented DP that iterates through all pairs of subsets of nodes would be
+<span class='math'>$O(4^N)$</span>.</li><li>The number of possible graphs is given by the
+<a href='https://en.wikipedia.org/wiki/Bell_number'>Bell numbers</a>  which are
+sufficiently small for
+<span class='math'>$N \le 13$</span>.</li></ul>
+<p></body></html>

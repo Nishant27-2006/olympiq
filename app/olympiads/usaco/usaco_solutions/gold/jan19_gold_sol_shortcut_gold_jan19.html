@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Patrick Zhang)
+<p>In order to solve this problem, we must compute two things for every vertex: the
+shortest path to the barn, and the number of cows that pass through that vertex.
+<p>Using Dijkstraâs algorithm, which computes the minimum path from each field to
+the barn, will help with both tasks. However, we must also store the parents so
+that we can backtrack to find the fields on the path to the barn. We also need
+to check that we are finding the lexicographically smallest shortest paths
+whenever the current lengths of the paths are equal.
+<p>After running Dijkstraâs algorithm, we can backtrack from every vertex to
+record how many cows pass through every field. This will run in <span class='math'>$O(N^{2}).$</span>
+<p>You can also use a dfs on the shortest path tree (the tree generated from
+Dijkstraâs algorithm), which would allow you to accomplish that task in
+<span class='math'>$O(N).$</span> Simply construct an edge list using the parent array then calculate the
+sum of the number of cows that pass through fields in its subtree.
+<p>Finally, we compute how much distance adding a road from the barn to the vertex
+saves, which is <span class='math'>$\max_{2 \leq i \leq N} c_i \cdot (d_i - T),$</span> where <span class='math'>$c_i$</span> is the
+number of cows that passes through field <span class='math'>$i$</span> and <span class='math'>$d_i$</span> is the shortest path from
+field <span class='math'>$i$</span> to the barn.
+<p>Dijkstraâs algorithm is <span class='math'>$O(M\log N)$</span> and backtracking is <span class='math'>$O(N^{2})$</span>, for a
+total efficiency of <span class='math'>$O(M\log{N} + N^{2})$</span> (or <span class='math'>$O(M\log{N} + N)$</span> if you use dfs),
+both of which are fast enough to fit in the time limit.
+<p>Here is my solution in C++:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+
+using namespace std;
+
+#define MAXN 10005
+
+struct State{
+   int v;                                 //vertex
+   long long w;                           //current distance
+};
+//custom comparator for State
+struct CompareState{
+   bool operator()(State s1, State s2){
+      return s1.w &gt; s2.w;
+   }
+};
+
+struct Edge{
+   int to;                                //other vertex
+   int w;                                 //weight
+};
+
+
+int par[MAXN];
+long long c[MAXN];
+long long djik[MAXN];                    //shortest distance from vertex 1
+long long nums[MAXN];                    //number of cows that pass through that vertex
+
+int main(){
+   ios::sync_with_stdio(false);
+   cin.tie(0);
+   
+   ifstream fin (&quot;shortcut.in&quot;);
+   ofstream fout (&quot;shortcut.out&quot;);
+   
+   int n,m;
+   long t;
+   fin &gt;&gt; n &gt;&gt; m &gt;&gt; t;
+   
+   for(int k = 1; k &lt;= n; k++){
+      fin &gt;&gt; c[k];
+   }
+   
+   //build edge list for every vertex
+   vector&lt;vector&lt;Edge&gt;&gt; adj(n+1);
+   
+   for(int k = 0; k &lt; m; k++){
+      int a,b;
+      long w;
+      
+      fin &gt;&gt; a &gt;&gt; b &gt;&gt; w;
+      
+      Edge ea {b,w};
+      Edge eb {a,w};
+      
+      adj[a].push_back(ea);
+      adj[b].push_back(eb);
+   }
+   
+   //basic dijkstra&apos;s algorithm while storing parents
+   fill(begin(djik),end(djik),LONG_MAX);
+   djik[1] = 0;
+   
+   fill(begin(par),end(par),-1);
+   
+   priority_queue&lt;State,vector&lt;State&gt;,CompareState&gt; pq;
+   State s {1,0};
+   pq.push(s);
+   
+   unordered_set&lt;int&gt; seen;
+   
+   seen.insert(1);
+   
+   while(!pq.empty()){
+      State cur = pq.top();
+      pq.pop();
+      
+      int u = cur.v;
+      
+      seen.insert(u);
+      
+      for(Edge e : adj[u]){
+         int v = e.to;
+         if(seen.find(v) != seen.end()) continue;
+         long long newdis = djik[u] + e.w;
+         if(newdis &lt; djik[v]){
+            djik[v] = newdis;
+            par[v] = u;
+            State next {v,newdis};
+            pq.push(next);
+         } else if(newdis == djik[v]){                      
+            //ensures lexicographically shortest path
+            if(u &lt; par[v]){
+               djik[v] = newdis;
+               par[v] = u;
+               State next {v,newdis};
+               pq.push(next);
+            }
+         }
+      }
+   }
+   
+   for(int k = 1; k &lt;= n; k++){
+      //backtrack to fill nums
+      int i = k;
+      while(i != -1){
+         nums[i] += c[k];
+         i = par[i];
+      }
+   }
+   
+   long long answer = 0;
+   for(int k = 1; k &lt;= n; k++){
+      //nums[k] * (djik[k] - t) is the distance saved
+      answer = max(answer,nums[k]*(djik[k]-t));
+   }
+   
+   cout &lt;&lt; answer &lt;&lt; endl;
+   fout &lt;&lt; answer &lt;&lt; endl;
+      
+      
+   
+   return 0;
+}
+</pre>
+<p>Here is the same solution, but with the <span class='math'>$O(N)$</span> dfs instead of <span class='math'>$O(N^2)$</span>
+backtracking:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+
+using namespace std;
+
+#define MAXN 10005
+
+struct State{
+   int v;                                 //vertex
+   long long w;                           //current distance
+};
+
+//custom comparator for State
+struct CompareState{
+   bool operator()(State s1, State s2){
+      return s1.w &gt; s2.w;
+   }
+};
+
+struct Edge{
+   int to;                                //other vertex
+   int w;                                 //weight
+};
+
+int par[MAXN];
+long long c[MAXN];
+long long djik[MAXN];               //shortest distance from vertex 1
+long long nums[MAXN];               //number of cows that pass through that vertex
+
+vector&lt;vector&lt;int&gt;&gt; spadj(MAXN);    //edge list for the shortest path tree
+
+//use a dfs to fill nums (the array storing the number of cows that pass through that field
+void dfs(int v, int p){
+   long long sum = c[v];
+   
+   for(auto nei : spadj[v]){
+      if(nei == p) continue;
+      dfs(nei,v);
+      sum += nums[nei];
+   }
+   
+   nums[v] = sum;
+}
+
+
+int main(){
+   ios::sync_with_stdio(false);
+   cin.tie(0);
+   
+   ifstream fin (&quot;shortcut.in&quot;);
+   ofstream fout (&quot;shortcut.out&quot;);
+   
+   int n,m;
+   long t;
+   fin &gt;&gt; n &gt;&gt; m &gt;&gt; t;
+   
+   for(int k = 1; k &lt;= n; k++){
+      fin &gt;&gt; c[k];
+   }
+   
+   //build edge list for every vertex
+   vector&lt;vector&lt;Edge&gt;&gt; adj(n+1);
+   
+   for(int k = 0; k &lt; m; k++){
+      int a,b;
+      long w;
+      
+      fin &gt;&gt; a &gt;&gt; b &gt;&gt; w;
+      
+      Edge ea {b,w};
+      Edge eb {a,w};
+      
+      adj[a].push_back(ea);
+      adj[b].push_back(eb);
+   }
+   
+   //basic djikstra&apos;s algorithm while storing parents
+   fill(begin(djik),end(djik),LONG_MAX);
+   djik[1] = 0;
+   
+   fill(begin(par),end(par),-1);
+   
+   priority_queue&lt;State,vector&lt;State&gt;,CompareState&gt; pq;
+   State s {1,0};
+   pq.push(s);
+   
+   unordered_set&lt;int&gt; seen;
+   
+   seen.insert(1);
+   
+   while(!pq.empty()){
+      State cur = pq.top();
+      pq.pop();
+      
+      int u = cur.v;
+      
+      seen.insert(u);
+      
+      for(Edge e : adj[u]){
+         int v = e.to;
+         if(seen.find(v) != seen.end()) continue;
+         long long newdis = djik[u] + e.w;
+         if(newdis &lt; djik[v]){
+            djik[v] = newdis;
+            par[v] = u;
+            State next {v,newdis};
+            pq.push(next);
+         } else if(newdis == djik[v]){                     
+            //ensures lexicographically shortest path
+            if(u &lt; par[v]){
+               djik[v] = newdis;
+               par[v] = u;
+               State next {v,newdis};
+               pq.push(next);
+            }
+         }
+      }
+   }
+   
+   //backtrack to fill nums
+   
+   for(int k = 2; k &lt;= n; k++){
+      //construct edge list using the parent array
+      spadj[k].push_back(par[k]);
+      spadj[par[k]].push_back(k);
+   }
+   
+   dfs(1,-1);
+
+   
+   long long answer = 0;
+   for(int k = 1; k &lt;= n; k++){
+      //nums[k] * (djik[k] - t) is the distance saved
+      answer = max(answer,nums[k]*(djik[k]-t));
+   }
+   
+   cout &lt;&lt; answer &lt;&lt; endl;
+   fout &lt;&lt; answer &lt;&lt; endl;
+      
+      
+   
+   return 0;
+}
+</pre>
+<p></body></html>

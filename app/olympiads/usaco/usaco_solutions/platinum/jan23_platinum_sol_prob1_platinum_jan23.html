@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Richard Qi)
+<p>First, we show how to find the length of the shortest path between <span class='math'>$a$</span> and <span class='math'>$b$</span>.
+It can be shown that greedily advancing from <span class='math'>$a$</span> to the farthest right reachable
+interval is always optimal. So, from each interval, we can assign a unique
+&quot;right parent&quot; interval, and the distance from <span class='math'>$a$</span> to <span class='math'>$b$</span> can be found by
+repeatedly going to the parent of the current interval, ending when we reach an
+interval at <span class='math'>$b$</span> or greater. To find these parents, we can use a two pointer
+technique where we scan from left to right and keep track of the parent of the
+current node, which always moves to the right. Naively, we can directly travel
+from <span class='math'>$a$</span> to <span class='math'>$b$</span> using these parent pointers.
+<p>To speed this process up to <span class='math'>$\mathcal O(\log{N})$</span> time per query, we can use the
+technique of binary jumping. For every <span class='math'>$k$</span> from <span class='math'>$1 \dots \log{N}$</span>, we can calculate
+the <span class='math'>$2^k$</span>-th parent of each interval: the <span class='math'>$2^k$</span>th parent of the <span class='math'>$i$</span>th interval
+is the <span class='math'>$2^{k-1}$</span>th parent of the <span class='math'>$2^{k-1}$</span>th parent of the <span class='math'>$i$</span>th interval. Then,
+to find the distance between <span class='math'>$a$</span> and <span class='math'>$b$</span>,  we can do the following process: for
+every <span class='math'>$k$</span> from <span class='math'>$\log{N} \dots 0$</span>, we check whether the <span class='math'>$2^k$</span>th parent of <span class='math'>$a$</span> is to
+the right of <span class='math'>$b$</span> or not. If so, then the shortest path between <span class='math'>$a$</span> and <span class='math'>$b$</span> is
+less than <span class='math'>$2^k$</span>. Else, we recursively find the shortest path between this parent
+and
+<span class='math'>$b$</span>.
+<p>This observation nets us partial credit, as we can find the shortest path
+between <span class='math'>$a$</span> and <span class='math'>$b$</span>, and then iterate over all special intervals <span class='math'>$s$</span> between <span class='math'>$a$</span>
+and <span class='math'>$b$</span>, and checking whether <span class='math'>$dist(a, s)+dist(s, b) = dist(a, b)$</span>. If so, then
+<span class='math'>$s$</span> clearly lies on a shortest path from <span class='math'>$a$</span> to <span class='math'>$b$</span>; otherwise,
+<span class='math'>$dist(a, s) + dist(s, b) &gt; dist(a, b)$</span> and any path going through <span class='math'>$s$</span> must have
+distance greater than <span class='math'>$dist(a, b)$</span>. 
+<p>An interesting observation to make is that when using the binary jumping
+solution above, we could arbitrarily use binary jumps going left or right. This
+will come in handy later on!
+<p>Now, we will take a closer look at the (not necessarily special) intervals <span class='math'>$s$</span>
+which satisfy <span class='math'>$dist(a, s) + dist(s, b) = dist(a, b)$</span>. For convenience, let
+<span class='math'>$L = dist(a, b)$</span>. Consider the intervals <span class='math'>$s$</span> which satisfy
+<span class='math'>$dist(a, s) = i, dist(s, b) = L-i$</span> for some <span class='math'>$i \in [1, L-1]$</span>. From our greedy
+strategy for finding shortest paths mentioned above, it can be shown that the
+set of intervals which satisfy <span class='math'>$dist(a, s) \le i$</span> are simply those with indices
+<span class='math'>$\le greedy_a(i)$</span>, where <span class='math'>$greedy_a(i)$</span> denotes the interval we arrive at if we
+start at <span class='math'>$a$</span> and greedily go right <span class='math'>$i$</span> times. Similarly, the set of intervals
+which satisfy <span class='math'>$dist(s, b) \le L-i$</span> are those with indices <span class='math'>$\ge greedy_b(L-i)$</span>,
+where <span class='math'>$greedy_b(L-i)$</span> denotes the interval we arrive at if we start at <span class='math'>$b$</span> and
+go greedily left <span class='math'>$L-i$</span> times.
+<p>So, the intervals <span class='math'>$s$</span> which satisfy <span class='math'>$dist(a, s) = i, dist(s, b) = L-i$</span> are the
+intersection of these two sets: intervals which satisfy
+<span class='math'>$greedy_b(L-i) \le s \le greedy_a(i)$</span>, which forms some contiguous range of
+intervals. Notice that if we consider all of these ranges for all <span class='math'>$i$</span>, no
+interval is counted twice. Additionally, each range is nonempty (in particular,
+<span class='math'>$greedy_a(i)$</span> always lies in range <span class='math'>$i$</span>). So, our answer can be expressed in the
+form
+<span class='math'>$\sum_{i=1}^{L-1} (\text{number of special ranges between }greedy_b(L-i)\text{ and }greedy_a(i)\text{, inclusive})$</span>.
+<p>(This potentially leaves out counting the intervals <span class='math'>$a$</span> and <span class='math'>$b$</span>, which we can
+take care of as special cases.)
+<p>We can then use cumulative sums to simplify this expression. Define <span class='math'>$csum(x)$</span> to
+be the number of special intervals between <span class='math'>$1$</span> and <span class='math'>$x$</span>, inclusive. The sum can
+be rewritten as <span class='math'>$\sum_{i=1}^{L-1} csum(greedy_a(i))-csum(greedy_b(L-i)-1)$</span>. We
+can rewrite the sum as 
+<span class='math'>$\sum_{i=1}^{L-1} csum(greedy_a(i)) -
+\sum_{i=1}^{L-1} csum(greedy_b(L-i)-1) = \sum_{i=1}^{L-1} csum(greedy_a(i)) -
+\sum_{i=1}^{L-1} csum(greedy_b(i)-1)$</span>.
+<p>Now, each of these sums can be computed independently and then summed up for the
+final answer. We show how to compute the second sum.
+<p>Consider again our binary jumping solution for computing the shortest path
+between <span class='math'>$a$</span> and <span class='math'>$b$</span>, where we defined the parent of an interval <span class='math'>$i$</span> as greedily
+going left one step. We can imagine these parent relations forming a graph
+(specifically, a forest) with directed edges going left. Then, the shortest path
+length is the length of the path starting at node <span class='math'>$b$</span> and going up the tree
+until we arrive at a node with index <span class='math'>$\le a$</span>. For each node, define <span class='math'>$par(node)$</span>
+to be the parent of the node. For each edge between some <span class='math'>$node$</span> and <span class='math'>$par(node)$</span>,
+we can place a weight on the edge equal to <span class='math'>$csum(par(node)-1)$</span>. Then, the
+expression <span class='math'>$\sum_{i=1}^{L-1} csum(greedy_b(i)-1)$</span> is simply the total weight of
+all the edges going from <span class='math'>$b$</span> to its <span class='math'>$L-1$</span>th parent.
+<p>The sum of the weights of these edges can be computed again using binary jumps.
+For every <span class='math'>$k$</span> from <span class='math'>$1 \dots \log{n}$</span>, we can precompute the sum of the weights
+on the path from each node <span class='math'>$i$</span> and its <span class='math'>$2^k$</span>th parent. We do this recursively:
+the sum of the weights on the path from node <span class='math'>$i$</span> and its <span class='math'>$2^k$</span>th parent is equal
+to the sum of the weights on the path from node <span class='math'>$i$</span> to its <span class='math'>$2^{k-1}$</span>th parent
+plus the sum of the weights on the path from the <span class='math'>$2^{k-1}$</span>th parent of <span class='math'>$i$</span> to
+the <span class='math'>$2^{k-1}$</span>th parent of the <span class='math'>$2^{k-1}$</span>th parent of <span class='math'>$i$</span>. We compute <span class='math'>$\log{N}$</span>
+pieces of information for each of the nodes, which takes <span class='math'>$\mathcal O(N \log{N})$</span>
+total time.
+<p>Then, to answer queries, we can traverse from <span class='math'>$b$</span> to its <span class='math'>$L-1$</span>th parent using
+<span class='math'>$\log{N}$</span> jumps (as described earlier), while summing up the weights we just
+computed every time we jump <span class='math'>$2^k$</span> distance for some <span class='math'>$k$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int mx = 200005;
+const int BIN = 30;
+int N, Q;
+ 
+//precompute binary jumps
+vector&lt;vector&lt;pair&lt;int, long long&gt;&gt;&gt; genJmp(string S, vector&lt;int&gt; csum){
+    vector&lt;vector&lt;pair&lt;int, long long&gt;&gt;&gt; res(N, vector&lt;pair&lt;int, long long&gt;&gt;(BIN));
+    res[0][0] = make_pair(-1, 0);
+    
+    vector&lt;pair&lt;int, int&gt;&gt; rangs(N);
+    int Ls = 0;
+    int Rs = 0;
+    for(int i = 0; i &lt; int(S.size()); i++){
+        if(S[i] == &apos;L&apos;){
+            rangs[Ls].first = i;
+            Ls++;
+        }
+        else{
+            rangs[Rs].second = i;
+            Rs++;
+        }
+    }
+ 	
+ 	//calculate the information for the 2^0th parent (can also be done in linear time)
+    set&lt;pair&lt;int, int&gt;&gt; rights;
+    for(int i = 0; i &lt; N; i++){
+        if(i &gt; 0){
+            auto it = rights.lower_bound(make_pair(rangs[i].first, -1));
+            int lower_ind = (it-&gt;second);
+            assert(lower_ind &lt; i);
+            res[i][0] = make_pair(lower_ind, csum[lower_ind]);
+        }
+        rights.insert(make_pair(rangs[i].second, i));
+    }
+ 	
+ 	//generate binary jumps
+    for(int i = 0; i &lt; N; i++){
+        for(int j = 1; j &lt; BIN; j++){
+            int lower_ind = res[i][j-1].first;
+            assert(lower_ind &lt; i);
+            if(lower_ind == -1){
+                res[i][j] = make_pair(-1, 0);
+            }
+            else{
+                res[i][j] = make_pair(res[lower_ind][j-1].first, res[i][j-1].second+res[lower_ind][j-1].second);
+            }
+        }
+    }
+ 
+    return res;
+}
+ 
+ 
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    cin &gt;&gt; N &gt;&gt; Q;
+    string S; cin &gt;&gt; S;
+    string special; cin &gt;&gt; special;
+
+    //generate cumulative sums
+    vector&lt;int&gt; csum(int(special.size()), 0);
+    for(int i = 0; i &lt; int(csum.size()); i++){
+        if(i-1 &gt;= 0) csum[i] = csum[i-1];
+        csum[i]+=(special[i] == &apos;1&apos;);
+    }
+
+    vector&lt;int&gt; csum_left(N);
+    //change indices of left cumulative sums
+    for(int i = 1; i &lt; N; i++){
+        csum_left[i] = csum[i-1];
+    }
+    //do a bunch of reversals so that we can use the same function for generating binary jumps, then reverse afterwards again
+    vector&lt;int&gt; csum_right = csum; reverse(begin(csum_right), end(csum_right));
+    
+    vector&lt;vector&lt;pair&lt;int, long long&gt;&gt;&gt; jmp_left = genJmp(S, csum_left);
+
+    reverse(begin(S), end(S));
+    for(auto&amp; u: S){
+        u = ((u == &apos;L&apos;) ? &apos;R&apos; : &apos;L&apos;);
+    }
+    reverse(begin(special), end(special));
+
+    vector&lt;vector&lt;pair&lt;int, long long&gt;&gt;&gt; jmp_right = genJmp(S, csum_right);
+
+    reverse(begin(jmp_right), end(jmp_right));
+    for(int i = 0; i &lt; int(jmp_right.size()); i++){
+        for(int j = 0; j &lt; int(jmp_right[i].size()); j++){
+            jmp_right[i][j].first = N-1-jmp_right[i][j].first;
+        }
+    }
+    reverse(begin(S), end(S));
+    for(auto&amp; u: S){
+        u = ((u == &apos;L&apos;) ? &apos;R&apos; : &apos;L&apos;);
+    }
+    reverse(begin(special), end(special));
+
+
+    //answer queries
+    for(int i = 1; i &lt;= Q; i++){
+        int a, b; cin &gt;&gt; a &gt;&gt; b;
+        a--; b--; //0-indexed intervals
+
+        int cur = b;
+        long long sum = 0; //sum of edge weights going left from b
+        int cur_right = a; //move this right as you go along
+        long long sum_right = 0; //sum of edge weights going right from a
+        int dist_traveled = 0;
+
+        for(int j = BIN-1; j &gt;= 0; j--){ //binary jump of size 2^j
+            if(jmp_left[cur][j].first == -1) continue;
+            if(jmp_left[cur][j].first &gt; a){ //don&apos;t reach a or further to the left
+                sum_right+=jmp_right[cur_right][j].second; //add up edge weights
+                cur_right = jmp_right[cur_right][j].first; //update current node
+                sum+=jmp_left[cur][j].second; //add up edge weights
+                cur = jmp_left[cur][j].first; //update current node
+
+                dist_traveled+=(1&lt;&lt;j);
+
+                assert(cur_right != -1 &amp;&amp; cur != -1);
+            }
+        }
+        assert(cur_right &lt; b);
+        assert(cur &gt; a);
+        long long ans = sum_right-sum;
+
+        if(special[a] == &apos;1&apos;) ans++; //take care of a and b specially
+        if(special[b] == &apos;1&apos;) ans++;
+
+        cout &lt;&lt; dist_traveled+1 &lt;&lt; &quot; &quot; &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+    // you should actually read the stuff at the bottom
+}
+ 
+/* stuff you should look for
+    * int overflow, array bounds
+    * special cases (n=1?)
+    * do smth instead of nothing and stay organized
+    * WRITE STUFF DOWN
+    * DON&apos;T GET STUCK ON ONE APPROACH
+*/
+</pre>
+<p>Bonus: Solve the case where the right endpoints of the intervals are not in
+increasing order (solution in
+<a href='https://drops.dagstuhl.de/opus/volltexte/2022/17344/pdf/LIPIcs-ISAAC-2022-59.pdf'>this
+paper</a>).
+<p></body></html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>A prerequisite to solving this problem is to compute <span class='math'>$A(t)$</span> (without any
+updates) in <span class='math'>$\mathcal O(|t|)$</span>. The below pseudocode solves this problem; see the
+analysis of the Silver version for an explanation.
+<p><pre class='prettyprint'>
+answer = 0
+tokenAmts = 6 * [0]
+
+for k in 1..|t|:
+    tokenAmts[0] += 1
+    newTokenAmts = 6 * [0]
+
+    for j in 0..5:
+        if t[k] == &quot;bessie&quot;[j]:
+           if j == 5:
+               answer += (|t| - k + 1) * tokenAmts[j]
+           newTokenAmts[(j + 1) % 6] += tokenAmts[j]
+        else:
+           newTokenAmts[j] += tokenAmts[j]
+    tokenAmts = newTokenAmts
+
+return answer
+</pre>
+<p>This algorithm can be used to solve the first two subtasks. The first subtask
+can be solved more easily by using the <span class='math'>$O(|t|^2)$</span> algorithm from the Silver
+analysis after each update.
+<p>To solve the full problem, we will optimize recalculation of the answer after
+updates using a segment tree. In order to do this, we will want to convert the
+above algorithm into a &quot;transition&quot; structure that encapsulates, for a given
+substring <span class='math'>$s$</span>, how the algorithm goes from its before state to its after state
+by looking through <span class='math'>$s$</span>. 
+<p>Such a transition structure needs to encapsulate two things:
+<ul><li> How we calculate <span class='math'>$tokenAmts$</span> after, given <span class='math'>$tokenAmts$</span> before</li><li> How
+we increase the answer, given <span class='math'>$tokenAmts$</span> before</li></ul>
+<p>Both of these relationships have two sources.
+<p>The first is that for a given index <span class='math'>$j$</span> in <span class='math'>$tokenAmts$</span> before, all of
+<span class='math'>$tokenAmts[j]$</span>, throughout the process of the algorithm reading <span class='math'>$s$</span>, is moved
+together to other positions in <span class='math'>$tokenAmts$</span>, and each time this amount goes from
+the end to the beginning of <span class='math'>$tokenAmts$</span>, contributes to the answer by being
+multiplied by some fixed amount dependent on the index of <span class='math'>$s$</span> that the algorithm
+is currently at. This means that to encapsulate this source, the transition
+structure needs to know the following:
+<ul><li> For each index <span class='math'>$j$</span> from <span class='math'>$0$</span> to <span class='math'>$5$</span>, the index <span class='math'>$j&apos;$</span> such that all of
+<span class='math'>$tokenAmts[j]$</span> before ends up at <span class='math'>$tokenAmts[j&apos;]$</span> after</li><li> For each index
+<span class='math'>$j$</span> from <span class='math'>$0$</span> to <span class='math'>$5$</span>, the overall coefficient <span class='math'>$c$</span> such that
+<span class='math'>$c \cdot tokenAmts[j]$</span> is contributed to the answer</li></ul>
+<p>The second source is that while going through <span class='math'>$s$</span>, the algorithm adds <span class='math'>$1$</span> to
+<span class='math'>$tokenAmts[0]$</span> at every step. This operates similarly to the first source,
+except that we instead have fixed amounts ending up in the after version of
+<span class='math'>$tokenAmts$</span> and a fixed overall contribution to the answer. Thus, the transition
+structure needs to know the following:
+<ul><li> For each index <span class='math'>$j$</span> from <span class='math'>$0$</span> to <span class='math'>$5$</span>, the additional fixed amount that ends
+up in <span class='math'>$tokenAmts[j]$</span> after</li><li> A single number representing the additional
+fixed contribution to the answer</li></ul> 
+<p>Given this transition structure, we can solve the problem as follows. Create a
+segment tree on the indexes of <span class='math'>$t$</span> that will contain a transition structure at
+each index. In order to be able to update the segment tree, we need to be able
+to create the transition structure for a single step of the algorithm given the
+index <span class='math'>$k$</span> and the character <span class='math'>$t[k]$</span>, and we need to be able to merge two
+transition structures, but both of these tasks are fairly straightforward; for
+details see the solution code below. The answer after each update will then be
+the fixed contribution to the answer of the transition structure at the root
+node of the segment tree.
+<p>Since the segment tree updates are <span class='math'>$\mathcal O(\log N)$</span> as usual, the overall
+time complexity of the algorithm is <span class='math'>$\mathcal O((N + U)\log N)$</span>. This can be
+improved to <span class='math'>$O(N + U\log N)$</span> by doing the initial setup of the segment tree all
+at once. 
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+
+public class Pareidolia {
+    public static final String BESSIE = &quot;bessie&quot;;
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        char[] string = in.readLine().toCharArray();
+        SegmentTree segTree = new SegmentTree(string.length);
+        for (int j = 0; j &lt; string.length; j++) {
+            segTree.update(j, Transition.create(string[j], j, string.length));
+        }
+        StringBuilder out = new StringBuilder();
+        out.append(segTree.get()).append(&apos;\n&apos;);
+        for (int u = Integer.parseInt(in.readLine()); u &gt; 0; u--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int j = Integer.parseInt(tokenizer.nextToken()) - 1;
+            string[j] = tokenizer.nextToken().charAt(0);
+            segTree.update(j, Transition.create(string[j], j, string.length));
+            out.append(segTree.get()).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+
+    static class Transition {
+        final int[] endsUpAt = new int[6];
+        final long[] coefficients = new long[6];
+        final long[] fixedEndsUpAt = new long[6];
+        long fixedContributionToAnswer = 0;
+
+        Transition compose(Transition other) {
+            Transition result = new Transition();
+            result.fixedContributionToAnswer += fixedContributionToAnswer;
+            result.fixedContributionToAnswer += other.fixedContributionToAnswer;
+            for (int d = 0; d &lt; 6; d++) {
+                result.endsUpAt[d] = other.endsUpAt[endsUpAt[d]];
+                result.coefficients[d] += coefficients[d];
+                result.coefficients[d] += other.coefficients[endsUpAt[d]];
+                result.fixedEndsUpAt[other.endsUpAt[d]] += fixedEndsUpAt[d];
+                result.fixedEndsUpAt[d] += other.fixedEndsUpAt[d];
+                result.fixedContributionToAnswer += other.coefficients[d] * fixedEndsUpAt[d];
+            }
+            return result;
+        }
+
+        static Transition create(char letter, int index, int n) {
+            Transition result = new Transition();
+            for (int d = 0; d &lt; 6; d++) {
+                if (letter == BESSIE.charAt(d)) {
+                    result.endsUpAt[d] = (d + 1) % 6;
+                } else {
+                    result.endsUpAt[d] = d;
+                }
+            }
+            result.fixedEndsUpAt[result.endsUpAt[0]] = 1;
+            if (result.endsUpAt[5] == 0) {
+                result.coefficients[5] = n - index;
+            }
+            return result;
+        }
+    }
+
+    static class SegmentTree {
+        final int size;
+        final Transition[] values = new Transition[600000];
+
+        SegmentTree(int size) {
+            this.size = size;
+            Arrays.fill(values, new Transition());
+        }
+
+        void update(int index, Transition delta, int node, int segFrom, int segTo) {
+            if (segFrom == segTo) {
+                values[node] = delta;
+            } else {
+                int mid = (segFrom + segTo) / 2;
+                int left = 2 * node;
+                int right = left + 1;
+                if (index &lt;= mid) {
+                    update(index, delta, left, segFrom, mid);
+                } else {
+                    update(index, delta, right, mid + 1, segTo);
+                }
+                values[node] = values[left].compose(values[right]);
+            }
+        }
+
+        void update(int index, Transition delta) {
+            update(index, delta, 1, 0, size - 1);
+        }
+
+        long get() {
+            return values[1].fixedContributionToAnswer;
+        }
+    }
+}
+</pre>
+<p></body></html>

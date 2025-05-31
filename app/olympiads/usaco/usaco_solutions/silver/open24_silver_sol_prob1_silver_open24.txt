@@ -1,0 +1,224 @@
+Solution ID: sol_prob1_silver_open24
+Contest: OPEN24
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_open24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Avnith Vijayram, Benjamin Qi)
+
+Solution 1:
+
+Use a priority queue to simulate the process. Let us refer to an instance of
+multiple farmers finishing at the same time as an **event**. For each event,
+store the set of farmers that finished. For now, assign the next few cows to
+those farmers in an arbitrary order. From this, we can determine the time of
+Bessie's interview.
+
+Once we simulate the process with
+
+$N$
+
+cows, the next farmer that finishes will
+be Bessie's interviewer: call him farmer
+
+$x$
+
+. Now, consider what happens if we
+iterate through the **events** in reverse chronological order.
+
+If farmer
+
+$x$
+
+is in one of these events, then any farmer who finished at the
+same time as him could be Bessie's interviewer. In fact, as we move backward
+through time, whenever the set of Bessie's possible interviewers and the set of
+farmers in an **event** intersect, any of the farmers in that **event** could
+end up being Bessie's interviewer.
+
+Thus, the algorithm is as follows:
+
+Simulate the process forward through time, storing **events** as they
+occur. Define
+
+$E_i$
+
+to be the set of farmers in the
+
+$i$
+
+-th event.
+
+After
+all
+
+$N$
+
+cows have been processed, create a set
+
+$S$
+
+of Bessie's possible
+interviewers. Initially,
+
+$S = \{x\}$
+
+.
+
+Process the events backward
+through time, and if
+
+$S \cap E_i \neq \varnothing$
+
+, then update
+
+$S = S \cup E_i$
+
+.
+
+This solution works in
+
+$O(N \log K)$
+
+.
+
+Avnith's C++ code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+using ll = long long;
+using pl = pair<ll, int>;
+
+#define f first
+#define s second
+
+int main() {
+    int n, k; 
+    cin >> n >> k;
+ 
+    vector<ll> t(n);
+    for (int i = 0; i < n; i++) cin >> t[i];
+	
+    priority_queue<pl, vector<pl>, greater<pl>> pq;
+    for (int i = 0; i < k; i++) pq.push({t[i], i});
+
+    int cur_cow = k;
+    pl last;
+    vector<vector<int>> events;
+    
+    while (true) {
+        vector<pl> ev;
+        do {
+            ev.push_back(pq.top());
+            pq.pop();
+        } while (!pq.empty() && pq.top().f == ev[0].f);
+        
+        if (ev.size() > 1) {
+            vector<int> farmers;
+            for (pl e : ev) farmers.push_back(e.s);
+            events.push_back(farmers);
+        }
+        
+        if (cur_cow + ev.size() > n) {
+            last = ev[0];
+            break;
+        }
+
+        for (pl e : ev) {
+            pq.push({e.f + t[cur_cow], e.s});
+            cur_cow++;
+        }
+    }
+
+    cout << last.f << "\n";
+    
+    vector<bool> can_interview(k, false);
+    can_interview[last.s] = true;
+    
+    for (int i = (int)events.size()-1; i >= 0; i--) {
+        bool intersect = false;
+        for (int j : events[i]) {
+            if (can_interview[j]) {
+                intersect = true;
+                break;
+            }
+        }
+        if (intersect) {
+            for (int j : events[i]) {
+                can_interview[j] = true;
+            }
+        }
+    }
+    vector<int> ans;
+    for (int i = 0; i < k; i++) {
+        cout << can_interview[i] << " ";
+    }
+    cout << "\n";
+}
+
+Solution 2:
+
+This is similar to solution 1, but we do not explicitly keep track of events. 
+Instead, we construct a directed graph with a vertex for each time and a 
+directed edge from each cow's interview start time to that cow's interview end 
+time. Then the
+
+$i$
+
+th farmer can interview Bessie if and only if there is a  path
+from
+
+$t_i$
+
+to Bessie's start time in this graph. We can check for which times
+such a path exists by running a
+
+breadth-first
+search
+
+(or depth-first search) from Bessie's start time.
+
+Ben's Python code:
+
+import heapq
+
+N, K = map(int, input().split())
+
+T = list(map(int, input().split()))
+times = [0] * K
+
+edges_into = dict()
+
+for t in T:
+    start = heapq.heappop(times)
+    end = start + t
+    edges_into.setdefault(end, []).append(start)
+    heapq.heappush(times, end)
+
+q = [heapq.heappop(times)]
+vis = set()
+for x in q:
+    if x in vis:
+        continue
+    vis.add(x)
+    if x not in edges_into:
+        continue
+    for prv in edges_into[x]:
+        q.append(prv)
+
+print(q[0])
+print("".join(["1" if t in vis else "0" for t in T[:K]]))
+
+Extension:
+
+Suppose every cow chooses one of the available farmers
+uniformly at random. Then compute for each farmer the probability that Bessie
+will be interviewed by him, modulo
+
+$10^9+7$
+
+.

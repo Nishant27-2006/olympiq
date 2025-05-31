@@ -1,0 +1,138 @@
+Solution ID: sol_angry_silver_jan16
+Contest: JAN16
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_angry_silver_jan16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we have several hay bales on the number line and a few
+exploding cows. We can send an exploding cow to a certain location on the line
+and it will cause all the hay bales to explode within a given radius. We want to
+figure out the smallest radius that the cows can explode at so that we can force
+all the hay bales to explode.
+
+Note that if there is some radius
+
+$r$
+
+such that it is possible for all hay bales
+to explode, then all the hay bales will explode for any radius
+
+$R > r$
+
+.
+Therefore, we can binary search for the minimum radius
+
+$r$
+
+.
+
+To check if a given radius
+
+$r$
+
+is feasible, consider the leftmost hay bale at
+location
+
+$x$
+
+. We have to place a cow somewhere between
+
+$x-r$
+
+and
+
+$x+r$
+
+in order
+to make that hay bale explode. To make as many other hay bales explode, it makes
+sense to move the cow to the right as much as possible, because there are no hay
+bales to the left of
+
+$x$
+
+so shifting the cow to the right can only include more
+hay bales. Therefore, we would have the hay bale explode at location
+
+$x+r$
+
+and
+all hay bales in between
+
+$x$
+
+and
+
+$x+2r$
+
+explode. We can then find the leftmost
+hay bale that is at location greater than
+
+$x+2r$
+
+and repeat this process, then
+count the number of cows that we placed. If the number of cows used is less than
+or equal to
+
+$K$
+
+, then
+
+$r$
+
+is feasible. Otherwise, the answer must be at least
+
+$r+1$
+
+.
+
+Here is my Java code demonstrating this.
+
+import java.io.*;
+import java.util.*;
+public class angry {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("angry.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("angry.out")));
+
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		int k = Integer.parseInt(st.nextToken());
+		
+		int[] locations = new int[n];
+		for(int i = 0; i < n; i++) {
+			locations[i] = Integer.parseInt(br.readLine());
+		}
+		
+		Arrays.sort(locations);
+		
+		int min = 0;
+		int max = 500000000;
+		while(min != max) {
+			int mid = (min+max)/2;
+			int used = 0;
+			int last = 0;
+			while(last < n) {
+				used++;
+				int curr = last+1;
+				while(curr < n && locations[curr] - locations[last] <= 2*mid) {
+					curr++;
+				}
+				last = curr;
+			}
+			if(used <= k) {
+				max = mid;
+			}
+			else {
+				min = mid+1;
+			}
+		}
+		pw.println(min);
+		pw.close();
+	}
+	
+}

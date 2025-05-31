@@ -1,0 +1,204 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: DEC24 Contest - Silver Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Farmer John is expanding his farm! He has identified the perfect location in
+the Red-Black Forest, which consists of $N$ trees ($1 \le N \le 10^5$) on a
+number line, with the $i$-th tree at position $x_i$
+($-10^9 \le x_i \le 10^9$).
+
+Environmental protection laws restrict which trees Farmer John can
+cut down to make space for his farm. There are $K$ restrictions ($1
+\leq K \leq 10^5$) specifying that there must always be at least $t_i$
+trees ($1 \leq t_i \leq N$) in the line segment $[l_i, r_i]$,
+including the endpoints ($-10^9 \le l_i \leq r_i \le 10^9$). It is
+guaranteed that the Red-Black Forest initially satisfies these
+restrictions.
+
+Farmer John wants to make his farm as big as possible. Please help him compute
+the maximum number of trees he can cut down while still satisfying all the
+restrictions!
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+Each input consists of $T$ ($1 \le T \le 10$) independent test cases. It is
+guaranteed that the sums of all $N$ and of all $K$ within an input each do not
+exceed $3 \cdot 10^5$.
+
+The first line of input contains $T$. Each test case is then formatted as
+follows:
+
+The first line contains integers $N$ and $K$.The next line
+contains the $N$ integers $x_1, \dots, x_N$.Each of the next $K$ lines
+contains three space-separated integers: $l_i$, $r_i$ and $t_i$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+For each test case, output a single line with an integer denoting the maximum
+number of trees Farmer John can cut down.
+
+
+SAMPLE INPUT:
+3
+7 1
+8 4 10 1 2 6 7
+2 9 3
+7 2
+8 4 10 1 2 6 7
+2 9 3
+1 10 1
+7 2
+8 4 10 1 2 6 7
+2 9 3
+1 10 4
+SAMPLE OUTPUT: 
+4
+4
+3
+
+For the first test case, Farmer John can cut down the first $4$ trees, leaving
+trees at $x_i = 2, 6, 7$ to satisfy the restriction.
+
+For the second test case, the additional restriction does not affect which trees
+Farmer John can cut down, so he can cut down the same trees and satisfy both
+restrictions.
+
+For the third test case, Farmer John can only cut down at most $3$ trees because
+there are initially $7$ trees but the second restriction requires him to leave
+at least $4$ trees uncut.
+
+SCORING:
+Input 2: $N, K \le 16$Inputs 3-5: $N, K \le 1000$Inputs 6-7: $t_i = 1$ for all $i = 1, \dots, K$.Inputs 8-11: No additional constraints.
+
+
+Problem credits: Tina Wang, Jiahe Lu, Benjamin Qi
+
+
+
+\section*{Input Format}
+Each input consists of $T$ ($1 \le T \le 10$) independent test cases. It is
+guaranteed that the sums of all $N$ and of all $K$ within an input each do not
+exceed $3 \cdot 10^5$.The first line of input contains $T$. Each test case is then formatted as
+follows:The first line contains integers $N$ and $K$.The next line
+contains the $N$ integers $x_1, \dots, x_N$.Each of the next $K$ lines
+contains three space-separated integers: $l_i$, $r_i$ and $t_i$.
+
+The first line of input contains $T$. Each test case is then formatted as
+follows:The first line contains integers $N$ and $K$.The next line
+contains the $N$ integers $x_1, \dots, x_N$.Each of the next $K$ lines
+contains three space-separated integers: $l_i$, $r_i$ and $t_i$.
+
+The first line contains integers $N$ and $K$.The next line
+contains the $N$ integers $x_1, \dots, x_N$.Each of the next $K$ lines
+contains three space-separated integers: $l_i$, $r_i$ and $t_i$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):For each test case, output a single line with an integer denoting the maximum
+number of trees Farmer John can cut down.SAMPLE INPUT:3
+7 1
+8 4 10 1 2 6 7
+2 9 3
+7 2
+8 4 10 1 2 6 7
+2 9 3
+1 10 1
+7 2
+8 4 10 1 2 6 7
+2 9 3
+1 10 4SAMPLE OUTPUT:4
+4
+3For the first test case, Farmer John can cut down the first $4$ trees, leaving
+trees at $x_i = 2, 6, 7$ to satisfy the restriction.For the second test case, the additional restriction does not affect which trees
+Farmer John can cut down, so he can cut down the same trees and satisfy both
+restrictions.For the third test case, Farmer John can only cut down at most $3$ trees because
+there are initially $7$ trees but the second restriction requires him to leave
+at least $4$ trees uncut.SCORING:Input 2: $N, K \le 16$Inputs 3-5: $N, K \le 1000$Inputs 6-7: $t_i = 1$ for all $i = 1, \dots, K$.Inputs 8-11: No additional constraints.Problem credits: Tina Wang, Jiahe Lu, Benjamin Qi
+
+\section*{Output Format}
+For each test case, output a single line with an integer denoting the maximum
+number of trees Farmer John can cut down.
+
+SAMPLE INPUT:3
+7 1
+8 4 10 1 2 6 7
+2 9 3
+7 2
+8 4 10 1 2 6 7
+2 9 3
+1 10 1
+7 2
+8 4 10 1 2 6 7
+2 9 3
+1 10 4SAMPLE OUTPUT:4
+4
+3For the first test case, Farmer John can cut down the first $4$ trees, leaving
+trees at $x_i = 2, 6, 7$ to satisfy the restriction.For the second test case, the additional restriction does not affect which trees
+Farmer John can cut down, so he can cut down the same trees and satisfy both
+restrictions.For the third test case, Farmer John can only cut down at most $3$ trees because
+there are initially $7$ trees but the second restriction requires him to leave
+at least $4$ trees uncut.SCORING:Input 2: $N, K \le 16$Inputs 3-5: $N, K \le 1000$Inputs 6-7: $t_i = 1$ for all $i = 1, \dots, K$.Inputs 8-11: No additional constraints.Problem credits: Tina Wang, Jiahe Lu, Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+3
+7 1
+8 4 10 1 2 6 7
+2 9 3
+7 2
+8 4 10 1 2 6 7
+2 9 3
+1 10 1
+7 2
+8 4 10 1 2 6 7
+2 9 3
+1 10 4
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+4
+4
+3
+
+For the first test case, Farmer John can cut down the first $4$ trees, leaving
+trees at $x_i = 2, 6, 7$ to satisfy the restriction.For the second test case, the additional restriction does not affect which trees
+Farmer John can cut down, so he can cut down the same trees and satisfy both
+restrictions.For the third test case, Farmer John can only cut down at most $3$ trees because
+there are initially $7$ trees but the second restriction requires him to leave
+at least $4$ trees uncut.SCORING:Input 2: $N, K \le 16$Inputs 3-5: $N, K \le 1000$Inputs 6-7: $t_i = 1$ for all $i = 1, \dots, K$.Inputs 8-11: No additional constraints.Problem credits: Tina Wang, Jiahe Lu, Benjamin Qi
+
+For the second test case, the additional restriction does not affect which trees
+Farmer John can cut down, so he can cut down the same trees and satisfy both
+restrictions.For the third test case, Farmer John can only cut down at most $3$ trees because
+there are initially $7$ trees but the second restriction requires him to leave
+at least $4$ trees uncut.SCORING:Input 2: $N, K \le 16$Inputs 3-5: $N, K \le 1000$Inputs 6-7: $t_i = 1$ for all $i = 1, \dots, K$.Inputs 8-11: No additional constraints.Problem credits: Tina Wang, Jiahe Lu, Benjamin Qi
+
+For the third test case, Farmer John can only cut down at most $3$ trees because
+there are initially $7$ trees but the second restriction requires him to leave
+at least $4$ trees uncut.SCORING:Input 2: $N, K \le 16$Inputs 3-5: $N, K \le 1000$Inputs 6-7: $t_i = 1$ for all $i = 1, \dots, K$.Inputs 8-11: No additional constraints.Problem credits: Tina Wang, Jiahe Lu, Benjamin Qi
+
+SCORING:Input 2: $N, K \le 16$Inputs 3-5: $N, K \le 1000$Inputs 6-7: $t_i = 1$ for all $i = 1, \dots, K$.Inputs 8-11: No additional constraints.Problem credits: Tina Wang, Jiahe Lu, Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1447
+
+\section*{Source}
+USACO DEC24 Contest, Silver Division, Problem ID: 1447
+
+\end{document}

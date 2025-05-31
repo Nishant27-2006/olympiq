@@ -1,0 +1,638 @@
+Solution ID: sol_prob3_silver_open24
+Contest: OPEN24
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_open24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Suhas Nagar)
+
+Subtask 1:
+
+$N \leq 100$
+
+(
+
+$O(N^5)$
+
+)
+
+For this problem, we can apply a brute force to simulate the process described
+in the problem statement for every
+
+$(K,L)$
+
+pair. We can iterate through all
+
+$K$
+
+length substrings, and find the lexicographic minimum out of all
+
+$L$
+
+length
+substrings contained within. We can then count the number of unique "winning"
+gene positions and add it to a larger array.
+
+Note that while the time complexity of this brute force is
+
+$O(N^5)$
+
+, there is a
+small fractional constant factor due to the restrictions on
+
+$K$
+
+and
+
+$L$
+
+and the
+number of valid substrings given
+
+$K$
+
+, so
+
+$N=100$
+
+runs comfortably in the TL.
+
+Benjamin Qi's Python code:
+
+N = int(input())
+S = input()
+
+cnt = [0] * (N + 1)
+for K in range(1, N + 1):
+    for L in range(K, N + 1):
+        marked = [0] * N
+        for i in range(N - L + 1):
+            best = None
+            best_idx = None
+            for j in range(i, i + L - K + 1):
+                if best is None or S[j : j + K] < best:
+                    best = S[j : j + K]
+                    best_idx = j
+            marked[best_idx] = True
+        cnt[sum(marked)] += 1
+
+for v in range(1, N + 1):
+    print(cnt[v])
+
+Subtask 1 / 2:
+
+$N \leq 500$
+
+(
+
+$O(N^4)$
+
+)
+
+For this subtask, we can switch how we think about this problem. Instead of
+determining how many "winning" gene positions a given
+
+$(K,L)$
+
+pair has, we can
+instead focus on some position
+
+$p_i$
+
+and determine which
+
+$(K,L)$
+
+pairs that
+
+$p_i$
+
+is a "winning" position for.
+
+Let us fix some position
+
+$p_i$
+
+and some length
+
+$L$
+
+. We want to determine what
+conditions on
+
+$K$
+
+are necessary for
+
+$p_i$
+
+to be a winning position. The first
+observation we can make is that
+
+$p_i$
+
+is a winning position as long as there
+exists some window of
+
+$K$
+
+characters where
+
+$S[p_i:p_i+L]$
+
+is lexicographically
+minimal. Let
+
+$a_i$
+
+be the maximum position such that
+
+$a_i < p_i$
+
+and
+
+$S[a_i:a_i+L] \leq S[p_i:p_i+L]$
+
+and let
+
+$b_i$
+
+be the minimum positions such
+that
+
+$b_i > p_i$
+
+and
+
+$S[b_i:b_i+L] < S[p_i:p_i+L]$
+
+(note our first equation uses
+
+$\leq$
+
+due to the tiebreaker condition favoring smaller indices).
+
+We can always identify a window of
+
+$K$
+
+characters where
+
+$p_i$
+
+is winning as long
+as our window doesn't "include" the ranges
+
+$[a_i:a_i+L]$
+
+and
+
+$[b_i:b_i+L]$
+
+. In
+other words, any
+
+$K$
+
+where
+
+$K \leq (b_i+L)-a_i-2$
+
+makes
+
+$p_i$
+
+a winning
+position.
+
+Now that we have identified how to determine valid
+
+$K$
+
+given
+
+$p_i$
+
+and
+
+$L$
+
+, we
+can create our solution from here. We can iterate over all
+
+$p_i$
+
+and
+
+$L$
+
+. To
+determine
+
+$a_i$
+
+and
+
+$b_i$
+
+, we can iterate over all
+
+$L$
+
+length substrings until
+we identify
+
+$a_i$
+
+or
+
+$b_i$
+
+that satisfy the above conditions. If none exist, we
+can use
+
+$-1$
+
+for
+
+$a_i$
+
+and
+
+$N$
+
+for
+
+$b_i$
+
+.
+
+Since we iterate over the string to find
+
+$a_i$
+
+and
+
+$b_i$
+
+for every position
+
+$p_i$
+
+and length
+
+$L$
+
+, and we call the substring function repeatedly, the time
+complexity of this solution is
+
+$O(N^4)$
+
+. However, this ends up running fast
+enough to pass subtask 2 in practice.
+
+My Java code:
+
+import java.io.PrintWriter;
+import java.util.Scanner;
+
+public class MinimizerNFourth {
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        PrintWriter pw = new PrintWriter(System.out);
+        int n = sc.nextInt();
+        String s = sc.next();
+        int[][] lk = new int[n+1][n+1];
+        for (int p = 0; p < n; p++){
+            for (int l = 1; l <= n; l++){
+                if (l+p > n) continue;
+                int b = p+1;
+                int a = p-1;
+                while (b < n && compare(p,b,l,s) <= 0) b++;
+                b = Math.min(n+1,b+l);
+                while (a >= 0 && compare(p,a,l,s) < 0) a--;
+                a++;
+                for (int k = l; k <= Math.min(b-a-1,n); k++){
+                    lk[l][k]++;
+                }
+            }
+        }
+        int[] count = new int[n+1];
+        for (int i = 0; i <= n; i++){
+            for (int j = i; j <= n; j++){
+                count[lk[i][j]]++;
+            }
+        }
+        for (int i = 1; i <= n; i++){
+            pw.println(count[i]);
+        }
+        pw.close();
+    }
+
+    static int compare(int i, int j, int k, String original){
+        return original.substring(i,Math.min(original.length(),i+k)).compareTo(original.substring(j,Math.min(original.length(),j+k)));
+    }
+}
+
+Subtask 2 / Subtask 3 Partial:
+
+$O(N^3)$
+
+To improve on the last subtask, we want to improve our compare function. To do
+this, we can precompute a
+
+longest common prefix
+
+(lcp) array that stores
+for positions
+
+$i$
+
+and
+
+$j$
+
+the  largest value
+
+$k$
+
+such that
+
+$S[i:i+k] = S[j:j+k]$
+
+. If we had this array, we could compare any two substrings
+at positions
+
+$i$
+
+and
+
+$j$
+
+in
+
+$O(1)$
+
+without using the substring function by 
+comparing the characters at
+
+$S[i+lcp[i][j]]$
+
+and
+
+$S[j+lcp[i][j]]$
+
+or returning a
+tie if
+
+$lcp[i][j] \geq k$
+
+(since we only take the first
+
+$k$
+
+characters at both
+positions.
+
+To compute this array, we can naively compute this array by finding the lcp for
+every pair of indices.
+
+Now that the cost of comparing strings is reduced, we need to improve the
+complexity of computing valid
+
+$K$
+
+for every value of
+
+$L$
+
+. The first observation
+we make is that
+
+$a_i$
+
+is monotonically decreasing for increasing value of
+
+$L$
+
+.
+Suppose this was not the case. This would mean that for some
+
+$L_1 < L_2$
+
+,
+
+$S[a_i:a_i+L_1] > S[p_i:p_i+L_1]$
+
+but
+
+$S[a_i:a_i+L_2] \leq 
+S[p_i:p_i+L_2]$
+
+. If one string is less than another string of equal length, 
+this will continue to hold even if we extend both strings by a character, so we
+form a contradiction here.
+
+Similarly we can make the same observation for
+
+$b_i$
+
+. Since it would be
+monotonically decreasing for increasing values of
+
+$L$
+
+, it would be monotonically
+increasing for decreasing values of
+
+$L$
+
+. Consequently, we can compute
+
+$a_i$
+
+and
+
+$b_i$
+
+for every value of
+
+$L$
+
+in
+
+$O(N)$
+
+using a pointer.
+
+Finally, in our previous solution we used a for loop to set every value of
+
+$L \leq k \leq b_i+L-a_i-2$
+
+as valid. Instead, we can use prefix sums to
+increment a range up to
+
+$b_i+L-a_i-2$
+
+in
+
+$O(1)$
+
+. While most of our computation
+is quick, we are bottlenecked by the LCP computation, so this solution runs in
+
+$O(N^3)$
+
+.
+
+Depending on your implementation, you might also be able to pass many of the
+last batch of test cases using a solution of this complexity.
+
+My Java code:
+
+import java.io.PrintWriter;
+import java.util.Scanner;
+
+public class MinimizerSlowLCP {
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        PrintWriter pw = new PrintWriter(System.out);
+        int n = sc.nextInt();
+        String s = sc.next();
+        int[][] lcp = new int[n+1][n+1];
+        int[][] deltas = new int[n+1][n+1];
+        for (int i = 0; i < n; i++){
+            for (int j = 0; j < n; j++){
+                int len = 0; int lp = i; int rp = j;
+                while (lp < n && rp < n && s.charAt(lp++) == s.charAt(rp++)) len++;
+                lcp[i][j] = len;
+            }
+        }
+        for (int p = 0; p < n; p++){
+            int[] b = new int[n+1];
+            int[] a = new int[n+1];
+            int b_cand = p+1;
+            for (int l = n; l >= 1; l--){
+                while (b_cand < n && compare(p,b_cand,l,lcp,s) <= 0) b_cand++;
+                b[l] = Math.min(b_cand+l,n+1);
+            }
+            int a_cand = p-1;
+            for (int l = 1; l <= n; l++){
+                while (a_cand >= 0 && compare(p,a_cand,l,lcp,s) < 0) a_cand--;
+                a[l] = a_cand+1;
+            }
+            for (int l = 1; l <= n; l++){
+                if (l+p > n) continue;
+                deltas[l][Math.min(b[l]-a[l]-1,n)]++;
+            }
+        }
+        int[] count = new int[n+1];
+        for (int l = 1; l <= n; l++){
+            int acc = 0;
+            for (int k = n; k >= l; k--){
+                acc += deltas[l][k];
+                count[acc]++;
+            }
+        }
+        for (int i = 1; i <= n; i++){
+            pw.println(count[i]);
+        }
+        pw.close();
+    }
+    static int compare(int i, int j, int k, int[][] lcp, String orig){
+        if (lcp[i][j] >= k) return 0;
+        if (i+lcp[i][j] == orig.length()) return -1;
+        if (j+lcp[i][j] == orig.length()) return 1;
+        return Character.compare(orig.charAt(i+lcp[i][j]),orig.charAt(j+lcp[i][j]));
+    }
+}
+
+Full Solution
+
+To speed up our solution to
+
+$O(N^2)$
+
+, we need to speed up our LCP array
+precomputation. However, instead of computing it naively, we can avoid  extra
+computations by leveraging the following property. If we know
+
+$LCP[i+1][j+1]$
+
+,
+we can determine
+
+$LCP[i][j]$
+
+depending on if character
+
+$i$
+
+is equal to character
+
+$j$
+
+. This motivates working backwards to compute LCP, using the following
+recurrence.
+
+lcp[i][j] = (S[i] == S[j]) + lcp[i+1][j+1]
+
+My Java code:
+
+import java.io.PrintWriter;
+import java.util.Scanner;
+
+public class Minimizer {
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        PrintWriter pw = new PrintWriter(System.out);
+        int n = sc.nextInt();
+        String s = sc.next();
+        int[][] lcp = new int[n+1][n+1];
+        int[][] deltas = new int[n+1][n+1];
+        for (int i = n-1; i >= 0; i--){
+            for (int j = n-1; j >= 0; j--){
+                if (s.charAt(i) == s.charAt(j)) lcp[i][j] = 1+lcp[i+1][j+1];
+            }
+        }
+        for (int p = 0; p < n; p++){
+            int[] b = new int[n+1];
+            int[] a = new int[n+1];
+            int b_cand = p+1;
+            for (int l = n; l >= 1; l--){
+                while (b_cand < n && compare(p,b_cand,l,lcp,s) <= 0) b_cand++;
+                b[l] = Math.min(b_cand+l,n+1);
+            }
+            int a_cand = p-1;
+            for (int l = 1; l <= n; l++){
+                while (a_cand >= 0 && compare(p,a_cand,l,lcp,s) < 0) a_cand--;
+                a[l] = a_cand+1;
+            }
+            for (int l = 1; l <= n; l++){
+                if (l+p > n) continue;
+                deltas[l][Math.min(b[l]-a[l]-1,n)]++;
+            }
+        }
+        int[] count = new int[n+1];
+        for (int l = 1; l <= n; l++){
+            int acc = 0;
+            for (int k = n; k >= l; k--){
+                acc += deltas[l][k];
+                count[acc]++;
+            }
+        }
+        for (int i = 1; i <= n; i++){
+            pw.println(count[i]);
+        }
+        pw.close();
+    }
+    static int compare(int i, int j, int k, int[][] lcp, String orig){
+        if (lcp[i][j] >= k) return 0;
+        if (i+lcp[i][j] == orig.length()) return -1;
+        if (j+lcp[i][j] == orig.length()) return 1;
+        return Character.compare(orig.charAt(i+lcp[i][j]),orig.charAt(j+lcp[i][j]));
+    }
+}

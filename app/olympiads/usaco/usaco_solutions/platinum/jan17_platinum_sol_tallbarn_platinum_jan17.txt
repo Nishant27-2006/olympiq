@@ -1,0 +1,132 @@
+Solution ID: sol_tallbarn_platinum_jan17
+Contest: JAN17
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_tallbarn_platinum_jan17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Yang Liu)
+
+Note that the benefits from a marginal cow on a job is decreasing - in
+particular, the marginal benefit of going from
+
+$c$
+
+cows to
+
+$c+1$
+
+cows is
+
+$\frac{a}{(c(c+1))}$
+
+, which is decreasing. Therefore, we get an
+
+$O(K
+\log N)$
+
+solution just by operating greedily: start with a single cow on each job, and
+for the next
+
+$K-N$
+
+steps, add a cow to a job that decreases the answer by the
+most.
+
+However, because
+
+$K$
+
+is large, this solution is too slow. Instead, we binary
+search on a parameter
+
+$x$
+
+, which represents the last marginal benefit we got
+from adding a cow to a job.
+
+For a fixed
+
+$x$
+
+, we can compute how many cows we can add until our benefit
+becomes less than
+
+$x$
+
+. We find the value
+
+$x$
+
+such that we use
+
+$K$
+
+cows
+(which exists by monotonicity) and then compute the answer.  More precisely, for some
+
+$x$
+
+we will be close to
+
+$K$
+
+, say with
+
+$T$
+
+workers used. Then the actual answer should be adjusted by
+
+$(K-T)*x$
+
+because all the extra / less workers will be providing marginal value
+
+$x$
+
+. This is what the last few lines of the code below are doing.
+
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int MAXN = 1e5+5;
+
+ll n, k, a[MAXN];
+
+ll ct(double x) {
+	ll tot = 0;
+	for (int i = 0; i < n; ++i)
+                // Using the quadratic formula to solve a[i]/(c(c+1)) >= x
+		tot += ll((sqrt(1 + 4*a[i]/x)-1)/2);
+	return tot;
+}
+
+int main() {
+	cin >> n >> k;
+	k -= n;
+	
+	for (int i = 0; i < n; ++i)
+		cin >> a[i];
+
+	double lo = 0, hi = 1e18;
+	for (int i = 0; i < 200; ++i) {
+		double mid = (lo+hi)/2;
+		if (ct(mid) >= k)
+			lo = mid;
+		else
+			hi = mid;
+	}
+
+	double ans = 0;
+	ll tot = 0;
+
+	for (int i = 0; i < n; ++i) {
+		ll x = ll((sqrt(1 + 4*a[i]/lo)-1)/2);
+		ans += 1.0*a[i]/(x+1);
+		tot += x;
+	}
+    
+	cout << (ll)round(ans - (k-tot)*lo) << endl;
+}

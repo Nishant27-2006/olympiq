@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi, Brandon Wang, Claire Zhang)
+<p>Let us first suppose we compute each <span class='math'>$e_n$</span> separately, and then we will do this
+<span class='math'>$D$</span> times. (Later we will describe how to support updates.) Suppose
+<span class='math'>$(m_1, b_1), \ldots, (m_n, b_n)$</span> are in increasing order of <span class='math'>$m_i$</span>. We can make
+the following observations:
+<p><ol><li>
+If <span class='math'>$b_i \geq b_j$</span> for <span class='math'>$i &lt; j$</span>, then we can ignore demand <span class='math'>$j$</span>.
+</li><li>
+Let us suppose we create <span class='math'>$a_i$</span> tasks on day <span class='math'>$i$</span>. Then, we can assume
+<span class='math'>$a_1 \geq a_2 \geq a_3 \cdots$</span> (since if <span class='math'>$a_i &lt; a_j$</span> with <span class='math'>$i &gt; j$</span>, we can swap
+<span class='math'>$a_i$</span> and <span class='math'>$a_j$</span>). 
+</li></ol>
+<p><strong> Subtask 1 (<span class='math'>$D\le100$</span>, <span class='math'>$m_i \le 100$</span>):</strong> 
+<p>Let the cost of a sequence of increments <span class='math'>$(a_i)$</span> be the energy required
+<span class='math'>$\left(\sum_i 3^{a_i}\right)$</span>. Additionally, say <span class='math'>$(a_i)$</span> is valid if it
+satisfies all demands.
+<p><strong>Claim</strong>: The lexicographically minimal sequence <span class='math'>$(a_i)$</span> which is
+non-increasing and valid attains minimum cost.
+<p>Proof: Let <span class='math'>$(a_i)$</span> be the lexicographically minimal sequence which is
+non-increasing and valid. Suppose for sake of contradiction that the lowest-cost
+non-increasing, valid sequence <span class='math'>$(b_i)$</span> has lower cost than <span class='math'>$(a_i)$</span>.  Without
+loss of generality, say the first index <span class='math'>$i$</span> where <span class='math'>$a_i\ne b_i$</span> is <span class='math'>$i=1$</span>. For
+example, consider
+<p><span class='math'>$(a_i) = [4, 4, 4, 4, 2]$</span>
+<p><span class='math'>$(b_i) = [5, 5, 4, 3, 1]$</span>
+<p>Then we claim <span class='math'>$(b_i)$</span> is not the lowest-cost sequence which is non-increasing
+and valid: consider decrementing <span class='math'>$b_j$</span>, where <span class='math'>$j$</span> is maximum index such that
+<span class='math'>$b_j=b_1$</span>, and incrementing <span class='math'>$b_k$</span>, where <span class='math'>$k$</span> is the minimum index such that
+<span class='math'>$b_k \le b_1-2$</span> (if such exists). In the example, 
+<p><span class='math'>$(b_i) = [5, 5, 4, 3, 1] \rightarrow (b&apos;_i) = [5, 5-1, 4, 3+1, 2]$</span>
+<p><span class='math'>$(b&apos;_i)$</span>
+<ul><li>meets all demands because the first <span class='math'>$k-1$</span> prefixes have sum at least that of
+<span class='math'>$a$</span>, and all other prefix sums are the same as in <span class='math'>$b$</span> (which are valid), </li><li> is non-increasing because the only consecutive difference that we decrease
+is between <span class='math'>$b_j$</span> and <span class='math'>$b_{j+1}$</span> (<span class='math'>$b_j &gt; b_{j+1}$</span>) and we only decrease it by
+1,</li><li> and has smaller cost as <span class='math'>$3^x + 3^y &gt; 3^{x-1} + 3^{y+1}$</span> when
+<span class='math'>$x&gt;y+1$</span>.</li></ul>
+<span class='math'>$(b&apos;_i)$</span> is a valid, non-increasing, sequence with lower cost than <span class='math'>$(b_i)$</span>-- a
+contradiction. (end of proof)
+<p>Using this claim, we can greedily select the smallest <span class='math'>$a_i$</span> for
+<span class='math'>$i=1, \ldots, D$</span>. If there are 0 test cases on day 0 and at least <span class='math'>$b_i$</span> on day
+<span class='math'>$m_i$</span>, there must be a day <span class='math'>$1 \le j \le  m_i$</span> where
+<span class='math'>$\lceil \frac{b_i}{m_i} \rceil$</span> test cases are prepared (max 1-day increase is
+at least average increase).  <span class='math'>$a_1$</span> is the maximum <span class='math'>$a_i$</span>, so <span class='math'>$a_1$</span> must be at
+least <span class='math'>$\max_{i=1}^D \lceil \frac{b_i}{m_i} \rceil$</span>. Let
+<span class='math'>$a_1 = \max_{i=1}^D \lceil \frac{b_i}{m_i} \rceil$</span> and decrement all <span class='math'>$m_i$</span>. If
+we set all <span class='math'>$a_i$</span> in this manner, <span class='math'>$(a_i)$</span> is 
+<ul><li>valid, because on day <span class='math'>$m_i$</span> we make at least
+<span class='math'>$\lceil \frac{b_i-\sum_{j=1}^{m_i-1}a_j}{1}\rceil \ge b_i-\sum_{j=1}^{m_i-1}a_j$</span>
+test cases, </li><li> lexicographically minimal by construction,</li><li> and
+non-increasing because
+<span class='math'>$\lceil\frac{b_i-\lceil \frac{b_i}{m_i}\rceil}{m_i-1} \rceil \le \lceil\frac{b_i}{m_i}\rceil$</span>
+</li></ul>
+Therefore, this greedy algorithm (code below) attains the lex. min valid
+sequence, which we have shown is cost-optimal. Its time complexity is
+<span class='math'>$O(D^3 + D^2 \log(B))$</span>.
+<p><pre class='prettyprint'>
+def ceildiv(a, b):
+    return -(a // -b)
+
+
+def solve(demands):
+    MOD = 10**9 + 7
+    ans = 0
+    while len(demands) &gt; 0:
+        a1 = max(ceildiv(b, m) for m, b in demands)
+        demands = [(m - 1, b - a1) for m, b in demands if b &gt; a1]
+        ans = (ans + pow(3, a1 - 1, MOD)) % MOD
+    return ans
+
+
+D = int(input())
+
+demands = []
+for _ in range(D):
+    m, b = map(int, input().split())
+    demands.append((m, b))
+    print(solve(demands))
+</pre>
+<p><strong>Subtask 2 (<span class='math'>$D \leq 3000$</span>):</strong>
+<p>Observation 2 implies that we only need to satisfy <span class='math'>$(m_i, b_i)$</span> that are on the
+&quot;upper left&quot; hull of the demand set (where we assume <span class='math'>$(0, 0)$</span> is also a demand).
+Let&apos;s take some <span class='math'>$(a_1, a_2, \ldots)$</span> that satisfies everything on the upper left
+hull. We claim that we can &quot;massage&quot; the <span class='math'>$a_i$</span> so that each <span class='math'>$(m_i, b_i)$</span> on the
+upper left hull is <em>exactly</em> satisfied. We will also do this in a way so
+that if <span class='math'>$(m_i, b_i)$</span>, <span class='math'>$(m_j, b_j)$</span> are consecutive on the hull, then
+<span class='math'>$a_{m_i+1} \geq a_{i+2} \geq \cdots a_{m_j}$</span> still holds (so everything not on
+the hull is still automatically satisfied). To see how to do this, suppose
+<span class='math'>$a_1 + a_2 + \cdots + a_{m_i} &gt; b_i$</span> with <span class='math'>$i$</span> minimal, and let <span class='math'>$j &gt; i$</span> be
+minimal such that <span class='math'>$a_1 + a_2 + \cdots + a_{m_j} = b_j$</span> (also, <span class='math'>$i, j$</span> are both on
+the hull). Then, we have <span class='math'>$a_{m_{i-1}+1} + \cdots + a_{m_i} &gt; b_i - b_{i-1}$</span>, but
+<span class='math'>$a_{m_{j-1}} + \cdots + a_{m_j} &lt; b_j - b_{j-1}$</span>. By convexity, we must have
+<span class='math'>$\frac{b_i - b_{i-1}}{m_i - m_{i-1}} \geq \frac{b_j - b_{j-1}}{m_j - m_{j-1}}$</span>,
+so we have <span class='math'>$a_{m_{i-1}+1} &gt; a_{m_j}$</span>. We can then move <span class='math'>$1$</span> test-case from the
+last <span class='math'>$a_k = a_{m_{i-1}+1}$</span> (with <span class='math'>$m_{i-1}+1\leq k \leq m_i$</span>) to the first
+<span class='math'>$a_\ell = a_{m_j}$</span> (with <span class='math'>$m_{j-1}+1\leq \ell \leq m_j$</span>). In this way, we have
+moved a subtask from a day with <span class='math'>$a_k$</span> subtasks to a day with <span class='math'>$a_\ell &lt; a_k$</span>
+subtasks, which does not increase the total cost.
+<p>The point of this argument is as follows: Suppose
+<span class='math'>$(0, 0), (m_{i_1}, b_{i_1}), \ldots, (m_{i_k}, b_{i_k})$</span>  is the upper left
+hull. Then, we can assume Bessie has prepared exactly <span class='math'>$b_{i_t}$</span> test-cases by
+day <span class='math'>$m_{i_t}$</span>. In particular, between days <span class='math'>$m_{i_{t-1}+1}$</span> and <span class='math'>$m_{i_t}$</span>
+(inclusive), Bessie prepares <span class='math'>$b_{i_t} - b_{i_{t-1}}$</span> test cases. By convexity of
+<span class='math'>$3^{a-1}$</span>, we want the number of test cases per day to be as close together as
+possible, so we should have them all be either <span class='math'>$\lceil x \rceil$</span> or
+<span class='math'>$\lfloor x \rfloor$</span>,  <span class='math'>$x$</span> being the average number of test cases prepared in
+this interval.
+<p>This gives us an <span class='math'>$O(D^2(\log D + \log B))$</span> solution (code below).
+<pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;stack&gt;
+ 
+typedef long long ll;
+typedef std::pair&lt;ll,ll&gt; pi;
+ 
+const int MAXN = 2e5+5;
+const ll P = 1000000007;
+ 
+int N;
+pi p[MAXN];
+ 
+ll modexp (ll a, ll n) {
+	if (n == 0) return 1;
+	ll b = modexp((a*a)%P, n/2);
+	return (n%2?(a*b)%P:b);
+}
+ 
+void input () {
+	std::cin &gt;&gt; N;
+	for (int i = 0; i &lt; N; i++) {
+		std::cin &gt;&gt; p[i].first &gt;&gt; p[i].second;
+	}
+}
+ 
+bool pre (pi p, pi q) {
+	// returns true if line to p is on or below line to q
+	return p.second*q.first &lt;= q.second*p.first;
+}
+ 
+ll diff (pi p, pi q) {
+	ll dy = q.second - p.second;
+	ll dx = q.first - p.first;
+	ll nh = dy%dx%P;
+	ll lo = dy/dx;
+	if (lo == 0) {
+		return ((nh%P) * modexp(3, lo))%P;
+	}
+	return (modexp(3, lo-1)*((dx-nh)%P) + modexp(3, lo)*(nh%P))%P;
+}
+ 
+ll query (int M) {
+	std::sort(p, p+M);
+	std::stack&lt;pi&gt; stk;
+	stk.push({0, 0});
+	for (int i = 0; i &lt; M; i++) {
+		while (int(stk.size()) &gt; 1) {
+			pi q = stk.top();
+			stk.pop();
+			pi r = stk.top();
+			if (pre({q.first-r.first, q.second-r.second}, {p[i].first-r.first, p[i].second-r.second})) {
+				continue;
+			}
+			else {
+				stk.push(q);
+				break;
+			}
+		}
+		if (stk.top().second &lt; p[i].second) {
+			stk.push(p[i]);
+		}
+	}	
+	ll ans = 0;
+	pi cur = stk.top();
+	stk.pop();
+	while (!stk.empty()) {
+		ans = (ans + diff(stk.top(), cur))%P;
+		cur = stk.top();
+		stk.pop();
+	}
+	return ans;
+}
+ 
+int main () {
+	input();
+	for (int i = 1; i &lt;= N; i++) {
+		std::cout &lt;&lt; query(i) &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p><strong>Subtask 3 (<span class='math'>$D \leq 2\cdot 10^5$</span>):</strong>
+<p>To optimize, we need to efficiently maintain consecutive pairs of points on the
+hull as points are added. For two sets of points <span class='math'>$A$</span>, <span class='math'>$B$</span>,
+<span class='math'>$h(A \cup B)=h(h(A), h(B))$</span>, where <span class='math'>$h(S)$</span> denotes the convex hull of <span class='math'>$S$</span>, a set
+of 2d points. This means that a point that&apos;s not on the convex hull will never
+be after new points are added. Thus, inserting a new point inserts at most 1 new
+point to the hull and deletes possibly many. 
+<p>We can maintain a set of <span class='math'>$(x,y)$</span> points on the hull, sorted by <span class='math'>$x$</span> (and <span class='math'>$y$</span>).
+Updating the convex hull after inserting a point <span class='math'>$p$</span> could require removing a
+ball of points around <span class='math'>$p$</span>. Say <span class='math'>$p$</span> has index <span class='math'>$i$</span> in the sorted set. We can
+repeatedly check if <span class='math'>$i \rightarrow (i+1) \rightarrow (i+2)$</span> forms a left turn;
+if so, <span class='math'>$i+1$</span> does not belong on the hull. Similarly, check for right turns of
+the form <span class='math'>$(i-2)\leftarrow(i-1)\leftarrow i$</span>. 
+<p>Note that <span class='math'>$a_i$</span>s should never be negative, so we should remove <span class='math'>$i+1$</span> whenever
+<span class='math'>$i\rightarrow(i+1)$</span> is downward sloping. Each point is removed at most once in
+<span class='math'>$O(\log D)$</span> time, and exponentiating to calculate the costs involving it is <span class='math'>$O(\log B)$</span> per hull edge. The total work is
+<span class='math'>$O(D(\log D+\log B))$</span>. 
+<p>Code:
+<pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+
+template &lt;ll Mod&gt;
+struct ModInt {
+  ll n;
+
+  ModInt(const ll x = 0) : n(x) {
+    while (n &lt; 0) n += Mod;
+    n %= Mod;
+  }
+  explicit operator int() const { return n; }
+  inline ModInt operator+(const ModInt r) const noexcept { return ModInt(*this) += r; }
+  inline ModInt operator-(const ModInt r) const noexcept { return ModInt(*this) -= r; }
+  inline ModInt operator*(const ModInt r) const noexcept { return ModInt(*this) *= r; }
+  inline ModInt operator/(const ModInt r) const noexcept { return ModInt(*this) /= r; }
+  inline ModInt &amp;operator+=(const ModInt r) noexcept {
+    n += r.n;
+    if (n &gt;= Mod) n -= Mod;
+    return *this;
+  }
+  inline ModInt &amp;operator-=(const ModInt r) noexcept {
+    if (n &lt; r.n) n += Mod;
+    n -= r.n;
+    return *this;
+  }
+  inline ModInt &amp;operator*=(const ModInt r) noexcept {
+    n = n * r.n % Mod;
+    return *this;
+  }
+  inline ModInt &amp;operator/=(const ModInt r) noexcept { return *this *= r.inv(); }
+
+  inline ModInt pow(ll x) const noexcept {
+    ModInt&lt;Mod&gt; ret(1), tmp(*this);
+    while (x) {
+      if (x&amp;1) ret *= tmp;
+      tmp *= tmp;
+      x &gt;&gt;= 1;
+    }
+    return ret;
+  }
+  inline ModInt inv() const noexcept { return pow(Mod-2); }
+
+  friend ostream&amp; operator&lt;&lt;(ostream&amp; os, const ModInt&amp; obj) { return os &lt;&lt; obj.n; }
+  friend istream&amp; operator&gt;&gt;(istream&amp; is, ModInt&amp; obj) {
+    ll t;
+    is &gt;&gt; t;
+    obj = ModInt(t);
+    return is;
+  }
+};
+
+const ll mod = 1000000007;
+using mi = ModInt&lt;mod&gt;;
+
+
+int main(){
+    cin.tie(0)-&gt;sync_with_stdio(0);
+
+    int D; cin &gt;&gt; D;
+
+    mi ans=0;
+
+    map&lt;int, ll&gt; ys;
+    set&lt;int&gt; xs({0});
+
+    auto left_turn=[&amp;](int x1, int x2, int x3)-&gt;bool{
+        return (ys[x2]-ys[x1])*(x3-x2) &lt;= (ys[x3]-ys[x2])*(x2-x1);
+    };
+
+    auto right_turn=[&amp;](int x1, int x2, int x3)-&gt;bool{
+        return !left_turn(x1, x2, x3);
+    };
+
+    auto f=[&amp;](int x1, int x2)-&gt;mi{
+        int dx = x2 - x1;
+        ll dy = ys[x2] - ys[x1];
+        if(dy&lt;=0) return 0;
+        // dx*k &lt;= dy &lt;= dx*(k+1)
+        ll step = dy/dx;
+        if(dy%dx) return mi(3).pow(dy/dx)*(dy%dx) + (dy/dx? mi(3).pow(dy/dx-1) : 0) *(dx-(dy%dx));
+        return dy/dx? mi(3).pow(dy/dx-1)*dx : 0;
+    };
+
+    auto upd=[&amp;](int x, bool del = 0){
+        auto it = xs.lower_bound(x);
+        assert(*it == x);
+        assert(it != xs.begin());
+        int x_bef = *prev(it);
+        if(del){
+            ans -= f(x_bef, x);
+            it++;
+            if(it != xs.end()){
+                int x_af = *it;
+                ans += f(x_bef, x_af) - f(x, x_af);
+            }
+            xs.erase(x);
+            ys[x] = 0;
+        } else{
+            ans += f(x_bef, x);
+            it++;
+            if(it != xs.end()){
+                int x_af = *it;
+                ans += f(x, x_af) - f(x_bef, x_af);
+            }
+        }
+    };
+
+    auto ins=[&amp;](int x, ll y){
+        // check if x -- y -- z y is below segment (x-z) in CH -- if so return
+        if(ys[x] and ys[x] &gt;= y) return;
+        if(ys[x]) upd(x, 1);
+        ys[x] = y;
+        xs.insert(x);
+        upd(x);
+        while(true){
+            auto it = xs.lower_bound(x);
+            bool ch = 0;
+            for(int i=0; i&lt;3; i++){
+                if(it!=xs.end() and next(it)!=xs.end() and next(next(it))!=xs.end()){
+                    int a=*it, b=*next(it), c=*next(next(it));
+                    if(left_turn(a, b, c)){
+                        ch = 1;
+                        upd(b, 1);
+                        break;
+                    }
+                }
+                if(it==xs.begin()) break;
+                it--;
+            }
+            if(!ch) break;
+        }
+    };
+
+    while(D--){
+        int t;
+        ll b;
+        cin &gt;&gt; t &gt;&gt; b;
+        ins(t, b);
+        cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+    }
+}
+
+</pre>
+<p>Note that the solution is correct even if you divide when computing left_turn
+instead of multiply:
+<p><pre class='prettyprint'>
+auto left_turn = [&amp;](int x1, int x2, int x3) -&gt; bool {
+	return ys[x2] &lt;= ys[x3] &amp;&amp; (ys[x2] - ys[x1]) / (x2 - x1) &lt;= (ys[x3] - ys[x2]) / (x3 - x2);
+};
+</pre>
+<p></body></html>

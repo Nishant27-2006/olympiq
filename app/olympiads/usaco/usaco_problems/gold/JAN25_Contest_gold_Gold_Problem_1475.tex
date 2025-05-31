@@ -1,0 +1,302 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN25 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Farmer John's farm is full of lush vegetation and every cow wants a photo of its
+natural beauty. Unfortunately, Bessie still has places to be, but she doesn't
+want to disrupt any  photo ops. 
+
+Bessie is currently standing at $(X,0)$ on the XY-plane and she wants to get to
+$(0,Y)$ ($1\le X,Y\le 10^6$). Unfortunately, $N$ ($1 \leq N \leq 3 \cdot 10^5$)
+other cows have decided to pose on the $X$ axis. More specifically, cow $i$ will
+be positioned at $(x_i,0)$ with a photographer at $(0,y_i)$ where
+$(1 \leq x_i,y_i \leq 10^6)$ ready to take their picture. They will begin posing
+moments before time $s_i$ ($1 \leq s_i < T$) and they will keep posing for a
+very long time (they have to get their picture just right). Here,
+$1\le T\le N+1$.
+
+Bessie knows the schedule for every cow's photo op, and she will take the
+shortest Euclidean distance to get to her destination, without crossing the line
+of sight from any photographer to their respective cow (her path will consist of
+one or more line segments).
+
+If Bessie leaves at time $t$, she will avoid the line of sights for all 
+photographer/cow pairs that started posing at time $s_i \le t$, and let  the
+distance to her final destination be $d_t$. Determine the values of 
+$\lfloor d_t\rfloor$ for each integer $t$ from $0$ to $T-1$ inclusive.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line of input contains $N$ and $T$, representing the number of cows
+posing on the $x$-axis and the timeframe that Bessie could leave at.
+
+The second line of input contains $X$ and $Y$, representing Bessie's starting $X$
+coordinate and her target $Y$ coordinate respectively.
+
+The next $N$ lines contain $s_i$ $x_i$ and $y_i$. It is guaranteed that all
+$x_i$ are distinct from each other and $X$, and all $y_i$ are distinct from each
+other and $Y$. All $s_i$ will be given in increasing order, where
+$s_i \leq s_{i+1}$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Print $T$ lines, with the $t$th (0-indexed) line containing
+$\lfloor d_t\rfloor$.
+
+SAMPLE INPUT:
+4 5
+6 7
+1 7 5
+2 4 4
+3 1 6
+4 2 9
+SAMPLE OUTPUT: 
+9
+9
+9
+10
+12
+
+SAMPLE INPUT:
+2 3
+10 7
+1 2 10
+1 9 1
+SAMPLE OUTPUT: 
+12
+16
+16
+
+For $t=0$ the answer is $\lfloor \sqrt{149} \rfloor=12$.
+
+For $t=1$ the answer is $\lfloor 14+\sqrt 5\rfloor=16$.
+
+SAMPLE INPUT:
+5 6
+8 9
+1 3 5
+1 4 1
+3 10 7
+4 9 2
+5 6 6
+SAMPLE OUTPUT: 
+12
+12
+12
+12
+14
+14
+
+For $t=5$ the answer is $\lfloor 1+\sqrt{9^2+7^2}+2\rfloor=14$. Path:
+$(8,0)\to (9,0)\to (0,7)\to (0,9)$
+
+SCORING:
+Inputs 4-6: $N\le 100$Inputs 7-9: $N\le 3000$Inputs 10-12: $T\le 10$Inputs 13-18: No additional constraints
+
+
+Problem credits: Suhas Nagar
+
+
+
+\section*{Input Format}
+The second line of input contains $X$ and $Y$, representing Bessie's starting $X$
+coordinate and her target $Y$ coordinate respectively.The next $N$ lines contain $s_i$ $x_i$ and $y_i$. It is guaranteed that all
+$x_i$ are distinct from each other and $X$, and all $y_i$ are distinct from each
+other and $Y$. All $s_i$ will be given in increasing order, where
+$s_i \leq s_{i+1}$.
+
+The next $N$ lines contain $s_i$ $x_i$ and $y_i$. It is guaranteed that all
+$x_i$ are distinct from each other and $X$, and all $y_i$ are distinct from each
+other and $Y$. All $s_i$ will be given in increasing order, where
+$s_i \leq s_{i+1}$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):Print $T$ lines, with the $t$th (0-indexed) line containing
+$\lfloor d_t\rfloor$.SAMPLE INPUT:4 5
+6 7
+1 7 5
+2 4 4
+3 1 6
+4 2 9SAMPLE OUTPUT:9
+9
+9
+10
+12SAMPLE INPUT:2 3
+10 7
+1 2 10
+1 9 1SAMPLE OUTPUT:12
+16
+16For $t=0$ the answer is $\lfloor \sqrt{149} \rfloor=12$.For $t=1$ the answer is $\lfloor 14+\sqrt 5\rfloor=16$.SAMPLE INPUT:5 6
+8 9
+1 3 5
+1 4 1
+3 10 7
+4 9 2
+5 6 6SAMPLE OUTPUT:12
+12
+12
+12
+14
+14For $t=5$ the answer is $\lfloor 1+\sqrt{9^2+7^2}+2\rfloor=14$. Path:
+$(8,0)\to (9,0)\to (0,7)\to (0,9)$SCORING:Inputs 4-6: $N\le 100$Inputs 7-9: $N\le 3000$Inputs 10-12: $T\le 10$Inputs 13-18: No additional constraintsProblem credits: Suhas Nagar
+
+\section*{Output Format}
+SAMPLE INPUT:4 5
+6 7
+1 7 5
+2 4 4
+3 1 6
+4 2 9SAMPLE OUTPUT:9
+9
+9
+10
+12SAMPLE INPUT:2 3
+10 7
+1 2 10
+1 9 1SAMPLE OUTPUT:12
+16
+16For $t=0$ the answer is $\lfloor \sqrt{149} \rfloor=12$.For $t=1$ the answer is $\lfloor 14+\sqrt 5\rfloor=16$.SAMPLE INPUT:5 6
+8 9
+1 3 5
+1 4 1
+3 10 7
+4 9 2
+5 6 6SAMPLE OUTPUT:12
+12
+12
+12
+14
+14For $t=5$ the answer is $\lfloor 1+\sqrt{9^2+7^2}+2\rfloor=14$. Path:
+$(8,0)\to (9,0)\to (0,7)\to (0,9)$SCORING:Inputs 4-6: $N\le 100$Inputs 7-9: $N\le 3000$Inputs 10-12: $T\le 10$Inputs 13-18: No additional constraintsProblem credits: Suhas Nagar
+
+\section*{Sample Input}
+\begin{verbatim}
+4 5
+6 7
+1 7 5
+2 4 4
+3 1 6
+4 2 9
+
+2 3
+10 7
+1 2 10
+1 9 1
+
+5 6
+8 9
+1 3 5
+1 4 1
+3 10 7
+4 9 2
+5 6 6
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+9
+9
+9
+10
+12
+
+SAMPLE INPUT:2 3
+10 7
+1 2 10
+1 9 1SAMPLE OUTPUT:12
+16
+16For $t=0$ the answer is $\lfloor \sqrt{149} \rfloor=12$.For $t=1$ the answer is $\lfloor 14+\sqrt 5\rfloor=16$.SAMPLE INPUT:5 6
+8 9
+1 3 5
+1 4 1
+3 10 7
+4 9 2
+5 6 6SAMPLE OUTPUT:12
+12
+12
+12
+14
+14For $t=5$ the answer is $\lfloor 1+\sqrt{9^2+7^2}+2\rfloor=14$. Path:
+$(8,0)\to (9,0)\to (0,7)\to (0,9)$SCORING:Inputs 4-6: $N\le 100$Inputs 7-9: $N\le 3000$Inputs 10-12: $T\le 10$Inputs 13-18: No additional constraintsProblem credits: Suhas Nagar
+
+12
+16
+16
+
+For $t=0$ the answer is $\lfloor \sqrt{149} \rfloor=12$.For $t=1$ the answer is $\lfloor 14+\sqrt 5\rfloor=16$.SAMPLE INPUT:5 6
+8 9
+1 3 5
+1 4 1
+3 10 7
+4 9 2
+5 6 6SAMPLE OUTPUT:12
+12
+12
+12
+14
+14For $t=5$ the answer is $\lfloor 1+\sqrt{9^2+7^2}+2\rfloor=14$. Path:
+$(8,0)\to (9,0)\to (0,7)\to (0,9)$SCORING:Inputs 4-6: $N\le 100$Inputs 7-9: $N\le 3000$Inputs 10-12: $T\le 10$Inputs 13-18: No additional constraintsProblem credits: Suhas Nagar
+
+For $t=1$ the answer is $\lfloor 14+\sqrt 5\rfloor=16$.SAMPLE INPUT:5 6
+8 9
+1 3 5
+1 4 1
+3 10 7
+4 9 2
+5 6 6SAMPLE OUTPUT:12
+12
+12
+12
+14
+14For $t=5$ the answer is $\lfloor 1+\sqrt{9^2+7^2}+2\rfloor=14$. Path:
+$(8,0)\to (9,0)\to (0,7)\to (0,9)$SCORING:Inputs 4-6: $N\le 100$Inputs 7-9: $N\le 3000$Inputs 10-12: $T\le 10$Inputs 13-18: No additional constraintsProblem credits: Suhas Nagar
+
+SAMPLE INPUT:5 6
+8 9
+1 3 5
+1 4 1
+3 10 7
+4 9 2
+5 6 6SAMPLE OUTPUT:12
+12
+12
+12
+14
+14For $t=5$ the answer is $\lfloor 1+\sqrt{9^2+7^2}+2\rfloor=14$. Path:
+$(8,0)\to (9,0)\to (0,7)\to (0,9)$SCORING:Inputs 4-6: $N\le 100$Inputs 7-9: $N\le 3000$Inputs 10-12: $T\le 10$Inputs 13-18: No additional constraintsProblem credits: Suhas Nagar
+
+12
+12
+12
+12
+14
+14
+
+For $t=5$ the answer is $\lfloor 1+\sqrt{9^2+7^2}+2\rfloor=14$. Path:
+$(8,0)\to (9,0)\to (0,7)\to (0,9)$SCORING:Inputs 4-6: $N\le 100$Inputs 7-9: $N\le 3000$Inputs 10-12: $T\le 10$Inputs 13-18: No additional constraintsProblem credits: Suhas Nagar
+
+SCORING:Inputs 4-6: $N\le 100$Inputs 7-9: $N\le 3000$Inputs 10-12: $T\le 10$Inputs 13-18: No additional constraintsProblem credits: Suhas Nagar
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1475
+
+\section*{Source}
+USACO JAN25 Contest, Gold Division, Problem ID: 1475
+
+\end{document}

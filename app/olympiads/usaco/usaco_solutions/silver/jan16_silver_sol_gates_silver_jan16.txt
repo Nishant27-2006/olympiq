@@ -1,0 +1,206 @@
+Solution ID: sol_gates_silver_jan16
+Contest: JAN16
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_gates_silver_jan16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(First Solution Analysis by Nick Wu)
+
+In this problem, Farmer John is building a fence on a 2D grid. He wants to count the number of gates
+he needs to build in order to make sure that he can travel from any location on the farm to any other one.
+Gates are necessary to cross between two squares which are separated by a fence.
+
+Because the fence is small, we can build the fence directly and then count the number of distinct
+regions Farmer John's farm is broken up into, say using a "floodfill" approach. If it is broken up into
+
+$N$
+
+distinct regions, then
+Farmer John needs to build
+
+$N-1$
+
+gates, since a gate can only connect make it possible to travel
+between two regions.
+
+In terms of storing the fence, we opt to use a two-dimensional array of booleans to track which locations
+have fence built on them. Instead of having fence pieces be unit length, we double the length of the fence.
+Therefore, distinct squares of the fence are at points
+
+$(x, y)$
+
+where both
+
+$x$
+
+and
+
+$y$
+
+are odd, and to
+check if there is a fence between those two points, you simply inspect the point in between.
+
+Here is my Java code demonstrating this.
+
+import java.io.*;
+import java.util.*;
+public class gates {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("gates.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("gates.out")));
+
+		int n = Integer.parseInt(br.readLine());
+		String s = br.readLine();
+		int currX = 1002;
+		int currY = 1002;
+		boolean[][] isFence = new boolean[2005][2005];
+		isFence[currX][currY] = true;
+		for(int i = 0; i < s.length(); i++) {
+			int dirX = 0, dirY = 0;
+			if(s.charAt(i) == 'N') {
+				dirX = -1;
+			}
+			else if(s.charAt(i) == 'S') {
+				dirX = 1;
+			}
+			else if(s.charAt(i) == 'W') {
+				dirY = -1;
+			}
+			else {
+				dirY = 1;
+			}
+			for(int a = 0; a < 2; a++) {
+				currX += dirX;
+				currY += dirY;
+				isFence[currX][currY] = true;
+			}
+		}
+		int ret = -1;
+		int[] dx = new int[]{-1,1,0,0};
+		int[] dy = new int[]{0,0,-1,1};
+		for(int i = 0; i < isFence.length; i++) {
+			for(int j = 0; j < isFence[i].length; j++) {
+				if(isFence[i][j]) {
+					continue;
+				}
+				ret++;
+				LinkedList<Point> q = new LinkedList<Point>();
+				q.add(new Point(i, j));
+				isFence[i][j] = true;
+				while(!q.isEmpty()) {
+					Point curr = q.removeFirst();
+					for(int k = 0; k < dx.length; k++) {
+						int nx = curr.x + dx[k];
+						int ny = curr.y + dy[k];
+						if(nx >= 0 && nx < isFence.length && ny >= 0 && ny < isFence[nx].length && !isFence[nx][ny]) {
+							isFence[nx][ny] = true;
+							q.add(new Point(nx, ny));
+						}
+					}
+				}
+			}
+		}
+		pw.println(ret);
+		
+		pw.close();
+	}
+	
+	static class Point {
+		public int x,y;
+		public Point(int xIn, int yIn) {
+			x = xIn;
+			y = yIn;
+		}
+	}
+	
+}
+
+(Alternative Solution Analysis by Lazar Ilic)
+
+In this problem, Farmer John creates a number of discrete regions in
+his farm. Adding a gate between two previously disconnected regions
+will combine them so the number of regions will be reduced by
+one. Thus the total number of gates needed is the number of initially
+disconnected regions minus one. It is important we note that the
+region outside all the fences counts as a region: indeed if there were
+no fenced in region we would need no gates, if we had one fenced in
+region we would need one gate, etc. As it happens there is a result on
+planar graphs called Euler's formula which states that $v-e+f=2$, where
+$v$, $e$, and, $f$ are the number of vertices, edges, and faces (regions)
+respectively. Furthermore the end state of the farm will be a planar
+graph where fences are edges and endpoints of fences are vertices
+since, by definition, no two fences will intersect at any point that
+is not a vertex. So, in our problem we want to find $f-1=e-v+1$. This
+enables us to cast the problem as one of vertices and edges instead of
+faces. Indeed all that remains is for us to count the number of
+distinct vertices and edges. In the code below I used the HashSet to
+avoid redundancies and used a few variables to keep track of the $(x,y)$
+values of the current point where Farmer John resides and of the
+previous point. Then we add the vertex and the edge (where each is a
+uniquely defined string with edges are composed of the vertices
+ordered in terms of their South/West to North/East ends) and move
+along through the loop.
+
+import java.io.*;
+import java.util.*;
+public class gates {
+    public static void main(String[] args) throws Exception{
+        Scanner in=new Scanner(new File("gates.in"));
+        PrintStream out=new PrintStream(new File("gates.out"));
+
+	int a=in.nextInt();
+	String b=in.next();
+
+	int x=0;
+	int y=0;
+	int xpre;
+	int ypre;
+
+	Set edges=new HashSet();
+	Set vertices=new HashSet();
+
+	vertices.add(x+" "+y);
+
+	for(int c=0;c<a;c++)
+	    {
+		xpre=x;
+		ypre=y;
+    
+		if(b.charAt(c)=='N')
+		    {
+			x=xpre;
+			y=ypre+1;
+		    }
+		else if(b.charAt(c)=='S')
+		    {
+			x=xpre;
+			y=ypre-1;
+		    }
+		else if(b.charAt(c)=='E')
+		    {
+			x=xpre+1;
+			y=ypre;
+		    }
+		else
+		    {
+			x=xpre-1;
+			y=ypre;
+		    }
+    
+		vertices.add(x+" "+y);
+    
+		if(b.charAt(c)=='N' || b.charAt(c)=='E')
+		    {
+			edges.add(xpre+" "+ypre+" "+x+" "+y);
+		    }
+		else
+		    {
+			edges.add(x+" "+y+" "+xpre+" "+ypre);
+		    }
+	    }
+	out.println(edges.size()-vertices.size()+1);
+    }
+}

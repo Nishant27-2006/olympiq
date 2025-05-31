@@ -1,0 +1,474 @@
+Solution ID: sol_prob1_silver_jan25
+Contest: JAN25
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_jan25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Subtasks 1 and 2
+
+As in the solution for the Bronze version of this problem, we can compute the
+number of cows checked for each possible operation and sum all of them. This
+takes
+
+$O(N^3)$
+
+or
+
+$O(N^2)$
+
+time.
+
+Subtask 2 (Alternative)
+
+Let's describe a different
+
+$O(N^2)$
+
+time solution. This one can be optimized to
+solve the remaining subtasks.
+
+Note: for consistency with the solution code, we assume both
+
+$a$
+
+and
+
+$b$
+
+are
+zero-indexed instead of one-indexed.
+
+Let's iterate over all pairs
+
+$(i,j)$
+
+such that
+
+$a_i=b_j$
+
+and for each one,
+determine its contribution to the answer in
+
+$O(1)$
+
+time; that is the number of
+operations sending
+
+$i$
+
+to
+
+$j$
+
+. Without loss of generality, assume
+
+$i\le j$
+
+(to
+determine the contribution coming from
+
+$i>j$
+
+, we can reverse the array and apply
+the same computations).
+
+There is a contribution of
+
+$\min(i,N-1-j)$
+
+coming from operations centered
+at
+
+$\frac{i+j}{2}$
+
+containing both indices
+
+$i$
+
+and
+
+$j$
+
+.
+
+Additionally,
+if
+
+$i=j$
+
+there are
+
+$\binom{i+1}{2}+\binom{N-i}{2}$
+
+operations that do not affect
+the
+
+$i$
+
+th position.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define all(x) begin(x), end(x)
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+
+using ll = int64_t;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N;
+    cin >> N;
+    vector<int> A(N), B(N);
+    for (int &x : A) cin >> x;
+    for (int &x : B) cin >> x;
+    auto ways2 = [&](ll x) { return x * (x + 1) / 2; };
+    ll ans = 0;
+    F0R(i, N) if (A[i] == B[i]) {
+        ans += ways2(i) + ways2(N - 1 - i) + min(i, N - 1 - i) + 1;
+    }
+    F0R(_, 2) {
+        F0R(i, N)
+        FOR(j, i + 1, N) if (A[i] == B[j]) ans += min(i, N - 1 - j) + 1;
+        reverse(all(A));
+        reverse(all(B));
+    }
+    cout << ans << "\n";
+}
+
+Subtask 3
+
+For the remaining subtasks, the only part we need to speed up is the 
+computation of the contribution from
+
+$i<j$
+
+. The logic for
+
+$i=j$
+
+will remain the same.
+
+When all values are generated independently and uniformly at random from the
+range
+
+$[1,N]$
+
+,  we can observe that the expected number of pairs satisfying
+
+$a_i=b_j$
+
+is only
+
+$N$
+
+(there are
+
+$N^2$
+
+pairs
+
+$(i,j)$
+
+, and each one satisfies
+
+$a_i=b_j$
+
+with probability
+
+$1/N$
+
+). So as long as our solution takes time
+proportional to
+
+$N$
+
+plus the number of equal pairs, it will likely be fast
+enough for this subtask.
+
+In the code below we initialize lists for each species value
+
+$v$
+
+from
+
+$1\dots N$
+
+, then for each
+
+$v$
+
+we iterate over all ways to select a position from
+
+$a$
+
+and a position from
+
+$b$
+
+with species
+
+$v$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define all(x) begin(x), end(x)
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+
+using ll = int64_t;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N;
+    cin >> N;
+    vector<int> A(N), B(N);
+    for (int &x : A) cin >> x;
+    for (int &x : B) cin >> x;
+    auto ways2 = [&](ll x) { return x * (x + 1) / 2; };
+    ll ans = 0;
+    F0R(i, N) if (A[i] == B[i]) {
+        ans += ways2(i) + ways2(N - 1 - i) + min(i, N - 1 - i) + 1;
+    }
+    F0R(_, 2) {
+        vector<vector<int>> with_A(N + 1), with_B(N + 1);
+        F0R(i, N) with_A[A[i]].push_back(i), with_B[B[i]].push_back(i);
+        FOR(v, 1, N + 1) {
+            for (int i : with_A[v])
+                for (int j : with_B[v])
+                    if (i < j) ans += min(i, N - 1 - j) + 1;
+        }
+        reverse(all(A));
+        reverse(all(B));
+    }
+    cout << ans << "\n";
+}
+
+Full Solution
+
+For full credit, let's process each value
+
+$v$
+
+in time proportional to the number
+of times it appears in
+
+$a$
+
+or
+
+$b$
+
+. Summing over all values will give a solution
+running in
+
+$O(N)$
+
+time.
+
+There are two types of contributions depending on whether
+
+$N-j$
+
+is "big" or
+"small" relative to
+
+$i+1$
+
+:
+
+big:
+
+$N-j > i+1$
+
+. This contributes
+
+$i+1$
+
+.
+
+small:
+
+$N-j\le i+1$
+
+. This
+contributes
+
+$N-j$
+
+.
+
+If
+
+$i$
+
+is fixed, a suffix of
+
+$j$
+
+have small contributions, and the remaining
+
+$j$
+
+have big contributions.
+
+Let's iterate over the occurrences of
+
+$v$
+
+from right to left;  when we encounter
+an occurrence of
+
+$b_j=v$
+
+let's record it, and when we encounter an occurrence of
+
+$a_i=v$
+
+let's add its contribution with all occurrences of
+
+$v$
+
+in
+
+$b$
+
+recorded
+so far to the answer.
+
+Each
+
+$N-j$
+
+initially starts out with a "small" contribution but changes to a
+"big" contribution when
+
+$i$
+
+gets small enough. Thus, we store the following
+information about
+
+$j$
+
+seen so far:
+
+Number of big contributions.
+
+Sum of
+
+$N-j$
+
+over all small
+contributions.
+
+A stack of
+
+$N-j$
+
+over all small contributions from
+lowest to highest.
+
+When we encounter
+
+$b_j=v$
+
+we add to the sum of the small contributions and push
+
+$N-j$
+
+to the stack. When we encounter
+
+$a_i=v$
+
+we pop from the stack  as
+necessary; every time we pop from the stack we subtract from the sum and add to
+the number of big contributions.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define all(x) begin(x), end(x)
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+ 
+using ll = int64_t;
+ 
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N;
+    cin >> N;
+    vector<int> A(N), B(N);
+    for (int &x : A) cin >> x;
+    for (int &x : B) cin >> x;
+    auto ways2 = [&](ll x) { return x * (x + 1) / 2; };
+    ll ans = 0;
+    F0R(i, N) if (A[i] == B[i]) {
+        ans += ways2(i) + ways2(N - 1 - i) + min(i, N - 1 - i) + 1;
+    }
+    F0R(_, 2) {
+        vector<vector<pair<int, int>>> with_oc(N + 1);
+        F0R(i, N) {
+            with_oc.at(B.at(i)).push_back({i, 1});
+            with_oc.at(A.at(i)).push_back({i, 0});
+        }
+        FOR(v, 1, N + 1) {
+            reverse(all(with_oc.at(v)));
+            stack<int> stk;
+            int num_large = 0;
+            ll sum_small = 0;
+            auto query = [&](int x) {
+                while (!stk.empty() && stk.top() > x) {
+                    ++num_large;
+                    sum_small -= stk.top();
+                    stk.pop();
+                }
+                return sum_small + (ll)num_large * x;
+            };
+            for (auto [idx, which] : with_oc.at(v)) {
+                if (which == 0) {
+                    ans += query(idx + 1);
+                } else {
+                    int v = N - idx;
+                    sum_small += v;
+                    stk.push(v);
+                }
+            }
+        }
+        reverse(all(A));
+        reverse(all(B));
+    }
+    cout << ans << "\n";
+}
+
+Subtask 4
+
+This subtask was intended to give credit for solutions that process each value
+
+$v$
+
+that occurs in
+
+$a$
+
+and
+
+$b$
+
+in
+
+$O(N)$
+
+time (e.g., using prefix sums to handle
+the "big" and "small" contributions mentioned above). The details are omitted.

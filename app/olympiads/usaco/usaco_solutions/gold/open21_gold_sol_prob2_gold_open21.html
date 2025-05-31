@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Consider a new undirected multigraph <span class='math'>$G$</span> with <span class='math'>$2N$</span> vertices such that 
+<p><ul><li>Every portal in the original graph corresponds to a vertex in <span class='math'>$G$</span>.</li><li>Every vertex <span class='math'>$v$</span> in the original graph corresponds to edges
+<span class='math'>$p_{v,0}\leftrightarrow p_{v,1}$</span> and <span class='math'>$p_{v,2}\leftrightarrow p_{v,3}$</span> in
+<span class='math'>$G$</span>.</li></ul>
+<p>Every vertex in <span class='math'>$G$</span> has degree exactly two, so <span class='math'>$G$</span> is a  union of disjoint
+cycles. The goal is to join all vertices in <span class='math'>$G$</span> into a single cycle.
+<p>Suppose that portals <span class='math'>$p_{v,0}$</span> and <span class='math'>$p_{v,1}$</span> are not contained within the same
+cycle as <span class='math'>$p_{v,2}$</span> and <span class='math'>$p_{v,3}$</span> in <span class='math'>$G$</span>. Then if we permute the portals adjacent
+to vertex <span class='math'>$v$</span> so that the adjacency list is now
+<span class='math'>$p_{v,0},p_{v,2},p_{v,1},p_{v,3}$</span>,  this will combine all of
+<span class='math'>$p_{v,0},p_{v,1},p_{v,2},$</span> and <span class='math'>$p_{v,3}$</span> into a single cycle. In other words,
+every vertex has the potential to unite two cycles.
+<p>If we replace all occurrences of &quot;cycle&quot; above with &quot;connected component,&quot; then
+it&apos;s clear that we&apos;re looking for a <a href='https://usaco.guide/gold/mst'>minimum
+spanning tree</a>. 
+<p>Specifically, the answer is the cost of the minimum spanning tree of <span class='math'>$G&apos;$</span>, where
+<span class='math'>$G&apos;$</span> has the same vertex set as <span class='math'>$G$</span> and the following edges and costs:
+<p><ul><li>For each <span class='math'>$v$</span>, edges <span class='math'>$p_{v,0}\leftrightarrow p_{v,1}$</span> and
+<span class='math'>$p_{v,2}\leftrightarrow p_{v,3}$</span> have cost <span class='math'>$0$</span>.</li><li>For each <span class='math'>$v$</span>, edge <span class='math'>$p_{v,0}\leftrightarrow p_{v,2}$</span> has cost <span class='math'>$c_v$</span>.</li></ul>
+<p>The minimum spanning tree can be found using Kruskal&apos;s algorithm.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.StringTokenizer;
+ 
+public class Portals {
+    static int[] union;
+ 
+    static int find(int u) {
+        if (union[union[u]] != union[u]) {
+            union[u] = find(union[u]);
+        }
+        return union[u];
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        union = new int[(2 * n) + 1];
+        for (int p = 1; p &lt;= 2 * n; p++) {
+            union[p] = p;
+        }
+        List&lt;Edge&gt; edges = new ArrayList&lt;&gt;();
+        for (int a = 1; a &lt;= n; a++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int cost = Integer.parseInt(tokenizer.nextToken());
+            int[] portals = new int[4];
+            for (int j = 0; j &lt; 4; j++) {
+                portals[j] = Integer.parseInt(tokenizer.nextToken());
+            }
+            edges.add(new Edge(portals[0], portals[1], 0));
+            edges.add(new Edge(portals[2], portals[3], 0));
+            edges.add(new Edge(portals[3], portals[0], cost));
+        }
+        edges.sort(Comparator.comparingInt(edge -&gt; edge.cost));
+        int answer = 0;
+        for (Edge edge : edges) {
+            int u = find(edge.a);
+            int v = find(edge.b);
+            if (u != v) {
+                answer += edge.cost;
+                union[u] = v;
+            }
+        }
+        System.out.println(answer);
+    }
+ 
+    static class Edge {
+        final int a;
+        final int b;
+        final int cost;
+ 
+        Edge(int a, int b, int cost) {
+            this.a = a;
+            this.b = b;
+            this.cost = cost;
+        }
+    }
+}
+</pre>
+<p></body></html>

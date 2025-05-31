@@ -1,0 +1,176 @@
+Solution ID: sol_262144_platinum_open16
+Contest: OPEN16
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_262144_platinum_open16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Mark Gordon)
+
+A simple way to approach this problem would be to consider all ranges of the input array
+and determine the largest number that can be produced in that range.  However, most ranges
+aren't actually interesting as they could never be combined into one.
+
+To see this it helps to look at the equivalent problem where each of the array elements are powers of two
+and instead of combining x and x to produce x + 1 you produced 2x.  Now it's clear that a range
+must sum to a power of two to be interesting.  In fact, an interesting range can be better
+described by its starting position and the power of two it sums to.
+
+This informs a simple Dynamic Programming solution.  We let DP[p][i] give the ending index of the range starting
+at i that can combine to p, or -1 if it doesn't exist.  DP[p + 1][i] is then calculated as
+DP[p + 1][i] = DP[p][DP[p][i]] provided DP[p][i] is valid.
+
+Here's my solution to this problem.
+
+#include <iostream>
+#include <cstdio>
+#include <vector>
+
+using namespace std;
+
+#define MAXN ((1 << 18) + 10)
+#define MAXSZ 70
+
+int dp[MAXSZ + 1][MAXN];
+int A[MAXN];
+
+int main() {
+  int N; cin >> N;
+
+  vector<int> A(N);
+  for (int i = 0; i < N; i++) {
+    cin >> A[i];
+  }
+
+  int result = 0;
+  for (int i = 0; i <= MAXSZ; i++) {
+    for (int j = 0; j < N; j++) {
+      if (A[j] == i) {
+        dp[i][j] = j + 1;
+        result = max(result, i);
+      } else {
+        if (i == 0 || dp[i - 1][j] == -1 || dp[i - 1][dp[i - 1][j]] == -1) {
+          dp[i][j] = -1;
+        } else {
+          dp[i][j] = dp[i - 1][dp[i - 1][j]];
+          result = max(result, i);
+        }
+      }
+    }
+    dp[i][N] = -1;
+  }
+  cout << result << endl;
+
+  return 0;
+}
+
+Further analysis contributed by Kyle Liu:
+
+There is an
+alternative $O(N)$ greedy approach. An $O(N \log N)$ greedy solution is
+obvious. We can remove the lowest value ($M$) by greedily combining $K$
+consecutive pairs of $M$ into $K/2$ pairs of ($M+1$). In case that $K$ is odd,
+we can simply break the sequence into two and assign the $K/2$ pairs of
+$M+1$ to both sequences. Repeating this process will give us an $O(N \log N)$
+solution, using appropriate data structures.
+
+$O(N)$ can be achieved since we don't have to always find lowest value
+to remove. Consider the sequence of numbers as heights of hills. We
+can simply find the "valley points" (point whose heights are below its
+neighbours') to remove. We first condense the sequence into
+consecutive intervals of same heights. We use a stack to keep track of
+the sequence and "valley point". As we go through the list of
+intervals, if the stack is empty or the incoming height is below the
+height in the top of stack (downhill), we simply push the incoming
+interval to the stack. If the incoming height is above the height in
+the top of stack (uphill), the point at the top of the stack is a
+"valley point", and it needs to be removed by combining into its
+neighbouring intervals. Its left neighbours are in the stack and its
+right neighbour is the incoming interval. If any combination needs to
+break into two sequences. We can calculate the optimal value of the
+first sequence by "collapsing" the stack. We then start the second
+sequence with only the "valley point" in the stack.
+
+Here is my code implementing this approach:
+
+#include <stdio.h>
+#include <iostream>
+#include <math.h>
+
+using namespace std;
+
+#define MAXN 262144+10
+
+struct Node {
+	int val;
+	int tot;
+};
+
+Node ar[MAXN];
+Node s[MAXN];
+int N, top = 0, res = 0;
+
+void collapse_stack(void) // calculate value for first squence and reset stack
+{
+	for (; top > 1; top--) 
+		s[top-2].tot += s[top-1].tot / (1 << (s[top-2].val - s[top-1].val));
+	res = max(res, s[top-1].val + (int)log2(s[top-1].tot));
+	top--;
+}
+
+void combine_left(int val) // combine the left side until height reaches val
+{
+	for (; top > 1; top--) {
+		if(s[top-2].val > val) break;
+		int num = 1 << (s[top-2].val - s[top-1].val);
+		if (s[top-1].tot % num) {
+			Node tmp = s[top-1];
+			collapse_stack();
+			s[top++] = tmp; // start second sequence with the "valley point"
+			break;
+		}
+		s[top-2].tot += s[top-1].tot / num;
+	}
+}
+
+int main(void)
+{
+	freopen("262144.in","r",stdin);
+	freopen("262144.out","w",stdout);
+	cin >> N;
+	
+	int st = 0;
+	for(int i=1; i<=N; i++) {
+		int a;
+		cin >> a;
+		res = max(res, a);
+		if(a == ar[st].val) ar[st].tot++;
+		else {
+			ar[++st].val = a;
+			ar[st].tot++;
+		}
+	}
+	
+	for(int i=1; i<=st; i++) {
+		if (top == 0 || (ar[i].val < s[top-1].val)) { // downhill, add to stack
+			s[top++] = ar[i];
+			continue;
+		}
+		combine_left(ar[i].val);
+		int num = 1 << (ar[i].val - s[top-1].val); 
+		if (s[top-1].tot % num == 0) { // combine new interval into stack
+  			s[top-1].val = ar[i].val;
+  			s[top-1].tot = ar[i].tot + s[top-1].tot / num;
+   		}
+   		else { // new intervals cannot be merged to intervals already in stack
+			ar[i].tot += s[top-1].tot / num;
+			collapse_stack();
+			s[top++] = ar[i];
+		}
+	}		
+	collapse_stack(); // obtain answer for remaining intervals in stack
+	cout << res << endl;
+	return 0;
+}

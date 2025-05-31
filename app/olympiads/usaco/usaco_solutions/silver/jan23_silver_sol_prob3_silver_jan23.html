@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brandon Wang, Claire Zhang, Benjamin Qi)
+<p>First, <span class='math'>$A_i$</span> must be even for all <span class='math'>$0\leq i \leq N-1$</span> because after every time we
+cross <span class='math'>$i.5$</span> moving right we must cross it again in the opposite direction in
+order to return to 0. We assume <span class='math'>$A_i$</span> is even for the rest of the analysis. 
+<p><strong>Claim:</strong> The optimal number of direction changes is at least
+<span class='math'>$\left(\sum_{i=-1}^{N-1}\frac{|A_i-A_{i+1}|}{2}\right)-1$</span>, where we let
+<span class='math'>$A_{-1}=A_{N}=0$</span>. 
+<p><strong>Proof:</strong> First, consider the case where <span class='math'>$A_i&lt;A_{i+1}$</span>. Then Bessie must
+move right from <span class='math'>$i$</span> to <span class='math'>$i+1$</span> exactly <span class='math'>$A_i/2$</span> times and right from <span class='math'>$i+1$</span> to <span class='math'>$i+2$</span>
+exactly <span class='math'>$A_{i+1}/2$</span> times. For each R corresponding to moving right from <span class='math'>$i+1$</span>
+to <span class='math'>$i+2$</span>,  consider the character preceding it; at most <span class='math'>$A_i/2$</span> of these
+characters can be Rs. Thus, there must be at least <span class='math'>$\frac{A_{i+1}-A_i}{2}$</span>
+occurrences of LR in Bessie&apos;s route corresponding to changing direction at
+position <span class='math'>$i+1$</span>. We subtract one for <span class='math'>$i=-1$</span>, which is a special case because the
+first character of our route is not preceded by any character.
+<p>Similarly, if <span class='math'>$A_i&gt;A_{i+1}$</span>, then there must be at least
+<span class='math'>$\frac{A_{i}-A_{i+1}}{2}$</span> occurrences of  RL in Bessie&apos;s route corresponding to
+changing direction at position <span class='math'>$i+1$</span>. <span class='math'>$\blacksquare$</span>
+<p>Next, we show that the optimal number of direction changes is exactly
+<span class='math'>$\left(\sum_{i=-1}^{N-1}\frac{|A_i-A_{i+1}|}{2}\right)-1$</span> by constructing a
+route with exactly this number of direction changes. We present two different 
+ways to do this below.
+<p><strong>Solution 1:</strong>
+<p>Greedily move in the current direction (initially right) until we are forced to
+switch directions. Repeat.
+<p><pre class='prettyprint'>
+N = int(input())
+A = list(map(int, input().split())) + [0]
+ 
+route = []
+i = 0
+while not (i == 0 and A[i] == 0):
+	while A[i] &gt; 0: # go right as far as possible
+		route.append(&apos;R&apos;)
+		A[i] -= 1
+		i += 1
+	while i &gt; 0 and (A[i-1] &gt; 1 or A[i] == 0): # go left as far as possible
+		route.append(&apos;L&apos;)
+		i -= 1
+		A[i] -= 1
+ 
+print(&quot;&quot;.join(route))
+</pre>
+<p>This solution is correct because it only turns left at positions <span class='math'>$i$</span> where
+<span class='math'>$A_{i-1}&gt;A_{i}$</span> and only does so <span class='math'>$\frac{A_{i-1} - A_{i}}{2}$</span> times (every time we reach
+position <span class='math'>$i$</span> after <span class='math'>$A_{i}$</span> becomes <span class='math'>$0$</span>), and similarly only turns right at
+positions where <span class='math'>$A_{i-1}&lt;A_{i}$</span> and only does so <span class='math'>$\frac{A_{i} - A_{i-1}}{2}$</span> times (minus
+one if <span class='math'>$i=0$</span>).
+<p><strong>Solution 2:</strong>
+<p>From <span class='math'>$A_{-1},A_0,\dots,A_{N}$</span> let&apos;s construct a sequence of parentheses with
+length equal to the optimal number of direction changes plus one. Iterate over
+<span class='math'>$i$</span> from <span class='math'>$-1$</span> to <span class='math'>$N-1$</span>. If <span class='math'>$A_{i}&lt;A_{i+1}$</span>, then add <span class='math'>$\frac{A_{i+1}-A_i}{2}$</span>
+left parentheses to our sequence, corresponding to places in the route where we
+switch directions from L to R. On the other hand, if <span class='math'>$A_i&gt;A_{i+1}$</span>, then add
+<span class='math'>$\frac{A_i-A_{i+1}}{2}$</span> right parentheses to our sequence, corresponding to
+places in the route where we need to switch directions from R to L. Observe 
+that every proper prefix of our sequence contains more left parentheses than
+right parentheses (after processing up to <span class='math'>$A_i$</span> the number of left parentheses
+minus the number of right parentheses is <span class='math'>$A_i/2&gt;0$</span>). Also, the total number of 
+left parentheses equals the total number of right parentheses. Thus, given the 
+sequence of parentheses, we can construct a valid route as follows:
+<p><ul><li>Start at the leftmost left parenthesis.</li><li>Go right to the rightmost right parenthesis.</li><li>Go left to the rightmost left parenthesis.</li><li>Go
+right to the second rightmost right parenthesis.</li><li>Go left to the second rightmost left parenthesis.</li><li>...</li><li>Go
+right to the <span class='math'>$k$</span>th rightmost right parenthesis.</li><li>Go left to the <span class='math'>$k$</span>th rightmost left parenthesis.</li><li>...</li><li>Go left to the leftmost left parenthesis.</li></ul>
+<p>The number of direction changes in this route is equal to the length of the
+sequence minus one, as desired.
+<p><pre class='prettyprint'>
+N = int(input())
+A = list(map(int, input().split()))
+
+lparens = [0] * (A[0] // 2)
+rparens = []
+for i in range(N-1):
+	for _ in range((A[i]-A[i+1]) // 2):
+		rparens.append(i+1)
+	for _ in range((A[i+1]-A[i]) // 2):
+		lparens.append(i+1)
+
+rparens += [N] * (A[-1] // 2)
+assert len(lparens) == len(rparens)
+
+x = 0
+route = []
+for l, r in reversed(list(zip(lparens, rparens))):
+	assert x &lt; r
+	while x &lt; r:
+		x += 1
+		route.append(&apos;R&apos;)
+	assert x &gt; l
+	while x &gt; l:
+		x -= 1
+		route.append(&apos;L&apos;)
+
+print(&quot;&quot;.join(route))
+</pre>
+<p></body></html>

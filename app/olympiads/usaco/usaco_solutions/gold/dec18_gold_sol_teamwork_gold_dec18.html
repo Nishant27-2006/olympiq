@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>This problem can be solved by dynamic programming. Let <span class='math'>$dp[i]$</span> be the optimal
+sum of skill levels achievable by the first <span class='math'>$i$</span> cows, assuming that the last
+team ends at cow <span class='math'>$i$</span>. If we knew that <span class='math'>$k$</span> was the size of the last team (among
+the first <span class='math'>$i$</span> cows), then the optimal sum of skill levels would be
+<div class='math'>$$dp[i-k] + \max_{0 \leq j &lt; k} s_{i-j}.$$</div>
+But the size of the last team could be anywhere from <span class='math'>$1$</span> to <span class='math'>$K$</span>. So we must try
+all possible sizes, and set <span class='math'>$dp[i]$</span> to the best sum of skills achieved.
+<p>This immediately yields an <span class='math'>$O(NK^2)$</span> algorithm, since there are <span class='math'>$N$</span> states, <span class='math'>$K$</span>
+transitions, and each transition takes <span class='math'>$O(K)$</span> time to compute. However, we can
+speed up the transitions by maintaining <div class='math'>$$\max_{0 \leq j &lt; k} s_{i-j}$$</div> as <span class='math'>$k$</span>
+is increased. Updating the maximum takes <span class='math'>$O(1)$</span> time, so each transition is now
+<span class='math'>$O(1)$</span>, for an overall time complexity of <span class='math'>$O(NK)$</span>. This is fast enough.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+int N,K;
+int A[10000];
+int dp[10000];
+ 
+int main()
+{
+	cin &gt;&gt; N &gt;&gt; K;
+	for(int i=0;i&lt;N;i++)
+		cin &gt;&gt; A[i];
+	dp[0] = A[0];
+	for(int i=1;i&lt;N;i++)
+	{
+		int mx = A[i];
+		for(int j=i;j&gt;=0 &amp;&amp; i+1-j &lt;= K; j--)
+		{
+			mx = max(mx, A[j]);
+			if(j==0) dp[i] = max(dp[i],mx*(i+1-j));
+			else dp[i] = max(dp[i],dp[j-1] + mx*(i+1-j));
+		}
+	}
+	cout &lt;&lt; dp[N-1] &lt;&lt; &apos;\n&apos;;
+}
+
+</pre></body></html>

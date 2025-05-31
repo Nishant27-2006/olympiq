@@ -1,0 +1,134 @@
+Solution ID: sol_prob3_bronze_jan23
+Contest: JAN23
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_jan23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Aryansh Shrivastava)
+
+Suppose we perform operations until we are left with a three-letter string XYZ.
+We must now modify XYZ to "MOO." We require Y='O' because there is no way to
+modify the string at the middle without deletions (which we cannot do at this
+point). We can replace any of X and Z with their opposites if necessary.
+
+This gives us a plan. First, if a string has length 1 or 2, output
+
+$-1$
+
+and
+return. Otherwise, search for an 'O' somewhere after the first element and
+before the last element of the string; if no 'O' exists, output
+
+$-1$
+
+and return.
+If a single 'O' exists, we consider the three-letter word around it and
+calculate the answer (removing surrounding elements and performing operations as
+necessary). If multiple 'O's exist, we choose the one that results in the least
+number of operations.
+
+Operations given a position with Y='O' specifically can be computed as follows:
+first, we reduce the given string to size 3 using
+
+$N-3$
+
+deletions, where
+
+$N$
+
+is
+the length of the input string. Then, we check if the first letter of the
+three-letter string is 'M' and  if the last is 'O;' if not, we need to perform
+replacements accordingly.
+
+The time complexity is
+
+$O(NQ)$
+
+.
+
+Aryansh Shrivastava's C++ code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(string s) {
+    int ans = 1e9;
+    if (size(s) <= 2) return -1;
+    for (int i = 1; i < size(s) - 1; ++i) {
+        if (s[i] == 'O') {
+            ans = min(ans,
+                      (int)size(s) - 3 + (s[i - 1] != 'M') + (s[i + 1] != 'O'));
+        }
+    }
+    return ans == 1e9 ? -1 : ans;
+}
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    int q;
+    cin >> q;
+    while (q--) {
+        string s;
+        cin >> s;
+        cout << solve(s) << "\n";
+    }
+}
+
+David Hu's Python code:
+
+TC = int(input())
+ 
+def solve(s):
+    #require zero edits
+    #there must be a MOO substring
+    for i in range(len(s) - 2):
+        if s[i:i+3] == 'MOO':
+            return len(s) - 3
+    #require one edit
+    #there must be a OOO or MOM subsequence
+    for i in range(len(s) - 2):
+        if s[i:i+3] == 'OOO':
+            return len(s) - 3 + 1
+        if s[i:i+3] == 'MOM':
+            return len(s) - 3 + 1
+    #require two edits
+    #there must be a OOM substring
+    for i in range(len(s) - 2):
+        if s[i:i+3] == 'OOM':
+            return len(s) - 3 + 2
+    return -1
+ 
+for i in range(TC):
+    s = input()
+    print(solve(s))
+
+Danny Mittal's Java code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+ 
+public class MooOperations {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q > 0; q--) {
+            String string = in.readLine();
+            int answer = -1;
+            if (string.contains("MOO")) {
+                answer = string.length() - 3;
+            } else if (string.contains("MOM") || string.contains("OOO")) {
+                answer = string.length() - 2;
+            } else if (string.contains("OOM")) {
+                answer = string.length() - 1;
+            }
+            out.append(answer).append('\n');
+        }
+        System.out.print(out);
+    }
+}

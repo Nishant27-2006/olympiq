@@ -1,0 +1,574 @@
+Solution ID: sol_prob3_bronze_open24
+Contest: OPEN24
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_open24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Subtask 1:
+
+Try all
+
+$N!=N\cdot (N-1)\cdots 1$
+
+possible
+
+$p$
+
+in
+lexicographical order, and see if they can produce
+
+$h$
+
+. In Python, we can use
+
+itertools.permutations
+
+to do this easily.
+
+Ben's Python code:
+
+def P_to_H(P):
+    H = []
+    while len(P) > 1:
+        if P[0] > P[-1]:
+            H.append(P[1])
+            P = P[1:]
+        else:
+            H.append(P[-2])
+            P = P[:-1]
+    return H
+ 
+ 
+import itertools
+ 
+ 
+def solve():
+    N = int(input())
+    H = list(map(int, input().split()))
+    for P in itertools.permutations(range(1, N + 1)):
+        if P_to_H(P) == H:
+            print(" ".join(map(str, P)))
+            return
+    print(-1)
+ 
+ 
+T = int(input())
+for _ in range(T):
+    solve()
+
+Subtask 2:
+
+If we are given the values of
+
+$p_1$
+
+and
+
+$p_N$
+
+, we can uniquely
+determine the rest of
+
+$p$
+
+by going through
+
+$h$
+
+one element at a time. In
+particular, when
+
+$N>2$
+
+,
+
+If
+
+$p_1>p_N$
+
+, then
+
+$p_2=h_1$
+
+. It remains to determine the elements between
+
+$p_2$
+
+and
+
+$p_N$
+
+.
+
+Else,
+
+$p_{N-1}=h_1$
+
+. It remains to determine the elements between
+
+$p_1$
+
+and
+
+$p_{N-1}$
+
+and then we can process
+
+$h_2,h_3,\dots, h_{N-1}$
+
+similarly. At the end, we
+should check if
+
+$p$
+
+forms a permutation or not and actually produces
+
+$h$
+
+; if so,
+we update our answer. The time complexity is
+
+$O(N^3)$
+
+per test.
+
+Ben's Python code:
+
+def P_to_H(P):
+    H = []
+    while len(P) > 1:
+        if P[0] > P[-1]:
+            H.append(P[1])
+            P = P[1:]
+        else:
+            H.append(P[-2])
+            P = P[:-1]
+    return H
+ 
+ 
+def solve():
+    N = int(input())
+    H = list(map(int, input().split()))
+    ans = None
+    for l_val in range(1, N + 1):
+        for r_val in range(1, N + 1):
+            cand = [-1] * N
+            l = 0
+            r = N - 1
+            cand[l] = l_val
+            cand[r] = r_val
+            for h in H:
+                if cand[l] > cand[r]:
+                    l += 1
+                    cand[l] = h
+                else:
+                    r -= 1
+                    cand[r] = h
+            if len(set(cand)) == N and P_to_H(cand) == H:
+                if ans is None:
+                    ans = cand
+                ans = min(ans, cand)
+ 
+    if ans is None:
+        print(-1)
+        return
+    print(" ".join(map(str, ans)))
+ 
+ 
+T = int(input())
+for _ in range(T):
+    solve()
+
+Subtask 3:
+
+Consider the process of producing
+
+$h$
+
+from
+
+$p$
+
+. Note that the
+smallest element of
+
+$p$
+
+,
+
+$1$
+
+, will never be removed. So when two elements remain
+in
+
+$p$
+
+, one must be
+
+$1$
+
+, and
+
+$1$
+
+will be the last element written down. Thus, we
+must have
+
+$h_{N-1}=1$
+
+, or else we can output
+
+$-1$
+
+and exit. For the remainder of
+the problem, we will not use the last element of
+
+$h$
+
+, so we discard the last
+element of
+
+$h$
+
+and assume that
+
+$h$
+
+has length
+
+$N-2$
+
+going forward.
+
+If the answer is not
+
+$-1$
+
+, the lexicographically minimum
+
+$p$
+
+must satisfy
+
+$p_1<p_N$
+
+, or else reversing
+
+$p$
+
+will give a lexicographically smaller
+permutation.
+
+Can there be more than one permutation
+
+$p$
+
+satisfying
+
+$p_1<p_N$
+
+that maps to the
+same
+
+$h$
+
+? If we print the mapping from
+
+$p$
+
+to
+
+$h$
+
+for all
+
+$p$
+
+for small
+
+$N$
+
+(e.g.,
+
+$N=4$
+
+) using our solution for subtask 1, we observe that all
+
+$h$
+
+are
+distinct. So it seems true if there exists some
+
+$p$
+
+that maps to
+
+$h$
+
+,
+
+$p$
+
+must
+be unique up to reversal.
+
+def P_to_H(P):
+    H = []
+    while len(P) > 1:
+        if P[0] > P[-1]:
+            H.append(P[1])
+            P = P[1:]
+        else:
+            H.append(P[-2])
+            P = P[:-1]
+    return H
+ 
+ 
+import itertools
+ 
+ 
+N = 4
+for P in itertools.permutations(range(1, N + 1)):
+    if P[0] < P[-1]:
+        print(P, P_to_H(P)[:-1])
+
+Output:
+
+(1, 2, 3, 4) [3, 2]
+(1, 2, 4, 3) [4, 2]
+(1, 3, 2, 4) [2, 3]
+(1, 3, 4, 2) [4, 3]
+(1, 4, 2, 3) [2, 4]
+(1, 4, 3, 2) [3, 4]
+(2, 1, 3, 4) [3, 1]
+(2, 1, 4, 3) [4, 1]
+(2, 3, 1, 4) [1, 3]
+(2, 4, 1, 3) [1, 4]
+(3, 1, 2, 4) [2, 1]
+(3, 2, 1, 4) [1, 2]
+
+Looking at the permutations above (or from working out a few cases by hand), we
+can further observe that
+
+All
+
+$N-2$
+
+elements of
+
+$h$
+
+must be distinct.
+
+The numbers at the ends of
+
+$p$
+
+are precisely those two missing from
+
+$h$
+
+.
+
+Here's a way to see why these observations are true. If we perform the following
+operation
+
+$N-2$
+
+times, we will always end up writing down a permutation of
+
+$p_2\dots p_{N-1}$
+
+:
+
+Operation:
+
+Choose to do exactly one of the following:
+
+Write down
+
+$p'_2$
+
+and remove
+
+$p'_1$
+
+from the permutation.
+
+Write down
+
+$p'_{n-1}$
+
+and remove
+
+$p'_n$
+
+from the permutation.
+
+Once we've determined the numbers at the ends of
+
+$p$
+
+, we can determine the
+remainder of
+
+$p$
+
+in the same way as subtask 2. In fact, it turns out that as
+long as all elements of
+
+$h$
+
+are distinct, there is some
+
+$p$
+
+mapping to it.
+
+Ben's Python code:
+
+def solve():
+    N = int(input())
+    H = list(map(int, input().split()))
+    if H[-1] != 1:
+        print(-1)
+        return
+    H = H[:-1]
+    remaining = [False] + [True] * N
+    for h in H:
+        if not remaining[h]:
+            print(-1)
+            return
+        remaining[h] = False
+    ends = [x for x in range(1, N + 1) if remaining[x]]
+    ans = [-1] * N
+    l, r = 0, N - 1
+    ans[l], ans[r] = ends
+    for h in H:
+        if ans[l] > ans[r]:
+            l += 1
+            ans[l] = h
+        else:
+            r -= 1
+            ans[r] = h
+    print(" ".join(map(str, ans)))
+ 
+ 
+T = int(input())
+for _ in range(T):
+    solve()
+
+Chongtian's C++ code:
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+int main() {
+	int T;
+	cin >> T;
+	while (T--) {
+		int n;
+		cin >> n;
+		vector<int> h(n - 1);
+		for (int &i : h) cin >> i;
+		vector<bool> has(n + 1);
+		for (int i : h) has[i] = 1;
+		vector<int> not_has;
+		for (int i = 1; i <= n; i++) {
+			if (!has[i]) { not_has.push_back(i); }
+		}
+		int cnt_one = count(h.begin(), h.end(), 1);
+		if (not_has.size() > 2 || h.back() != 1 ||
+		    (not_has.size() == 2 && cnt_one != 2)) {
+			cout << -1 << endl;
+			continue;
+		}
+		vector<int> p(n);
+		if (not_has.size() == 1) {
+			// this must mean 1 is in the corner
+			p[0] = 1;
+			p[n - 1] = not_has[0];
+		} else {
+			p[0] = not_has[0];
+			p[n - 1] = not_has[1];
+		}
+		int l = 0, r = n - 1;
+		for (int i = 0; i < n - 1; i++) {
+			if (p[l] > p[r]) {
+				p[++l] = h[i];
+			} else {
+				p[--r] = h[i];
+			}
+		}
+		for (int i = 0; i < n; i++) {
+			if (i) cout << " ";
+			cout << p[i];
+		}
+		cout << "\n";
+	}
+}
+
+Bonus:
+
+In this problem, we constructed a bijection (one-to-one mapping) between all
+
+$N!/2$
+
+line graphs with vertex set
+
+$1\dots N$
+
+and all
+
+$N!/2$
+
+sequences of
+length
+
+$N-2$
+
+consisting only of
+
+$1\dots N$
+
+with no duplicates. More generally,
+there is a bijection between all
+
+$N^{N-2}$
+
+trees
+
+with vertex set
+
+$1\dots N$
+
+and all
+
+$N^{N-2}$
+
+sequences of length
+
+$N-2$
+
+consisting only of
+
+$1\dots N$
+
+(
+
+Prufer
+sequence
+
+). The mapping from trees to sequences is essentially the same as
+described in this problem;
+
+$N-2$
+
+times, take the highest leaf, write down the
+vertex it is adjacent to, and remove the leaf. Try to figure out the reverse
+mapping (sequence to trees) on your own.

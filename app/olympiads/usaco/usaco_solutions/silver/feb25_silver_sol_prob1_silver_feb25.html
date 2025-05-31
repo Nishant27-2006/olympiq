@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Chongtian Ma)
+<p><strong>Observation</strong>: We will add cow <span class='math'>$c$</span> to the back of line <span class='math'>$b$</span> if and only if
+<span class='math'>$a_c = \max(a_c, a_{c+1}, \ldots, a_N)$</span>.
+<p>Proof: Suppose we have already considered cows <span class='math'>$a_1, a_2, \ldots, a_{c-1}$</span> and
+temporarily constructed an array <span class='math'>$b_1, b_2 \ldots b_{k-1}$</span>. Let&apos;s say
+<span class='math'>$a_c = \max(a_c, a_{c+1}, \ldots, a_N)$</span> and we want to consider if adding it to
+the back of <span class='math'>$b$</span> is optimal. It&apos;s important to note that:
+<p><ul><li> The maximum possible value of <span class='math'>$b_k$</span> is exactly
+<span class='math'>$\max(a_c,\ldots, a_N)$</span>.</li><li> To ensure <span class='math'>$b$</span> is the lexicographically
+greatest, we must add a cow labeled <span class='math'>$\max(a_c,\ldots, a_N)$</span> as <span class='math'>$b_k$</span>. </li><li>
+It cannot worsen <span class='math'>$b$</span> to add the first such occurrence of
+<span class='math'>$\max(a_c,\ldots, a_N)$</span>.  If we instead add some other cow that has a label of
+<span class='math'>$\max(a_c,\ldots, a_N)$</span>, we can just replace <span class='math'>$b_k$</span> with <span class='math'>$a_c$</span>, and our <span class='math'>$b$</span>
+effectively remains the same. </li></ul>
+<p>Therefore, it is optimal add <span class='math'>$a_c$</span> as <span class='math'>$b_k$</span> if and only if
+<span class='math'>$a_c = \max(a_c,\ldots, a_N)$</span>.
+<p><strong> Subtask <span class='math'>$1$</span>: <span class='math'>$N \leq 100$</span> </strong>
+<p>It suffices to fix the position of the old and new positions of the cow we will
+remove to the front, and recompute <span class='math'>$b$</span> every time. This runs in
+<span class='math'>$\mathcal{O}(N^3)$</span>.
+<p><strong> Full Credit </strong>
+<p>Let&apos;s consider the preliminary array <span class='math'>$b$</span>, constructed before the operation is
+performed. Let&apos;s denote another array <span class='math'>$p_i$</span> that represents the position where
+<span class='math'>$b_i$</span> is taken from <span class='math'>$a$</span>.
+<p>Consider an index <span class='math'>$j$</span> such that <span class='math'>$b_j &gt; b_{j+1}$</span>. Note that it is pointless to
+move <span class='math'>$b_{j+1}$</span> before <span class='math'>$p_j$</span>, since <span class='math'>$b_{j+1}$</span> will no longer be a suffix maximum
+of <span class='math'>$a$</span>.  Therefore, the only way we can improve <span class='math'>$b$</span> is through inserting new
+elements after <span class='math'>$p_{j+1}$</span>, and these new elements must be new suffix maximums
+that appear after we move <span class='math'>$b_{j+1}$</span> forwards.
+<p>To maximize the number of candidate suffix maximums, it is optimal to move
+<span class='math'>$b_{j+1}$</span> right before index <span class='math'>$p_j+1$</span>. Why? Consider element <span class='math'>$a_k$</span> where
+<span class='math'>$p_j &lt; k &lt; p_{j+1}$</span>, <span class='math'>$a_k &lt; b_j$</span> and there is no other element after index
+<span class='math'>$p_{j+1}$</span> that is greater than <span class='math'>$a_k$</span>. After moving <span class='math'>$b_{j+1}$</span> to a position
+before <span class='math'>$k$</span>,  <span class='math'>$a_k$</span> will become a suffix maximum if there is no position
+<span class='math'>$l \in [k+1, p_{j+1}-1]$</span> where <span class='math'>$a_l &gt; a_k$</span>. To maximize the number of candidates
+for <span class='math'>$a_k$</span>, we want the number of elements between <span class='math'>$p_{j+1}$</span> after the move and
+<span class='math'>$p_{j+2}$</span> to be as large as possible.  Any element between those two indices can
+potentially be a new suffix maximum.
+<p>What other elements can we insert in <span class='math'>$b$</span> after the move?  Consider a
+non-increasing subsequence <span class='math'>$s_1, s_2, \ldots, s_m$</span> formed by elements indexed
+within <span class='math'>$[p_j+1, p_{j+2}-1$</span>], excluding <span class='math'>$p_{j+1}$</span>. If <span class='math'>$s_1 &lt; b_{j+1}$</span> and
+<span class='math'>$s_m \geq b_{j+2}$</span>, then all of those elements can be inserted behind <span class='math'>$b_{j+1}$</span>,
+as they will all become suffix maximums, since <span class='math'>$b_j$</span> is moved before
+<span class='math'>$p_j+1$</span>.
+<p>Note that we will also need to consider <span class='math'>$j$</span> where <span class='math'>$b_j = b_{j+1}$</span>. Even if we
+move <span class='math'>$b_{j+1}$</span> before <span class='math'>$p_j$</span>, it is still a suffix maximum. However, this move
+will not improve the number of candidate suffix maximums, as it the upper bound
+for the suffix maximums will be <span class='math'>$b_j$</span>, which is equivalent to <span class='math'>$b_{j+1}$</span>. 
+<p>It is pointless to consider moving cows not in <span class='math'>$b$</span>, since more suffix maximums
+can&apos;t be produced. Additionally, since you may want to move an element before
+the start of the array, it may be useful to denote
+<span class='math'>$b_0 = \infty$</span>.
+<p>Finally, to obtain the lexicographically greatest result, it is optimal to
+consider the first index <span class='math'>$j$</span> such that a non-empty subsequence of suffix
+maximums can be newly inserted behind <span class='math'>$b_{j+1}$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main(){
+	int T; cin &gt;&gt; T;
+	while(T--){
+		int N; cin &gt;&gt; N;
+		vector&lt;int&gt; a(N);
+		for(int i = 0; i &lt; N; i++) cin &gt;&gt; a[i];
+		
+		// build array b without the operation
+		// the second element in the pair is the index taken from a
+		vector&lt;pair&lt;int, int&gt;&gt; b;
+		int suff_max = -1;
+		for(int i = N - 1; i &gt;= 0; i--){
+			suff_max = max(suff_max, a[i]);
+			if(suff_max == a[i]) b.push_back({a[i], i});
+		}
+		reverse(b.begin(), b.end());
+		
+		b.insert(b.begin(), {N + 1, -1}); // append arbitrary large number to start of b
+		b.push_back({-1, N}); // append arbitrary small number to end of b
+		
+		for(int i = 1; i &lt; (int) b.size() - 1; i++){
+			vector&lt;pair&lt;int, int&gt;&gt; add;
+			suff_max = b[i+1].first;
+			for(int j = b[i+1].second - 1; j &gt; b[i-1].second; j--){
+				if(b[i].second == j) continue;
+				suff_max = max(suff_max, a[j]);
+				if(suff_max == a[j]) add.push_back({a[j], j});
+			}
+			reverse(add.begin(), add.end());
+			if(!add.empty()){
+				b.insert(b.begin() + i + 1, add.begin(), add.end());
+				break;
+			}
+		}
+		
+		for(int i = 1; i &lt; (int) b.size() - 1; i++){
+			cout &lt;&lt; b[i].first &lt;&lt; &quot; \n&quot;[i + 2 == (int) b.size()];
+		}
+	}
+}
+// Bessie says hi vvv
+
+/*
+\|/          (__)    
+     `\------(oo)
+       ||    (__)
+       ||w--||     \|/
+   \|/
+*/
+</pre>
+<p></body></html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have the counts of how many participants are bronze, silver,
+gold, and platinum before a contest and how many are in each division after the
+contest, and we wish to count the number of participants who were promoted
+between each division.
+<p>Let&apos;s start by counting the number of participants who were promoted to
+platinum. The only way that someone can end up being promoted from gold to
+platinum is if they were not platinum before the contest, and then ended up in
+platinum after the contest. Therefore, the number of participants who were
+promoted from gold to platinum is simply the difference between the number of
+participants who were platinum before the contest and the number of participants
+who were platinum after the contest.
+<p>By similar logic, in order to have been promoted from silver to gold during the
+contest, a participant could not be in gold or platinum before the contest, but
+would appear in gold or platinum after the contest. Therefore, we count the
+number of participants who were in gold or platinum after the contest, and
+subtract the number of participants who were gold or platinum before the
+contest.
+<p>Lastly, to count the participants who were promoted from bronze to silver, we
+count the number of  participants who were in silver, gold, or platinum after
+the contest, and subtract the number of participants who were in those divisions
+before the contest.
+<p>Here is my Java code demonstrating this.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class promote {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader(&quot;promote.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;promote.out&quot;)));
+		
+		// read in counts for bronze
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int bronzeBefore = Integer.parseInt(st.nextToken());
+		int bronzeAfter = Integer.parseInt(st.nextToken());
+		
+		// read in counts for silver
+		st = new StringTokenizer(br.readLine());
+		int silverBefore = Integer.parseInt(st.nextToken());
+		int silverAfter = Integer.parseInt(st.nextToken());
+		
+		// read in counts for gold
+		st = new StringTokenizer(br.readLine());
+		int goldBefore = Integer.parseInt(st.nextToken());
+		int goldAfter = Integer.parseInt(st.nextToken());
+		
+		// read in counts for platinum
+		st = new StringTokenizer(br.readLine());
+		int platinumBefore = Integer.parseInt(st.nextToken());
+		int platinumAfter = Integer.parseInt(st.nextToken());
+		
+		// do the computations
+		int goldToPlatinum = platinumAfter - platinumBefore;
+		int silverToGold = goldAfter - goldBefore + platinumAfter - platinumBefore;
+		int bronzeToSilver = silverAfter - silverBefore + goldAfter - goldBefore + platinumAfter - platinumBefore;
+		
+		// print the answers
+		pw.println(bronzeToSilver);
+		pw.println(silverToGold);
+		pw.println(goldToPlatinum);
+		
+		// close output stream
+		pw.close();
+	}
+}
+</pre>
+</body></html>

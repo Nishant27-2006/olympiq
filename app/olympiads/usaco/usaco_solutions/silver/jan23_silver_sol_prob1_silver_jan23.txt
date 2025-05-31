@@ -1,0 +1,297 @@
+Solution ID: sol_prob1_silver_jan23
+Contest: JAN23
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_jan23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Given an input string
+
+$s$
+
+and an output string
+
+$t$
+
+, construct a directed graph
+on vertex set
+
+$\{\texttt{a}\dots\texttt{z}\}\cup \{\texttt{A}\dots\texttt{Z}\}$
+
+.
+For every two characters
+
+$x$
+
+and
+
+$y$
+
+, add a directed edge from
+
+$x$
+
+to
+
+$y$
+
+if
+there exists at least one index
+
+$i$
+
+such that
+
+$s_i=x$
+
+and
+
+$t_i=y$
+
+.
+
+First, let's figure out when it is impossible to transform
+
+$s$
+
+into
+
+$t$
+
+. If
+there is a vertex in our directed graph with more than one out-edge, the answer
+is
+
+$-1$
+
+. The answer is also
+
+$-1$
+
+whenever
+
+$s\neq t$
+
+and
+
+$t$
+
+contains all
+
+$52$
+
+distinct characters; any replacement will cause
+
+$s$
+
+to contain fewer than
+
+$52$
+
+distinct characters.
+
+In all other cases, it is possible to transform
+
+$s$
+
+to
+
+$t$
+
+. A single keystroke
+allows us to take any edge
+
+$x\to y$
+
+and replace it with an edge
+
+$z\to y$
+
+as long
+as
+
+$z$
+
+does not have out-degree greater than one afterward. Any keystroke can
+remove at most one edge from our directed graph, so the number of required
+keystrokes is at least the number of edges in the directed graph excluding
+self-loops. Also, suppose that we treat the edges as undirected and divide the
+graph into connected components. Then every connected component of size greater than one
+that is a cycle increases the answer by one (for example, consider
+the cycle
+
+$\texttt{A}\to \texttt{B}\to \texttt{A}$
+
+in the last test case of
+the sample). Note that cycles within larger connected components don't increase
+the answer by one. For example, if the edges in the directed graph are
+
+$\texttt{A}\to \texttt{B}, \texttt{B}\to \texttt{A}, \texttt{C}\to \texttt{B}$
+
+,
+then the answer is three, because we can use the first keystroke to replace
+
+$\texttt{A}$
+
+with
+
+$\texttt{C}$
+
+, which breaks the cycle.
+
+Thus, the answer is equal to the following quantity: the number of edges in the
+graph excluding self-loops  plus the number of connected components with size
+greater than one that are cycles. To prove that this is correct,  it suffices to check that in all cases
+where the answer is not
+
+$-1$
+
+, any keystroke  will decrease this quantity by at
+most one, and that there exists a keystroke that decreases this quantity by one.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+ 
+public class FindAndReplaceSilverFixed {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        for (int t = Integer.parseInt(in.readLine()); t > 0; t--) {
+            String before = in.readLine();
+            String after = in.readLine();
+            int[] becomes = new int[52];
+            Arrays.fill(becomes, -1);
+            boolean possible = true;
+            Set<Character> set = new HashSet<>();
+            for (int j = 0; j < before.length(); j++) {
+                int b = letterToNode(before.charAt(j));
+                int a = letterToNode(after.charAt(j));
+                set.add(after.charAt(j));
+                if (becomes[b] != -1 && becomes[b] != a) {
+                    possible = false;
+                }
+                becomes[b] = a;
+            }
+ 
+            if (set.size() == 52) {
+                possible = false;
+            }
+            if (before.equals(after)) {
+                possible = true;
+            }
+ 
+            int answer = 0;
+            if (possible) {
+                int[] inDegree = new int[52];
+                for (int a = 0; a < 52; a++) {
+                    if (becomes[a] != -1 && becomes[a] != a) {
+                        inDegree[becomes[a]]++;
+                    }
+                }
+ 
+                for (int a = 0; a < 52; a++) {
+                    if (becomes[a] != -1 && becomes[a] != a) {
+                        answer++;
+                    }
+                }
+ 
+                int[] seen = new int[52];
+                for (int r = 0; r < 52; r++) {
+                    if (seen[r] == 0) {
+                        int a = r;
+                        while (a != -1 && seen[a] == 0) {
+                            seen[a] = r + 1;
+                            a = becomes[a];
+                        }
+                        if (a != -1 && a != becomes[a] && seen[a] == r + 1) {
+                            int s = a;
+                            boolean freePass = false;
+                            do {
+                                seen[a] = 2;
+                                if (inDegree[a] > 1) {
+                                    freePass = true;
+                                }
+                                a = becomes[a];
+                            } while (a != s);
+                            if (!freePass) {
+                                answer++;
+                            }
+                        }
+                    }
+                }
+            } else {
+                answer = -1;
+            }
+ 
+            out.append(answer).append('\n');
+        }
+        System.out.print(out);
+    }
+ 
+    static int letterToNode(char letter) {
+        if ('a' <= letter && letter <= 'z') {
+            return letter - 'a';
+        } else {
+            return 26 + (letter - 'A');
+        }
+    }
+}
+
+Andi Qu's code:
+
+ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+ 
+t = int(input())
+for test_case in range(t):
+    before = input()
+    after = input()
+ 
+    becomes = {}
+    possible = True
+    for i in range(len(before)):
+        if before[i] in becomes and becomes[before[i]] != after[i]:
+            possible = False
+        becomes[before[i]] = after[i]
+    if len(set(after)) == 52 and before != after:
+        possible = False
+ 
+    answer = 0
+    if possible:
+        in_degree = {}
+        for r in ALPHABET:
+            if r in becomes and becomes[r] != r:
+                in_degree[becomes[r]] = in_degree.get(becomes[r], 0) + 1
+                answer += 1
+        seen = {}
+        for r in ALPHABET:
+            if r not in seen:
+                a = r
+                while a not in seen:
+                    seen[a] = r
+                    a = becomes.get(a, a)
+                if a in becomes and a != becomes[a] and seen[a] == r:
+                    s = a
+                    cycle = True
+                    while True:
+                        seen[a] = 'moo'
+                        if in_degree.get(a, 0) > 1:
+                            cycle = False
+                        a = becomes[a]
+                        if a == s:
+                            break
+                    if cycle:
+                        answer += 1
+        print(answer)
+    else:
+        print(-1)

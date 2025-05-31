@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Subtask 1: <span class='math'>$M \leq 16$</span>:</strong>
+<p>For this subtask, it suffices to iterate through all of Elsie&apos;s <span class='math'>$2^M$</span> candidate
+turn sequences in lexicographical order. If with Elsie&apos;s current candidate turn
+sequence, she is guaranteed to not lose, output the current sequence, and exit. 
+<p>It remains to describe how to check whether Elsie is guaranteed to not lose with
+a given candidate turn sequence. Given Elsie&apos;s guess <span class='math'>$p$</span> for a turn <span class='math'>$t$</span>, the
+best response for Bessie is the one that causes Elsie to lose the most marbles
+on that turn (or gain the least marbles if none of Bessie&apos;s responses can cause
+Elsie to lose marbles on that turn). Define <span class='math'>$\texttt{changes}[t][p]$</span> to be the
+amount <span class='math'>$N$</span> will change on turn <span class='math'>$t$</span> if Elsie guesses parity <span class='math'>$p$</span> and Bessie moves
+optimally. After precomputing all entries of <span class='math'>$\texttt{changes}$</span> in <span class='math'>$O(MK)$</span> time,
+we can check whether a given turn  sequence causes Elsie to not lose in <span class='math'>$O(M)$</span>
+time. 
+<p>The overall time complexity is
+<span class='math'>$O(MK+M\cdot 2^M)$</span>.
+<p>Implementation (Python):
+<p><pre class='prettyprint'>
+def solve():
+    N, M, K = map(int, input().split())
+
+    # changes[t][p] = how many marbles Elsie will gain on turn t,
+    # if Elsie guesses parity p and Bessie responds optimally
+    changes = []
+    for _ in range(M):
+        change_for_turn = [float(&quot;inf&quot;)] * 2
+        for a in map(int, input().split()):
+            parity = a &amp; 1
+            change_for_turn[parity] = min(change_for_turn[parity], a)
+            change_for_turn[parity ^ 1] = min(change_for_turn[parity ^ 1], -a)
+        changes.append(change_for_turn)
+    ans = None
+
+    def elsie_does_not_lose(seq):
+        state = N
+        for turn in range(M):
+            state += changes[turn][seq[turn]]
+            if state &lt;= 0:
+                return False
+        return True
+
+    def find_best_move_seq_starting_with(seq):
+        nonlocal ans
+        if ans is not None:
+            return
+        if len(seq) == M:
+            if elsie_does_not_lose(seq):
+                ans = seq
+            return
+        for parity in range(2):
+            find_best_move_seq_starting_with(seq + [parity])
+
+    find_best_move_seq_starting_with([])
+    if ans is None:
+        print(-1)
+        return
+    print(&quot; &quot;.join([[&quot;Even&quot;, &quot;Odd&quot;][p] for p in ans]))
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+</pre>
+<p><strong>Subtask 2: <span class='math'>$M\le 1000$</span></strong>
+<p>To remove the <span class='math'>$O(M\cdot 2^M)$</span> from the time complexity, we can make the
+following optimization to the function
+<span class='math'>$\texttt{find_best_move_seq_starting_with}(seq)$</span> from the above solution code:
+if there is no sequence of moves starting with <span class='math'>$seq$</span> that allows Elsie to not
+lose, then immediately return. To check whether such a sequence exists or not,
+we assume that for every turn after <span class='math'>$|seq|$</span>, Elsie guesses the parity that
+causes her to gain the most marbles, assuming Bessie responds optimally.  If
+this allows Elsie to not lose, then a sequence exists. Otherwise, no sequence
+exists, since Elsie lost despite always making the best move after <span class='math'>$seq$</span>. This
+can be checked in <span class='math'>$O(M)$</span> time.
+<p>After adding the optimization, the function
+<span class='math'>$\texttt{find_best_move_seq_starting_with}$</span>  is called <span class='math'>$O(M)$</span> times rather than
+<span class='math'>$O(2^M)$</span> times, because if <span class='math'>$\texttt{find_best_move_seq_starting_with}(seq)$</span> does
+not immediately return, then
+<p><ol><li>If there is a move sequence starting with <span class='math'>$seq + [0]$</span>, then the answer will
+be found after calling
+<span class='math'>$\texttt{find_best_move_seq_starting_with}(seq + [0])$</span>.</li><li>Otherwise, <span class='math'>$\texttt{find_best_move_seq_starting_with}(seq + [0])$</span>
+immediately returns and the answer will be found after calling
+<span class='math'>$\texttt{find_best_move_seq_starting_with}(seq + [1])$</span>.</li></ol>
+<p>The overall time complexity is <span class='math'>$O(MK+M^2)$</span>.
+<p>Implementation with recursion:
+<p><pre class='prettyprint'>
+import sys
+
+
+def solve():
+    N, M, K = map(int, input().split())
+    sys.setrecursionlimit(M + 5)
+
+    changes = []
+    for _ in range(M):
+        change_for_turn = [float(&quot;inf&quot;)] * 2
+        for a in map(int, input().split()):
+            parity = a &amp; 1
+            change_for_turn[parity] = min(change_for_turn[parity], a)
+            change_for_turn[parity ^ 1] = min(change_for_turn[parity ^ 1], -a)
+        changes.append(change_for_turn)
+    ans = None
+
+    def cannot_start_with(seq):
+        state = N
+        for turn in range(M):
+            if turn &lt; len(seq):
+                state += changes[turn][seq[turn]]
+            else:
+                state += max(changes[turn])
+            if state &lt;= 0:
+                return True
+        return False
+
+    def find_best_move_seq_starting_with(seq):
+        nonlocal ans
+        if ans is not None:
+            return
+        if cannot_start_with(seq):
+            return
+        if len(seq) == M:
+            ans = seq
+            return
+        for parity in range(2):
+            find_best_move_seq_starting_with(seq + [parity])
+
+    find_best_move_seq_starting_with([])
+    if ans is None:
+        print(-1)
+        return
+    print(&quot; &quot;.join([[&quot;Even&quot;, &quot;Odd&quot;][p] for p in ans]))
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+</pre>
+<p>Implementation without recursion:
+<p><pre class='prettyprint'>
+def solve():
+    N, M, K = map(int, input().split())
+
+    changes = []
+    for _ in range(M):
+        change_for_turn = [float(&quot;inf&quot;)] * 2
+        for a in map(int, input().split()):
+            parity = a &amp; 1
+            change_for_turn[parity] = min(change_for_turn[parity], a)
+            change_for_turn[parity ^ 1] = min(change_for_turn[parity ^ 1], -a)
+        changes.append(change_for_turn)
+    ans = None
+
+    def cannot_start_with(seq):
+        state = N
+        for turn in range(M):
+            if turn &lt; len(seq):
+                state += changes[turn][seq[turn]]
+            else:
+                state += max(changes[turn])
+            if state &lt;= 0:
+                return True
+        return False
+
+    if cannot_start_with([]):
+        print(-1)
+        return
+    ans = []
+    for _ in range(M):
+        ans.append(1 if cannot_start_with(ans + [0]) else 0)
+    print(&quot; &quot;.join([[&quot;Even&quot;, &quot;Odd&quot;][p] for p in ans]))
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+</pre>
+<p><strong>Full solution:</strong>
+<p>To reduce <span class='math'>$O(M^2)$</span> to <span class='math'>$O(M)$</span> time, we need to speed up the function
+<span class='math'>$\texttt{cannot_start_with}(seq)$</span> from the above solution code. This function
+checks the following two conditions:
+<p><ol><li><span class='math'>$N+\sum_{t=0}^{l-1}\texttt{changes}[t][seq[t]]&gt;0$</span> for all <span class='math'>$l &lt; |seq|$</span>.</li><li><span class='math'>$N+\sum_{t=0}^{|seq|-1}\texttt{changes}[t][seq[t]] + \sum_{t=|seq|}^{l-1}\max(\texttt{changes}[t][0], \texttt{changes}[t][1])&gt;0$</span>
+for all <span class='math'>$|seq|\le l\le M$</span>.</li></ol>
+<p>Suppose that the first condition already holds; then the second condition holds
+if and only if the minimum prefix sum (including the empty prefix) of the array 
+<p><pre>
+[max(changes[t]) for t in range(len(seq), M)]
+</pre>
+<p>is greater than some threshold. Let <span class='math'>$\texttt{min_psum}[t]$</span> denote the minimum
+prefix sum when <span class='math'>$|seq| = t$</span>; then we have
+<span class='math'>$\texttt{min_psum}[t]=\min(0, \max(\texttt{changes}[t]) + \texttt{min_psum}[t+1])$</span>
+for <span class='math'>$t&lt;M$</span>. So <span class='math'>$\texttt{min_psum}[t]$</span> can be computed for all <span class='math'>$t$</span> in reverse
+order in <span class='math'>$O(M)$</span> time.
+<p>The full solution is now clear; it is the same as the non-recursive solution to
+the previous subtask but replacing the call to <span class='math'>$\texttt{cannot_start_with}(seq)$</span>
+with a comparison involving the current value of <span class='math'>$N$</span> and
+<span class='math'>$\texttt{min_psum}$</span>.
+<p>The overall time complexity is <span class='math'>$O(MK)$</span>.
+<p>My Implementation:
+<p><pre class='prettyprint'>
+def solve():
+    N, M, K = map(int, input().split())
+
+    changes = []
+    for _ in range(M):
+        change_for_turn = [float(&quot;inf&quot;)] * 2
+        for a in map(int, input().split()):
+            parity = a &amp; 1
+            change_for_turn[parity] = min(change_for_turn[parity], a)
+            change_for_turn[parity ^ 1] = min(change_for_turn[parity ^ 1], -a)
+        changes.append(change_for_turn)
+    min_psum = [0] * (M + 1)
+    for t in reversed(range(M)):
+        min_psum[t] = min(0, max(changes[t]) + min_psum[t + 1])
+    if N + min_psum[0] &lt;= 0:
+        print(-1)
+        return
+    ans = []
+    for t in range(M):
+        p = 1 if (N + changes[t][0] + min_psum[t + 1] &lt;= 0) else 0
+        ans.append(p)
+        N += changes[t][p]
+    print(&quot; &quot;.join([[&quot;Even&quot;, &quot;Odd&quot;][p] for p in ans]))
+
+
+T = int(input())
+for _ in range(T):
+    solve()
+</pre>
+<p>Danny Mittal&apos;s Implementation (Java):
+<p><pre class='prettyprint'>
+import java.util.Arrays;
+import java.util.Scanner;
+import java.util.StringJoiner;
+ 
+public class Moorbles {
+ 
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        for (int t = in.nextInt(); t &gt; 0; t--) {
+            int n = in.nextInt();
+            int m = in.nextInt();
+            int k = in.nextInt();
+            int[][] deltas = new int[m][2];
+            for (int j = 0; j &lt; m; j++) {
+                Arrays.fill(deltas[j], 10000);
+                for (int u = k; u &gt; 0; u--) {
+                    int x = in.nextInt();
+                    deltas[j][x % 2] = Math.min(deltas[j][x % 2], x);
+                    deltas[j][(x + 1) % 2] = Math.min(deltas[j][(x + 1) % 2], -x);
+                }
+            }
+            int[] bounds = new int[m + 1];
+            for (int j = m - 1; j &gt;= 0; j--) {
+                bounds[j] = Math.max(0, bounds[j + 1] - Math.max(deltas[j][0], deltas[j][1]));
+            }
+            if (n &lt;= bounds[0]) {
+                System.out.println(-1);
+            } else {
+                StringJoiner joiner = new StringJoiner(&quot; &quot;);
+                for (int j = 0; j &lt; m; j++) {
+                    if (n + deltas[j][0] &gt; bounds[j + 1]) {
+                        n += deltas[j][0];
+                        joiner.add(&quot;Even&quot;);
+                    } else {
+                        n += deltas[j][1];
+                        joiner.add(&quot;Odd&quot;);
+                    }
+                }
+                System.out.println(joiner);
+            }
+        }
+    }
+}
+</pre>
+<p></body></html>

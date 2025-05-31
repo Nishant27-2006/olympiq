@@ -1,0 +1,259 @@
+Solution ID: sol_prob1_silver_dec21
+Contest: DEC21
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_dec21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Farmer Nhoj's cows partition the number line into
+
+$M+1$
+
+intervals. The general
+idea is to find the answers for each of these intervals independently, and then
+combine them.
+
+Firstly, note that John can claim the total tastiness of the leftmost interval
+with a single cow. Similar reasoning holds for the rightmost interval. Every
+other of the
+
+$M-1$
+
+intervals has one of Nhoj's cows at both of its endpoints, so
+one of John's cows might not be enough to claim all of the tastinesses within
+it. But placing two cows will definitely be enough (one just to the right of the
+left endpoint of the interval, and another just to the left of the right
+endpoint of the interval).
+
+Assume all the patches and cows are sorted in increasing order of position, and 
+consider the interval
+
+$(f_{x-1},f_x)$
+
+. Probably the trickiest part of the
+solution involves computing the maximum tastiness John can claim if he places
+only one cow in this interval. If John places a cow at
+
+$q\in (f_{x-1},f_x)$
+
+, he
+claims the tastinesses of all patches with positions in the range
+
+$\left(\frac{f_{x-1}+q}{2},\frac{f_{x}+q}{2}\right)$
+
+. Note that the length of
+this range ("window") is equal to
+
+$\frac{f_x-f_{x-1}}{2}$
+
+regardless of
+
+$q$
+
+. We
+can slide this constant-length window from left to right and keep track of how
+the sum of tastinesses changes as patches enter and exit this window. The
+one-cow answer for this interval will equal the maximum sliding window sum that
+we ever encounter.
+
+Now that we've computed the one-cow and two-cow answers for every interval,  it
+remains to combine these to get the answer to the original problem. If John was
+restricted to placing at most one cow  in every interval, then we could create a
+list of all the one-cow answers, sort it in decreasing order, and sum its first
+
+$N$
+
+elements. It turns out that a slight modification of this strategy works
+when we allow John to place up to two cows in every interval: add the quantity
+
+$(\text{two-cow answer} - \text{one-cow answer})$
+
+for each interval to the list
+before sorting it (if there are ties, put quantities of the form
+
+$\text{one-cow answer}$
+
+before quantities of the form
+
+$(\text{two-cow answer} - \text{one-cow answer})$
+
+).
+
+The reason these works is because
+
+$2\cdot (\text{one-cow answer})\ge (\text{two-cow answer})$
+
+for any interval; in
+other words, adding a second cow to an interval can't increase the total
+tastiness more than adding the first cow did. This implies that if a prefix of
+the list contains the quantity
+
+$(\text{two-cow answer} - \text{one-cow answer})$
+
+for an interval, it will also contain the quantity
+
+$\text{one-cow answer}$
+
+for
+that same interval.
+
+My code (with a single vector for both the patches and Nhoj's cows):
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	cin.tie(nullptr)->sync_with_stdio(false);
+	int K, M, N;
+	cin >> K >> M >> N;
+	vector<pair<int, int>> patches(K + M); // patches and Nhoj's cows
+	for (int i = 0; i < K; ++i)
+		cin >> patches[i].first >> patches[i].second;
+	for (int i = K; i < K + M; ++i) {
+		cin >> patches[i].first;
+		patches[i].second = -1;
+	}
+	sort(begin(patches), end(patches));
+	vector<uint64_t> increases;
+	int last_i = -1;
+	uint64_t sum_range = 0;
+	for (int i = 0; i < (int)patches.size(); ++i) {
+		if (patches[i].second == -1) {
+			if (last_i == -1) { // try placing to left of Nhoj's leftmost cow
+				increases.push_back(sum_range);
+			} else {
+				uint64_t cur_ans_1 = 0;	 // current sum of window
+				uint64_t best_ans_1 = 0; // best sum over all windows
+				for (int j = last_i + 1, r = last_i; j < i; ++j) {
+					// assume j is the leftmost patch in the window
+					while (r + 1 < i &&
+						   (patches[r + 1].first - patches[j].first) * 2 <
+							   patches[i].first - patches[last_i].first) {
+						cur_ans_1 += patches[++r].second;
+					}
+					// window sum is now sum(tastinesses(j..r))
+					best_ans_1 = max(best_ans_1, cur_ans_1);
+					cur_ans_1 -= patches[j].second;
+				}
+				assert(2 * best_ans_1 >= sum_range);
+				// answer for one cow
+				increases.push_back(best_ans_1);
+				// answer for two cows - answer for one cow
+				increases.push_back(sum_range - best_ans_1);
+			}
+			last_i = i;
+			sum_range = 0;
+		} else {
+			sum_range += patches[i].second;
+		}
+	}
+	// try placing to right of Nhoj's rightmost cow
+	increases.push_back(sum_range);
+	// sort in decreasing order
+	sort(rbegin(increases), rend(increases));
+	increases.resize(N);
+	uint64_t ans = 0;
+	for (auto val : increases)
+		ans += val;
+	cout << ans << "\n";
+}
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
+ 
+public class ClosestCowWins {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        Patch[] patches = new Patch[k];
+        for (int j = 0; j < k; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int location = Integer.parseInt(tokenizer.nextToken());
+            long tastiness = Long.parseLong(tokenizer.nextToken());
+            patches[j] = new Patch(location, tastiness);
+        }
+        Arrays.sort(patches);
+        long[] tastinessSums = new long[k + 1];
+        for (int j = 0; j < k; j++) {
+            tastinessSums[j + 1] = tastinessSums[j] + patches[j].tastiness;
+        }
+        Integer[] nhojCows = new Integer[m];
+        for (int j = 0; j < m; j++) {
+            nhojCows[j] = Integer.parseInt(in.readLine());
+        }
+        Arrays.sort(nhojCows);
+        TreeMap<Integer, Integer> nhojCowsTreeMap = new TreeMap<>();
+        for (int j = 0; j < m; j++) {
+            nhojCowsTreeMap.put(nhojCows[j], j);
+        }
+        TreeMap<Integer, Integer> patchTreeMap = new TreeMap<>();
+        for (int j = 0; j < k; j++) {
+            patchTreeMap.put(patches[j].location, j);
+        }
+        long[][] valueAdded = new long[3][m + 1];
+        for (int j = 0; j < k; j++) {
+            Map.Entry<Integer, Integer> nextNhojCowEntry = nhojCowsTreeMap.ceilingEntry(patches[j].location);
+            int nextNhojCow = nextNhojCowEntry == null ? m : nextNhojCowEntry.getValue();
+            valueAdded[2][nextNhojCow] += patches[j].tastiness;
+            if (nextNhojCow == 0 || nextNhojCow == m) {
+                valueAdded[1][nextNhojCow] += patches[j].tastiness;
+            } else {
+                int johnCowLocation = Math.min(nhojCows[nextNhojCow], (2 * patches[j].location) - nhojCows[nextNhojCow - 1]);
+                int extent = (johnCowLocation + nhojCows[nextNhojCow] + 1) / 2;
+                int farthestPatch = patchTreeMap.lowerEntry(extent).getValue();
+                valueAdded[1][nextNhojCow] = Math.max(valueAdded[1][nextNhojCow], tastinessSums[farthestPatch + 1] - tastinessSums[j]);
+            }
+        }
+        Long[] valueAddedOverall = new Long[2 * (m + 1)];
+        for (int j = 0; j <= m; j++) {
+            valueAddedOverall[2 * j] = valueAdded[1][j];
+            valueAddedOverall[(2 * j) + 1] = valueAdded[2][j] - valueAdded[1][j];
+        }
+        Arrays.sort(valueAddedOverall);
+        long answer = 0;
+        for (int j = Math.max(0, valueAddedOverall.length - n); j < valueAddedOverall.length; j++) {
+            answer += valueAddedOverall[j];
+        }
+        System.out.println(answer);
+    }
+ 
+    public static class Patch implements Comparable<Patch> {
+        final int location;
+        final long tastiness;
+ 
+        public Patch(int location, long tastiness) {
+            this.location = location;
+            this.tastiness = tastiness;
+        }
+ 
+        @Override
+        public int compareTo(Patch other) {
+            return location - other.location;
+        }
+    }
+}
+
+Bonus: It would still be possible to solve this question even if the condition
+
+$2\cdot (\text{one-cow answer})\ge (\text{two-cow answer})$
+
+did not hold (see
+
+this problem
+
+).

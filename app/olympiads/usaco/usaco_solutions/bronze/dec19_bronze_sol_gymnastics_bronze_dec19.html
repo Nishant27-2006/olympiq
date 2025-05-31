@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>As the problem statement says, for each pair of cows <span class='math'>$(A, B)$</span>,
+we will count how many practice sessions cow <span class='math'>$A$</span> did better than cow <span class='math'>$B$</span> in.
+If cow <span class='math'>$A$</span> did better than cow <span class='math'>$B$</span> in all <span class='math'>$K$</span> practice sessions, we increment
+a counter, and we&apos;ll print out the value of the counter once we&apos;ve looped over
+all pairs of cows.
+<p>In terms of implementation details, we can use a 2D array to store all of
+the rankings. Below is Brian Dean&apos;s code following this approach.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+ 
+int N, K;
+int data[10][20];
+ 
+bool better(int a, int b, int session)
+{
+  int apos, bpos;
+  for (int i=0; i&lt;N; i++) {
+    if (data[session][i] == a) apos = i;
+    if (data[session][i] == b) bpos = i;
+  }
+  return apos &lt; bpos;
+}
+ 
+int Nbetter(int a, int b)
+{
+  int total = 0;
+  for (int session=0; session&lt;K; session++)
+    if (better(a,b,session)) total++;
+  return total;
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;gymnastics.in&quot;);
+  ofstream fout (&quot;gymnastics.out&quot;);
+  fin &gt;&gt; K &gt;&gt; N;
+  for (int k=0; k&lt;K; k++)
+    for (int n=0; n&lt;N; n++) 
+      fin &gt;&gt; data[k][n];
+  int answer = 0;
+  for (int a=1; a&lt;=N; a++)
+    for (int b=1; b&lt;=N; b++)
+      if (Nbetter(a,b) == K) answer++;
+  fout &lt;&lt; answer &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre></body></html>

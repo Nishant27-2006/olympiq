@@ -1,0 +1,154 @@
+Solution ID: sol_lemonade_silver_open18
+Contest: OPEN18
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_lemonade_silver_open18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+This problem immediately seems to be looking for a greedy solution. There are
+two obvious greedy orderings: sort the cows by increasing
+
+$w_i$
+
+, or sort the
+cows by decreasing
+
+$w_i$
+
+.
+
+Trying both orderings, it turns out that sorting the cows from largest
+
+$w_i$
+
+to
+smallest
+
+$w_i$
+
+is provably optimal. There are several ways to show this. One way
+is to consider any ordering in which the
+
+$w_i$
+
+are not ordered
+largest-to-smallest, and show that swapping two out-of-order cows will improve
+the solution or leave it the same.
+
+Here is a slightly cleaner proof. We do not explicitly show that the above
+ordering is optimal, but this can be deduced from the properties we do prove
+about the ordering.
+
+Given any ordering, we can shuffle the cows who do not join the line to the end
+of the ordering -- and they will still not join the line in this new ordering.
+So there is an optimal ordering in which all cows who join the line precede all
+cows who do not join the line. Now consider any cow
+
+$i$
+
+who does join the line,
+and any cow
+
+$j$
+
+who does not join the line. If
+
+$w_i < w_j$
+
+, we can swap cows
+
+$i$
+
+and
+
+$j$
+
+, and cow
+
+$j$
+
+will join the line but cow
+
+$i$
+
+will not. So in some optimal
+ordering, the cows who join the line have the
+
+$k$
+
+largest
+
+$w_i$
+
+for some
+
+$k \leq N$
+
+.
+
+Now, the optimum is at most
+
+$k$
+
+if and only if
+
+$w_{k+1} < k$
+
+, where
+
+$w_{k+1}$
+
+is the waiting time of the
+
+$(k+1)^\text{st}$
+
+cow after sorting largest-to-smallest. This gives our algorithm: after sorting the cows from largest
+
+$w_i$
+
+to smallest
+
+$w_i$
+
+,
+we can simply scan through the cows for the first
+
+$k$
+
+such that
+
+$w_{k+1} < k$
+
+.
+
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+using namespace std;
+ 
+int N, W[100000];
+ 
+int main(void)
+{
+  ifstream fin("lemonade.in");
+  ofstream fout("lemonade.out");
+ 
+  fin >> N;
+  for (int i=0; i<N; i++) fin >> W[i];
+ 
+  sort(W,W+N);
+  
+  int i, num_in_line=0;
+  for (i=N-1; i>=0; i--) {
+    if (W[i] < num_in_line) break;
+    num_in_line++;
+  }
+ 
+  fout << num_in_line << "\n";
+ 
+  return 0;
+}

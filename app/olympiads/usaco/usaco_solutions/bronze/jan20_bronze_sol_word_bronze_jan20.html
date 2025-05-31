@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Just simulate the described process. Maintain the number of non-space characters
+on your current line (denoted by <span class='math'>$w$</span> in the code below). If adding the next word
+would cause the number of non-space characters to exceed <span class='math'>$K$</span>, then place it on a
+new line.
+<p>Dhruv Rohatgi&apos;s code (modified by Ben):
+<p><pre class='prettyprint'>
+with open(&quot;word.in&quot;,&quot;r&quot;) as fin:
+	L = list(fin)
+	N,K = map(int,L[0].split())
+	with open(&quot;word.out&quot;,&quot;w&quot;) as fout:
+		w = 0 # current length of line
+		for c in L[1].split(): # go through each word
+			if w+len(c) &gt; K: # place on new line
+				fout.write(&quot;\n&quot;+c)
+				w = len(c)
+			else: # place on current line
+				if w &gt; 0:
+					fout.write(&quot; &quot;)
+				fout.write(c)
+				w += len(c)
+		fout.write(&quot;\n&quot;)
+</pre>
+<p></body></html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>For each springboard <span class='math'>$i,$</span> let <span class='math'>$ans[i]$</span> denote the minimum distance needed to
+walk to the start point of springboard <span class='math'>$i$</span>. If Bessie walks directly to this
+springboard, then the distance is <span class='math'>$x_1[i]+y_1[i].$</span> Otherwise, Bessie last took
+some springboard <span class='math'>$j$</span> before walking to springboard <span class='math'>$i,$</span> giving a distance of
+<span class='math'>$ans[j]+x_1[i]+y_1[i]-x_2[j]-y_2[j],$</span> where both <span class='math'>$x_2[j]\le x_1[i]$</span> and
+<span class='math'>$y_2[j]\le y_1[i]$</span> must be satisfied.
+<p>Sort all springboard start and endpoints by <span class='math'>$x$</span>. Then for each <span class='math'>$x_1[i]$</span> in
+increasing order we need to compute the minimum possible value of 
+<span class='math'>$ans[j]-x_2[j]-y_2[j]$</span> over all <span class='math'>$j$</span> such that <span class='math'>$x_2[j]\le x_1[i]$</span> and
+<span class='math'>$y_2[j]\le y_1[i].$</span> Our approach requires some data structure <span class='math'>$D$</span> that stores
+pairs and supports the following operations.
+<p>For each pair in increasing lexicographical order:
+<ul><li>If we&apos;re currently considering the end point of a springboard <span class='math'>$i$</span>,  insert
+<span class='math'>$(y_2[i],ans[i]-x_2[i]-y_2[i])$</span> into <span class='math'>$D$</span>. </li><li>If we&apos;re currently considering the start point of a springboard <span class='math'>$i$</span>,  query
+the pair <span class='math'>$(y_2[j],ans[j]-x_2[j]-y_2[j])\in D$</span> with maximum second element that
+satisfies <span class='math'>$y_2[j]\le y_1[i]$</span>. Then update <span class='math'>$ans[i]$</span> accordingly.</li></ul>
+<p>One candidate for <span class='math'>$D$</span> is a segment tree that supports point updates and range
+minimum queries. A simpler approach is to use a map.
+<p><ul><li> When the point <span class='math'>$(x_2[j],y_2[j])$</span> is reached, consider the pair
+<span class='math'>$p_j=(y_2[j],ans[j]-x_2[j]-y_2[j]).$</span> 
+<ul><li> If there already exists a pair <span class='math'>$p_k\in D$</span> such that <span class='math'>$y_2[k]\le y_2[j]$</span> and 
+<span class='math'>$ans[k]-x_2[k]-y_2[k]\le ans[j]-x_2[j]-y_2[j],$</span> then there is never any reason
+to use springboard <span class='math'>$j$</span> over springboard <span class='math'>$k,$</span> so <span class='math'>$D$</span> remains unchanged. </li><li>Otherwise, while there exists <span class='math'>$k$</span> such that <span class='math'>$p_k\in D$</span> <span class='math'>$y_2[k]\ge y_2[j]$</span>
+and <span class='math'>$ans[k]-x_2[k]-y_2[k]\ge ans[j]-x_2[j]-y_2[j],$</span> remove <span class='math'>$p_k$</span> from <span class='math'>$D$</span>. Then
+insert <span class='math'>$p_j$</span> into <span class='math'>$D$</span>.</li></ul>
+</li><li> When querying for <span class='math'>$y_1[i],$</span> it suffices to consider only the pair in <span class='math'>$D$</span>
+with  maximum first element such that its first element is at most <span class='math'>$y_1[i].$</span>
+This works because pairs with  higher first element in <span class='math'>$D$</span> have lower second
+element. 
+</li></ul>
+<p>These operations run in <span class='math'>$O(\log n)$</span> time amortized.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#define f first
+#define s second
+
+void setIO(string name) {
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	freopen((name+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((name+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+const int MX = 1e5+5;
+
+int N,P;
+map&lt;int,int&gt; m;
+int ans[MX];
+ 
+void ins(int y, int v) {
+	auto it = prev(m.upper_bound(y));
+	if (it-&gt;s &lt;= v) return;
+	it ++;
+	while (it != end(m) &amp;&amp; it-&gt;s &gt; v) m.erase(it++);
+	m[y] = v;
+}
+ 
+int main() {
+	setIO(&quot;boards&quot;);
+	cin &gt;&gt; N &gt;&gt; P; m[0] = 0;
+	vector&lt;pair&lt;pair&lt;int,int&gt;,pair&lt;int,int&gt;&gt;&gt; ev;
+	for (int i = 0; i &lt; P; ++i) {
+		pair&lt;int,int&gt; a,b; 
+		cin &gt;&gt; a.f &gt;&gt; a.s &gt;&gt; b.f &gt;&gt; b.s;
+		ev.push_back({a,{i,-1}}); // start point
+		ev.push_back({b,{i,1}}); // end point
+	}
+	sort(begin(ev),end(ev));
+	for (auto&amp; t: ev) {
+		if (t.s.s == -1) {
+			ans[t.s.f] = t.f.f+t.f.s+prev(m.upper_bound(t.f.s))-&gt;s;
+		} else {
+			ins(t.f.s,ans[t.s.f]-t.f.f-t.f.s);
+		}
+	}
+	cout &lt;&lt; m.rbegin()-&gt;s+2*N;
+}
+</pre>
+<p></body></html>

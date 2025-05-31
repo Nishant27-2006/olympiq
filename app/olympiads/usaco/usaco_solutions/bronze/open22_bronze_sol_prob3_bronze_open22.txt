@@ -1,0 +1,190 @@
+Solution ID: sol_prob3_bronze_open22
+Contest: OPEN22
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob3_bronze_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+For notational convenience, if
+
+$i>j$
+
+, we'll say that metal
+
+$i$
+
+is more valuable
+than metal
+
+$j$
+
+. Note that all recipes take a single unit of some metals and
+produce one unit of a metal that is more valuable than all of the original
+metals.
+
+To solve test case 2, every unit of metal can be converted into a unit of metal
+
+$N$
+
+, so the answer is the number of units of metal that Bessie has.
+
+To solve test cases 3 and 4, if there is no recipe that can make metal
+
+$N$
+
+, then
+the answer is simply the number of units of metal
+
+$N$
+
+that Bessie starts out
+with. Otherwise, there is some less valuable metal that can be turned directly
+into metal
+
+$N$
+
+, so all of those units can also be converted into metal
+
+$N$
+
+. If
+that less valuable metal has no recipe, then we are done. Otherwise, we repeat
+this process and sum up the counts of the less valuable metals until we reach
+one which can't be made.
+
+To solve the problem fully, we'll take advantage of how recipes can only turn
+less valuable metals into more valuable metals. If we want to gain one unit of
+metal
+
+$N$
+
+, we must use that recipe, and so that means we need one unit of some
+less valuable metals. If we already have one of each unit of the less valuable
+metals, we can directly consume those. If we don't have a unit of some metal,
+and no recipe for that metal exists, we cannot make any more of metal
+
+$N$
+
+, and
+the process ends. If there is a recipe, then we need one unit of each of the
+metals that are ingredients in that recipe.
+
+Since more valuable metals cannot be used as ingredients in recipes for less
+valuable metals, we can loop over the metals in order from metal
+
+$N$
+
+down to
+metal
+
+$1$
+
+, tracking at each point in time how many units of each metal we need
+in order to make one unit of metal
+
+$N$
+
+.
+
+The while loop runs at most
+
+$N\cdot \max(a_i)$
+
+times and takes
+
+$O(N)$
+
+time per
+iteration, for a time complexity of
+
+$O(N^2\cdot \max(a_i))$
+
+.
+
+C++ code that does this iteratively:
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+int main() {
+  int n;
+  cin >> n;
+  vector<int> have(n);
+  for(auto& x: have) cin >> x;
+  int k;
+  cin >> k;
+  vector<vector<int>> need(n);
+  while(k--) {
+    int want, m;
+    cin >> want >> m;
+    need[--want].resize(m);
+    for(auto& x: need[want]) {
+      cin >> x;
+      x--;
+    }
+  }
+  int ret = 0;
+  while(true) {
+    vector<int> consume(n);
+    consume[n-1]++;
+    bool good = true;
+    for(int i = n-1; i >= 0; i--) {
+      if(consume[i] <= have[i]) {
+        have[i] -= consume[i];
+        continue;
+      }
+      if(need[i].size() == 0) {
+        good = false;
+        break;
+      }
+      int take = min(consume[i], have[i]);
+      consume[i] -= take;
+      have[i] -= take;
+      for(int out: need[i]) consume[out] += consume[i];
+    }
+    if(good) ret++;
+    else break;
+  }
+  cout << ret << "\n";
+}
+
+Java code that does this recursively:
+
+import java.io.*;
+import java.util.*;
+public class Alchemy {
+  public static void main(String[] args) throws IOException {
+    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+    int n = Integer.parseInt(in.readLine());
+    StringTokenizer st = new StringTokenizer(in.readLine());
+    int[] have = new int[n];
+    for(int i = 0; i < n; i++) have[i] = Integer.parseInt(st.nextToken());
+    int ans = 0;
+    int[][] recipes = new int[n][];
+    int k = Integer.parseInt(in.readLine());
+    while(k-- > 0) {
+      st = new StringTokenizer(in.readLine());
+      int gain = Integer.parseInt(st.nextToken())-1;
+      recipes[gain] = new int[Integer.parseInt(st.nextToken())];
+      for(int i = 0; i < recipes[gain].length; i++) recipes[gain][i] = Integer.parseInt(st.nextToken())-1;
+    }
+    while(canMake(recipes, have, n-1)) ans++;
+    PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    out.println(ans);
+    out.close();
+  }
+  private static boolean canMake(int[][] recipes, int[] have, int want) {
+    if(have[want] > 0) {
+      have[want]--;
+      return true;
+    }
+    if(recipes[want] == null) return false;
+    for(int component: recipes[want]) if(!canMake(recipes, have, component)) return false;
+    return true;
+  }
+}

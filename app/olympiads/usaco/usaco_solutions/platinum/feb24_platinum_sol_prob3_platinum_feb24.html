@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>Define <span class='math'>$D$</span> to be the maximum value of <span class='math'>$\Delta_j$</span> over all queries <span class='math'>$j$</span> and <span class='math'>$S$</span> to
+be the maximum value of <span class='math'>$T_i$</span> over all cities <span class='math'>$i$</span>.
+<p><strong>Subtask 1: <span class='math'>$D \leq 200$</span></strong>
+<p>By storing the sequence <span class='math'>$c_{i, 0}, \ldots, c_{i, T_i - 1}$</span> as an array for each
+city <span class='math'>$i$</span>, we can calculate the next city Bessie will go to each day in constant
+time given the current day <span class='math'>$t$</span> and her current city <span class='math'>$i$</span> by looking at index
+<span class='math'>$t \bmod T_i$</span> in the array for <span class='math'>$i$</span>.
+<p>This means that we can answer each query in <span class='math'>$O(\Delta_j)$</span> time, making this
+solution <span class='math'>$O(\sum T_i + QD)$</span>, which is fast enough here.
+<p><strong>Subtask 2: <span class='math'>$N, \sum T_i \leq 2 \cdot 10^3$</span></strong>
+<p>Consider a situation where Bessie is currently at city <span class='math'>$i$</span> on day <span class='math'>$t$</span>, and we
+know <span class='math'>$i$</span> but only know <span class='math'>$t \bmod S$</span>. In order to figure out which city Bessie
+will go to next, we need to know <span class='math'>$t$</span> modulo <span class='math'>$T_i$</span>. Crucially, because <span class='math'>$T_i$</span> is a
+power of <span class='math'>$2$</span> for all <span class='math'>$i$</span>, and <span class='math'>$S$</span> is the maximum of all them, <span class='math'>$S$</span> will also be a
+power of <span class='math'>$2$</span> at least as large as <span class='math'>$T_i$</span> and will therefore be a multiple of
+<span class='math'>$T_i$</span>. This means that given <span class='math'>$t \bmod S$</span> we can simply mod by <span class='math'>$T_i$</span> to get
+<span class='math'>$t \bmod T_i$</span>.
+<p>Thus, given <span class='math'>$i$</span> and <span class='math'>$t \bmod S$</span>, we know exactly what city Bessie will go to
+next. This suggests constructing a directed graph whose nodes are pairs <span class='math'>$(i, t)$</span>
+of a city <span class='math'>$i$</span> and a day <span class='math'>$t$</span> that we consider to be modulo <span class='math'>$S$</span> (so in particular,
+there are only <span class='math'>$S$</span> values of <span class='math'>$t$</span>). Each node has one outgoing edge pointing to
+another node (which makes this a functional graph, though we don&apos;t need to
+exploit this structure).
+<p>We now wish to be able to calculate which node we will get to if we follow the
+outgoing edge <span class='math'>$\Delta$</span> times for large <span class='math'>$\Delta$</span>. To do this, we can use binary
+lifting (construct a table storing for each node which node we will get to if we
+follow the outgoing edge <span class='math'>$2^k$</span> times for all <span class='math'>$2^k \leq D$</span>, then use this table
+to answer each query in <span class='math'>$O(\log D)$</span>).
+<p>There are <span class='math'>$N \cdot S$</span> nodes, and for each one we calculate <span class='math'>$O(\log D)$</span> entries,
+making the construction <span class='math'>$O(NS\log D)$</span>. Answering queries is then <span class='math'>$O(Q\log D)$</span>,
+making the overall runtime <span class='math'>$O((NS + Q)\log D)$</span>. <span class='math'>$S$</span> is bounded by <span class='math'>$\sum T_i$</span>,
+and in this case is at most <span class='math'>$2^{10}$</span>, making this fast enough. 
+<p>Java code:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+
+public class InfiniteAdventureN2 {
+    public static final int LG = 60;
+    public static final int S = 1024;
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int q = Integer.parseInt(tokenizer.nextToken());
+        int[][] period = new int[n + 1][];
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int city = 1; city &lt;= n; city++) {
+            period[city] = new int[Integer.parseInt(tokenizer.nextToken())];
+        }
+        for (int city = 1; city &lt;= n; city++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            for (int t = 0; t &lt; period[city].length; t++) {
+                period[city][t] = Integer.parseInt(tokenizer.nextToken());
+            }
+        }
+
+        int[][][] binaryLift = new int[n + 1][S][LG];
+        for (int city = 1; city &lt;= n; city++) {
+            for (int t = 0; t &lt; S; t++) {
+                binaryLift[city][t][0] = period[city][t % period[city].length];
+            }
+        }
+
+        for (int k = 1; k &lt; LG; k++) {
+            for (int city = 1; city &lt;= n; city++) {
+                for (int t = 0; t &lt; S; t++) {
+                    int halfwayCity = binaryLift[city][t][k - 1];
+                    int halfwayT = (int) ((t + (1L &lt;&lt; (k - 1))) % S);
+                    binaryLift[city][t][k] = binaryLift[halfwayCity][halfwayT][k - 1];
+                }
+            }
+        }
+
+        StringBuilder out = new StringBuilder();
+        for (int j = 0; j &lt; q; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int currentCity = Integer.parseInt(tokenizer.nextToken());
+            long currentDay = Long.parseLong(tokenizer.nextToken());
+            long daysAdventured = Long.parseLong(tokenizer.nextToken());
+
+            for (int k = LG - 1; k &gt;= 0; k--) {
+                if ((daysAdventured &amp; (1L &lt;&lt; k)) != 0L) {
+                    int t = (int) (currentDay % S);
+                    currentCity = binaryLift[currentCity][t][k];
+                    currentDay += 1L &lt;&lt; k;
+                }
+            }
+
+            out.append(currentCity).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p><strong>Subtask 3: <span class='math'>$N, \sum T_i \leq 10^4$</span></strong>
+<p>We want to do binary lifting like we did for Subtask 2, but a graph with <span class='math'>$NS$</span>
+nodes would now be too large. Therefore, instead of considering pairs of the
+form <span class='math'>$(i, t)$</span> where <span class='math'>$t$</span> is modulo <span class='math'>$S$</span> for all <span class='math'>$i$</span>, we will consider <span class='math'>$t$</span> to be
+modulo <span class='math'>$T_i$</span>, so that the number of pairs is equal to <span class='math'>$\sum T_i \leq 10^5$</span>. 
+<p>What goes wrong if we try to now just do binary lifting on these pairs? Consider
+a situation where we have two cities <span class='math'>$a$</span> and <span class='math'>$b$</span> such that <span class='math'>$T_a &lt; T_b$</span>. Suppose
+that when Bessie is at city <span class='math'>$a$</span> and the day is <span class='math'>$t$</span> modulo <span class='math'>$T_a$</span>, Bessie goes
+next to city <span class='math'>$b$</span>. To calculate the binary lifting entry for Bessie going
+<span class='math'>$2^1 = 2$</span> steps from <span class='math'>$(a, t)$</span>, we want to know where Bessie will go immediately
+after city <span class='math'>$b$</span>. However, we can&apos;t know this just from <span class='math'>$t \bmod T_a$</span>, because
+that doesn&apos;t determine <span class='math'>$t \bmod T_b$</span>.
+<p>This problem makes constructing a full binary lifting table impossible. To solve
+this, we will divide the cities into levels. At this point, there are two
+potential  approaches:
+<p><strong>Approach 1 (Level by <span class='math'>$T_i$</span>):</strong>
+<p>Each level contains all the cities with the same value of <span class='math'>$T_i$</span>.
+<p>For each city, we can at least construct the binary lifting table for that city
+up to the point where we reach a city of a higher level. If we also store the
+amount of days it takes for us to get to that first city of a higher level, then
+we can use the binary lifting table as follows:
+<p>To figure out where Bessie ends up if she starts at <span class='math'>$(i, t)$</span> and adventures for
+<span class='math'>$\Delta$</span> days, we repeatedly do the following:
+<ul><li>If, starting from <span class='math'>$(i, t)$</span> it takes at most <span class='math'>$\Delta$</span> days to reach a city of
+a higher level, then go to that city.</li><li>Otherwise, find the highest power
+of <span class='math'>$2$</span> at most <span class='math'>$\Delta$</span> and use the binary lifting table to travel that many
+days.</li><li>Update <span class='math'>$i, t, \Delta$</span> accordingly.</li></ul>
+The second bullet point can be done at most <span class='math'>$\lg D$</span> times, and because there are
+at most <span class='math'>$\lg S$</span> levels, the first bullet point can be done at most <span class='math'>$\lg S$</span> times
+in a row. This means that such a calculation takes <span class='math'>$O(\lg D \lg S)$</span> time.
+<p>We can first construct the binary lifting table by going in order of increasing
+powers of <span class='math'>$2$</span> and applying the above procedure to the existing entries (and also
+calculate when a higher level is reached where applicable), then use the same
+procedure to answer the queries. There are <span class='math'>$\sum T_i \lfloor\lg D\rfloor$</span>
+entries and <span class='math'>$Q$</span> queries, so the runtime complexity is
+<div class='math'>$$O\left(\left(\sum T_i\lg D + Q\right)\lg D \lg S\right)$$</div>
+which is fast enough.
+<p><strong>Approach 2 (sqrt decomposition):</strong>
+<p>We will split the nodes into small and large nodes, where small nodes have
+<span class='math'>$T_i \leq \sqrt S$</span> and large nodes have <span class='math'>$T_i &gt; \sqrt S$</span>. For each large node
+<span class='math'>$i$</span>, we will compute the binary lifting table for all <span class='math'>$(i, t)$</span>,  but for each
+small node we will only compute the binary lifting table for <span class='math'>$(i, t)$</span> for
+<span class='math'>$0\leq t &lt; \sqrt S$</span> (i.e. for small nodes we only consider time mod <span class='math'>$\sqrt S$</span>).
+In addition, for each small node we will store the min. time required to reach a
+big node,  and only store the <span class='math'>$k$</span>th entry of the <span class='math'>$(i, t)$</span> table (corresponding
+to location after <span class='math'>$2^k$</span> steps) if after <span class='math'>$2^k$</span> steps we have never encountered a
+large node.
+<p>We can compute the small nodes in just <span class='math'>$O(N\sqrt S \lg D)$</span>,  For large nodes, to
+compute the <span class='math'>$k$</span>th entry, we first refer to the <span class='math'>$k-1$</span>th entry. If this is a large
+node, we are immediately done, otherwise we jump to the next large node, and
+then recurse (roughly we are performing a query). This takes
+<span class='math'>$O(\sum T_i\sqrt S \lg^2 D)$</span>.
+<p>To do a query, we do the following, for <span class='math'>$k = 60, 59, \ldots, 0$</span>: If the next
+large node is within <span class='math'>$\Delta$</span> away, jump to the next large node (and increment
+<span class='math'>$t$</span> and decrement <span class='math'>$\Delta$</span>). Now, if <span class='math'>$\Delta \geq 2^k$</span>, jump to the next
+position in the binary lifting table (and modify <span class='math'>$t$</span> and <span class='math'>$\Delta$</span>). This takes
+<span class='math'>$O(\lg D)$</span> per query, so the total runtime is
+<span class='math'>$O(\sum T_i \sqrt S \lg^2 D + Q\lg D)$</span>.
+<p>Java code for the first approach:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+
+public class InfiniteAdventure {
+    public static final int LG = 60;
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int q = Integer.parseInt(tokenizer.nextToken());
+        int[][] period = new int[n + 1][];
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int city = 1; city &lt;= n; city++) {
+            period[city] = new int[Integer.parseInt(tokenizer.nextToken())];
+        }
+        for (int city = 1; city &lt;= n; city++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            for (int t = 0; t &lt; period[city].length; t++) {
+                period[city][t] = Integer.parseInt(tokenizer.nextToken());
+            }
+        }
+
+        int[][][] binaryLift = new int[n + 1][][];
+        int[][] firstHigher = new int[n + 1][];
+        long[][] firstHigherDays = new long[n + 1][];
+        for (int a = 1; a &lt;= n; a++) {
+            binaryLift[a] = new int[period[a].length][LG];
+            firstHigherDays[a] = new long[period[a].length];
+            firstHigher[a] = new int[period[a].length];
+            for (int k = 0; k &lt; period[a].length; k++) {
+                if (period[period[a][k]].length &gt; period[a].length) {
+                    firstHigherDays[a][k] = 1;
+                    firstHigher[a][k] = period[a][k];
+                } else {
+                    binaryLift[a][k][0] = period[a][k];
+                }
+            }
+        }
+
+        for (int k = 1; k &lt; LG; k++) {
+            for (int city = 1; city &lt;= n; city++) {
+                for (int t = 0; t &lt; period[city].length; t++) {
+                    if (firstHigherDays[city][t] == 0) {
+                        int laterCity = binaryLift[city][t][k - 1];
+                        long remainingDays = 1L &lt;&lt; (k - 1);
+                        int e = k - 1;
+                        long currentDay = ((long) t) + (1L &lt;&lt; (k - 1));
+                        while (remainingDays &gt; 0 &amp;&amp; period[laterCity].length &lt;= period[city].length) {
+                            while ((1L &lt;&lt; e) &gt; remainingDays) {
+                                e--;
+                            }
+                            int laterT = (int) (currentDay % period[laterCity].length);
+                            if (firstHigherDays[laterCity][laterT] != 0 &amp;&amp; firstHigherDays[laterCity][laterT] &lt;= (1L &lt;&lt; e)) {
+                                remainingDays -= firstHigherDays[laterCity][laterT];
+                                currentDay += firstHigherDays[laterCity][laterT];
+                                laterCity = firstHigher[laterCity][laterT];
+                            } else {
+                                remainingDays -= 1L &lt;&lt; e;
+                                currentDay += 1L &lt;&lt; e;
+                                laterCity = binaryLift[laterCity][laterT][e];
+                            }
+                        }
+                        if (period[laterCity].length &gt; period[city].length) {
+                            firstHigherDays[city][t] = (1L &lt;&lt; k) - remainingDays;
+                            firstHigher[city][t] = laterCity;
+                        } else {
+                            binaryLift[city][t][k] = laterCity;
+                        }
+                    }
+                }
+            }
+        }
+
+        StringBuilder out = new StringBuilder();
+        for (int j = 0; j &lt; q; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int currentCity = Integer.parseInt(tokenizer.nextToken());
+            long currentDay = Long.parseLong(tokenizer.nextToken());
+            long remainingDays = Long.parseLong(tokenizer.nextToken());
+
+            int k = LG - 1;
+
+            while (remainingDays &gt; 0) {
+                while ((1L &lt;&lt; k) &gt; remainingDays) {
+                    k--;
+                }
+                int t = (int) (currentDay % period[currentCity].length);
+                if (firstHigherDays[currentCity][t] != 0 &amp;&amp; firstHigherDays[currentCity][t] &lt;= (1L &lt;&lt; k)) {
+                    remainingDays -= firstHigherDays[currentCity][t];
+                    currentDay += firstHigherDays[currentCity][t];
+                    currentCity = firstHigher[currentCity][t];
+                } else {
+                    remainingDays -= 1L &lt;&lt; k;
+                    currentDay += 1L &lt;&lt; k;
+                    currentCity = binaryLift[currentCity][t][k];
+                }
+            }
+
+            out.append(currentCity).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p><strong>Full solution</strong>
+<p>The bottleneck in the first approach to Subtask 3 is the fact that the amount of
+entries in the binary lifting table is already <span class='math'>$\log$</span> times linear, and we then
+have to spend <span class='math'>$\log^2$</span> on calculating each entry. In a normal binary lifting
+table, calculation of each entry is constant because you just look at two
+existing entries.
+<p>So, we want to make our binary lifting table more like a normal one. To do this,
+we will construct a binary lifting table for each level instead: the <span class='math'>$k$</span>th entry
+for <span class='math'>$(i, t)$</span> will, instead of telling you what city you will reach after <span class='math'>$2^k$</span>
+days, tell you the <span class='math'>$2^k$</span>th city you will reach that is at the same level as <span class='math'>$i$</span>.
+This can then be computed in constant time using previous entries.
+<p>To construct the base of the binary lifting table, we will need to know for each
+pair <span class='math'>$(i, t)$</span> what the soonest is that Bessie reaches a city <span class='math'>$j$</span> at the
+<em>same</em> level as <span class='math'>$i$</span> (and what <span class='math'>$j$</span> is), in addition to the same for Bessie
+reaching a <em>higher</em> level.
+<p>If Bessie starts from <span class='math'>$(i, t)$</span>, let the first city she encounters of the same
+level be <span class='math'>$f(i, t)$</span> and the first city she encounters of the same level
+<span class='math'>$g(i, t)$</span>. Before, we calculated <span class='math'>$g(i, t)$</span> as part of the binary lifting
+construction, but now <span class='math'>$f$</span> needs to be calculated beforehand, so we will
+calculate <span class='math'>$f$</span> and <span class='math'>$g$</span> together recursively:
+<p>From <span class='math'>$(i, t)$</span>, check what city <span class='math'>$j$</span> Bessie will go to next.
+<ul><li>If <span class='math'>$j$</span> is at a higher level than <span class='math'>$i$</span>, then we know that <span class='math'>$f(i, t)$</span> doesn&apos;t
+exist and <span class='math'>$g(i, t) = j$</span>.</li><li>If
+<span class='math'>$j$</span> is at the same level as <span class='math'>$i$</span>, then we know that <span class='math'>$f(i, t) = j$</span> and
+<span class='math'>$g(i, t) = g(j, t + 1)$</span>.</li><li>Otherwise, we can update <span class='math'>$t$</span> and repeatedly compute <span class='math'>$j = g(j, t)$</span> until we
+reach one of the first two situations, taking <span class='math'>$O(\log S)$</span> time as there are
+<span class='math'>$O(\log S)$</span> levels (note that we also need to store the number of days needed to
+reach <span class='math'>$f(i, t)$</span> and <span class='math'>$g(i, t)$</span>).</li></ul>This step thus takes
+<span class='math'>$O(\sum T_i \log S)$</span> time.
+<p>Once those are calculated, we can calculate the binary lifting tables for each
+level, which will store not only the <span class='math'>$2^k$</span>th city in the same level that we get
+to but also the number of days needed to get there. The time taken is constant
+for each of the <span class='math'>$O(\log D)$</span> entries per pair <span class='math'>$(i, t)$</span>, so <span class='math'>$O(\sum T_i \log D)$</span>
+overall.
+<p>To answer a query, we take a greedy strategy similar to in Subtask 3. Keeping
+track of our current city i and current day t, as well as the day that Bessie
+stops:
+<ul><li>While we have time to go to the next city with a higher level <span class='math'>$g(i, t)$</span>, we
+go there. This takes <span class='math'>$O(\log S)$</span> steps.</li><li>Then, we use the binary lifting
+table to go as far as we can in our current level (note that for each
+<span class='math'>$2^k \leq D$</span> instead of checking whether the number of days left to go is at
+least <span class='math'>$2^k$</span>, we need to check against the number of days needed to travel to
+<span class='math'>$2^k$</span> cities in the same level, which we also stored in our table), which takes
+<span class='math'>$O(\log D)$</span> steps.</li><li>If we have gone as far as possible in the current
+level and haven&apos;t finished Bessie&apos;s adventure yet, we go to the immediately next
+city (using <span class='math'>$1$</span> day) and repeat the process from there.</li></ul>
+Each iteration of this process takes <span class='math'>$O(\log S + \log D)$</span> time, and each time we
+repeat it, after we increase our level as much as possible (the first bullet
+point) we end up at a lower level than last time, which means that we repeat the
+process at most <span class='math'>$O(\log S)$</span> times. Thus, the entire calculation takes
+<span class='math'>$O(\log S(\log S + \log D))$</span> time.
+<p>The overall runtime is therefore
+<div class='math'>$$O\left(\sum T_i \log S + \sum T_i\log D + Q\log S \left(\log S + \log D\right)\right) = O\left(\left(\sum T_i + Q\log S\right)\left(\log S + \log D\right)\right)$$</div>
+which is fast enough.
+<p>Java code:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+
+public class InfiniteAdventure {
+    public static final int LG = 60;
+    public static final long LIMIT = 1_000_000_000_000_000_000L;
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int q = Integer.parseInt(tokenizer.nextToken());
+        int[][] period = new int[n + 1][];
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int city = 1; city &lt;= n; city++) {
+            period[city] = new int[Integer.parseInt(tokenizer.nextToken())];
+        }
+        for (int city = 1; city &lt;= n; city++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            for (int t = 0; t &lt; period[city].length; t++) {
+                period[city][t] = Integer.parseInt(tokenizer.nextToken());
+            }
+        }
+
+        int[][] firstHigher = new int[n + 1][];
+        long[][] firstHigherDays = new long[n + 1][];
+        int[][][] binaryLift = new int[n + 1][][];
+        long[][][] binaryLiftDays = new long[n + 1][][];
+
+
+        for (int a = 1; a &lt;= n; a++) {
+            firstHigher[a] = new int[period[a].length];
+            firstHigherDays[a] = new long[period[a].length];
+            binaryLift[a] = new int[period[a].length][LG];
+            binaryLiftDays[a] = new long[period[a].length][LG];
+        }
+
+        new Object() {
+            boolean[][] seen = new boolean[n + 1][];
+
+            void perform() {
+                for (int a = 1; a &lt;= n; a++) {
+                    seen[a] = new boolean[period[a].length];
+                }
+                for (int a = 1; a &lt;= n; a++) {
+                    for (int k = 0; k &lt; period[a].length; k++) {
+                        calc(a, k);
+                    }
+                }
+            }
+
+            void calc(int city, int t) {
+                if (!seen[city][t]) {
+                    seen[city][t] = true;
+
+                    int laterCity = period[city][t];
+                    long days = 1;
+                    while (laterCity != 0 &amp;&amp; period[laterCity].length &lt;= period[city].length) {
+                        int laterT = (int) ((t + days) % period[laterCity].length);
+                        calc(laterCity, laterT);
+                        if (period[laterCity].length == period[city].length) {
+                            binaryLift[city][t][0] = laterCity;
+                            binaryLiftDays[city][t][0] = days;
+                        }
+                        days += firstHigherDays[laterCity][laterT];
+                        laterCity = firstHigher[laterCity][laterT];
+                    }
+                    if (laterCity != 0) {
+                        firstHigher[city][t] = laterCity;
+                        firstHigherDays[city][t] = days;
+                    }
+                }
+            }
+        }.perform();
+
+        for (int k = 1; k &lt; LG; k++) {
+            for (int city = 1; city &lt;= n; city++) {
+                for (int t = 0; t &lt; period[city].length; t++) {
+                    if (firstHigher[city][t] == 0 || firstHigherDays[city][t] &gt; (1L &lt;&lt; k)) {
+                        int halfwayCity = binaryLift[city][t][k - 1];
+                        if (halfwayCity != 0) {
+                            int halfwayT = (int) ((t + binaryLiftDays[city][t][k - 1]) % period[city].length);
+                            long days = binaryLiftDays[city][t][k - 1] + binaryLiftDays[halfwayCity][halfwayT][k - 1];
+                            if (binaryLift[halfwayCity][halfwayT][k - 1] != 0 &amp;&amp; days &lt;= LIMIT) {
+                                binaryLift[city][t][k] = binaryLift[halfwayCity][halfwayT][k - 1];
+                                binaryLiftDays[city][t][k] = days;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        StringBuilder out = new StringBuilder();
+        for (int j = 0; j &lt; q; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int currentCity = Integer.parseInt(tokenizer.nextToken());
+            long currentDay = Long.parseLong(tokenizer.nextToken());
+            long remainingDays = Long.parseLong(tokenizer.nextToken());
+
+            while (remainingDays &gt; 0) {
+                while (true) {
+                    int t = (int) (currentDay % period[currentCity].length);
+                    if (firstHigher[currentCity][t] == 0 || remainingDays &lt; firstHigherDays[currentCity][t]) {
+                        break;
+                    }
+                    currentDay += firstHigherDays[currentCity][t];
+                    remainingDays -= firstHigherDays[currentCity][t];
+                    currentCity = firstHigher[currentCity][t];
+                }
+
+                for (int k = LG - 1; k &gt;= 0; k--) {
+                    int t = (int) (currentDay % period[currentCity].length);
+                    if (binaryLift[currentCity][t][k] != 0 &amp;&amp; remainingDays &gt;= binaryLiftDays[currentCity][t][k]) {
+                        currentDay += binaryLiftDays[currentCity][t][k];
+                        remainingDays -= binaryLiftDays[currentCity][t][k];
+                        currentCity = binaryLift[currentCity][t][k];
+                    }
+                }
+                if (remainingDays &gt; 0) {
+                    int t = (int) (currentDay % period[currentCity].length);
+                    currentDay++;
+                    remainingDays--;
+                    currentCity = period[currentCity][t];
+                }
+            }
+
+            out.append(currentCity).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p></body></html>

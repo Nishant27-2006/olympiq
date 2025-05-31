@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Richard Qi)
+<p>For <span class='math'>$N \le 1000, T \le 10000$</span>, we can directly simulate the process described by
+the problem. Initialize an array corresponding to the current order of the cows
+(<span class='math'>$0$</span> to <span class='math'>$N-1$</span>). Call this array &quot;order&quot;. 
+<p>For each timestep, first update &quot;order&quot; by shifting according to the indices
+listed in <span class='math'>$A$</span> (you can create a copy of &quot;order&quot; and change the values in the
+copy, or swap/change the values in place). Then, update <span class='math'>$A$</span> by adding one to
+each element and taking modulo <span class='math'>$N$</span>. 
+<p>Richard&apos;s code (C++):
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int mx = 200005;
+int A[mx];
+int ans[mx];
+ 
+int main(){
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int N, K, T; cin &gt;&gt; N &gt;&gt; K &gt;&gt; T;
+    for(int i = 1; i &lt;= K; i++){
+        cin &gt;&gt; A[i];
+    }
+ 
+    for(int i = 0; i &lt; N; i++){
+        ans[i] = i;
+    }
+ 
+    for(int t = 1; t &lt;= T; t++){
+        //active positions rotate
+        vector&lt;int&gt; vals;
+        for(int i = 1; i &lt;= K; i++){
+            vals.push_back(ans[A[i]]);
+        }
+        for(int i = 0; i &lt; K; i++){
+            ans[A[i+1]] = vals[(i-1+(vals.size())) % (vals.size())];
+        }
+        for(int i = 1; i &lt;= K; i++){
+            A[i] = (A[i]+1) % N;
+        }
+    }
+    for(int i = 0; i &lt; N; i++){
+        cout &lt;&lt; ans[i];
+        if(i+1 &lt; N) cout &lt;&lt; &quot; &quot;;
+    }
+    cout &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>For the full solution, it helps to work out some examples of the process on
+paper, or use your brute force solution to list out some examples for you.
+<p>Here&apos;s the output of a brute force solution on a slightly larger test case:
+<p><pre>
+INPUT
+N=10 K=3 T=15
+A=[0, 3, 7]
+SIMULATING
+Initial, T = 0: order = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], A = [0, 3, 7]
+T = 1: order = [7, 1, 2, 0, 4, 5, 6, 3, 8, 9]
+T = 1: A = [1, 4, 8]
+T = 2: order = [7, 8, 2, 0, 1, 5, 6, 3, 4, 9]
+T = 2: A = [2, 5, 9]
+T = 3: order = [7, 8, 9, 0, 1, 2, 6, 3, 4, 5]
+T = 3: A = [3, 6, 0]
+T = 4: order = [6, 8, 9, 7, 1, 2, 0, 3, 4, 5]
+T = 4: A = [4, 7, 1]
+T = 5: order = [6, 3, 9, 7, 8, 2, 0, 1, 4, 5]
+T = 5: A = [5, 8, 2]
+T = 6: order = [6, 3, 4, 7, 8, 9, 0, 1, 2, 5]
+T = 6: A = [6, 9, 3]
+T = 7: order = [6, 3, 4, 5, 8, 9, 7, 1, 2, 0]
+T = 7: A = [7, 0, 4]
+T = 8: order = [1, 3, 4, 5, 6, 9, 7, 8, 2, 0]
+T = 8: A = [8, 1, 5]
+T = 9: order = [1, 2, 4, 5, 6, 3, 7, 8, 9, 0]
+T = 9: A = [9, 2, 6]
+T = 10: order = [1, 2, 0, 5, 6, 3, 4, 8, 9, 7]
+T = 10: A = [0, 3, 7]
+T = 11: order = [8, 2, 0, 1, 6, 3, 4, 5, 9, 7]
+T = 11: A = [1, 4, 8]
+T = 12: order = [8, 9, 0, 1, 2, 3, 4, 5, 6, 7]
+T = 12: A = [2, 5, 9]
+T = 13: order = [8, 9, 7, 1, 2, 0, 4, 5, 6, 3]
+T = 13: A = [3, 6, 0]
+T = 14: order = [4, 9, 7, 8, 2, 0, 1, 5, 6, 3]
+T = 14: A = [4, 7, 1]
+T = 15: order = [4, 5, 7, 8, 9, 0, 1, 2, 6, 3]
+</pre>
+<p>Try looking at the above output; notice any patterns? There are two similar
+solutions that naturally follow from patterns that can be found in the above
+output. The solution code for each solution is at the bottom of the page.
+<p><strong> Solution 1: </strong>  Look at a single cow&apos;s journey over time. For example,
+look at cow <span class='math'>$0$</span>. Cow <span class='math'>$0$</span> started at position <span class='math'>$0$</span> at <span class='math'>$T = 0$</span>, then was at
+position <span class='math'>$3$</span> during <span class='math'>$1 \le T \le 3$</span>, then was at position <span class='math'>$6$</span> during
+<span class='math'>$4 \le T \le 6$</span>. Other than <span class='math'>$T=0$</span>, cow <span class='math'>$0$</span> appears to stay at a position for
+exactly <span class='math'>$3$</span> minutes, then move <span class='math'>$3$</span> positions forward, then stay at that position
+for exactly <span class='math'>$3$</span> minutes, etc.
+<p>This is no coincidence: cow <span class='math'>$1$</span> follows the same behavior! Cow <span class='math'>$1$</span> starts at
+position <span class='math'>$1$</span> for <span class='math'>$0 \le T \le 1$</span>, then goes to position <span class='math'>$4$</span> for <span class='math'>$2 \le T \le 4$</span>,
+then goes to position <span class='math'>$7$</span> for <span class='math'>$5 \le T \le 7$</span>. In fact, if you examine further,
+cow <span class='math'>$2$</span> also exhibits this behavior, moving <span class='math'>$3$</span> positions forward every <span class='math'>$3$</span>
+minutes. Cow <span class='math'>$3$</span> moves <span class='math'>$4$</span> positions forward every <span class='math'>$4$</span> minutes, which is
+slightly different from cows <span class='math'>$0-2$</span>, but still follows the pattern of moving <span class='math'>$i$</span>
+positions every <span class='math'>$i$</span> minutes. 
+<p>A natural question to ask is &quot;why is this happening?&quot;. We will prove why this is
+happening for cow <span class='math'>$2$</span>. Because <span class='math'>$A_1 = 0$</span> and <span class='math'>$A_2 = 3$</span>, cow <span class='math'>$2$</span> is &quot;between&quot;
+these two active positions and does not move until <span class='math'>$T = 2$</span>, when
+<span class='math'>$A_1 = 2, A_2 = 5$</span>. During this timestep, cow <span class='math'>$2$</span> moves to position <span class='math'>$5$</span>. So,
+after this timestep, cow <span class='math'>$2$</span> is at position <span class='math'>$5$</span>, <span class='math'>$A_1 = 3, A_2 = 6$</span>. Notice that
+at the very beginning of timestep <span class='math'>$T=3$</span>, cow <span class='math'>$2$</span> is still between the active
+positions <span class='math'>$A_1$</span> and <span class='math'>$A_2$</span>. In fact, cow <span class='math'>$2$</span> is exactly two positions after <span class='math'>$A_1$</span>
+and <span class='math'>$1$</span> position before <span class='math'>$A_2$</span>, which was true at <span class='math'>$T=0$</span> as well.
+<p>This motivates looking at cow <span class='math'>$2$</span> in the following way: observe cow <span class='math'>$2$</span> relative
+to active positions <span class='math'>$A_1$</span> and <span class='math'>$A_2$</span>. Cow <span class='math'>$2$</span> is always between <span class='math'>$A_1$</span> and <span class='math'>$A_2$</span>,
+because cow <span class='math'>$2$</span> stays in place while <span class='math'>$A_1$</span> and <span class='math'>$A_2$</span> increase at a rate of <span class='math'>$1$</span>
+unit per second, and as soon as <span class='math'>$A_1$</span> is equal to the position of cow <span class='math'>$1$</span>, cow
+<span class='math'>$1$</span> jumps ahead <span class='math'>$A_2-A_1$</span> positions and is now just behind position <span class='math'>$A_2$</span>. This
+also shows why cow <span class='math'>$j$</span> jumps exactly <span class='math'>$A_{i+1}-A_i$</span> positions every <span class='math'>$A_{i+1}-A_i$</span>
+timesteps (if <span class='math'>$A_i \le j &lt; A_{i+1}$</span>).
+<p>We use the above observation to solve the problem in the following way: first,
+define <span class='math'>$A_{K+1} = N$</span> for convenience. Then, for each <span class='math'>$i$</span> from <span class='math'>$i=1$</span> to <span class='math'>$i=K$</span>,
+consider all cows <span class='math'>$j$</span> in the range <span class='math'>$A_i \le j &lt; A_{i+1}$</span>.
+<p>Cow <span class='math'>$j$</span> first stays in place for <span class='math'>$j-A_i$</span> minutes, during which <span class='math'>$A_i$</span> increases
+to meet <span class='math'>$j$</span>. Then, on the <span class='math'>$j-A_i+1$</span>th minute, <span class='math'>$j$</span> jumps forward <span class='math'>$A_{i+1}-A_i$</span>
+positions.
+<p>After this point, there are <span class='math'>$T&apos; = T-(j-A_i+1)$</span> minutes left to go. From then on,
+every <span class='math'>$A_{i+1}-A_i$</span> minutes, cow <span class='math'>$j$</span>&apos;s position increases by <span class='math'>$A_{i+1}-A_i$</span>. So,
+during this phase, cow <span class='math'>$j$</span>&apos;s position increases
+<span class='math'>$\lfloor \frac{T&apos;}{A_{i+1}-A_i} \rfloor$</span> times, and each time, cow <span class='math'>$j$</span>&apos;s
+position increases by <span class='math'>$A_{i+1}-A_i$</span> positions, for a total position increase of
+<span class='math'>$\lfloor \frac{T&apos;}{A_{i+1}-A_i} \rfloor \cdot (A_{i+1}-A_i)$</span>.
+<p>We can compute this quantity in <span class='math'>$\mathcal O \left(1 \right)$</span> time for every
+position <span class='math'>$j$</span>, for a total time complexity of <span class='math'>$\mathcal O \left(N \right)$</span>.
+<p><strong> Solution 2: </strong> Instead of having the active positions shift by <span class='math'>$+1$</span>, which
+hard to think about, suppose that instead all cows shift by <span class='math'>$-1$</span>, while the
+active positions remain constant throughout the entire process. In this way, the
+relative positions between the active indices and the cows remain exactly the
+same. So, if we simulate the process of shifting cows back by <span class='math'>$-1$</span> and keeping
+<span class='math'>$A$</span> constant, we will end up with the same final array as the original process
+(shifted by <span class='math'>$T$</span>). 
+<p>Here&apos;s the output of this shifted order; the pattern is easier to spot now.
+<p><pre>
+INPUT
+N=10 K=3 T=15
+A=[0, 3, 7]
+SIMULATING
+Initial, T = 0: order = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], A = [0, 3, 7]
+T = 1: order_shifted = [1, 2, 0, 4, 5, 6, 3, 8, 9, 7]
+T = 2: order_shifted = [2, 0, 1, 5, 6, 3, 4, 9, 7, 8]
+T = 3: order_shifted = [0, 1, 2, 6, 3, 4, 5, 7, 8, 9]
+T = 4: order_shifted = [1, 2, 0, 3, 4, 5, 6, 8, 9, 7]
+T = 5: order_shifted = [2, 0, 1, 4, 5, 6, 3, 9, 7, 8]
+T = 6: order_shifted = [0, 1, 2, 5, 6, 3, 4, 7, 8, 9]
+T = 7: order_shifted = [1, 2, 0, 6, 3, 4, 5, 8, 9, 7]
+T = 8: order_shifted = [2, 0, 1, 3, 4, 5, 6, 9, 7, 8]
+T = 9: order_shifted = [0, 1, 2, 4, 5, 6, 3, 7, 8, 9]
+T = 10: order_shifted = [1, 2, 0, 5, 6, 3, 4, 8, 9, 7]
+T = 11: order_shifted = [2, 0, 1, 6, 3, 4, 5, 9, 7, 8]
+T = 12: order_shifted = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+T = 13: order_shifted = [1, 2, 0, 4, 5, 6, 3, 8, 9, 7]
+T = 14: order_shifted = [2, 0, 1, 5, 6, 3, 4, 9, 7, 8]
+T = 15: order_shifted = [0, 1, 2, 6, 3, 4, 5, 7, 8, 9]
+</pre>
+<p>The pattern is the following: for every <span class='math'>$i$</span>, the values in the range
+<span class='math'>$A_i \le j &lt; A_{i+1}$</span> always stay in the positions which are in the range
+<span class='math'>$A_i \le j &lt; A_{i+1}$</span>. If we consider these values, the values cyclically shift
+left by <span class='math'>$1$</span> every minute.
+<p>For example, look at the indices <span class='math'>$3, 4, 5, 6$</span> in the above output.  The values
+at those indices start as <span class='math'>$3, 4, 5, 6$</span> at <span class='math'>$T = 0$</span>, then <span class='math'>$4, 5, 6, 3$</span> at <span class='math'>$T=1$</span>,
+then <span class='math'>$5, 6, 3, 4$</span> at <span class='math'>$T=2$</span>, then <span class='math'>$6, 3, 4, 5$</span> at <span class='math'>$T=3$</span>, then <span class='math'>$3, 4, 5, 6$</span> at
+<span class='math'>$T=4$</span> (and keeps repeating in this cycle forever).
+<p>So, for each <span class='math'>$j$</span> such that <span class='math'>$A_i \le j &lt; A_{i+1}$</span>, we cyclically shift it to the
+left <span class='math'>$T$</span> times modulo <span class='math'>$A_{i+1}-A_i$</span> within the subarray with left endpoint <span class='math'>$A_i$</span>
+and right endpoint <span class='math'>$A_{i+1}-1$</span>. Finally, at the end, we add back <span class='math'>$T$</span> to the
+final position to get back the original indices. 
+<p>Richard&apos;s code (Solution 1, Python):
+<p><pre class='prettyprint'>
+# Read in the input
+N, K, T = map(int, input().split())
+A = list(map(int, input().split())) + [N] # append the value N to the sequence
+
+ans = [-1] * N # declare an empty final array
+
+for i in range(K):
+    for j in range(A[i], A[i+1]):
+    	T_prime = T-(j-A[i]+1)
+
+    	if T_prime &gt;= 0:
+    		increase_times = 1 + T_prime // (A[i+1]-A[i]) # integer division is // in python
+    		ending_position = (j + increase_times * (A[i+1]-A[i])) % N
+    	else:
+    		# doesn&apos;t move at all
+    		ending_position = j
+
+    	ans[ending_position] = j
+
+# Print the output
+print(&quot; &quot;.join(map(str, ans)))
+</pre>
+<p>Richard&apos;s code (Solution 2, C++):
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+const int mx = 200005;
+int A[mx];
+int ans[mx];
+
+int main(){
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int N, K, T; cin &gt;&gt; N &gt;&gt; K &gt;&gt; T;
+    for(int i = 1; i &lt;= K; i++){
+        cin &gt;&gt; A[i];
+    }
+    A[K+1] = N;
+    for(int i = 1; i &lt;= K; i++){
+        for(int j = A[i]; j &lt; A[i+1]; j++){
+            //where is j relative to A[i]
+            int current_shift = j-A[i];
+            //j moves backwards T times
+            int new_shift = current_shift-T;
+            int diff = A[i+1]-A[i];
+            new_shift = (new_shift % diff + diff) % diff; //take mods to get it back in the range [0, diff-1].
+            
+            //A[i] moves new_shift times, then we shift our perspective by T.
+            ans[(A[i]+new_shift+T) % N] = j;
+        }
+    }
+    for(int i = 0; i &lt; N; i++){
+        cout &lt;&lt; ans[i];
+        if(i+1 &lt; N) cout &lt;&lt; &quot; &quot;;
+    }
+    cout &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

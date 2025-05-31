@@ -1,0 +1,127 @@
+Solution ID: sol_shuffle_bronze_dec17
+Contest: DEC17
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_shuffle_bronze_dec17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+In this problem, we have some cows in a row that shuffle themselves according to
+a fixed pattern. We know how they shuffle themselves in one shuffle rotation,
+and we know how they're arranged after three shuffles. We wish to reconstruct
+their original ordering.
+
+There are few enough cows that it is possible to guess and check, for each cow
+and each possible starting position, if that cow could end up in the location we
+currently observe it in. However, there is a way to determine exactly where each
+cow was originally without any sort of guesswork.
+
+We can do this by pretending to go backwards in time and construct were each cow
+was after two shuffles, then after one shuffle, and then where they were
+originally. We know that the cow in position
+
+$i$
+
+goes to position
+
+$a_i$
+
+after
+one shuffle. What this also means though is that if a cow was in position
+
+$a_i$
+
+after one shuffle, then before that shuffle happened, that cow was in position
+
+$i$
+
+!
+
+Therefore, we only have to undo three shuffles to get the original locations of all the cows.
+
+import java.io.*;
+import java.util.*;
+public class shuffle {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader("shuffle.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("shuffle.out")));
+		
+		// read in the number of cows
+		int n = Integer.parseInt(br.readLine());
+		
+		// if a cow was in position i after shuffling, then moveTo[i] will
+		// be the location that they were in before the shuffle
+		int[] moveTo = new int[n+1];
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		for(int i = 1; i <= n; i++) {
+			// destination is the location a cow would be after a shuffle
+			// if they were originally in position i
+			int destination = Integer.parseInt(st.nextToken());;
+			moveTo[destination] = i;
+		}
+		
+		// allocate an array to store the observed locations of all cows
+		// read in the observations
+		int[] finalLocs = new int[n+1];
+		st = new StringTokenizer(br.readLine());
+		for(int i = 1; i <= n; i++) {
+			finalLocs[i] = Integer.parseInt(st.nextToken());
+		}
+		
+		// allocate an array to store the original locations of all cows
+		int[] originalLocations = new int[n+1];
+		for(int finalPosition = 1; finalPosition <= n; finalPosition++) {
+			int currentLocation = finalPosition;
+			// reverse three shuffles
+			for(int iter = 1; iter <= 3; iter++) {
+				currentLocation = moveTo[currentLocation];
+			}
+			// store the original location of the cow that ended up in finalPosition
+			originalLocations[currentLocation] = finalLocs[finalPosition];
+		}
+		
+		// print the answer
+		for(int i = 1; i <= n; i++) {
+			pw.println(originalLocations[i]);
+		}
+		pw.close();
+	}
+}
+
+For those who prefer C++, here is Brian Dean's solution:
+
+#include <iostream>
+#include <fstream>
+const int MAX_N = 100;
+using namespace std;
+ 
+int A[MAX_N+1];
+int order[MAX_N+1];
+int original_order[MAX_N+1];
+ 
+int main(void)
+{
+  ifstream fin ("shuffle.in");
+  ofstream fout ("shuffle.out");
+ 
+  int N;
+  
+  fin >> N;
+  for (int i=1; i<=N; i++) 
+    fin >> A[i];
+  for (int i=1; i<=N; i++) 
+    fin >> order[i];
+ 
+  for (int iter=0; iter<3; iter++) {    
+    for (int i=1; i<=N; i++) original_order[i] = order[A[i]];
+    for (int i=1; i<=N; i++) order[i] = original_order[i];
+  }
+  
+  for (int i=1; i<=N; i++)
+    fout << order[i] << "\n";
+  return 0;
+}

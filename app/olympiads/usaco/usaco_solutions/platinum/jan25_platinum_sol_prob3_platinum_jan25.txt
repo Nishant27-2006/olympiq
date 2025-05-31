@@ -1,0 +1,281 @@
+Solution ID: sol_prob3_platinum_jan25
+Contest: JAN25
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_jan25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Larry Xing)
+
+Subtask 1:
+
+We approach this problem with dynamic programming. Let
+
+$dp(i+1, j)$
+
+represent
+the minimum possible cost to water the first
+
+$i$
+
+plants and give
+
+$j$
+
+units of
+water to the
+
+$i+1$
+
+th plant.
+
+Then, we must have paid
+
+$j\cdot c_i$
+
+to the
+
+$i$
+
+th canal. Thus, we see that
+
+$$dp(i+1, j) = \min_{k+j \ge w_i} dp(i, k)+jc_i$$
+
+This results in an
+
+$O(N\cdot (\max w_i)^2)$
+
+solution.
+
+Subtask 2:
+
+After each dp iteration, we can keep track of the suffix minimum of our dp. This
+allows us to transition in
+
+$O(1)$
+
+, for a complexity of
+
+$O(N\cdot \max w_i)$
+
+, as
+in the code below.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef pair<ll, ll> pll;
+const int MAX_N = 5e5+5;
+const int MAX_W = 1e6+5;
+const ll INF = 1e18;
+
+int n;
+ll w[MAX_N], c[MAX_N], dp[MAX_W], dp2[MAX_W];
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)->sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin >> n;
+    for(int i = 0; i < n; i++) cin >> w[i];
+    for(int i = 0; i < n-1; i++) cin >> c[i];
+    dp[0] = 0;
+    for(int i = 1; i <= w[0]; i++)
+        dp[i] = INF;
+    for(int i = 1; i < n; i++){
+        ll mn = dp[w[i-1]];
+        for(int j = 0; j <= w[i-1]; j++){
+            mn = min(mn, dp[w[i-1]-j]);
+            dp2[j] = mn + j*c[i-1];
+        }
+        for(int j = w[i-1]+1; j <= w[i]; j++)
+            dp2[j] = mn + j*c[i-1];
+        for(int j = w[i]+1; j <= w[i-1]; j++)
+            dp2[w[i]] = min(dp2[w[i]], dp2[j]);
+        for(int j = 0; j <= w[i]; j++)
+            dp[j] = dp2[j];
+        cout << dp[w[i]] << '\n';
+    }
+    return 0;
+}
+
+Subtask 3:
+
+Let's try to optimize our dp.
+
+Consider the structure of our transitions:
+
+First, we reverse the array (call this a reverse operation)
+
+Second, we prefix min the array (call this a prefix min operation)
+
+Third, we add
+
+$j\cdot c_i$
+
+to the array (call this an addition
+operation)
+
+Last, we cut off the array at
+
+$w_{i+1}$
+
+(call this a cut operation)
+
+This motivates us to try to represent our dp array as a data structure where you
+can efficiently do those four operations.
+
+To formulate this data structure, we consider the difference array
+
+$dif[j] = dp[j+1]-dp[j]$
+
+. Observe that the difference array is always
+nondecreasing: It starts nondecreasing, and all of the operations will keep the
+difference array nondecreasing.
+
+Thus, we can store segments of these differences, representing contiguous blocks
+of  differences that have the same difference. Each of the operations can be
+done simply by iterating through the segments, and each transition can only
+increase the number of segments by 1 (only the prefix min operation can increase
+the number of segments).
+
+This gives us an
+
+$O(N^2)$
+
+solution.
+
+Subtask 4:
+
+This subtask was intended to give partial credit to the solution above and other
+heuristics. For uniformly randomly generated data, the number of segments seems to be
+small (no more than 10 on the test cases that were provided).
+
+Full Solution:
+
+Let's further optimize our data structure.
+
+Store the segments within a deque, with each segment storing the number of times
+the  difference appears and the difference in the segment, as well as the first
+and last value of our dp array. Then, to handle each operation, we can do the
+following:
+
+Reverse operation: maintain a lazy tag that indicates whether the segments
+have been reversed. Act on the front of the deque (rather than the back) if it
+is reversed, and negate all of the differences.
+
+Prefix min operation: repeatedly pop positive differences off of the back of
+the deque, and insert a zero segment at the end.
+
+Add operation: maintain a lazy tag that indicates how much we still need to
+add to every difference.
+
+Cut operation: repeatedly pop segments from the difference array until the
+array is the right size. Take note that if the minimum is past the cut point, we
+should reset the entire difference array.
+
+This gives us an
+
+$O(N)$
+
+solution.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef pair<ll, ll> pll;
+const int MAX_N = 5e5+5;
+const int MAX_W = 1e6+5;
+const ll INF = 1e18;
+
+ll n, tot, rev, start, totdiff, lz;
+ll w[MAX_N], c[MAX_N];
+deque<pll> v;
+
+void reverse(ll x){
+    if(!rev){
+        pll lst = {-1, -1};
+        while(tot > x && v.size()){
+            lst = v.back();
+            v.pop_back();
+            if(lst.second+lz <= 0){
+                rev = 1, start += totdiff, totdiff = 0, tot = INF, lz = 0;
+                v.clear();
+                v.push_back({INF, 0});
+                return;
+            }
+            tot -= lst.first;
+            totdiff -= lst.first*(lst.second+lz);
+        }
+        if(tot < x){
+            v.push_back({x-tot, lst.second});
+            totdiff += (x-tot)*(lst.second+lz);
+        }
+        rev = 1, start += totdiff, totdiff = -totdiff, tot = x;
+        while(v.size() && v.front().second+lz < 0){
+            tot -= v.front().first;
+            totdiff += v.front().first*(v.front().second+lz);
+            v.pop_front();
+        }
+        v.push_front({INF, -lz});
+        tot += INF;
+    } else{
+        pll lst = {-1, -1};
+        while(tot > x && v.size()){
+            lst = v.front();
+            v.pop_front();
+            if(lst.second+lz >= 0){
+                rev = 0, start += totdiff, totdiff = 0, tot = INF, lz = 0;
+                v.clear();
+                v.push_back({INF, 0});
+                return;
+            }
+            tot -= lst.first;
+            totdiff += lst.first*(lst.second+lz);
+        }
+        if(tot < x){
+            v.push_front({x-tot, lst.second});
+            totdiff -= (x-tot)*(lst.second+lz);
+        }
+        rev = 0, start += totdiff, totdiff = -totdiff, tot = x;
+        while(v.size() && v.back().second+lz > 0){
+            tot -= v.back().first;
+            totdiff -= v.back().first*(v.back().second+lz);
+            v.pop_back();
+        }
+        v.push_back({INF, -lz});
+        tot += INF;
+    }
+}
+
+void add(ll p){
+    if(!rev){
+        lz += p;
+        totdiff += p*tot;
+    } else{
+        lz -= p;
+        totdiff += p*tot;
+    }
+}
+
+int main(int argc, const char * argv[]){
+    cin.tie(0)->sync_with_stdio(0);
+    cin.exceptions(cin.failbit);
+    cin >> n;
+    for(int i = 0; i < n; i++) cin >> w[i];
+    for(int i = 0; i < n-1; i++) cin >> c[i];
+    v.push_back({INF, INF});
+    tot = INF, totdiff = INF*INF, start = 0, rev = 0;
+    reverse(w[0]);
+    for(int i = 1; i < n; i++){
+        add(c[i-1]);
+        reverse(w[i]);
+        cout << start << '\n';
+    }
+    return 0;
+}

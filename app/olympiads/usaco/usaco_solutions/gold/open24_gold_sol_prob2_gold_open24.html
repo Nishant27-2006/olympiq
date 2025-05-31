@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Subtask 2:</strong> All <span class='math'>$k$</span> equal
+<p>The intervals with intersection at least <span class='math'>$k$</span> with <span class='math'>$[\ell_i, r_i]$</span> are all
+intervals besides those satisfying <span class='math'>$r_j&lt;\ell+k$</span> or <span class='math'>$\ell_j&gt;r-k$</span>. Note that these
+inequalities can&apos;t hold simultaneously, as it would imply
+<span class='math'>$r_j-\ell_j&lt;\ell-r+2k&lt;k$</span>,  contradicting the requirement that all intervals have
+length at least <span class='math'>$k$</span>. 
+<p>So  our answer is simply <span class='math'>$N-1$</span> minus the number of intervals satisfying each
+inequality, which can be computed with sorting (and optionally, binary search).
+<p><strong>Full Solution:</strong> 
+<p>To count the number of intervals with intersection at least <span class='math'>$k_i$</span> with
+<span class='math'>$[\ell_i,r_i]$</span>, count the number of intervals with  length at least <span class='math'>$k_i$</span>, and
+subtract out those with right endpoint <span class='math'>$&lt;l_i+k_i$</span> or left endpoint <span class='math'>$&gt;r_i-k_i$</span>.
+Since an interval with left endpoint <span class='math'>$&gt;r_i-k_i$</span> and right endpoint <span class='math'>$&lt;l_i+k_i$</span>
+must have length  <span class='math'>$&lt;l_i-r_i+2k_i\le k_i$</span>, no interval is subtracted more than
+once.
+<p>Since we may compute the counts in any order, let&apos;s sort them in decreasing
+order of <span class='math'>$k$</span>. Maintain lists of the left endpoints and right endpoints of the
+intervals with length at least <span class='math'>$k$</span>. As <span class='math'>$k$</span> decreases, we need to efficiently add
+to the lists and answer queries of the form: how many elements in the list are
+<span class='math'>$\le x$</span> for some given <span class='math'>$x$</span>? There are many  ways to do this, such as using a
+<a href='https://usaco.guide/gold/PURS?lang=cpp#binary-indexed-tree'>binary indexed
+tree</a> with coordinate compression, or an
+<a href='https://usaco.guide/gold/PURS?lang=cpp#order-statistic-tree'>order statistic
+tree</a> in C++.
+<p>Implementation with order statistic tree (Benjamin Chen):
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#define ar array
+
+#include &lt;ext/pb_ds/assoc_container.hpp&gt;
+using namespace __gnu_pbds;
+
+template&lt;class T&gt; using Tree = tree&lt;T, null_type, less&lt;T&gt;, rb_tree_tag, tree_order_statistics_node_update&gt;;
+
+const int mxN=2e5;
+int n, l[mxN], r[mxN], k[mxN], ans[mxN], len_order[mxN], k_order[mxN];
+
+int main() {
+	ios::sync_with_stdio(0);
+	cin.tie(0);
+	cin &gt;&gt; n;
+	for (int i = 0; i &lt; n; ++i) {
+		cin &gt;&gt; l[i] &gt;&gt; r[i] &gt;&gt; k[i];
+		len_order[i] = k_order[i] = i;
+	}
+	sort(len_order, len_order + n, [](int a, int b) { return make_pair(r[a]-l[a], a) &gt; make_pair(r[b]-l[b], b); });
+	sort(k_order, k_order + n, [](int a, int b) { return make_pair(k[a], a) &gt; make_pair(k[b], b); });
+	Tree&lt;ar&lt;int, 2&gt;&gt; left_endpoints, right_endpoints;
+	for (int i = 0, j = 0; i &lt; n; ++i) {
+		for (; j &lt; n &amp;&amp; r[len_order[j]] - l[len_order[j]] &gt;= k[k_order[i]]; ++j) {
+			left_endpoints.insert({l[len_order[j]], j});
+			right_endpoints.insert({r[len_order[j]], j});
+		}
+		ans[k_order[i]] = j - 1;
+		ans[k_order[i]] -= j - left_endpoints.order_of_key({r[k_order[i]] - k[k_order[i]] + 1, -1});
+	   	ans[k_order[i]]	-= right_endpoints.order_of_key({l[k_order[i]] + k[k_order[i]], -1});
+	}
+	for (int i=0; i&lt;n; ++i)
+		cout &lt;&lt; ans[i] &lt;&lt; &quot;\n&quot;;
+	return 0;
+}
+</pre>
+<p>Implementation with binary indexed tree and coordinate compression (Brandon
+Wang):
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;iostream&gt;
+#include &lt;map&gt;
+ 
+const int MAXN = 200005;
+const int MAXT = 4 * MAXN + 5;
+ 
+int N;
+int l[MAXN];
+int r[MAXN];
+int k[MAXN];
+ 
+std::map&lt;int, int&gt; cc;
+std::vector&lt;int&gt; coords;
+ 
+std::pair&lt;int, std::pair&lt;int, int&gt;&gt; keys[MAXN];
+std::pair&lt;std::pair&lt;int,int&gt;, std::pair&lt;int,int&gt;&gt; queries[MAXN];
+ 
+int ans[MAXN];
+int lbit[MAXT];
+int rbit[MAXT];
+ 
+void input () {
+	std::cin &gt;&gt; N;
+	for (int i = 0; i &lt; N; i++) {
+		std::cin &gt;&gt; l[i] &gt;&gt; r[i] &gt;&gt; k[i];
+	}
+}
+ 
+void compress () {
+	for (int i = 0; i &lt; N; i++) {
+		coords.push_back(l[i]);
+		coords.push_back(r[i]);
+		coords.push_back(l[i] + k[i] - 1);
+		coords.push_back(r[i] - k[i] + 1);
+	}
+	std::sort(coords.begin(), coords.end());
+	int idx = 1;
+	for (int i = 0; i &lt; int(coords.size()); i++) {
+		cc[coords[i]] = idx;
+		idx++;
+	}
+}
+ 
+void proc () {
+	for (int i = 0; i &lt; N; i++) {
+		keys[i] = {r[i] - l[i], {cc[l[i]], cc[r[i]]}};
+		queries[i] = {{k[i], i}, {cc[l[i]+k[i]-1], cc[r[i]-k[i]+1]}};
+	}
+	std::sort(keys, keys+N);
+	std::sort(queries, queries+N);
+}
+ 
+void lupd (int x, int d) {
+	while (x &lt; MAXT) {
+		lbit[x] += d;
+		x += (x &amp; (-x));
+	}
+}
+ 
+void rupd (int x, int d) {
+	while (x &lt; MAXT) {
+		rbit[x] += d;
+		x += (x &amp; (-x));
+	}
+}
+ 
+int lqr (int x) {
+	if (x == 0) return 0;
+	return lbit[x] + lqr(x - (x &amp; (-x)));
+}
+ 
+int rqr (int x) {
+	if (x == 0) return 0;
+	return rbit[x] + rqr(x - (x &amp; (-x)));
+}
+ 
+void solve () {
+	int qdx = N-1;
+	for (int i = (N-1); i &gt;= 0; i--) {
+		while ((qdx &gt;= 0) &amp;&amp; (queries[qdx].first.first &gt; keys[i].first)) {
+			int idx = queries[qdx].first.second;
+			ans[idx] += (N-2-i);
+			ans[idx] -= rqr(queries[qdx].second.first);
+			ans[idx] -= (lqr(MAXT-1) - lqr(queries[qdx].second.second - 1));
+			// std::cout &lt;&lt; queries[qdx].first.second &lt;&lt; &quot; &quot; &lt;&lt; queries[qdx].second.first &lt;&lt; &quot; &quot; &lt;&lt; queries[qdx].second.second &lt;&lt; &quot;\n&quot;;
+			qdx--;
+		}
+		lupd(keys[i].second.first, 1);
+		// std::cout &lt;&lt; keys[i].second.first &lt;&lt; &quot; &quot; &lt;&lt; keys[i].second.second &lt;&lt; &quot;\n&quot;;
+		rupd(keys[i].second.second, 1);
+	}
+	while (qdx &gt;= 0) {
+		int idx = queries[qdx].first.second;
+		ans[idx] += (N-1);
+		ans[idx] -= rqr(queries[qdx].second.first);
+		ans[idx] -= (lqr(MAXT-1) - lqr(queries[qdx].second.second - 1));
+		// std::cout &lt;&lt; queries[qdx].first.second &lt;&lt; &quot; &quot; &lt;&lt; queries[qdx].second.first &lt;&lt; &quot; &quot; &lt;&lt; queries[qdx].second.second &lt;&lt; &quot;\n&quot;;
+		qdx--;
+	}
+}
+ 
+void print () {
+	for (int i = 0; i &lt; N; i++) {
+		std::cout &lt;&lt; ans[i] &lt;&lt; &quot;\n&quot;;
+	}
+}
+ 
+int main () {
+	std::cin.tie(0);
+	std::ios_base::sync_with_stdio(0);
+	input();
+	compress();
+	proc();
+	solve();
+	print();
+}
+</pre></body></html>

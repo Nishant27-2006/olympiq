@@ -1,0 +1,410 @@
+Solution ID: sol_prob2_platinum_open22
+Contest: OPEN22
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal)
+
+Subtask 1:
+
+$N \leq 100$
+
+,
+
+$M \leq 200$
+
+We can solve this subtask by creating a new graph of pairs of nodes from the old
+graph, where each pair
+
+$(a, b)$
+
+represents a game state where one token is on
+
+$a$
+
+and one token is on
+
+$b$
+
+. We can perform a search where we repeatedly remove
+nodes that are winning for the brain.
+
+In order to do this, we maintain for each pair
+
+$(a, b)$
+
+the amount of remaining
+pairs
+
+$(c, b)$
+
+such that
+
+$a \to c$
+
+is an edge in the original graph, and a
+similar amount of remaining pairs
+
+$(a, c)$
+
+. In the process of removing pairs, if
+one of these amounts becomes
+
+$0$
+
+for a certain pair
+
+$(a, b)$
+
+, then the brain can
+choose that token in order to win, so we remove
+
+$(a, b)$
+
+as well, then decrement
+the amounts for the appropriate other pairs by looking at incoming edges to
+
+$a$
+
+and
+
+$b$
+
+.
+
+At the end of this process, any remaining pairs represent game states from which
+the brain cannot win. We can then answer queries by simply checking whether they
+are a pair that was removed or not.
+
+The bottleneck in this algorithm is the part after removing a pair when we
+decrement the other appropriate pairs' amounts. Each edge
+
+$a \to c$
+
+is
+potentially considered as part of pairs
+
+$(c, b)$
+
+and
+
+$(b, c)$
+
+for all
+
+$b$
+
+,
+making the worst case runtime
+
+$O(N)$
+
+per edge and so
+
+$O(NM)$
+
+overall. This is
+far under the time limit, so less efficient variants of this solution could also
+have passed.
+
+Subtask 2:
+
+$N \le 5000$
+
+First note that if a node with a token on it has no outgoing edges, then the
+brain can win by simply choosing the token on that node to leave the hoof
+without any moves. This means that we can mark the nodes as such and then simply
+remove them from the graph. Furthermore, any nodes that now have no outgoing
+edges also represent a win for the brain, because the brain can repeatedly
+choose the token on those nodes, and eventually the token will reach a node with
+no outgoing edges. Therefore, we can repeatedly remove all nodes with no
+outgoing edges from the graph until all nodes remaining have at least one
+outgoing edge.
+
+Now, consider a node
+
+$a$
+
+with only a single outgoing edge to a different node
+
+$b$
+
+. Any token on
+
+$a$
+
+can clearly be moved to
+
+$b$
+
+. This means that we don't need
+to really consider
+
+$a$
+
+as being separate from
+
+$b$
+
+; if the brain can force the
+hoof to lose by making it so that both tokens would end up at
+
+$a$
+
+, the brain can
+also just force the hoof to lose by making it so that both tokens would end up
+at
+
+$b$
+
+, by making each token move once more. Therefore, we can "merge"
+
+$a$
+
+into
+
+$b$
+
+, meaning that
+
+$b$
+
+inherits all of
+
+$a$
+
+'s incoming edges. Then, just like
+before, some new nodes may now have only one outgoing edge because they
+previously had edges only to
+
+$a$
+
+and
+
+$b$
+
+, so we can merge those as well. At the
+end of this process, all nodes remaining in the graph will either have at least
+two outgoing edges, or a single edge to themself.
+
+We now make the critical observation that in a graph where every node has at
+least two outgoing edges, if the tokens start at different nodes, then no matter
+which token the brain picks each time, the hoof always has a valid node to move
+it into that isn't the location of the other node, and so the hoof always wins.
+This extends to graphs that also have nodes with only a single edge to
+themselves, because the hoof can just move the token across that single edge
+back to the same node, since the other token is at a different node.
+
+Therefore, after applying the above two reductions, we can answer a query for
+starting nodes
+
+$a$
+
+and
+
+$b$
+
+as follows:
+
+If either
+
+$a$
+
+or
+
+$b$
+
+was removed from the graph in the first reduction, then the
+brain wins. Otherwise, if
+
+$a$
+
+and
+
+$b$
+
+became the same node after the merging
+process in the second reduction, the brain still wins. Otherwise, the hoof wins.
+
+The two above reductions can be done fairly straightforwardly in
+
+$\mathcal O(N^2)$
+
+by maintaining a set of incoming edges and a set of outgoing
+edges for each node, then using DFS or BFS. Each query is answered in constant
+time, for an overall runtime of
+
+$\mathcal O(N^2 + Q)$
+
+.
+
+Subtask 3: No additional constraints
+
+The first reduction should actually already run in linear time if you use sets
+as suggested above. To improve the runtime of the second reduction, we can use
+small to large merging and union find. When we merge
+
+$a$
+
+into
+
+$b$
+
+, instead of
+simply adding all of
+
+$a$
+
+'s incoming edges to
+
+$b$
+
+'s, we add whichever set is
+smaller to whichever set is larger. This means that each edge is added to a set
+at most
+
+$\lg N$
+
+times. We then use union find to keep track of which node each
+node has been merged into. Whenever we find a node
+
+$a$
+
+to merge into a node
+
+$b$
+
+,
+we need to make sure to instead merge the union find root of
+
+$a$
+
+into the union
+find root of
+
+$b$
+
+.
+
+As each edge is merged at most
+
+$\lg N$
+
+times, the overall runtime becomes
+
+$\mathcal O(M\lg N + Q)$
+
+.
+
+Java code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Stack;
+import java.util.StringTokenizer;
+ 
+public class HoofAndBrain {
+    static int[] union;
+ 
+    static int find(int u) {
+        if (union[u] != union[union[u]]) {
+            union[u] = find(union[u]);
+        }
+        return union[u];
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        Set<Integer>[] adj = new Set[n + 1];
+        Set<Integer>[] rev = new Set[n + 1];
+        union = new int[n + 1];
+        for (int a = 1; a <= n; a++) {
+            adj[a] = new HashSet<>();
+            rev[a] = new HashSet<>();
+            union[a] = a;
+        }
+        for (; m > 0; m--) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            adj[a].add(b);
+            rev[b].add(a);
+        }
+        Stack<Integer> stack = new Stack<>();
+        for (int a = 1; a <= n; a++) {
+            if (adj[a].isEmpty()) {
+                stack.push(a);
+            }
+        }
+        while (!stack.isEmpty()) {
+            int a = stack.pop();
+            union[a] = 0;
+            for (int b : rev[a]) {
+                adj[b].remove(a);
+                if (adj[b].isEmpty()) {
+                    stack.push(b);
+                }
+            }
+        }
+        for (int a = 1; a <= n; a++) {
+            if (adj[a].size() == 1) {
+                stack.push(a);
+            }
+        }
+        while (!stack.isEmpty()) {
+            int a = stack.pop();
+            int c = 0;
+            for (int b : adj[a]) {
+                c = b;
+            }
+            a = find(a);
+            c = find(c);
+            if (a != c) {
+                if (rev[a].size() > rev[c].size()) {
+                    int temp = a;
+                    a = c;
+                    c = temp;
+                }
+                for (int b : rev[a]) {
+                    adj[b].remove(a);
+                    adj[b].add(c);
+                    if (adj[b].size() == 1) {
+                        rev[c].remove(b);
+                        stack.push(b);
+                    } else {
+                        rev[c].add(b);
+                    }
+                }
+                union[a] = c;
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q > 0; q--) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            int u = find(a);
+            int v = find(b);
+            if (u == 0 || v == 0 || u == v) {
+                out.append('B');
+            } else {
+                out.append('H');
+            }
+        }
+        System.out.println(out);
+ 
+    }
+}
+
+Exercise: Solve the problem where the hoof wins by not having a valid move, and
+the brain wins by the game continuing indefinitely.

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Note: I index the cows as <span class='math'>$0\ldots N-1$</span> rather than <span class='math'>$1\ldots N$</span>.
+<p>To solve this problem in <span class='math'>$\mathcal{O}(N^2)$</span> time, fix <span class='math'>$r$</span> and iterate over all
+possible <span class='math'>$l$</span> in decreasing order. Let <span class='math'>$\texttt{unique}_{l,r}$</span> equal the number
+of cows in the interval <span class='math'>$l\ldots r$</span> whose breeds are unique within that
+interval. When we decrease <span class='math'>$l$</span> by one,
+<p><ul><li>If <span class='math'>$B_l=B_r$</span>, then cow <span class='math'>$r$</span> cannot be a leader in <span class='math'>$l\ldots r$</span>. Break.</li><li>If <span class='math'>$B_l$</span> is unique in the range <span class='math'>$l\ldots r$</span>, then add
+<span class='math'>$\texttt{unique}_{l+1,r-1}$</span> to the answer and set
+<span class='math'>$\texttt{unique}_{l,r-1}=\texttt{unique}_{l+1,r-1}+1$</span>.</li><li>If <span class='math'>$B_l$</span> occurs exactly once in the range <span class='math'>$l+1\ldots r$</span>, then <span class='math'>$B_l$</span> was
+unique in <span class='math'>$l+1\ldots r$</span> but not <span class='math'>$l\ldots r$</span>. Set
+<span class='math'>$\texttt{unique}_{l,r-1}=\texttt{unique}_{l+1,r-1}-1$</span>.</li></ul>
+<p><pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main() {
+	int N; cin &gt;&gt; N;
+	vector&lt;int&gt; B(N); for (int&amp; b: B) cin &gt;&gt; b;
+	int64_t ans = 0;
+	for (int r = 0; r &lt; N; ++r) {
+		vector&lt;int&gt; occ(N+1);
+		int unique = 0;
+		for (int l = r-1; l &gt;= 0; --l) {
+			if (B[l] == B[r]) break;
+			int&amp; o = occ[B[l]]; ++o;
+			if (o == 1) {
+				ans += unique;
+				++unique;
+			} else if (o == 2) {
+				--unique;
+			}
+		}
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Essentially, we&apos;re computing arrays <span class='math'>$\texttt{active}_r[l]$</span>,
+<span class='math'>$\texttt{unique}_r[l]$</span>, <span class='math'>$\texttt{val}_r[l]$</span> for each <span class='math'>$r$</span> from <span class='math'>$0\ldots N-1$</span>. For
+each <span class='math'>$l\le r$</span>, define
+<p><ul><li><span class='math'>$\texttt{active}_r[l]=1$</span> if <span class='math'>$B_l$</span> is unique among <span class='math'>$B_l,B_{l+1},\ldots,B_r$</span>,
+and <span class='math'>$0$</span> otherwise.
+</li><li><span class='math'>$\texttt{unique}_r[l]=\texttt{unique}_{l+1,r-1}$</span>.</li><li><span class='math'>$\texttt{val}_r[l]=\texttt{active}_r[l]\cdot \texttt{unique}_{l+1,r-1}$</span>.</li></ul>
+<p>For every <span class='math'>$r$</span>, we add a suffix of <span class='math'>$\texttt{val}_r$</span> to the answer. 
+<p>To solve this problem in <span class='math'>$\mathcal{O}(N\log N)$</span> time, we must be able to
+efficiently transition from <span class='math'>$r-1$</span> to <span class='math'>$r$</span>. Define <span class='math'>$\texttt{prev_oc}[j]$</span> to equal
+the maximum index <span class='math'>$i&lt;j$</span> such that <span class='math'>$B_i=B_j$</span>. <span class='math'>$\texttt{active}_r$</span> and
+<span class='math'>$\texttt{unique}_r$</span> are the same as <span class='math'>$\texttt{active}_{r-1}$</span> and
+<span class='math'>$\texttt{unique}_{r-1}$</span> respectively except for the following changes:
+<p><ul><li><span class='math'>$\texttt{active}_r[r]=1$</span>.</li><li><span class='math'>$\texttt{active}_r[\texttt{prev_oc}[r]]=0$</span>.</li><li><span class='math'>$\texttt{unique}_r[\texttt{prev_oc}[r]\ldots r-1]$</span> must be incremented by
+<span class='math'>$1$</span>.</li><li><span class='math'>$\texttt{unique}_r[\texttt{prev_oc}[\texttt{prev_oc}[r]]\ldots \texttt{prev_oc}[r]-1]$</span>
+must be decremented by <span class='math'>$1$</span>.</li></ul>
+<p>These updates and range sum queries over <span class='math'>$\texttt{val}_r$</span> can be supported in 
+<span class='math'>$\mathcal{O}(\log N)$</span> time each using a
+<a href='https://usaco.guide/plat/RURQ#lazy-segment-tree'>segment tree with lazy
+propagation</a>. At each segment <span class='math'>$x\ldots y$</span> of the tree, maintain 
+<span class='math'>$\sum_{i=x}^y\texttt{active}_r[i]$</span>, <span class='math'>$\sum_{i=x}^y\texttt{val}_r[i]$</span>, and a lazy
+value that the values of all active indices in the segment should be increased
+by. You can check the analysis for
+<a href='https://www.usaco.org/current/data/sol_haybales_platinum_dec15.html'>Counting
+Haybales</a> for an introduction to lazy segment trees.
+<p><pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+using namespace std;
+
+using T = uint64_t;
+const int SZ = 1&lt;&lt;18;
+
+struct LazySeg {
+	T sum[2*SZ], lazy[2*SZ], num_active[2*SZ];
+	LazySeg() {
+		for (int i = 0; i &lt; SZ; ++i) 
+			num_active[SZ+i] = 1;
+		for (int i = SZ-1; i &gt; 0; --i) 
+			num_active[i] = num_active[2*i]+num_active[2*i+1];
+	}
+	void push(int ind, int L, int R) {
+		sum[ind] += num_active[ind]*lazy[ind];
+		if (L != R) for (int i = 0; i &lt; 2; ++i) 
+			lazy[2*ind+i] += lazy[ind];
+		lazy[ind] = 0;
+	}
+	void pull(int ind) {
+		sum[ind] = sum[2*ind]+sum[2*ind+1];
+		num_active[ind] = num_active[2*ind]+num_active[2*ind+1];
+	}
+	void increment(int lo,int hi, int val, int ind=1,int L=0, int R=SZ-1) {
+		push(ind,L,R); if (hi &lt; L || R &lt; lo) return;
+		if (lo &lt;= L &amp;&amp; R &lt;= hi) { 
+			lazy[ind] = val; push(ind,L,R); return; }
+		int M = (L+R)/2; 
+		increment(lo,hi,val,2*ind,L,M); 
+		increment(lo,hi,val,2*ind+1,M+1,R); 
+		pull(ind);
+	}
+	T query(int lo, int hi, int ind=1, int L=0, int R=SZ-1) {
+		push(ind,L,R); 
+		if (lo &gt; R || L &gt; hi) return 0;
+		if (lo &lt;= L &amp;&amp; R &lt;= hi) return sum[ind];
+		int M = (L+R)/2;
+		return query(lo,hi,2*ind,L,M)+query(lo,hi,2*ind+1,M+1,R);
+	}
+	void deactivate(int pos, int ind=1, int L=0, int R=SZ-1) {
+		push(ind,L,R); 
+		if (pos &gt; R || L &gt; pos) return;
+		if (pos &lt;= L &amp;&amp; R &lt;= pos) {
+			assert(num_active[ind] == 1);
+			sum[ind] = num_active[ind] = 0;
+			return;
+		}
+		int M = (L+R)/2; 
+		deactivate(pos,2*ind,L,M);
+		deactivate(pos,2*ind+1,M+1,R);
+		pull(ind);
+	}
+} Seg;
+
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	int N; cin &gt;&gt; N;
+	vector&lt;int&gt; B(N); for (int&amp; b: B) cin &gt;&gt; b;
+	vector&lt;int&gt; last(N+1,-1), prev_oc(N);
+	int64_t ans = 0;
+	for (int r = 0; r &lt; N; ++r) {
+		int&amp; last_oc = last[B[r]];
+		ans += Seg.query(last_oc+1,SZ-1);
+		if (last_oc != -1) {
+			Seg.deactivate(last_oc);
+			Seg.increment(prev_oc[last_oc],last_oc-1,-1);
+		}
+		Seg.increment(last_oc,r-1,1);
+		prev_oc[r] = last_oc; last_oc = r;
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class TriplesOfCows {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int[] last2 = new int[n + 1];
+        int[] last = new int[n + 1];
+        long answer = 0;
+        SegmentTree segTree = new SegmentTree(n);
+        for (int j = 1; j &lt;= n; j++) {
+            int k = Integer.parseInt(tokenizer.nextToken());
+            segTree.updateSingle(last[k], -1);
+            segTree.updateRange(last2[k] + 1, last[k] - 1, -1);
+            answer += segTree.query(last[k] + 1, j - 1);
+            segTree.updateRange(last[k] + 1, j - 1, 1);
+            segTree.updateSingle(j, 1);
+            last2[k] = last[k];
+            last[k] = j;
+        }
+        System.out.println(answer);
+    }
+ 
+    static class SegmentTree {
+        final int n;
+        final long[] value = new long[530000];
+        final long[] singles = new long[530000];
+        final long[] lazy = new long[530000];
+ 
+        SegmentTree(int n) {
+            this.n = n;
+        }
+ 
+        void propagate(int node) {
+            value[2 * node] += lazy[node] * singles[2 * node];
+            value[(2 * node) + 1] += lazy[node] * singles[(2 * node) + 1];
+            lazy[2 * node] += lazy[node];
+            lazy[(2 * node) + 1] += lazy[node];
+            lazy[node] = 0;
+        }
+ 
+        void updateSingle(int index, long delta, int node, int segFrom, int segTo) {
+            if (segFrom == segTo) {
+                value[node] += delta * lazy[node];
+                singles[node] += delta;
+            } else {
+                propagate(node);
+                int mid = (segFrom + segTo) / 2;
+                if (index &lt;= mid) {
+                    updateSingle(index, delta, 2 * node, segFrom, mid);
+                } else {
+                    updateSingle(index, delta, (2 * node) + 1, mid + 1, segTo);
+                }
+                value[node] = value[2 * node] + value[(2 * node) + 1];
+                singles[node] = singles[2 * node] + singles[(2 * node) + 1];
+            }
+        }
+ 
+        void updateSingle(int index, long delta) {
+            if (index &gt; 0) {
+                updateSingle(index, delta, 1, 1, n);
+            }
+        }
+ 
+        void updateRange(int from, int to, long delta, int node, int segFrom, int segTo) {
+            if (segTo &lt; from || to &lt; segFrom) {
+ 
+            } else if (from &lt;= segFrom &amp;&amp; segTo &lt;= to) {
+                value[node] += delta * singles[node];
+                lazy[node] += delta;
+            } else {
+                propagate(node);
+                int mid = (segFrom + segTo) / 2;
+                updateRange(from, to, delta, 2 * node, segFrom, mid);
+                updateRange(from, to, delta, (2 * node) + 1, mid + 1, segTo);
+                value[node] = value[2 * node] + value[(2 * node) + 1];
+                singles[node] = singles[2 * node] + singles[(2 * node) + 1];
+            }
+        }
+ 
+        void updateRange(int from, int to, long delta) {
+            updateRange(from, to, delta, 1, 1, n);
+        }
+ 
+        long query(int from, int to, int node, int segFrom, int segTo) {
+            if (segTo &lt; from || to &lt; segFrom) {
+                return 0;
+            } else if (from &lt;= segFrom &amp;&amp; segTo &lt;= to) {
+                return value[node];
+            } else {
+                propagate(node);
+                int mid = (segFrom + segTo) / 2;
+                return query(from, to, 2 * node, segFrom, mid) + query(from, to, (2 * node) + 1, mid + 1, segTo);
+            }
+        }
+ 
+        long query(int from, int to) {
+            return query(from, to, 1, 1, n);
+        }
+    }
+}
+</pre>
+<p></body></html>

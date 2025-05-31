@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have a series of observations about cows crossing a road and
+we want to count the number of times that we have confirmed that a cow has
+crossed the road.
+<p>Imagine that we only have one cow, and we have the list of observations for that
+cow. The only time when we can confirm that a cow has crossed the road is when
+some observation has the cow on one side of the road, and the observation
+immediately following that one has the cow on the other side of the road.
+<p>In the actual problem, we have 10 different cows. Since different cows are
+independent of each other, we can track their last known locations independently
+and then accumulate the total number of times we have confirmed that a cow has
+had a crossing.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class crossroad {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;crossroad.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;crossroad.out&quot;)));
+		
+		// read in the number of observations
+		int n = Integer.parseInt(br.readLine());
+		
+		// create an array to track the last known appearance of each cow
+		// lastSeen[cow] == 0 means we haven&apos;t seen the cow yet
+		// lastSeen[cow] == 1 means we have last seen the cow on the left side of the road
+		// lastSeen[cow] == 2 means we have last seen the cow on the right side of the road
+		int[] lastSeen = new int[11];
+		
+		// track the number of crossings that are confirmed
+		int crossings = 0;
+		for(int i = 0; i &lt; n; i++) {
+			// read in the data for one observation
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			int index = Integer.parseInt(st.nextToken());
+			int current = Integer.parseInt(st.nextToken())+1;
+			
+			// if we have seen a cow already and the last side we saw it on is different
+			// from the current side, then it is a confirmed crossing
+			if(lastSeen[index] &gt; 0 &amp;&amp; lastSeen[index] != current) {
+				crossings++;
+			}
+			
+			// update the last side we have seen the given cow on
+			lastSeen[index] = current;
+		}
+		
+		// print the answer
+		pw.println(crossings);
+		pw.close();
+	}
+}
+</pre>
+<p></body></html>

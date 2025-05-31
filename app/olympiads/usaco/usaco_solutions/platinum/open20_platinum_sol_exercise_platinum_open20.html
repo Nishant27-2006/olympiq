@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi, Sanjeev Murty)
+<p>Call the number of steps that a permutation requires the <strong>period</strong> of the
+permutation. Every permutation can be partitioned into cycles of sizes
+<span class='math'>$c_1,c_2,c_3,\ldots,c_k$</span>  such that <span class='math'>$c_1+c_2+\ldots+c_k=N$</span>. Then the  period is
+equal to <span class='math'>$\text{lcm}(c_1,c_2,\ldots,c_k)$</span>. 
+<p><strong>Subtask <span class='math'>$N\le 50$</span>:</strong> 
+<p>Maintain the number of possible permutations for each possible LCM of a
+permutation with <span class='math'>$n$</span> elements for each <span class='math'>$1\le n\le N$</span>. This number is quite small
+for <span class='math'>$N=50$</span> (it ends up being 1056) but grows quite rapidly. The number of
+permutations for a single LCM should be stored <span class='math'>$\pmod{M-1}$</span> because
+<span class='math'>$a^{M-1}\equiv 1\pmod{M}$</span> for all <span class='math'>$0&lt;a&lt;M$</span> (Fermat&apos;s Little Theorem). 
+<p><strong>Subtask <span class='math'>$N\le 500$</span>:</strong> 
+<p>In general, we can calculate the period of a permutation as follows:
+<p><ul><li>Start with the period equal to one.</li><li>Let <span class='math'>$p$</span> be a prime and <span class='math'>$k$</span> be a positive integer.</li><li>If <span class='math'>$D=p^k$</span> divides one of the cycle lengths then multiply the period by
+<span class='math'>$p$</span>.</li></ul>
+<p>So we can essentially solve the problem independently for each distinct prime
+power <span class='math'>$D$</span>. Doing this in <span class='math'>$O(N^2)$</span> for a single prime power is sufficient for
+this subtask.
+<p><strong>Subtask <span class='math'>$N\le 3000$</span>:</strong> 
+<p>If we can count the number of ways to create a permutation of length <span class='math'>$n$</span> for
+each <span class='math'>$n\in [1,N]$</span>  such that no cycle length is divisible by <span class='math'>$D$</span> in
+<span class='math'>$O\left(\frac{N^2}{D}\right)$</span> time,  then the solution runs in 
+<span class='math'>$O\left(N^2\cdot \sum_{D=1}^N\frac{1}{D}\right)=O\left(N^2\log N\right)$</span> time.
+<p><strong>Subtask <span class='math'>$N\le 7500$</span>:</strong> 
+<p>The high bound on <span class='math'>$N$</span> (hopefully) ensures that the above solution does not
+receive full credit. How can we do better?
+<p>Note that if <span class='math'>$2D&gt;N$</span> then we  can compute the number of permutations containing a
+cycle with length divisible by <span class='math'>$D$</span> in <span class='math'>$O(1)$</span> time (assuming that we have
+precomputed some quantities in <span class='math'>$O(N^2)$</span>). This is true because if  there is a
+cycle with length divisible by <span class='math'>$p^k$</span>, then there must be exactly one cycle with
+length equal to <span class='math'>$p^k$</span> (and the rest can have arbitrary lengths).
+<p>Let&apos;s try to generalize. Define <span class='math'>$D=p^k$</span>. Any permutation has between <span class='math'>$0$</span> and
+<span class='math'>$\left\lfloor\frac{N}{D}\right\rfloor$</span> cycles with length divisible by <span class='math'>$D$</span>. So
+it suffices to count each of the following quantities for each
+<span class='math'>$k\in \left[0,\left\lfloor\frac{N}{D}\right\rfloor\right]$</span>.
+<ul><li>The number of permutations of length <span class='math'>$Dk$</span> such that every cycle has length
+divisible by <span class='math'>$D$</span>.</li><li>The number of permutations of length <span class='math'>$N-Dk$</span> such that
+no cycle has length divisible by <span class='math'>$D$</span>.</li></ul>
+If we can count both of these in <span class='math'>$O\left(\frac{N^2}{D^2}\right)$</span> time, then this
+solution runs in 
+<span class='math'>$O\left(N^2\cdot \sum_{D=1}^{\infty}\frac{1}{D^2}\right)=O\left(N^2\cdot \frac{\pi^2}{6}\right)=O\left(N^2\right)$</span>
+time. 
+<p>Mark Chen&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+typedef long long LL;
+
+int n; LL m;
+ 
+typedef unsigned long long ull;
+typedef __uint128_t L;
+struct FastMod {
+    ull b, m;
+    FastMod(ull b) : b(b), m(ull((L(1) &lt;&lt; 64) / b)) {}
+    ull reduce(ull a) {
+        ull q = (ull)((L(m) * a) &gt;&gt; 64);
+        ull r = a - q * b; // can be proven that 0 &lt;= r &lt; 2*b
+        return r &gt;= b ? r - b : r;
+    }
+};
+FastMod f(2);
+ 
+LL mul(LL x, LL y) {
+    return f.reduce(x * y);
+}
+ 
+LL add(LL x, LL y) {
+    x += y;
+    if (x &gt;= m) x -= m;
+    return x;
+}
+ 
+LL sub(LL x, LL y) {
+    x -= y;
+    if (x &lt; 0) x += m;
+    return x;
+}
+ 
+LL powmod(LL a, LL b) {LL res=1; a %= (m+1); for(;b;b&gt;&gt;=1) {if (b&amp;1) res = res*a % (m+1); a = a*a % (m+1);} return res;}
+ 
+const int MAXN = 7505;
+LL factorial[MAXN], c[MAXN][MAXN];
+ 
+int main() {
+    freopen(&quot;exercise.in&quot;,&quot;r&quot;,stdin);
+    freopen(&quot;exercise.out&quot;,&quot;w&quot;,stdout);
+    cin &gt;&gt; n &gt;&gt; m;
+ 
+    m--;
+    f = FastMod(m);
+ 
+    factorial[0] = 1;
+    for (int i = 1; i &lt; MAXN; ++i) factorial[i] = mul(factorial[i-1], i);
+ 
+    c[1][0] = c[1][1] = 1;
+    for (int i = 2; i &lt; MAXN; i++) {
+        c[i][0] = c[i][i] = 1;
+        for (int j = 1; j &lt; i; j++) c[i][j] = add(c[i-1][j-1], c[i-1][j]);
+    }
+ 
+    vector&lt;int&gt; composite(MAXN);
+ 
+    LL ans = 1;
+ 
+    for (int i = 2; i &lt;= n; i++) {
+        if (!composite[i]) {
+            for (int j = i; j &lt;= n; j *= i) {
+                // count permutations of length j*k where ALL cycles are divisible by j
+                vector&lt;LL&gt; aj(n/j+1);
+                aj[0] = 1;
+ 
+                for (int k = 1; k &lt; n/j+1; k++) {
+                    for (int l = 1; l &lt;= k; l++) {
+                        aj[k] = add(aj[k], mul(mul(c[j*k-1][j*l-1], factorial[j*l-1]), aj[k-l]));
+                    }
+                }
+ 
+                // count permutations of length n-j*k where NO cycle is divisible by j
+                vector&lt;LL&gt; nj(n/j+1);
+ 
+                for (int k = n/j; k &gt;= 0; k--) {
+                    nj[k] = factorial[n-j*k];
+                    for (int l = k+1; l &lt;= n/j; l++) {
+                        nj[k] = sub(nj[k], mul(c[n-j*k][n-l*j], mul(aj[l-k], nj[l])));
+                    }
+                }
+ 
+                ans = (ans * powmod(i, sub(factorial[n], nj[0]))) % (m+1);
+            }
+ 
+            for (int j = 2*i; j &lt;= n; j += i) {
+                composite[j] = 1;
+            }
+        }
+    }
+ 
+    printf(&quot;%lld\n&quot;, ans);
+}
+</pre>
+<p>My code (which uses the principle of inclusion and exclusion):
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+void setIO(string s) {
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+    freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+ 
+typedef long long ll;
+const int MX = 7501;
+ 
+typedef unsigned long long ul;
+typedef __uint128_t L;
+struct ModFast {
+    ul b, m; ModFast(ul b) : b(b), m(ul((L(1)&lt;&lt;64)/b)) {}
+    ul reduce(ul a) {
+        ul q = (ul)((L(m)*a)&gt;&gt;64), r = a-q*b;
+        return r&gt;=b?r-b:r; }
+};
+ 
+ModFast MF(1);
+ 
+int M,MOD,n;
+int ad(int a, int b) { 
+    a += b; if (a &gt;= M) a -= M;
+    return a;
+}
+int sub(int a, int b) { 
+    a -= b; if (a &lt; 0) a += M;
+    return a; 
+}
+int mul(int a, int b) { return MF.reduce((ul)a*b); }
+ 
+int choose[MX][MX];
+int with(int z) { // # of permutations with z dividing some cycle length
+    int res = 0;
+    vector&lt;int&gt; dp(n/z+1); dp[0] = sub(0,1);
+    for (int i = 1; i &lt;= n/z; ++i) for (int j = 1; j &lt;= i; ++j)
+        dp[i] = sub(dp[i],mul(choose[i*z-1][j*z-1],dp[i-j]));
+    for (int i = 1; i &lt;= n/z; ++i) 
+        res = ad(res,mul(choose[n][n-i*z],dp[i]));
+    return res;
+}
+ 
+ll mpow(ll a, ll b) { return !b?1:mpow(a*a%MOD,b/2)*(b&amp;1?a:1)%MOD; }
+ 
+int main() {
+    setIO(&quot;exercise&quot;); 
+    cin &gt;&gt; n &gt;&gt; MOD; M = MOD-1; MF = ModFast(M);
+    for (int i = 0; i &lt;= n; ++i) {
+        choose[i][0] = 1;
+        for (int j = 0; j &lt; i; ++j) choose[i][j+1] = mul(choose[i][j],i-j);
+    }
+    vector&lt;bool&gt; comp(n+1); ll ans = 1;
+    for (int i = 2; i &lt;= n; ++i) if (!comp[i]) {
+        for (int j = 2*i; j &lt;= n; j += i) comp[j] = 1;
+        for (int j = i; j &lt;= n; j *= i) ans = ans*mpow(i,with(j))%MOD;
+    }
+    cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>It is possible to solve this problem more quickly if you are familiar with
+exponential generating functions (EGF).
+<a href='https://codeforces.com/blog/entry/75154?#comment-595888'>This comment</a>
+gives an explicit formula, which I&apos;ll try to explain here. From KACTL,  we have
+the following fact. Let <span class='math'>$g_S(n)$</span> be the number of <span class='math'>$n$</span>-permutations whose cycle
+lengths all belong to the set <span class='math'>$S$</span>. Letting <span class='math'>$S(x)=\sum_{n\in S}\frac{x^n}{n}$</span>, it
+follows that
+<div class='math'>$$\sum_{n=0}g_S(n)\frac{x^n}{n!}=\exp(S(x))=\sum_{k=0}^{\infty}\frac{S(x)^k}{k!}.$$</div>
+Essentially, the <span class='math'>$\frac{S(x)^k}{k!}$</span> term corresponds to the number of ways to
+form permutations with exactly <span class='math'>$k$</span> cycles. When all cycle lengths are valid,
+<div class='math'>$$S(x)=\sum_{n=1}^{\infty}\frac{x^n}{n}=-\ln(1-x)$$</div>
+and 
+<div class='math'>$$\exp(S(x))=\frac{1}{1-x}=1+x+x^2+\cdots,$$</div>
+which is clearly correct. If we want to exclude cycles with lengths that are
+multiples of <span class='math'>$z$</span>, then 
+<div class='math'>$$S(x)=-\ln(1-x)-\frac{1}{z}\cdot \sum_{k=1}^{\infty}\frac{x^{zk}}{k}=-\ln(1-x)+\frac{1}{z}\cdot \ln(1-x^z).$$</div>
+It follows that 
+<div class='math'>$$\exp(S(x))=\frac{(1-x^z)^{1/z}}{1-x}.$$</div>
+By the binomial theorem, the numerator has only terms with degree divisible by
+<span class='math'>$z$</span>. Letting <span class='math'>$d=\lfloor n/z\rfloor$</span> and <span class='math'>$[x^n]P(x)$</span> denote the coefficient of
+<span class='math'>$x^n$</span> in <span class='math'>$P(x)$</span>, it follows that
+<div class='math'>$$[x^n]\frac{(1-x^z)^{1/z}}{1-x}=[x^{zd}]\frac{(1-x^z)^{1/z}}{1-x^z}=[x^{zd}](1-x^z)^{1/z-1}.$$</div>
+By the binomial theorem, 
+<div class='math'>$$g_S(n)=n!\cdot (-1)^d\binom{1/z-1}{d}=\frac{n!}{d!}\prod_{i=1}^d(i-1/z)=\frac{n!}{d!z^d}\cdot \prod_{i=1}^d(zi-1).$$</div>
+So it turns out that we can replace part of the above code with
+<p><pre class='prettyprint'>
+int without(int z) {
+    int res = 1; 
+    for (int i = 1; i &lt;= n; ++i) {
+        if (i%z != 0) res = mul(res,i);
+        else res = mul(res,i-1);
+    }
+    return res;
+}
+int with(int z) { // # of permutations with z dividing some cycle length
+    return sub(choose[n][n],without(z));
+}
+</pre>
+<p>although this isn&apos;t actually faster since it still runs in
+<span class='math'>$O(N \pi(N)) = O(N^2 / \log N)$</span> time  (where <span class='math'>$\pi(N)$</span> denotes the number of
+primes that are at most <span class='math'>$N$</span>). 
+<p>Here is a way to derive this formula without generating functions (by Sanjeev):
+<p>(BEGIN)
+<p>We use <span class='math'>$(n)_k$</span> to denote <span class='math'>$n \cdot (n-1) \cdots (n-k+1)$</span>, the falling factorial.
+<p>Let <span class='math'>$a_n$</span> be the number of permutations that have no cycles with length dividing
+<span class='math'>$z$</span>. Then, if we imagine choosing the rest of the cycle that <span class='math'>$1$</span> belongs to then
+recursing, we have
+<p><div class='math'>$$
+a_n = \sum_{\substack{k = 1 \\ z \nmid k}}^n (n-1)_{k-1} a_{n-k}.
+$$</div>
+Expressing this in terms of <span class='math'>$a_{n-z}$</span>, we have
+<div class='math'>$$
+a_n = (n-1)_z a_{n-z} + \sum_{k=1}^{z-1} (n-1)_{k-1} a_{n-k}.
+$$</div>
+<p>You can think of the above as two cases: we choose a cycle of length greater
+than <span class='math'>$z$</span> or less than <span class='math'>$z$</span>.
+<p>Now consider the corresponding expression for <span class='math'>$a_{n-1}$</span>:
+<p><div class='math'>$$
+a_{n-1} = (n-2)_z a_{n-z-1} + \sum_{k=1}^{z-1} (n-2)_{k-1} a_{n-k-1}.
+$$</div>
+<p>If we subtract <span class='math'>$n-1$</span> times this expression from the expression for <span class='math'>$a_n$</span>, we get
+<p><div class='math'>$$\begin{align*}
+a_n &amp;= (n-1)_z a_{n-z} + (n-1) \Big[a_{n-1} - (n-2)_z a_{n-z-1} - (n-2)_{z-2} a_{n-z}\Big] + (n-1)_0 a_{n-1} \\
+&amp;= n a_{n-1} + (n-1)_{z-1} (n-z-1) a_{n-z} - (n-1)_{z+1} a_{n-z-1}. \\
+\end{align*}$$</div>
+<p>This already implies an <span class='math'>$O(n\pi(n))$</span> algorithm for the original problem after
+pre-computation, but we can do better. Manipulating the above, we see
+<p><div class='math'>$$\begin{align*}
+b_n \triangleq na_{n-1} - a_n &amp;= (n-1)_{z-1} (n-z-1) \Big[ (n-z) a_{n-z-1} - a_{n-z}\Big]  \\
+&amp;= (n-1)_{z-1} (n-z-1) b_{n-z}.
+\end{align*}$$</div>
+<p>From the initial conditions, we see that <span class='math'>$b_n$</span> is only nonzero when <span class='math'>$z \mid n$</span>.
+It is then straightforward by induction that <span class='math'>$b_n = a_{n-1}$</span> when <span class='math'>$z \mid n$</span>, so
+we have
+<p><div class='math'>$$
+a_n = \begin{cases}
+n a_{n-1} &amp; \text{if } z \nmid n \\
+(n-1) a_{n-1} &amp; \text{else}
+\end{cases}
+= \frac{n!}{z^{\left\lfloor n/z\right\rfloor} \left \lfloor n/z\right\rfloor!} \prod_{i=1}^{\left\lfloor n/z\right\rfloor} (zi - 1)
+$$</div>
+<p>If we precompute
+<span class='math'>$\frac{n!}{z^{\left\lfloor n/z\right\rfloor} \left\lfloor n/z\right\rfloor!}$</span>
+for all prime powers <span class='math'>$z \le n$</span> (noting that it is an integer), then after that
+we have an
+<div class='math'>$$
+O\left(\sum_{\substack{1 \le z \le n, \\ z = p^k}} \frac{n}{z} \right) = O(n \log \log n)
+$$</div>
+algorithm for the problem. First factorize <span class='math'>$M-1$</span> in <span class='math'>$O(\sqrt{M})$</span> time (or
+<span class='math'>$O(n)$</span>, since prime factors of <span class='math'>$M-1$</span> greater than <span class='math'>$n$</span> do not affect our answer).
+Then we can do this precomputation in <span class='math'>$O(n \log M)$</span> time by looping in
+increasing order of <span class='math'>$z$</span> and keeping track of the powers of the various prime
+factors of <span class='math'>$M-1$</span> in <span class='math'>$\frac{n!}{\left\lfloor n/z\right\rfloor!}$</span>, in addition to
+the part of it sharing no prime factors with <span class='math'>$M-1$</span>. For each prime power
+<span class='math'>$z = p^k$</span>, if it is coprime to <span class='math'>$M-1$</span>, we simply multiply
+<span class='math'>$\frac{n!}{\left\lfloor n/z\right\rfloor!}$</span> by
+<span class='math'>$z^{-\left\lfloor n/z\right\rfloor} \mod M-1$</span>. Otherwise, we subtract
+<span class='math'>$k \left\lfloor n/z\right\rfloor$</span> from the exponent of <span class='math'>$p$</span> we have been keeping
+track of. Our final time complexity (assuming a word size of
+<span class='math'>$\Omega(\max(\log n, \log M))$</span>) is then
+<p><div class='math'>$$
+O\left(n (\log \log n + \log M)\right),
+$$</div>
+<p>and we require <span class='math'>$O(n)$</span> space. The space can probably be improved to
+<span class='math'>$O(n / \log n)$</span>. Note that the constant factor for <span class='math'>$\log M$</span> is favorable, since
+it comes from the maximum number of primes dividing <span class='math'>$M-1$</span> (e.g. <span class='math'>$9$</span> for
+<span class='math'>$M\le10^9$</span>).
+<p>(END)
+<p>Another solution that runs in <span class='math'>$O(N\log N)$</span> time is to use divide and conquer to
+initialize a data structure that allows you to query any range product
+<span class='math'>$l\cdot (l+1)\cdots (r-1)\cdot r$</span> modulo <span class='math'>$M-1$</span> in constant time (where
+<span class='math'>$1\le l\le r\le N$</span>). This avoids the need to factorize <span class='math'>$M-1$</span>.
+<p></body></html>

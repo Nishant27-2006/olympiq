@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Suhas Nagar)
+<p>The minimal number of traversals to visit every node must be the number of
+leaves of the tree. If the starting room <span class='math'>$1$</span> is a leaf, we exclude it from this
+count. Let this number of leaves excluding the starting room be <span class='math'>$L$</span>.
+<p>Observation 1: The number of potions we can collect is bounded by the number of
+leaves of the tree. Since we have to explore a path (indicated by a new leaf)
+each iteration, the potions at <span class='math'>$p_{L+1}, p_{L+2}, \ldots, p_{N}$</span> will never
+spawn since we explore the tree by then so we can disregard them.
+<p>Observation 2: We notice that the order of <span class='math'>$p_1\dots p_L$</span> does not matter since
+we could just change the order that we make our traversals in.
+<p><strong>Subtask 1: <span class='math'>$N \leq 1000$</span>:</strong>
+<p>For each leaf <span class='math'>$l_i$</span>, we can greedily pair it with the closest potion <span class='math'>$p_i$</span> that
+is an ancestor of the leaf. 
+<p>Suppose this was not optimal. This means that <span class='math'>$l_i$</span> should get paired with some
+other <span class='math'>$p_j$</span> or not get paired at all. If <span class='math'>$l_i$</span> gets paired with some <span class='math'>$p_j$</span> and
+another leaf <span class='math'>$l_j$</span> pairs with <span class='math'>$p_i$</span>, this is equivalent to our greedy pairing
+since <span class='math'>$p_j$</span> must be an ancestor of <span class='math'>$p_i$</span> and therefore be able to pair with
+<span class='math'>$l_j$</span>. If <span class='math'>$l_i$</span> should not get paired and <span class='math'>$l_j$</span> should pair with <span class='math'>$p_i$</span>, this
+will still provide an equivalent answer to our construction. 
+<p>Since there are <span class='math'>$O(N)$</span> leaves with each leaf having up to <span class='math'>$O(N)$</span> nodes between
+it and the  nearest potion, this solution will run in <span class='math'>$O(N^2)$</span>.
+<p>Brandon Wang&apos;s C++ code:
+<pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+ 
+const int MAXN = 200005;
+ 
+int N;
+std::vector&lt;int&gt; adj[MAXN];
+int at[MAXN];
+int p[MAXN];
+int par[MAXN];
+ 
+void input () {
+	std::cin &gt;&gt; N;
+	for (int i = 0; i &lt; N; i++) {
+		std::cin &gt;&gt; p[i];
+	}
+	for (int i = 1; i &lt; N; i++) {
+		int a, b; std::cin &gt;&gt; a &gt;&gt; b;
+		adj[a].push_back(b);
+		adj[b].push_back(a);
+	}
+}
+ 
+void dfs (int v) {
+	for (auto &amp;u : adj[v]) {
+		if (u != par[v]) {
+			par[u] = v;
+			dfs(u);
+		}
+	}
+}
+ 
+void proc () {
+	int L = 0;
+	for (int i = 2; i &lt;= N; i++) {
+		L += (int(adj[i].size()) == 1);
+	}
+	for (int i = 0; i &lt; L; i++) {
+		at[p[i]]++;
+	}
+}
+ 
+bool grab (int v) {
+	while (v &gt; 0) {
+		if (at[v] &gt; 0) {
+			at[v]--;
+			return 1;
+		}
+		v = par[v];
+	}	
+	return 0;
+}
+ 
+int solve () {
+	int ans = 0;
+	for (int i = 2; i &lt;= N; i++) {
+		if (int(adj[i].size()) == 1) {
+			ans += grab(i);
+		}
+	}
+	return ans;
+}
+ 
+int main () {
+	input();
+	proc();
+	dfs(1);
+	std::cout &lt;&lt; solve() &lt;&lt; std::endl;
+}
+</pre>
+<p><strong>Full Credit:</strong>
+<p>Let <span class='math'>$C(i)$</span> be the number of leaves that node <span class='math'>$i$</span> is an ancestor of. Let <span class='math'>$P(i)$</span>
+be the number of potions collected by all the paths that go through node <span class='math'>$i$</span>.
+Building on observation <span class='math'>$1$</span>, we see that <span class='math'>$P(i) \leq C(i)$</span> across all nodes <span class='math'>$i$</span>.
+We can apply this fact recursively across all nodes to create our solution.
+<p>Let <span class='math'>$pot[i]$</span> be the number of potions that spawn at node <span class='math'>$i$</span>. To compute the
+value of <span class='math'>$P(i)$</span>, we can determine the values of <span class='math'>$P(c)$</span> for all children of <span class='math'>$i$</span>
+and sum them together: <span class='math'>$P(i) = \min(C(i),\sum_c P(c)+pot[i])$</span>. If we build this
+answer from the leaves up to the root, which can be done after the recursive
+step of a DFS iteration through the tree, we can compute our answer up to <span class='math'>$P(1)$</span>
+and print this as our answer.
+<p>We can apply a similar proof to subtask 1 to show why this works, because we are
+still pairing leaves with the closest potion that is an ancestor. Since we build
+this  answer recursively from the leaves up to the root, if
+<span class='math'>$\sum_c P(c) &lt; C(i)$</span>, this means that there are some unpaired leaves.
+Consequently, any potions found at node <span class='math'>$i$</span> are the closest potions that are
+ancestors of those unpaired leaves, so we can just pair them. On the other hand,
+if <span class='math'>$\sum_c P(c) = C(i)$</span>, that means that every leaf in this subtree has  already
+encountered a potion that is closer than the node that we are currently
+processing, so there is no leaf to pair with it. Since we only use a single DFS
+to compute these values, this solution runs in <span class='math'>$O(N)$</span>.
+<p>My code:
+<pre class='prettyprint'>
+import java.util.*;
+import java.io.*;
+ 
+public class PotionFarming {
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        int s = 0;
+        int[] pots = new int[n];
+        int i = 0;
+        for (String potion : in.readLine().split(&quot; &quot;)) {
+            pots[i++] = Integer.parseInt(potion)-1;
+        }
+        ArrayList[] graph = new ArrayList[n];
+        for (i = 0; i &lt; n; i++) {
+            graph[i] = new ArrayList();
+        }
+        for (i = 0; i &lt; n - 1; i++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken()) - 1;
+            int b = Integer.parseInt(tokenizer.nextToken()) - 1;
+            graph[a].add(b);
+            graph[b].add(a);
+        }
+        numleaves = new int[n];
+        int leaves = countleaves(s, -1, graph);
+        int[] modpots = new int[n];
+        for (i = 0; i &lt; leaves; i++) {
+            modpots[pots[i]]++;
+        }
+        System.out.println(countPotions(s, -1, graph, modpots));
+    }
+    public static int countPotions(int cur, int par, ArrayList[] graph, int[] modpots){
+        int sum = 0;
+        for (Object a : graph[cur]){
+            if ((int)a == par){
+                continue;
+            }
+            sum += countPotions((int)a,cur,graph, modpots);
+        }
+        sum += modpots[cur];
+        return Math.min(sum,numleaves[cur]);
+    }
+    public static int[] numleaves;
+    public static int countleaves(int cur, int par, ArrayList[] graph){
+        if ((graph[cur].size() == 1 &amp;&amp; (int)graph[cur].get(0) == par) || graph[cur].size() == 0){
+            numleaves[cur] = 1;
+            return 1;
+        }
+        int sum = 0;
+        for (Object a : graph[cur]){
+            if ((int)a == par){
+                continue;
+            }
+            sum += countleaves((int)a,cur,graph);
+        }
+        numleaves[cur] = sum;
+        return sum;
+    }
+}
+</pre>
+<p></body></html>

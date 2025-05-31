@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>Let&apos;s add the cows one by one into a <span class='math'>$1000 \times 1000$</span> boolean array <span class='math'>$A$</span>, where
+a <span class='math'>$1$</span> in position <span class='math'>$A[x][y]$</span> indicates that there is a cow at <span class='math'>$(x,y)$</span>, and
+otherwise <span class='math'>$A[x][y] = 0$</span>.
+<p>When a new cow is added, there are at most five cows who might either become
+comfortable or become uncomfortable: the new cow, plus any neighbors she might
+have. So before adding a cow into position <span class='math'>$(x,y)$</span>, we can count the number of
+neighbors who are comfortable; after adding we count the number of neighbors (or
+the new cow) who are comfortable, and we update a running counter (of
+comfortable cows) by the difference.
+<p>To make the code simpler, it helps to have a function which, given a position in
+the array, determines whether there is a comfortable cow at this location.
+<p>This algorithm runs in linear time, with only one pass through the input.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+using namespace std;
+#define MAXN 1001
+ 
+int N;
+bool A[MAXN][MAXN];
+int dx[] = {-1,1,0,0};
+int dy[] = {0,0,-1,1};
+ 
+bool valid_position(int x,int y)
+{
+	return x&gt;=0 &amp;&amp; x&lt;=N &amp;&amp; y&gt;=0 &amp;&amp; y&lt;=N;
+}
+ 
+bool comfortable(int x,int y)
+{
+	if(A[x][y] == 0) return 0;
+	int neighbors = 0;
+	for(int d=0;d&lt;4;d++)
+		if(valid_position(x+dx[d],y+dy[d]))
+			if(A[x+dx[d]][y+dy[d]])
+				neighbors++;
+	return neighbors == 3;
+}
+ 
+int main()
+{
+	int x,y;
+	cin &gt;&gt; N;
+	int nComfortable = 0;
+	for(int i=0;i&lt;N;i++)
+	{
+		cin &gt;&gt; x &gt;&gt; y;
+		for(int d=0;d&lt;4;d++)
+			if(valid_position(x+dx[d],y+dy[d]))
+				nComfortable -= comfortable(x+dx[d],y+dy[d]);
+		A[x][y] = 1;
+		for(int d=0;d&lt;4;d++)
+			if(valid_position(x+dx[d],y+dy[d]))
+				nComfortable += comfortable(x+dx[d],y+dy[d]);
+		nComfortable += comfortable(x,y);
+		cout &lt;&lt; nComfortable &lt;&lt; &apos;\n&apos;;
+	}
+}
+</pre>
+<p></body></html>

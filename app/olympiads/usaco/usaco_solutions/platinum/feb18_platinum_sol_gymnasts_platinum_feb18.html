@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>Consider any magical configuration. Let <span class='math'>$m$</span> be the minimum number of cows in any
+stack, and consider some stack <span class='math'>$i$</span> achieving this minimum. Then the <span class='math'>$m-1$</span> stacks
+before it will all &quot;contribute&quot;: that is, one cow from each of these stacks will
+land on stack <span class='math'>$i$</span>. But of course stack <span class='math'>$i$</span> contributes to itself, so we have
+already accounted for all <span class='math'>$m$</span> cows which land on stack <span class='math'>$i$</span>. This means that
+stack <span class='math'>$i-m$</span> (wrapping around the index if necessary) cannot contribute to stack
+<span class='math'>$m$</span>. So stack <span class='math'>$i-m$</span> must also have only <span class='math'>$m$</span> cows. Applying the above proof
+repeatedly, we see that if <span class='math'>$j \equiv i \pmod{g}$</span>, where <span class='math'>$g = \gcd(N,m)$</span>, then
+stack <span class='math'>$j$</span> must have only <span class='math'>$m$</span> cows.
+<p>We will show inductively that none of stacks <span class='math'>$i-1, i-2, \dots, i-g+1$</span> can have
+more than <span class='math'>$m+1$</span> cows. Start with stack <span class='math'>$i-1$</span>. If it had more than <span class='math'>$m+1$</span> cows,
+then it would contribute to stack <span class='math'>$i+m$</span>. But we know that stack <span class='math'>$i+m$</span> has only
+<span class='math'>$m$</span> cows, and we know that these <span class='math'>$m$</span> cows come from stacks
+<span class='math'>$i+1, i+2, \dots, i+m$</span>. So this is impossible.
+<p>More generally, consider stack <span class='math'>$i-k$</span> for some <span class='math'>$k&gt;0$</span>. There are two cases.
+<p>If stack <span class='math'>$i-k+1$</span> has <span class='math'>$m$</span> cows, then the logic we described for stack <span class='math'>$i-1$</span>
+applies: stack <span class='math'>$i-k$</span> cannot contribute to stack <span class='math'>$i-k+m+1$</span>, so it must have at
+most <span class='math'>$m+1$</span> cows. 
+<p>If on the other hand stack <span class='math'>$i-k+1$</span> does not have <span class='math'>$m$</span> cows, then by our inductive
+hypothesis it must have <span class='math'>$m+1$</span> cows. This implies that every stack <span class='math'>$j$</span>, where
+<span class='math'>$j \equiv i-k+1 \pmod{g}$</span>, must have exactly <span class='math'>$m+1$</span> cows: by a parallel
+induction, we know that every such stack can have at most <span class='math'>$m+1$</span> cows, and by the
+previous periodicity fact we proved above, if any such stack had <span class='math'>$m$</span> cows then
+stack <span class='math'>$i-k+1$</span> would also have <span class='math'>$m$</span> cows.
+<p>So in particular, stack <span class='math'>$i-k+m+1$</span> has exactly <span class='math'>$m+1$</span> cows. We know that each of
+the stacks <span class='math'>$i-k+2, i-k+3, \dots, i-k+m+1$</span> contribute to stack <span class='math'>$i-k+m+1$</span>, simply
+because they all have at least <span class='math'>$m$</span> cows. And we know that stack <span class='math'>$i-k+1$</span>
+contributes, since it has <span class='math'>$m+1$</span> cows. So stack <span class='math'>$i-k$</span> must not contribute to
+stack <span class='math'>$i-k+m+1$</span>. We conclude that stack <span class='math'>$i-k$</span> cannot have more than <span class='math'>$m+1$</span> cows.
+<p>This argument shows that every stack has either <span class='math'>$m$</span> or <span class='math'>$m+1$</span> cows. Together with
+the periodicity fact, this means that for every <span class='math'>$j$</span>, stack <span class='math'>$j$</span> has the same
+number of cows as stack <span class='math'>$j+g$</span>. So the configuration is periodic with period <span class='math'>$g$</span>.
+It is not hard to verify that any configuration satisfying these two properties
+is magical.
+<p>Now that we have characterized magical configurations, it remains to count them.
+Fix some <span class='math'>$m$</span>, and assume that <span class='math'>$m &lt; N$</span>. Then by our characterization above, there
+are <span class='math'>$2^{\gcd(N,m)} - 1$</span> magical configurations for which the minimum number of
+cows in any stack is <span class='math'>$m$</span>. Taking care of the case <span class='math'>$m = N$</span>, the total number of
+magical configurations is <div class='math'>$$2 - 2^N + \sum_{m=1}^N \left ( 2^{\gcd(m,N)} - 1 \right ).$$</div> Calculating
+this sum directly is too slow, and only receives partial credit. To speed it up,
+observe that for a fixed gcd <span class='math'>$g$</span>, the summand <span class='math'>$2^g$</span> is fixed. Furthermore, the
+number of times this summand appears in the sum is the number of <span class='math'>$m$</span> with
+<span class='math'>$1 \leq m \leq N$</span> and <span class='math'>$\gcd(m,N) = g$</span>. Equivalently, it is the number of <span class='math'>$m&apos;$</span>
+with <span class='math'>$1 \leq m&apos; \leq \frac{N}{g}$</span> and <span class='math'>$\gcd(m&apos;, \frac{N}{g}) = 1$</span>. But this is
+precisely <span class='math'>$\varphi(\frac{N}{g})$</span>, the Euler totient function of <span class='math'>$\frac{N}{g}$</span>.
+Therefore the sum is equal to
+<div class='math'>$$2 - N - 2^N + \sum_{g \mid N} 2^g \varphi(\frac{N}{g}).$$</div>
+<p>To efficiently compute this sum, we start by prime factorizing <span class='math'>$N$</span> in
+<span class='math'>$O(\sqrt{N})$</span> time: simply divide out all prime divisors of magnitude at most
+<span class='math'>$\sqrt{N}$</span>; the remaining number must be either <span class='math'>$1$</span> or prime, since <span class='math'>$N$</span> cannot
+have multiple prime factors of magnitude greater than <span class='math'>$\sqrt{N}$</span>.
+<p>Now the <span class='math'>$O(\sqrt{N})$</span> divisors of <span class='math'>$N$</span> can be enumerated quickly. For each
+divisor, we use fast exponentiation to compute <span class='math'>$2^g$</span>, and we compute the totient
+function using the formula
+<div class='math'>$$\varphi(p_1^{e_1}p_2^{e_2}\cdots p_i^{e_i}) = p_1^{e_1-1}p_2^{e_2-1}\cdots p_i^{e_i-1}(p_1-1)(p_2-1)\cdots(p_i-1).$$</div>
+<p>A simple (though by no means tight) bound on the overall time complexity is <span class='math'>$O(\sqrt{N}\log N)$</span>. Below is an implementation
+of the algorithm described above. Note that depth-first search is used to
+iterate over the divisors of <span class='math'>$N$</span>, allowing the totient function to be computed
+with only constant overhead.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+using namespace std;
+#define MOD 1000000007
+ 
+ 
+vector&lt;long long&gt; p;
+vector&lt;int&gt; e;
+int ans;
+long long origN;
+ 
+int fexp(int a,long long e)
+{
+	if(e==0) return 1;
+	int tmp = fexp(a,e/2);
+	tmp = (tmp*((long long)tmp))%MOD;
+	if(e&amp;1) tmp = (tmp*((long long)a))%MOD;
+	return tmp;
+}
+ 
+long long gcd(long long a,long long b)
+{
+	if(b==0) return a;
+	return gcd(b,a%b);
+}
+ 
+void dfs(int i,long long cdiv, long long sdiv, long long smult)
+{
+	if(i == p.size())
+	{
+		if(cdiv &lt; origN)
+			ans = (ans + fexp(2,cdiv)*((long long)((origN/(cdiv*sdiv))*smult)))%MOD;
+		return;
+	}
+	for(int j=0;j&lt;e[i];j++)
+	{
+		dfs(i+1,cdiv,sdiv*p[i],smult*(p[i]-1));
+		cdiv *= p[i];
+	}
+	dfs(i+1,cdiv,sdiv,smult);
+}
+ 
+int main()
+{
+	long long N;
+	cin &gt;&gt; N;
+	origN = N;
+	int i = 2;
+	long long bound = N;
+	for(i=2;i*((long long)i) &lt; bound;i++)
+		if(N%i == 0)
+		{
+			int mult = 0;
+			while(N%i == 0)
+			{
+				mult++;
+				N /= i;
+			}
+			p.push_back(i);
+			e.push_back(mult);
+		}
+	if(i*((long long)i) == bound &amp;&amp; N%i == 0)
+	{
+		int mult = 0;
+		while(N%i == 0)
+		{
+			mult++;
+			N /= i;
+		}
+		p.push_back(i);
+		e.push_back(mult);
+	}
+	if(N &gt; 1)
+	{
+		p.push_back(N);
+		e.push_back(1);
+	}
+	dfs(0,1,1,1);
+	ans = (ans + MOD - (origN - 1)%MOD)%MOD;
+	ans = (ans+1)%MOD;
+	cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

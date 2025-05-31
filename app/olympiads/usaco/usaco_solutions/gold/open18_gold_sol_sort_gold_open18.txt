@@ -1,0 +1,172 @@
+Solution ID: sol_sort_gold_open18
+Contest: OPEN18
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_sort_gold_open18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brian Dean)
+
+Look at the input array lined up against itself sorted, and imagine that we draw
+a line between position i and i+1:
+
+Input array A:  1   8   5  |  3   2
+Sorted version: 1   2   3  |  5   8
+                        i    i+1
+
+Let
+
+$M_i$
+
+be the number of elements that appear left of this line in
+
+$A$
+
+but
+right of the line in sort(
+
+$A$
+
+); equivalently, this is the same as the number of
+elements right of the line in
+
+$A$
+
+but left of the line in sort(
+
+$A$
+
+).  In some
+sense,
+
+$M_i$
+
+tells the amount of "flow" that needs to cross the line in either
+direction in order to sort
+
+$A$
+
+.
+
+We claim that each
+
+$M_i$
+
+is a lower bound on the answer, and that moreover the
+the maximum of the
+
+$M_i$
+
+'s is the answer (or 1 pass, as a special case, if all
+
+$M_i$
+
+'s are zero due to the array already being sorted). In short, this is
+because each iteration  of the bi-directed bubble sort "corrects" one of the
+
+$M_i$
+
+units of imbalance for the line between positions
+
+$i$
+
+and
+
+$i+1$
+
+by dragging one element that needs to go from left
+to right and then dragging one element that needs to go from right to left. 
+After
+
+$M_i$
+
+iterations, the elements up to position
+
+$i$
+
+will therefore all be no
+more than the elements in positions
+
+$i+1$
+
+onward.  If we run a number of
+iterations equal to the maximum of the
+
+$M_i$
+
+'s, the array will be correctly
+"partitioned" this way at every single possible location, which implies it must
+be sorted (if it weren't sorted, there would be some location
+
+$i$
+
+where
+
+$A[i] > A[i+1]$
+
+, contradicting the fact that the array is correctly partitioned
+between positions
+
+$i$
+
+and
+
+$i+1$
+
+).
+
+We can compute all the
+
+$M_i$
+
+'s using a binary indexed tree.  In my code below,
+we scan through sort(
+
+$A$
+
+) and at each position
+
+$i$
+
+we count the number of
+elements up to position
+
+$i$
+
+in the original array that have not yet been seen --
+this gives the value of
+
+$M_i$
+
+.
+
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int N, B[100001];
+pair<int,int> A[100001];
+
+// Concise implementation of a binary indexed tree
+void modify(int j) { for (; j<=N; j+=(j&-j)) B[j]++; }
+int prefix_sum(int j) { int sum = 0; for (; j>0; j-=(j&-j)) sum += B[j]; return sum; }
+
+int main(void)
+{
+  int answer = 1;
+  cin >> N;
+  for (int i=1; i<=N; i++) {
+    int x; 
+    cin >> x;
+    A[i] = make_pair(x, i);
+  }
+  sort (A+1, A+N+1);
+  for (int i=1; i<=N-1; i++) {
+    modify(A[i].second);
+    answer = max(answer, i - prefix_sum(i));
+  }
+  cout << answer << "\n";
+  return 0;
+}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Chris Zhang)
+<p>For the first two subtasks, we can just simulate. <span class='math'>$NK$</span> minutes will suffice
+because the sequence of positions of an individual cow will start repeating
+within that time. 
+<p>Now, onto the full solution. After the first <span class='math'>$K$</span> swaps, we compute where each
+cow ends up. If a cow started at the <span class='math'>$i$</span>-th position, let its new position be
+<span class='math'>$p_i$</span>. Letâs also track the set <span class='math'>$s_i$</span> of all positions that cow <span class='math'>$i$</span> reached
+during the <span class='math'>$K$</span> swaps. This does not take too much memory because the sum of the
+sizes of all sets <span class='math'>$s_i$</span> is bounded by <span class='math'>$2K+N$</span> (every swap, at most two cows move,
+thus adding at most two elements to the sets).
+<p>Letâs build a directed graph on the positions that shows how the cows move
+every <span class='math'>$K$</span> swaps. We have <span class='math'>$N$</span> directed edges from all <span class='math'>$i$</span> to <span class='math'>$p_i$</span>
+<span class='math'>$(1 \le i \le N)$</span>. This graph is a bunch of cycles because after <span class='math'>$K$</span> swaps,
+there is exactly one cow in each position, so the outdegree and indegree of each
+node is one. Therefore, the graph is a bunch of disjoint cycles (as with
+<a href='https://www.usaco.org/index.php?page=viewproblem2&amp;cpid=1014'>Swapity Swapity
+Swap</a>).
+<p>We claim that the answers for all cows in the same cycle are the same. Because
+everything repeats every <span class='math'>$K$</span> swaps, if two cows have ever been in the same
+position after a multiple of <span class='math'>$K$</span> swaps, they would visit the same positions
+eventually. After <span class='math'>$K$</span> swaps, cow <span class='math'>$i$</span> goes to position <span class='math'>$p_i$</span>, so the answers for
+cow <span class='math'>$i$</span> and cow <span class='math'>$p_i$</span> are the same. This logic extends to every cow in the cycle
+(the answer for cow <span class='math'>$p_i$</span> is equal to cow <span class='math'>$p_{p_i}$</span> and so on). 
+<p>So, what exactly is the answer for some cycle? Itâs the size of the union of
+all the sets <span class='math'>$s_i$</span> for each cow <span class='math'>$i$</span> in the cycle. In other words, the answer is
+the number of unique positions in all the sets in the cycle. The complexity of
+this solution is <span class='math'>$\mathcal{O}(N+K)$</span>.
+<p>Chrisâ code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int N,K;
+int A[200001],B[200001]; //input
+int P[100001]; //as described in analysis
+vector&lt;int&gt;S[100001]; //as described in analysis
+int from[100001]; //from[i] = where the cow in position i originated from
+int cnt[100001]; //array to keep track of uniquePos
+int uniquePos; //# of unique reachable positions
+
+//add in S_node
+void add(int node){
+  for (int x:S[node]){
+    if (cnt[x]==0)
+      uniquePos++;
+    cnt[x]++;
+  }
+}
+
+//remove S_node
+void remove(int node){
+  for (int x:S[node]){
+    if (cnt[x]==1)
+      uniquePos--;
+    cnt[x]--;
+  }
+}
+
+bool vis[100001];
+queue&lt;int&gt;q; //stores all nodes in current cycle
+
+void dfs(int node){
+  vis[node]=true;
+  add(node);
+  q.push(node);
+  if (!vis[P[node]])
+    dfs(P[node]);
+}
+
+int main(){
+  cin&gt;&gt;N&gt;&gt;K;
+  for (int i=0;i&lt;K;i++)
+    cin&gt;&gt;A[i]&gt;&gt;B[i];
+  //initialize from and S
+  for (int i=1;i&lt;=N;i++){
+    from[i]=i;
+    S[i].push_back(i);
+  }
+  //simulate the first K swaps, keeping track of where each position can reach
+  for (int i=0;i&lt;K;i++){
+    S[from[A[i]]].push_back(B[i]);
+    S[from[B[i]]].push_back(A[i]);
+    swap(from[A[i]],from[B[i]]);
+  }
+  //compute array P after first K swaps
+  for (int i=1;i&lt;=N;i++)
+    P[from[i]]=i;
+  int ans[100001];
+  //run a DFS on each cycle
+  for (int i=1;i&lt;=N;i++)
+    if (!vis[i]){
+      dfs(i);
+      int tempAns=uniquePos; //the answer 
+      //assign the answer for all nodes in the cycle, which we&apos;ve stored in this queue
+      while (!q.empty()){
+	remove(q.front());
+	ans[q.front()]=tempAns;
+	q.pop();
+      }
+    }
+  for (int i=1;i&lt;=N;i++)
+    cout&lt;&lt;ans[i]&lt;&lt;endl;
+  return 0;
+}
+</pre>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class DanceMoovesSilver {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int k = Integer.parseInt(tokenizer.nextToken());
+        int[] cows = new int[n + 1];
+        List&lt;Integer&gt;[] viewed = new List[n + 1];
+        for (int j = 1; j &lt;= n; j++) {
+            cows[j] = j;
+            viewed[j] = new ArrayList&lt;&gt;();
+            viewed[j].add(j);
+        }
+        for (long t = 1; t &lt;= k; t++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            int c = cows[a];
+            int d = cows[b];
+            cows[a] = d;
+            cows[b] = c;
+            viewed[cows[a]].add(a);
+            viewed[cows[b]].add(b);
+        }
+        int[] answer = new int[n + 1];
+        for (int r = 1; r &lt;= n; r++) {
+            if (cows[r] != 0) {
+                List&lt;Integer&gt; cycle = new ArrayList&lt;&gt;();
+                int j = r;
+                while (cows[j] != 0) {
+                    cycle.add(j);
+                    j = cows[j];
+                    cows[cycle.get(cycle.size() - 1)] = 0;
+                }
+                Set&lt;Integer&gt; viewedHere = new HashSet&lt;&gt;();
+                for (int cow : cycle) {
+                    viewedHere.addAll(viewed[cow]);
+                }
+                for (int cow : cycle) {
+                    answer[cow] = viewedHere.size();
+                }
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int j = 1; j &lt;= n; j++) {
+            out.append(answer[j]).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p></body></html>

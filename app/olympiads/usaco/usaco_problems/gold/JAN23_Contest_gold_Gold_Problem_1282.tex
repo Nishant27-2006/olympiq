@@ -1,0 +1,159 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN23 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+**Note: The time limit for this problem is 4s, twice the default.**
+
+Bessie wants to go to sleep, but the farm's lights are keeping her awake. How
+can she turn them off?
+
+Bessie has two bit strings of length $N$ ($2\le N\le 20$), representing a
+sequence of lights and a sequence of switches, respectively. Each light is
+either on (1) or off (0). Each switch is either active (1) or inactive (0).
+
+A *move* consists of the following sequence of operations:
+
+Toggle exactly one switch (set it to active if it is inactive, or vice
+versa).For each active switch, toggle the state of the corresponding light (turn it
+off if it is on, or vice versa).Cyclically rotate the switches to the right by one. Specifically, if the bit
+string corresponding to the switches is initially $s_0s_1\dots s_{N-1}$  then it
+becomes $s_{N-1}s_0s_1\dots s_{N-2}$.
+For $T$ ($1\le T\le 2\cdot 10^5$) instances of the problem above, count the
+minimum number of moves required to turn all the lights off. 
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+First line contains $T$ and $N$.
+
+Next $T$ lines each contain a pair of length-$N$ bit strings.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+For each pair, the minimum number of moves required to turn all the lights off.
+
+SAMPLE INPUT:
+4 3
+000 101
+101 100
+110 000
+111 000
+SAMPLE OUTPUT: 
+0
+1
+3
+2
+
+ First test case: the lights are already all off.  Second test
+case: We flip the third switch on the first move.  Third test case: we
+flip the first switch on the first move, the second switch on the second move,
+and the second switch again on the third move.  Fourth test case: we
+flip the first switch on the first move and the third switch on the second move.
+
+It can be shown that in each case this is the minimal number of moves necessary.
+
+SAMPLE INPUT:
+1 10
+1100010000 1000011000
+SAMPLE OUTPUT: 
+2
+
+It can be shown that $2$ moves are required to turn all lights off.
+ We flip the seventh switch on the first move and then again on the second
+move. 
+SCORING:
+Inputs 3-5: $N \le 8$Inputs 6-13: $N\le 18$Inputs 14-20: No additional constraints.
+
+
+Problem credits: William Yue, Eric Yang, and Benjamin Qi
+
+
+
+\section*{Input Format}
+Next $T$ lines each contain a pair of length-$N$ bit strings.
+
+OUTPUT FORMAT (print output to the terminal / stdout):For each pair, the minimum number of moves required to turn all the lights off.SAMPLE INPUT:4 3
+000 101
+101 100
+110 000
+111 000SAMPLE OUTPUT:0
+1
+3
+2First test case: the lights are already all off.Second test
+case: We flip the third switch on the first move.Third test case: we
+flip the first switch on the first move, the second switch on the second move,
+and the second switch again on the third move.Fourth test case: we
+flip the first switch on the first move and the third switch on the second move.It can be shown that in each case this is the minimal number of moves necessary.SAMPLE INPUT:1 10
+1100010000 1000011000SAMPLE OUTPUT:2It can be shown that $2$ moves are required to turn all lights off.We flip the seventh switch on the first move and then again on the second
+move.SCORING:Inputs 3-5: $N \le 8$Inputs 6-13: $N\le 18$Inputs 14-20: No additional constraints.Problem credits: William Yue, Eric Yang, and Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:4 3
+000 101
+101 100
+110 000
+111 000SAMPLE OUTPUT:0
+1
+3
+2First test case: the lights are already all off.Second test
+case: We flip the third switch on the first move.Third test case: we
+flip the first switch on the first move, the second switch on the second move,
+and the second switch again on the third move.Fourth test case: we
+flip the first switch on the first move and the third switch on the second move.It can be shown that in each case this is the minimal number of moves necessary.SAMPLE INPUT:1 10
+1100010000 1000011000SAMPLE OUTPUT:2It can be shown that $2$ moves are required to turn all lights off.We flip the seventh switch on the first move and then again on the second
+move.SCORING:Inputs 3-5: $N \le 8$Inputs 6-13: $N\le 18$Inputs 14-20: No additional constraints.Problem credits: William Yue, Eric Yang, and Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+4 3
+000 101
+101 100
+110 000
+111 000
+
+1 10
+1100010000 1000011000
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+0
+1
+3
+2
+
+It can be shown that in each case this is the minimal number of moves necessary.SAMPLE INPUT:1 10
+1100010000 1000011000SAMPLE OUTPUT:2It can be shown that $2$ moves are required to turn all lights off.We flip the seventh switch on the first move and then again on the second
+move.SCORING:Inputs 3-5: $N \le 8$Inputs 6-13: $N\le 18$Inputs 14-20: No additional constraints.Problem credits: William Yue, Eric Yang, and Benjamin Qi
+
+SAMPLE INPUT:1 10
+1100010000 1000011000SAMPLE OUTPUT:2It can be shown that $2$ moves are required to turn all lights off.We flip the seventh switch on the first move and then again on the second
+move.SCORING:Inputs 3-5: $N \le 8$Inputs 6-13: $N\le 18$Inputs 14-20: No additional constraints.Problem credits: William Yue, Eric Yang, and Benjamin Qi
+
+2
+
+SCORING:Inputs 3-5: $N \le 8$Inputs 6-13: $N\le 18$Inputs 14-20: No additional constraints.Problem credits: William Yue, Eric Yang, and Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1282
+
+\section*{Source}
+USACO JAN23 Contest, Gold Division, Problem ID: 1282
+
+\end{document}

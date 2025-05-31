@@ -1,0 +1,670 @@
+Solution ID: sol_prob3_platinum_feb25
+Contest: FEB25
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_feb25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Andi Qu)
+
+First, let's characterize Elsie's optimal choice. Bessie loses
+
+$a_i + b_i$
+
+points if she answers question
+
+$i$
+
+and Elsie changes it. As such, it is optimal
+for Elsie to change the top
+
+$k$
+
+questions Bessie answers, sorted by
+
+$a_i + b_i$
+
+.
+
+Observation 1:
+
+Sort the questions in ascending order of
+
+$a_i + b_i$
+
+, and
+suppose Bessie answers questions
+
+$q_1, \dots, q_{p + k}$
+
+where
+
+$1 \leq q_1 < \cdots < q_{p + k} \leq N$
+
+and
+
+$0 \leq p \leq N - k$
+
+. If Bessie
+acts optimally, then
+
+$q_i = i$
+
+for each
+
+$i = 1, \dots, p$
+
+. In other words,
+Bessie's optimal choice consists of some (possibly empty) prefix of the sorted
+questions and then
+
+$k$
+
+additional questions in the suffix.
+
+(Technically, the prefix extends up to
+
+$i = p + 1$
+
+when
+
+$k > 0$
+
+, but it's
+more convenient to split up Bessie's optimal choice at
+
+$p$
+
+.)
+
+Proof:
+
+Elsie will never change any questions in the prefix, so Bessie
+will only gain points by answering all of them.
+
+Using Observation 1, we can construct the following
+
+$O(QN^2 \log N)$
+
+algorithm
+to solve the first subtask:
+
+Sort the questions in ascending order of
+
+$a_i + b_i$
+
+.
+
+For each
+
+$k$
+
+:
+
+Iterate through the range of valid prefix lengths
+
+$p$
+
+.
+
+For each
+
+$p$
+
+, compute the sum of the
+
+$k$
+
+smallest
+
+$b_i$
+
+in the suffix and subtract it
+from the prefix sum of
+
+$a_i$
+
+. The result is the score for
+
+$p$
+
+. Formally:
+
+$$\text{score}[p] = \sum_{i = 1}^p a_i - \min_{p < q_{p + 1} < \cdots < q_{p + k} \leq N} \sum_{j = p + 1}^{p + k} b_{q_j}$$
+
+Output the best score.
+
+#include <algorithm>
+#include <iostream>
+#include <utility>
+typedef long long ll;
+using namespace std;
+ 
+const ll INF = 1e18;
+ 
+int n, q;
+pair<ll, ll> questions[200001];
+ll pref[200001], sorted_b[200001];
+ 
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        cin >> questions[i].first >> questions[i].second;
+    }
+    sort(questions + 1, questions + n + 1, [](pair<ll, ll> a, pair<ll, ll> b) {
+        return a.first + a.second < b.first + b.second;
+    });
+    for (int i = 1; i <= n; i++) {
+        pref[i] = pref[i - 1] + questions[i].first;
+    }
+    while (q--) {
+        int k;
+        cin >> k;
+        ll best_score = -INF;
+        for (int i = 0; i <= n - k; i++) {
+            ll score = pref[i];
+            for (int j = i + 1; j <= n; j++) {
+                sorted_b[j] = questions[j].second;
+            }
+            sort(sorted_b + i + 1, sorted_b + n + 1);
+            for (int j = i + 1; j <= i + k; j++) {
+                score -= sorted_b[j];
+            }
+            if (score >= best_score) {
+                best_score = score;
+            }
+        }
+        cout << best_score << '\n';
+    }
+    return 0;
+}
+
+A major bottleneck in this algorithm is that it spends
+
+$O(N \log N)$
+
+time
+computing the sum of the
+
+$k$
+
+smallest
+
+$b_i$
+
+in the suffix. This part of the
+algorithm seems like a variation of the classical range minimum/sum query, so we
+might hope to optimize it to
+
+$O(\log N)$
+
+per query.
+
+Indeed, there are several data structures we can use to optimize these queries.
+For example, a
+
+wavelet tree
+
+or
+
+persistent
+segment tree
+
+can answer these queries directly in
+
+$O(\log N)$
+
+time.
+
+However, we can use our algorithm's structure to simplify the data structures.
+Note that we are not making
+
+arbitrary range
+
+queries, but instead
+
+suffix
+
+queries that each differ in length by exactly 1. As such, we can
+iterate backward through the range of
+
+$p$
+
+and use a priority queue to keep track
+of the
+
+$k$
+
+smallest
+
+$b_i$
+
+in the current suffix. Each time we decrement
+
+$p$
+
+, we
+push one element to the queue and then pop one.
+
+#include <algorithm>
+#include <iostream>
+#include <utility>
+#include <queue>
+typedef long long ll;
+using namespace std;
+
+const ll INF = 1e18;
+
+int n, q;
+pair<ll, ll> questions[200001];
+ll pref[200001], sorted_b[200001];
+
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        cin >> questions[i].first >> questions[i].second;
+    }
+    sort(questions + 1, questions + n + 1, [](pair<ll, ll> a, pair<ll, ll> b) {
+        return a.first + a.second < b.first + b.second;
+    });
+    for (int i = 1; i <= n; i++) {
+        pref[i] = pref[i - 1] + questions[i].first;
+    }
+    while (q--) {
+        int k;
+        cin >> k;
+        ll k_min_sum = 0;
+        priority_queue<ll> k_min;
+        for (int i = n; i > n - k; i--) {
+            k_min.push(questions[i].second);
+            k_min_sum += questions[i].second;
+        }
+        ll best_score = pref[n - k] - k_min_sum;
+        for (int i = n - k; i > 0; i--) {
+            k_min.push(questions[i].second);
+            k_min_sum += questions[i].second;
+            k_min_sum -= k_min.top();
+            k_min.pop();
+            best_score = max(best_score, pref[i - 1] - k_min_sum);
+        }
+        cout << best_score << '\n';
+    }
+    return 0;
+}
+
+Another bottleneck in this algorithm is that we seem to be repeating a lot of
+work between values of
+
+$k$
+
+by scanning through the entire range of
+
+$p$
+
+each
+time. Intuitively, knowing Bessie's optimal choice for
+
+$k$
+
+should give us some
+information about her optimal choice for
+
+$k + 1$
+
+.
+
+Observation 2:
+
+Let
+
+$p^*[k]$
+
+be the optimal prefix length
+
+$p$
+
+for
+
+$k$
+
+(breaking ties by choosing the larger
+
+$p$
+
+). Then
+
+$p^*[k + 1] \leq p^*[k]$
+
+for
+each
+
+$k = 0, \dots, N - 1$
+
+.
+
+Proof:
+
+Let
+
+$\text{opt}[k]$
+
+be the optimal score for
+
+$k$
+
+. Assume for a
+contradiction that
+
+$p^*[k + 1] > p^*[k]$
+
+for some
+
+$k$
+
+. Suppose question
+
+$q_{k + 1}$
+
+has the
+
+$(k + 1)$
+
+-th smallest
+
+$b_i$
+
+in the suffix
+
+$p^*[k + 1] + 1, \dots, N$
+
+. By assumption, Bessie would choose to answer
+question
+
+$q_{k + 1}$
+
+for
+
+$k + 1$
+
+but not
+
+$k$
+
+. However:
+
+If
+
+$\text{opt}[k + 1] > \text{opt}[k] - b_{q_{k + 1}}$
+
+, then Bessie can
+improve her score for
+
+$k$
+
+by answering the same questions she would for
+
+$k + 1$
+
+,
+minus question
+
+$q_{k + 1}$
+
+. This contradicts the optimality of
+
+$p^*[k]$
+
+.
+
+If
+
+$\text{opt}[k + 1] < \text{opt}[k] - b_{q_{k + 1}}$
+
+, then Bessie can
+improve her score for
+
+$k + 1$
+
+by answering the same questions she would for
+
+$k$
+
+,
+plus question
+
+$q_{k + 1}$
+
+. This contradicts the optimality of
+
+$p^*[k + 1]$
+
+.
+
+If
+
+$\text{opt}[k + 1] = \text{opt}[k] - b_{q_{k + 1}}$
+
+, then Bessie can
+achieve the same score for
+
+$k$
+
+with a longer prefix. This contradicts the
+tie-breaking condition.
+
+Therefore,
+
+$p^*[k + 1] \leq p^*[k]$
+
+for each
+
+$k = 0, \dots, N - 1$
+
+.
+
+Using Observation 2, we can construct the following
+
+$O(N \log^2 N)$
+
+divide-and-conquer algorithm to solve the full problem:
+
+We want to find
+
+$p^*[k]$
+
+for each
+
+$k = k_l, \dots, k_r$
+
+, given that each
+
+$p^*[k] \in [p_l, p_r]$
+
+.
+
+Initially,
+
+$k_l = p_l = 0$
+
+and
+
+$k_r = p_r = N$
+
+Let
+
+$k_\text{mid} = \left\lfloor\frac{k_l + k_r}{2}\right\rfloor$
+
+and find
+
+$p^*[k_\text{mid}]$
+
+by iterating through the range
+
+$[p_l, p_r]$
+
+.
+
+We now
+know that:
+
+$p^*[k] \in [p^*[k_\text{mid}], p_r]$
+
+for each
+
+$k = k_l, \dots, k_\text{mid} - 1$
+
+.
+
+$p^*[k] \in [p_l, p^*[k_\text{mid}]]$
+
+for each
+
+$k = k_\text{mid} + 1, \dots, k_r$
+
+.
+
+Split the ranges
+
+$[k_l, k_r]$
+
+and
+
+$[p_l, p_r]$
+
+accordingly and recursively
+solve those two subproblems.
+
+Unfortunately, the priority queue approach described previously will not work
+with this algorithm. As such, the solution code below uses a persistent segment
+tree to handle range queries. However, it is possible to solve this problem
+using a regular segment tree or a doubly linked list by extending the idea of
+making point updates as
+
+$p$
+
+increments/decrements. (The doubly linked list
+approach would also remove a
+
+$\log N$
+
+factor from the time complexity.)
+
+#include <algorithm>
+#include <iostream>
+#include <utility>
+typedef long long ll;
+using namespace std;
+ 
+const ll INF = 1e18;
+ 
+int n, q;
+ 
+struct Question {
+    ll a, b;
+    int b_rank;
+} questions[200001];
+ 
+ll pref[200001], sorted_b[200001], ans[200001];
+ 
+struct Node {
+    Node *l, *r;
+    ll sum;
+    int cnt;
+ 
+    Node(ll s, int c) : l(nullptr), r(nullptr), sum(s), cnt(c) {}
+ 
+    Node(Node *_l, Node *_r) {
+        l = _l, r = _r;
+        sum = 0;
+        cnt = 0;
+        if (l) {
+            sum += l->sum;
+            cnt += l->cnt;
+        }
+        if (r) {
+            sum += r->sum;
+            cnt += r->cnt;
+        }
+    }
+} *roots[200001];
+ 
+Node *build(int l = 1, int r = n) {
+    if (l == r) return new Node(0, 0);
+    int mid = (l + r) / 2;
+    return new Node(build(l, mid), build(mid + 1, r));
+}
+ 
+Node *update(Node *node, Question val, int l = 1, int r = n) {
+    if (l == r) {
+        return new Node(node->sum + val.b, node->cnt + 1);
+    }
+    int mid = (l + r) / 2;
+    if (val.b_rank > mid) {
+        return new Node(node->l, update(node->r, val, mid + 1, r));
+    } else {
+        return new Node(update(node->l, val, l, mid), node->r);
+    }
+}
+ 
+ll k_min_sum(Node *l_node, Node *r_node, int k, int l = 1, int r = n) {
+    if (k == 0) return 0;
+    if (l == r) return sorted_b[l];
+    int mid = (l + r) / 2;
+    int l_cnt = r_node->l->cnt - l_node->l->cnt;
+    if (l_cnt >= k) {
+        return k_min_sum(l_node->l, r_node->l, k, l, mid);
+    } else {
+        return r_node->l->sum - l_node->l->sum +
+               k_min_sum(l_node->r, r_node->r, k - l_cnt, mid + 1, r);
+    }
+}
+ 
+void solve(int k_lo, int k_hi, int cut_lo, int cut_hi) {
+    if (k_lo > k_hi) return;
+    int k = (k_lo + k_hi) / 2;
+    int best_cut = cut_lo;
+    ans[k] = -INF;
+    for (int i = cut_lo; i <= min(cut_hi, n - k); i++) {
+        ll score = pref[i] - k_min_sum(roots[i], roots[n], k);
+        if (score >= ans[k]) {
+            ans[k] = score;
+            best_cut = i;
+        }
+    }
+    solve(k_lo, k - 1, best_cut, cut_hi);
+    solve(k + 1, k_hi, cut_lo, best_cut);
+}
+ 
+int main() {
+    cin.tie(0)->sync_with_stdio(0);
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        cin >> questions[i].a >> questions[i].b;
+    }
+    sort(questions + 1, questions + n + 1,
+         [](Question x, Question y) { return x.b < y.b; });
+    for (int i = 1; i <= n; i++) {
+        questions[i].b_rank = i;
+        sorted_b[i] = questions[i].b;
+    }
+    sort(questions + 1, questions + n + 1,
+         [](Question x, Question y) { return x.a + x.b < y.a + y.b; });
+    roots[0] = build();
+    for (int i = 1; i <= n; i++) {
+        roots[i] = update(roots[i - 1], questions[i]);
+    }
+    for (int i = 1; i <= n; i++) {
+        pref[i] = pref[i - 1] + questions[i].a;
+    }
+    solve(0, n, 0, n);
+    while (q--) {
+        int k;
+        cin >> k;
+        cout << ans[k] << '\n';
+    }
+    return 0;
+}

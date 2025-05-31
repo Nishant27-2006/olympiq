@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>The text of the problem gives us a fairly simple algorithm to implement - try every
+possible combination of picking one move for the first <span class='math'>$x$</span> moves and picking another
+move for the other <span class='math'>$N-x$</span> moves. <span class='math'>$x$</span> can take on <span class='math'>$N+1$</span> values, so there are at most <span class='math'>$9(N+1)$</span>
+different combinations to try, which is small enough that we could try all of them.
+<p>If we directly simulate trying out all combinations, it will take linear time to simulate
+a single one, giving us an <span class='math'>$O(N^2)$</span> algorithm which is too slow.
+<p>If we look carefully at the linear-time simulation, we&apos;re doing the same thing repeatedly -
+namely, taking a prefix of the list and counting how many items in the prefix take on
+a specific value, and doing the same for the suffix. If we were able to efficiently precompute, for
+every prefix, how many items in that prefix take on that value, then it would take
+constant time to simulate a single combination and our algorithm would be fast enough!
+<p>The key to note about precomputing the values quickly is that any given prefix of a list is
+just a smaller prefix of the list plus a single element. Therefore, if we precompute the desired
+values for the prefixes in increasing order of length of prefix, then we can compute all
+the values in linear time.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class hps {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;hps.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;hps.out&quot;)));
+		int n = Integer.parseInt(br.readLine());
+		int[] l = new int[n];
+		int[] lReverse = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			String s = br.readLine();
+			if(s.equals(&quot;P&quot;)) l[i] = 1;
+			else if(s.equals(&quot;S&quot;)) l[i] = 2;
+			lReverse[l.length-1-i] = l[i];
+		}
+		int[][] matchPrefix = getMatch(l);
+		int[][] matchSuffix = getMatch(lReverse);
+		
+		int ret = 0;
+		for(int a = 0; a &lt;= n; a++) {
+			for(int i = 0; i &lt; 3; i++) {
+				for(int j = 0; j &lt; 3; j++) {
+					ret = Math.max(ret, matchPrefix[i][a] + matchSuffix[j][n-a]);
+				}
+			}
+		}
+		
+		pw.println(ret);
+		pw.close();
+	}
+	
+	public static int[][] getMatch(int[] l) {
+		int[][] matches = new int[3][l.length+1];
+		for(int i = 0; i &lt; l.length; i++) {
+			for(int j = 0; j &lt; 3; j++) {
+				matches[j][i+1] = matches[j][i];
+			}
+			matches[l[i]][i+1]++;
+		}
+		return matches;
+	}
+	
+}	
+</pre></body></html>

@@ -1,0 +1,96 @@
+Solution ID: sol_prob1_bronze_dec21
+Contest: DEC21
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_dec21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+We need to count the number of substrings of length 3 that contain exactly one G
+or one H.
+
+The most direct solution involves checking every substring of length at least 3.
+There are
+
+$\mathcal{O}(N^2)$
+
+such substrings to check, and each one takes
+
+$\mathcal{O}(N)$
+
+time to validate, for a total runtime of
+
+$\mathcal{O}(N^3)$
+
+.
+
+To improve the performance of this solution, we can choose to check substrings
+in a specific order. In particular, fix the leftmost character in the substring
+and then start scanning to the right. If we have seen at least three characters
+and exactly one of them is G or one of them is H, increment a counter. Loop over
+all leftmost characters and then print the counter at the end. The approach of
+this solution is
+
+$\mathcal{O}(N^2)$
+
+.
+
+#include <iostream>
+#include <string>
+ 
+int main() {
+  int n;
+  std::string s;
+  std::cin >> n >> s;
+  int ans = 0;
+  for(int i = 0; i < (int)s.size(); i++) {
+    int g = 0;
+    int h = 0;
+    for(int j = i; j < (int)s.size(); j++) {
+      if(s[j] == 'G') g++;
+      else h++;
+      if(g+h >= 3 && (g==1 || h==1)) ans++;
+    }
+  }
+  std::cout << ans << "\n";
+}
+
+It is possible to solve this problem in
+
+$\mathcal{O}(N)$
+
+. For each character,
+let's count the number of photos in which that character is the odd one out. In
+the case where that character is G, the substring must either have at least two
+H's on one side of it or at least one H on both sides of it and no other
+occurrences of G. We can count the number of mismatching characters directly to
+the left and to the right and account for both cases.
+
+#include <iostream>
+#include <string>
+ 
+using namespace std;
+ 
+int main() {
+  int n;
+  string s;
+  cin >> n >> s;
+  int64_t ans = 0;
+  for(int i = 0; i < n; i++) {
+    int64_t lhs = 0;
+    if(i > 0 && s[i-1] != s[i]) {
+      lhs++;
+      for(int k = i-2; k >= 0 && s[k] == s[i-1]; k--) lhs++;
+    }
+    int64_t rhs = 0;
+    if(i+1 < n && s[i+1] != s[i]) {
+      rhs++;
+      for(int k = i+2; k < n && s[k] == s[i+1]; k++) rhs++;
+    }
+    ans += lhs * rhs + max(lhs-1, (int64_t)0) + max(rhs-1, (int64_t)0);
+  }
+  cout << ans << "\n";
+}

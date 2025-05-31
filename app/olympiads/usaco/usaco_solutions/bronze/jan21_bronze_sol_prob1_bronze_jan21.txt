@@ -1,0 +1,92 @@
+Solution ID: sol_prob1_bronze_jan21
+Contest: JAN21
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_jan21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+The minimum number of times Bessie must have hummed the cowphabet for a string of
+length
+
+$N$
+
+is at most
+
+$N$
+
+- we can just map the
+
+$i$
+
+th letter that Farmer John
+heard to the
+
+$i$
+
+th iteration that Bessie hummed.
+
+Because of this, we can naively try to see if it is possible to hum the cowphabet
+once to get Bessie's hummed string. If not, then we see if it's possible if
+Bessie hummed it twice, then three times, and so on.
+
+How do we validate that it is possible to hum the cowphabet
+
+$K$
+
+times to get the
+string that Farmer John heard? Consider the very first character that Bessie
+hummed. Does it match the first character that Farmer John heard? If not, then
+Farmer John must have ignored it, and we can discard this character.
+
+What happens if the two characters match? It seems that we have a choice to
+make, whether Farmer John might have missed this character in favor of a later
+one, or if Farmer John actually heard this character. We claim that if Farmer
+John could have heard the string that Bessie hummed, then it must be possible
+for Farmer John to have heard this specific character. If Farmer John could have
+heard the string without using this specific character, then the first character
+that Farmer John heard must have come strictly later. However, if that is the
+case, then we can safely replace that character with this one.
+
+Therefore, if two characters match, we can assert that Farmer John heard it, and
+then advance the character that Farmer John expects to hear to the next
+character.
+
+Some people may recognize this problem as the classical problem of determining
+if one string is a subsequence of another string.
+
+#include <iostream>
+ 
+int main() {
+  std::string alphabet, s;
+  std::cin >> alphabet >> s;
+  std::string hummed = "";
+  for(int numHums = 1; true; numHums++) {
+    hummed += alphabet;
+    int idx = 0;
+    for(int i = 0; i < hummed.size() && idx < s.size(); i++) {
+      if(hummed[i] == s[idx]) {
+        idx++;
+      }
+    }
+    if(idx == s.size()) {
+      std::cout << numHums << "\n";
+      return 0;
+    }
+  }
+}
+
+Can we do better than trying to brute force for the answer?
+
+If we consider two adjacent letters that Bessie hums, they can only be in the
+same iteration of the cowphabet if the latter character comes after the former
+character in the cowphabet. This lets us come up with a very short solution -
+notably, we can count the number of times a letter is not after the letter that
+immediately was heard before it in the cowphabet, and then the answer is just one
+larger than the number of times this inversion is observed.
+
+alphabet, hum = input(), input()
+print(1 + sum([alphabet.find(hum[i+1]) <= alphabet.find(hum[i]) for i in range(len(hum)-1)]))

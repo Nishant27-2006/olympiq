@@ -1,0 +1,74 @@
+Solution ID: sol_feast_gold_dec15
+Contest: DEC15
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_feast_gold_dec15.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nathan Pinsker)
+
+This is a standard
+
+knapsack
+problem
+
+with a bit of a twist. After Bessie drinks water once, her fullness
+value will
+
+decrease
+
+, but she won't be able to drink water again. A
+standard knapsack algorithm won't quite work here  because the maximum fullness
+Bessie can achieve might not be the result of a non-decreasing function.
+
+Since Bessie can only drink water once, we can separate the problem into two
+cases: the case where  Bessie can still drink, and the case where she has
+already drunk. In both cases, we can run standard  knapsack. Furthermore, notice
+that if we first handle the case where Bessie can still drink, then this allows
+us to obtain all possible points at which Bessie can start eating again, right
+after drinking. Then, we can just run another standard knapsack algorithm on the
+second case, now that we have the  list of possible starting locations. Taking
+the maximum obtainable value over both cases gives us  the answer.
+
+Here is Nick Wu's code that implements this idea. (He sets seen[0][X] to true if
+Bessie can attain X units of fullness without drinking water, and seen[1][X]
+to true if Bessie can attain X  units of fullness after drinking water.)
+
+import java.io.*;
+import java.util.*;
+public class feast {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader("feast.in"));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int t = Integer.parseInt(st.nextToken());
+		int x = Integer.parseInt(st.nextToken());
+		int y = Integer.parseInt(st.nextToken());
+		boolean[][] seen = new boolean[2][t+1];
+		seen[0][0] = true;
+		for(int a = 0; a < seen.length; a++) {
+			for(int i = 0; i < seen[a].length; i++) {
+				if(!seen[a][i]) {
+					continue;
+				}
+				if(i+x <= t) {
+					seen[a][i+x] = true;
+				}
+				if(i+y <= t) {
+					seen[a][i+y] = true;
+				}
+				if(a+1 < seen.length) {
+					seen[a+1][i/2] = true;
+				}
+			}
+		}
+		int ret = t;
+		while(!seen[1][ret]) {
+			ret--;
+		}
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("feast.out")));
+		pw.println(ret);
+		pw.close();
+	}
+}

@@ -1,0 +1,107 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: DEC16 Contest - Bronze Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Farmer John has decided to update his farm to simplify its geometry. 
+Previously, his cows grazed in two rectangular fenced-in pastures.  Farmer John
+would like to replace these with a single square fenced-in pasture of minimum
+size that still covers all the regions of his farm that were previously enclosed
+by the former two fences.
+
+Please help Farmer John figure out the minimum area he needs to make his new
+square pasture so that if he places it appropriately, it can still cover all the
+area formerly covered by the two older rectangular pastures.  The square
+pasture should have its sides parallel to the x and y axes.
+
+INPUT FORMAT (file square.in):
+The first line in the input file specifies one of the original rectangular
+pastures with four space-separated integers $x_1$ $y_1$ $x_2$ $y_2$,  each in
+the range $0 \ldots 10$.  The lower-left corner of the pasture is at the point
+$(x_1, y_1)$, and the upper-right corner is at the point $(x_2, y_2)$, where 
+$x_2 > x_1$ and $y_2 > y_1$.
+
+The second line of input has the same 4-integer format as the first line, and
+specifies the second original rectangular pasture.  This pasture will not
+overlap or touch the first pasture.
+
+OUTPUT FORMAT (file square.out):
+The output should consist of one line containing the minimum area required of a
+square pasture that would cover all the regions originally enclosed by the two
+rectangular pastures.  
+
+SAMPLE INPUT:
+6 6 8 8
+1 8 4 9
+SAMPLE OUTPUT: 
+49
+
+In the example above, the first original rectangle has corners $(6,6)$ and
+$(8,8)$. The second has corners at $(1,8)$ and $(4,9)$.  By drawing a square fence
+of side length 7 with corners $(1,6)$ and $(8,13)$, the original areas can still be enclosed; moreover, this is the best possible, since it is impossible to enclose the original areas with a square of side length only 6.  Note that there are several different possible valid placements for the square of side length 7, as it could have been shifted vertically a bit.
+
+
+Problem credits: Brian Dean
+
+
+
+\section*{Input Format}
+The second line of input has the same 4-integer format as the first line, and
+specifies the second original rectangular pasture.  This pasture will not
+overlap or touch the first pasture.
+
+OUTPUT FORMAT (file square.out):The output should consist of one line containing the minimum area required of a
+square pasture that would cover all the regions originally enclosed by the two
+rectangular pastures.SAMPLE INPUT:6 6 8 8
+1 8 4 9SAMPLE OUTPUT:49In the example above, the first original rectangle has corners $(6,6)$ and
+$(8,8)$. The second has corners at $(1,8)$ and $(4,9)$.  By drawing a square fence
+of side length 7 with corners $(1,6)$ and $(8,13)$, the original areas can still be enclosed; moreover, this is the best possible, since it is impossible to enclose the original areas with a square of side length only 6.  Note that there are several different possible valid placements for the square of side length 7, as it could have been shifted vertically a bit.Problem credits: Brian Dean
+
+\section*{Output Format}
+SAMPLE INPUT:6 6 8 8
+1 8 4 9SAMPLE OUTPUT:49In the example above, the first original rectangle has corners $(6,6)$ and
+$(8,8)$. The second has corners at $(1,8)$ and $(4,9)$.  By drawing a square fence
+of side length 7 with corners $(1,6)$ and $(8,13)$, the original areas can still be enclosed; moreover, this is the best possible, since it is impossible to enclose the original areas with a square of side length only 6.  Note that there are several different possible valid placements for the square of side length 7, as it could have been shifted vertically a bit.Problem credits: Brian Dean
+
+\section*{Sample Input}
+\begin{verbatim}
+6 6 8 8
+1 8 4 9
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+49
+
+In the example above, the first original rectangle has corners $(6,6)$ and
+$(8,8)$. The second has corners at $(1,8)$ and $(4,9)$.  By drawing a square fence
+of side length 7 with corners $(1,6)$ and $(8,13)$, the original areas can still be enclosed; moreover, this is the best possible, since it is impossible to enclose the original areas with a square of side length only 6.  Note that there are several different possible valid placements for the square of side length 7, as it could have been shifted vertically a bit.Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+
+Problem credits: Brian Dean
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=663
+
+\section*{Source}
+USACO DEC16 Contest, Bronze Division, Problem ID: 663
+
+\end{document}

@@ -1,0 +1,130 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB25 Contest - Bronze Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+You are given an array $a$ of $N$ non-negative integers $a_1, a_2, \dots, a_N$
+($1\le N\le 2\cdot 10^5, 0\le a_i\le N$). In one operation, you can change any
+element of $a$ to any non-negative integer.
+
+The mex of an array is the minimum non-negative integer that it does not
+contain. For each $i$ in the range $0$ to $N$ inclusive, compute the minimum
+number of operations you need  in order to make the mex of $a$ equal $i$.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$.
+
+The next line contains $a_1,a_2,\dots, a_N$.
+
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+For each $i$ in the range $0$ to $N$, output the minimum number of operations
+for $i$ on a new line. Note that it is always possible to make the mex of $a$
+equal to any $i$ in the range $0$ to $N$.
+
+SAMPLE INPUT:
+4
+2 2 2 0
+SAMPLE OUTPUT: 
+1
+0
+3
+1
+2
+
+To make the mex of $a$ equal to $0$, we can change $a_4$ to $3$ (or any
+positive integer). In the resulting array, $[2, 2, 2, 3]$, $0$ is the smallest
+non-negative integer that the array does not contain, so $0$ is the mex of the
+array.To make the mex of $a$ equal to $1$, we don't need to make any changes since
+$1$ is already the smallest non-negative integer that $a = [2, 2, 2, 0]$ does
+not contain.To make the mex of $a$ equal to $2$, we need to change the first three
+elements of $a$. For example, we can change $a$ to be $[3, 1, 1, 0]$.
+SCORING:
+Inputs 2-6: $N\le 10^3$Inputs 7-11: No additional constraints.
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+The next line contains $a_1,a_2,\dots, a_N$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):For each $i$ in the range $0$ to $N$, output the minimum number of operations
+for $i$ on a new line. Note that it is always possible to make the mex of $a$
+equal to any $i$ in the range $0$ to $N$.SAMPLE INPUT:4
+2 2 2 0SAMPLE OUTPUT:1
+0
+3
+1
+2To make the mex of $a$ equal to $0$, we can change $a_4$ to $3$ (or any
+positive integer). In the resulting array, $[2, 2, 2, 3]$, $0$ is the smallest
+non-negative integer that the array does not contain, so $0$ is the mex of the
+array.To make the mex of $a$ equal to $1$, we don't need to make any changes since
+$1$ is already the smallest non-negative integer that $a = [2, 2, 2, 0]$ does
+not contain.To make the mex of $a$ equal to $2$, we need to change the first three
+elements of $a$. For example, we can change $a$ to be $[3, 1, 1, 0]$.SCORING:Inputs 2-6: $N\le 10^3$Inputs 7-11: No additional constraints.Problem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:4
+2 2 2 0SAMPLE OUTPUT:1
+0
+3
+1
+2To make the mex of $a$ equal to $0$, we can change $a_4$ to $3$ (or any
+positive integer). In the resulting array, $[2, 2, 2, 3]$, $0$ is the smallest
+non-negative integer that the array does not contain, so $0$ is the mex of the
+array.To make the mex of $a$ equal to $1$, we don't need to make any changes since
+$1$ is already the smallest non-negative integer that $a = [2, 2, 2, 0]$ does
+not contain.To make the mex of $a$ equal to $2$, we need to change the first three
+elements of $a$. For example, we can change $a$ to be $[3, 1, 1, 0]$.SCORING:Inputs 2-6: $N\le 10^3$Inputs 7-11: No additional constraints.Problem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+4
+2 2 2 0
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+1
+0
+3
+1
+2
+
+To make the mex of $a$ equal to $0$, we can change $a_4$ to $3$ (or any
+positive integer). In the resulting array, $[2, 2, 2, 3]$, $0$ is the smallest
+non-negative integer that the array does not contain, so $0$ is the mex of the
+array.To make the mex of $a$ equal to $1$, we don't need to make any changes since
+$1$ is already the smallest non-negative integer that $a = [2, 2, 2, 0]$ does
+not contain.To make the mex of $a$ equal to $2$, we need to change the first three
+elements of $a$. For example, we can change $a$ to be $[3, 1, 1, 0]$.SCORING:Inputs 2-6: $N\le 10^3$Inputs 7-11: No additional constraints.Problem credits: Benjamin Qi
+
+SCORING:Inputs 2-6: $N\le 10^3$Inputs 7-11: No additional constraints.Problem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1492
+
+\section*{Source}
+USACO FEB25 Contest, Bronze Division, Problem ID: 1492
+
+\end{document}

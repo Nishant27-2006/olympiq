@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>This problem can be solved with flood fill. We loop over all ice cream cells,
+and depth-first search or breadth-first search to label the entire blob
+containing the cell. Ordinarily this would take <span class='math'>$O(N^4)$</span> time, since each search
+could take <span class='math'>$O(N^2)$</span> time and we perform <span class='math'>$O(N^2)$</span> searches. However, if a cell
+has already been visited by a previous search (i.e. it is in the same component
+as a previously seen cell) then we can skip it, since the cells in its component
+have already been labelled. Thus, every cell is only visited once, so the
+complexity of all the searches together is only <span class='math'>$O(N^2)$</span>, which runs in time.
+<p>Now each ice cream cell is labelled with a &quot;blob ID&quot;. Now we need to find the
+area and perimeter of each blob. Area is simply the number of cells labelled
+with this ID, and the perimeter is the sum over all cells in the region of the
+number of &quot;border edges&quot; of that cell: that is, the number of empty-space cells
+adjacent to that ice cream cell.
+<p>Hence, we can initialize the area and perimeter of each region to zero, and
+compute them incrementally by making a final pass over the grid.
+<p>Once all areas and perimeters are computed, it is a simple matter to find the
+largest area, and among those blobs with largest area, find the smallest
+perimeter.
+<p>Brian Dean&apos;s code is below.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;vector&gt;
+#include &lt;stack&gt;
+using namespace std;
+ 
+int N, R;
+char grid[1002][1002]; // pad with .&apos;s
+int region[1002][1002], area[1000000], perimeter[1000000];
+ 
+typedef pair&lt;int,int&gt; pii;
+void visit(int i, int j, int r)
+{
+  stack&lt;pii&gt; to_visit;
+  to_visit.push(make_pair(i,j));
+  while (!to_visit.empty()) {
+    pii current = to_visit.top();
+    to_visit.pop();
+    i = current.first; j = current.second;
+    if (region[i][j] != 0 || grid[i][j]==&apos;.&apos;) continue;
+    region[i][j] = R;
+    area[R]++;
+    to_visit.push(make_pair(i-1,j));
+    to_visit.push(make_pair(i+1,j));
+    to_visit.push(make_pair(i,j-1));
+    to_visit.push(make_pair(i,j+1));
+  }
+}
+ 
+void find_perimeters(void)
+{
+  for (int i=1; i&lt;=N; i++)
+    for (int j=1; j&lt;=N; j++) {
+      int r = region[i][j];
+      if (r == 0) continue;
+      if (region[i-1][j]==0) perimeter[r]++;
+      if (region[i+1][j]==0) perimeter[r]++;
+      if (region[i][j-1]==0) perimeter[r]++;
+      if (region[i][j+1]==0) perimeter[r]++;
+    }
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;perimeter.in&quot;);
+  fin &gt;&gt; N;
+  string s;
+  for (int i=0; i&lt;N+2; i++) grid[0][i] = grid[N+1][i] = &apos;.&apos;;    
+  for (int i=1; i&lt;=N; i++) {
+    grid[i][0] = grid[i][N+1] = &apos;.&apos;;
+    fin &gt;&gt; s;
+    for (int j=1; j&lt;=N; j++) grid[i][j] = s[j-1];
+  }
+  
+  for (int i=1; i&lt;=N; i++)
+    for (int j=1; j&lt;=N; j++)
+      if (grid[i][j] == &apos;#&apos; &amp;&amp; region[i][j] == 0) visit(i,j,++R);
+  
+  find_perimeters();
+ 
+  int best_a=0, best_p=0;
+  for (int i=1; i&lt;=R; i++) 
+    if (area[i] &gt; best_a || (area[i] == best_a &amp;&amp; perimeter[i] &lt; best_p)) {
+      best_a = area[i];
+      best_p = perimeter[i];
+    }
+ 
+  ofstream fout (&quot;perimeter.out&quot;);
+  fout &lt;&lt; best_a &lt;&lt; &quot; &quot; &lt;&lt; best_p &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+<p></body></html>

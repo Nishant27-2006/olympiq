@@ -1,0 +1,153 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: DEC24 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+It's the year $3000$, and Bessie became the first cow in space! During her
+journey between the stars, she found a number line with $N$
+($2 \leq N \leq 5 \cdot 10^5$) points, numbered from $1$ to $N$. All points are
+initially colored white. She can perform the following operation any number of
+times.
+
+Choose a position $i$ within the number line and a positive integer $x$.
+Then, color all the points in the interval $[i, i + x - 1]$ red and all points
+in $[i + x, i + 2x - 1]$ blue. All chosen intervals must be disjoint
+(i.e. no points in $[i, i + 2x - 1]$ can be already colored red or blue). The
+entire interval must also fall within the number line (i.e.
+$1 \leq i \leq i + 2x - 1 \leq N$).
+Farmer John gives Bessie a string $s$ of length $N$ consisting of characters
+$R$, $B$, and $X$. The string represents Farmer John's color preferences for
+each point: $s_i=R$ means the $i$'th point must be colored red, $s_i = B$ means
+the $i$'th point must be colored blue, and $s_i = X$ means there is no
+constraint on the color for the $i$'th point.
+
+Help Bessie count the number of distinct ways for the number line to be colored
+while satisfying Farmer John's preferences. Two colorings are different if there
+is at least one corresponding point with a different color. Because the answer
+may be large, output it modulo $10^9+7$. 
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains an integer $N$.
+
+The following line contains string $s$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Output the number of distinct ways for the number line to be colored while
+satisfying Farmer John's preferences modulo
+$10^9+7$.
+
+SAMPLE INPUT:
+6
+RXXXXB
+SAMPLE OUTPUT: 
+5
+
+Bessie can choose $i=1,x=1$ (i.e. color point $1$ red and point $2$ blue) and
+$i=3,x=2$ (i.e. color points $3,4$ red and points $5,6$ blue) to produce the
+coloring $RBRRBB$. 
+
+The other colorings are $RRBBRB$, $RBWWRB$, $RRRBBB$, and
+$RBRBRB$.
+
+SAMPLE INPUT:
+6
+XXRBXX
+SAMPLE OUTPUT: 
+6
+
+The six colorings are $WWRBWW$, $WWRBRB$, $WRRBBW$, $RBRBWW$, $RBRBRB$, and $RRRBBB$.
+SAMPLE INPUT:
+12
+XBXXXXRXRBXX
+SAMPLE OUTPUT: 
+18
+
+SCORING:
+Input 4: $N\le 500$Inputs 5-6: $N\le 10^4$Inputs 7-13: All but at most $100$ characters in $s$ are
+$X$.Inputs 14-23: No additional constraints
+
+
+Problem credits: Chongtian Ma, Alex Liang
+
+
+
+\section*{Input Format}
+The following line contains string $s$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):Output the number of distinct ways for the number line to be colored while
+satisfying Farmer John's preferences modulo
+$10^9+7$.SAMPLE INPUT:6
+RXXXXBSAMPLE OUTPUT:5Bessie can choose $i=1,x=1$ (i.e. color point $1$ red and point $2$ blue) and
+$i=3,x=2$ (i.e. color points $3,4$ red and points $5,6$ blue) to produce the
+coloring $RBRRBB$.The other colorings are $RRBBRB$, $RBWWRB$, $RRRBBB$, and
+$RBRBRB$.SAMPLE INPUT:6
+XXRBXXSAMPLE OUTPUT:6The six colorings are $WWRBWW$, $WWRBRB$, $WRRBBW$, $RBRBWW$, $RBRBRB$, and $RRRBBB$.SAMPLE INPUT:12
+XBXXXXRXRBXXSAMPLE OUTPUT:18SCORING:Input 4: $N\le 500$Inputs 5-6: $N\le 10^4$Inputs 7-13: All but at most $100$ characters in $s$ are
+$X$.Inputs 14-23: No additional constraintsProblem credits: Chongtian Ma, Alex Liang
+
+\section*{Output Format}
+SAMPLE INPUT:6
+RXXXXBSAMPLE OUTPUT:5Bessie can choose $i=1,x=1$ (i.e. color point $1$ red and point $2$ blue) and
+$i=3,x=2$ (i.e. color points $3,4$ red and points $5,6$ blue) to produce the
+coloring $RBRRBB$.The other colorings are $RRBBRB$, $RBWWRB$, $RRRBBB$, and
+$RBRBRB$.SAMPLE INPUT:6
+XXRBXXSAMPLE OUTPUT:6The six colorings are $WWRBWW$, $WWRBRB$, $WRRBBW$, $RBRBWW$, $RBRBRB$, and $RRRBBB$.SAMPLE INPUT:12
+XBXXXXRXRBXXSAMPLE OUTPUT:18SCORING:Input 4: $N\le 500$Inputs 5-6: $N\le 10^4$Inputs 7-13: All but at most $100$ characters in $s$ are
+$X$.Inputs 14-23: No additional constraintsProblem credits: Chongtian Ma, Alex Liang
+
+\section*{Sample Input}
+\begin{verbatim}
+6
+RXXXXB
+
+6
+XXRBXX
+
+12
+XBXXXXRXRBXX
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+5
+
+The other colorings are $RRBBRB$, $RBWWRB$, $RRRBBB$, and
+$RBRBRB$.SAMPLE INPUT:6
+XXRBXXSAMPLE OUTPUT:6The six colorings are $WWRBWW$, $WWRBRB$, $WRRBBW$, $RBRBWW$, $RBRBRB$, and $RRRBBB$.SAMPLE INPUT:12
+XBXXXXRXRBXXSAMPLE OUTPUT:18SCORING:Input 4: $N\le 500$Inputs 5-6: $N\le 10^4$Inputs 7-13: All but at most $100$ characters in $s$ are
+$X$.Inputs 14-23: No additional constraintsProblem credits: Chongtian Ma, Alex Liang
+
+SAMPLE INPUT:6
+XXRBXXSAMPLE OUTPUT:6The six colorings are $WWRBWW$, $WWRBRB$, $WRRBBW$, $RBRBWW$, $RBRBRB$, and $RRRBBB$.SAMPLE INPUT:12
+XBXXXXRXRBXXSAMPLE OUTPUT:18SCORING:Input 4: $N\le 500$Inputs 5-6: $N\le 10^4$Inputs 7-13: All but at most $100$ characters in $s$ are
+$X$.Inputs 14-23: No additional constraintsProblem credits: Chongtian Ma, Alex Liang
+
+6
+
+18
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1450
+
+\section*{Source}
+USACO DEC24 Contest, Gold Division, Problem ID: 1450
+
+\end{document}

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>For full credit, we need to do better than just simulating the <span class='math'>$K$</span> processes
+individually.
+<p>For each <span class='math'>$i$</span> compute the minimum positive integer <span class='math'>$X$</span> such that
+after <span class='math'>$X$</span> repetitions of the process, the cow with label <span class='math'>$i$</span> is again the cow
+that is <span class='math'>$i$</span>-th from the left. Then, for that cow, we can consider the remainder when <span class='math'>$K$</span> is
+divided by <span class='math'>$X$</span> rather than <span class='math'>$K$</span> itself. As the remainder is always less than <span class='math'>$N$</span>,
+this runs in <span class='math'>$O(N^2)$</span>. See the silver analysis for how to do it in
+<span class='math'>$O(N)$</span>.
+<p><pre class='prettyprint'>
+#include &quot;bits/stdc++.h&quot;
+ 
+using namespace std;
+ 
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+ 
+int N,K,A1,A2,B1,B2,res[101];
+ 
+int nex(int x) {
+	if (A1 &lt;= x &amp;&amp; x &lt;= A2) x = A1+A2-x;
+	if (B1 &lt;= x &amp;&amp; x &lt;= B2) x = B1+B2-x;
+	return x;
+}
+ 
+int main() {
+	setIO(&quot;swap&quot;);
+	cin &gt;&gt; N &gt;&gt; K &gt;&gt; A1 &gt;&gt; A2 &gt;&gt; B1 &gt;&gt; B2;
+	for (int i = 1; i &lt;= N; ++i) {
+		int p = 1, cur = nex(i);
+		while (cur != i) {
+			p ++;
+			cur = nex(cur);
+		}
+		int k = K%p;
+		for (int j = 0; j &lt; k; ++j) cur = nex(cur);
+		res[cur] = i; // position of cow i after k steps is cur
+	}
+	for (int i = 1; i &lt;= N; ++i) cout &lt;&lt; res[i] &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Alternatively, we can just hope that the permutation returns to its original state quickly.
+If it repeats after <span class='math'>$S$</span> steps, then it suffices to simulate only <span class='math'>$K\pmod{S}$</span>
+steps. It can be verified (by exhaustive search) that the maximum possible value of <span class='math'>$S$</span> for <span class='math'>$N\le 100$</span>
+is <span class='math'>$29640$</span> for <span class='math'>$A=(1,94)$</span> and <span class='math'>$B=(2,98)$</span>. Thus, the bounds were small enough to allow a solution that runs in <span class='math'>$O(NS)$</span>
+time to run in time.
+<p>Nick Wu&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class Solution {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader(&quot;swap.in&quot;));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;swap.out&quot;)));
+    StringTokenizer st = new StringTokenizer(br.readLine());
+    int n = Integer.parseInt(st.nextToken());
+    int k = Integer.parseInt(st.nextToken());
+    st = new StringTokenizer(br.readLine());
+    int a1 = Integer.parseInt(st.nextToken())-1;
+    int a2 = Integer.parseInt(st.nextToken())-1;
+    st = new StringTokenizer(br.readLine());
+    int b1 = Integer.parseInt(st.nextToken())-1;
+    int b2 = Integer.parseInt(st.nextToken())-1;
+    int cycleSize = 0;
+    int[] l = new int[n];
+    for(int i = 0; i &lt; n; i++) l[i] = i;
+    boolean sorted = true;
+    do {
+      cycleSize++;
+      reverse(l, a1, a2);
+      reverse(l, b1, b2);
+      sorted = true;
+      for(int i = 0; sorted &amp;&amp; i &lt; n; i++) sorted = l[i] == i;
+    }
+    while(!sorted);
+    k %= cycleSize;
+    for(int i = 0; i &lt; n; i++) l[i] = i+1;
+    for(int i = 0; i &lt; k; i++) {
+      reverse(l, a1, a2);
+      reverse(l, b1, b2);
+    }
+    for(int val: l) pw.println(val);
+    pw.close();
+  }
+  private static void reverse(int[] l, int a, int b) {
+    while(a &lt; b) {
+      int t = l[a];
+      l[a] = l[b];
+      l[b] = t;
+      a++;
+      b--;
+    }
+  }
+}
+</pre>
+<p></body></html>

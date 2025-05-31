@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>A starting point for this problem is to notice that if <span class='math'>$s$</span> and <span class='math'>$t$</span> are equal
+when restricted to some subset <span class='math'>$X$</span> of letters, then they must also be equal when
+restricted to any subset <span class='math'>$Y$</span> of <span class='math'>$X$</span>. In particular, this means that if <span class='math'>$s$</span> and
+<span class='math'>$t$</span> are equal when restricted to some subset <span class='math'>$X$</span> of letters, they are also equal
+when restricted to any two letters in
+<span class='math'>$X$</span>.
+<p>Now consider the case where <span class='math'>$s$</span> and <span class='math'>$t$</span> are not equal when restricted to <span class='math'>$X$</span>.
+Again let <span class='math'>$s&apos;$</span> and <span class='math'>$t&apos;$</span> be <span class='math'>$s$</span> and <span class='math'>$t$</span> restricted to <span class='math'>$X$</span>. One possibility is
+that <span class='math'>$s&apos;$</span> and <span class='math'>$t&apos;$</span> are of different lengths, which means that <span class='math'>$s$</span> and <span class='math'>$t$</span> have
+differing amounts of the letters in <span class='math'>$X$</span>.
+<p>The other possibility is that <span class='math'>$s&apos;$</span> and <span class='math'>$t&apos;$</span> have different letters at some
+position. In this case, consider the first position at which <span class='math'>$s&apos;$</span> and <span class='math'>$t&apos;$</span>
+differ, and let <span class='math'>$x$</span> and <span class='math'>$y$</span> be the two letters that <span class='math'>$s&apos;$</span> and <span class='math'>$t&apos;$</span> have at this
+position. Since <span class='math'>$s&apos;$</span> and <span class='math'>$t&apos;$</span> are completely the same up to this position, if we
+remove all letters other than <span class='math'>$x$</span> and <span class='math'>$y$</span> from <span class='math'>$s&apos;$</span> and <span class='math'>$t&apos;$</span> to create new
+strings <span class='math'>$s&apos;&apos;$</span> and <span class='math'>$t&apos;&apos;$</span>, the portion before this position will become the same
+(smaller) portion at the beginning of <span class='math'>$s&apos;&apos;$</span> and <span class='math'>$t&apos;&apos;$</span>, and so the <span class='math'>$x$</span> and <span class='math'>$y$</span> at the same position in <span class='math'>$s&apos;$</span> and <span class='math'>$t&apos;$</span> will still be in the same position in <span class='math'>$s&apos;&apos;$</span> and <span class='math'>$t&apos;&apos;$</span>. This means
+that <span class='math'>$s&apos;&apos;$</span> and <span class='math'>$t&apos;&apos;$</span> are not the same, and so, since <span class='math'>$s&apos;&apos;$</span> and <span class='math'>$t&apos;&apos;$</span> are
+actually just <span class='math'>$s$</span> and <span class='math'>$t$</span> restricted to the two letters <span class='math'>$x$</span> and <span class='math'>$y$</span>, we can
+conclude that <span class='math'>$s$</span> and <span class='math'>$t$</span> are not the same when restricted to <span class='math'>$x$</span> and <span class='math'>$y$</span>.
+<p>We have therefore shown that if <span class='math'>$s$</span> and <span class='math'>$t$</span> are not equal when restricted to
+<span class='math'>$X$</span>, then either they do not have the same amount of letters in <span class='math'>$X$</span>, or they are
+not the same when restricted to some pair of letters in <span class='math'>$X$</span>. However, we already
+know that if <span class='math'>$s$</span> and <span class='math'>$t$</span> are equal when restricted to <span class='math'>$X$</span>, then they must be the
+same when restricted to any pair of letters in <span class='math'>$X$</span>, and in this case they
+clearly must also have the same amount of letters in <span class='math'>$X$</span>.
+<p>This means that <span class='math'>$s$</span> and <span class='math'>$t$</span> being equal when restricted to <span class='math'>$X$</span> is actually
+<em>equivalent</em> to having the same amount of letters in <span class='math'>$X$</span> and being equal
+when restricted to any pair of letters in <span class='math'>$X$</span>.
+<p>We can use this fact to write our algorithm. We need to be able to quickly
+compute, for a given subset of letters <span class='math'>$X$</span>, whether <span class='math'>$s$</span> and <span class='math'>$t$</span> have the same
+amount of letters in <span class='math'>$X$</span>, and whether <span class='math'>$s$</span> and <span class='math'>$t$</span> are the same when restricted
+to any pair of letters in <span class='math'>$X$</span>.
+<p>We can make checking the first condition easy by precomputing the frequencies of
+each letter in each of <span class='math'>$s$</span> and <span class='math'>$t$</span>. This takes linear time. Then, for a given
+<span class='math'>$X$</span>, we simply add up the frequencies of all letters in <span class='math'>$X$</span> for each of <span class='math'>$s$</span> and
+<span class='math'>$t$</span> and check if the sums are equal.
+<p>We can make checking the second condition easy by just precomputing the answer
+for each pair of letters. For each pair, we can find the answer in linear time
+by simply reducing <span class='math'>$s$</span> and <span class='math'>$t$</span> to the strings <span class='math'>$s&apos;$</span> and <span class='math'>$t&apos;$</span> that only have the
+letters in the pair, then checking whether <span class='math'>$s&apos;$</span> and <span class='math'>$t&apos;$</span> are equal. Then, for a
+given <span class='math'>$X$</span>, we simply loop through all pairs of letters in <span class='math'>$X$</span> and check our
+precomputed answers.
+<p>The overall runtime becomes
+<span class='math'>$\mathcal O(\text{number of pairs} \cdot (|s| + |t| + Q))$</span> due to the linear
+time precomputation for each pair and then checking each pair in constant time
+for each query. Since there are only <span class='math'>$18$</span> letters we need to consider, there are
+only <span class='math'>$\frac {18 \cdot 17} 2 = 153$</span> pairs, which is small enough for this
+algorithm to be reasonably efficient.
+<p>Java code:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class SubsetEquality {
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        char[] s = in.readLine().toCharArray();
+        char[] t = in.readLine().toCharArray();
+        int[] freqsS = new int[26];
+        int[] freqsT = new int[26];
+        for (char x = &apos;a&apos;; x &lt;= &apos;z&apos;; x++) {
+            for (char letter : s) {
+                if (letter == x) {
+                    freqsS[x - &apos;a&apos;]++;
+                }
+            }
+            for (char letter : t) {
+                if (letter == x) {
+                    freqsT[x - &apos;a&apos;]++;
+                }
+            }
+        }
+        boolean[][] compatible = new boolean[26][26];
+        for (char y = &apos;a&apos;; y &lt;= &apos;z&apos;; y++) {
+            for (char x = &apos;a&apos;; x &lt; y; x++) {
+                StringBuilder sRestricted = new StringBuilder();
+                StringBuilder tRestricted = new StringBuilder();
+                for (char letter : s) {
+                    if (letter == x || letter == y) {
+                        sRestricted.append(letter);
+                    }
+                }
+                for (char letter : t) {
+                    if (letter == x || letter == y) {
+                        tRestricted.append(letter);
+                    }
+                }
+                compatible[x - &apos;a&apos;][y - &apos;a&apos;] = sRestricted.toString().equals(tRestricted.toString());
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int q = Integer.parseInt(in.readLine()); q &gt; 0; q--) {
+            char[] subset = in.readLine().toCharArray();
+            char answer = &apos;Y&apos;;
+            int sSum = 0;
+            int tSum = 0;
+            for (char x : subset) {
+                sSum += freqsS[x - &apos;a&apos;];
+                tSum += freqsT[x - &apos;a&apos;];
+            }
+            if (sSum != tSum) {
+                answer = &apos;N&apos;;
+            }
+            for (int j = 0; j &lt; subset.length; j++) {
+                for (int k = j + 1; k &lt; subset.length; k++) {
+                    if (!compatible[subset[j] - &apos;a&apos;][subset[k] - &apos;a&apos;]) {
+                        answer = &apos;N&apos;;
+                    }
+                }
+            }
+            out.append(answer);
+        }
+        System.out.println(out);
+    }
+}
+</pre>
+<p></body></html>

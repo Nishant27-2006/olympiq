@@ -1,0 +1,138 @@
+Solution ID: sol_snowboots_silver_feb18
+Contest: FEB18
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_snowboots_silver_feb18.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Brian Dean)
+
+This problem can be solved using a recursive "depth first" search of the space
+of all possible (location, boot index) states we can reach, starting from
+(location 0, boot index 0).
+
+There are
+
+$O(NB)$
+
+states, and each time we visit a state we may try visiting
+
+$O(N + B)$
+
+neighboring states, so the total running time will be at worst
+
+$O(N^2B + NB^2)$
+
+, which is comfortable since
+
+$N$
+
+and
+
+$B$
+
+are both at most 250.
+
+Code for my recursive search approach is below:
+
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+using namespace std;
+     
+int N, B, F[250], S[250], D[250], best = 9999;
+bool beenthere[250][250];  // set of (location, boot) states we can reach
+
+// recursively search through all reachable states     
+void visit(int i, int b)
+{
+   // don't re-visit already-visited states
+   if (beenthere[i][b]) return;   
+   beenthere[i][b] = true;     
+
+   // reached the end?  keep track of smallest boot # we can achieve
+   if (i==N-1) { best = min(best, b); return; }
+
+   // try all possible steps forward
+   for (int i2=i+1; i2<N && i2-i<=D[b]; i2++) 
+      if (F[i2]<=S[b]) visit(i2,b);
+
+   // try all possible changes of boots
+   for (int b2=b+1; b2<B; b2++) 
+      if (F[i]<=S[b2]) visit(i,b2);
+}
+     
+int main(void)
+{
+   ifstream fin ("snowboots.in");
+   ofstream fout ("snowboots.out");
+   
+   fin >> N >> B;
+   for (int i=0; i<N; i++) fin >> F[i];
+   for (int i=0; i<B; i++) fin >> S[i] >> D[i];
+   
+   visit(0, 0);
+   fout << best << "\n";
+  
+   return 0;
+}
+
+Although perhaps not the intended way of thinking about a problem in the  silver
+division, this problem can also be solved with more of a "dynamic programming"
+outlook, where we loop over all possible (location, boot) states Y and compute
+whether we  can reach that state based on prior states X that can transition to
+Y.  This approach is actually quite similar to the recursive search, just it
+loops over all the states and computes their reachability one by one, instead
+of  recursively fanning out to discover the set of reachable states.  Worst-case
+running time would be the same as with the prior approach.
+
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+using namespace std;
+     
+int N, B, F[250], S[250], D[250], best = 9999;
+bool beenthere[250][250];  // set of (location, boot) states we can reach
+
+int solve(void)
+{
+   for (int b=0; b<B; b++) 
+      for (int i=0; i<N; i++) {
+
+         // Compute whether state (i, b) is reachable...
+	
+         if (F[i] > S[b]) { beenthere[i][b] = false; continue; } // invalid state; snow too deep
+
+         if (i==0 && b==0) beenthere[i][b] = true;  // initial state
+
+         // can we reach this state via forward step from some prior state?
+         for (int i2=0; i2<i; i2++) 
+            if (beenthere[i2][b] && i2+D[b]>=i) beenthere[i][b] = true;
+
+         // can we reach this state via change of boot from some prior state?
+         for (int b2=0; b2<b; b2++) 
+            if (beenthere[i][b2]) beenthere[i][b] = true;
+
+         // have we reached the end?  return smallest boot # we can achieve
+         if (i==N-1 && beenthere[i][b]) return b;
+      }
+}
+     
+int main(void)
+{
+   ifstream fin ("snowboots.in");
+   ofstream fout ("snowboots.out");
+   
+   fin >> N >> B;
+   for (int i=0; i<N; i++) fin >> F[i];
+   for (int i=0; i<B; i++) fin >> S[i] >> D[i];
+
+   fout << solve() << "\n"; 
+   return 0;
+}
+
+Note that there are ways to optimize the code above (e.g., by breaking out of
+loops when we've determined that beenthere can be set to true); however, this
+isn't necessary to solve the problem in time.

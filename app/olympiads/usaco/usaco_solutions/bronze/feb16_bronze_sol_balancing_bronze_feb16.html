@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>There are a lot of possible fence combinations to consider - if we simply
+consider every possible even x-coordinate and every possible event y-coordinate,
+there would be <span class='math'>$500000^2$</span> different combinations which is far too
+many.
+<p>Let us take an extreme example where there are two cows, one at
+<span class='math'>$(1, 1)$</span> and the other at <span class='math'>$(999999, 999999)$</span>. Note that
+every even x-coordinate between <span class='math'>$2$</span> and <span class='math'>$999998$</span> yields
+exactly the same division of cows into quadrants, no matter which y-coordinate
+we pick. By the same logic, every even y-coordinate between <span class='math'>$2$</span> and
+<span class='math'>$999998$</span> yields exactly the same division of cows into quadrants.
+<p>Therefore, we can make the following observation - if we set the vertical fence at
+<span class='math'>$x=a$</span> but no cow is placed with an x-coordinate of <span class='math'>$a-1$</span>,
+we can move the vertical fence to <span class='math'>$x=a-2$</span> and still preserve the same division of cows
+into quadrants. Similarly, if we set the horizontal fence at <span class='math'>$y=b$</span>
+but no cow is placed with a y-coordinate at <span class='math'>$y=b-1$</span>, we can move
+the horizontal fence to <span class='math'>$y=b-2$</span>.
+<p>This means that we only need to place vertical fences where <span class='math'>$x=a$</span> and there
+is a cow with x-coordinate <span class='math'>$a-1$</span>, and we only need to place vertical fences
+where <span class='math'>$y=b$</span> and there is a cow with y-coordinate <span class='math'>$b-1$</span>.
+<p>This gives us at most ten thousand pairs to try, which is small enough.
+<p>Here is my Java code:
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class balancing {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader(&quot;balancing.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;balancing.out&quot;)));
+		
+		// read in N, we can safely ignore B so we don&apos;t actually read the value
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		int n = Integer.parseInt(st.nextToken());
+		
+		// create arrays to store locations of cows
+		// cow i is at point (xLoc[i], yLoc[i])
+		int[] xLoc = new int[n];
+		int[] yLoc = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			// read in location of cow i
+			st = new StringTokenizer(br.readLine());
+			xLoc[i] = Integer.parseInt(st.nextToken());
+			yLoc[i] = Integer.parseInt(st.nextToken());
+		}
+		// in the absolute worst case, N cows will be in one quadrant
+		int ans = n;
+		for(int xIndex = 0; xIndex &lt; n; xIndex++) {
+			for(int yIndex = 0; yIndex &lt; n; yIndex++) {
+				// identify the fence location
+				// vertical fence at x=xDiv
+				// horizontal fence at y=yDiv
+				int xDiv = xLoc[xIndex]+1;
+				int yDiv = yLoc[yIndex]+1;
+				int upperLeft = 0;
+				int upperRight = 0;
+				int lowerLeft = 0;
+				int lowerRight = 0;
+				// identify which quadrant each cows lands in
+				for(int i = 0; i &lt; n; i++) {
+					if(xLoc[i] &lt; xDiv &amp;&amp; yLoc[i] &lt; yDiv) {
+						lowerLeft++;
+					}
+					if(xLoc[i] &lt; xDiv &amp;&amp; yLoc[i] &gt; yDiv) {
+						upperLeft++;
+					}
+					if(xLoc[i] &gt; xDiv &amp;&amp; yLoc[i] &lt; yDiv) {
+						lowerRight++;
+					}
+					if(xLoc[i] &gt; xDiv &amp;&amp; yLoc[i] &gt; yDiv) {
+						upperRight++;
+					}
+				}
+				// figure out which region has the most cows
+				int worstRegion = 0;
+				if(upperLeft &gt; worstRegion) {
+					worstRegion = upperLeft;
+				}
+				if(upperRight &gt; worstRegion) {
+					worstRegion = upperRight;
+				}
+				if(lowerLeft &gt; worstRegion) {
+					worstRegion = lowerLeft;
+				}
+				if(lowerRight &gt; worstRegion) {
+					worstRegion = lowerRight;
+				}
+				// determine if we have found a better pair of fences
+				if(worstRegion &lt; ans) {
+					ans = worstRegion;
+				}
+			}
+		}
+		// print the answer
+		pw.println(ans);
+		// close output stream
+		pw.close();
+	}
+}
+</pre></body></html>

@@ -1,0 +1,283 @@
+Solution ID: sol_prob1_bronze_jan24
+Contest: JAN24
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_jan24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Subtask 1:
+
+$N \le 2$
+
+.
+
+Note that focus groups of two cannot cause any cow to change their opinion.
+Therefore, the only way for all cows to like the same type of hay is if they
+start out liking the same type of hay.
+
+t = int(input())
+for _ in range(t):
+  input()
+  l = [int(x) for x in input().split()]
+  if l[0] == l[1]: print(l[0])
+  else: print(-1)
+
+Subtask 2:
+
+$N \le 50$
+
+.
+
+For each type of hay, we'll try to determine if it's possible to make every cow
+like that type of hay by finding potential focus groups that will cause other
+cows to like our desired type of hay. Specifically, we are looking for focus
+groups where a strict majority of cows like our desired type of hay, but there
+is at least one cow that does not like it, because then that focus group will
+cause the given cow to change the type of hay they like.
+
+Naively, there are
+
+$\mathcal{O}(N^2)$
+
+focus groups to check - checking each one
+takes
+
+$\mathcal{O}(N)$
+
+time, and we only need to run
+
+$\mathcal{O}(N)$
+
+focus
+groups to get all cows to switch to our desired type of hay. With
+
+$\mathcal{O}(N)$
+
+different types of hay, this algorithm runs in
+
+$\mathcal{O}(N^5)$
+
+with a low constant factor. There are ways to improve this
+style of solution, but they are not necessary to get credit for this subtask.
+
+def canmake(l, x):
+  while l.count(x) != len(l):
+    upd = False
+    for j in range(1, len(l)+1):
+      for i in range(j):
+        match = l[i:j].count(x)
+        if match * 2 > len(l[i:j]) and match != len(l[i:j]):
+          l = l[:i] + [x] * (j-i) + l[j:]
+          upd = True
+          break
+    if not upd:
+      break
+  return l.count(x) == len(l)
+ 
+t = int(input())
+for _ in range(t):
+  input()
+  l = [int(x) for x in input().split()]
+  valid = [i for i in range(1, len(l)+1) if canmake(l, i)]
+  if not valid: valid.append(-1)
+  print(" ".join([str(x) for x in valid]))
+
+Subtask 3:
+
+$h_i \le h_{i+1}$
+
+for
+
+$1 \le i < N$
+
+.
+
+The key to this subtask is that, if two cows like the same type of hay, then
+there must exist two cows
+
+$i$
+
+and
+
+$i+1$
+
+that both like the same type of hay. The
+intended solution to this subtask otherwise does not depend on the
+
+$h_i$
+
+values
+actually being in sorted order.
+
+Note that if cows
+
+$i$
+
+and
+
+$i+1$
+
+like the same type of hay, then a focus group
+with those two cows and exactly one other cow can cause the other cow to like
+the same type of hay as cows
+
+$i$
+
+and
+
+$i+1$
+
+. Therefore, for this subtask, we can
+print out all types of hay that are liked by at least two cows.
+
+t = int(input())
+for _ in range(t):
+  input()
+  l = [int(x) for x in input().split()]
+  valid = []
+  for i in range(1, len(l)):
+    if l[i] == l[i-1] and (i == 1 or l[i] != l[i-2]): valid.append(l[i])
+  if not valid: valid.append(-1)
+  print(" ".join([str(x) for x in valid]))
+
+Full Credit:
+
+From the above subtask, we can also observe that if cows
+
+$i-1$
+
+and
+
+$i+1$
+
+like
+the same type of hay, a focus group with cows
+
+$i-1$
+
+,
+
+$i$
+
+, and
+
+$i+1$
+
+will end up
+having all three cows liking the same type of hay.
+
+Note furthermore that for any focus group of size greater than 3 with a majority
+of cows liking the same type of hay, we can find always find a smaller focus
+group of size 3 inside where two of the cows like the same type of hay as the
+majority of cows in the larger focus group. We leave the proof of this fact as
+an exercise for the reader.
+
+Therefore, a type of hay is valid if and only if there exist cows
+
+$i$
+
+and
+
+$i+1$
+
+that both like it, or there exist cows
+
+$i$
+
+and
+
+$i+2$
+
+that both like it.
+
+Claire Zhang's C++ code:
+
+#include<bits/stdc++.h>
+using namespace std;
+ 
+int main(){
+    int T, N;
+    cin >> T;
+    while(T--){
+        cin >> N;
+        int a[N];
+        bool good[N];
+        memset(good, 0, sizeof(good)); 
+        
+        for(int i=0; i<N; i++){
+            cin >> a[i];
+            a[i]--;
+            if(i>0 and a[i]==a[i-1] or i>1 and a[i]==a[i-2]) good[a[i]]=1;
+        }
+ 
+        bool at_least_one = 0;
+        for(int i=0; i<N; i++){
+            if(good[i]){
+                at_least_one = 1;
+                cout << i+1 << " ";
+            }
+        }
+        if(!at_least_one) cout << -1;
+        cout << '\n';
+    }
+}
+
+My Java code:
+
+import java.io.*;
+import java.util.*;
+public class Solution {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    int t = Integer.parseInt(br.readLine());
+    while(t-- > 0) {
+      int n = Integer.parseInt(br.readLine());
+      StringTokenizer st = new StringTokenizer(br.readLine());
+      int[] h = new int[n];
+      for(int i = 0; i < n; i++) h[i] = Integer.parseInt(st.nextToken());
+      boolean[] good = new boolean[n+1];
+      for(int i = 0; i + 1 < n; i++) {
+        if(h[i] == h[i+1]) good[h[i]] = true;
+        if(i+2 < n && h[i] == h[i+2]) good[h[i]] = true;
+      }
+      boolean printed = false;
+      for(int i = 1; i <= n; i++) {
+        if(good[i]) {
+          if(printed) pw.print(' ');
+          printed = true;
+          pw.print(i);
+        }
+      }
+      if(!printed) pw.print(-1);
+      pw.println();
+    }
+    pw.close();
+  }
+}
+
+Claire Zhang's Python code:
+
+def solve(arr):
+    result = []
+    for i in range(len(arr) - 1):
+        if arr[i] == arr[i + 1] or (i < len(arr) - 2 and arr[i] == arr[i + 2]):
+            result.append(arr[i])
+    result = sorted(list(set(result)))
+    if len(result) == 0:
+        result = [-1]
+    return result
+ 
+def main():
+    T = int(input())
+    for _ in range(T):
+        N = int(input())
+        arr = list(map(int, input().split()))
+        print(*solve(arr))
+ 
+if __name__ == "__main__":
+    main()

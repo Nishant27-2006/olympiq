@@ -1,0 +1,190 @@
+Solution ID: sol_prob1_bronze_open21
+Contest: OPEN21
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_open21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+Let's suppose that
+
+$L = 0$
+
+; then we just want to compute the
+
+$h$
+
+-index of
+Bessie's papers with no additional citations. To find this, we can sort the
+citation counts from largest to smallest, and find the largest
+
+$h$
+
+such that the
+first
+
+$h$
+
+papers all have at least
+
+$h$
+
+citations. This can be done in one pass
+through the sorted counts.
+
+Now let's consider how to use
+
+$L$
+
+extra citations to increase the
+
+$h$
+
+-index.
+Since the survey cannot cite any one paper multiple times, it's not possible to
+increase the
+
+$h$
+
+-index by more than
+
+$1$
+
+: the
+
+$(h+1)$
+
+-st most cited paper before
+the survey had at most
+
+$h$
+
+citations, so afterwards it cannot have more than
+
+$h+1$
+
+citations.
+
+But it's not always possible to increase the
+
+$h$
+
+-index by one. When is it
+possible? Well, out of the top
+
+$h$
+
+papers before the survey, some
+
+$k$
+
+of them
+have exactly
+
+$h$
+
+citations (and the rest have more than
+
+$h$
+
+). We need to cite
+each of these
+
+$k$
+
+papers. Additionally, we need to cite the
+
+$(h+1)$
+
+-st most
+cited paper. So it's necessary that
+
+$L \geq k+1$
+
+. Finally, if the
+
+$(h+1)$
+
+-st
+most cited paper has less than
+
+$h$
+
+citations, then we cannot hope to increase
+the
+
+$h$
+
+-index. Conversely, if it has
+
+$h$
+
+citations (it cannot have more than
+
+$h$
+
+), and if
+
+$L \geq k+1$
+
+, then the
+
+$h$
+
+-index can be increased to
+
+$h+1$
+
+.
+
+Below is Danny Mittal's code, which does a slight variation on the above idea. This program increments the citation counts of the
+
+$[h-L+2, h+1]$
+
+-most cited papers (which we've seen is optimal) and checks what the new
+
+$h$
+
+-index is.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.StringTokenizer;
+ 
+public class AcowdemiaI {
+ 
+    static int hIndex(Integer[] papers) {
+        int h = papers.length;
+        while (h > 0 && papers[h - 1] < h) {
+            h--;
+        }
+        return h;
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int l = Integer.parseInt(tokenizer.nextToken());
+        Integer[] papers = new Integer[n];
+        tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 0; j < n; j++) {
+            papers[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        Arrays.sort(papers, Comparator.reverseOrder());
+        int h = hIndex(papers);
+        if (h != n) {
+            for (int j = h; j >= 0 && j > h - l; j--) {
+                papers[j]++;
+            }
+        }
+        Arrays.sort(papers, Comparator.reverseOrder());
+        System.out.println(hIndex(papers));
+    }
+}

@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html>
+	<head>
+				
+<script>AoPS = {
+	start_time : new Date().getTime()
+};</script>
+
+<script>
+	AoPS.bootstrap_data = [];
+	AoPS.bd = AoPS.bootstrap_data; // Alias!
+	AoPS.session = {"user_id":1,"platform_user_id":"","username":"Anonymous","avatar":"\/\/avatar.artofproblemsolving.com\/avatar_1.png?t=1","email":"","role":"","logged_in":false,"initialized":false,"needs_coppa_approval":false,"admin":false,"national_staff":false,"wikiname":""};
+	AoPS.bd.assetVersion = 1;
+	AoPS.bd.environment = 'production';
+	AoPS.protected_url = 'https://artofproblemsolving.com/';
+	AoPS.aops_url = 'https://artofproblemsolving.com/';
+	AoPS.academy_url = 'https://aopsacademy.org/';
+</script>
+		<!-- GA plugin and Enhanced Ecommerce -->
+		<script>
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+		ga('create', 'UA-1905305-1', 'auto', {allowLinker: true}); // GA Property ID
+		ga('send', 'pageview');
+		</script>
+		<!-- End GA plugin and Enhanced Ecommerce -->
+		<!-- Google Tag Manager -->
+		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+		new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+		j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+		'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer', 'GTM-59JWRGZ')</script>
+		<!-- End Google Tag Manager -->
+
+		<link rel="apple-touch-icon" href="https://artofproblemsolving.com/apple-touch-icon.png">
+
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="initial-scale=1">
+		<meta name="referrer" content="origin">
+
+		<meta name="facebook-domain-verification" content="zmmwg7oqqsqvf8ihckwvzoo85b08gx" />
+
+		
+		<link rel="apple-touch-icon" href="https://assets.artofproblemsolving.com/images/apple-touch-icon.png">
+		<title>Art of Problem Solving</title>
+
+		
+		<link href="https://artofproblemsolving.com/assets/fonts/font-awesome/css/all.css" rel="stylesheet">
+
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/sharedsite.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/navheader.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/footer.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/main-head.css">
+
+					<link rel="icon" href="https://artofproblemsolving.com/online-favicon.ico?v=2">
+		
+		
+		<script>
+  if (!window.console) console = {log: function() {}, dir: function() {}};
+  $$ = function( selector ) { return document.getElementById( selector ); }
+</script>
+
+							<script src="//assets.artofproblemsolving.com/js/jquery360.min.js"></script>
+							<script src="//artofproblemsolving.com/assets/vendor/jquery/3.6.0/jquery-migrate.min.js"></script>
+					<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          // customised options
+          // • auto-render specific keys, e.g.:
+          delimiters: [
+              {left: '[katex]', right: '[/katex]', display: false},
+			  {left: '[katex display=true]', right: '[/katex]', display: true} 
+          ],
+          // • rendering keys, e.g.:
+          throwOnError : false
+        });
+    });
+</script>
+
+<script>
+MathJax = {
+  tex: {
+	inlineMath: [['[mathjax]', '[/mathjax]'], ['\\(', '\\)']],
+	displayMath: [['[mathjax display=true]', '[/mathjax]']]
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"> </script>
+
+				<meta charset="UTF-8"/>
+<title>1996 USAMO Problems/Problem 1 - AoPS Wiki</title>
+<script>document.documentElement.className = document.documentElement.className.replace( /(^|\s)client-nojs(\s|$)/, "$1client-js$2" );</script>
+<script>(window.RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"1996_USAMO_Problems/Problem_1","wgTitle":"1996 USAMO Problems/Problem 1","wgCurRevisionId":131505,"wgRevisionId":131505,"wgArticleId":11462,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Olympiad Algebra Problems"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"1996_USAMO_Problems/Problem_1","wgRelevantArticleId":11462,"wgRequestId":"78026959f98092abbdd6f665","wgIsProbablyEditable":false,"wgRelevantPageIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});mw.loader.state({"site.styles":"ready","noscript":"ready","user.styles":"ready","user":"ready","site":"ready","user.options":"ready","user.tokens":"loading","mediawiki.legacy.shared":"ready","mediawiki.legacy.commonPrint":"ready","mediawiki.sectionAnchor":"ready","skins.aopsp":"ready"});mw.loader.implement("user.tokens@09avpoe",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
+});mw.loader.load(["mediawiki.page.startup","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.toc","mediawiki.searchSuggest","skins.aopsp.js"]);});</script>
+<link rel="stylesheet" href="/wiki/load.php?debug=false&amp;lang=en&amp;modules=mediawiki.legacy.commonPrint%2Cshared%7Cmediawiki.sectionAnchor%7Cskins.aopsp&amp;only=styles&amp;skin=aopsp"/>
+<script async="" src="/wiki/load.php?debug=false&amp;lang=en&amp;modules=startup&amp;only=scripts&amp;skin=aopsp"></script>
+<meta name="ResourceLoaderDynamicStyles" content=""/>
+<link rel="stylesheet" href="/wiki/load.php?debug=false&amp;lang=en&amp;modules=site.styles&amp;only=styles&amp;skin=aopsp"/>
+<meta name="generator" content="MediaWiki 1.31.1"/>
+<link rel="shortcut icon" href="/favicon.ico"/>
+<link rel="search" type="application/opensearchdescription+xml" href="/wiki/opensearch_desc.php" title="AoPS Wiki (en)"/>
+<link rel="EditURI" type="application/rsd+xml" href="https://artofproblemsolving.com/wiki/api.php?action=rsd"/>
+<link rel="alternate" type="application/atom+xml" title="AoPS Wiki Atom feed" href="/wiki/index.php?title=Special:RecentChanges&amp;feed=atom"/>
+<!--[if lt IE 9]><script src="/wiki/load.php?debug=false&amp;lang=en&amp;modules=html5shiv&amp;only=scripts&amp;skin=aopsp&amp;sync=1"></script><![endif]-->
+			</head>
+		
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Print to PDF</title>
+                <style>
+                    .print-note {
+                        background-color: #f0f0f0;
+                        padding: 10px;
+                        border: 1px solid #ccc;
+                        margin-bottom: 20px;
+                        font-family: Arial, sans-serif;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-note">
+                    <strong>Note:</strong> This HTML file should be printed to PDF. 
+                    Please use your browser's print function (Ctrl+P) and select "Save as PDF".
+                </div>
+            <body class="production mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-1996_USAMO_Problems_Problem_1 rootpage-1996_USAMO_Problems_Problem_1 skin-aopsp action-view resources">
+
+					<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59JWRGZ"
+			height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		
+		<div id="page-wrapper">
+
+			<!-- search:off -->
+			
+			<!-- The gray bar at top -->
+			<!-- see shared-site.css -->
+			<div id="top-bar" class="sharedsite-wrapper no-select">
+				<div class="sharedsitebar">
+					<a href="https://artofproblemsolving.com" class="mobile-title"></a>
+					<div class="sharedsite-links">
+											<a class="site-link main" href="https://artofproblemsolving.com/company">
+												Art of Problem Solving
+						</a>
+						<div class="site">
+													<a class="site-link selected" href="https://artofproblemsolving.com">
+														<img src="https://artofproblemsolving.com/assets/images/logos/icon-online.svg" class="site-icon">
+								<span class="site-name">AoPS Online</span>
+							</a>
+							<!-- Rich dropdown -->
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-online.svg"/>
+										</div>
+										<div class="site-snippet">
+											Math texts, online classes, and more
+											<br/>for students in grades 5-12.
+										</div>
+										<a target="_blank" class="site-visit aops-primary" href="https://artofproblemsolving.com">
+											Visit AoPS Online <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://artofproblemsolving.com/store" class="btn btn-primary aops-btn">
+											Books for Grades 5-12
+										</a>
+										<a target="_blank" href="https://artofproblemsolving.com/school" class="btn btn-primary aops-btn">
+											Online Courses
+										</a>
+									</div>
+								</div>
+							</div>
+							<!-- End rich dropdown -->
+						</div>
+						<div class="site">
+							<a class="site-link" href="https://beastacademy.com">
+								<img src="https://artofproblemsolving.com/assets/images/logos/icon-ba.svg" class="site-icon">
+								<span class="site-name">Beast Academy</span>
+							</a>
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-ba.svg"/>
+										</div>
+										<div class="site-snippet">
+											Engaging math books and online learning
+											<br/>for students ages 6-13.
+										</div>
+										<a target="_blank" class="site-visit ba-primary" href="https://beastacademy.com">
+											Visit Beast Academy <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://beastacademy.com/books" class="btn btn-primary ba-btn">
+											Books for Ages 6-13
+										</a>
+										<a target="_blank" href="https://beastacademy.com/online" class="btn btn-primary ba-btn">
+											Beast Academy Online
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="site">
+							<a class="site-link" href="https://aopsacademy.org">
+								<img src="https://artofproblemsolving.com/assets/images/logos/icon-academy.svg" class="site-icon">
+								<span class="site-name">AoPS Academy</span>
+							</a>
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-academy.svg"/>
+										</div>
+										<div class="site-snippet">
+											Small live classes for advanced math
+											<br/>and language arts learners in grades 2-12.
+										</div>
+										<a target="_blank" class="site-visit academy-primary" href="https://aopsacademy.org">
+											Visit AoPS Academy <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://aopsacademy.org/campuses" class="btn btn-primary academy-btn">
+											Find a Physical Campus
+										</a>
+										<a target="_blank" href="https://virtual.aopsacademy.org" class="btn btn-primary academy-btn">
+											Visit the Virtual Campus
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div id="header-wrapper" class="no-select">
+				<div class="header-underlay">
+					<div id="header">
+
+						<!-- The white area where main menu options appear -->
+
+						<!-- The menu links -->
+													<div id="main-menubar">
+								<div class="menubar-content">
+									<div class="menubar-logo online">
+										<img class="menubar-hamburger" src="https://artofproblemsolving.com/assets/images/hamburger.svg"/>
+										<a class="logo-img-link" href="https://artofproblemsolving.com/online">
+											<img class="logo-img" src="https://artofproblemsolving.com/assets/images/logos/aops-online.svg"/>
+											<img class="logo-img-mobile" src="https://artofproblemsolving.com/assets/images/logos/aops-online-mobile.svg"/>
+											<img class="logo-img-small" src="https://artofproblemsolving.com/assets/images/logos/aops-online-mobile.svg"/>
+										</a>
+									</div>
+									<div class="menubar-links-outer">
+										<!-- The login links -->
+										<div class="menu-login-wrapper online">
+											
+											<div class="menu-login-item">
+															<div 
+		    id="header-login"
+			class="no-select not-signed-in"
+			style="display:flex">
+
+			<div class="online-login-button solid-rounded-button">Sign&nbsp;In</div><div class="online-register-button">Register</div>
+		</div>
+												</div>
+
+											
+										</div>
+										<div class="menubar-labels online">
+											<div class="menubar-label school">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/school">
+														online school
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+														<!-- These have IDs for A/B testing purposes. T27691 -->
+																												<a id="online-school-menu-schedule" href="https://artofproblemsolving.com/school/schedule"> Class Schedule </a>
+														<a id="online-school-menu-recommmendations" href="https://artofproblemsolving.com/school/recommendations"> Recommendations </a>
+														<a id="online-school-menu-woot-courses" href="https://artofproblemsolving.com/school/woot?gtmlist=School_Nav"> Olympiad Courses </a>
+														<a id="online-school-menu-mathjams" href="https://artofproblemsolving.com/school/mathjams"> Free Sessions </a>
+																																									</div>
+												</div>
+											</div>
+											<div class="menubar-label store">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/store">
+														books<span class="menubar-link-ext">tore </span>
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+																																																								<a href="https://artofproblemsolving.com/store/list/aops-curriculum">AoPS Curriculum</a>
+														<a href="https://artofproblemsolving.com/store/list/beast-academy">Beast Academy</a>
+														<a href="https://artofproblemsolving.com/store/online">Online Books</a>
+														<a href="https://artofproblemsolving.com/store/recommendations">Recommendations</a>
+														<a href="https://artofproblemsolving.com/store/list/other-products">Other Books &amp; Gear</a>
+														<a href="https://artofproblemsolving.com/store/list/all-products">All Products</a>
+														<a href="https://artofproblemsolving.com/store/gift-certificates?gtmlist=Bookstore_Nav">Gift Certificates</a>
+																											</div>
+												</div>
+											</div>
+											<div class="menubar-label community">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/community">
+														community
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+																												<a data-cmty href="https://artofproblemsolving.com/community">Forums</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/c13_contests">Contests</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/search">Search</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/faq">Help</a>
+																																									</div>
+												</div>
+											</div>
+											<div class="menubar-label resources">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/resources">
+														resources
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+														<div class="dropdown-columns">
+															<div class="dropdown-category">
+																<span class="dropdown-category-label">math training & tools</span>
+																<a href="https://artofproblemsolving.com/alcumus">Alcumus</a>
+																<a href="https://artofproblemsolving.com/videos">Videos</a>
+																<a href="https://artofproblemsolving.com/ftw">For the Win!</a>
+																<a href="https://artofproblemsolving.com/mathcounts_trainer">MATHCOUNTS Trainer</a>
+																<a href="https://artofproblemsolving.com/contests/practice">AoPS Practice Contests</a>
+																<a href="https://artofproblemsolving.com/wiki/index.php?title=Main_Page">AoPS Wiki</a>
+																<a href="https://artofproblemsolving.com/texer">LaTeX TeXeR</a>
+																<a href="https://artofproblemsolving.com/polymath">MIT PRIMES/CrowdMath</a>
+																<a href="https://artofproblemsolving.com/keeplearning">Keep Learning</a>
+																<a href="https://beastacademy.com/all-ten">All Ten</a>
+																															</div>
+															<div class="dropdown-column">
+																																<div class="dropdown-category category-in-column">
+																	<span class="dropdown-category-label">contests on aops</span>
+																	<a href="https://artofproblemsolving.com/contests/practice">Practice Math Contests</a>
+																	<a href="https://artofproblemsolving.com/contests/usabo">USABO</a>
+																</div>
+																<div class="dropdown-category category-in-column">
+                                                                                                                                        <span class="dropdown-category-label">news</span>
+                                                                                                                                        <a href="https://artofproblemsolving.com/blog">AoPS Blog</a>
+                                                                                                                                        <a href="https://artofproblemsolving.com/blog/webinars/aopswebinars">Webinars</a>
+                                                                                                                                </div>
+															</div>
+														</div>
+														<div class="dropdown-view-more-link-container">
+															<a href="https://artofproblemsolving.com/resources" class="dropdown-view-more-link">view all <span class="aops-icon">0</span></a>
+														</div>
+													</div>
+												</div>
+											</div>
+																						<div class="menubar-label menu-login-item">
+															<div 
+		    id="header-login"
+			class="no-select not-signed-in"
+			style="display:flex">
+
+			<div class="online-login-button solid-rounded-button">Sign&nbsp;In</div><div class="online-register-button">Register</div>
+		</div>
+												</div>
+																					</div>
+									</div>
+								</div>
+							</div>
+											</div>
+				</div>
+
+								<noscript>
+					<div class="infobar">JavaScript is not enabled. JavaScript is required to fully utilize the site.</div>
+				</noscript>
+
+
+									<div id="breadcrumbs-wrapper">
+						<div id="submenu-icon"></div>
+						<div id="breadcrumbs">
+														<!-- ignore-security-checks -->
+							<div class="title-wrapper"><div class="title"><a href="/wiki">AoPS Wiki</a></div></div>
+														<div class="crumb-wrapper">
+																										<span class="crumb crumb-1">
+																			<!-- ignore-security-checks -->
+										<a href="https://artofproblemsolving.com/resources">Resources</a>
+																		</span>
+																											<i class="aops-font aops-angle-double-right"></i>
+																		<span class="crumb crumb-2">
+																			<!-- ignore-security-checks -->
+										<a href="/wiki">Aops Wiki</a>
+																		</span>
+																											<i class="aops-font aops-angle-double-right"></i>
+																		<span class="crumb crumb-3">
+																			1996 USAMO Problems/Problem 1																		</span>
+															</div>
+						</div>
+					</div>
+							</div>
+
+			<!-- search icon script lives in footer.phtml-->
+
+			<!-- /search:off -->
+
+<div id="main-content" class="left-navigation wiki">
+	<div id="side-column-wrapper">
+		<div id="side-column">
+						<div id="content-actions" class="menu open">
+				<div class="submenu">
+					<h1>Page</h1>
+					<div class="submenu-wrapper">
+						<span id="ca-nstab-main" class="selected"><a href="/wiki/index.php/1996_USAMO_Problems/Problem_1" title="View the content page " accesskey="c">Article</a></span><span id="ca-talk" class="new"><a href="/wiki/index.php?title=Talk:1996_USAMO_Problems/Problem_1&amp;action=edit&amp;redlink=1" rel="discussion" title="Discussion about the content page (page does not exist) " accesskey="t">Discussion</a></span><span id="ca-viewsource"><a href="/wiki/index.php?title=1996_USAMO_Problems/Problem_1&amp;action=edit" title="This page is protected.&#10;You can view its source " accesskey="e">View source</a></span><span id="ca-history"><a href="/wiki/index.php?title=1996_USAMO_Problems/Problem_1&amp;action=history" title="Past revisions of this page " accesskey="h">History</a></span>					</div>
+				</div>
+			</div>
+			<div id="toolbox" class="menu open">
+				<div class="submenu">
+					<h1>Toolbox</h1>
+					<div class="submenu-wrapper">
+						<span id="n-recentchanges"><a href="/wiki/index.php/Special:RecentChanges" title="A list of recent changes in the wiki " accesskey="r">Recent changes</a></span><span id="n-randompage"><a href="/wiki/index.php/Special:Random" title="Load a random page " accesskey="x">Random page</a></span><span id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></span><span id="t-whatlinkshere"><a href="/wiki/index.php/Special:WhatLinksHere/1996_USAMO_Problems/Problem_1" title="A list of all wiki pages that link here " accesskey="j">What links here</a></span><span id="t-specialpages"><a href="/wiki/index.php/Special:SpecialPages" title="A list of all special pages " accesskey="q">Special pages</a></span>					</div>
+				</div>
+			</div>
+			
+			<div id="search" class="menu open">
+				<h1>Search</h1>
+				<div class="submenu-wrapper" style="margin-bottom:5px;">
+					<form action="/wiki/index.php" id="searchform" class="mw-search">
+						<input type="hidden" name="title" value="Special:Search">
+						<input type="search" name="search" placeholder="Search" value="" accesskey="f" id="searchInput">
+						<div style="margin:0 5px 5px 5px;text-align:right;"><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="btn btn-primary searchButton"/></div>
+					</form>
+				</div>
+			</div>
+
+			<!--
+			<div class="menu open">
+				<h1>Note</h1>
+				<div class="submenu-wrapper" style="padding:10px;color:#444;">
+					Please do not discuss the 2015 AMC 8 Competition on any website until November 25th.
+				</div>
+			</div>
+			-->
+		</div>
+	</div>
+
+	<div id="main-column" style="margin-top:10px">
+				<div class="page-wrapper">
+						<div id="mw-js-message" style="display:none;"></div>
+			<h1 id="firstHeading" class="firstHeading">1996 USAMO Problems/Problem 1</h1>
+
+						
+			<div class="mw-body">
+												
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div class="mw-parser-output"><div id="toc" class="toc"><div class="toctitle" lang="en" dir="ltr"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Problem"><span class="tocnumber">1</span> <span class="toctext">Problem</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Solution"><span class="tocnumber">2</span> <span class="toctext">Solution</span></a>
+<ul>
+<li class="toclevel-2 tocsection-3"><a href="#Solution_1"><span class="tocnumber">2.1</span> <span class="toctext">Solution 1</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#Solution_2"><span class="tocnumber">2.2</span> <span class="toctext">Solution 2</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#Solution_3_-hashtagmath"><span class="tocnumber">2.3</span> <span class="toctext">Solution 3 -hashtagmath</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-6"><a href="#See_Also"><span class="tocnumber">3</span> <span class="toctext">See Also</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Problem">Problem</span></h2>
+<p>Prove that the average of the numbers <img src="//latex.artofproblemsolving.com/e/d/2/ed265860b43d533d3bea9121de2e0910549cf133.png" class="latex" alt="$n\sin n^{\circ}\; (n = 2,4,6,\ldots,180)$" style="vertical-align: -4px" width="221" height="18" /> is <img src="//latex.artofproblemsolving.com/1/3/4/134841980b297f4309fad3dbad57cc0f5acccdd4.png" class="latex" alt="$\cot 1^\circ$" style="vertical-align: 0px" width="42" height="13" />.
+</p>
+<h2><span class="mw-headline" id="Solution">Solution</span></h2>
+<h3><span class="mw-headline" id="Solution_1">Solution 1</span></h3>
+<p>First, as <img src="//latex.artofproblemsolving.com/8/1/d/81d305f7d4b236748b479bd36f33e243cecc33b9.png" class="latex" alt="$180\sin{180^\circ}=0,$" style="vertical-align: -3px" width="128" height="16" /> we omit that term. Now, we multiply by <img src="//latex.artofproblemsolving.com/3/5/2/352404bde5b339d5da72a79b265065580be77d94.png" class="latex" alt="$\sin 1^\circ$" style="vertical-align: 0px" width="40" height="13" /> to get, after using product to sum, <img src="//latex.artofproblemsolving.com/e/d/5/ed509ec2e1053143212ae9339e72c4df83a9f438.png" class="latex" alt="$(\cos 1^\circ-\cos 3^\circ)+2(\cos 3^\circ-\cos 5^\circ)+\cdots +89(\cos 177^\circ-\cos 179^\circ)$" style="vertical-align: -4px" width="523" height="18" />. 
+This simplifies to <img src="//latex.artofproblemsolving.com/3/4/2/342088cfad6b6517b3bb93ec8f1783a5028d3ab7.png" class="latex" alt="$\cos 1^\circ+\cos 3^\circ +\cos 5^\circ+\cos 7^\circ+...+\cos 177^\circ-89\cos 179^\circ$" style="vertical-align: -1px" width="468" height="14" />. Since <img src="//latex.artofproblemsolving.com/4/6/9/469fe230b8e8f3930d87ee2db57eb16c5767352e.png" class="latex" alt="$\cos x=-\cos(180-x),$" style="vertical-align: -4px" width="181" height="18" /> this simplifies to <img src="//latex.artofproblemsolving.com/0/6/a/06a109129085b9a09d990a5ad6fc0bd95d687269.png" class="latex" alt="$90\cos 1^\circ$" style="vertical-align: 0px" width="63" height="13" />. We multiplied by <img src="//latex.artofproblemsolving.com/3/5/2/352404bde5b339d5da72a79b265065580be77d94.png" class="latex" alt="$\sin 1^\circ$" style="vertical-align: 0px" width="40" height="13" /> in the beginning, so we must divide by it now, and thus the sum is just <img src="//latex.artofproblemsolving.com/1/3/3/13306b77c103f0b505ba81e04a3853a88a0c4c83.png" class="latex" alt="$90\cot 1^\circ$" style="vertical-align: 0px" width="63" height="13" />, so the average is <img src="//latex.artofproblemsolving.com/1/3/4/134841980b297f4309fad3dbad57cc0f5acccdd4.png" class="latex" alt="$\cot 1^\circ$" style="vertical-align: 0px" width="42" height="13" />, as desired.
+</p><p><img src="//latex.artofproblemsolving.com/c/1/2/c12dda010ebddef028cda1ec9d14986f4a26d07e.png" class="latex" alt="$\Box$" style="vertical-align: -1px" width="12" height="11" />
+</p>
+<h3><span class="mw-headline" id="Solution_2">Solution 2</span></h3>
+<p>Notice that for every <img src="//latex.artofproblemsolving.com/d/3/8/d38ae681aa2854fadc42224359ec65437fa938ba.png" class="latex" alt="$n\sin n^\circ$" width="56" height="13" /> there exists a corresponding pair term <img src="//latex.artofproblemsolving.com/b/f/6/bf6363fb4615e2f30c210073dfb21f18a9d79e34.png" class="latex" alt="$(180^\circ - n)\sin{180^\circ - n} = (180^\circ - n)\sin n^\circ$" style="vertical-align: -4px" width="330" height="18" />, for <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> not <img src="//latex.artofproblemsolving.com/2/2/e/22ec0d2e4202839322d26a23dcb13f79821df5d7.png" class="latex" alt="$90^\circ$" width="24" height="13" />. Pairing gives the sum of all <img src="//latex.artofproblemsolving.com/d/3/8/d38ae681aa2854fadc42224359ec65437fa938ba.png" class="latex" alt="$n\sin n^\circ$" width="56" height="13" /> terms to be <img src="//latex.artofproblemsolving.com/e/a/f/eaf4f1f8a3e152ab802555fcc3e903f7ed35251e.png" class="latex" alt="$90(\sin 2^\circ + \sin 4^\circ + ... + \sin 178^\circ)$" style="vertical-align: -4px" width="257" height="18" />, and thus the average is <img src="//latex.artofproblemsolving.com/a/0/8/a081dadc867b44d0b0a481798b4571ed744b03bd.png" class="latexcenter" alt="\[S = (\sin 2^\circ + \sin 4^\circ + ... + \sin 178^\circ). (*)\]" width="302" height="18" /> We need to show that <img src="//latex.artofproblemsolving.com/d/9/9/d995e3639dca43fb9e6adfcf11af9f3678102817.png" class="latex" alt="$S = \cot 1^\circ$" style="vertical-align: 0px" width="78" height="13" />. Multiplying (*) by <img src="//latex.artofproblemsolving.com/6/2/0/6203bf4a3cad3d37c9e6a0f60567a439b43e0bb2.png" class="latex" alt="$2\sin 1^\circ$" style="vertical-align: 0px" width="52" height="13" /> and using sum-to-product and telescoping gives <img src="//latex.artofproblemsolving.com/0/a/e/0aefb7462e6626bee679e28328e84acfe41665be.png" class="latex" alt="$2\sin 1^\circ S = \cos 1^\circ - \cos 179^\circ = 2\cos 1^\circ$" style="vertical-align: 0px" width="298" height="13" />. Thus, <img src="//latex.artofproblemsolving.com/b/f/5/bf5dfee75522858296e86407ab165593f8c675b2.png" class="latex" alt="$S = \frac{\cos 1^\circ}{\sin 1^\circ} = \cot 1^\circ$" style="vertical-align: -13px" width="151" height="37" />, as desired.
+</p><p><img src="//latex.artofproblemsolving.com/c/1/2/c12dda010ebddef028cda1ec9d14986f4a26d07e.png" class="latex" alt="$\Box$" style="vertical-align: -1px" width="12" height="11" />
+</p>
+<h3><span class="mw-headline" id="Solution_3_-hashtagmath">Solution 3 -hashtagmath</span></h3>
+<p>We know that the average of a list of numbers is the sum of all the terms, divided by the number of terms. So we will set up an average. This average will average to <img src="//latex.artofproblemsolving.com/1/3/4/134841980b297f4309fad3dbad57cc0f5acccdd4.png" class="latex" alt="$\cot 1^\circ$" style="vertical-align: 0px" width="42" height="13" />. So we can set it equal to <img src="//latex.artofproblemsolving.com/5/e/2/5e2059f3c7cd86802b0ef646a84f18300c713907.png" class="latex" alt="$\frac{\cos 1^\circ}{\sin 1^\circ}$" style="vertical-align: -13px" width="46" height="37" />. Doing so, gives us <img src="//latex.artofproblemsolving.com/5/a/f/5aff6815e6765978c7034954d1564da85fe18135.png" class="latexcenter" alt="\[\frac{2 \sin 2^\circ + 4 \sin 4^\circ + 6 \sin 6^\circ + 8 \sin 8^\circ + 10 \sin 10^\circ + 12 \sin 12^\circ ... + 180 \sin 180^\circ}{90} = \frac{\cos 1^\circ}{\sin 1^\circ}.(1)\]" width="701" height="38" />
+</p><p>We should try to simplify the numerator as it looks pretty messy.
+</p><p>Now we know that <img src="//latex.artofproblemsolving.com/2/4/4/244d0c1645c16f225a882863ee2d275397e7ba73.png" class="latex" alt="$\sin x = \sin (180-x)$" style="vertical-align: -4px" width="155" height="18" />, so maybe we can use this to clear things up a bit. Applying this to <img src="//latex.artofproblemsolving.com/0/d/9/0d9c3b1c142cbd3f8217dabc160c57e4750df241.png" class="latex" alt="$(1)$" style="vertical-align: -4px" width="21" height="18" /> gives us <img src="//latex.artofproblemsolving.com/4/6/3/463f2fc56d8e4e1eaa57e26b698394609fdfc96c.png" class="latexcenter" alt="\[\frac{2 \sin 178^\circ + 4 \sin 176^\circ + 6 \sin 174^\circ + 8 \sin 172^\circ + 10 \sin 170^\circ + 12 \sin 168^\circ ... + 180 \sin 0^\circ}{90} = \frac{\cos 1^\circ}{\sin 1^\circ}. (2)\]" width="774" height="38" />
+</p><p>Now, we know that <img src="//latex.artofproblemsolving.com/4/7/d/47d59e312cf2079afcbddbcb106e2c01e3965c7a.png" class="latex" alt="$\sin 2^\circ = \sin 178^\circ$" style="vertical-align: 0px" width="124" height="13" />, and <img src="//latex.artofproblemsolving.com/4/8/9/489577009866bb9f4cf73f010baac6406a352330.png" class="latex" alt="$\sin 4^\circ = \sin 176^\circ$" style="vertical-align: 0px" width="124" height="13" /> and so on. We also know that <img src="//latex.artofproblemsolving.com/c/6/c/c6c6ed1c9eb6e40530e226f0ba29082a832359d9.png" class="latex" alt="$\sin 0^\circ = 0$" width="75" height="13" />, so we can omit the last term. Also, we know that <img src="//latex.artofproblemsolving.com/a/c/2/ac2dadc887a0cde2674790749d0fa0ebeb17d72d.png" class="latex" alt="$\sin 90 = 1$" style="vertical-align: -1px" width="79" height="14" />. Thus <img src="//latex.artofproblemsolving.com/2/7/a/27a5095d9ce53ff6a00eef1d455eee977e37d222.png" class="latex" alt="$90 \sin 90 = 90$" width="106" height="12" />. So we will use all these when we further simplify. Another thing that we can simplify is to notice that when we reach the term <img src="//latex.artofproblemsolving.com/c/0/d/c0d2be537c14aa9a4a4d2efbb6578fc3a7701822.png" class="latex" alt="$92\sin 88^\circ$" width="70" height="13" />, we can rewrite it as <img src="//latex.artofproblemsolving.com/9/3/c/93c0339d761080e9d9a0c9d2575018e95d246578.png" class="latex" alt="$92\sin 92^\circ$" width="70" height="13" />. Thus we can rewrite everything in the form <img src="//latex.artofproblemsolving.com/e/b/b/ebb0ddd9acd02c69795d2edcb41ddf6340ed0e61.png" class="latex" alt="$x\sin y^\circ$" style="vertical-align: -3px" width="54" height="16" /> as <img src="//latex.artofproblemsolving.com/4/7/4/474c6f640dd78834dddd2041c84131696e0059e6.png" class="latex" alt="$x \sin x^\circ$" width="55" height="13" />, starting with the term <img src="//latex.artofproblemsolving.com/c/0/d/c0d2be537c14aa9a4a4d2efbb6578fc3a7701822.png" class="latex" alt="$92\sin 88^\circ$" width="70" height="13" />, then <img src="//latex.artofproblemsolving.com/a/6/f/a6f3c449c5f0cfd8f03c1d165e71e6beefce35db.png" class="latex" alt="$94\sin 86^\circ$" style="vertical-align: -1px" width="74" height="15" />, and so on. 
+</p><p>Thus we can further simplify our equation. Doing so, gives us <img src="//latex.artofproblemsolving.com/b/3/9/b39cad8a2873c2181e0b79f43d54b87a911a613b.png" class="latexcenter" alt="\[\frac{2 \sin 178^\circ + 4 \sin 176^\circ + 6 \sin 174^\circ + 8 \sin 172^\circ + 10 \sin 170^\circ + 12 \sin 168^\circ ...+ 176 \sin 176^\circ + 178 \sin 178^\circ + 90}{90} = \frac{\cos 1^\circ}{\sin 1^\circ}. (3)\]" width="945" height="38" />
+</p><p>Then, to make things easier, we can rewrite all the numbers with degrees less than <img src="//latex.artofproblemsolving.com/2/2/e/22ec0d2e4202839322d26a23dcb13f79821df5d7.png" class="latex" alt="$90^\circ$" width="24" height="13" /> and combine like terms. Doing so gives us  <img src="//latex.artofproblemsolving.com/4/0/6/40649a4e87cbbf3bc53a8ac898fe81bd219ad460.png" class="latexcenter" alt="\[\frac{180 \sin 2^\circ + 180 \sin 4^\circ + 180 \sin 6^\circ +180 \sin 8^\circ +180 \sin 10^\circ ... +180 \sin 88^\circ + (90)}{90} = \frac{\cos 1^\circ}{\sin 1^\circ}. (4)\]" width="734" height="39" />
+</p><p>Now we can factor out <img src="//latex.artofproblemsolving.com/5/c/b/5cb1b41850ab676e4d1cf15c69b1609af4befbc5.png" class="latex" alt="$180$" style="vertical-align: 0px" width="26" height="13" /> to get <img src="//latex.artofproblemsolving.com/6/5/5/655eaa04e97155e1bbdb73566bd270e1cc0f0c83.png" class="latexcenter" alt="\[\frac{180(\sin 2^\circ+ \sin 4^\circ + \sin 6^\circ + \sin 8^\circ + \sin 10^\circ ... + \sin 88^\circ) + 90}{90} = \frac{\cos 1^\circ}{\sin 1^\circ}. (5)\]" width="579" height="39" />
+</p><p>Then we can simplify it by getting rid of the denominator to get to <img src="//latex.artofproblemsolving.com/8/3/e/83ef9cbc2d5d0aa24b73753a16256e24d0473f27.png" class="latexcenter" alt="\[2(\sin 2^\circ+ \sin 4^\circ + \sin 6^\circ + \sin 8^\circ + \sin 10^\circ ... + \sin 88^\circ) + 1 = \frac{\cos 1^\circ}{\sin 1^\circ}. (6)\]" width="501" height="37" />
+</p><p>Now we notice that we can multiply both sides by <img src="//latex.artofproblemsolving.com/3/5/2/352404bde5b339d5da72a79b265065580be77d94.png" class="latex" alt="$\sin 1^\circ$" style="vertical-align: 0px" width="40" height="13" />. Doing so gives us <img src="//latex.artofproblemsolving.com/7/6/2/7629ba4f9c42696fb692819c728881adab06e0db.png" class="latexcenter" alt="\[\sin 1^\circ(2 (\sin 2^\circ+ \sin 4^\circ + \sin 6^\circ + \sin 8^\circ + \sin 10^\circ ... + \sin 88^\circ) + 1) = \cos 1^\circ. (7)\]" width="553" height="18" />
+</p><p>Now, simplifying <img src="//latex.artofproblemsolving.com/c/6/c/c6c9c6113c1eed38c55d7bf62addb920d9a68e96.png" class="latex" alt="$\sin 2^\circ+ \sin 4^\circ + \sin 6^\circ + \sin 8^\circ + \sin 10^\circ ... + \sin 88^\circ$" style="vertical-align: -1px" width="395" height="14" /> doesn't look too promising. So maybe if we expand again, we can maybe somehow use our product to sum formulas. 
+</p><p>Doing so, gives us <img src="//latex.artofproblemsolving.com/c/4/3/c43f3e9f4f141da59ef42e66c7a2f2e9ea11e79a.png" class="latexcenter" alt="\[(\sin 1^\circ)(2 \sin 2^\circ)+(\sin 1^\circ)(2\sin 4^\circ) +(\sin 1^\circ)(2\sin 6^\circ) + (\sin 1^\circ)(2\sin 8^\circ) +(\sin 1^\circ)(2 \sin 10^\circ) ... + (\sin 1^\circ)(2\sin 88^\circ) + \sin 1^\circ = \cos 1^\circ. (8)\]" width="1001" height="18" />
+</p><p>Now we can use our product of sines to sum formula and see if we can find a pattern. 
+</p><p>We will start with expanding <img src="//latex.artofproblemsolving.com/3/1/8/318c3908ee6b118f20861793cef9a41ef6e6c889.png" class="latex" alt="$(\sin 1^\circ)(2 \sin 2^\circ)$" style="vertical-align: -4px" width="123" height="18" />. Because the format of our formula for the product of sines is <img src="//latex.artofproblemsolving.com/e/3/e/e3ed436172a450962d22cf060bfb90538c0f658f.png" class="latex" alt="$\sin \alpha + \sin \beta$" style="vertical-align: -3px" width="95" height="16" />, we can factor out the <img src="//latex.artofproblemsolving.com/4/1/c/41c544263a265ff15498ee45f7392c5f86c6d151.png" class="latex" alt="$2$" width="8" height="12" /> and find the product, then multiply by <img src="//latex.artofproblemsolving.com/4/1/c/41c544263a265ff15498ee45f7392c5f86c6d151.png" class="latex" alt="$2$" width="8" height="12" />. So, we are at <img src="//latex.artofproblemsolving.com/f/2/1/f214c38fe7ee5438d8dc2a63df8b735f739ee55a.png" class="latex" alt="$2(\sin 1^\circ)(\sin 2^\circ)$" style="vertical-align: -4px" width="120" height="18" />. Our formula for the product of sines is <img src="//latex.artofproblemsolving.com/6/8/4/684f3fc3fe50265945a02e1b2243a2229fbc8e47.png" class="latex" alt="$\sin \alpha + \sin \beta = \frac{1}{2}[\cos(\alpha - \beta) - \cos(\alpha + \beta)]$" style="vertical-align: -12px" width="330" height="37" />. Plugging in our values into the formula and simplifying gives us <img src="//latex.artofproblemsolving.com/9/5/7/957351285a61b4d51d003b297e286954ee45f23d.png" class="latex" alt="$2\left(\frac{1}{2}(\cos 1^\circ - \cos 3^\circ)\right)$" style="vertical-align: -17px" width="172" height="43" />. We know that <img src="//latex.artofproblemsolving.com/5/f/c/5fcc02e4f55ec23a9a59af4d2b64c665e70cce44.png" class="latex" alt="$2\left(\frac{1}{2}\right)$" style="vertical-align: -17px" width="48" height="43" /> will just cancel out to <img src="//latex.artofproblemsolving.com/d/c/e/dce34f4dfb2406144304ad0d6106c5382ddd1446.png" class="latex" alt="$1$" style="vertical-align: -1px" width="11" height="14" />. So we are left with <img src="//latex.artofproblemsolving.com/1/1/1/111875803b5db308d437f3bc6874f3a1b168b807.png" class="latex" alt="$\cos 1^\circ - \cos 3^\circ$" style="vertical-align: 0px" width="108" height="13" />. <img src="//latex.artofproblemsolving.com/1/d/2/1d28c1a96e9fde93ff391f0c873f42484f02e38d.png" class="latex" alt="$(9)$" style="vertical-align: -4px" width="21" height="18" />
+</p><p>Next we expand <img src="//latex.artofproblemsolving.com/b/3/d/b3d38d5d6f37eae03fb23369979d616925ab0f7f.png" class="latex" alt="$(\sin 1^\circ)(2\sin 4^\circ)$" style="vertical-align: -4px" width="123" height="18" />. We use the same steps or strategy as we did above and get <img src="//latex.artofproblemsolving.com/2/e/6/2e6e528b67e7642f767ee728851d80a9410a8ae7.png" class="latex" alt="$\cos 3^\circ - \cos 5^\circ$" width="108" height="13" />. <img src="//latex.artofproblemsolving.com/2/d/a/2daa9d926d55af6c3d3ac81cee88c298e15ae7ff.png" class="latex" alt="$(10)$" style="vertical-align: -4px" width="30" height="18" />
+</p><p>We may be noticing a pattern. Just to make sure it is true, we will expand <img src="//latex.artofproblemsolving.com/7/6/e/76e3e5a0500cdecec69f3c472c1968934e91f3ee.png" class="latex" alt="$(\sin 1^\circ)(2\sin 6^\circ)$" style="vertical-align: -4px" width="123" height="18" />. When we expand this using the same strategy above, we get <img src="//latex.artofproblemsolving.com/8/2/1/821e9b6bb2a1591e0f8ab5a02a633cc2dc03b172.png" class="latex" alt="$\cos 5^\circ - \cos 7^\circ$" width="108" height="13" />. <img src="//latex.artofproblemsolving.com/5/4/3/54391c55d01fc37908b5a0a7e670220f6261a7b4.png" class="latex" alt="$(11)$" style="vertical-align: -4px" width="30" height="18" /> So our pattern is that <img src="//latex.artofproblemsolving.com/7/a/9/7a9b60699cdc35686dc6464a86c6c78d500a7473.png" class="latex" alt="$(\sin 1^\circ)(2\sin \mu^\circ) = \cos (\mu-1)^\circ - \cos (\mu+1)^\circ. (12)$" style="vertical-align: -4px" width="385" height="18" />
+</p><p>Now we notice that when we add <img src="//latex.artofproblemsolving.com/1/d/2/1d28c1a96e9fde93ff391f0c873f42484f02e38d.png" class="latex" alt="$(9)$" style="vertical-align: -4px" width="21" height="18" /> and <img src="//latex.artofproblemsolving.com/2/d/a/2daa9d926d55af6c3d3ac81cee88c298e15ae7ff.png" class="latex" alt="$(10)$" style="vertical-align: -4px" width="30" height="18" />, <img src="//latex.artofproblemsolving.com/7/f/9/7f95bfb20ea68e3153dd734c6378473fed29ca92.png" class="latex" alt="$-\cos 3^\circ$" width="59" height="13" /> and <img src="//latex.artofproblemsolving.com/e/2/a/e2a213e8c738a78225014df12c8297c34f6e2221.png" class="latex" alt="$+\cos 3^\circ$" style="vertical-align: -1px" width="59" height="14" /> cancel themselves out to just <img src="//latex.artofproblemsolving.com/7/d/f/7dfd64a98bc9ce9ddefec103a0c20ecd71a731b8.png" class="latex" alt="$\cos 1^\circ - \cos 5^\circ$" style="vertical-align: 0px" width="108" height="13" />. Then, when we add <img src="//latex.artofproblemsolving.com/5/4/3/54391c55d01fc37908b5a0a7e670220f6261a7b4.png" class="latex" alt="$(11)$" style="vertical-align: -4px" width="30" height="18" /> to it, <img src="//latex.artofproblemsolving.com/d/3/f/d3f3e917b1dbe0697012828cecfba9a25e725bc3.png" class="latex" alt="$+ \cos 5^\circ$" style="vertical-align: -1px" width="59" height="14" /> and <img src="//latex.artofproblemsolving.com/8/b/d/8bd2308d898a791f072fa49fa824f5bead126429.png" class="latex" alt="$- \cos 5^\circ$" width="59" height="13" /> also cancel themselves out. 
+</p><p>Now, we need to figure out when we should stop canceling out. We can use formula <img src="//latex.artofproblemsolving.com/2/f/4/2f48065d6fbbb08faa757208705cdc52c7aec0bb.png" class="latex" alt="$(12)$" style="vertical-align: -4px" width="30" height="18" /> and replace <img src="//latex.artofproblemsolving.com/4/0/d/40d924a5d0ade21a3824a7f0343f8beae70ef96e.png" class="latex" alt="$88$" width="17" height="12" /> with <img src="//latex.artofproblemsolving.com/2/d/8/2d8c833ed800824727cd7bd2fb9de1a12ad7e674.png" class="latex" alt="$\mu$" style="vertical-align: -3px" width="10" height="11" /> since <img src="//latex.artofproblemsolving.com/4/0/d/40d924a5d0ade21a3824a7f0343f8beae70ef96e.png" class="latex" alt="$88$" width="17" height="12" /> is the last one in <img src="//latex.artofproblemsolving.com/4/2/0/420d02790058efed5f0a5a99484783befa04bc08.png" class="latex" alt="$(8)$" style="vertical-align: -4px" width="21" height="18" />. Applying this formula and simplifying gives us <img src="//latex.artofproblemsolving.com/3/c/6/3c654184eb36fe4e5f05944087d26f7cf10045d5.png" class="latex" alt="$\cos 87^\circ - \cos 89$" width="120" height="13" />, so the last term would be <img src="//latex.artofproblemsolving.com/6/5/4/654e8d37397fc7313a656896e11621df697a8836.png" class="latex" alt="$- \cos 89$" width="62" height="12" />.
+</p><p>Thus we know that everything we cancel themselves out except the first and the last term. So, we are left with <img src="//latex.artofproblemsolving.com/f/4/b/f4b24240a75c0568ef6325b88f481ae2c789d7ca.png" class="latexcenter" alt="\[(\cos 1^\circ - \cos 89^\circ) + \sin 1^\circ = \cos 1^\circ. (13)\]" width="300" height="18" />
+</p><p>Now we notice that we have <img src="//latex.artofproblemsolving.com/8/7/6/8768a4246566599d32b1bf5f04b8195eb57733ce.png" class="latex" alt="$\cos 1^\circ$" style="vertical-align: 0px" width="42" height="13" /> on both sides. Thus we can subtract <img src="//latex.artofproblemsolving.com/8/7/6/8768a4246566599d32b1bf5f04b8195eb57733ce.png" class="latex" alt="$\cos 1^\circ$" style="vertical-align: 0px" width="42" height="13" /> from both sides to get <img src="//latex.artofproblemsolving.com/b/3/f/b3f08ac7f52cc64ee99ce5bbbefaa9315b7ff402.png" class="latex" alt="$- \cos 89^\circ + \sin 1^\circ = 0$" style="vertical-align: -1px" width="167" height="14" />. Now we can add <img src="//latex.artofproblemsolving.com/a/e/b/aebc86d55bd2491968723206f0b68a5ec75348e6.png" class="latex" alt="$\cos 89^\circ$" style="vertical-align: -1px" width="55" height="15" /> to both sides and get <img src="//latex.artofproblemsolving.com/d/c/b/dcb59f328473d22b2490446beb7e5b12d7be3d40.png" class="latex" alt="$\sin 1^\circ = \cos 89^\circ$" style="vertical-align: 0px" width="117" height="13" />. Now we also know that <img src="//latex.artofproblemsolving.com/d/0/c/d0c30ad880709cff680ad7f664d584524329802a.png" class="latex" alt="$\sin (\omega)^\circ = \cos(90-\omega)$" style="vertical-align: -4px" width="169" height="18" />. Thus we know that <img src="//latex.artofproblemsolving.com/d/c/b/dcb59f328473d22b2490446beb7e5b12d7be3d40.png" class="latex" alt="$\sin 1^\circ = \cos 89^\circ$" style="vertical-align: 0px" width="117" height="13" />. Hence, our proof is complete. <img src="//latex.artofproblemsolving.com/b/6/c/b6cf65b1f2fbdf388e3daeff9b96b34d3399d777.png" class="latex" alt="$\square$" width="13" height="12" />
+</p>
+<h2><span class="mw-headline" id="See_Also">See Also</span></h2>
+<table class="wikitable" style="margin:0.5em auto; font-size:95%; border:1px solid black; width:40%;">
+<tbody><tr>
+<td style="background:#ccf;text-align:center;" colspan="3"><b><a href="/wiki/index.php/1996_USAMO" title="1996 USAMO">1996 USAMO</a></b> (<b><a href="/wiki/index.php/1996_USAMO_Problems" title="1996 USAMO Problems">Problems</a></b> • <a rel="nofollow" class="external text" href="http://www.artofproblemsolving.com/Forum/resources.php?c=182&amp;cid=27&amp;year=1996">Resources</a>)
+</td></tr>
+<tr>
+<td width="50%" align="center" rowspan="1">Preceded&#160;by<br /><b>First Question</b>
+</td>
+<td width="50%" align="center" rowspan="1">Followed&#160;by<br /><b><a href="/wiki/index.php/1996_USAMO_Problems/Problem_2" title="1996 USAMO Problems/Problem 2">Problem 2</a></b>
+</td></tr>
+<tr>
+<td colspan="3" style="text-align:center;"><a class="mw-selflink selflink">1</a> <b>•</b> <a href="/wiki/index.php/1996_USAMO_Problems/Problem_2" title="1996 USAMO Problems/Problem 2">2</a> <b>•</b> <a href="/wiki/index.php/1996_USAMO_Problems/Problem_3" title="1996 USAMO Problems/Problem 3">3</a> <b>•</b> <a href="/wiki/index.php/1996_USAMO_Problems/Problem_4" title="1996 USAMO Problems/Problem 4">4</a> <b>•</b> <a href="/wiki/index.php/1996_USAMO_Problems/Problem_5" title="1996 USAMO Problems/Problem 5">5</a> <b>•</b> <a href="/wiki/index.php/1996_USAMO_Problems/Problem_6" title="1996 USAMO Problems/Problem 6">6</a>
+</td></tr>
+<tr>
+<td colspan="3" style="text-align:center;"><b><a href="/wiki/index.php/USAMO_Problems_and_Solutions" title="USAMO Problems and Solutions"> All USAMO Problems and Solutions</a></b>
+</td></tr></tbody></table>
+<p>These problems are copyrighted &#169; by the <a rel="nofollow" class="external text" href="https://www.maa.org">Mathematical Association of America</a>, as part of the <a rel="nofollow" class="external text" href="https://maa.org/student-programs/amc/">American Mathematics Competitions</a>. <a href="/wiki/index.php/File:AMC_logo.png" class="image"><img alt="AMC logo.png" src="https://wiki-images.artofproblemsolving.com//thumb/8/8b/AMC_logo.png/50px-AMC_logo.png" width="50" height="43" style="vertical-align: middle" srcset="https://wiki-images.artofproblemsolving.com//thumb/8/8b/AMC_logo.png/75px-AMC_logo.png 1.5x, https://wiki-images.artofproblemsolving.com//8/8b/AMC_logo.png 2x" /></a>
+</p>
+<div style="clear:both;"></div>
+
+<!-- 
+NewPP limit report
+Cached time: 20250524153415
+Cache expiry: 86400
+Dynamic content: false
+CPU time usage: 0.057 seconds
+Real time usage: 1.225 seconds
+Preprocessor visited node count: 888/1000000
+Preprocessor generated node count: 2068/1000000
+Post‐expand include size: 1208/2097152 bytes
+Template argument size: 56/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+Unstrip recursion depth: 0/20
+Unstrip post‐expand size: 18360/5000000 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   48.213      1 -total
+ 73.86%   35.612      1 Template:MAA_Notice
+ 25.85%   12.465      1 Template:USAMO_newbox
+-->
+</div>
+<!-- Saved in parser cache with key wiki-wiki_:pcache:idhash:11462-0!canonical and timestamp 20250524153414 and revision id 131505
+ -->
+</div><div class="printfooter">
+Retrieved from "<a dir="ltr" href="https://artofproblemsolving.com/wiki/index.php?title=1996_USAMO_Problems/Problem_1&amp;oldid=131505">https://artofproblemsolving.com/wiki/index.php?title=1996_USAMO_Problems/Problem_1&amp;oldid=131505</a>"</div>
+
+
+									<div class="catlinks"><div id="catlinks" class="catlinks" data-mw="interface"><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/index.php/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="/wiki/index.php/Category:Olympiad_Algebra_Problems" title="Category:Olympiad Algebra Problems">Olympiad Algebra Problems</a></li></ul></div></div></div>
+				
+
+							</div>
+		</div>
+	</div>
+</div>
+
+<!-- search:off -->
+	<div class="clearfix"></div>
+
+	
+	<div id="main-footer" class="no-print">
+		<div class="footer-container">
+			<div class="footer-topRow">
+											<a href="https://artofproblemsolving.com/online">
+							<img class="footer-mainLogo"
+							src="https://artofproblemsolving.com/assets/images/logos/aops-online-footer.svg"/>
+						</a>
+										<div class="footer-wasc">
+						<span>
+							Art of Problem Solving is an
+							<br class="wasc-break"/>
+							<span class="footer-accredited">ACS WASC Accredited School</span>
+						</span>
+						<img class="footer-wascLogo"
+						src="https://artofproblemsolving.com/assets/images/logos/wasc.png"/>
+					</div>
+			</div>
+			<div class="footer-links">
+				<div class="footer-col">
+					<div class="footer-colHeader">aops programs</div>
+					<div><a class="link" href="https://artofproblemsolving.comonline">AoPS Online</a></div>
+					<div><a class="link" href="https://beastacademy.com">Beast Academy</a></div>
+					<div><a class="link" href="https://aopsacademy.org">AoPS Academy</a></div>
+				</div>
+
+				<div class="footer-col">
+					<div class="footer-colHeader">About</div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/about">About AoPS</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/staff">Our Team</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/history">Our History</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/careers">Jobs</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/blog">AoPS Blog</a></div>
+				</div>
+
+				<div class="footer-col">
+					<div class="footer-colHeader" style="left:-1px;">Site Info</div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/tos">Terms</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/privacy">Privacy</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/contact">Contact Us</a></div>
+				</div>
+
+				<div class="footer-col social">
+					<div class="footer-colHeader">follow us</div>
+					<div class="footer-social">
+													<a class="link" target="_blank" href="https://www.facebook.com/artofproblemsolving">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/facebook.svg" class="sm-icon"/>
+							</a>
+							<a class="link" target="_blank" href="http://twitter.com/AoPSNews">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/twitter.svg" class="sm-icon"/>
+							</a>
+							<a class="link" target="_blank" href="https://www.pinterest.com/artofproblemsolving/pins/">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/pinterest.svg" class="sm-icon"/>
+							</a>
+											</div>
+				</div>
+									<div class="footer-col subscribe">
+						<div class="footer-colHeader">
+							Subscribe for news and updates
+						</div>
+						<form method="post" action="/mailinglist">
+							<input type="email" class="footer-email" placeholder="Enter e-mail" name="subscribe-email">
+							<input type="hidden" name="new-books" value="on">
+							<input type="hidden" name="classes" value="on">
+							<input type="hidden" name="mathjams" value="on">
+							<input type="submit" class="footer-submit" value="">
+							<div class="footer-submit-arrow">
+								<svg x="0px" y="0px" viewBox="0 0 289 289" enable-background="new 0 0 289 289">
+									<g>
+										<path class="arrow-fill" d="M121.5,220.5c-2.6,0-5.1-1-7.1-2.9c-3.9-3.9-3.9-10.2,0-14.1l58.9-58.9l-58.9-58.9c-3.9-3.9-3.9-10.2,0-14.1c3.9-3.9,10.2-3.9,14.1,0l66,66c3.9,3.9,3.9,10.2,0,14.1l-66,66C126.6,219.5,124.1,220.5,121.5,220.5z"/>
+									</g>
+								</svg>
+							</div>
+						</form>
+					</div>
+							</div>
+			<div class="copyright">
+				<span>&copy; 2025 AoPS Incorporated
+				</span>
+			</div>
+		</div>
+	</div>
+
+	<div id="small-footer-wrapper">
+		<div class="footer-container">
+							<a href="https://artofproblemsolving.com/online">
+					<img class="footer-mainLogo"
+					src="https://artofproblemsolving.com/assets/images/logos/aops-online-footer.svg"/>
+				</a>
+						<div class="copyright">
+				&copy; 2025 Art of Problem Solving
+				<div class="copyright-links">
+					<a href="https://artofproblemsolving.com/company">About Us</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/contact">Contact Us</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/company/tos">Terms</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/company/privacy">Privacy</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<form id="registration-form" method="post" action="/user/register.php">
+	<input type="hidden" name="username" value="">
+	<input type="hidden" name="password" value="">
+	<input type="hidden" name="from-login" value="true">
+	</form>
+<div id="print-footer" class="printer">Copyright &copy; 2025 Art of Problem Solving</div>
+
+
+
+<div id="epicfail" class="aops-html-modal-epic-fail" style="display: none">
+	<div class="aops-html-modal-inner-epic-fail">
+		<div class="aops-html-modal-main-epic-fail">
+			<p>Something appears to not have loaded correctly.</p>
+		</div>
+		<div class="aops-html-modal-bottom-epic-fail">
+			<p><a onclick="location.reload(true);return false">Click to refresh</a>.</p>
+		</div>
+	</div>
+</div>
+<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/epic-fail.css">
+
+
+
+
+
+<!-- /search:off -->
+
+
+<!-- copied from contact page index, with edits -->
+<script id="footer-tpl-email-dialog" type="text/x-handlebars-template">
+	<div id="mail-dialog">
+		<h1>Email Art of Problem Solving</h1>
+		<p>
+			<input type="text" id="email" name="email" placeholder="Your email address">
+			<input type="text" id="subject" name="subject" placeholder="Subject of message">
+			<textarea id="message" name="message" placeholder="Enter your message"></textarea>
+			<div style="padding:5px 30px">
+				<input type="checkbox" id="email-copy" name="email_copy">
+				<label for="email-copy" id="email-copy-label">Send a copy to my email address.</label>
+			</div>
+			<div style="padding:5px 30px 20px">
+				<input id="footer-submit-btn" type="submit" class="btn btn-primary" value="Send">
+				<input id="footer-cancel-btn" type="submit" class="btn btn-default" value="Cancel">
+			</div>
+		</p>
+		<p id="email-error"></p>
+	</div>
+</script>
+
+
+<script id="footer-tpl-email-confirm" type="text/x-handlebars-template">
+	<div id="mail-dialog-confirm">
+		<h2>Email Sent</h2>
+		<p>Thank you for your email. We will respond to it soon.</p>
+	</div>
+</script>
+
+<!-- bing -->
+<script>(function(w,d,t,r,u){var f,n,i;w[u]=w[u]||[],f=function(){var o={ti:"5105596"};o.q=w[u],w[u]=new UET(o),w[u].push("pageLoad")},n=d.createElement(t),n.src=r,n.async=1,n.onload=n.onreadystatechange=function(){var s=this.readyState;s&&s!=="loaded"&&s!=="complete"||(f(),n.onload=n.onreadystatechange=null)},i=d.getElementsByTagName(t)[0],i.parentNode.insertBefore(n,i)})(window,document,"script","//bat.bing.com/bat.js","uetq");</script><noscript><img src="//bat.bing.com/action/0?ti=5105596&Ver=2" height="0" width="0" style="display:none; visibility: hidden;" /></noscript>
+
+</body>
+<!-- Cached 20250524184428 -->
+</html>
+

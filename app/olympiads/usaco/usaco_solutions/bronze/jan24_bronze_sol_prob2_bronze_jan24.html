@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Ben Chen)
+<p>First consider the case where all jump pads have a positive <span class='math'>$v$</span>. We may directly
+simulate Bessie&apos;s process. At a given power <span class='math'>$p$</span>, Bessie will jump at most
+<span class='math'>$\frac n p$</span> times before she exits the number line or she hits a jump pad, in which
+her power increases. Therefore the number of bounces is bounded by
+<span class='math'>$\sum_{i=1}^n \frac n i = O(n\lg(n))$</span>.
+<p>When there are jump pads with with value <span class='math'>$0$</span>, then there&apos;s a possibility Bessie
+can get stuck in an infinite loop. This happens only when Bessie hits a jump pad
+of value <span class='math'>$0$</span>, switches direction, and after some bounces, the next jump pad she
+hits is also value <span class='math'>$0$</span>. It is possible to check for this infinite loop cycle,
+but it&apos;s easier to implement just simulating Bessie&apos;s bounces for enough
+iterations (about <span class='math'>$O(n\lg(n))$</span>) since Bessie won&apos;t break additional targets
+while stuck in a loop.
+<p>Sample implementation:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main() {
+	ios::sync_with_stdio(0);
+	cin.tie(0);
+	int n, x;
+	cin &gt;&gt; n &gt;&gt; x;
+	vector&lt;pair&lt;int, int&gt;&gt; pad(n + 1);
+	vector&lt;bool&gt; vis(n + 1);
+	for (int i = 1; i &lt;= n; ++i)
+		cin &gt;&gt; pad[i].first &gt;&gt; pad[i].second;
+	int dir = 1, power = 1, ans = 0;
+	for (int reps = 0; reps &lt; 5000000 &amp;&amp; 1 &lt;= x &amp;&amp; x &lt;= n; ++reps) {
+		// Bessie breaks a target she hasn&apos;t broken before
+		if (pad[x].first == 1 &amp;&amp; power &gt;= pad[x].second &amp;&amp; !vis[x]) {
+			vis[x] = true;
+			++ans;
+		}
+		if (pad[x].first == 0) { // jump pad
+			dir *= -1;
+			power += pad[x].second;
+		}
+		x += dir * power;
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+	return 0;
+}
+</pre>
+<p></body></html>

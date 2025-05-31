@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, we have some cows in a row that shuffle themselves according to
+a fixed pattern. We know how they shuffle themselves in one shuffle rotation,
+and we know how they&apos;re arranged after three shuffles. We wish to reconstruct
+their original ordering.
+<p>There are few enough cows that it is possible to guess and check, for each cow
+and each possible starting position, if that cow could end up in the location we
+currently observe it in. However, there is a way to determine exactly where each
+cow was originally without any sort of guesswork.
+<p>We can do this by pretending to go backwards in time and construct were each cow
+was after two shuffles, then after one shuffle, and then where they were
+originally. We know that the cow in position <span class='math'>$i$</span> goes to position <span class='math'>$a_i$</span> after
+one shuffle. What this also means though is that if a cow was in position <span class='math'>$a_i$</span>
+after one shuffle, then before that shuffle happened, that cow was in position
+<span class='math'>$i$</span>!
+<p>Therefore, we only have to undo three shuffles to get the original locations of all the cows.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class shuffle {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader(&quot;shuffle.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;shuffle.out&quot;)));
+		
+		// read in the number of cows
+		int n = Integer.parseInt(br.readLine());
+		
+		// if a cow was in position i after shuffling, then moveTo[i] will
+		// be the location that they were in before the shuffle
+		int[] moveTo = new int[n+1];
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		for(int i = 1; i &lt;= n; i++) {
+			// destination is the location a cow would be after a shuffle
+			// if they were originally in position i
+			int destination = Integer.parseInt(st.nextToken());;
+			moveTo[destination] = i;
+		}
+		
+		// allocate an array to store the observed locations of all cows
+		// read in the observations
+		int[] finalLocs = new int[n+1];
+		st = new StringTokenizer(br.readLine());
+		for(int i = 1; i &lt;= n; i++) {
+			finalLocs[i] = Integer.parseInt(st.nextToken());
+		}
+		
+		// allocate an array to store the original locations of all cows
+		int[] originalLocations = new int[n+1];
+		for(int finalPosition = 1; finalPosition &lt;= n; finalPosition++) {
+			int currentLocation = finalPosition;
+			// reverse three shuffles
+			for(int iter = 1; iter &lt;= 3; iter++) {
+				currentLocation = moveTo[currentLocation];
+			}
+			// store the original location of the cow that ended up in finalPosition
+			originalLocations[currentLocation] = finalLocs[finalPosition];
+		}
+		
+		// print the answer
+		for(int i = 1; i &lt;= n; i++) {
+			pw.println(originalLocations[i]);
+		}
+		pw.close();
+	}
+}
+</pre>
+For those who prefer C++, here is Brian Dean's solution:
+<pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+const int MAX_N = 100;
+using namespace std;
+ 
+int A[MAX_N+1];
+int order[MAX_N+1];
+int original_order[MAX_N+1];
+ 
+int main(void)
+{
+  ifstream fin ("shuffle.in");
+  ofstream fout ("shuffle.out");
+ 
+  int N;
+  
+  fin &gt;&gt; N;
+  for (int i=1; i&lt;=N; i++) 
+    fin &gt;&gt; A[i];
+  for (int i=1; i&lt;=N; i++) 
+    fin &gt;&gt; order[i];
+ 
+  for (int iter=0; iter&lt;3; iter++) {    
+    for (int i=1; i&lt;=N; i++) original_order[i] = order[A[i]];
+    for (int i=1; i&lt;=N; i++) order[i] = original_order[i];
+  }
+  
+  for (int i=1; i&lt;=N; i++)
+    fout &lt;&lt; order[i] &lt;&lt; "\n";
+  return 0;
+}
+</pre>
+</body></html>

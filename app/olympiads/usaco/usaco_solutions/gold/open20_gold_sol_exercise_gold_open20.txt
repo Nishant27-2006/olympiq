@@ -1,0 +1,232 @@
+Solution ID: sol_exercise_gold_open20
+Contest: OPEN20
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_exercise_gold_open20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Call the number of steps that a permutation takes the
+
+period
+
+of the
+permutation. Every permutation can be partitioned into cycles of sizes
+
+$c_1,c_2,c_3,\ldots,c_k$
+
+such that
+
+$c_1+c_2+\ldots+c_k=N$
+
+(see
+
+Swapity Swapity
+Swap
+
+from the last contest). Then the  period is equal to
+
+$\text{lcm}(c_1,c_2,\ldots,c_k)$
+
+.
+
+Suppose that we want find the minimum
+
+$n$
+
+such that there exists a permutation
+of length
+
+$n$
+
+with period
+
+$K=\prod p_i^{e_i},$
+
+where the right side denotes the 
+prime factorization of
+
+$K$
+
+. It turns out that
+
+$n=\sum p_i^{e_i}$
+
+because
+
+It is never optimal to have
+
+$\text{gcd}(c_i,c_j)>1$
+
+for
+
+$i\neq j$
+
+because
+then we could divide each of
+
+$c_i,c_j$
+
+by an appropriate factor. This would
+reduce the value of
+
+$\sum_{i=1}^kc_i$
+
+.
+
+It is never optimal to have
+
+$c_i=pq$
+
+for
+
+$\min(p,q)>1$
+
+and
+
+$\text{gcd}(p,q)=1$
+
+because then
+
+$p+q<c_i$
+
+.
+
+Thus, we need to find the sum of all positive integers
+
+$K$
+
+such that
+
+$\sum p_i^{e_i}\le N$
+
+.
+
+Subtask
+
+$N\le 100$
+
+:
+
+Just searching for all possible
+
+$K$
+
+suffices (there are only
+
+$18663$
+
+for
+
+$N=100$
+
+). However, this number grows quite rapidly as
+
+$N$
+
+increases.
+
+Full Credit:
+
+Maintain a DP table storing the sum of all possible
+
+$K$
+
+for each prime power sum
+
+$n$
+
+in
+
+$[0,N]$
+
+. Then we can add prime powers in increasing order of
+
+$p$
+
+and
+update the table in
+
+$O(N)$
+
+for each of them.
+
+Unfortunately, I was unaware that the sequence could be found on
+
+OEIS
+
+. I'll try to be more careful about this 
+in the future ...
+
+Mark Chen's code:
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+typedef long long LL;
+
+const int MAXP = 1234;
+const int MAXN = 10005;
+ 
+LL res[MAXP][MAXN];  // result for permutations of length n restricted to using the first p primes
+ 
+int n; LL m;
+ 
+LL mul(LL x, LL y) {
+    return (x * y) % m;
+}
+ 
+LL add(LL x, LL y) {
+    x += y;
+    if (x >= m) x -= m;
+    return x;
+}
+ 
+LL sub(LL x, LL y) {
+    x -= y;
+    if (x < 0) x += m;
+    return x;
+}
+ 
+int main() {
+    freopen("exercise.in","r",stdin);
+    freopen("exercise.out","w",stdout);
+    cin >> n >> m;
+ 
+    vector<int> composite(n+1);
+    vector<int> primes;
+ 
+    for (int i = 2; i <= n; i++) {
+        if (!composite[i]) {
+            primes.push_back(i);
+            for (int j = 2*i; j <= n; j += i) {
+                composite[j] = 1;
+            }
+        }
+    }
+ 
+    if (primes.size() == 0) {
+        cout << "1\n";
+        return 0;
+    }
+ 
+    for (int j = 0; j <= n; j++) res[0][j] = 1;  // identities
+ 
+    for (int i = 1; i <= primes.size(); i++) {
+        for (int j = 0; j <= n; j++) {
+            res[i][j] = res[i-1][j];
+ 
+            int pp = primes[i-1];
+            while (pp <= j) {
+                res[i][j] = add(res[i][j], mul(pp, res[i-1][j-pp]));
+                pp *= primes[i-1];
+            }
+        }
+    }
+ 
+    cout << res[primes.size()][n] << "\n";
+}

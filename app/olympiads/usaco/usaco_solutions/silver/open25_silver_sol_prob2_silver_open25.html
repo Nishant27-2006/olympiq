@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Consider an undirected graph with a vertex for every distinct ID that appears in
+the input. Draw an edge (possibly a self-loop) between every two vertices whose
+labels sum to <span class='math'>$A$</span> or <span class='math'>$B$</span>. Then cows can only be paired if their vertices are
+connected by an edge, and every vertex is incident to at most two distinct
+edges. For each edge, we need to choose some non-negative number of pairs to
+form along it such that no ID is used more times than it appears.
+<p>Graph Theory Definitions: We say that
+<ul><li>A vertex is <em>incident</em> to an edge if the edge has the vertex as one of
+its endpoints.</li><li>Two distinct edges are <em>adjacent</em> if they are
+incident to a common vertex.</li></ul>
+<p><div class='prob-section'><h4>Subtask 1:</h4>
+If <span class='math'>$A=B$</span>, then no two edges are adjacent.  So for each edge we should form as
+many pairs as possible using it.
+<p><ul><li>Edges connecting <span class='math'>$(x,y)$</span> with <span class='math'>$x\neq y$</span> add <span class='math'>$\min(cnt[x],cnt[y])$</span>, where
+<span class='math'>$cnt[x]$</span> denotes the number of cows with id <span class='math'>$x$</span>.</li><li>Edges connecting
+<span class='math'>$(x,x)$</span> add <span class='math'>$cnt[x]/2$</span>.</li></ul>
+<p>This runs in <span class='math'>$O(N\log N)$</span> if a sorted map is used.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, A, B;
+    cin &gt;&gt; N &gt;&gt; A &gt;&gt; B;
+    assert(A == B);
+
+    map&lt;int, int&gt; cnt;
+    while (N--) {
+        int n, id;
+        cin &gt;&gt; n &gt;&gt; id;
+        cnt[id] = n;
+    }
+    int64_t ans = 0;
+    for (auto [id, n] : cnt) {
+        if (2 * id &lt; A) {
+            if (cnt.count(A - id)) ans += min(n, cnt.at(A - id));
+        } else if (2 * id == A) {
+            ans += n / 2;
+        }
+    }
+    cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Full Solution:</h4>
+Suppose there is a vertex <span class='math'>$x$</span> incident to only one edge <span class='math'>$e$</span>, with opposite
+endpoint <span class='math'>$y$</span>. If <span class='math'>$x=y$</span>, then as in subtask 1 we must form as many pairs with
+this edge as possible since it is adjacent to no other edges. Otherwise, this
+edge could be adjacent to a different edge <span class='math'>$e&apos;$</span>, and forming an additional pair
+with <span class='math'>$e$</span> might prevent the formation of an additional pair with <span class='math'>$e&apos;$</span>. However,
+it does not hurt to form as many pairs using <span class='math'>$e$</span> as possible, since each
+additional pair formed using <span class='math'>$e$</span> prevents the formation of at most one other
+pair. After doing this, no additional pairs can be formed with <span class='math'>$e$</span>, and <span class='math'>$e$</span> may
+be removed from the graph.
+<p>It turns out that as long as we repeat the procedure above while possible, we
+will end up removing all edges from the graph (see the end of the analysis for
+why). 
+<p>To simulate this efficiently, we can maintain a list of vertices that might be
+incident to exactly one edge. While the list is  nonempty, we can remove its
+last element, and if this element is incident to exactly one edge,  apply the
+procedure above and append <span class='math'>$y$</span> to the list.
+<p>The runtime is <span class='math'>$O(N\log N)$</span>, which is the same as the previous subtask.
+Solutions with an additional factor of <span class='math'>$N$</span> could receive partial credit.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+template &lt;class T&gt; using V = vector&lt;T&gt;;
+#define all(x) begin(x), end(x)
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, A, B;
+    cin &gt;&gt; N &gt;&gt; A &gt;&gt; B;
+
+    map&lt;int, int&gt; cnt;
+    while (N--) {
+        int n, id;
+        cin &gt;&gt; n &gt;&gt; id;
+        cnt[id] = n;
+    }
+    map&lt;int, set&lt;int&gt;&gt; adj;
+    vector&lt;int&gt; cands;
+    for (auto [id, _] : cnt) {
+        cands.push_back(id);
+        adj[id] = {};
+        for (int s : {A, B})
+            if (cnt.count(s - id)) adj[id].insert(s - id);
+    }
+    int64_t ans = 0;
+    while (!cands.empty()) {
+        int x = cands.back();
+        cands.pop_back();
+        if (adj.at(x).size() != 1) continue;
+        int y = *begin(adj.at(x));
+        if (x == y) {
+            ans += cnt.at(x) / 2;
+        } else {
+            int pairs = min(cnt.at(x), cnt.at(y));
+            ans += pairs;
+            cnt.at(y) -= pairs;
+        }
+        // note: cnt[x] is no longer used in any future steps,
+        // so its value doesn&apos;t matter
+        adj.at(x).erase(y);
+        adj.at(y).erase(x);
+        cands.push_back(y);
+    }
+    // sanity check: no edges remaining
+    for (const auto &amp;[id, s] : adj) assert(s.empty());
+    cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Why are all edges removed?</h4>
+We want to show that if the graph contains an edge, then there is a vertex
+incident to exactly one edge. When <span class='math'>$A=B$</span> no vertex is incident to more than one
+edge, so the conclusion is trivial. 
+<p>It remains to consider <span class='math'>$A\neq B$</span>. Every vertex in the graph incident to at least
+one edge must be incident to either one or two edges. Suppose there is a vertex
+<span class='math'>$x$</span> incident to two edges (one corresponding to summing to A, and the other
+corresponding to summing to B).  Then let&apos;s construct a walk by traversing a
+type-A edge, then a type-B edge, then a type-A edge, and so forth. This walk
+will eventually terminate at some vertex incident to exactly one edge. or it
+would run indefinitely. However, the latter case is impossible since then it
+would traverse infinitely many distinct vertices (<span class='math'>$x, x+B-A, x+2(B-A), \dots $</span>),
+contradicting the graph having finite size.
+</div>
+<p></body></html>

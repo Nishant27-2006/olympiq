@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Chongtian Ma and Alex Liang)
+<p><strong>Subtask 1:</strong> <span class='math'>$N, M \le 1000$</span>.
+<p>We can directly simulate the process according to the problem statement. We can
+keep track of the amount of milk that each cow has and update in
+<span class='math'>$\mathcal{O}(N)$</span> each minute leading to an <span class='math'>$\mathcal{O}(NM)$</span> solution.
+<p>Chongtian Ma&apos;s C++ Code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+using ll = long long;
+
+int main(){
+    int N, M; cin &gt;&gt; N &gt;&gt; M;
+    string S; cin &gt;&gt; S;
+    vector&lt;ll&gt; a(N);
+    for (ll&amp; i : a) cin &gt;&gt; i;
+    vector&lt;ll&gt; cap = a;
+
+    for (int t = 0; t &lt; M; t++){
+        vector&lt;ll&gt; new_a = a;
+        for (int i = 0; i &lt; N; i++){
+            if (a[i] &gt;= 1){
+                new_a[i]--;
+                if (S[i] == &apos;L&apos;){
+                    new_a[(i - 1 + N) % N]++;
+                } 
+                else{
+                    new_a[(i + 1) % N]++;
+                }
+            }
+        }
+        for (int i = 0; i &lt; N; i++){
+            new_a[i] = min(new_a[i], cap[i]);
+        }
+        a = new_a;
+    }
+    
+    cout &lt;&lt; accumulate(a.begin(), a.end(), 0LL) &lt;&lt; endl;
+}
+</pre>
+<p>Alex Liang&apos;s Python Code:
+<p><pre class='prettyprint'>
+N, M = map(int, input().split())
+S = list(input())
+cap = [int(x) for x in input().split()]
+cur = [i for i in cap]
+ 
+for t in range(M):
+    for i in range(N):
+        if cur[i] &gt; 0:
+            cur[i] -= 1
+            cur[(i + (1 if S[i] == &apos;R&apos; else -1) + N) % N] += 1
+    for i in range(N):
+        cur[i] = min(cur[i], cap[i])
+ 
+print(sum(cur))
+</pre>
+<p><strong>Full Credit:</strong>
+<p>Note that we can only lose milk if we have a cow that is pointed at in both
+directions since it is outputting one unit but gaining two units of milk. Call
+this kind of cow the &quot;deficit cow&quot;. Two deficit cows occur in the middle when we
+have substrings of <span class='math'>$\text{âRRR}\dots \text{RL} \dots \text{LLLâ}$</span>. 
+<p>The circle can be broken by these adjacent pairs of deficit cows. For a deficit
+cow to stop losing milk, only milk supply from one side needs to stop. Since the
+two deficit cows will infinitely loop each other, milk supply will never stop in the
+side they meet each other, which is why deficit cows always have a full bucket of milk. The only way for the milk source to stop is wait for the other side to end. Below is an example with the deficit cows drawn in
+red.
+<p><figure><img src='viewproblem.php?pid=1848&amp;resource=example'/><figcaption></figcaption></figure>
+<p>The non-cycle side must be a chain (consecutive sequence of cows facing the direction of the corresponding deficit cow) that supplies the milk. In
+the chain, milk is always being preserved since milk is always flowing in one
+direction. So, the number of units of milk lost by the deficit cow is the sum of
+<span class='math'>$a_i$</span> of the chain, excluding the deficit cow. For example, for the left deficit
+cow in the adjacent pair (let&apos;s say, at index <span class='math'>$i$</span>) and <span class='math'>$j$</span> be the leftmost cow
+such that <span class='math'>$s_j, s_{j+1} \dots s_i = \text{âRâ}$</span>, then the amount of milk
+that can be lost is <span class='math'>$\sum_{k=j}^{i-1} a_k$</span>. Note that since only one unit is
+lost per minute, the sum is also capped by <span class='math'>$M$</span>. 
+<p>So, we can compute the sum of <span class='math'>$a_i$</span> for the non cycle sides for the pairs of
+deficit cows. If <span class='math'>$S$</span> is the chain sum, the amount of milk that the cow causes us
+to lose in <span class='math'>$M$</span> minutes is <span class='math'>$\min(S, M)$</span>. This leads to an <span class='math'>$\mathcal{O}(N)$</span>
+solution.
+<p>Chongtian Ma&apos;s C++ Code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+using ll = long long;
+ 
+int main(){
+    int N, M; cin &gt;&gt; N &gt;&gt; M;
+    string S; cin &gt;&gt; S;
+    vector&lt;ll&gt; a(N);
+    for(ll&amp; i: a) cin &gt;&gt; i;
+	
+    vector&lt;bool&gt; bad_L(N), bad_R(N);
+    for(int i = 0; i &lt; N; i++){
+        if(S[i] == &apos;R&apos; &amp;&amp; S[(i + 1) % N] == &apos;L&apos;){
+            bad_L[i] = true;
+            bad_R[(i + 1) % N] = true;
+        }
+    }
+        
+    ll ans = accumulate(a.begin(), a.end(), 0LL);
+    for(int i = 0; i &lt; N; i++){
+        ll sum = 0;
+        if(bad_L[i]){
+            int j = (i - 1 + N) % N;
+            while(S[j] == &apos;R&apos;){
+                sum += a[j--];
+                if(j &lt; 0) j += N;
+            }
+        }
+        if(bad_R[i]){
+            int j = (i + 1) % N;
+            while(S[j] == &apos;L&apos;){
+                sum += a[j++];
+                if(j &gt;= N) j -= N;
+            }
+        }
+        ans -= min(sum, (ll) M);
+    }
+    cout &lt;&lt; ans &lt;&lt; endl;
+}
+</pre>
+<p>Alex Liang&apos;s Python Code:
+<pre class='prettyprint'>
+N, M = map(int, input().split())
+S = list(input())
+A = [int(x) for x in input().split()]
+ 
+ans = sum(A)
+ 
+for i in range(N):
+    if (S[i] == &apos;R&apos; and S[(i + 1) % N] == &apos;L&apos;):
+        j = (i - 1 + N) % N 
+        total = 0
+ 
+        while S[j] == &apos;R&apos;:
+            total += A[j]
+            j = (j - 1 + N) % N 
+ 
+        ans -= min(total, M)
+    
+    if (S[i] == &apos;L&apos; and S[(i - 1 + N) % N] == &apos;R&apos;):
+        j = (i + 1) % N 
+        total = 0
+ 
+        while S[j] == &apos;L&apos;:
+            total += A[j]
+            j = (j + 1) % N 
+ 
+        ans -= min(total, M)
+ 
+print(ans)
+</pre></body></html>

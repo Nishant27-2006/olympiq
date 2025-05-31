@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>We can think of a valid move in the game as follows:
+<p><ol><li>Dividing all of the pile sizes by some positive integer.</li><li>Subtracting one from some pile with a positive size.</li></ol>
+<p>We claim that a state in the game is losing for the first player iff for each
+<span class='math'>$x\ge 1$</span>, the number of piles of size <span class='math'>$x$</span> is even. In this case, the second
+player can win by simply mirroring the moves of the first player. 
+<p>In all other states, let <span class='math'>$x$</span> the maximum pile size such that the number of piles
+of size exactly <span class='math'>$x$</span> is odd. Then the first player wins if she removes that pile.
+<p>Now suppose that Bessie removes <span class='math'>$x$</span> stones from some pile on her first turn.
+Then we need to count the number of integers among the sequence
+<span class='math'>$S_x=\left[\left\lfloor \frac{a_1}{x}\right\rfloor, \left\lfloor \frac{a_2}{x}\right\rfloor, 
+\left\lfloor \frac{a_3}{x}\right\rfloor, \ldots, \left\lfloor \frac{a_n}{x}\right\rfloor\right]$</span>
+such that when decreased by one, every positive integer in the sequence occurs
+an even number of times (ignoring zero).
+<p>So Bessie wins if she picks <span class='math'>$t&gt;0$</span> such that
+<p><ul><li><span class='math'>$t$</span> occurs an odd number of times in <span class='math'>$S_x$</span></li><li>If <span class='math'>$t&gt;1$</span>, <span class='math'>$t-1$</span> occurs
+an odd number of times in <span class='math'>$S_x$</span></li><li>No other positive integer occurs an odd
+number of times in <span class='math'>$S_x$</span>.</li></ul>
+<p>For each <span class='math'>$x$</span> and <span class='math'>$t$</span>, the number of occurrences of <span class='math'>$t$</span> in <span class='math'>$S_x$</span> is equal to the
+number of integers in the input sequence that are in the range <span class='math'>$[xt,x(t+1)-1]$</span>.
+For a fixed <span class='math'>$x$</span>, we can compute this quantity for all relevant <span class='math'>$t$</span> in 
+<span class='math'>$\mathcal{O}\left(\frac{\max a_i}{x}\right)$</span> time using prefix sums. After this,
+it&apos;s just a matter of checking which numbers appear an odd number of times in
+<span class='math'>$S_x$</span> and updating the answer accordingly.
+<p><strong>Time Complexity:</strong> <span class='math'>$\mathcal{O}(N+(\max a_i)\log (\max a_i))$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main() {
+	int N; cin &gt;&gt; N;
+	vector&lt;int&gt; A(N); 
+	int mx = 0;
+	for (int&amp; t: A) {
+		cin &gt;&gt; t;
+		mx = max(mx,t);
+	}
+ 
+	vector&lt;int&gt; cum(mx+1); for (int t: A) ++cum[t];
+	for (int i = 1; i &lt;= mx; ++i) cum[i] += cum[i-1];
+	auto getCum = [&amp;](int ind) { // number of elements of A &lt;= ind
+		if (ind &gt; mx) return cum.back();
+		return cum[ind];
+	};
+ 
+	long long ans = 0;
+	for (int x = 1; x &lt;= mx; ++x) {
+		vector&lt;int&gt; counts{0};
+		for (int t = 1; x*t &lt;= mx; ++t)
+			counts.push_back(getCum(x*(t+1)-1)-getCum(x*t-1));
+		vector&lt;int&gt; odd; 
+		for (int t = 1; t &lt; counts.size(); ++t) 
+			if (counts[t]&amp;1) odd.push_back(t);
+		if (odd == vector&lt;int&gt;{1} || (odd.size() == 2 &amp;&amp; odd[0]+1 == odd[1]))
+			ans += counts[odd.back()];
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Danny Mittal&apos;s Code (somewhat different):
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+ 
+public class StoneGame {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        Integer[] piles = new Integer[n + 1];
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 0; j &lt; n; j++) {
+            piles[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        piles[n] = 0;
+        Arrays.sort(piles);
+        int[] diffSums = new int[1000001];
+        int[] indexSums = new int[1000001];
+        for (int j = n; j &gt;= 1; j -= 2) {
+            diffSums[piles[j]]++;
+            diffSums[piles[j - 1]]--;
+            indexSums[piles[j]] += j;
+            indexSums[piles[j - 1]] -= j;
+        }
+        long answer = 0;
+        for (int k = 1000000; k &gt; 0; k--) {
+            diffSums[k - 1] += diffSums[k];
+            indexSums[k - 1] += indexSums[k];
+            int diff = 0;
+            int index = 0;
+            for (int m = k; m &lt;= 1000000; m += k) {
+                diff += diffSums[m];
+                index += indexSums[m];
+            }
+            if (diff == 1) {
+                int upper = n;
+                int lower = index;
+                while (upper &gt; lower) {
+                    int mid = (upper + lower + 1) / 2;
+                    if (piles[mid] / k == piles[index] / k) {
+                        lower = mid;
+                    } else {
+                        upper = mid - 1;
+                    }
+                }
+                answer += upper - index + 1;
+            }
+        }
+        System.out.println(answer);
+    }
+}
+</pre>
+<p></body></html>

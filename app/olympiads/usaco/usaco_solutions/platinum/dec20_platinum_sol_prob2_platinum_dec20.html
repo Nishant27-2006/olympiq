@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p><strong>Subtask 1</strong> (<span class='math'>$K \leq 5$</span>)
+<p>We can do this via bitmask DP. Our states will be pairs <span class='math'>$(\mu, r)$</span> where <span class='math'>$\mu$</span>
+is a bitmask of length <span class='math'>$K$</span> and <span class='math'>$r$</span> is a room. The bitmask <span class='math'>$\mu$</span> represents all
+sequences of button presses such that iff the <span class='math'>$j$</span>th bit in <span class='math'>$\mu$</span> is on, Bessie
+has pressed button <span class='math'>$j$</span> at least once and has not pressed any button with a
+higher number than <span class='math'>$j$</span> since the last time she pressed button <span class='math'>$j$</span>. The state
+<span class='math'>$(\mu, r)$</span> then represents all sequences of button presses and rooms beginning
+in room <span class='math'>$s$</span> by pressing button <span class='math'>$b_s$</span>, ending in room <span class='math'>$r$</span>, and satisfying the
+conditions to correspond to mask <span class='math'>$\mu$</span>.
+<p>A transition in our DP is then moving to another (possibly the same) room as
+well as pressing another button. Bessie can move to room <span class='math'>$râ$</span> iff there is an
+edge from <span class='math'>$r$</span> to <span class='math'>$râ$</span>. Additionally, Bessie can press button <span class='math'>$j$</span> iff the <span class='math'>$j$</span>th
+bit in the current mask <span class='math'>$\mu$</span> is off â otherwise, she would press button <span class='math'>$j$</span>
+twice without pressing a button with a higher number in between.
+<p>We then must also consider how pressing a button changes <span class='math'>$\mu$</span>. It clearly sets
+the <span class='math'>$j$</span>th bit to be on. Additionally, all lower bits are set off now that a
+higher button has been pressed. All higher bits are unaffected. It is important
+to note that the way this modification works implies that we always increase the
+numerical value of our bitmask when transitioning, meaning that there are no
+circular relations in our DP and that we should consider bitmasks in order of
+increasing numerical value.
+<p>Our DP then has <span class='math'>$O(2^KN)$</span> states, from each of which we perform <span class='math'>$O(KN)$</span>
+transitions, meaning that our DP runs in <span class='math'>$O(K2^KN^2)$</span>.
+<p>To compute the answer for each query, we simply take the sum of the DP values of
+<span class='math'>$(t, \mu)$</span> over all bitmasks <span class='math'>$\mu$</span> such that the <span class='math'>$b_t$</span>th bit is on and all lower
+bits are off, as these correspond precisely to the sequences where we end by
+pressing button <span class='math'>$b_t$</span>. This takes <span class='math'>$O(2^K)$</span> time, so that our final computations
+take <span class='math'>$O(2^KQ)$</span> time overall and thus our overall solution takes
+<span class='math'>$O(2^K(KN^2 + Q))$</span>.
+<p><strong>Subtask 2</strong> (<span class='math'>$b_s = K - 1$</span> and <span class='math'>$b_t = K$</span> for each query)
+<p>First note that as Bessie always presses button <span class='math'>$K$</span> at the end, she cannot press
+button <span class='math'>$K$</span> before then, as there would be no higher button that she could press
+in between (as button <span class='math'>$K$</span> is the highest button). This also means that she
+cannot press button <span class='math'>$K - 1$</span> after the beginning as she could never press button
+<span class='math'>$K$</span>, the only higher button. Thus, any sequence of button presses that Bessie
+takes, excluding the first and last button, uses buttons with numbers at most
+<span class='math'>$K - 2$</span>.
+<p>We can then solve this using DP. <span class='math'>$dp_{a, b, x}$</span> will be the number of sequences
+of rooms and button presses which start at room <span class='math'>$a$</span>, end at room <span class='math'>$b$</span>, and only
+involve pressing buttons with numbers at most <span class='math'>$x$</span>. We can compute transitions as
+follows. First, we add all of <span class='math'>$dp_{a, b, x - 1}$</span> to <span class='math'>$dp_{a, b, x}$</span>, as a
+sequence only using buttons with numbers at most <span class='math'>$x - 1$</span> will clearly also only
+use buttons with numbers at most <span class='math'>$x$</span>.
+<p>We then consider the case where we do press button <span class='math'>$x$</span>. Note that as we never
+press any higher buttons, we must only press button <span class='math'>$x$</span> once. Letâs then fix
+the room <span class='math'>$r$</span> that Bessie is in when she presses button <span class='math'>$x$</span>, and consider in
+isolation the part of the sequence before pressing button <span class='math'>$x$</span> (the left side)
+and after pressing button <span class='math'>$x$</span> (the right side). The left side, if it is not
+empty, starts at some room <span class='math'>$a$</span>, ends at some room <span class='math'>$b$</span> such that there is an edge
+from <span class='math'>$b$</span> to <span class='math'>$r$</span>, and only presses buttons with number at most <span class='math'>$x - 1$</span>.
+Similarly, the right side, if it is not empty, starts at some room <span class='math'>$c$</span> such that
+there is an edge from <span class='math'>$r$</span> to <span class='math'>$c$</span>, ends at some room <span class='math'>$d$</span>, and only presses
+buttons with number at most <span class='math'>$x - 1$</span>.
+<p>The number of left sides is then <span class='math'>$dp_{a, b, x - 1}$</span> for each <span class='math'>$a, b$</span> and the
+number of right sides is <span class='math'>$dp_{c, d, x - 1}$</span> for each <span class='math'>$c, d$</span>. We only care about
+the endpoints <span class='math'>$a$</span> and <span class='math'>$d$</span>, so for each <span class='math'>$a$</span>, we compute the sum over all
+<span class='math'>$dp_{a, b, x - 1}$</span> such that there is an edge from <span class='math'>$b$</span> to <span class='math'>$r$</span>, and similarly for
+each <span class='math'>$d$</span>. Note that we should account for the left side possibly being empty by
+adding <span class='math'>$1$</span> to our calculation for <span class='math'>$a = r$</span>, as in that case our overall left
+endpoint will just be <span class='math'>$r$</span> (and similarly for the right side). Finally, for each
+<span class='math'>$a, d$</span>, we can simply multiply these quantities together and add the result to
+<span class='math'>$dp_{a, d, x}$</span>.
+<p>Each of these three computations is <span class='math'>$O(N^2)$</span>, so as we do them for each maximum
+number <span class='math'>$x$</span> and âmiddleâ room <span class='math'>$r$</span>, our DP computation is <span class='math'>$O(N^3K)$</span> overall.
+<p>Given this DP, for each query to compute the answer, given that we want to start
+at room <span class='math'>$s$</span> and end at room <span class='math'>$t$</span>, we loop through all second rooms <span class='math'>$a$</span> (such that
+there is an edge from <span class='math'>$s$</span> to <span class='math'>$a$</span>) and second-to-last rooms <span class='math'>$b$</span> (such that there
+is an edge from <span class='math'>$b$</span> to <span class='math'>$t$</span>) and add <span class='math'>$dp_{a, b, K - 2}$</span> to our answer. This is
+<span class='math'>$O(N^2)$</span> for each query, making our overall algorithm <span class='math'>$O(N^3K + QN^2)$</span>.
+<p><strong>Subtask 3</strong> (<span class='math'>$N, K, Q \leq 20$</span>)
+<p>We can solve this subtask by modifying our solution for the previous subtask.
+First note that our constraints are now low enough to allow computing our
+<span class='math'>$O(N^3K)$</span> DP for each query. Given this, we can simply modify our DP as follows.
+<span class='math'>$dp_{a, b, k}$</span> will be defined as usual, except that <span class='math'>$a$</span> can also take a special
+value <span class='math'>$\alpha$</span> which will indicate that we are counting sequences which start at
+room <span class='math'>$s$</span> but must also start by pressing button <span class='math'>$b_s$</span>. Similarly, <span class='math'>$b$</span> can take a
+special value <span class='math'>$\beta$</span> which will indicate that we are counting sequences which
+end at room <span class='math'>$t$</span> but must also end by pressing button <span class='math'>$b_t$</span>.
+<p>These special values <span class='math'>$\alpha$</span> and <span class='math'>$\beta$</span> then essentially function as normal
+rooms during our DP. There are only two differences: ones is that in our above
+loops through all <span class='math'>$a, b$</span> and <span class='math'>$c, d$</span>, the rooms <span class='math'>$b$</span> and <span class='math'>$c$</span> are not allowed to be
+<span class='math'>$\alpha$</span> or <span class='math'>$\beta$</span> as that would lead to overcounting; the other is that we
+must properly account for the left side being empty by also adding <span class='math'>$1$</span> to our
+calculation for <span class='math'>$a = \alpha$</span> if we are currently at <span class='math'>$r = s$</span> and <span class='math'>$x = b_s$</span>, and
+similarly for the right side.
+<p>Our answer is then simply <span class='math'>$dp_{\alpha, \beta, K}$</span>. These modifications do not
+affect the asymptotic runtime of our DP, but we do now do it for each query,
+giving the overall algorithm a runtime of <span class='math'>$O(QN^3K)$</span>.
+<p><strong>Subtask 4</strong> (original constraints)
+<p>Our solution for this is essentially the same as for the previous subtask,
+noting that we donât actually really need to compute this DP for each query.
+We can compute this DP just once by, instead of having the two special values
+<span class='math'>$\alpha$</span> and <span class='math'>$\beta$</span>, having values <span class='math'>$\alpha_j$</span> and <span class='math'>$\beta_j$</span> for each
+<span class='math'>$1 \leq j \leq Q$</span> such that <span class='math'>$\alpha_j$</span> corresponds to <span class='math'>$(s, b_s)$</span> for the <span class='math'>$j$</span>th
+query and <span class='math'>$\beta_j$</span> corresponds to <span class='math'>$(t, b_t)$</span> for the <span class='math'>$j$</span>th query. The answer to
+the <span class='math'>$j$</span>th query is then <span class='math'>$dp_{\alpha_j, \beta_j, K}$</span>.
+<p>Considering the additional states, the runtime of our algorithm is now
+<span class='math'>$O(N(N + Q)^2K)$</span>, which is still fast enough.
+<p>Danny&apos;s code:
+<p><pre class='prettyprint'>
+import java.util.Scanner;
+ 
+public class LevelGraph {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int k = in.nextInt();
+        int q = in.nextInt();
+        boolean[][] adj = new boolean[n][n];
+        for (int a = 0; a &lt; n; a++) {
+            String line = in.next();
+            for (int b = 0; b &lt; n; b++) {
+                adj[a][b] = line.charAt(b) == &apos;1&apos;;
+            }
+        }
+        int[] xs = new int[q];
+        int[] froms = new int[q];
+        int[] ys = new int[q];
+        int[] tos = new int[q];
+        for (int j = 0; j &lt; q; j++) {
+            xs[j] = in.nextInt() - 1;
+            froms[j] = in.nextInt() - 1;
+            ys[j] = in.nextInt() - 1;
+            tos[j] = in.nextInt() - 1;
+        }
+        long[][][] dp = new long[k][n + q][n + q];
+        for (int h = 0; h &lt; k; h++) {
+            if (h &gt; 0) {
+                for (int a = 0; a &lt; n + q; a++) {
+                    for (int b = 0; b &lt; n + q; b++) {
+                        dp[h][a][b] = dp[h - 1][a][b];
+                    }
+                }
+            }
+            for (int c = 0; c &lt; n; c++) {
+                long[] left = new long[n + q];
+                left[c] = 1;
+                for (int j = 0; j &lt; q; j++) {
+                    if (h == xs[j] &amp;&amp; froms[j] == c) {
+                        left[n + j] = 1;
+                    }
+                }
+                if (h &gt; 0) {
+                    for (int a = 0; a &lt; n + q; a++) {
+                        for (int b = 0; b &lt; n; b++) {
+                            if (adj[b][c]) {
+                                left[a] += dp[h - 1][a][b];
+                                left[a] %= MOD;
+                            }
+                        }
+                    }
+                }
+                long[] right = new long[n + q];
+                right[c] = 1;
+                for (int j = 0; j &lt; q; j++) {
+                    if (h == ys[j] &amp; tos[j] == c) {
+                        right[n + j] = 1;
+                    }
+                }
+                if (h &gt; 0) {
+                    for (int a = 0; a &lt; n; a++) {
+                        for (int b = 0; b &lt; n + q; b++) {
+                            if (adj[c][a]) {
+                                right[b] += dp[h - 1][a][b];
+                                right[b] %= MOD;
+                            }
+                        }
+                    }
+                }
+                for (int a = 0; a &lt; n + q; a++) {
+                    for (int b = 0; b &lt; n + q; b++) {
+                        dp[h][a][b] += left[a] * right[b];
+                        dp[h][a][b] %= MOD;
+                    }
+                }
+            }
+        }
+        for (int j = 0; j &lt; q; j++) {
+            System.out.println(dp[k - 1][n + j][n + j]);
+        }
+    }
+}
+</pre>
+<p></body></html>

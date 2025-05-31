@@ -1,0 +1,10 @@
+Solution ID: sol_cbarn_silver_feb16
+Contest: FEB16
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_cbarn_silver_feb16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+See the analysis for the gold version of this same problem.

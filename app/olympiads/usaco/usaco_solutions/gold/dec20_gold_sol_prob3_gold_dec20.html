@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>For a set of greater than one cow that can be covered by a square, let the
+<em>bounding rectangle</em> of the set be the rectangle of the minimum size with
+sides parallel to the coordinates axes that contains all cows in the set. 
+<p>It suffices to deal with the case where the width of the bounding rectangle is
+greater or equal to its height. (We can handle the other case by swapping all
+<span class='math'>$x$</span> and <span class='math'>$y$</span> coordinates and rerunning the solution, while making sure not to
+overcount bounding rectangles with equal width as height.)
+<p>Fix the leftmost and rightmost cows <span class='math'>$a=(x_a,y_a)$</span> and <span class='math'>$b=(x_b,y_b)$</span> (<span class='math'>$x_a&lt;x_b$</span>)
+in the set. Then we must be able to cover all cows in the set (and none outside
+of it) with a square that contains <span class='math'>$a$</span> on its left side and <span class='math'>$b$</span> on its right
+side. The square will include all cows <span class='math'>$(x_t,y_t)$</span> such that <span class='math'>$x_t\in [x_a,x_b]$</span>
+and  <span class='math'>$y_t\in [y,y+x_b-x_a]$</span> for some <span class='math'>$y\in [lo,hi]$</span>, where
+<span class='math'>$lo=\max(y_a,y_b)-(x_b-x_a)$</span> and <span class='math'>$hi=\min(y_a,y_b)$</span>. Note that if <span class='math'>$lo&gt;hi$</span>, this
+would contradict the assumption that the height of the bounding rectangle is
+less than or equal to the width.
+<p>Given the <span class='math'>$y$</span>-coordinates of all cows <span class='math'>$(x_c,y_c)$</span> satisfying <span class='math'>$x_a&lt;x_c&lt;x_b$</span>,  we
+can compute the number of such squares in <span class='math'>$\mathcal{O}(N\log N)$</span> by sorting the
+<span class='math'>$y$</span>-coordinates and using two pointers. Start with the bottom side of the square
+at <span class='math'>$y=lo$</span> and increase <span class='math'>$y$</span> until a new cow enters the set  through the top side
+or leaves the set through the bottom side (or both at once). 
+<p>This gives a solution that runs in <span class='math'>$\mathcal{O}(N^3\log N)$</span> or
+<span class='math'>$\mathcal{O}(N^3)$</span> time.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using pi = pair&lt;int,int&gt;;
+#define f first
+#define s second
+#define sz(x) int((x).size())
+
+int N,ans,eq;
+vector&lt;pi&gt; cows;
+ 
+void solve() {
+	sort(begin(cows),end(cows));
+	for (int a = 0; a &lt; N; ++a) { // leftmost cow a
+		set&lt;int&gt; sorted_y; // set of y-coordinates for cows a+1..b-1
+		for (int b = a+1; b &lt; N; ++b) { // rightmost cow b
+			if (a &lt; b-1) sorted_y.insert(cows[b-1].s);
+			int len = cows[b].f-cows[a].f; // side length of square
+			int lo = max(cows[a].s,cows[b].s)-len, hi = min(cows[a].s,cows[b].s); 
+			if (lo &gt; hi) continue;
+
+			// initialize the square as [cows[a].f,cows[b].f] x [lo,lo+len]
+			vector&lt;int&gt; y(begin(sorted_y),end(sorted_y)); 
+			int l = 0, r = -1;
+			// find cow of lowest y-coordinate that square currently contains
+			while (l &lt; sz(y) &amp;&amp; lo &gt;= y[l]+1) l ++; 
+			// find cow of highest y-coordinate that square currently contains
+			while (r+1 &lt; sz(y) &amp;&amp; lo &gt;= y[r+1]-len) r ++; 
+			// initial square currently includes cows [l,r]
+
+			while (1) { // repeatedly increase y
+				++ ans;
+				int yl = min(cows[a].s,cows[b].s), yr = max(cows[a].s,cows[b].s);
+				if (l &lt;= r) yl = min(yl,y[l]), yr = max(yr,y[r]);
+				assert(yr-yl &lt;= len); 
+				eq += yr-yl == len; // width is equal to height
+				// current bounding rectangle is [cows[a].f,cows[b].f] x [yl,yr]
+				int leave_bottom = (l &lt; sz(y) ? y[l]+1 : INT_MAX);  // set will no longer include cow l
+				int enter_top    = (r+1 &lt; sz(y) ? y[r+1]-len : INT_MAX); // set will include cow r+1
+				int change_y = min(leave_bottom ,enter_top); // find min y such that set changes
+				if (change_y &gt; hi) break;
+				l += leave_bottom == change_y;
+				r += enter_top == change_y;
+			}
+		}
+	}
+}
+ 
+int main() {
+	cin &gt;&gt; N; cows.resize(N); 
+	for (pi&amp; cow: cows) cin &gt;&gt; cow.f &gt;&gt; cow.s;
+	ans = N+1;
+
+	solve();
+	for(pi&amp; cow: cows) swap(cow.f,cow.s);
+	solve();
+
+	assert(eq%2 == 0); // bounding rectangles with equal width as height counted twice
+	cout &lt;&lt; ans-eq/2;
+}
+</pre>
+<p>Note that the answer to this problem would be different if the cows were treated
+as points rather than squares. For example, if the input was
+<p><pre>
+4
+0 2
+2 3
+3 0
+4 1
+</pre>
+<p>then we cannot create a square that encloses only the cows occupying cells
+<span class='math'>$(2,3)$</span> and
+<span class='math'>$(3,0)$</span>.
+<p></body></html>

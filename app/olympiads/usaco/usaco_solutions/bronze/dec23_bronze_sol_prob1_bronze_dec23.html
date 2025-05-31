@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p><strong>Subtask 1</strong>: <span class='math'>$N, M \le 10^3$</span>.
+<p>For this subtask, it suffices to simulate the process, as that would take
+<span class='math'>$\mathcal{O}(NM)$</span> time.
+<p>Python code is as follows:
+<pre class='prettyprint'>
+n, m = (int(x) for x in input().split())
+h = [int(x) for x in input().split()]
+for curr in [int(x) for x in input().split()]:
+  idx = 0
+  taken = 0
+  while idx &lt; n:
+    if h[idx] &gt; taken:
+      inc = min(curr, h[idx]) - taken
+      h[idx] += inc
+      taken += inc
+    idx += 1
+for x in h:
+  print(x)
+</pre>
+<p><strong>Full credit</strong>:
+<p>Only a small change is needed from the subtask solution to
+get full credit - specifically, if the candy cane is fully eaten, don&apos;t simulate
+the remaining cows trying to eat the candy cane, just break out of that loop and
+start the next iteration.
+<p>We can show that this process takes <span class='math'>$\mathcal{O}(M + N \log 10^9)$</span> time. Note
+that if any cow besides the first cow gets to eat any part of a given candy
+cane, this implies that the first cow was able to eat their height&apos;s worth of
+candy cane and doubles in height. Under the bounds of the given problem, the cow
+cannot double in height more than <span class='math'>$30$</span> times.
+<p>Agastya Goel&apos;s C++ solution:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+ 
+using namespace std;
+ 
+typedef long long ll;
+ 
+const int MAXN = 2e5+5;
+ll heights[MAXN];
+int n, m;
+ 
+int main() {
+	cin &gt;&gt; n &gt;&gt; m;
+	for (int i = 0; i &lt; n; i++) cin &gt;&gt; heights[i];
+	for (int i = 0; i &lt; m; i++) {
+		int x; cin &gt;&gt; x;
+		int l = 0;
+		for (int j = 0; j &lt; n &amp;&amp; l &lt; x; j++) {
+			int diff = max(0, (int)min(heights[j], (ll)x)-l);
+			heights[j] += diff;
+			l += diff;
+		}
+	}
+	for (int i = 0; i &lt; n; i++) {
+		cout &lt;&lt; heights[i] &lt;&lt; &apos;\n&apos;;
+	}
+}
+</pre>
+<p>My Java solution:
+<pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class Solution {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    StringTokenizer st = new StringTokenizer(br.readLine());
+    int n = Integer.parseInt(st.nextToken());
+    int q = Integer.parseInt(st.nextToken());
+    long[] h = new long[n];
+    st = new StringTokenizer(br.readLine());
+    for(int i = 0; i &lt; n; i++) {
+      h[i] = Long.parseLong(st.nextToken());
+    }
+    st = new StringTokenizer(br.readLine());
+    while(q-- &gt; 0) {
+      long curr = Long.parseLong(st.nextToken());
+      long taken = 0;
+      for(int i = 0; i &lt; n &amp;&amp; taken &lt; curr; i++) {
+        long inc = Math.min(curr, h[i]) - taken;
+        if(inc &gt; 0) {
+          h[i] += inc;
+          taken += inc;
+        }
+      }
+    }
+    for(int i = 0; i &lt; n; i++) pw.println(h[i]);
+    pw.close();  
+  }
+}
+</pre>
+<p>Benjamin Qi&apos;s Python solution:
+<pre class='prettyprint'>
+N, M = map(int, input().split())
+ 
+cows = list(map(int, input().split()))
+haybales = map(int, input().split())
+ 
+for h in haybales:
+	if h &lt;= cows[0]:
+		cows[0] += h
+	else:
+		h_so_far = 0
+		for i in range(N):
+			if cows[i] &gt; h_so_far:
+				next_h = min(cows[i], h)
+				cows[i] += next_h - h_so_far
+				h_so_far = next_h
+ 
+ 
+for c in cows:
+	print(c)
+</pre>
+<p></body></html>

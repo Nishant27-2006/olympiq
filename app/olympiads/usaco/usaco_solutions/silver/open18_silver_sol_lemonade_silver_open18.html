@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>This problem immediately seems to be looking for a greedy solution. There are
+two obvious greedy orderings: sort the cows by increasing <span class='math'>$w_i$</span>, or sort the
+cows by decreasing <span class='math'>$w_i$</span>.
+<p>Trying both orderings, it turns out that sorting the cows from largest <span class='math'>$w_i$</span> to
+smallest <span class='math'>$w_i$</span> is provably optimal. There are several ways to show this. One way
+is to consider any ordering in which the <span class='math'>$w_i$</span> are not ordered
+largest-to-smallest, and show that swapping two out-of-order cows will improve
+the solution or leave it the same.
+<p>Here is a slightly cleaner proof. We do not explicitly show that the above
+ordering is optimal, but this can be deduced from the properties we do prove
+about the ordering. 
+<p>Given any ordering, we can shuffle the cows who do not join the line to the end
+of the ordering -- and they will still not join the line in this new ordering.
+So there is an optimal ordering in which all cows who join the line precede all
+cows who do not join the line. Now consider any cow <span class='math'>$i$</span> who does join the line,
+and any cow <span class='math'>$j$</span> who does not join the line. If <span class='math'>$w_i &lt; w_j$</span>, we can swap cows <span class='math'>$i$</span>
+and <span class='math'>$j$</span>, and cow <span class='math'>$j$</span> will join the line but cow <span class='math'>$i$</span> will not. So in some optimal
+ordering, the cows who join the line have the <span class='math'>$k$</span> largest <span class='math'>$w_i$</span> for some
+<span class='math'>$k \leq N$</span>.
+<p>Now, the optimum is at most <span class='math'>$k$</span> if and only if <span class='math'>$w_{k+1} &lt; k$</span>, where <span class='math'>$w_{k+1}$</span> is the waiting time of the <span class='math'>$(k+1)^\text{st}$</span> cow after sorting largest-to-smallest. This gives our algorithm: after sorting the cows from largest <span class='math'>$w_i$</span> to smallest <span class='math'>$w_i$</span>,
+we can simply scan through the cows for the first <span class='math'>$k$</span> such that <span class='math'>$w_{k+1} &lt; k$</span>.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+int N, W[100000];
+ 
+int main(void)
+{
+  ifstream fin(&quot;lemonade.in&quot;);
+  ofstream fout(&quot;lemonade.out&quot;);
+ 
+  fin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++) fin &gt;&gt; W[i];
+ 
+  sort(W,W+N);
+  
+  int i, num_in_line=0;
+  for (i=N-1; i&gt;=0; i--) {
+    if (W[i] &lt; num_in_line) break;
+    num_in_line++;
+  }
+ 
+  fout &lt;&lt; num_in_line &lt;&lt; &quot;\n&quot;;
+ 
+  return 0;
+}
+</pre>
+<p></body></html>

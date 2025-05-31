@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>In this problem, we have a graph where the vertices are pastures, and there is
+an edge between two pastures if those two pastures are the favorites of some
+cow. We want to color each vertex with one of <span class='math'>$4$</span> colors so that no two adjacent
+vertices (i.e. no two vertices connected by an edge) are given the same color.
+<p>So let&apos;s just assign colors to the vertices in order. For each vertex, we need
+to find a color which has not already been assigned to any adjacent vertices.
+Luckily, in our case this is always possible: the problem statement guarantees
+that no vertex is adjacent to more than <span class='math'>$3$</span> other vertices, so at least one of
+the <span class='math'>$4$</span> colors is free. Thus, we will always be able to find a coloring with
+this strategy. The complexity is <span class='math'>$O(NM)$</span> if implemented naively, and could easily
+be reduced to <span class='math'>$O(N)$</span> by storing for each vertex the identities of the <span class='math'>$\leq 3$</span>
+adjacent vertices. However, for the given constraints, this optimization is unnecessary.
+<p>Brian Dean&apos;s code is below.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+ 
+int main(void)
+{
+  int N, M;
+  int A[151], B[151], G[101];
+  ifstream fin (&quot;revegetate.in&quot;);
+  fin &gt;&gt; N &gt;&gt; M;
+  for (int i=0; i&lt;M; i++) { 
+    fin &gt;&gt; A[i] &gt;&gt; B[i];
+    if (A[i] &gt; B[i]) swap (A[i], B[i]);
+  }
+ 
+  ofstream fout (&quot;revegetate.out&quot;);  
+  for (int i=1; i&lt;=N; i++) {
+    int g;
+    for (g = 1; g &lt;= 4; g++) {
+      bool ok = true;
+      for (int j=0; j&lt;M; j++) 
+	if (B[j] == i &amp;&amp; G[A[j]] == g) ok = false;
+      if (ok) break;
+    }
+    G[i] = g;
+    fout &lt;&lt; g;
+  }
+  fout &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+</body></html>

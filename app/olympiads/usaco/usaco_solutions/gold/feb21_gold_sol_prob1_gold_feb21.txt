@@ -1,0 +1,219 @@
+Solution ID: sol_prob1_gold_feb21
+Contest: FEB21
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob1_gold_feb21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+We can think of a valid move in the game as follows:
+
+Dividing all of the pile sizes by some positive integer.
+
+Subtracting one from some pile with a positive size.
+
+We claim that a state in the game is losing for the first player iff for each
+
+$x\ge 1$
+
+, the number of piles of size
+
+$x$
+
+is even. In this case, the second
+player can win by simply mirroring the moves of the first player.
+
+In all other states, let
+
+$x$
+
+the maximum pile size such that the number of piles
+of size exactly
+
+$x$
+
+is odd. Then the first player wins if she removes that pile.
+
+Now suppose that Bessie removes
+
+$x$
+
+stones from some pile on her first turn.
+Then we need to count the number of integers among the sequence
+
+$S_x=\left[\left\lfloor \frac{a_1}{x}\right\rfloor, \left\lfloor \frac{a_2}{x}\right\rfloor, 
+\left\lfloor \frac{a_3}{x}\right\rfloor, \ldots, \left\lfloor \frac{a_n}{x}\right\rfloor\right]$
+
+such that when decreased by one, every positive integer in the sequence occurs
+an even number of times (ignoring zero).
+
+So Bessie wins if she picks
+
+$t>0$
+
+such that
+
+$t$
+
+occurs an odd number of times in
+
+$S_x$
+
+If
+
+$t>1$
+
+,
+
+$t-1$
+
+occurs
+an odd number of times in
+
+$S_x$
+
+No other positive integer occurs an odd
+number of times in
+
+$S_x$
+
+.
+
+For each
+
+$x$
+
+and
+
+$t$
+
+, the number of occurrences of
+
+$t$
+
+in
+
+$S_x$
+
+is equal to the
+number of integers in the input sequence that are in the range
+
+$[xt,x(t+1)-1]$
+
+.
+For a fixed
+
+$x$
+
+, we can compute this quantity for all relevant
+
+$t$
+
+in
+
+$\mathcal{O}\left(\frac{\max a_i}{x}\right)$
+
+time using prefix sums. After this,
+it's just a matter of checking which numbers appear an odd number of times in
+
+$S_x$
+
+and updating the answer accordingly.
+
+Time Complexity:
+
+$\mathcal{O}(N+(\max a_i)\log (\max a_i))$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+int main() {
+	int N; cin >> N;
+	vector<int> A(N); 
+	int mx = 0;
+	for (int& t: A) {
+		cin >> t;
+		mx = max(mx,t);
+	}
+ 
+	vector<int> cum(mx+1); for (int t: A) ++cum[t];
+	for (int i = 1; i <= mx; ++i) cum[i] += cum[i-1];
+	auto getCum = [&](int ind) { // number of elements of A <= ind
+		if (ind > mx) return cum.back();
+		return cum[ind];
+	};
+ 
+	long long ans = 0;
+	for (int x = 1; x <= mx; ++x) {
+		vector<int> counts{0};
+		for (int t = 1; x*t <= mx; ++t)
+			counts.push_back(getCum(x*(t+1)-1)-getCum(x*t-1));
+		vector<int> odd; 
+		for (int t = 1; t < counts.size(); ++t) 
+			if (counts[t]&1) odd.push_back(t);
+		if (odd == vector<int>{1} || (odd.size() == 2 && odd[0]+1 == odd[1]))
+			ans += counts[odd.back()];
+	}
+	cout << ans << "\n";
+}
+
+Danny Mittal's Code (somewhat different):
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+ 
+public class StoneGame {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        Integer[] piles = new Integer[n + 1];
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        for (int j = 0; j < n; j++) {
+            piles[j] = Integer.parseInt(tokenizer.nextToken());
+        }
+        piles[n] = 0;
+        Arrays.sort(piles);
+        int[] diffSums = new int[1000001];
+        int[] indexSums = new int[1000001];
+        for (int j = n; j >= 1; j -= 2) {
+            diffSums[piles[j]]++;
+            diffSums[piles[j - 1]]--;
+            indexSums[piles[j]] += j;
+            indexSums[piles[j - 1]] -= j;
+        }
+        long answer = 0;
+        for (int k = 1000000; k > 0; k--) {
+            diffSums[k - 1] += diffSums[k];
+            indexSums[k - 1] += indexSums[k];
+            int diff = 0;
+            int index = 0;
+            for (int m = k; m <= 1000000; m += k) {
+                diff += diffSums[m];
+                index += indexSums[m];
+            }
+            if (diff == 1) {
+                int upper = n;
+                int lower = index;
+                while (upper > lower) {
+                    int mid = (upper + lower + 1) / 2;
+                    if (piles[mid] / k == piles[index] / k) {
+                        lower = mid;
+                    } else {
+                        upper = mid - 1;
+                    }
+                }
+                answer += upper - index + 1;
+            }
+        }
+        System.out.println(answer);
+    }
+}

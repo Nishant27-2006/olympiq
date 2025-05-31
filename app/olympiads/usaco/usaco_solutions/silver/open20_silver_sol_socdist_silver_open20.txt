@@ -1,0 +1,106 @@
+Solution ID: sol_socdist_silver_open20
+Contest: OPEN20
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_socdist_silver_open20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Sort the intervals from left to right and binary search on the separating
+distance
+
+$D$
+
+.  For a fixed
+
+$D$
+
+we want to check whether we can place at least
+
+$N$
+
+cows. This can be done with a greedy strategy; just place each cow at the
+leftmost position possible. Once the number of cows placed reaches
+
+$N$
+
+we can
+break, so a single
+
+$D$
+
+can be  checked in
+
+$O(N+M)$
+
+time. Thus, the entire
+solution runs in
+
+$O((N+M)\log (\text{max dist}))$
+
+time.
+
+Mark Chen's code:
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+typedef long long LL;
+ 
+#define INF 2000000000
+#define FF first
+#define SS second
+
+int n, m;
+ 
+vector<pair<LL,LL>> intervals;
+ 
+bool ok(LL d) {
+    LL prev = -1LL * INF * INF;
+    
+    int cnt = 0;
+    for (auto& i : intervals) {
+        while (max(prev + d, i.FF) <= i.SS) {
+            prev = max(prev + d, i.FF);
+            cnt++;
+            if (cnt >= n) break;
+        }
+        if (cnt >= n) break;
+    }
+ 
+    return (cnt >= n);
+}
+ 
+int main() {
+    freopen("socdist.in","r",stdin);
+    freopen("socdist.out","w",stdout);
+    cin >> n >> m;
+
+    intervals.resize(m);
+    for (int i = 0; i < m; ++i) 
+        cin >> intervals[i].FF >> intervals[i].SS;
+ 
+    sort(intervals.begin(), intervals.end());
+ 
+    LL lo = 1;
+    LL hi = 1LL * INF * INF;
+    LL res = -1;
+ 
+    while (lo <= hi) {
+        LL mid = (lo + hi) / 2;
+ 
+        if (ok(mid)) {
+            res = mid;
+            lo = mid + 1;
+        }
+        else {
+            hi = mid - 1;
+        }
+    }
+ 
+    cout << res << "\n";
+}

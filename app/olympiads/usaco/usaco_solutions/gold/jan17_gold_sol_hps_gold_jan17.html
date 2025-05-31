@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>If we were to simulate Bessie&apos;s gameplay against FJ with brute force, we would
+need to keep track of how many games Bessie has played and won so far, Bessie&apos;s
+current gesture, and how many more times Bessie can switch gestures. This
+approach is far too slow when <span class='math'>$N$</span> gets large, since there are at least
+<span class='math'>$2^K \cdot \binom{N}{K}$</span> different ways Bessie can choose to switch gestures.
+<p>However, if we look at the information we have to keep track of, we note that
+the number of games Bessie has played is at most <span class='math'>$N$</span>, and the number of times
+Bessie can still switch gestures is at most <span class='math'>$K$</span>. If we memoise the maximum
+number of games Bessie can win, we only consider at most <span class='math'>$O(NK)$</span> states, each
+with at most 3 transitions, for an <span class='math'>$O(NK)$</span> dynamic programming solution.
+<p>Here is Travis Hance&apos;s solution.
+<p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;cassert&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+#define NMAX 100000
+#define KMAX 20
+
+int moves[NMAX];
+
+int dp[NMAX + 1][KMAX + 1][3];
+
+int main() {
+    int n, k;
+    scanf(&quot;%d&quot;, &amp;n);
+    scanf(&quot;%d&quot;, &amp;k);
+
+    char s[10];
+    for (int i = 0; i &lt; n; i++) {
+        scanf(&quot;%s&quot;, s);
+        if (s[0] == &apos;H&apos;) moves[i] = 0;
+        if (s[0] == &apos;P&apos;) moves[i] = 1;
+        if (s[0] == &apos;S&apos;) moves[i] = 2;
+    }
+
+    for (int i = 0; i &lt;= n; i++) {
+        for (int j = 0; j &lt;= k; j++) {
+            for (int state = 0; state &lt; 3; state++) {
+                if (i == 0) {
+                    dp[i][j][state] = 0;
+                } else {
+                    if (j == 0) {
+                        dp[i][j][state] = dp[i-1][j][state] + (moves[i-1] == state ? 1 : 0);
+                    } else {
+                        int ostate1 = (state + 1) % 3;
+                        int ostate2 = (state + 2) % 3;
+                        dp[i][j][state] = max(max(dp[i-1][j][state], dp[i-1][j-1][ostate1]), dp[i-1][j-1][ostate2]) + (moves[i-1] == state ? 1 : 0);
+                    }
+                }
+            }
+        }
+    }
+
+    printf(&quot;%d\n&quot;, max(max(dp[n][k][0], dp[n][k][1]), dp[n][k][2]));
+}
+</pre>
+</body></html>

@@ -1,0 +1,279 @@
+Solution ID: sol_prob2_silver_open25
+Contest: OPEN25
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_open25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Consider an undirected graph with a vertex for every distinct ID that appears in
+the input. Draw an edge (possibly a self-loop) between every two vertices whose
+labels sum to
+
+$A$
+
+or
+
+$B$
+
+. Then cows can only be paired if their vertices are
+connected by an edge, and every vertex is incident to at most two distinct
+edges. For each edge, we need to choose some non-negative number of pairs to
+form along it such that no ID is used more times than it appears.
+
+Graph Theory Definitions: We say that
+
+A vertex is
+
+incident
+
+to an edge if the edge has the vertex as one of
+its endpoints.
+
+Two distinct edges are
+
+adjacent
+
+if they are
+incident to a common vertex.
+
+Subtask 1:
+
+If
+
+$A=B$
+
+, then no two edges are adjacent.  So for each edge we should form as
+many pairs as possible using it.
+
+Edges connecting
+
+$(x,y)$
+
+with
+
+$x\neq y$
+
+add
+
+$\min(cnt[x],cnt[y])$
+
+, where
+
+$cnt[x]$
+
+denotes the number of cows with id
+
+$x$
+
+.
+
+Edges connecting
+
+$(x,x)$
+
+add
+
+$cnt[x]/2$
+
+.
+
+This runs in
+
+$O(N\log N)$
+
+if a sorted map is used.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+#define all(x) begin(x), end(x)
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, A, B;
+    cin >> N >> A >> B;
+    assert(A == B);
+
+    map<int, int> cnt;
+    while (N--) {
+        int n, id;
+        cin >> n >> id;
+        cnt[id] = n;
+    }
+    int64_t ans = 0;
+    for (auto [id, n] : cnt) {
+        if (2 * id < A) {
+            if (cnt.count(A - id)) ans += min(n, cnt.at(A - id));
+        } else if (2 * id == A) {
+            ans += n / 2;
+        }
+    }
+    cout << ans << "\n";
+}
+
+Full Solution:
+
+Suppose there is a vertex
+
+$x$
+
+incident to only one edge
+
+$e$
+
+, with opposite
+endpoint
+
+$y$
+
+. If
+
+$x=y$
+
+, then as in subtask 1 we must form as many pairs with
+this edge as possible since it is adjacent to no other edges. Otherwise, this
+edge could be adjacent to a different edge
+
+$e'$
+
+, and forming an additional pair
+with
+
+$e$
+
+might prevent the formation of an additional pair with
+
+$e'$
+
+. However,
+it does not hurt to form as many pairs using
+
+$e$
+
+as possible, since each
+additional pair formed using
+
+$e$
+
+prevents the formation of at most one other
+pair. After doing this, no additional pairs can be formed with
+
+$e$
+
+, and
+
+$e$
+
+may
+be removed from the graph.
+
+It turns out that as long as we repeat the procedure above while possible, we
+will end up removing all edges from the graph (see the end of the analysis for
+why).
+
+To simulate this efficiently, we can maintain a list of vertices that might be
+incident to exactly one edge. While the list is  nonempty, we can remove its
+last element, and if this element is incident to exactly one edge,  apply the
+procedure above and append
+
+$y$
+
+to the list.
+
+The runtime is
+
+$O(N\log N)$
+
+, which is the same as the previous subtask.
+Solutions with an additional factor of
+
+$N$
+
+could receive partial credit.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+template <class T> using V = vector<T>;
+#define all(x) begin(x), end(x)
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, A, B;
+    cin >> N >> A >> B;
+
+    map<int, int> cnt;
+    while (N--) {
+        int n, id;
+        cin >> n >> id;
+        cnt[id] = n;
+    }
+    map<int, set<int>> adj;
+    vector<int> cands;
+    for (auto [id, _] : cnt) {
+        cands.push_back(id);
+        adj[id] = {};
+        for (int s : {A, B})
+            if (cnt.count(s - id)) adj[id].insert(s - id);
+    }
+    int64_t ans = 0;
+    while (!cands.empty()) {
+        int x = cands.back();
+        cands.pop_back();
+        if (adj.at(x).size() != 1) continue;
+        int y = *begin(adj.at(x));
+        if (x == y) {
+            ans += cnt.at(x) / 2;
+        } else {
+            int pairs = min(cnt.at(x), cnt.at(y));
+            ans += pairs;
+            cnt.at(y) -= pairs;
+        }
+        // note: cnt[x] is no longer used in any future steps,
+        // so its value doesn't matter
+        adj.at(x).erase(y);
+        adj.at(y).erase(x);
+        cands.push_back(y);
+    }
+    // sanity check: no edges remaining
+    for (const auto &[id, s] : adj) assert(s.empty());
+    cout << ans << "\n";
+}
+
+Why are all edges removed?
+
+We want to show that if the graph contains an edge, then there is a vertex
+incident to exactly one edge. When
+
+$A=B$
+
+no vertex is incident to more than one
+edge, so the conclusion is trivial.
+
+It remains to consider
+
+$A\neq B$
+
+. Every vertex in the graph incident to at least
+one edge must be incident to either one or two edges. Suppose there is a vertex
+
+$x$
+
+incident to two edges (one corresponding to summing to A, and the other
+corresponding to summing to B).  Then let's construct a walk by traversing a
+type-A edge, then a type-B edge, then a type-A edge, and so forth. This walk
+will eventually terminate at some vertex incident to exactly one edge. or it
+would run indefinitely. However, the latter case is impossible since then it
+would traverse infinitely many distinct vertices (
+
+$x, x+B-A, x+2(B-A), \dots $
+
+),
+contradicting the graph having finite size.

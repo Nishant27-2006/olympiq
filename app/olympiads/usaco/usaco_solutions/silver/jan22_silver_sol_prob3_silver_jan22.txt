@@ -1,0 +1,348 @@
+Solution ID: sol_prob3_silver_jan22
+Contest: JAN22
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_jan22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+Note that in the sample case, because the first three cows share no cereals in
+common with the last five cows, we can order those three independently of the
+last five: in any permutation of the 8 cows, all that matters for the number of
+cows that go hungry is the order of the first three, and separately, the order
+of the last five.
+
+More generally, for any input, we can consider the graph where each cereal is a
+vertex, and each cow is a directed edge from her favorite cereal to her
+second-favorite cereal. If there is a group of cereals such that every cow has 0
+or 2 of her cereals in that group, then we can solve for the optimal order of
+the cows with 2 cereals in that group independently of solving for the optimal
+order of the cows with 0 cereals in that group. In graph theoretic terms, we can
+solve every connected component of the graph (ignoring edge directions for now)
+independently. Once we have an optimal ordering for each component, we can
+arbitrarily interlace the orderings (or just concatenate them), and we'll have
+an optimal ordering for the entire graph.
+
+So now let's focus on a single connected component with
+
+$V$
+
+vertices (i.e.
+cereals) and
+
+$E$
+
+edges (i.e. cows). Necessarily, it holds that
+
+$E \geq V-1$
+
+.
+Also, if
+
+$E > V$
+
+, then necessarily, at least
+
+$E-V$
+
+cows will go hungry in any
+ordering. So the question is whether we can always find an ordering in which
+only
+
+$\max(0,E-V)$
+
+cows go hungry.
+
+Let's consider the easiest case:
+
+$E = V-1$
+
+. Then the connected component is a
+tree. If we root the tree at an arbitrary vertex and pick the cows in order of
+increasing depth in the tree, then we can see that every cow is able to pick one
+of her two cereals. Depth-first-search order also works: all that matters is
+that an edge is chosen before its "child" edges.
+
+Next, if
+
+$E=V$
+
+, then the connected component is a tree plus an extra edge. Pick
+the cow corresponding to that extra edge first. What's left is a tree with a
+missing vertex (the cereal that the first cow took). Root the tree at that
+vertex, and again pick the cows in order of increasing depth in the tree. Then
+every cow is able to pick one of her two cereals.
+
+Finally, consider the case
+
+$E>V$
+
+. By depth-first search we can find a tree in
+this component, and there are
+
+$E+1-V$
+
+extra edges. Put all but one of these cows
+at the end of the ordering; we don't care if they go hungry. Now we've reduced
+to the case with only
+
+$V$
+
+edges, and we know that in this case we can find an
+ordering where no cows go hungry. So overall at most
+
+$E-V$
+
+cows go hungry (in
+fact, exactly
+
+$E-V$
+
+cows: the last
+
+$E-V$
+
+cows in the ordering).
+
+This shows that in a component with
+
+$E$
+
+edges and
+
+$V$
+
+vertices, we can always
+find an ordering where
+
+$\max(0, E-V)$
+
+cows go hungry, and we've already seen
+that this is optimal. For each component, we do a depth-first search to find a
+spanning tree, pick an extra edge in the component, and then do another
+depth-first search at the favorite endpoint of that edge, to order the spanning
+tree edges by depth. Thus, solving each component takes linear time in the
+component size. Finding the components is also done by repeated depth-first
+search on unvisited vertices, which takes linear time. Thus, the overall
+algorithm takes linear time.
+
+Note that all of these depth-first searches ignore the directions of the edges.
+Danny Mittal's Java code is below, followed by Leon Zhao's C++ code.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class Cereal2 {
+    static List<Cow>[] adj;
+    static int[] seen;
+    static Cow[] edgeHeres;
+    static Cow cycleEdge = null;
+    static List<Integer> answer = new ArrayList<>();
+ 
+    static void dfs1(int a, Cow edgeHere) {
+        if (seen[a] == 1) {
+            if (cycleEdge == null) {
+                cycleEdge = edgeHere;
+            }
+        } else {
+            seen[a] = 1;
+            edgeHeres[a] = edgeHere;
+            for (Cow edge : adj[a]) {
+                if (edgeHere == null || edge.id != edgeHere.id) {
+                    dfs1(edge.to, edge);
+                }
+            }
+        }
+    }
+ 
+    static void dfs2(int a) {
+        for (Cow edge : adj[a]) {
+            if (seen[edge.to] == 1) {
+                seen[edge.to] = 2;
+                answer.add(edge.id);
+                dfs2(edge.to);
+            }
+        }
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        adj = new List[m + 1];
+        seen = new int[m + 1];
+        edgeHeres = new Cow[m + 1];
+        for (int a = 1; a <= m; a++) {
+            adj[a] = new ArrayList<>();
+        }
+        for (int j = 1; j <= n; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int first = Integer.parseInt(tokenizer.nextToken());
+            int second = Integer.parseInt(tokenizer.nextToken());
+            adj[first].add(new Cow(j, first, second, first));
+            adj[second].add(new Cow(j, second, first, first));
+        }
+        for (int r = 1; r <= m; r++) {
+            if (seen[r] == 0) {
+                cycleEdge = null;
+                dfs1(r, null);
+                if (cycleEdge == null) {
+                    seen[r] = 2;
+                    dfs2(r);
+                } else {
+                    List<Integer> restOfCycle = new ArrayList<>();
+                    for (int a = cycleEdge.from; a != cycleEdge.to; a = edgeHeres[a].from) {
+                        seen[a] = 2;
+                        restOfCycle.add(edgeHeres[a].id);
+                    }
+                    seen[cycleEdge.to] = 2;
+                    answer.add(cycleEdge.id);
+                    if (cycleEdge.favorite == cycleEdge.to) {
+                        Collections.reverse(restOfCycle);
+                    }
+                    answer.addAll(restOfCycle);
+                    for (int a = cycleEdge.from; a != cycleEdge.to; a = edgeHeres[a].from) {
+                        dfs2(a);
+                    }
+                    dfs2(cycleEdge.to);
+                }
+            }
+        }
+        Set<Integer> dontGoHungry = new HashSet<>(answer);
+        for (int j = 1; j <= n; j++) {
+            if (!dontGoHungry.contains(j)) {
+                answer.add(j);
+            }
+        }
+        System.out.println(n - dontGoHungry.size());
+        StringJoiner joiner = new StringJoiner("\n");
+        for (int j : answer) {
+            joiner.add("" + j);
+        }
+        System.out.println(joiner);
+    }
+ 
+    static class Cow {
+        final int id;
+        final int from;
+        final int to;
+        final int favorite;
+ 
+        Cow(int id, int from, int to, int favorite) {
+            this.id = id;
+            this.from = from;
+            this.to = to;
+            this.favorite = favorite;
+        }
+ 
+        @Override
+        public String toString() {
+            return "" + id;
+        }
+    }
+}
+
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+struct edge {
+    int cow; // which cow's choice 
+    int to;
+    bool is_first;
+ 
+    edge() {};
+    edge(int cow, int to, bool is_first) : cow(cow), to(to), is_first(is_first) {};
+};
+ 
+int N, M;
+ 
+vector<edge> adj[100001];
+bool visited_cycle[100001]; // array for cycle finding
+bool visited[100001]; // visited array for finding which order of cows we should use
+bool gets_cereal[100001]; 
+ 
+int hungry_cows = 0;
+queue<int> order;
+int ignore_edge = -1;
+int first_cereal = -1; // the cereal we start the search from, if the CC is not a tree then this must be on a cycle
+ 
+void find_cycle(int cur, int prev = -1) {
+    visited_cycle[cur] = true; 
+ 
+    for (edge next : adj[cur]) {
+        if (visited_cycle[next.to]) {
+            if (first_cereal == -1 && next.to != prev) {
+                if (next.is_first) {
+                    first_cereal = next.to; 
+                } else {
+                    first_cereal = cur;
+                }
+                
+                ignore_edge = next.cow; 
+                order.push(next.cow);
+                gets_cereal[next.cow] = true;
+            }
+        } else {
+            find_cycle(next.to, cur);
+        }
+    }
+}
+ 
+ 
+void dfs(int cur) {
+    visited[cur] = true;
+    for (edge next : adj[cur]) {
+        if (!visited[next.to] && next.cow != ignore_edge) { 
+            gets_cereal[next.cow] = true;
+            order.push(next.cow);
+            dfs(next.to);
+        }
+    }
+}
+ 
+ 
+int main() {
+    cin >> N >> M;
+    for (int i = 0; i < N; ++i) {
+        int a, b;
+        cin >> a >> b;
+        adj[a].push_back(edge(i+1, b, false));
+        adj[b].push_back(edge(i+1, a, true));
+    }
+ 
+    for (int i = 1; i <= M; ++i) {
+        first_cereal = -1;
+        ignore_edge = -1;
+        if (!visited[i]) {
+            find_cycle(i);
+           
+            if (first_cereal > 0) {
+                dfs(first_cereal);
+            } else {
+                dfs(i);
+            }
+        }
+    }
+ 
+    for (int i = 1; i <= N; ++i) {
+        if (!gets_cereal[i]) {
+            ++hungry_cows;
+            order.push(i);
+        } 
+    }
+ 
+    cout << hungry_cows << endl;
+    while (!order.empty()) {
+        cout << order.front() << endl; 
+        order.pop();
+    }
+ 
+    return 0;
+}

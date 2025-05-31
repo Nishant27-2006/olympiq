@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Michelle Wei and Nick Wu)
+<p><strong> Subtask 1: </strong>
+<p>We can loop through every pair of numbers from <span class='math'>$1$</span> to <span class='math'>$N$</span> and perform a linear
+scan to check whether a moo with those numbers appears in the contest. This
+takes <span class='math'>$\mathcal{O}(N^3)$</span> time, which is fast enough for <span class='math'>$N \leq 10^2$</span>.
+<p>Nick&apos;s Python code:
+<p><pre class='prettyprint'>
+n = int(input())
+l = [int(x) for x in input().split()]
+ans = 0
+for m in range(1, n+1):
+  for o in range(1, n+1):
+    if m == o: continue
+    stage = 0
+    for val in l:
+      if stage == 0 and val == m: stage += 1
+      elif 1 &lt;= stage &lt;= 2 and val == o: stage += 1
+    if stage == 3: ans += 1
+print(ans)
+</pre>
+<p><strong>Subtask 2:</strong>
+<p>Imagine that some integer <span class='math'>$o$</span> appears more than two times. Any moo of the form
+<span class='math'>$[m, o, o]$</span> that exists can always be constructed using the rightmost two
+occurrences of <span class='math'>$o$</span> in the original array.
+<p>This motivates the following <span class='math'>$\mathcal{O}(N^2)$</span> solution - scan over the array
+from right to left and keep track of how many times each integer has been seen.
+When we see an integer for the second time, count the number of distinct
+different integers to the left of that one. The sum of these counts is therefore
+the answer.
+<p>Nick&apos;s Python code:
+<p><pre class='prettyprint'>
+n = int(input())
+l = [int(x) for x in input().split()]
+ans = 0
+seen = [-1] * n
+freq = [0] * (n+1)
+for i in range(n-1, -1, -1):
+  freq[l[i]] += 1
+  if freq[l[i]] == 2:
+    for j in range(i-1, -1, -1):
+      if l[j] == l[i]: continue
+      if seen[l[j]] != l[i]:
+        ans += 1
+        seen[l[j]] = l[i]
+print(ans)
+</pre>
+<p><strong> Full credit: </strong>
+<p>Looking at the solution for subtask 2, we see that we want to count the number
+of distinct integers for various prefixes of the array.
+<p>We can precompute all of these in <span class='math'>$\mathcal{O}(N)$</span> time by looping over the 
+array from left to right and tracking the first time we see each integer. By
+precomputing all of these, we can optimize the previous solution down to
+<span class='math'>$\mathcal{O}(N)$</span>.
+<p>There is an overcounting problem to handle though since we need to track, for a
+given integer <span class='math'>$o$</span>, if it also appears in the prefix. To handle this, we subtract
+by the number of integers that appear at least 3 times.
+<p>Michelle&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &quot;bits/stdc++.h&quot;
+#define MAXN 1000005
+using namespace std;
+int a[MAXN], pref[MAXN], cnt[MAXN];
+long long ans = 0;
+ 
+int main() {
+    int n; cin &gt;&gt; n;
+    for (int i = 1; i &lt;= n; i++)
+        cin &gt;&gt; a[i];
+    for (int i = 1; i &lt;= n; i++) {
+        pref[i] = pref[i-1];
+        cnt[a[i]]++;
+        if (cnt[a[i]] == 1)
+            pref[i]++;
+    }
+    memset(cnt, 0, sizeof cnt);
+    for (int i = n; i &gt;= 1; i--) {
+        cnt[a[i]]++;
+        if (cnt[a[i]] == 2) {
+            ans += pref[i-1];
+        }
+    }
+    for (int i = 1; i &lt;= n; i++) {
+        if (cnt[i] &gt;= 3)
+            ans--;
+    }
+    cout &lt;&lt; ans;
+}
+</pre>
+<p>Benjamin Qi&apos;s Python code (which uses a slightly different approach):
+<p><pre class='prettyprint'>
+N = int(input())
+A = list(map(int, input().split()))
+ 
+cnt_left = [0] * (N + 1)
+cnt_right = [0] * (N + 1)
+for x in A:
+	cnt_right[x] += 1
+ 
+ans = 0
+distinct_left = 0
+ 
+for i in range(N):
+	if cnt_right[A[i]] == 2:
+		ans += distinct_left - (cnt_left[A[i]] &gt; 0)
+	cnt_right[A[i]] -= 1
+	distinct_left += cnt_left[A[i]] == 0
+	cnt_left[A[i]] += 1
+ 
+print(ans)
+</pre>
+<p></body></html>

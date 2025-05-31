@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>We are given a collection of directories and files, and asked to find the
+directory from which the sum of relative paths to files is minimized.
+Abstractly, this is a graph problem: the collection of directories forms a tree,
+where the files are special leaves of the tree, and there are two weights on
+each edge. For instance, if the weight from node <span class='math'>$u$</span> to node <span class='math'>$v$</span> is <span class='math'>$w_{uv}$</span>,
+this means that any relative path ending at <span class='math'>$u$</span> (but not passing through <span class='math'>$v$</span>)
+must be extended by <span class='math'>$w$</span> characters to obtain a relative path for <span class='math'>$v$</span>. There is a
+corresponding weight <span class='math'>$w_{vu}$</span>, which may not be equal to <span class='math'>$w_{uv}$</span>.
+<p>So we want to find, for each node in the tree, the sum of path lengths from the
+node to special leaves. Our answer will essentially be the minimum sum, although
+depending on how exactly the weights are chosen, some care should be taken with
+counting backslash characters correctly.
+<p>Now the question is how to compute the sums. For each node, split the sum into
+an up-sum and a down-sum, where the down-sum counts paths to special leaves in
+the node&apos;s subtree, and the up-sum counts paths to all other special leaves.
+Then the down-sum of a node is almost equal to the sum over all its children of
+their down-sums: every special leaf in the node&apos;s subtree is counted by exactly
+one of the children. So we must simply account for how much each path increased.
+For a particular child, all paths in its subtree increased by the weight of the
+(directed) edge from the node to the child. This means that given the number of
+special leaves in each child&apos;s subtree, and the down-sum of each child, we can
+compute the down-sum of the parent node. Therefore we can compute all down-sums
+in a single depth-first search.
+<p>We can compute the up-sums in a second depth-first search, as follows. Fix some
+node <span class='math'>$u$</span> with parent <span class='math'>$p$</span>. Every special leaf not in the subtree of <span class='math'>$u$</span> is either
+not in the subtree of <span class='math'>$p$</span>, or in the subtree of a different child of <span class='math'>$u$</span>. So the
+up-sum of <span class='math'>$u$</span> can be computed from the up-sum of <span class='math'>$p$</span> (for the first case), the
+down-sum of <span class='math'>$p$</span> minus the contribution of <span class='math'>$u$</span> to this down-sum (for the second
+case), and the weight of the (directed) edge from <span class='math'>$u$</span> to <span class='math'>$p$</span> (since all paths
+increase by this length when extended from <span class='math'>$p$</span> to <span class='math'>$u$</span>), and the number of special leaves not in the subtree of <span class='math'>$p$</span> (since this is the number of paths whose lengths increase by that weight).
+<p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;cassert&gt;
+#include &lt;cstring&gt;
+#include &lt;vector&gt;
+using namespace std;
+ 
+#define NMAX 100000
+ 
+struct Node {
+  bool isFile;
+  vector&lt;Node*&gt; children;
+  int namelen;
+ 
+  int numLeaves;
+  long long totalSubtreeLen;
+ 
+  long long total;
+};
+ 
+Node nodes[NMAX];
+ 
+int n;
+int nleaves;
+ 
+void dfs1(Node* node) {
+  node-&gt;numLeaves = (node-&gt;isFile ? 1 : 0);
+  node-&gt;totalSubtreeLen = 0;
+  for (Node* child : node-&gt;children) {
+    dfs1(child);
+    node-&gt;numLeaves += child-&gt;numLeaves;
+    node-&gt;totalSubtreeLen += child-&gt;totalSubtreeLen + child-&gt;numLeaves * (child-&gt;namelen + (child-&gt;isFile ? 0 : 1));
+  }
+}
+ 
+void dfs2(Node* node, long long parentlen) {
+  node-&gt;total = parentlen + node-&gt;totalSubtreeLen;
+ 
+  long long plenadd = 0;
+  for (Node* child : node-&gt;children) {
+    plenadd += child-&gt;totalSubtreeLen + child-&gt;numLeaves * (child-&gt;namelen + (child-&gt;isFile ? 0 : 1));
+  }
+  for (Node* child : node-&gt;children) {
+    dfs2(child, parentlen + plenadd -
+      (child-&gt;totalSubtreeLen + child-&gt;numLeaves * (child-&gt;namelen + (child-&gt;isFile ? 0 : 1)))
+      + 3 * (nleaves - child-&gt;numLeaves));
+  }
+}
+ 
+int main() {
+  scanf(&quot;%d&quot;, &amp;n);
+  char name[40];
+  nleaves = 0;
+  for (int i = 0; i &lt; n; i++) {
+    scanf(&quot;%s&quot;, name);
+    nodes[i].namelen = strlen(name);
+    int numChildren;
+    scanf(&quot;%d&quot;, &amp;numChildren);
+    nodes[i].isFile = (numChildren == 0);
+    if (nodes[i].isFile) {
+      nleaves++;
+    }
+    for (int j = 0; j &lt; numChildren; j++) {
+      int id;
+      scanf(&quot;%d&quot;, &amp;id);
+      nodes[i].children.push_back(&amp;nodes[id-1]);
+    }
+  }
+ 
+  assert(!nodes[0].isFile);
+ 
+  dfs1(&amp;nodes[0]);
+  dfs2(&amp;nodes[0], 0);
+  long long ans = nodes[0].total;
+  for (int i = 0; i &lt; n; i++) {
+    if (!nodes[i].isFile) {
+      ans = (ans &lt; nodes[i].total ? ans : nodes[i].total);
+    }
+  }
+  printf(&quot;%lld\n&quot;, ans);
+}
+</pre>
+<p></body></html>

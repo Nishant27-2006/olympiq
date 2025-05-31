@@ -1,0 +1,147 @@
+Solution ID: sol_prob1_bronze_feb25
+Contest: FEB25
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_feb25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Subtask 1:
+
+Because
+
+$N$
+
+is so small, it is possible to brute force every possible valid
+canvas and compare the difference between that canvas and the current one. There
+are
+
+$\mathcal{O}\left(2^{N^2}\right)$
+
+total canvases, but only
+
+$\mathcal{O}\left(2^{\frac{N^2}{4}}\right)$
+
+are relevant because once we decide the state
+of every square in the top-left quadrant of the canvas, the rest of the canvas
+is determined.
+
+Nick Wu's Python code:
+
+n, u = (int(x) for x in input().split())
+g = [[x == '#' for x in input()] for _ in range(n)]
+def getans():
+  best = n*n
+  for grid in range(2 ** ((n*n)//4)):
+    wrongcount = 0
+    for i in range(n):
+      for j in range(n):
+        truei = min(i, n-1-i)
+        truej = min(j, n-1-j)
+        if g[i][j] != ((grid & (2 ** (truei * (n // 2) + truej))) != 0): wrongcount += 1
+    best = min(best, wrongcount)
+  return best
+print(getans())
+for _ in range(u):
+  a, b = (int(x)-1 for x in input().split())
+  g[a][b] = not g[a][b]
+  print(getans())
+
+Subtask 2:
+
+In this subtask, the number of updates is small, but the canvas is very large.
+Therefore, it is no longer feasible to brute force every possible canvas.
+
+The critical observation moving forward for this problem is to note that each
+square in the canvas can be mapped to exactly one square in the top-left
+quadrant of the canvas, and  furthermore each square in the top-left quadrant of
+the canvas depends on exactly four squares. If all four squares happen to be
+exactly the same, then it is optimal to select that square to match all four. If
+three of the squares share the same painted status, then it is optimal to select
+that painted status and repaint the lone remaining other square. Otherwise, two
+squares will need to be repainted.
+
+Michelle Wei's C++ code:
+
+#include "bits/stdc++.h"
+ 
+using namespace std;
+ 
+int n, u;
+char grid[2005][2005];
+ 
+int main() {
+    cin >> n >> u;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++)
+            cin >> grid[i][j];
+    }
+    
+    for (int t = 0; t <= u; t++) {
+        int ans = 0;
+        for (int i = 0; i < n/2; i++) {
+            for (int j = 0; j < n/2; j++) {
+                int vals[4];
+                vals[0] = grid[i][j] == '#' ? 1 : 0;
+                vals[1] = grid[i][n-1-j] == '#' ? 1 : 0;
+                vals[2] = grid[n-1-i][j] == '#' ? 1 : 0;
+                vals[3] = grid[n-1-i][n-1-j] == '#' ? 1 : 0;
+                int freq = 0;
+                for (int k = 0; k < 4; k++) freq += vals[k];
+                ans += min(freq, 4-freq);
+            }
+        }
+        cout << ans << "\n";
+        if (t < u) {
+            int r, c;
+            cin >> r >> c;
+            grid[r-1][c-1] = grid[r-1][c-1] == '#' ? '.' : '#';
+        }
+    }
+}
+
+Full Credit:
+
+To get full credit, we need to take advantage of the fact
+that updates only touch one square. Because exactly one square is touched per
+update, only four squares can possibly be impacted, namely the four squares that
+map to the updated one. We can temporarily ignore the optimal painted state for
+those four squares, perform the update, and recompute the answer.
+
+Nick Wu's C++ code:
+
+#include <array>
+#include <iostream>
+#include <vector>
+ 
+int main() {
+  int n, q;
+  std::cin >> n >> q;
+  std::vector<std::string> grid(n);
+  for(auto& x: grid) std::cin >> x;
+  std::vector<std::vector<int>> canonical(n/2);
+  for(auto& x: canonical) x.resize(n/2);
+  int ans = 0;
+  auto apply = [&](int x, int y, int scale) -> void {
+    if(grid[x][y] == '.') return;
+    x = std::min(x, n-1-x);
+    y = std::min(y, n-1-y);
+    ans -= std::min(canonical[x][y], 4-canonical[x][y]);
+    canonical[x][y] += scale;
+    ans += std::min(canonical[x][y], 4-canonical[x][y]);
+  };
+  for(int i = 0; i < n; i++) for(int j = 0; j < n; j++) apply(i, j, 1);
+  std::cout << ans << "\n";
+  while(q--) {
+    int x, y;
+    std::cin >> x >> y;
+    x--; y--;
+    apply(x, y, -1);
+    grid[x][y] = '#' + '.' - grid[x][y];
+    apply(x, y, 1);
+    std::cout << ans << "\n";
+  }
+}

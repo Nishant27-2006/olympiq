@@ -1,0 +1,118 @@
+Solution ID: sol_balancing_platinum_feb16
+Contest: FEB16
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_balancing_platinum_feb16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nathan Pinsker)
+
+The most immediately obvious solution is to try all possible locations for one
+gate (let's arbitrarily assume the north-south gate), then  try all possible
+locations for the other gate; unfortunately, this takes
+
+$O(n^2)$
+
+time in total
+and is too slow.
+
+However, we can speed up figuring out where to put the east-west gate, given the
+position of the north-south gate already. As we move our east-west gate from top
+to bottom, note that the number of cows in each of the northern two regions is a
+nondecreasing function. Similarly, the number of cows in each of the southern
+two regions is a nonincreasing function. Thus, max(cows in northwest region,
+cows in northeast region) is also nondecreasing, and max(cows in southwest
+region, cows in southeast region) is also nonincreasing.
+
+This means that we can use a form of binary search to figure out where they
+cross: we simply look for the y-value where the two graphs of these functions
+cross. Put more simply, if there are too many cows in the top regions, then we
+need to move our fence downwards, and if there are too many cows  in the bottom
+regions, then we need to move our fence upwards. Note that as we iterate over
+all possible positions for the north-south gate, we need to efficiently keep
+track of cows as they move from one side of the fence to the other. We can do
+this using a segment tree, which also lets us compute the number of cows in each
+region very easily.
+
+Here is Mark Gordon's code, which implements this idea:
+
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <functional>
+#include <set>
+#include <algorithm>
+#include <map>
+
+using namespace std;
+
+#define MAXN (1 << 17)
+
+int S1[2 * MAXN];
+int S2[2 * MAXN];
+
+void update(int* S, int x, int v) {
+  x += MAXN;
+  S[x] += v;
+  for (x = x >> 1; x; x = x >> 1) {
+    S[x] = S[2 * x + 0] + S[2 * x + 1];
+  }
+}
+
+int query(int x, int l1, int r1, int l2, int r2) {
+  if (x > MAXN) {
+    (l1 < r1 ? l1 : r1) += S1[x];
+    (l2 < r2 ? l2 : r2) += S2[x];
+    return max(max(l1, r1), max(l2, r2));
+  }
+
+  int c1 = x * 2 + 0;
+  int c2 = x * 2 + 1;
+  if (max(l1 + S1[c1], l2 + S2[c1]) < max(r1 + S1[c2], r2 + S2[c2])) {
+    return query(c2, l1 + S1[c1], r1, l2 + S2[c1], r2);
+  } else {
+    return query(c1, l1, r1 + S1[c2], l2, r2 + S2[c2]);
+  }
+}
+
+int main() {
+  int N; cin >> N;
+
+  vector<pair<int, int> > A(N);
+  for (int i = 0; i < N; i++) {
+    cin >> A[i].first >> A[i].second;
+  }
+  sort(A.begin(), A.end());
+
+  int xp = 0, lx = A[0].first;
+  for (int i = 0; i < N; i++) {
+    if (A[i].first != lx) {
+      lx = A[i].first;
+      xp++;
+    }
+    A[i].first = xp;
+  }
+
+  sort(A.begin(), A.end(), [](pair<int, int> a, pair<int, int> b) {
+    return make_pair(a.second, a.first) < make_pair(b.second, b.first);
+  });
+
+  for (int i = 0; i < N; i++) {
+    update(S1, A[i].first, 1);
+  }
+
+  int result = N;
+  for (int i = 0; i < N; ) {
+    int sz = 0;
+    while (i + sz < N && A[i].second == A[i + sz].second) {
+      update(S1, A[i + sz].first, -1);
+      update(S2, A[i + sz].first, 1);
+      sz++;
+    }
+    result = min(result, query(1, 0, 0, 0, 0));
+    i += sz;
+  }
+  cout << result << endl;
+}

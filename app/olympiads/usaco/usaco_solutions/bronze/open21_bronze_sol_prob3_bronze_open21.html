@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>There&apos;s a simple greedy strategy. Iterate over each grass square. 
+<p><ul><li>If it is adjacent to at most one cow, then nothing happens.</li><li>If it is adjacent to greater than two cows, then it is adjacent to two cows
+on opposite sides. Increment the answer by one.</li><li>Otherwise if exactly 2 adjacent cows we pair those up. That is, insert this
+pair of cows into a set.</li></ul>
+<p>At the end, we add the number of distinct pairs in the set to the answer.
+<p>My code:
+<p><pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+using namespace std;
+
+int main() {
+	int N,M; cin &gt;&gt; N &gt;&gt; M;
+	vector&lt;string&gt; G(N); for (string&amp; row: G) cin &gt;&gt; row;
+	auto exists_cow = [&amp;](int i, int j) { 
+		return 0 &lt;= i &amp;&amp; i &lt; N &amp;&amp; 0 &lt;= j &amp;&amp; j &lt; M &amp;&amp; G[i][j] == &apos;C&apos;;
+	};
+	set&lt;vector&lt;pair&lt;int,int&gt;&gt;&gt; pairs;
+	int ans = 0;
+	for (int i = 0; i &lt; N; ++i) 
+		for (int j = 0; j &lt; M; ++j) if (G[i][j] == &apos;G&apos;) {
+			vector&lt;pair&lt;int,int&gt;&gt; v;
+			int dx[]{1,0,-1,0};
+			int dy[]{0,1,0,-1};
+			for (int d = 0; d &lt; 4; ++d) {
+				int ii = i+dx[d], jj = j+dy[d];
+				if (exists_cow(ii,jj)) v.emplace_back(ii,jj);
+			}
+			if (v.size() &gt; 2) {
+				++ans;
+				continue;
+			}
+			if (v.size() == 2) {
+				sort(begin(v),end(v));
+				pairs.insert(v);
+			}
+		}
+	cout &lt;&lt; pairs.size()+ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Danny Mittal&apos;s code (similar greedy strategy, but doesn&apos;t use a set):
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+ 
+public class AcowdemiaIII {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int m = Integer.parseInt(tokenizer.nextToken());
+        char[][] pasture = new char[n + 2][];
+        pasture[0] = new char[m + 2];
+        Arrays.fill(pasture[0], &apos;.&apos;);
+        pasture[n + 1] = pasture[0];
+        for (int y = 1; y &lt;= n; y++) {
+            pasture[y] = (&apos;.&apos; + in.readLine() + &apos;.&apos;).toCharArray();
+        }
+        int answer = 0;
+        for (int y = 1; y &lt;= n; y++) {
+            for (int x = 1; x &lt;= m; x++) {
+                if (pasture[y][x] == &apos;G&apos; &amp;&amp; ((pasture[y][x - 1] == &apos;C&apos; &amp;&amp; pasture[y][x + 1] == &apos;C&apos;) || (pasture[y - 1][x] == &apos;C&apos; &amp;&amp; pasture[y + 1][x] == &apos;C&apos;))) {
+                    pasture[y][x] = &apos;.&apos;;
+                    answer++;
+                }
+            }
+        }
+        for (int y = 1; y &lt;= n; y++) {
+            for (int x = 1; x &lt;= m; x++) {
+                if (pasture[y][x] == &apos;C&apos;) {
+                    if (pasture[y + 1][x - 1] == &apos;C&apos;) {
+                        if (pasture[y][x - 1] == &apos;G&apos;) {
+                            pasture[y][x - 1] = &apos;.&apos;;
+                            answer++;
+                        } else if (pasture[y + 1][x] == &apos;G&apos;) {
+                            pasture[y + 1][x] = &apos;.&apos;;
+                            answer++;
+                        }
+                    }
+                    if (pasture[y + 1][x + 1] == &apos;C&apos;) {
+                        if (pasture[y][x + 1] == &apos;G&apos;) {
+                            pasture[y][x + 1] = &apos;.&apos;;
+                            answer++;
+                        } else if (pasture[y + 1][x] == &apos;G&apos;) {
+                            pasture[y + 1][x] = &apos;.&apos;;
+                            answer++;
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println(answer);
+    }
+}
+</pre>
+<p></body></html>

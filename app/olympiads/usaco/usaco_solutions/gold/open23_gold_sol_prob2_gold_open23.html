@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>Let <span class='math'>$s$</span> be the given string, and <span class='math'>$c$</span> be the given list of deletion costs. 
+<p><strong>Subtask <span class='math'>$N \leq 2000$</span></strong>
+<p>We will use DP. Let <span class='math'>$dp(k, x, j)$</span> be the minimum cost to delete characters in
+<span class='math'>$s[1\dots k]$</span> so that we have <span class='math'>$x$</span> occurrences of &quot;bessie&quot; as well as having the
+first <span class='math'>$j$</span> characters of &quot;bessie&quot; at the very end (without any characters after).
+The answer will be <span class='math'>$x$</span> and <span class='math'>$dp(|s|, x, 0)$</span> for the largest <span class='math'>$x$</span> such that the
+latter is finite.
+<p>There are two general transitions. The first is to transition from
+<span class='math'>$dp(k - 1, x, j)$</span> to <span class='math'>$dp(k, x, j)$</span> by deleting <span class='math'>$s_k$</span>, adding <span class='math'>$c_k$</span> cost. The
+second occurs when <span class='math'>$s_k$</span> is in a &quot;bessie&quot;, in which case for all <span class='math'>$j$</span> such that
+<span class='math'>$s_k$</span> is the <span class='math'>$j$</span>th letter in &quot;bessie&quot; (with <span class='math'>$j$</span> being <span class='math'>$1$</span>-indexed), we can go
+from <span class='math'>$dp(k - 1, x, j - 1)$</span> to <span class='math'>$dp(k, x, j)$</span> without adding any cost. Thus, we
+can compute the DP using the following equations. If <span class='math'>$s_k$</span> is the <span class='math'>$j$</span>th
+character in &quot;bessie&quot;,
+<div class='math'>$$dp(k, x, j) = \min(dp(k - 1, x, j) + c_k, dp(k - 1, x, j - 1)).$$</div>
+Otherwise,
+<div class='math'>$$dp(k, x, j) = dp(k - 1, x, j) + c_k.$$</div>
+Each of these transitions has a special case associated with <span class='math'>$j = 0$</span>. For the
+first one, because &apos;the first <span class='math'>$0$</span> characters of &quot;bessie&quot; occurring at the end of
+the string&apos; isn&apos;t actually a real constraint, we don&apos;t need to delete the added
+character to maintain it, so we can transition directly from <span class='math'>$dp(k - 1, x, 0)$</span>
+to <span class='math'>$dp(k, x, 0)$</span> without any added cost. For the second one we need to account
+for having a whole &quot;bessie&quot; at the end of the string that we would like to
+include in the count <span class='math'>$x$</span>. We can do this cleanly by transitioning from
+<span class='math'>$dp(k, x - 1, 6)$</span> to <span class='math'>$dp(k, x, 0)$</span>. Thus, we can write
+<div class='math'>$$dp(k, x, 0) = \min(dp(k - 1, x, 0), dp(k, x - 1, 6)).$$</div>
+We therefore have a DP with <span class='math'>$\mathcal O(|s|^2)$</span> states (because the amount of
+&quot;bessie&quot;s in <span class='math'>$s$</span> is at most <span class='math'>$\frac {|s|} 6$</span>) with constant time transitions,
+giving an <span class='math'>$\mathcal O(|s|^2)$</span> algorithm.
+<p><strong>No additional constraints</strong>
+<p>We can optimize the above DP by moving <span class='math'>$x$</span> from the state to the value. The idea
+here is that because we want to maximize the number of &quot;bessie&quot;s first and
+minimize the cost second, a configuration that achieves <span class='math'>$x$</span> &quot;bessie&quot;s with <span class='math'>$y$</span>
+cost is always better than a configuration that achieves <span class='math'>$x&apos; &lt; x$</span> &quot;bessie&quot;s and
+<span class='math'>$y&apos;$</span> cost regardless of if <span class='math'>$y&apos;$</span> is much smaller than <span class='math'>$y$</span>.
+<p>We can therefore define <span class='math'>$dp(k, j)$</span> to be the optimal pair <span class='math'>$(x, y)$</span> for deleting
+characters in <span class='math'>$s[1\dots k]$</span> to end up with the first <span class='math'>$j$</span> characters of &quot;bessie&quot; at
+the end, where <span class='math'>$x$</span> is the number of additional &quot;bessie&quot;s in that string and <span class='math'>$y$</span>
+is the cost. Optimality is then determined first by higher <span class='math'>$x$</span> then by lower
+<span class='math'>$y$</span>.
+<p>The above transitions can be written as follows, with addition of pairs defined
+as <span class='math'>$(a, b) + (c, d) = (a + c, b + d)$</span>.
+<p>If <span class='math'>$s_k$</span> is the <span class='math'>$j$</span>th character in &quot;bessie&quot;,
+<div class='math'>$$dp(k, j) = \text{opt}(dp(k - 1, j) + (0, c_k), dp(k - 1, j - 1)).$$</div>
+Otherwise,
+<div class='math'>$$dp(k, j) = dp(k - 1, j) + (0, c_k).$$</div>
+And,
+<div class='math'>$$dp(k, 0) = \text{opt}(dp(k - 1, 0), dp(k, 6) + (1, 0)).$$</div>
+The number of states has been reduced to <span class='math'>$\mathcal O(|s|)$</span> while the transitions
+are still constant time, giving a <span class='math'>$\mathcal O(|s|)$</span> solution.
+<p>Python code that closely follows the analysis:
+<pre class='prettyprint'>
+s = input()
+c = list(map(int, input().split()))
+BESSIE = &quot;bessie&quot;
+INF = 300_000_000
+
+def opt(a, b):
+    if a[0] &gt; b[0]:
+        return a
+    if b[0] &gt; a[0]:
+        return b
+    if a[1] &lt; b[1]:
+        return a
+    return b
+
+def add(a, b):
+    return (a[0] + b[0], a[1] + b[1])
+
+dp = [[(-1, INF)] * 7 for _ in range(len(s) + 1)]
+dp[0][0] = (0, 0)
+
+for k in range(1, len(s) + 1):
+    for j in range(1, 7):
+        if s[k - 1] == BESSIE[j - 1]:
+            dp[k][j] = opt(add(dp[k - 1][j], (0, c[k - 1])), dp[k - 1][j - 1])
+        else:
+            dp[k][j] = add(dp[k - 1][j], (0, c[k - 1]))
+    dp[k][0] = opt(dp[k - 1][0], add(dp[k][6], (1, 0)))
+
+bessies, cost = dp[len(s)][0]
+print(bessies)
+print(cost)
+</pre>
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+s = input()
+costs = map(int, input().split())
+
+target = &quot;bessie&quot;
+dp = [(float(&quot;-inf&quot;), 0) for _ in target]
+dp[0] = (0, 0)
+
+for c, cost in zip(s, costs):
+    ndp = [(float(&quot;-inf&quot;), 0) for _ in target]
+    for i in range(len(target)):
+        ndp[i] = max(ndp[i], (dp[i][0], dp[i][1] - (i &gt; 0) * cost))
+        if target[i] == c:
+            j = (i + 1) % len(target)
+            ndp[j] = max(ndp[j], (dp[i][0] + 1, dp[i][1]))
+    dp = ndp
+
+oc, minus_cost = max([(progress // len(target), cost) for progress, cost in dp])
+print(oc)
+print(-minus_cost)
+</pre>
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main() {
+    string s;
+    cin &gt;&gt; s;
+ 
+    vector&lt;int&gt; costs;
+    int cost;
+    for (int i = 0; i &lt; s.size(); i++) {
+        cin &gt;&gt; cost;
+        costs.push_back(cost);
+    }
+ 
+    string target = &quot;bessie&quot;;
+    vector&lt;pair&lt;int, int&gt;&gt; dp(target.size(), {-1e9, 0});
+    dp[0] = {0, 0};
+ 
+    for (int i = 0; i &lt; s.size(); i++) {
+        vector&lt;pair&lt;int, int&gt;&gt; ndp(target.size(), {-1e9, 0});
+        char c = s[i];
+        for (int j = 0; j &lt; target.size(); j++) {
+            ndp[j] =
+                max(ndp[j], {dp[j].first, dp[j].second - (j &gt; 0) * costs[i]});
+            if (target[j] == s[i]) {
+                int k = (j + 1) % target.size();
+                ndp[k] = max(ndp[k], {dp[j].first + 1, dp[j].second});
+            }
+        }
+        swap(dp, ndp);
+    }
+ 
+    pair&lt;int, int&gt; mx{-1e9, 0};
+    for (int i = 0; i &lt; target.size(); i++)
+        mx = max(mx, {dp[i].first / target.size(), dp[i].second});
+ 
+    cout &lt;&lt; mx.first &lt;&lt; endl;
+    cout &lt;&lt; -mx.second &lt;&lt; endl;
+ 
+    return 0;
+}
+</pre>
+<p></body></html>

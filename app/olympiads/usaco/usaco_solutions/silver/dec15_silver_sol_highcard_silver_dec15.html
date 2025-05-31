@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, Bessie and Elsie each have <span class='math'>$N$</span> unique integers ranging from 1
+to <span class='math'>$2N$</span>. Over <span class='math'>$N$</span> rounds, Bessie and Elsie will each select a different integer
+and the cow who selected the larger integer wins a point. Bessie knows what
+integers Elsie will select and wants to maximize her (Bessie&apos;s) score.
+<p>Because Bessie knows the exact order in which Elsie will select her integers,
+Bessie can determine her exact strategy beforehand, choosing to win points on
+certain rounds and not win points on other rounds.
+<p>Assume without loss of generality that Bessie is able to earn <span class='math'>$K$</span> points using
+some strategy. We claim that there exists a strategy where Bessie wins points
+exactly when Elsie picks her <span class='math'>$K$</span> smallest integers. The intuition for this is as
+follows - if there are two integers <span class='math'>$x$</span> and <span class='math'>$y$</span> where <span class='math'>$x&lt;y$</span>, Elsie picks <span class='math'>$x$</span> and
+Bessie loses, and Elsie picks <span class='math'>$y$</span> and Bessie wins, then Bessie can swap the two
+moves - Bessie will win when Elsie picks <span class='math'>$x$</span> and lose when she picks <span class='math'>$y$</span>.
+<p>Therefore, it remains to see how many of Elsie&apos;s smallest integers Bessie can
+beat.
+<p>Bessie can start by trying to beat Elsie&apos;s smallest integer. If none of Bessie&apos;s integers
+are larger than that one, Bessie can&apos;t win any points. Otherwise, Bessie needs to pick
+an integer to beat Elsie&apos;s smallest integer. Intuitively, the best choice is to pick the smallest
+integer that can beat it - the reason for this is that we want to save bigger integers for later on.
+<p>After beating Elsie&apos;s smallest integer, Bessie can then try to beat her second smallest one, and
+continue beating Elsie&apos;s integers in order until she can no longer beat one.
+<p>To efficiently find the smallest such integer that can beat a given one from Elsie, we can consider
+Bessie&apos;s integers in order. If one of her integers can&apos;t beat Elsie&apos;s smallest unbeaten integer,
+it will never be usable and we can ignore it. Otherwise, we use that integer to beat Elsie&apos;s
+integer.
+<p>Here is my code illustrating this:
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class highcard {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(&quot;highcard.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;highcard.out&quot;)));
+		int n = Integer.parseInt(br.readLine());
+		boolean[] elsieOwns = new boolean[2*n+1];
+		for(int i = 0; i &lt; n; i++) {
+			elsieOwns[Integer.parseInt(br.readLine())] = true;
+		}
+		ArrayList&lt;Integer&gt; bessie = new ArrayList&lt;Integer&gt;();
+		ArrayList&lt;Integer&gt; elsie = new ArrayList&lt;Integer&gt;();
+		int points = 0;
+		// because we loop over the values in increasing order, the two lists will be in sorted order
+		for(int i = 1; i &lt;= 2*n; i++) {
+			if(elsieOwns[i]) {
+				elsie.add(i);
+			}
+			else {
+				bessie.add(i);
+			}
+		}
+		int bessieIndex = 0;
+		int elsieIndex = 0;
+		while(bessieIndex &lt; n &amp;&amp; elsieIndex &lt; n) {
+			if(bessie.get(bessieIndex) &gt; elsie.get(elsieIndex)) {
+				points++;
+				bessieIndex++;
+				elsieIndex++;
+			}
+			else {
+				bessieIndex++;
+			}
+		}
+		pw.println(points);
+		pw.close();
+	}
+}
+</pre></body></html>

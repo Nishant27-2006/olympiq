@@ -1,0 +1,155 @@
+Solution ID: sol_valleys_platinum_open19
+Contest: OPEN19
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_valleys_platinum_open19.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by  Dhruv Rohatgi )
+
+Ignore the "no holes" condition for a moment. Each valley is defined by its
+highest elevation cell, and consists of the connected component of that cell
+with lower elevation cells.
+
+So to iterate through the regions, we can maintain connected components using
+union find, and insert cells one by one, in order of increasing elevation. The
+issue is simply how to check whether a component contains any holes.
+
+There are several ways to do this, some of which are essentially equivalent. My
+approach was to track the "curvature" of each component (or rather, a discrete
+analogue). Every corner of a component can be assigned a curvature (either
+
+$1$
+
+or
+
+$-1$
+
+), and (by the Gauss-Bonnet theorem, and also by examining small examples) the total curvature of a component is
+
+$4 - 4h$
+
+, where
+
+$h$
+
+is the
+number of holes. So if we can maintain the curvature of each component
+throughout the process of inserting cells and union-find, then we can determine
+for each component whether it has any holes.
+
+This can be done. When a cell is inserted, it merges some components. The
+curvature is almost additive, since it's a sum over all corners in the
+component. All that needs to be taken care of are the four corners adjacent to
+the inserted cell; their curvatures changed. For each of these corners, the
+change in curvature is a purely local computation, so it can be done in constant
+time. Thus, maintaining curvatures of the components only adds linear overhead
+to the time complexity of the algorithm.
+
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define MAXN 755
+ 
+int N;
+int A[MAXN][MAXN];
+ 
+int conv(int i,int j)
+{
+	return (N+2)*i+j;
+}
+ 
+int fid[760*760];
+int rot[760*760];
+int sz[760*760];
+ 
+void init()
+{
+	for(int i=0;i<760*760;i++)
+		fid[i] = i, sz[i]=1;
+}
+ 
+int find(int i)
+{
+	if(fid[i]==i) return i;
+	return fid[i] = find(fid[i]);
+}
+ 
+void join(int i,int j)
+{
+	i = find(i), j = find(j);
+	if(i!=j)
+	{
+		fid[i] = j;
+		sz[j] += sz[i];
+		rot[j] += rot[i];
+	}
+}
+ 
+int cid[760*760];
+int val[760*760];
+ 
+bool cmp(int a,int b)
+{
+	return val[a]<val[b];
+}
+ 
+int evaluateCorner(int a,int b,int c)
+{
+	if(a+b+c==0) return +1;
+	if(a+b+c==1)
+	{
+		if(b==1) return +1;
+		return -1;
+	}
+	if(a+b+c==2)
+	{
+		if(b==0) return -3;
+		return -1;
+	}
+	if(a+b+c==3) return +1;
+}
+ 
+int main()
+{
+	cin >> N;
+	for(int i=0;i<=N+1;i++)
+		for(int j=0;j<=N+1;j++)
+			A[i][j] = 1000000000;
+	for(int i=1;i<=N;i++)
+		for(int j=1;j<=N;j++)
+		{
+			cin >> A[i][j];
+		}
+	for(int i=0;i<=N+1;i++)
+		for(int j=0;j<=N+1;j++)
+		{
+			cid[conv(i,j)] = conv(i,j);
+			val[conv(i,j)] = A[i][j];
+		}
+	sort(cid,cid+(N+2)*(N+2),cmp);
+	init();
+	long long ans = 0;
+	for(int m=0;m<(N+2)*(N+2);m++)
+	{
+		int cur = cid[m];
+		int i = cur/(N+2);
+		int j = cur%(N+2);
+		if(A[i][j]==1000000000) break;
+		if(A[i+1][j]<=A[i][j]) join(conv(i,j),conv(i+1,j));
+		if(A[i-1][j]<=A[i][j]) join(conv(i,j),conv(i-1,j));
+		if(A[i][j+1]<=A[i][j]) join(conv(i,j),conv(i,j+1));
+		if(A[i][j-1]<=A[i][j]) join(conv(i,j),conv(i,j-1));
+		int x = evaluateCorner(find(conv(i-1,j))==find(cur), find(conv(i-1,j-1))==find(cur), find(conv(i,j-1))==find(cur))
+		+ evaluateCorner(find(conv(i,j-1))==find(cur), find(conv(i+1,j-1))==find(cur), find(conv(i+1,j))==find(cur))
+		+ evaluateCorner(find(conv(i+1,j))==find(cur), find(conv(i+1,j+1))==find(cur), find(conv(i,j+1))==find(cur))
+		+ evaluateCorner(find(conv(i,j+1))==find(cur), find(conv(i-1,j+1))==find(cur), find(conv(i-1,j))==find(cur));
+		rot[find(cur)] += x;
+		if(rot[find(cur)] > 0)
+			ans += sz[find(cur)];
+	}
+	cout << ans << '\n';
+	
+}

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Let <span class='math'>$s$</span> and <span class='math'>$t$</span> denote the two strings. Define  <span class='math'>$a_1,\dots,a_m$</span> to be the
+positions of the <span class='math'>$1$</span>s in <span class='math'>$s$</span>, and <span class='math'>$b_1,\dots,b_m$</span> similarly for <span class='math'>$t$</span>.
+<p>In this problem, we only care about dance moves involving both types of cows.
+These dance moves are equivalent to moving a <span class='math'>$1$</span> (i.e., a Holstein) to a
+position not containing a <span class='math'>$1$</span> (i.e., a position containing a Guernsey).
+<p><strong>Claim 1:</strong> The answer is at least the minimum value of
+<span class='math'>$\sum_{i=1}^m\left\lceil\frac{|a_i-c_i|}{K}\right\rceil$</span> over all permutations
+<span class='math'>$c$</span> of <span class='math'>$b$</span>. This summation represents the minimum cost to match <span class='math'>$1$</span>s in <span class='math'>$s$</span> with
+<span class='math'>$1$</span>s in <span class='math'>$t$</span>. The cost to pair up two <span class='math'>$1$</span>s equals the ceiling of the distance
+between them divided by <span class='math'>$K$</span>.
+<p><em>Proof:</em> Every <span class='math'>$1$</span> in <span class='math'>$s$</span> must pair up with (i.e., end at the same location
+as) some <span class='math'>$1$</span> in <span class='math'>$t$</span>. To move a <span class='math'>$1$</span> a distance of <span class='math'>$d$</span>, at least
+<span class='math'>$\lceil d/K\rceil$</span> dance moves are required, as each dance move moves a <span class='math'>$1$</span> by a
+distance of at most <span class='math'>$K$</span>.
+<p>In fact, we will later show that claim 1 holds with equality.
+<p><strong><em>SUBTASK 1: <span class='math'>$K=1$</span></em></strong> 
+<p><strong>Claim 1.5:</strong> The answer is <span class='math'>$\sum_{i=1}^m|a_i-b_i|$</span>.
+<p><em>Proof:</em> Using an exchange argument, it can be shown that 
+<span class='math'>$\sum_{i=1}^m|a_i-c_i|$</span> is minimized when <span class='math'>$b=c$</span>. So the answer is at least 
+<span class='math'>$\sum_{i=1}^m|a_i-b_i|$</span>. Furthermore, we can construct a sequence of swaps with
+exactly this length:
+<p><ul><li>While <span class='math'>$a\neq b$</span>, take the smallest <span class='math'>$i$</span> such that
+<span class='math'>$a_i\neq b_i$</span>:
+<ul><li>If <span class='math'>$a_i&gt;b_i$</span>, move the <span class='math'>$1$</span> at <span class='math'>$a_i$</span> one position to the left.</li><li>Otherwise, move the <span class='math'>$1$</span> in <span class='math'>$b_i$</span> one position to the left.</li></ul>
+This operation decreases <span class='math'>$\sum_{i=1}^m|a_i-b_i|$</span> by one
+</li><li>Repeat until <span class='math'>$a=b$</span>.</li></ul>
+<p>Implementation 1 in Python:
+<p><pre class='prettyprint'>
+from collections import deque
+
+N, K = map(int, input().split())
+s = input()
+t = input()
+
+a = [i for i in range(N) if s[i] == &quot;1&quot;]
+b = [i for i in range(N) if t[i] == &quot;1&quot;]
+
+print(sum(abs(x - y) for x, y in zip(a, b)))
+</pre>
+<p>Another summation that gives the same answer is:
+<div class='math'>$$\sum_{i=1}^N|(\text{# ones in }s\text{ with position }\le i)-(\text{# ones in }t\text{ with position }\le i)|$$</div>
+We can compute this summation by sweeping <span class='math'>$i$</span> from left to right. 
+<p>Implementation 2 in Python:
+<p><pre class='prettyprint'>
+from collections import deque
+ 
+N, K = map(int, input().split())
+s = input()
+t = input()
+ 
+ans = 0
+ 
+dif = 0
+for i in range(N):
+    dif += s[i] == &quot;1&quot;
+    dif -= t[i] == &quot;1&quot;
+    ans += abs(dif)
+ 
+print(ans)
+</pre>
+<p>As we will see later on, the full solution will look quite similar to
+implementation 2.
+<p><strong><em>SUBTASK 2: <span class='math'>$m \leq 8$</span></em></strong>
+<p>Assuming Claim 1 holds with equality, we can iterate over all permutations <span class='math'>$c$</span>
+of <span class='math'>$b$</span> and compute the expression from claim 1 in <span class='math'>$O(m!\cdot m)$</span> time. 
+<p><strong><em>FULL SOLUTION</em></strong>
+<p>Suppose we draw an arrow <span class='math'>$a_i\to c_i$</span> for each <span class='math'>$i$</span>. We say that the arrow has
+length <span class='math'>$|a_i-c_i|$</span>, and points <strong>rightward</strong> if <span class='math'>$a_i&lt;c_i$</span>, and
+<strong>leftward</strong> otherwise. Two arrows point <strong>in opposite directions</strong> if one
+points leftward and the other rightward. The <span class='math'>$i$</span>-th arrow spans the interval 
+<span class='math'>$[\min(a_i,c_i),\max(a_i,c_i)]$</span>, and we say that two arrows <strong>cross</strong> if
+their intervals intersect.
+<p><strong>Claim 2:</strong> There is a permutation <span class='math'>$c$</span> of <span class='math'>$b$</span> minimizing
+<span class='math'>$\sum_{i=1}^m\left\lceil\frac{|a_i-c_i|}{K}\right\rceil$</span> such that no two
+opposite-direction arrows cross each other.
+<p><em>Proof:</em> If two opposite-direction arrows cross, we can swap two entries of
+<span class='math'>$c$</span> to uncross them without increasing the summation:
+<p><ul><li>If one arrow completely covers the other, we need to verify that
+<span class='math'>$\lceil (x+y)/K\rceil + 1\ge \lceil x/K\rceil+\lceil y/K\rceil$</span>. Indeed, this
+inequality is true for all <span class='math'>$x,y\ge 0$</span></li><li> Otherwise, uncrossing them
+decreases the lengths of both arrows, so the summation does not increase.</li></ul>
+<p>We can repeatedly uncross opposite-direction arrow pairs until no such pairs exist.
+Because the sum of lengths of all arrows strictly decreases each time we uncross
+two arrows, this process must eventually terminate.
+<p><strong>Claim 3:</strong> Claim 1 holds with equality.
+<p><em>Proof:</em> Take <span class='math'>$c$</span> satisfying claim 2 and partition the positions into
+independent substrings where no two arrows point in
+opposite directions within each substring.
+Now consider one of those substrings. Without loss of generality, assume all
+arrows point rightward within the substring (i.e., <span class='math'>$a_i\le c_i$</span> for all <span class='math'>$i$</span>).
+<p>We use induction. Take any such <span class='math'>$c$</span> minimizing the number of <span class='math'>$i$</span> such that 
+<span class='math'>$a_i=c_i$</span>, and consider the maximum <span class='math'>$i$</span> satisfying <span class='math'>$a_i&lt;c_i$</span>. We
+can move <span class='math'>$a_i$</span> to the right in such a way that
+<span class='math'>$\sum_i\left\lceil\frac{|a_i-c_i|}{K}\right\rceil$</span> decreases by one:
+<ul><li>If <span class='math'>$a_i$</span>
+and <span class='math'>$c_i$</span> are within <span class='math'>$K$</span> of each other, then <span class='math'>$c_i$</span> must contain a zero, and we
+can move a one from <span class='math'>$a_i$</span> to <span class='math'>$c_i$</span> in one move.</li><li>Otherwise, move <span class='math'>$a_i$</span> to
+<span class='math'>$c_i+K$</span>, which must contain a zero. (If it doesn&apos;t, then there is a permutation
+of <span class='math'>$c$</span> with fewer <span class='math'>$i$</span> such that <span class='math'>$a_i=c_i$</span>, which is a contradiction.)
+Then, apply the
+inductive hypothesis.</li></ul>
+<p>It remains to describe how to compute the expression from claim 1 efficiently.
+One (overpowered) way to pass subtask 3 is to use the 
+<a href='https://en.wikipedia.org/wiki/Hungarian_algorithm'>Hungarian algorithm</a> for
+minimum-cost matching, which runs in <span class='math'>$O(N^3)$</span> time.  However, there is a much
+simpler way using a greedy algorithm.
+<p>Firstly, there is a minimum-cost matching pairing all <span class='math'>$a_i$</span> and <span class='math'>$b_j$</span> such that
+<span class='math'>$a_i=b_j$</span>. It remains to pair two types of positions:
+<ol><li><strong>Type 1 positions</strong>, where <span class='math'>$s_i = 1$</span> and <span class='math'>$t_i = 0$</span>.</li><li><strong>Type 2 positions</strong>, where <span class='math'>$s_i = 0$</span> and <span class='math'>$t_i = 1$</span>.</li></ol>
+<p>In the case where all arrows point rightward, every type 1
+position is paired with a type 2 position to the right of it, and we can use the
+following greedy strategy that sweeps from left to right:
+<p><ol><li>Maintain a list of type 1 positions not yet paired.</li><li>Iterate over all <span class='math'>$i$</span> from <span class='math'>$1$</span> to <span class='math'>$N$</span>.
+<p><ol><li>For each position in the list, if it is less than <span class='math'>$i$</span>, add <span class='math'>$K$</span> to it and
+increase the answer by one, because it must be moved rightward at least once
+more.</li><li>If <span class='math'>$i$</span> is type 1, add it to the list of type 1 positions to be matched.</li><li>If <span class='math'>$i$</span> is type 2, we can pair it with any type 1 position from the list. To
+minimize the cost, we should pair it with the minimum element from the list.
+(This statement can be proven formally using an exchange argument.)</li></ol>
+<p></li></ol>
+<p>The time complexity is <span class='math'>$O(N^2/K)$</span> if step 2.1 is implemented naively, or <span class='math'>$O(N)$</span>
+if the list is maintained as a queue consisting of pairs of the form {value,
+count} in strictly increasing order of value. When all arrows point leftward,
+the solution is the same except types 1 and 2 are swapped.
+<p>The <span class='math'>$O(N)$</span> implementation follows. Note that it is written in such a way such
+that it handles both leftward and rightward arrows symmetrically.
+<p>My Python code:
+<p><pre class='prettyprint'>
+from collections import deque
+
+N, K = map(int, input().split())
+s = input()
+t = input()
+
+d = deque()
+
+ans = 0
+for i in range(N):
+    if len(d) &gt; 0 and d[0][0] &lt; i:  # step 2.1
+        ans += abs(d[0][1])
+        d.append((d[0][0] + K, d[0][1]))
+        d.popleft()
+    if s[i] != t[i]:
+        dif = 1 if s[i] == &quot;1&quot; else -1
+        if len(d) == 0 or abs(d[0][1] + dif) &gt; abs(d[0][1]):  # 2.2
+            if not (len(d) &gt; 0 and d[0][0] == i):
+                d.appendleft((i, 0))
+            d[0] = d[0][0], d[0][1] + dif
+        else:  # 2.3
+            d[0] = d[0][0], d[0][1] + dif
+            if d[0][1] == 0:
+                d.popleft()
+
+print(ans)
+</pre>
+<p><span class='math'>$O(N\log N)$</span> solutions using a sorted map rather than a deque were also fast
+enough to pass.
+<p>Andi Qu&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;map&gt;
+typedef long long ll;
+using namespace std;
+ 
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int n, k;
+    cin &gt;&gt; n &gt;&gt; k;
+    string s1, s2;
+    cin &gt;&gt; s1 &gt;&gt; s2;
+ 
+    ll ans = 0;
+    map&lt;int, int&gt; mismatches;
+    for (int i = 0; i &lt; n; i++) {
+        int d = s1[i] - s2[i];  // d = 0 if match; +1 if 0|1; -1 if 1|0
+ 
+        // First, move any mismatches *before* the sweep-line forward
+        // and increment the answer accordingly
+        while (mismatches.size() &amp;&amp; mismatches.begin()-&gt;first &lt; i) {
+            pair&lt;int, int&gt; curr = *mismatches.begin();
+            mismatches[curr.first + k] += curr.second;
+            ans += abs(curr.second);
+            mismatches.erase(curr.first);
+        }
+        // Next, resolve any reachable mismatches from the current position
+        if (mismatches.size() &amp;&amp; mismatches.begin()-&gt;second * d &lt; 0) {
+            mismatches.begin()-&gt;second += d;
+            if (mismatches.begin()-&gt;second == 0)
+                mismatches.erase(mismatches.begin());
+        } else if (d)
+            mismatches[i] += d;
+    }
+ 
+    cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+    return 0;
+}
+</pre>
+<p></body></html>

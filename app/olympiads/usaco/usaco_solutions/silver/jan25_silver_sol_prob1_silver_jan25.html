@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><div class='prob-section'><h4>Subtasks 1 and 2</h4>
+As in the solution for the Bronze version of this problem, we can compute the
+number of cows checked for each possible operation and sum all of them. This
+takes <span class='math'>$O(N^3)$</span> or <span class='math'>$O(N^2)$</span> time.
+</div>
+<p><div class='prob-section'><h4>Subtask 2 (Alternative)</h4>
+Let&apos;s describe a different <span class='math'>$O(N^2)$</span> time solution. This one can be optimized to
+solve the remaining subtasks.
+<p>Note: for consistency with the solution code, we assume both <span class='math'>$a$</span> and <span class='math'>$b$</span> are
+zero-indexed instead of one-indexed.
+<p>Let&apos;s iterate over all pairs <span class='math'>$(i,j)$</span> such that <span class='math'>$a_i=b_j$</span> and for each one,
+determine its contribution to the answer in <span class='math'>$O(1)$</span> time; that is the number of
+operations sending <span class='math'>$i$</span> to <span class='math'>$j$</span>. Without loss of generality, assume <span class='math'>$i\le j$</span> (to
+determine the contribution coming from <span class='math'>$i&gt;j$</span>, we can reverse the array and apply
+the same computations).
+<p><ul><li>There is a contribution of <span class='math'>$\min(i,N-1-j)$</span> coming from operations centered
+at <span class='math'>$\frac{i+j}{2}$</span>  containing both indices <span class='math'>$i$</span> and <span class='math'>$j$</span>.</li><li>Additionally,
+if <span class='math'>$i=j$</span> there are <span class='math'>$\binom{i+1}{2}+\binom{N-i}{2}$</span> operations that do not affect
+the <span class='math'>$i$</span>th position.</li></ul>
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#define all(x) begin(x), end(x)
+#define FOR(i, a, b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+
+using ll = int64_t;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N;
+    cin &gt;&gt; N;
+    vector&lt;int&gt; A(N), B(N);
+    for (int &amp;x : A) cin &gt;&gt; x;
+    for (int &amp;x : B) cin &gt;&gt; x;
+    auto ways2 = [&amp;](ll x) { return x * (x + 1) / 2; };
+    ll ans = 0;
+    F0R(i, N) if (A[i] == B[i]) {
+        ans += ways2(i) + ways2(N - 1 - i) + min(i, N - 1 - i) + 1;
+    }
+    F0R(_, 2) {
+        F0R(i, N)
+        FOR(j, i + 1, N) if (A[i] == B[j]) ans += min(i, N - 1 - j) + 1;
+        reverse(all(A));
+        reverse(all(B));
+    }
+    cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Subtask 3</h4>
+For the remaining subtasks, the only part we need to speed up is the 
+computation of the contribution from <span class='math'>$i&lt;j$</span>. The logic for <span class='math'>$i=j$</span> will remain the same.
+<p>When all values are generated independently and uniformly at random from the
+range <span class='math'>$[1,N]$</span>,  we can observe that the expected number of pairs satisfying
+<span class='math'>$a_i=b_j$</span> is only <span class='math'>$N$</span>  (there are <span class='math'>$N^2$</span> pairs <span class='math'>$(i,j)$</span>, and each one satisfies
+<span class='math'>$a_i=b_j$</span> with probability <span class='math'>$1/N$</span>). So as long as our solution takes time
+proportional to <span class='math'>$N$</span> plus the number of equal pairs, it will likely be fast
+enough for this subtask.
+<p>In the code below we initialize lists for each species value <span class='math'>$v$</span> from
+<span class='math'>$1\dots N$</span>, then for each <span class='math'>$v$</span> we iterate over all ways to select a position from
+<span class='math'>$a$</span> and a position from <span class='math'>$b$</span> with species
+<span class='math'>$v$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+#define all(x) begin(x), end(x)
+#define FOR(i, a, b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+
+using ll = int64_t;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N;
+    cin &gt;&gt; N;
+    vector&lt;int&gt; A(N), B(N);
+    for (int &amp;x : A) cin &gt;&gt; x;
+    for (int &amp;x : B) cin &gt;&gt; x;
+    auto ways2 = [&amp;](ll x) { return x * (x + 1) / 2; };
+    ll ans = 0;
+    F0R(i, N) if (A[i] == B[i]) {
+        ans += ways2(i) + ways2(N - 1 - i) + min(i, N - 1 - i) + 1;
+    }
+    F0R(_, 2) {
+        vector&lt;vector&lt;int&gt;&gt; with_A(N + 1), with_B(N + 1);
+        F0R(i, N) with_A[A[i]].push_back(i), with_B[B[i]].push_back(i);
+        FOR(v, 1, N + 1) {
+            for (int i : with_A[v])
+                for (int j : with_B[v])
+                    if (i &lt; j) ans += min(i, N - 1 - j) + 1;
+        }
+        reverse(all(A));
+        reverse(all(B));
+    }
+    cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Full Solution</h4>
+For full credit, let&apos;s process each value <span class='math'>$v$</span> in time proportional to the number
+of times it appears in <span class='math'>$a$</span> or <span class='math'>$b$</span>. Summing over all values will give a solution
+running in <span class='math'>$O(N)$</span> time. 
+<p>There are two types of contributions depending on whether <span class='math'>$N-j$</span> is &quot;big&quot; or
+&quot;small&quot; relative to <span class='math'>$i+1$</span>:
+<p><ul><li>big: <span class='math'>$N-j &gt; i+1$</span>. This contributes <span class='math'>$i+1$</span>.</li><li>small: <span class='math'>$N-j\le i+1$</span>. This
+contributes <span class='math'>$N-j$</span>.</li></ul>
+<p>If <span class='math'>$i$</span> is fixed, a suffix of <span class='math'>$j$</span> have small contributions, and the remaining <span class='math'>$j$</span>
+have big contributions.
+<p>Let&apos;s iterate over the occurrences of <span class='math'>$v$</span> from right to left;  when we encounter
+an occurrence of <span class='math'>$b_j=v$</span> let&apos;s record it, and when we encounter an occurrence of
+<span class='math'>$a_i=v$</span> let&apos;s add its contribution with all occurrences of <span class='math'>$v$</span>  in <span class='math'>$b$</span> recorded
+so far to the answer.
+<p>Each <span class='math'>$N-j$</span> initially starts out with a &quot;small&quot; contribution but changes to a
+&quot;big&quot; contribution when <span class='math'>$i$</span> gets small enough. Thus, we store the following
+information about <span class='math'>$j$</span> seen so far:
+<p><ul><li>Number of big contributions.</li><li>Sum of <span class='math'>$N-j$</span> over all small
+contributions.</li><li>A stack of <span class='math'>$N-j$</span> over all small contributions from
+lowest to highest.</li></ul>
+<p>When we encounter <span class='math'>$b_j=v$</span> we add to the sum of the small contributions and push
+<span class='math'>$N-j$</span> to the stack. When we encounter <span class='math'>$a_i=v$</span> we pop from the stack  as
+necessary; every time we pop from the stack we subtract from the sum and add to
+the number of big contributions.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define all(x) begin(x), end(x)
+#define FOR(i, a, b) for (int i = (a); i &lt; (b); ++i)
+#define F0R(i, a) FOR(i, 0, a)
+ 
+using ll = int64_t;
+ 
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N;
+    cin &gt;&gt; N;
+    vector&lt;int&gt; A(N), B(N);
+    for (int &amp;x : A) cin &gt;&gt; x;
+    for (int &amp;x : B) cin &gt;&gt; x;
+    auto ways2 = [&amp;](ll x) { return x * (x + 1) / 2; };
+    ll ans = 0;
+    F0R(i, N) if (A[i] == B[i]) {
+        ans += ways2(i) + ways2(N - 1 - i) + min(i, N - 1 - i) + 1;
+    }
+    F0R(_, 2) {
+        vector&lt;vector&lt;pair&lt;int, int&gt;&gt;&gt; with_oc(N + 1);
+        F0R(i, N) {
+            with_oc.at(B.at(i)).push_back({i, 1});
+            with_oc.at(A.at(i)).push_back({i, 0});
+        }
+        FOR(v, 1, N + 1) {
+            reverse(all(with_oc.at(v)));
+            stack&lt;int&gt; stk;
+            int num_large = 0;
+            ll sum_small = 0;
+            auto query = [&amp;](int x) {
+                while (!stk.empty() &amp;&amp; stk.top() &gt; x) {
+                    ++num_large;
+                    sum_small -= stk.top();
+                    stk.pop();
+                }
+                return sum_small + (ll)num_large * x;
+            };
+            for (auto [idx, which] : with_oc.at(v)) {
+                if (which == 0) {
+                    ans += query(idx + 1);
+                } else {
+                    int v = N - idx;
+                    sum_small += v;
+                    stk.push(v);
+                }
+            }
+        }
+        reverse(all(A));
+        reverse(all(B));
+    }
+    cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Subtask 4</h4>
+This subtask was intended to give credit for solutions that process each value
+<span class='math'>$v$</span> that occurs in <span class='math'>$a$</span> and <span class='math'>$b$</span> in <span class='math'>$O(N)$</span> time (e.g., using prefix sums to handle
+the &quot;big&quot; and &quot;small&quot; contributions mentioned above). The details are omitted.
+</div>
+<p></body></html>

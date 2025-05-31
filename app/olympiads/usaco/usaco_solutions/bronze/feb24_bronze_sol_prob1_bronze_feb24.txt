@@ -1,0 +1,138 @@
+Solution ID: sol_prob1_bronze_feb24
+Contest: FEB24
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_feb24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+We start by defining a winning position and a losing position. If the current
+player wins given optimal play on both sides, the position is a winning
+position, otherwise the position is a losing position.
+
+For positions that are not immediately winning or losing positions, we can make
+the following two observations:
+
+If one can make a move to a position that is a losing position, then the
+current position is a winning position.
+
+If one can only make moves to
+positions that are winning positions, then the current position is a losing
+position.
+
+In the context of this problem, the pile having zero stones is a losing
+position, the pile having
+
+$1, 2, \dots, 9$
+
+stones is a winning position, and the
+pile having ten stones is a losing position.
+
+Subtask 1:
+
+$S < 100$
+
+.
+
+We can naively check this process and compute for all
+
+$S$
+
+in increasing order if
+they are winning positions or losing positions.
+
+T = int(input())
+ 
+def is_pal(j):
+	s = str(j)
+	return s == "".join(reversed(s))
+ 
+for _ in range(T):
+	S = int(input())
+	win = [False] * (S+1)
+	for i in range(S+1):
+		for j in range(1, i+1):
+			if is_pal(j) and not win[i-j]:
+				win[i] = True
+	print("B" if win[S] else "E")
+
+Subtask 2:
+
+$S < 10^6$
+
+.
+
+This subtask rewarded people for experimenting with moves and only trying moves
+that involved taking at most
+
+$9$
+
+stones.
+
+T = int(input())
+
+S = 10**6
+win = [False] * (S+1)
+for i in range(S+1):
+	for j in range(1, min(i+1, 10)):
+		if not win[i-j]:
+			win[i] = True
+ 
+for _ in range(T):
+	S = int(input())
+	print("B" if win[S] else "E")
+
+Subtask 3:
+
+$S < 10^9$
+
+.
+
+If we look at the winning position and losing positions, we can see that a
+position is winning if and only if
+
+$S$
+
+is not divisible by
+
+$10$
+
+. The proof of
+this follows directly from observing that taking anywhere from
+
+$1$
+
+to
+
+$9$
+
+stones
+is possible, but it is never possible to remove a multiple of ten. Therefore, we
+just naively check if the integer is divisible by
+
+$10$
+
+.
+
+Full Credit:
+
+To check if a very large integer is a multiple of
+
+$10$
+
+, it suffices to check if
+the last digit of the number is
+
+$0$
+
+.
+
+Benjamin Qi's code:
+
+T = int(input())
+for _ in range(T):
+	start = input()
+	print('E' if start[-1] == '0' else 'B')

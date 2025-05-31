@@ -1,0 +1,219 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB24 Contest - Platinum Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Bessie has $N$ ($2\le N\le 300$) tiles in a line with ugliness values 
+$a_1, a_2, \dots, a_N$ in that order ($1\le a_i\le 10^6$). $K$
+($0\le K\le \min(N,6)$) of the tiles are stuck in place; specifically, those at
+indices $x_1,\dots, x_K$ ($1\le x_1 < x_2<\dots< x_K\le N$). 
+
+Bessie wants to minimize the total ugliness of the tiles, which is defined as
+the sum of the maximum ugliness over every consecutive pair of tiles; that is,
+$\sum_{i=1}^{N-1}\max(a_i,a_{i+1})$. She is allowed to perform the following
+operation any number of times: choose two tiles, neither of which are stuck in
+place, and swap them. 
+
+Determine the minimum possible total ugliness Bessie can achieve if she performs
+operations optimally.
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $N$ and $K$.
+
+The next line contains $a_1,\dots,a_N$.
+
+The next line contains the $K$ indices $x_1,\dots,x_K$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Output the minimum possible total ugliness.
+
+SAMPLE INPUT:
+3 0
+1 100 10
+
+SAMPLE OUTPUT: 
+110
+
+Bessie can swap the second and third tiles so that $a=[1,10,100]$, achieving
+total ugliness $\max(1,10)+\max(10,100)=110$. Alternatively, she could swap the
+first and second tiles so that $a=[100,1,10]$, also achieving  total ugliness
+$\max(100,1)+\max(1,10)=110$.
+
+SAMPLE INPUT:
+3 1
+1 100 10
+3
+SAMPLE OUTPUT: 
+110
+
+Bessie could swap the first and second tiles so that $a=[100,1,10]$, achieving 
+total ugliness $\max(100,1)+\max(1,10)=110$.
+
+SAMPLE INPUT:
+3 1
+1 100 10
+2
+SAMPLE OUTPUT: 
+200
+
+The initial total ugliness of the tiles is $\max(1,100)+\max(100,10)=200$.
+Bessie is only allowed to swap the first and third tiles, which does not allow
+her to reduce the total ugliness.
+
+SAMPLE INPUT:
+4 2
+1 3 2 4
+2 3
+SAMPLE OUTPUT: 
+9
+
+SCORING:
+Input 5: $K=0$Inputs 6-7: $K=1$Inputs 8-12: $N\le 50$Inputs 13-24: No additional constraints
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+The next line contains $a_1,\dots,a_N$.The next line contains the $K$ indices $x_1,\dots,x_K$.
+
+The next line contains the $K$ indices $x_1,\dots,x_K$.
+
+OUTPUT FORMAT (print output to the terminal / stdout):Output the minimum possible total ugliness.SAMPLE INPUT:3 0
+1 100 10SAMPLE OUTPUT:110Bessie can swap the second and third tiles so that $a=[1,10,100]$, achieving
+total ugliness $\max(1,10)+\max(10,100)=110$. Alternatively, she could swap the
+first and second tiles so that $a=[100,1,10]$, also achieving  total ugliness
+$\max(100,1)+\max(1,10)=110$.SAMPLE INPUT:3 1
+1 100 10
+3SAMPLE OUTPUT:110Bessie could swap the first and second tiles so that $a=[100,1,10]$, achieving 
+total ugliness $\max(100,1)+\max(1,10)=110$.SAMPLE INPUT:3 1
+1 100 10
+2SAMPLE OUTPUT:200The initial total ugliness of the tiles is $\max(1,100)+\max(100,10)=200$.
+Bessie is only allowed to swap the first and third tiles, which does not allow
+her to reduce the total ugliness.SAMPLE INPUT:4 2
+1 3 2 4
+2 3SAMPLE OUTPUT:9SCORING:Input 5: $K=0$Inputs 6-7: $K=1$Inputs 8-12: $N\le 50$Inputs 13-24: No additional constraintsProblem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:3 0
+1 100 10SAMPLE OUTPUT:110Bessie can swap the second and third tiles so that $a=[1,10,100]$, achieving
+total ugliness $\max(1,10)+\max(10,100)=110$. Alternatively, she could swap the
+first and second tiles so that $a=[100,1,10]$, also achieving  total ugliness
+$\max(100,1)+\max(1,10)=110$.SAMPLE INPUT:3 1
+1 100 10
+3SAMPLE OUTPUT:110Bessie could swap the first and second tiles so that $a=[100,1,10]$, achieving 
+total ugliness $\max(100,1)+\max(1,10)=110$.SAMPLE INPUT:3 1
+1 100 10
+2SAMPLE OUTPUT:200The initial total ugliness of the tiles is $\max(1,100)+\max(100,10)=200$.
+Bessie is only allowed to swap the first and third tiles, which does not allow
+her to reduce the total ugliness.SAMPLE INPUT:4 2
+1 3 2 4
+2 3SAMPLE OUTPUT:9SCORING:Input 5: $K=0$Inputs 6-7: $K=1$Inputs 8-12: $N\le 50$Inputs 13-24: No additional constraintsProblem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+3 0
+1 100 10
+
+3 1
+1 100 10
+3
+
+3 1
+1 100 10
+2
+
+4 2
+1 3 2 4
+2 3
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+110
+
+Bessie can swap the second and third tiles so that $a=[1,10,100]$, achieving
+total ugliness $\max(1,10)+\max(10,100)=110$. Alternatively, she could swap the
+first and second tiles so that $a=[100,1,10]$, also achieving  total ugliness
+$\max(100,1)+\max(1,10)=110$.SAMPLE INPUT:3 1
+1 100 10
+3SAMPLE OUTPUT:110Bessie could swap the first and second tiles so that $a=[100,1,10]$, achieving 
+total ugliness $\max(100,1)+\max(1,10)=110$.SAMPLE INPUT:3 1
+1 100 10
+2SAMPLE OUTPUT:200The initial total ugliness of the tiles is $\max(1,100)+\max(100,10)=200$.
+Bessie is only allowed to swap the first and third tiles, which does not allow
+her to reduce the total ugliness.SAMPLE INPUT:4 2
+1 3 2 4
+2 3SAMPLE OUTPUT:9SCORING:Input 5: $K=0$Inputs 6-7: $K=1$Inputs 8-12: $N\le 50$Inputs 13-24: No additional constraintsProblem credits: Benjamin Qi
+
+SAMPLE INPUT:3 1
+1 100 10
+3SAMPLE OUTPUT:110Bessie could swap the first and second tiles so that $a=[100,1,10]$, achieving 
+total ugliness $\max(100,1)+\max(1,10)=110$.SAMPLE INPUT:3 1
+1 100 10
+2SAMPLE OUTPUT:200The initial total ugliness of the tiles is $\max(1,100)+\max(100,10)=200$.
+Bessie is only allowed to swap the first and third tiles, which does not allow
+her to reduce the total ugliness.SAMPLE INPUT:4 2
+1 3 2 4
+2 3SAMPLE OUTPUT:9SCORING:Input 5: $K=0$Inputs 6-7: $K=1$Inputs 8-12: $N\le 50$Inputs 13-24: No additional constraintsProblem credits: Benjamin Qi
+
+110
+
+Bessie could swap the first and second tiles so that $a=[100,1,10]$, achieving 
+total ugliness $\max(100,1)+\max(1,10)=110$.SAMPLE INPUT:3 1
+1 100 10
+2SAMPLE OUTPUT:200The initial total ugliness of the tiles is $\max(1,100)+\max(100,10)=200$.
+Bessie is only allowed to swap the first and third tiles, which does not allow
+her to reduce the total ugliness.SAMPLE INPUT:4 2
+1 3 2 4
+2 3SAMPLE OUTPUT:9SCORING:Input 5: $K=0$Inputs 6-7: $K=1$Inputs 8-12: $N\le 50$Inputs 13-24: No additional constraintsProblem credits: Benjamin Qi
+
+SAMPLE INPUT:3 1
+1 100 10
+2SAMPLE OUTPUT:200The initial total ugliness of the tiles is $\max(1,100)+\max(100,10)=200$.
+Bessie is only allowed to swap the first and third tiles, which does not allow
+her to reduce the total ugliness.SAMPLE INPUT:4 2
+1 3 2 4
+2 3SAMPLE OUTPUT:9SCORING:Input 5: $K=0$Inputs 6-7: $K=1$Inputs 8-12: $N\le 50$Inputs 13-24: No additional constraintsProblem credits: Benjamin Qi
+
+200
+
+The initial total ugliness of the tiles is $\max(1,100)+\max(100,10)=200$.
+Bessie is only allowed to swap the first and third tiles, which does not allow
+her to reduce the total ugliness.SAMPLE INPUT:4 2
+1 3 2 4
+2 3SAMPLE OUTPUT:9SCORING:Input 5: $K=0$Inputs 6-7: $K=1$Inputs 8-12: $N\le 50$Inputs 13-24: No additional constraintsProblem credits: Benjamin Qi
+
+SAMPLE INPUT:4 2
+1 3 2 4
+2 3SAMPLE OUTPUT:9SCORING:Input 5: $K=0$Inputs 6-7: $K=1$Inputs 8-12: $N\le 50$Inputs 13-24: No additional constraintsProblem credits: Benjamin Qi
+
+9
+
+SCORING:Input 5: $K=0$Inputs 6-7: $K=1$Inputs 8-12: $N\le 50$Inputs 13-24: No additional constraintsProblem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1405
+
+\section*{Source}
+USACO FEB24 Contest, Platinum Division, Problem ID: 1405
+
+\end{document}

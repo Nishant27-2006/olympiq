@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal, Benjamin Qi)
+<p>At any point in the drawing process, Bessie&apos;s drawing will always be one large
+triangle whose interior is then divided into many smaller triangles by the
+segments inside.
+<p>To see this, first note that it is true after drawing the first three points,
+because at that point we simply have a triangle with nothing inside. Then, for
+each additional point that we draw, it either falls inside or outside of our
+current triangle.
+<p>If it falls inside, then it must fall inside one of the interior triangles,
+which means that Bessie will draw segments from the new point to the three
+vertexes of that interior triangle, replacing it with three even smaller
+triangles. Note that this automatically satisfies the requirement that Bessie
+draw exactly three new segments each time.
+<p>If it falls outside, then Bessie could only connect the new point to the three
+vertexes of the large triangle, so in order to satisfy the requirement, Bessie
+must draw connecting segments to all of the vertexes. This will have the effect
+of creating a new large triangle, composed of the previous large triangle as
+well as two new interior triangles.
+<p>Therefore, in order to satisfy the requirement, we need it to be true that
+whenever we draw a point outside our current large triangle, this point can be
+connected to all the vertexes of our current large triangle.
+<p>We will thus compute the number of permutations via DP.
+<p><strong>Method 1:</strong> <span class='math'>$\mathcal{O}(N^5)$</span>
+<p>If we look at the drawing process in the forward direction, all we need to keep
+track of is the current large triangle and the number of points we&apos;ve drawn so
+far. When adding a new point to the permutation, either it is contained within
+the current large triangle and the large triangle remains the same, or it is
+located outside the large triangle and all three vertices of the large triangle
+are visible from it. There are <span class='math'>$\mathcal{O}(N^4)$</span> states and each of them can
+transition to  <span class='math'>$\mathcal{O}(N)$</span> other states, so the overall time complexity is
+<span class='math'>$\mathcal{O}(N^5)$</span>. As the constant factor is quite low, this solution runs well
+below the time limit.
+<p>Ben&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using ll = long long;
+using P = pair&lt;int,int&gt;;
+using Tri = array&lt;int,3&gt;;
+
+#define f first
+#define s second
+
+const int MOD = 1e9+7;
+
+struct mi {
+ 	int v; explicit operator int() const { return v; } 
+	mi() { v = 0; }
+	mi(ll _v):v(_v%MOD) { v += (v&lt;0)*MOD; }
+};
+mi&amp; operator+=(mi&amp; a, mi b) { 
+	if ((a.v += b.v) &gt;= MOD) a.v -= MOD; 
+	return a; }
+mi&amp; operator-=(mi&amp; a, mi b) { 
+	if ((a.v -= b.v) &lt; 0) a.v += MOD; 
+	return a; }
+mi operator+(mi a, mi b) { return a += b; }
+mi operator-(mi a, mi b) { return a -= b; }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+mi&amp; operator*=(mi&amp; a, mi b) { return a = a*b; }
+
+vector&lt;mi&gt; dp[100][100][100];
+int N;
+vector&lt;P&gt; points;
+ 
+P&amp; operator-=(P&amp; a, const P&amp; b) {
+	a.f -= b.f, a.s -= b.s;
+	return a;
+}
+int cross(P a, P b, P c) {
+	b -= a; c -= a;
+	return b.f*c.s-b.s*c.f;
+}
+ 
+int area(Tri a) {
+	return abs(cross(points[a[0]],points[a[1]],points[a[2]]));
+}
+ 
+bool inside(Tri a, int b) {
+	int sum = 0;
+	for (int i = 0; i &lt; 3; ++i) {
+		swap(a[i],b);
+		sum += area(a);
+		swap(a[i],b);
+	}
+	sum -= area(a); assert(sum &gt;= 0);
+	return sum == 0;
+}
+ 
+void ad(vector&lt;mi&gt;&amp; v, int ind, mi val) {
+	while (v.size() &lt;= ind) v.push_back(0);
+	v[ind] += val;
+}
+ 
+int main() {
+	cin &gt;&gt; N; points.resize(N); 
+	for (P&amp; p: points) cin &gt;&gt; p.f &gt;&gt; p.s;
+
+	vector&lt;Tri&gt; triangles;
+	for (int i = 0; i &lt; N; ++i)
+		for (int j = i+1; j &lt; N; ++j)
+			for (int k = j+1; k &lt; N; ++k)
+				triangles.push_back({i,j,k});
+	sort(begin(triangles),end(triangles),[&amp;](Tri a, Tri b) {
+		return area(a) &lt; area(b); });
+
+	mi ans = 0;
+	for (Tri&amp; t: triangles) {
+		int tot_inside = 0;
+		vector&lt;Tri&gt; nex;
+		for (int i = 0; i &lt; N; ++i) {
+			if (inside(t,i)) ++tot_inside;
+			else {
+				for (int j = 0; j &lt; 3; ++j) {
+					Tri new_t = t; new_t[j] = i;
+					sort(begin(new_t),end(new_t));
+					if (inside(new_t,t[j])) 
+						nex.push_back(new_t);
+				}
+			}
+		}
+		tot_inside -= 3;
+		assert(tot_inside &gt;= 0);
+		dp[t[0]][t[1]][t[2]].resize(1+tot_inside);
+		dp[t[0]][t[1]][t[2]][0] = 1;
+		for (int i = 0; i &lt;= tot_inside; ++i) {
+			mi v = dp[t[0]][t[1]][t[2]][i];
+			if (i &lt; tot_inside)
+				ad(dp[t[0]][t[1]][t[2]],1+i,(tot_inside-i)*v);
+			for (Tri u: nex)
+				ad(dp[u[0]][u[1]][u[2]],1+i,v);
+		}
+		if (tot_inside == N-3) 
+			ans += dp[t[0]][t[1]][t[2]][tot_inside];
+	}
+	cout &lt;&lt; (6*ans).v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><strong>Method 2:</strong> <span class='math'>$\mathcal{O}(N^4)$</span>
+<p>Our DP will actually compute the answer by looking at the drawing process in
+reverse. Our state will be the current large triangle, and we can  transition
+from one large triangle to a smaller one if the smaller triangle shares two
+vertexes with the larger one and its third vertex is contained in the larger
+one.
+<p><span class='math'>$dp_T$</span>, where <span class='math'>$T$</span> is a triangle, will be the number of valid orders in which
+Bessie draws the points <strong>outside</strong> of <span class='math'>$T$</span> given that before drawing any of
+those points, our large triangle was <span class='math'>$T$</span>.
+<p>One important note is that in order for there to be any possible order at all,
+there must be a triangle containing all <span class='math'>$N$</span> of our points. Let this triangle be
+<span class='math'>$T_{\text{everything}}$</span> (if it doesn&apos;t exist, the answer is <span class='math'>$0$</span>). We then start
+with <span class='math'>$dp_{T_{\text{everything}}} = 1$</span>.
+<p>We now need to transition. Let&apos;s say that we&apos;re trying to compute <span class='math'>$dp_T$</span> for
+some triangle <span class='math'>$T$</span>. As described previously, we can transition from all larger
+triangles <span class='math'>$T&apos;$</span> such that <span class='math'>$T$</span> and <span class='math'>$T&apos;$</span> share two vertexes and the third vertex of
+<span class='math'>$T$</span> is inside <span class='math'>$T&apos;$</span>. Then, <span class='math'>$dp_{T&apos;}$</span> counts the number of orders that Bessie can
+draw the points outside of <span class='math'>$T&apos;$</span>. In order to compute <span class='math'>$dp_T$</span>, we must also
+account for the points outside of <span class='math'>$T$</span> but inside <span class='math'>$T&apos;$</span>.
+<p>Define <span class='math'>$P(a,b)=\frac{a!}{(a-b)!}$</span> to be the number of permutations of <span class='math'>$b$</span>
+elements that we choose from a pool of <span class='math'>$a$</span> elements.
+<p>Let there be <span class='math'>$x$</span> points outside <span class='math'>$T$</span> and <span class='math'>$y$</span> points outside <span class='math'>$T&apos;$</span>, so that there
+are <span class='math'>$x - y - 1$</span> points outside <span class='math'>$T$</span> but inside <span class='math'>$T&apos;$</span> (because the third vertex of
+<span class='math'>$T&apos;$</span>, which is outside of <span class='math'>$T$</span>, is neither inside nor outside of <span class='math'>$T&apos;$</span>). This
+third vertex of <span class='math'>$T&apos;$</span> must be drawn before all <span class='math'>$x$</span> of the points outside <span class='math'>$T$</span>,
+because otherwise we would have intermediate large triangles due to points
+outside of <span class='math'>$T$</span> being drawn while <span class='math'>$T$</span> is still the large triangle. After the
+third vertex is drawn and <span class='math'>$T&apos;$</span> is completed, the <span class='math'>$x - y - 1$</span> points between <span class='math'>$T$</span>
+and <span class='math'>$T&apos;$</span> can be drawn whenever we want because they are inside <span class='math'>$T&apos;$</span> and thus
+drawing them is always valid. Therefore, to transition, we need to count the
+number of ways to mix these <span class='math'>$x - y - 1$</span> &quot;in between&quot; points with the <span class='math'>$y$</span> points
+that are outside of <span class='math'>$T&apos;$</span>. This is just
+<span class='math'>$P(x - y - 1 + y,x - y - 1) = P(x - 1,x - y - 1)$</span>, and so our transition becomes
+<p><div class='math'>$$dp_T = dp_T + P(x-1,x-y-1) dp_{T&apos;}.$$</div>
+<p>To compute the final answer, we iterate over which triangle is used as the first
+three points that Bessie draws. If this triangle is <span class='math'>$T$</span>, and there are <span class='math'>$x$</span>
+points outside of <span class='math'>$T$</span> as before, then Bessie first draws the three vertexes of
+<span class='math'>$T$</span> (there are <span class='math'>$3! = 6$</span> ways to do this), then draws the points inside of <span class='math'>$T$</span> as
+well as the points outside of <span class='math'>$T$</span>. The ways to draw the points outside of <span class='math'>$T$</span>
+are counted by <span class='math'>$dp_T$</span>, so we simply need to mix in the points inside <span class='math'>$T$</span>. These
+can be mixed in however we want as <span class='math'>$T$</span> is already drawn, so the number of ways
+to mix them in is simply <span class='math'>$P(N - 3, N - 3 - x)$</span>.
+Therefore, our final answer is
+<p><div class='math'>$$\sum_{T\text{ is a triangle}} 6 \cdot P(N - 3, N - 3 - x) dp_T.$$</div>
+<p>For the runtime, note that we have <span class='math'>$\mathcal O(N^3)$</span> triangles, and for each
+triangle we only consider triangles that share two vertexes, of which there are
+<span class='math'>$\mathcal O(N)$</span>, so the overall runtime is <span class='math'>$\mathcal O(N^4)$</span>. 
+<p>Danny&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class Permutation {
+    public static final long MOD = 1000000007;
+    static int n;
+    static int[] xs;
+    static int[] ys;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        n = Integer.parseInt(in.readLine());
+        xs = new int[n];
+        ys = new int[n];
+        for (int a = 0; a &lt; n; a++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            xs[a] = Integer.parseInt(tokenizer.nextToken());
+            ys[a] = Integer.parseInt(tokenizer.nextToken());
+        }
+        List&lt;Triangle&gt; triangles = new ArrayList&lt;&gt;();
+        int[][][] inside = new int[n][n][n];
+        for (int a = 0; a &lt; n; a++) {
+            for (int b = a + 1; b &lt; n; b++) {
+                for (int c = b + 1; c &lt; n; c++) {
+                    triangles.add(new Triangle(a, b, c));
+                    for (int p = 0; p &lt; n; p++) {
+                        if (inside(a, b, c, p)) {
+                            inside[a][b][c]++;
+                        }
+                    }
+                }
+            }
+        }
+        triangles.sort(Comparator.comparingInt(triangle -&gt; -area2(triangle.a, triangle.b, triangle.c)));
+        Triangle wholeTriangle = triangles.get(0);
+        if (inside[wholeTriangle.a][wholeTriangle.b][wholeTriangle.c] == n) {
+            long[][] choose = new long[n + 1][n + 1];
+            long[] factorial = new long[n + 1];
+            long[][] permutations = new long[n + 1][n + 1];
+            for (int a = 0; a &lt;= n; a++) {
+                choose[a][0] = 1;
+                if (a == 0) {
+                    factorial[a] = 1;
+                } else {
+                    factorial[a] = (((long) a) * factorial[a - 1]) % MOD;
+                }
+                for (int b = 1; b &lt;= a; b++) {
+                    choose[a][b] = (choose[a - 1][b - 1] + choose[a - 1][b]) % MOD;
+                }
+                for (int b = 0; b &lt;= a; b++) {
+                    permutations[a][b] = (choose[a][b] * factorial[b]) % MOD;
+                }
+            }
+            long[][][] dp = new long[n][n][n];
+            long answer = 0;
+            dp[wholeTriangle.a][wholeTriangle.b][wholeTriangle.c] = 1;
+            for (Triangle triangle : triangles) {
+                int a = triangle.a;
+                int b = triangle.b;
+                int c = triangle.c;
+                answer += permutations[n - 3][inside[a][b][c] - 3] * dp[a][b][c];
+                answer %= MOD;
+                for (int p = 0; p &lt; n; p++) {
+                    if (p != a &amp;&amp; p != b &amp;&amp; p != c &amp;&amp; inside(a, b, c, p)) {
+                        for (int j = 0; j &lt; 3; j++) {
+                            int[] newPoints = {a, b, c};
+                            newPoints[j] = p;
+                            Arrays.sort(newPoints);
+                            int d = newPoints[0];
+                            int e = newPoints[1];
+                            int f = newPoints[2];
+                            dp[d][e][f] += permutations[n - inside[d][e][f] - 1][inside[a][b][c] - inside[d][e][f] - 1] * dp[a][b][c];
+                            dp[d][e][f] %= MOD;
+                        }
+                    }
+                }
+            }
+            answer *= 6L;
+            answer %= MOD;
+            System.out.println(answer);
+        } else {
+            System.out.println(0);
+        }
+    }
+ 
+    static int area2(int a, int b, int c) {
+        return Math.abs((xs[a] * ys[b]) + (xs[b] * ys[c]) + (xs[c] * ys[a]) - (xs[a] * ys[c]) - (xs[c] * ys[b]) - (xs[b] * ys[a]));
+    }
+ 
+    static boolean inside(int a, int b, int c, int p) {
+        return area2(a, b, c) == area2(a, b, p) + area2(b, c, p) + area2(c, a, p);
+    }
+ 
+    static class Triangle {
+        final int a;
+        final int b;
+        final int c;
+ 
+        Triangle(int a, int b, int c) {
+            this.a = a;
+            this.b = b;
+            this.c = c;
+        }
+    }
+}
+</pre>
+<p></body></html>

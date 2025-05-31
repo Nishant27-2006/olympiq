@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Suhas Nagar)
+<p>Claim 1: Bessie&apos;s path will consist of up to three segments:  some walk along
+the X-axis, some walk from a point on the X-axis to a point on the Y-axis and
+some walk along the Y-axis. Any alternative path can be shown to be transformed
+into an equal or shorter distance path via the triangle inequality. This also
+means that Bessie&apos;s path will always be of the form <span class='math'>$a+\sqrt{b}$</span> which means
+that we can easily compute 
+<span class='math'>$\lfloor a+\sqrt{b} \rfloor = a+ \lfloor \sqrt{b} \rfloor$</span>.
+<p>Let a photo op from <span class='math'>$x$</span> to <span class='math'>$y$</span> be denoted by <span class='math'>$x - y$</span>. We notice that two lines
+<span class='math'>$x_1 - y_1$</span> and <span class='math'>$x_2 - y_2$</span> cross where <span class='math'>$x_1 &lt; x_2$</span> and <span class='math'>$y_2 &lt; y_1$</span>. If this is
+the case, it is impossible for Bessie to cross from <span class='math'>$x$</span> to <span class='math'>$y$</span> where
+<span class='math'>$x \leq x_2$</span> and <span class='math'>$y \geq y_2$</span> or <span class='math'>$x \geq x_1$</span> and <span class='math'>$y \leq y_1$</span>  as she will
+always intersect one of these lines. This leads us to the observation that the
+photo ops segment the XY-plane into &quot;good&quot; regions and &quot;bad&quot; regions (indicated
+by the red in the image below) where Bessie can only cross within a &quot;good&quot;
+region where a region can be defined by its endpoints <span class='math'>$x_1,y_1,x_2,y_2$</span> where 
+<span class='math'>$x_1 &lt; x_2$</span> and <span class='math'>$y_1 &lt; y_2$</span>.
+<p><figure><img src='fig1_photo_op_region_gold_jan25.png' width=50%/><figcaption></figcaption></figure>
+<p>Suppose that we know the list of &quot;good&quot; regions at some time <span class='math'>$i$</span>. To compute the
+best estimate <span class='math'>$d_i$</span> for time <span class='math'>$i$</span>, we want to determine the best estimate for a
+path that goes through a given region, for every region.
+<p>We can define the function <span class='math'>$clip(p,[a,b])$</span> as follows: If <span class='math'>$p$</span> is within the
+interval <span class='math'>$[a,b]$</span>, then it maps to itself, otherwise it maps to the closest point
+in the interval.
+<p>Observation: For a specific &quot;good&quot; region <span class='math'>$x_1,y_1,x_2,y_2$</span>, there aren&apos;t many
+cases to consider for the best path. The optimal path from <span class='math'>$X$</span> to <span class='math'>$Y$</span> must pass
+through both <span class='math'>$clip(X,[x_1,x_2])$</span> and <span class='math'>$clip(Y,[y_1,y_2])$</span>. Since the region is
+&quot;good&quot;, we know that Bessie can make her path
+<span class='math'>$X \rightarrow clip(X,[x_1,x_2]) \rightarrow clip(Y,[y_1,y_2]) \rightarrow Y$</span>
+without crossing any lines.
+<p><div class='prob-section'><h4>Subtask 2:</h4>
+The important part of the previous observation is that the only &quot;important&quot;
+points to consider are endpoints of the photo ops, <span class='math'>$X$</span>, and <span class='math'>$Y$</span>. We can utilize
+this simplification to solve the second subtask. For every important <span class='math'>$x$</span>, we can 
+maintain the smallest and largest y-coordinate it can directly reach 
+(meaning y-coordinates included in the âgoodâ regions to the left and right of <span class='math'>$x$</span>). 
+We iterate over all the lines in the time order and record how the lines bound the 
+reachable y-coordinates.
+<p>We can take minimum across all <span class='math'>$x$</span> to get the best estimates for every time.
+Since we iterate over all <span class='math'>$N+1$</span> important <span class='math'>$x$</span> points, and we iterate over all
+<span class='math'>$N$</span> lines for every coordinate, so the time complexity of this solution would be
+<span class='math'>$O(N^2)$</span>. 
+</div>
+<p>Note that the following solution uses a <span class='math'>$\texttt{sqrt_safe}$</span> function to compute
+the square root of a number. Although coordinates were small enough, a square
+root function of this form ensures that precision issues don&apos;t cause correctness
+issues.
+<p>Spencer Compton&apos;s C++ Code:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+typedef long long ll;
+#define pb push_back
+ 
+int INF = (int)2e6;
+int sqrt_safe(ll a, ll b){
+    ll val = a*a+b*b;
+    ll ret = (ll)sqrt(val)-1LL;
+    while((ret+1LL)*(ret+1LL)&lt;=val){
+        ret++;
+    }
+    return ret;
+}
+int snap(int l, int r, int x){
+    if(x &lt; l){
+        return l;
+    }
+    if(x &gt; r){
+        return r;
+    }
+    return x;
+}
+int calc(int cX, pair&lt;int, int&gt; yRange, int X, int Y){
+    int cY = snap(yRange.first,yRange.second,Y);
+    int ret = abs(cX-X)+abs(cY-Y)+sqrt_safe(cX,cY);
+    return ret;
+}
+int main(){
+    int N, T;
+    int X, Y;
+    cin &gt;&gt; N &gt;&gt; T &gt;&gt; X &gt;&gt; Y;
+    vector&lt;int&gt; s, x, y;
+    for(int i = 0; i&lt;N; i++){
+        int a, b, c;
+        cin &gt;&gt; a &gt;&gt; b &gt;&gt; c;
+        s.pb(a);
+        x.pb(b);
+        y.pb(c);
+    }
+    vector&lt;int&gt; ans(T,X+Y);
+    x.pb(X);
+ 
+    for(auto curX : x){
+        int point = 0;
+        int lo = 0;
+        int hi = INF;
+        for(int t = 0; t&lt;T; t++){
+            while(point&lt;N &amp;&amp; s[point]&lt;=t){
+                int tmpX = x[point];
+                int tmpY = y[point];
+                if(tmpX &lt; curX){
+                    lo = max(lo,tmpY);
+                }
+                else if(tmpX &gt; curX){
+                    hi = min(hi,tmpY);
+                }
+                point++;
+            }
+            if(lo&lt;=hi){
+                ans[t] = min(ans[t],calc(curX,make_pair(lo,hi),X,Y));
+            }
+            else{
+                break;
+            }
+        }
+    }
+    
+    for(int t = 0; t&lt;T; t++){
+        cout &lt;&lt; ans[t] &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p><div class='prob-section'><h4>Full Solution:</h4>
+From earlier, we know that if we know all our &quot;good&quot; regions for a given time,
+the best estimate is simple to calculate for a specific region since there are
+very limited important points that Bessie can cross between in a single region.
+This motivates trying to find an efficient way to maintain our regions. Note
+that if we know the &quot;bad&quot; regions, we can easily determine the &quot;good&quot; regions to
+be the space in between &quot;bad&quot; regions, so maintaining either set of regions is
+equivalent.
+<p>Suppose that we already know our &quot;bad&quot; regions and we add a line. Since a line
+can be thought of as a &quot;bad&quot; region on its own with endpoints equivalent to the
+endpoints of the line,  we just need to perform a merge of the &quot;bad&quot; region
+formed by this line with the other regions in our set. More specifically, if
+multiple regions intersect with our new bad region, we can delete these regions,
+merge them with the line into a single region <span class='math'>$R$</span> and add it to our set.
+<p>Every &quot;bad&quot; region can only be created once or merged into another region once,
+so we will only ever have <span class='math'>$O(regions) = O(N)$</span> operations to perform. We can
+associate a pair of consecutive &quot;bad&quot; regions with an estimate for how long it
+takes to travel in the &quot;good&quot; region between. Our answer would then just be
+picking the smallest estimate.
+<p>We just need to be careful about only maintaining estimates for regions that
+still exist by removing estimates for regions that get merged and adding the
+estimates for new regions that get added (we need to also make sure we consider
+the estimates for a given region with the region to its left and right).
+<p>Since the entire XY-plane is &quot;good&quot; at the beginning, we can start off with two
+&quot;bad&quot; regions in our set, where the first one has all of its endpoints at <span class='math'>$0$</span>
+and the second one has all of its endpoints at <span class='math'>$1e9$</span> (or some equivalent large
+value that will never be crossed). This allows our initial path to always pass
+through the &quot;good&quot; region between, which is effectively unconstrained.
+<p>We can use a multiset (or some equivalent data structure) to maintain our
+estimates,  and ordered sets to maintain our &quot;bad&quot; regions, and all our updates
+can occur in <span class='math'>$O(N \log N)$</span> which gives us our full solution. 
+</div>
+<p>Benjamin Qi&apos;s C++ Code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using ll = long long;
+using pi = pair&lt;int, int&gt;;
+using ppi = pair&lt;pi, pi&gt;;
+
+ll sq(ll x) { return x * x; }
+
+int sqrt_safe(ll x) {
+    assert(x &gt;= 0);
+    int s = sqrt(x);
+    while (!(sq(s + 1) &gt; x)) ++s;
+    while (sq(s) &gt; x) --s;
+    return s;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int N, T, X, Y;
+    cin &gt;&gt; N &gt;&gt; T &gt;&gt; X &gt;&gt; Y;
+    multiset&lt;ppi&gt; bad;
+    multiset&lt;ll&gt; cands;
+
+    auto make_range = [&amp;](ll &amp;ans, pi x_range, int &amp;x) {
+        assert(x_range.first &lt;= x_range.second);
+        if (x &lt; x_range.first) {
+            ans += x_range.first - x;
+            x = x_range.first;
+        }
+        if (x &gt; x_range.second) {
+            ans += x - x_range.second;
+            x = x_range.second;
+        }
+    };
+    auto get_cost = [&amp;](pair&lt;pi, pi&gt; l, pair&lt;pi, pi&gt; r) {
+        pi x_range{l.first.second, r.first.first};
+        pi y_range{l.second.second, r.second.first};
+        int cx = X, cy = Y;
+        ll ans = 0;
+        make_range(ans, x_range, cx);
+        make_range(ans, y_range, cy);
+        ans += sqrt_safe(sq(cx) + sq(cy));
+        return ans;
+    };
+    auto add_cost = [&amp;](pair&lt;pi, pi&gt; l, pair&lt;pi, pi&gt; r, int sgn) {
+        auto c = get_cost(l, r);
+        if (sgn == 1) cands.insert(c);
+        else {
+            auto it = cands.find(c);
+            assert(it != end(cands));
+            cands.erase(it);
+        }
+    };
+    auto isect = [&amp;](ppi a, ppi b) {
+        assert(a &lt;= b);
+        if (a.first.second &lt;= b.first.first &amp;&amp;
+            a.second.second &lt;= b.second.first)
+            return 0;
+        return 1;
+    };
+    auto add = [&amp;](auto it, int sgn) {
+        bool has_prev = it != begin(bad);
+        bool has_next = next(it) != end(bad);
+        if (has_prev) add_cost(*prev(it), *it, sgn);
+        if (has_next) add_cost(*it, *next(it), sgn);
+        if (has_prev &amp;&amp; has_next) add_cost(*prev(it), *next(it), -sgn);
+    };
+    auto merge_pair = [&amp;](pi &amp;a, pi b) {
+        a.first = min(a.first, b.first);
+        a.second = max(a.second, b.second);
+    };
+    auto merge_pairs = [&amp;](ppi &amp;a, ppi b) {
+        merge_pair(a.first, b.first);
+        merge_pair(a.second, b.second);
+    };
+
+    auto ins_line = [&amp;](int x, int y) {
+        ppi p{{x, x}, {y, y}};
+        while (true) {
+            auto it = bad.lower_bound(p);
+            if (it != end(bad) &amp;&amp; isect(p, *it)) {
+                add(it, -1);
+                merge_pairs(p, *it);
+                bad.erase(it);
+                continue;
+            }
+            if (it != begin(bad) &amp;&amp; isect(*prev(it), p)) {
+                auto IT = prev(it);
+                add(IT, -1);
+                merge_pairs(p, *IT);
+                bad.erase(IT);
+                continue;
+            }
+            break;
+        }
+        auto it = bad.insert(p);
+        add(it, 1);
+    };
+    for (int x : {0, (int)1e9}) ins_line(x, x);
+    vector&lt;vector&lt;pi&gt;&gt; upds(T);
+    for (int i = 0; i &lt; N; i++) {
+        int s, x, y;
+        cin &gt;&gt; s &gt;&gt; x &gt;&gt; y;
+        upds.at(s).push_back({x, y});
+    }
+    for (int i = 0; i &lt; T; i++) {
+        for (auto [x, y] : upds.at(i)) ins_line(x, y);
+        cout &lt;&lt; *begin(cands) &lt;&lt; &apos;\n&apos;;
+    }
+}
+</pre>
+<p></body></html>

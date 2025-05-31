@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi, Richard Qi)
+<p>Call the tiles which are stuck in place &quot;fixed values&quot;, and call all other
+values &quot;unfixed values&quot;.  First, append large fixed values (say, <span class='math'>$10^6$</span>) to
+either end of the array, so that every unfixed value is between two fixed
+values. At the end, we then subtract <span class='math'>$2 \cdot 10^6$</span> from the answer.
+<p>Define a range to be the space between two consecutive fixed tiles <span class='math'>$a_l$</span> and
+<span class='math'>$a_r$</span>.
+<p>Instead of the original scenario of a sequence of tiles, we can imagine that we
+have <span class='math'>$K+1$</span> &quot;ranges&quot;, where the <span class='math'>$i$</span>th range consists of two values
+<span class='math'>$m_i = \min(a_l, a_r), M_i = \max(a_l, a_r)$</span>, and some size <span class='math'>$len_i$</span>, satisfying
+<span class='math'>$\sum_{i=1}^{K+1} len_i = N-K$</span>. Our job is to allocate <span class='math'>$N-K$</span> values to the <span class='math'>$K+1$</span>
+ranges, where the <span class='math'>$i$</span>th range gets a sequence of values
+<span class='math'>$b_{i, 1}, b_{i, 2}, \dots, b_{i, len_i}$</span>, such that the value we want to
+minimize is <span class='math'>$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \max(b_{i, j}, b_{i, j+1})$</span>
+where we also define <span class='math'>$b_{i, 0} = m_i$</span>, <span class='math'>$b_{i, len_i+1} = M_i$</span> as fixed values.
+<p>Claim: For a range <span class='math'>$i$</span>, it is optimal for the values to be sorted such that
+<span class='math'>$b_{i, j} \le b_{i, j+1}$</span> for <span class='math'>$j \in [1, len_i-1]$</span>. 
+<p>Proof: This holds from the <span class='math'>$0-1$</span> principle. If all numbers are <span class='math'>$0$</span> or <span class='math'>$1$</span>, then
+clearly it is optimal for the values to be sorted in the above manner. So, it is
+optimal to sort even when the numbers are not <span class='math'>$0$</span> or <span class='math'>$1$</span>. 
+<p>More rigorously, the objective function we want to minimize can be written as
+<span class='math'>$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \sum_{v=0}^{\infty} \max(f_v(b_{i, j}), f_v(b_{i, j+1})) = \sum_{v=0}^{\infty} \sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \max(f_v(b_{i, j}), f_v(b_{i, j+1}))$</span>.
+where <span class='math'>$f_v(x) = 1$</span> if <span class='math'>$x &gt; v$</span>, and otherwise <span class='math'>$f_v(x) = 0$</span>. Now, for each value
+of <span class='math'>$v$</span>, the inner summation is minimized when the values are sorted. So, it is
+optimal to sort the values in increasing order.
+<p>So, for the <span class='math'>$K = 0$</span> case, there is only one range, and we simply sort the values
+to compute <span class='math'>$\sum_{j=0}^{len_1} \max(b_{1, j}, b_{1, j+1})$</span>.
+<p>For <span class='math'>$N \le 50$</span>, we can do a
+<span class='math'>$O(\prod_{i=1}^{K+1} len_i) \le O((\frac{N}{K+1})^{K+1})$</span> state DP. For each of
+the unfixed values in increasing value order, we decide which range to put it
+in, and place the value in the first position which is unfilled in the range.
+The DP state is the number of elements filled for each range so far
+<span class='math'>$(placed_1, placed_2, \dots, placed_{K+1})$</span>, and the value of the state is the
+sum over all <span class='math'>$i$</span> of <span class='math'>$\sum_{j=0}^{placed_i-1} \max(b_{i, j}, b_{i, j+1})$</span> if
+<span class='math'>$placed_i &lt; len_i$</span>, and <span class='math'>$\sum_{j=0}^{len_i} \max(b_{i, j}, b_{i, j+1})$</span> if
+<span class='math'>$placed_i = len_i$</span>. 
+<p>Richard&apos;s Code for <span class='math'>$N \le 50$</span>:
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define sz(x) int((x).size())
+ 
+int main() {
+	cin.tie(0)-&gt;sync_with_stdio(0);
+	int N, K;
+	cin &gt;&gt; N &gt;&gt; K;
+	multiset&lt;int&gt; multi_vals;
+	vector&lt;int&gt; inp_a;
+	for (int i = 1; i &lt;= N; i++) {
+		int a;
+		cin &gt;&gt; a;
+		multi_vals.insert(a);
+		inp_a.push_back(a);
+	}
+ 
+	vector&lt;pair&lt;int, int&gt;&gt; xys;
+	for (int i = 1; i &lt;= K; i++) {
+		int x, y;
+		cin &gt;&gt; x;
+		y = inp_a[x - 1];
+		xys.push_back(make_pair(x, y));
+		multi_vals.erase(multi_vals.find(y));
+	}
+	xys.push_back(make_pair(0, 1000000));
+	xys.push_back(make_pair(N + 1, 1000000));
+	sort(begin(xys), end(xys));
+ 
+	vector&lt;int&gt; vals;
+	for (auto u : multi_vals) vals.push_back(u);
+ 
+	// xys and vals store the input
+ 
+	vector&lt;pair&lt;pair&lt;int, int&gt;, int&gt;&gt; rangs; //ranges: ((min value, max value), size)
+	
+	int addon_zerosz = 0;
+	for (int i = 0; i + 1 &lt; sz(xys); i++) {
+		int rang_size = xys[i + 1].first - xys[i].first - 1;
+		if (rang_size == 0) {
+			addon_zerosz += max(xys[i + 1].second, xys[i].second);
+		} else {
+			pair&lt;int, int&gt; rang_vals = make_pair(xys[i].second, xys[i + 1].second);
+			if (rang_vals.first &gt; rang_vals.second) swap(rang_vals.first, rang_vals.second);
+			rangs.push_back(make_pair(rang_vals, rang_size));
+		}
+	}
+ 
+	map&lt;vector&lt;int&gt;, int&gt; dp;
+	dp[vector&lt;int&gt;(sz(rangs), 0)] = 0;
+ 
+	for(auto v: vals){ //for each value in increasing order
+		map&lt;vector&lt;int&gt;, int&gt; ndp;
+		for(const auto&amp; u: dp){
+			vector&lt;int&gt; st = u.first; //current # of placed values in each range
+			for(int i = 0; i &lt; sz(rangs); i++){ //place the next value in range i
+				if(st[i]+1 &lt;= rangs[i].second){
+					vector&lt;int&gt; new_st = st;
+					int new_val = u.second;
+					new_st[i]++;
+					if(st[i] == 0){
+						new_val+=max(v, rangs[i].first.first)-v;
+					}
+					if(st[i] == rangs[i].second-1){
+						new_val+=max(v, rangs[i].first.second)-rangs[i].first.second;
+					}
+ 
+					if(!ndp.count(new_st) || ndp[new_st] &gt;= new_val){
+ 						ndp[new_st] = new_val;
+					}
+				}
+			}
+		}
+		swap(dp, ndp);
+	}
+ 
+	assert(sz(dp) == 1);
+	int ans = dp.begin()-&gt;second;
+ 
+	//add in fixed values
+	for (auto u : vals) { ans += u; }
+	for (auto u : rangs) { ans += u.first.second; }
+	ans += addon_zerosz;
+	ans -= 2 * 1000000;
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Now, using the sorted property, notice that in the expression
+<span class='math'>$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \max(b_{i, j}, b_{i, j+1})$</span>, we almost
+always have <span class='math'>$\max(b_{i, j}, b_{i, j+1}) = b_{i, j+1}$</span>. The only <span class='math'>$j$</span> where this
+might not be the case are <span class='math'>$j = 0, len_i$</span>.  However, we know the value of
+<span class='math'>$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} b_{i, j+1}$</span> is just the sum of all
+non-fixed values plus <span class='math'>$\sum_{i=1}^{K+1} M_i$</span>. 
+<p>So, it suffices to minimize
+<span class='math'>$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \max(b_{i, j}, b_{i, j+1}) - b_{i, j+1}$</span>
+instead. From the above observation, we know that
+<span class='math'>$\sum_{i=1}^{K+1} \sum_{j=0}^{len_i} \max(b_{i, j}, b_{i, j+1}) - b_{i, j+1} = \sum_{i=1}^{K+1} \max(b_{i, 0}, b_{i, 1}) - b_{i, 1} + \max(b_{i, len_i}, b_{i, len_i+1})-b_{i, len_i + 1} = \sum_{i=1}^{K+1} \max(m_i, b_{i, 1}) - b_{i, 1} + \max(b_{i, len_i}, M_i)-M_i$</span>
+<p>For the <span class='math'>$K = 1$</span> subtask, we have <span class='math'>$2$</span> ranges. Notice that <span class='math'>$M_1 = M_2 = +10^6,$</span> so
+that for <span class='math'>$i = 1, 2$</span>, we have
+<span class='math'>$\max(b_{i, len_i}, b_{i, len_i+1})-b_{i, len_i + 1} = M_i-M_i = 0$</span>. Also, for
+<span class='math'>$K = 1$</span>, we have both <span class='math'>$m_1 = m_2 = m$</span> as the only fixed value. So, we want to
+minimize <span class='math'>$\sum_{i=1}^{2} \max(m, b_{i, 1}) - b_{i, 1}$</span>. Let the unfixed values
+be <span class='math'>$c_1, c_2, \dots, c_{N-1}$</span>, in increasing value order. One of the values
+<span class='math'>$b_{i, 1}$</span> is forced to be the value <span class='math'>$c_1$</span>, and because
+<span class='math'>$\max(m, b_{i, 1}) - b_{i, 1}$</span> is a decreasing function in <span class='math'>$b_{i, 1}$</span>, it
+suffices to maximize the other <span class='math'>$b_{i, 1}$</span>. It is easy to prove that the maximum
+such value is <span class='math'>$c_{\max(len_1, len_2)+1}$</span>, where we allocate a prefix of the
+values <span class='math'>$c_1, c_2, \dots, c_{N-1}$</span> to be in one range, and a suffix of the values
+to be in the other range.
+<p>Now, we go for the full solution. Define the bounds of a range <span class='math'>$i$</span> to be
+<span class='math'>$[b_{i, 1}, b_{i, len_i}]$</span>. Define the sequence of non-fixed values in
+increasing order as <span class='math'>$c_1, c_2, \dots, c_{N-K}$</span>. 
+<p>Claim: There is an optimal solution where for every two ranges one of the bounds
+contains the other, or the bounds do not intersect. 
+<p>Proof: WLOG, let the two ranges be ranges <span class='math'>$1$</span> and <span class='math'>$2$</span>. Let the values currently
+allocated to range <span class='math'>$1$</span> and <span class='math'>$2$</span> be
+<span class='math'>$c_{s_1} \le c_{s_2} \le \dots \le c_{s_{len_1+len_2}}$</span> for some sequence of
+indices <span class='math'>$s_1 &lt; s_2 \dots &lt; s_{len_1+len_2}$</span>, such that <span class='math'>$len_1$</span> of the values are
+allocated to range <span class='math'>$1$</span> and <span class='math'>$len_2$</span> of the values are allocated to range <span class='math'>$2$</span>.
+<p>Now, if indices <span class='math'>$s_1, s_{len_1+len_2}$</span> both belonged to the same range, then one
+range would contain the other. Thus, we can assume WLOG that range <span class='math'>$1$</span> contains
+index <span class='math'>$s_1$</span> and range <span class='math'>$2$</span> contains index <span class='math'>$s_{len_1+len_2}$</span>. Also, if first
+<span class='math'>$len_1$</span> values corresponding to indices <span class='math'>$s_1, \dots, s_{len_1}$</span> all belong to
+range <span class='math'>$1$</span>, then the bounds do not intersect, and we are done. 
+<p>Otherwise, there is a <span class='math'>$k$</span> such that <span class='math'>$s_k$</span> belongs to range <span class='math'>$2$</span> and <span class='math'>$s_{k+1}$</span>
+belongs to range <span class='math'>$1$</span>. Now, if we can show that we can swap the values such that
+<span class='math'>$s_k$</span> belongs to range <span class='math'>$1$</span> and <span class='math'>$s_{k+1}$</span> belongs to range <span class='math'>$2$</span>, then after making
+as many of these repeated swaps as possible, we are left in the case where the
+bounds do not intersect, and we are done. This is because if we list out which
+range each <span class='math'>$s_k$</span> belongs to as a sequence of <span class='math'>$1$</span>s and <span class='math'>$2$</span>s, each swap decreases
+the number of inversions by <span class='math'>$1$</span>.
+<p>Notice that because <span class='math'>$s_1$</span> corresponds to <span class='math'>$b_{1, 1}$</span> and <span class='math'>$s_{len_1+len_2}$</span>
+corresponds to <span class='math'>$b_{2, len_2}$</span>, <span class='math'>$s_k$</span> does not correspond to <span class='math'>$b_{2, len_2}$</span>, and
+<span class='math'>$s_{k+1}$</span> does not correspond to <span class='math'>$b_{1, 1}$</span>. So, the effect of making the swap
+on <span class='math'>$s_k, s_{k+1}$</span> on <span class='math'>$b_{1, 1}, b_{1, len_1}, b_{2, 1}, b_{2, len_2}$</span> can only
+result in increasing <span class='math'>$b_{2, 1}$</span> and decreasing <span class='math'>$b_{1, len_1}$</span>. 
+<p>Recall that the quantity for range <span class='math'>$i$</span> that we want to minimize is
+<span class='math'>$\max(m_i, b_{i, 1}) - b_{i, 1} + \max(b_{i, len_i}, M_i)-M_i$</span>, which is
+decreasing when we increase <span class='math'>$b_{i, 1}$</span> and decrease <span class='math'>$b_{i, len_i}$</span>. Thus, making
+the swap does not decrease the summation, as desired.
+<p>Now, we can use dynamic programming, on consecutive subsegments of the array
+<span class='math'>$c_1, c_2, \dots, c_{N-K}$</span> and a subset of ranges (<span class='math'>$O(N^22^K)$</span> states in total).
+The state stores the  minimum sum of differences attainable if for each range in
+the subset we only allocate values within the contiguous subsequence to it.
+<p>Specifically, <span class='math'>$dp[L][R][sub]$</span> to be the minimum cost of assigning non-fixed
+values <span class='math'>$c_L, c_{L+1}, \dots, c_{R}$</span> to completely fill the ranges determined by
+the mask <span class='math'>$sub$</span>, where do not necessarily use all of the values
+<span class='math'>$c_L, \dots, c_R$</span>. 
+<p>First, if the number of required values to fill all ranges in <span class='math'>$sub$</span> is more than
+<span class='math'>$R-L+1$</span>, then we set the cost to <span class='math'>$+\infty$</span>. Now, there are three types of
+transitions: 
+<p><ol><li>
+If <span class='math'>$c_L$</span> does not belong to any range in <span class='math'>$sub$</span>, we transition to state
+<span class='math'>$dp[L+1][R][sub]$</span>. Similarly, if <span class='math'>$c_R$</span> does not belong to any range in <span class='math'>$sub$</span> we
+transition to state <span class='math'>$dp[L][R-1][sub]$</span>. 
+</li><li>
+If <span class='math'>$c_L$</span> and <span class='math'>$c_R$</span> belong to the same range <span class='math'>$i$</span>, then we know the value
+<span class='math'>$\max(m_i, b_{i, 1}) - b_{i, 1} + \max(b_{i, len_i}, M_i)-M_i$</span> for range <span class='math'>$i$</span>,
+which we add to the current cost, and then transition to
+<span class='math'>$dp[L+1][R-1][sub-2^i]$</span>.
+</li><li>
+Else, there must be some split point <span class='math'>$M$</span> such that <span class='math'>$c_L, \dots, c_M$</span> belong to
+some nonempty subset of ranges <span class='math'>$sub_1$</span>, and <span class='math'>$c_{M+1}, \dots, c_R$</span> belong to some
+nonempty subset of ranges <span class='math'>$sub_2$</span>, where <span class='math'>$sub_1 \cap sub_2 = \emptyset$</span>, and
+<span class='math'>$sub_1 \cup sub_2 = sub$</span>.  So, we transition to
+<span class='math'>$dp[L][M][sub_1] + dp[M+1][R][sub_2]$</span>. 
+<p>Clearly, we must have <span class='math'>$M \ge L+size(sub_1)-1$</span>, where
+<span class='math'>$size(sub_1) = \sum_{i \in sub_1} len_i$</span>. Using a similar swapping argument as
+the proof of the previous claim, it can be shown that it is optimal for
+<span class='math'>$M = L+size(sub_1)-1$</span> (in other words, all of the values in the range <span class='math'>$[L, M]$</span>
+exactly correspond to ranges in <span class='math'>$sub_1$</span> and no other ranges. 
+</li></ol>
+<p>The answer is <span class='math'>$dp[1][N-K][2^{\text{# of ranges}}-1]$</span>, plus the fixed quantity
+that we subtracted out earlier.
+<p>For each <span class='math'>$L, R$</span> and mask <span class='math'>$sub$</span>, we iterate over all submasks of <span class='math'>$sub$</span>, for a
+total time complexity of <span class='math'>$O(N^2 3^K)$</span>. 
+<p>Richard&apos;s Code (Full Solution):
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+#define sz(x) int((x).size())
+ 
+const int MOD = 1e9+7;
+ 
+int dp[305][305][1&lt;&lt;7];
+int size_sum[1&lt;&lt;7];
+ 
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int N, K; cin &gt;&gt; N &gt;&gt; K;
+    multiset&lt;int&gt; multi_vals;
+    vector&lt;int&gt; inp_a;
+    for(int i = 1; i &lt;= N; i++){
+        int a; cin &gt;&gt; a; multi_vals.insert(a);
+        inp_a.push_back(a);
+    }
+ 
+    vector&lt;pair&lt;int, int&gt;&gt; xys;
+    for(int i = 1; i &lt;= K; i++){
+        int x, y; cin &gt;&gt; x; y = inp_a[x-1];
+        xys.push_back(make_pair(x, y));
+        multi_vals.erase(multi_vals.find(y));
+    }
+    xys.push_back(make_pair(0, 1000000));
+    xys.push_back(make_pair(N+1, 1000000));
+    sort(begin(xys), end(xys));
+ 
+    vector&lt;int&gt; vals;
+    for(auto u: multi_vals) vals.push_back(u);
+ 
+    //xys and vals store the input
+ 
+    vector&lt;pair&lt;pair&lt;int, int&gt;, int&gt;&gt; rangs;
+    //((min, max), size)
+    int addon_zerosz = 0;
+    for(int i = 0; i+1 &lt; sz(xys); i++){
+        int rang_size = xys[i+1].first-xys[i].first-1;
+        if(rang_size == 0){
+            addon_zerosz+=max(xys[i+1].second, xys[i].second);
+        }
+        else{
+            pair&lt;int, int&gt; rang_vals = make_pair(xys[i].second, xys[i+1].second);
+            if(rang_vals.first &gt; rang_vals.second) swap(rang_vals.first, rang_vals.second);
+            rangs.push_back(make_pair(rang_vals, rang_size));
+        }
+    }
+ 
+    for(int i = 0; i &lt; (1&lt;&lt;sz(rangs)); i++){
+        for(int j = 0; j &lt; sz(rangs); j++){
+            if((i&gt;&gt;j)&amp;1){
+                size_sum[i]+=rangs[j].second;
+            }
+        }
+    }
+ 
+ 
+    for(int i = 0; i &lt; 305; i++) for(int j = 0; j &lt; 305; j++) for(int k = 0; k &lt; (1&lt;&lt;7); k++) dp[i][j][k] = MOD;
+ 
+    for(int L = sz(vals)-1; L &gt;= 0; L--){
+        for(int R = L; R &lt; sz(vals); R++){
+            for(int mask = 0; mask &lt; (1&lt;&lt;sz(rangs)); mask++){
+                //compute dp[L][R][mask]
+                int rang_size = R-L+1;
+                if(size_sum[mask] &gt; rang_size) continue;
+ 
+                if(size_sum[mask] &lt;= rang_size-1){ //not use either end
+                    dp[L][R][mask] = min(dp[L][R][mask], dp[L+1][R][mask]);
+                    dp[L][R][mask] = min(dp[L][R][mask], dp[L][R-1][mask]);
+                }
+ 
+                //split in half somewhere by some submask
+                for(int submask = mask; ; submask = ((submask-1)&amp;mask)){
+                    if(submask == 0) break;
+                    if(submask == mask) continue;
+                    dp[L][R][mask] = min(dp[L][R][mask], dp[L][L+size_sum[submask]-1][submask]+dp[L+size_sum[submask]][R][mask^submask]);
+                }
+ 
+                for(int k = 0; k &lt; sz(rangs); k++){
+                    //assign L, R to be left and right of range k
+                    if((mask&gt;&gt;k)&amp;1){
+                        if(size_sum[1&lt;&lt;k] == 1 &amp;&amp; L &lt; R) continue;
+                        
+                        //compute contribution of range k to the sum
+                        int small_val = vals[L];
+                        int big_val = vals[R];
+                        int contrib = max(big_val, rangs[k].first.second)-rangs[k].first.second + max(small_val, rangs[k].first.first)-small_val;
+                        assert(contrib &gt;= 0);
+ 
+                        if((1&lt;&lt;k) == mask){
+                            //only thing left
+                        }
+                        else{
+                            assert(L+1 &lt;= R-1);
+                            contrib+=dp[L+1][R-1][mask^(1&lt;&lt;k)];
+                        }
+                        dp[L][R][mask] = min(dp[L][R][mask], contrib);
+                    }
+                }
+                
+            }
+        }
+    }
+ 
+    int ans = dp[0][sz(vals)-1][(1&lt;&lt;sz(rangs))-1];
+ 
+    //add fixed term
+    for(auto u: vals){
+        ans+=u;
+    }
+    for(auto u: rangs){
+        ans+=u.first.second;
+    }
+    ans+=addon_zerosz;
+    ans-=2*1000000;
+    cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

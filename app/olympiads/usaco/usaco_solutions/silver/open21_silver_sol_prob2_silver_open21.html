@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Consider the list <span class='math'>$x$</span> for a single test case.
+<p><strong>Solution 1:</strong> Solve <span class='math'>$\frac{7!}{(7-N)!}$</span> distinct linear 
+systems using <a href='https://mathworld.wolfram.com/GaussianElimination.html'>Gaussian
+elimination.</a> But of course, Silver contestants are not expected to know how
+to do this.
+<p><strong>Solution 2:</strong> Add <span class='math'>$0$</span> to <span class='math'>$x$</span>, so <span class='math'>$x$</span> now contains between <span class='math'>$5$</span> and <span class='math'>$8$</span> elements
+inclusive. Suppose that <span class='math'>$x$</span> is compatible with a triple <span class='math'>$(A,B,C)$</span>. Then consider
+the following pairs of integers:
+<p><ul><li><span class='math'>$(0,A)$</span></li><li><span class='math'>$(B,A+B)$</span></li><li><span class='math'>$(C,A+C)$</span></li><li><span class='math'>$(B+C,A+B+C)$</span></li></ul>
+<p>Since the size of <span class='math'>$x$</span> is greater than <span class='math'>$4$</span>, <span class='math'>$x$</span> must contain two elements from
+the same pair, implying that there exist two elements of <span class='math'>$x$</span> such that their
+difference equals <span class='math'>$A$</span>. Similar reasoning holds for <span class='math'>$B$</span> and <span class='math'>$C$</span>.
+<p>So it suffices to iterate through all possibilities for <span class='math'>$A$</span>, <span class='math'>$B$</span>, and <span class='math'>$C$</span> and
+increment the answer whenever we come across a candidate triple that works.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class DoYouKnowYourABCsCounting {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        int t = Integer.parseInt(in.readLine());
+        for (int tc = 1; tc &lt;= t; tc++) {
+            int n = Integer.parseInt(in.readLine());
+            int[] numbers = new int[n];
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            for (int j = 0; j &lt; n; j++) {
+                numbers[j] = Integer.parseInt(tokenizer.nextToken());
+            }
+            int answer = 0;
+            Set&lt;Integer&gt; expanded = new HashSet&lt;&gt;();
+            for (int x : numbers) {
+                expanded.add(x);
+                for (int y : numbers) {
+                    if (x &lt; y) {
+                        expanded.add(y - x);
+                    }
+                }
+            }
+ 
+            for (int a : expanded) {
+                for (int b : expanded) {
+                    for (int c : expanded) {
+                        if (a &lt;= b &amp;&amp; b &lt;= c) {
+                            List&lt;Integer&gt; allNumbers = Arrays.asList(a, b, c, a + b, b + c, c + a, a + b + c);
+                            boolean works = true;
+                            for (int x : numbers) {
+                                if (!allNumbers.contains(x)) {
+                                    works = false;
+                                }
+                            }
+                            if (works) {
+                                answer++;
+                            }
+                        }
+                    }
+                }
+            }
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p><strong>Solution 3:</strong> There exist two elements of <span class='math'>$x$</span> such that their
+sum equals <span class='math'>$A+B+C$</span> (by similar reasoning as solution 2). Given the sum, we only
+need to check two candidate solutions.
+<p>My code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int N;
+vector&lt;int&gt; x;
+set&lt;multiset&lt;int&gt;&gt; sols;
+
+void check_sol(int sum, int b, int c) {
+	int a = sum-b-c;
+	assert(a &gt; 0 &amp;&amp; b &gt; 0 &amp;&amp; c &gt; 0);
+	set&lt;int&gt; s{0,a,b,c,a+b,b+c,c+a,a+b+c};
+	for (int t: x) if (!s.count(t)) return;
+	sols.insert({a,b,c});
+}
+ 
+void test(int sum) {
+	set&lt;int&gt; candidates;
+	for (int t: x) {
+		if (t &gt; sum) return;
+		if (t == 0 || t == sum) continue;
+		candidates.insert(min(t,sum-t));
+	}
+	assert(candidates.size() &gt;= 2);
+	int a = *begin(candidates);
+	int b = *next(begin(candidates));
+	check_sol(sum,a,b);
+	check_sol(sum,a,sum-b);
+}
+ 
+int solve() {
+	cin &gt;&gt; N; 
+	x.resize(N); for (int&amp; t : x) cin &gt;&gt; t;
+	x.push_back(0);
+
+	sols.clear();
+	for (int i = 0; i &lt; (int)x.size(); ++i)
+		for (int j = i+1; j &lt; (int)x.size(); ++j)
+			test(x[i]+x[j]);
+	return (int)sols.size();
+}
+ 
+int main() {
+	int T; cin &gt;&gt; T;
+	while (T--) cout &lt;&lt; solve() &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

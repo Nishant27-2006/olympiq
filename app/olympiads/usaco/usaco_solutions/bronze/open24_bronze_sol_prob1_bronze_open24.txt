@@ -1,0 +1,388 @@
+Solution ID: sol_prob1_bronze_open24
+Contest: OPEN24
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_prob1_bronze_open24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Chongtian Ma)
+
+Subtask 1:
+
+$N, Q \leq 100$
+
+It suffices to re-evaluate the statement for every query and simulate the
+process outlined in the problem statement. Since we need to check if any
+
+and
+
+s or
+
+or
+
+s remain in the statement and replace the phrase with
+its evaluation, this process will take
+
+$\mathcal{O}(N^2)$
+
+. The time complexity
+is
+
+$\mathcal{O}(QN^2)$
+
+.
+
+Subtask 2:
+
+$N, Q \leq 1000$
+
+We can evaluate the statement in
+
+$\mathcal{O}(N)$
+
+. First, we need to evaluate 
+all
+
+and
+
+phrases, and then all
+
+or
+
+phrases. When processing  phrases
+with the same operator, since the processing order does not matter, we go from
+left to right.
+
+In total, this will take
+
+$\mathcal{O}(QN)$
+
+time.
+
+C++:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+string eval_statement(vector<string> statement){
+	int n = statement.size();
+	vector<string> removed_and;
+	// evaluate and first
+	int i = 0;
+	while(i < n){
+		if(i < n - 1 && statement[i + 1] == "and"){
+			string final_eval = statement[i];
+			int j = i + 2;
+                        // obtain the farthest consecutive and
+			while(j < n && statement[j - 1] == "and"){
+				if(statement[j] == "false"){
+					final_eval = "false";
+				}
+				j += 2;
+			}
+			removed_and.push_back(final_eval);
+			i = j;
+		}
+		else{
+			removed_and.push_back(statement[i]);
+			i += 2;
+		}
+	}
+	// evaluate with ors only
+	string final_eval = "false";
+	for(string s: removed_and){
+                // recall we only need one phrase to be true
+		if(s == "true"){
+			final_eval = "true";
+		}
+	}
+	return final_eval;	
+}
+
+int main(){
+	cin.tie(0) -> sync_with_stdio(0);
+	int N, Q; cin >> N >> Q;
+	vector<string> statement(N);
+	for(string& s: statement) cin >> s;
+	while(Q--){
+		int l, r; string t; cin >> l >> r >> t;
+		--l; --r;
+		bool ok = false;
+		for(string try_replace: {"true", "false"}){
+			vector<string> new_statement;
+			for(int i = 0; i < l; i++) new_statement.push_back(statement[i]);
+			new_statement.push_back(try_replace);
+			for(int i = r + 1; i < N; i++) new_statement.push_back(statement[i]);
+			if(eval_statement(new_statement) == t){
+				ok = true;
+			}
+		}
+		cout << (ok ? 'Y' : 'N');
+	}
+}
+
+If using Python, we can use
+
+$\texttt{eval}$
+
+instead of manually evaluating the
+statement.
+
+Python (from Benjamin Qi):
+
+N, Q = map(int, input().split())
+keywords = input().split()
+ 
+def capitalize_first(w):
+	return w[:1].upper() + w[1:]
+ 
+for i in range(0, N, 2):
+	keywords[i] = capitalize_first(keywords[i])
+ 
+assert N % 2 == 1
+answers = []
+for _ in range(Q):
+	l, r, result = input().split()
+	l = int(l)
+	r = int(r)
+	result = capitalize_first(result)
+	assert l % 2 == 1 and r % 2 == 1
+	answer = False
+	for val in ["True", "False"]:
+		res = keywords[:l-1] + [val] + keywords[r:]
+		answer |= eval(" ".join(res)) == eval(result)
+	answers.append(answer)
+ 
+print("".join(map(lambda x: {False: 'N', True: 'Y'}[x], answers)))
+
+No additional constraints
+
+Let's call a maximal sequence of booleans separated by
+
+and
+
+operators a
+group. These groups are separated by
+
+or
+
+operators. For example, in the
+first sample, there are two groups, which we will surround with parentheses:
+
+(false and true) or (true)
+
+Observation 1:
+
+The statement evaluates to true if and only if at least
+one group that evaluates to true.
+
+For the original statement, note the first and last groups that evaluate to
+true. For each query,  denote the group that index
+
+$l$
+
+is in by
+
+$gl$
+
+and the
+group that index
+
+$r$
+
+is by
+
+$gr$
+
+. First, we check if the first true group is
+before
+
+$gl$
+
+or the last true group is after
+
+$gr$
+
+. If either of these hold, then
+at least one group evaluates to true, so the statement will be true regardless
+of what boolean value we replace the segment with.
+
+Otherwise, we know for all
+
+$g$
+
+where
+
+$g < gl$
+
+or
+
+$g > gr$
+
+, group
+
+$g$
+
+will
+evaluate to false, we can now focus on groups
+
+$g$
+
+such that
+
+$gl \leq g \leq gr$
+
+.
+For each
+
+$g$
+
+, note the first and last false keywords. This is because as long as
+a group contains at least one false, it evaluates to false regardless of the
+remaining keywords in the group.
+
+It is always optimal to replace the segment with the boolean value that the
+query asks for, because:
+
+If the value the statement evaluates to does not depend on the replaced
+value, it does not matter what we replace the segment with.
+
+Otherwise, the statement evaluates to the replaced value.
+
+For queries asking for "true", we have to do another check if the segment
+contains the first false keyword of
+
+$gl$
+
+and the last false keyword of
+
+$gr$
+
+. If
+it doesn't, then the statement will evaluate to false even if we replace the rest
+of the statement with "true". For queries asking for false, if we place a false,
+the statement will evaluate to false.
+
+If we store the leftmost "false" and the rightmost "false" of each group, in
+addition to the first and last group that already evaluates to "true", we can
+answer each query in constant time. Thus, the total time complexity is
+
+$\mathcal{O}(N + Q)$
+
+.
+
+C++:
+
+#include <bits/stdc++.h>
+using namespace std;
+const int INF = 1e9;
+
+int main(){
+	cin.tie(0) -> sync_with_stdio(0);
+	int n, q; cin >> n >> q;
+	vector<string> s(n);
+	for(int i = 0; i < n; i++) cin >> s[i];
+	vector<int> group(n);
+	int group_no = 0;
+	for(int i = 0; i < n; i++){
+		if(s[i] == "or"){
+			group_no++;
+		}
+		else{
+			if(i % 2 == 0){
+				group[i] = group_no;
+			}
+		}
+	}
+	vector<int> first_false(group_no + 1, INF);
+	vector<int> last_false(group_no + 1, -1);
+	for(int i = 0; i < n; i += 2){
+		int g = group[i];
+		if(s[i] == "false"){
+			if(first_false[g] == INF){
+				first_false[g] = i;
+			}
+			last_false[g] = i;
+		}
+	}
+	int total_first_true = INF, total_last_true = -1;
+	for(int i = 0; i <= group_no; i++){
+		if(first_false[i] == INF){
+			if(total_first_true == INF){
+				total_first_true = i;
+			}
+			total_last_true = i;
+		}
+	}
+	while(q--){
+		int l, r; cin >> l >> r;
+		--l; --r;
+		string t; cin >> t;
+		// we only need one true for whole statement to be true
+		int l_group = group[l], r_group = group[r];
+		if(total_first_true < l_group || total_last_true > r_group){
+			cout << (t == "true" ? 'Y' : 'N');
+			continue;
+		}
+		if(t == "true"){
+			cout << (first_false[l_group] < l || last_false[r_group] > r ? 'N' : 'Y');
+		}
+		else{
+			cout << 'Y';
+		}
+	}
+}
+
+Python (from Benjamin Qi):
+
+N, Q = map(int, input().split())
+keywords = input().split()
+assert N % 2 == 1 and len(keywords) == N
+ 
+ 
+for i in range(0, N, 2):
+    keywords[i] = keywords[i] == "true"
+ 
+lowest_r = float("inf")
+highest_l = -1
+ 
+r = 0
+while r < N:
+    l = r
+    group_result = keywords[l]
+    while r + 1 < N and keywords[r + 1] == "and":
+        r += 2
+        group_result &= keywords[r]
+    if group_result:
+        lowest_r = min(lowest_r, r)
+        highest_l = max(highest_l, l)
+    r += 2
+ 
+exists_false_left_of = [False] * N
+for i in range(2, N, 2):
+    if keywords[i - 1] == "or":
+        continue
+    exists_false_left_of[i] = exists_false_left_of[i - 2] or keywords[i - 2] == False
+ 
+exists_false_right_of = [False] * N
+for i in reversed(range(0, N - 1, 2)):
+    if keywords[i + 1] == "or":
+        continue
+    exists_false_right_of[i] = exists_false_right_of[i + 2] or keywords[i + 2] == False
+ 
+answers = []
+for _ in range(Q):
+    l, r, result = input().split()
+    l = int(l) - 1
+    r = int(r) - 1
+    result = result == "true"
+    assert l % 2 == 0 and r % 2 == 0
+    eval_result = lowest_r < l or r < highest_l
+    if not (exists_false_left_of[l] or exists_false_right_of[r]):
+        eval_result |= result
+    answers.append(result == eval_result)
+ 
+ 
+print("".join(map(lambda x: {False: "N", True: "Y"}[x], answers)))

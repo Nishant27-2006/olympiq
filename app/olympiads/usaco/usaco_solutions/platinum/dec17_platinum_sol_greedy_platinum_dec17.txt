@@ -1,0 +1,218 @@
+Solution ID: sol_greedy_platinum_dec17
+Contest: DEC17
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_greedy_platinum_dec17.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Dhruv Rohatgi)
+
+A first observation is that if some cow never receives a gift, then her rank in
+the queue (that is, the number of cows ahead of her in the queue) never
+increases. This has several consequences. First, none of the cows after her can
+receive a gift, since it's impossible for one cow to actively ``overtake"
+another. So the set of cows who never receive gifts actually forms a suffix of
+the list of cows, and our problem is to find the length of this suffix.
+
+Consider the first cow who never receives a gift. Her rank never reaches
+
+$0$
+
+. So
+after a sufficiently long time, she will attain some minimum rank
+
+$k$
+
+. By our
+previous observation, she will remain at this rank forever. It follows that no
+cow in front of her will jump behind her upon reaching the head of the queue.
+But every cow in front of her reaches the head at some point, since she is by
+choice the first cow to not reach the head. Thus all
+
+$k$
+
+cows in front of her
+have skipping number at least
+
+$N-k$
+
+. Rephrasing skipping numbers in terms of
+ranks, all
+
+$k$
+
+cows in front of her jump to ranks at most
+
+$k$
+
+. In the original
+permutation of cows, these
+
+$k$
+
+cows (and possibly some other cows) must already
+have been ahead of her, since ``overtaking" cannot happen.
+
+So for any cow who never receives a gift, there is some positive integer
+
+$k$
+
+such that there are
+
+$k$
+
+cows ahead of her with ``jumping numbers" at most
+
+$k$
+
+.
+It turns out that this condition is also sufficient for a cow to not receive a
+gift. Suppose that there is a cow who receives a gift (call her Moomoo), but who
+is preceded by
+
+$k$
+
+cows with jumping numbers at most
+
+$k$
+
+. We claim by induction
+that at every timestep, Moomoo is preceded by
+
+$k$
+
+cows with jumping numbers at
+most
+
+$k$
+
+. To see this, suppose one of these
+
+$k$
+
+cows has reached the head of the
+queue. This cow will jump to a rank at most
+
+$k$
+
+. But Moomoo's rank is at least
+
+$k$
+
+, by our inductive hypothesis. So the jumping cow will remain in front of
+Moomoo. By induction, Moomoo never reaches the head of the queue (and in
+particular, never has rank less than
+
+$k$
+
+).
+
+So now we simply need to find the first cow for whom there is some positive
+integer
+
+$k$
+
+such that there are
+
+$k$
+
+cows ahead of her with ``jumping numbers" at
+most
+
+$k$
+
+, where the jumping number of cow
+
+$i$
+
+is simply
+
+$N - c_i$
+
+. This can be
+done in
+
+$O(N \log N)$
+
+time: binary search for the first such cow. To check if a
+given cow satisfies the condition, compute for each
+
+$k$
+
+the number of cows in
+front of the given cow with number at exactly
+
+$k$
+
+, and then check for each
+
+$k$
+
+if the
+
+$k^\text{th}$
+
+partial sum is at least
+
+$k$
+
+.
+
+Below is Travis Hance's solution implementing this idea.
+
+#include <cstdio>
+#include <cassert>
+#include <ctime>
+#include <iostream>
+#include <iomanip>
+ 
+#define NMAX 2000005
+ 
+int c[NMAX];
+ 
+int num[NMAX+1];
+ 
+bool all_recv(int k, int n) {
+  for (int i = 1; i <= n; i++) {
+    num[i] = 0;
+  }
+  for (int i = 0; i < k-1; i++) {
+    num[c[i]]++;
+  }
+  int total = 0;
+  for (int i = 1; i <= n; i++) {
+    total += num[i];
+    if (total >= i) {
+      return false;
+    }
+  }
+  return true;
+}
+ 
+int main() {
+  int n;
+  scanf("%d",&n);
+  for (int i = 0; i < n; i++) {
+    int d;
+    scanf("%d", &d);
+    assert(0 <= d && d < n);
+    c[i] = n - d;
+  }
+
+  // lo <= the answer < hi
+  int lo = 1;
+  int hi = n+1;
+  while (hi > lo + 1) {
+    int mid = (lo + hi) / 2;
+    if (all_recv(mid, n)) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+ 
+  int ans = lo;
+  printf("%d\n", n - ans);
+}

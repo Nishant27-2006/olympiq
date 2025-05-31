@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Mythreya Dharani)
+<p>Let&apos;s start by defining a cow as <em>covered</em> if there is a patch feeding its
+breed within a distance of <span class='math'>$K$</span>. The problem is asking us to cover all cows with
+the minimum number of patches.
+<p>Consider each cow <span class='math'>$i$</span> from <span class='math'>$1 \dots N$</span> in that order, placing patches whenever
+necessary. First of all, if the current cow is already covered,  then we don&apos;t
+need to place another patch, and we can just move on. Otherwise, we need to
+place a new patch for this cow, so where would we place it? Consider what
+happens if we place the patch at position <span class='math'>$i + K$</span>. Not only will cow <span class='math'>$i$</span> be
+covered but any cows after it which are within <span class='math'>$K$</span> distance of that patch will
+also be covered. In fact, placing it at this location maximizes the number of
+potential cows that can be covered. 
+<p>Thus, we can just implement this strategy starting at cow <span class='math'>$1$</span>. Keep in mind that
+if there is a cow <span class='math'>$i$</span> which needs to be fed and <span class='math'>$i + K &gt; N$</span>, we can just place
+our new patch at position <span class='math'>$i$</span> since all remaining same-breed cows can feed off
+that patch. This solution runs in <span class='math'>$O(N)$</span> time since we are just doing a single
+pass over the <span class='math'>$N$</span> cows.
+<p>There is actually one edge case; what if when we try to place a patch at
+position <span class='math'>$i$</span> but there is already a patch there? In this case, we can place the
+patch at <span class='math'>$i-1$</span> instead, as it may be proven that there can&apos;t already be patches
+at both <span class='math'>$i-1$</span> and <span class='math'>$i$</span>. As <span class='math'>$i-1+K\ge N$</span>, this patch covers all cows from <span class='math'>$i$</span> to
+<span class='math'>$N$</span> of the same breed as cow <span class='math'>$i$</span>.
+<p>Mythreya Dharani&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+
+	int T;
+	cin &gt;&gt; T;
+
+	while (T--) {
+		int n;
+		int k;
+		cin &gt;&gt; n &gt;&gt; k;
+		string s;
+		cin &gt;&gt; s;
+
+		int patchG = -k - 1; // first patch location which does not cover cow 1
+		int patchH = -k - 1; // first patch location which does not cover cow 1
+
+		int cnt = 0;
+		string ans(n, &apos;.&apos;);
+
+		for (int i = 0; i &lt; n; i++) {
+			if (s[i] == &apos;G&apos; &amp;&amp; i - patchG &gt; k) {
+				// the nearest G patch we placed does not cover cow i
+				++cnt;
+				if (i + k &gt;= n) {
+					patchG = i;
+					if (ans[patchG] == &apos;H&apos;) { patchG--; }
+				} else {
+					patchG = i + k; // place the G patch k away
+				}
+				ans[patchG] = &apos;G&apos;;
+			}
+			if (s[i] == &apos;H&apos; &amp;&amp; i - patchH &gt; k) {
+				// the nearest H patch we placed does not cover cow i
+				++cnt;
+				if (i + k &gt;= n) {
+					patchH = i;
+					if (ans[patchH] == &apos;G&apos;) { patchH--; }
+				} else {
+					patchH = i + k; // place the H patch k away
+				}
+				ans[patchH] = &apos;H&apos;;
+			}
+		}
+		cout &lt;&lt; cnt &lt;&lt; endl &lt;&lt; ans &lt;&lt; endl;
+	}
+}
+</pre>
+<p>Danny Mittal&apos;s Java code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class FeedingTheCows {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        for (int t = Integer.parseInt(in.readLine()); t &gt; 0; t--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int n = Integer.parseInt(tokenizer.nextToken());
+            int k = Integer.parseInt(tokenizer.nextToken());
+            char[] cows = in.readLine().toCharArray();
+            int lastGuernseyPatch = -k - 1;
+            int lastHolsteinPatch = -k - 1;
+            char[] answer = new char[n];
+            for (int j = 0; j &lt; n; j++) {
+                answer[j] = &apos;.&apos;;
+            }
+            int amtPatches = 0;
+            for (int j = k; j &lt; n; j++) {
+                if (cows[j - k] == &apos;G&apos;) {
+                    if ((j - k) - lastGuernseyPatch &gt; k) {
+                        amtPatches++;
+                        answer[j] = &apos;G&apos;;
+                        lastGuernseyPatch = j;
+                    }
+                } else {
+                    if ((j - k) - lastHolsteinPatch &gt; k) {
+                        amtPatches++;
+                        answer[j] = &apos;H&apos;;
+                        lastHolsteinPatch = j;
+                    }
+                }
+            }
+            boolean gNeeds = false;
+            for (int j = n - 1; j &gt;= 0; j--) {
+                if (cows[j] == &apos;G&apos; &amp;&amp; j - lastGuernseyPatch &gt; k) {
+                    gNeeds = true;
+                }
+            }
+            if (gNeeds) {
+                for (int j = n - 1; j &gt;= 0; j--) {
+                    if (answer[j] == &apos;.&apos;) {
+                        amtPatches++;
+                        answer[j] = &apos;G&apos;;
+                        break;
+                    }
+                }
+            }
+            boolean hNeeds = false;
+            for (int j = n - 1; j &gt;= 0; j--) {
+                if (cows[j] == &apos;H&apos; &amp;&amp; j - lastHolsteinPatch &gt; k) {
+                    hNeeds = true;
+                }
+            }
+            if (hNeeds) {
+                for (int j = n - 1; j &gt;= 0; j--) {
+                    if (answer[j] == &apos;.&apos;) {
+                        amtPatches++;
+                        answer[j] = &apos;H&apos;;
+                        break;
+                    }
+                }
+            }
+            System.out.println(amtPatches);
+            System.out.println(answer);
+        }
+    }
+}
+</pre>
+<p>Nick Wu&apos;s Python code:
+<p><pre class='prettyprint'>
+def solve():
+    n, k = (int(x) for x in input().split())
+    patches = [&apos;.&apos;] * n
+    gCover = -1
+    hCover = -1
+    s = input()
+    for idx, ch in enumerate(s):
+        if ch == &apos;G&apos; and gCover &lt; idx:
+            if idx + k &gt;= len(patches):
+                if patches[idx] != &apos;.&apos;:
+                    patches[idx-1] = &apos;G&apos;
+                else:
+                    patches[idx] = &apos;G&apos;
+                gCover = n
+            else:
+                patches[idx+k] = &apos;G&apos;
+                gCover = idx + 2*k
+        elif ch == &apos;H&apos; and hCover &lt; idx:
+            if idx + k &gt;= len(patches):
+                if patches[idx] != &apos;.&apos;:
+                    patches[idx-1] = &apos;H&apos;
+                else:
+                    patches[idx] = &apos;H&apos;
+                hCover = idx + k
+            else:
+                patches[idx+k] = &apos;H&apos;
+                hCover = idx + 2*k
+    print(n - patches.count(&apos;.&apos;))
+    print(&quot;&quot;.join(patches))
+ 
+t = int(input())
+for _ in range(t): solve()
+</pre>
+<p></body></html>

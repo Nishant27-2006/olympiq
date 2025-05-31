@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>Let&apos;s call a node where Bessie watches Cowflix <em>active</em>.
+<p>For the <span class='math'>$N \leq 5000$</span> subtask, we can compute the answer in <span class='math'>$O(N)$</span> for each <span class='math'>$k$</span>
+via tree DP, for an overall <span class='math'>$\mathcal O(N^2)$</span> algorithm. For each node <span class='math'>$a$</span>,
+<span class='math'>$dp(x, a)$</span> will be the minimum cost to handle watching Cowflix in all the
+necessary locations in <span class='math'>$a$</span>&apos;s subtree, where:
+<ul><li> If <span class='math'>$x = 0$</span>, Bessie doesn&apos;t include node <span class='math'>$a$</span> itself in any
+subscription.</li><li> If <span class='math'>$x = 1$</span>, Bessie does include node <span class='math'>$a$</span> itself in a
+subscription.</li></ul> 
+<p>These can then be computed as follows:
+<div class='math'>$$dp(0, a) = \sum_{\text{$b$ child of $a$}} \min(dp(0, b), dp(1, b))$$</div>
+<div class='math'>$$dp(1, a) = k + 1 + \sum_{\text{$b$ child of $a$}} \min(dp(0, b), dp(1, b) - k)$$</div>
+except that if <span class='math'>$a$</span> is active, <span class='math'>$dp(0, a) = \infty$</span>, because <span class='math'>$a$</span> must be included in a subscription.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+
+public class WatchingCowflix {
+    static boolean[] active;
+    static List&lt;Integer&gt;[] adj;
+    static int[][][] dp;
+
+    static void dfs(int k, int a, int parent) {
+        dp[k][1][a] = k + 1;
+        for (int b : adj[a]) {
+            if (b != parent) {
+                dfs(k, b, a);
+                dp[k][0][a] += Math.min(dp[k][0][b], dp[k][1][b]);
+                dp[k][1][a] += Math.min(dp[k][0][b], dp[k][1][b] - k);
+            }
+        }
+        if (active[a]) {
+            dp[k][0][a] = Integer.MAX_VALUE;
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        String places = in.readLine();
+        active = new boolean[n + 1];
+        adj = new List[n + 1];
+        // choose root that is active for convenience
+        int r = -1;
+        for (int a = 1; a &lt;= n; a++) {
+            active[a] = places.charAt(a - 1) == &apos;1&apos;;
+            if (active[a]) {
+                r = a;
+            }
+            adj[a] = new ArrayList&lt;&gt;();
+        }
+        for (int j = n - 1; j &gt; 0; j--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            adj[a].add(b);
+            adj[b].add(a);
+        }
+
+        dp = new int[n + 1][2][n + 1];
+        for (int k = 1; k &lt;= n; k++) {
+            dfs(k, r, 0);
+            int answer = dp[k][1][r];
+            System.out.println(answer);
+        }
+    }
+}
+</pre>
+<p>To solve for <span class='math'>$N \leq 2 \cdot 10^5$</span>, we can optimize the <span class='math'>$\mathcal O(N^2)$</span>
+solution. Given a fixed <span class='math'>$k$</span>, notice that if any two active nodes are at distance
+at most <span class='math'>$k$</span>, then it&apos;s always beneficial to connect them into a single
+subscription, because we spend at most <span class='math'>$k - 1$</span> dollars in connecting them but
+save <span class='math'>$k$</span> for one less subscription.
+<p>This means that we could consider automatically connecting all pairs of active
+nodes at distance at most <span class='math'>$k$</span> prior to the DP. After we do this, if we consider
+each prior-connected component of active nodes to be a single node, then notice
+that we must have at most <span class='math'>$\frac {2N} k$</span> active nodes, because every remaining
+active node must be at a distance of at least <span class='math'>$k + 1$</span> from all other active
+nodes, which means that each node in the graph is at distance <span class='math'>$\leq \frac k 2$</span>
+from at most one active node, so since every active node must have at least
+<span class='math'>$\frac k 2$</span> other nodes within a distance of <span class='math'>$\frac k 2$</span> (assuming that there is
+more than one active node), the number of nodes in the graph is behind from
+below by
+<div class='math'>$$(\text{number of active nodes}) \cdot \frac k 2$$</div>
+which leads to the desired conclusion.
+<p>This means that, if we consider rooting the tree, the number of additional nodes
+that &quot;branch&quot; to different active nodes (i.e., have multiple children with
+active nodes in their subtrees) is also at most <span class='math'>$\frac {2N} k$</span>, because each
+such &quot;branching&quot; node merges at least two active nodes into a single subtree,
+which can only be done <span class='math'>$(\text{number of active nodes}) - 1$</span> times.
+<p>We can apply this by first repeatedly removing leaves that aren&apos;t active nodes,
+then compressing chains of nodes that are just paths (i. e. compress chains of
+the form <span class='math'>$a_0, a_1, \ldots, a_m$</span> where <span class='math'>$a_k$</span> is only adjacent to <span class='math'>$a_{k - 1}$</span> and
+<span class='math'>$a_{k + 1}$</span> for <span class='math'>$0 &lt; k &lt; m$</span> into a single edge of length <span class='math'>$m$</span> between <span class='math'>$a_0$</span> and
+<span class='math'>$a_m$</span>). After we do this, the only remaining nodes will be active nodes and
+nodes that &quot;branch&quot; to different active nodes. If we do this, then connect
+active nodes that are at distance at most <span class='math'>$k$</span> apart, we will have a tree of size
+<span class='math'>$O(\frac N k)$</span> on which we can compute our tree DP in <span class='math'>$O(\frac N k)$</span> time.
+<p>Therefore, we can write the following algorithm. On the initial tree, first
+repeatedly remove leaves that aren&apos;t active nodes, then compress paths.
+Following that, precompute with a DFS for each node <span class='math'>$a$</span>, the minimum <span class='math'>$k$</span> such
+that <span class='math'>$a$</span> is involved in a length <span class='math'>$\leq k$</span> path between two active nodes.
+Finally, loop through <span class='math'>$k$</span> from <span class='math'>$1$</span> to <span class='math'>$N$</span>, removing the nodes that can be
+removed, then compute the answer for that <span class='math'>$k$</span> using tree DP on the remaining
+nodes.
+<p>The precomputation is all <span class='math'>$O(N)$</span>, and the tree DPs are computed in total time
+<span class='math'>$O(\sum_{k = 1}^N \frac N k) = O(N\lg N)$</span>, yielding an <span class='math'>$O(N\lg N)$</span> solution.
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+
+public class WatchingCowflix {
+    static int n;
+    static boolean[] active;
+    static Set&lt;Integer&gt;[] children;
+
+    static boolean[] removed;
+    static int[] parent;
+    static int[] parentDist;
+    static int[] depth;
+
+    static void dfsRemoveInactiveLeaves(int a) {
+        for (int b : children[a].toArray(new Integer[0])) {
+            parent[b] = a;
+            parentDist[b] = 1;
+            depth[b] = depth[a] + 1;
+            children[b].remove(a);
+            dfsRemoveInactiveLeaves(b);
+        }
+        if (!active[a] &amp;&amp; children[a].isEmpty()) {
+            children[parent[a]].remove(a);
+            removed[a] = true;
+        }
+    }
+
+    static void compressPaths() {
+        for (int a = 1; a &lt;= n; a++) {
+            if (!removed[a] &amp;&amp; !active[a] &amp;&amp; children[a].size() == 1) {
+                int b = -1;
+                for (int c : children[a]) {
+                    b = c;
+                }
+                parent[b] = parent[a];
+                parentDist[b] += parentDist[a];
+                children[parent[a]].remove(a);
+                children[parent[a]].add(b);
+                removed[a] = true;
+            }
+        }
+    }
+
+    static int[] nearestActiveDist;
+    static int[] secondNearestActiveDist;
+    
+    static void dfsCalculateNearestActiveDists(int a) {
+        nearestActiveDist[a] = active[a] ? 0 : Integer.MAX_VALUE;
+        secondNearestActiveDist[a] = nearestActiveDist[a];
+        for (int b : children[a]) {
+            dfsCalculateNearestActiveDists(b);
+            int candidate = nearestActiveDist[b] + parentDist[b];
+            if (candidate &lt; nearestActiveDist[a]) {
+                secondNearestActiveDist[a] = nearestActiveDist[a];
+                nearestActiveDist[a] = candidate;
+            } else if (candidate &lt; secondNearestActiveDist[a]) {
+                secondNearestActiveDist[a] = candidate;
+            }
+        }
+    }
+
+    static int[] whenEdgeToParentForced;
+
+    static void dfsCalculateWhenForced(int a, int nearestActiveDistAbove) {
+        whenEdgeToParentForced[a] = nearestActiveDistAbove + nearestActiveDist[a];
+        for (int b : children[a]) {
+            int otherNearestActiveDist =
+                    nearestActiveDist[b] + parentDist[b] == nearestActiveDist[a]
+                            ? secondNearestActiveDist[a]
+                            : nearestActiveDist[a];
+            dfsCalculateWhenForced(b, Math.min(otherNearestActiveDist, nearestActiveDistAbove) + parentDist[b]);
+        }
+    }
+
+    static int[] answers;
+
+    static void computeAnswers() {
+        List&lt;Integer&gt;[] buckets = new List[n + 2];
+        for (int k = 0; k &lt;= n + 1; k++) {
+            buckets[k] = new ArrayList&lt;&gt;();
+        }
+        int[] whenNodeForced = new int[n + 1];
+        int[] amtNodesForced = new int[n + 1];
+        int[] amtEdgesForced = new int[n + 1];
+        TreeSet&lt;Integer&gt; nodes = new TreeSet&lt;&gt;((a, b) -&gt; {
+            if (depth[a] != depth[b]) {
+                return depth[b] - depth[a];
+            } else {
+                return a - b;
+            }
+        });
+
+        for (int a = 1; a &lt;= n; a++) {
+            if (!removed[a]) {
+                nodes.add(a);
+
+                if (active[a]) {
+                    whenNodeForced[a] = 0;
+                } else {
+                    whenNodeForced[a] = whenEdgeToParentForced[a];
+                }
+                int whenIrrelevant = whenEdgeToParentForced[a];
+                for (int b : children[a]) {
+                    whenIrrelevant = Math.max(whenIrrelevant, whenEdgeToParentForced[b]);
+                    whenNodeForced[a] = Math.min(whenNodeForced[a], whenEdgeToParentForced[b]);
+                }
+
+                buckets[whenIrrelevant].add(a);
+                amtNodesForced[whenNodeForced[a]]++;
+                if (depth[a] != 0) {
+                    amtNodesForced[whenEdgeToParentForced[a]] += parentDist[a] - 1;
+                    amtEdgesForced[whenEdgeToParentForced[a]] += parentDist[a];
+                }
+            }
+        }
+
+        int currNodesForced = amtNodesForced[0];
+        int currEdgesForced = 0;
+        int[][] dp = new int[2][n + 1];
+        for (int k = 1; k &lt;= n; k++) {
+            buckets[k].forEach(nodes::remove);
+
+            currNodesForced += amtNodesForced[k];
+            currEdgesForced += amtEdgesForced[k];
+            int forcedComponents = currNodesForced - currEdgesForced;
+            int answer = (k * forcedComponents) + currNodesForced;
+
+            for (int a : nodes) {
+                if (whenNodeForced[a] &lt;= k) {
+                    dp[0][a] = Integer.MAX_VALUE; // no possibility of not having node a
+                    // don&apos;t have to add (k + 1) to dp[1][a] because already accounted for
+                    // via forcedComponents and currNodesForced respectively
+                } else {
+                    dp[1][a] += k + 1;
+                }
+
+                if (whenEdgeToParentForced[a] &lt;= k) {
+                    answer += dp[1][a];
+                } else {
+                    dp[0][parent[a]] += Math.min(dp[0][a], dp[1][a]);
+                    dp[1][parent[a]] += Math.min(dp[0][a], Math.min(dp[1][a], dp[1][a] - k + (parentDist[a] - 1)));
+                }
+
+                dp[0][a] = 0;
+                dp[1][a] = 0;
+            }
+            answers[k] = answer;
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        n = Integer.parseInt(in.readLine());
+        String places = in.readLine();
+        active = new boolean[n + 1];
+        children = new Set[n + 1];
+        
+        // choose root that is active for convenience 
+        int r = -1;
+        for (int a = 1; a &lt;= n; a++) {
+            active[a] = places.charAt(a - 1) == &apos;1&apos;;
+            if (active[a]) {
+                r = a;
+            }
+            children[a] = new HashSet&lt;&gt;();
+        }
+        for (int j = n - 1; j &gt; 0; j--) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int a = Integer.parseInt(tokenizer.nextToken());
+            int b = Integer.parseInt(tokenizer.nextToken());
+            children[a].add(b);
+            children[b].add(a);
+        }
+
+        removed = new boolean[n + 1];
+        parent = new int[n + 1];
+        parentDist = new int[n + 1];
+        depth = new int[n + 1];
+        dfsRemoveInactiveLeaves(r);
+
+        compressPaths();
+
+        nearestActiveDist = new int[n + 1];
+        secondNearestActiveDist = new int[n + 1];
+        dfsCalculateNearestActiveDists(r);
+
+        whenEdgeToParentForced = new int[n + 1];
+        dfsCalculateWhenForced(r, 0);
+
+        answers = new int[n + 1];
+        computeAnswers();
+
+        StringBuilder out = new StringBuilder();
+        for (int k = 1; k &lt;= n; k++) {
+            out.append(answers[k]).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p><em>Note:</em> It was also possible to solve this problem in <span class='math'>$O(N\sqrt N)$</span> time.
+Suppose we augment the tree DP described in the <span class='math'>$N\le 5000$</span> subtask to return
+the minimum number of components  used in an optimal solution; as <span class='math'>$k$</span> increases,
+this number stays the same or goes down. Using the observation that the answers
+are concave down, it can be proven that the pseudocode below makes <span class='math'>$O(\sqrt N)$</span>
+calls to the <span class='math'>$O(N)$</span> time tree DP: 
+<p><pre class='prettyprint'>
+def divide_and_conquer(l, r):
+    # compute solutions for k = l+1 ... r-1, 
+    # assuming solutions for k = l and k = r already computed
+    if min number of components in solutions for l and r are the same:
+        linearly interpolate answers between l and r 
+    else:
+        m = (l+r) // 2 
+        compute {answer, min number of components} for k = m using tree DP
+        divide_and_conquer(l, m)
+        divide_and_conquer(m, r)
+</pre>
+<p>This was enough to receive full credit if the tree DP was properly optimized.
+One way to optimize the tree DP is to first relabel the tree so that the parent
+of each node has label less than the label of the node itself, so that the DP
+can be implemented using a single for loop (as opposed to DFS).
+<p></body></html>

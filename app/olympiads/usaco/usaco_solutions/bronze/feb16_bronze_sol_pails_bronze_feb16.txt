@@ -1,0 +1,49 @@
+Solution ID: sol_pails_bronze_feb16
+Contest: FEB16
+Division: Bronze
+Solution URL: https://usaco.org/current/data/sol_pails_bronze_feb16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+It isn't immediately clear how to fill the larger bucket using
+the size X bucket and the size Y bucket. Instead of trying to cleverly
+figure out how many times to use each bucket, we can fix the number of times
+we use the bucket of size X, and then continually use the bucket of size Y until
+we would overflow the old bucket. We can loop over all possible numbers
+for usages of the size X bucket.
+
+Here is my Java code.
+
+import java.io.*;
+import java.util.*;
+public class pails {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader("pails.in"));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("pails.out")));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		// read X, Y, and M
+		int x = Integer.parseInt(st.nextToken());
+		int y = Integer.parseInt(st.nextToken());
+		int m = Integer.parseInt(st.nextToken());
+		int ans = 0;
+		// loop over how many times we can pour the X-size bucket
+		for(int xPour = 0; xPour*x <= m; xPour++) {
+			// loop over how many times we can then pour over the Y-size bucket
+			for(int yPour = 0; xPour*x + yPour*y <= m; yPour++) {
+				// determine if we have filled the bucket more than any previous time
+				if(xPour*x + yPour*y > ans) {
+					ans = xPour*x + yPour*y;
+				}
+			}
+		}
+		// print the answer
+		pw.println(ans);
+		// close output stream
+		pw.close();
+	}
+}

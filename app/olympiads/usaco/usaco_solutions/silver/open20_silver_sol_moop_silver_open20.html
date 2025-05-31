@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Construct an undirected graph where each vertex represents a moo particle and
+there exists an edge between two moo particles if they can interact. An
+interaction corresponds to removing a vertex with at least one adjacent edge.
+<p>Within each connected component, at least one particle must remain. Conversely, 
+we can show that this is always attainable. Consider a spanning forest of the
+graph; just keep removing a particle that is a leaf in this forest.
+<p>It remains to show how to compute the number of connected components in faster
+than <span class='math'>$O(N^2)$</span>. Sort the moo particles in increasing order of <span class='math'>$x$</span> and then <span class='math'>$y$</span>.
+Initially, suppose that each particle is its own connected component. Then while
+there exist two connected components that are adjacent in the order such that
+the minimum <span class='math'>$y$</span>-coordinate in the left component is at most the maximum
+<span class='math'>$y$</span>-coordinate of the right coordinate, combine them together.
+<p>For the following input (a combination of the two samples), the answer is 3.
+<p><pre>
+7
+1 0
+0 1
+-1 0
+0 -1
+3 -5
+4 -4
+2 -2
+</pre>
+<figure><img src='https://www.usaco.org/current/data/fig_moop_silver_open20.png'/><figcaption></figcaption></figure>
+<p>After this is done, the <span class='math'>$i$</span>-th moo particle in the sorted order is not in the
+same connected component as the <span class='math'>$i+1$</span>-st if and only if 
+<span class='math'>$\min(y_1,y_2,\ldots,y_i)&gt;\max(y_{i+1},y_{i+2},\ldots,y_N)$</span> (which automatically
+implies that <span class='math'>$\max(x_1,x_2,\ldots,x_i)&lt;\min(x_{i+1},x_{i+2},\ldots,x_N)$</span>). So
+after sorting we only need <span class='math'>$O(N)$</span> additional time to compute the answer.
+<p>Dhruv Rohatgi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MAXN 100000
+ 
+int N;
+int x[MAXN], y[MAXN];
+int cid[MAXN];
+int minl[MAXN];
+int maxr[MAXN];
+ 
+bool cmp(int a,int b)
+{
+	if(x[a]==x[b]) return y[a]&lt;y[b];
+	return x[a]&lt;x[b];
+}
+ 
+ 
+int main()
+{
+	freopen(&quot;moop.in&quot;,&quot;r&quot;,stdin);
+	freopen(&quot;moop.out&quot;,&quot;w&quot;,stdout);
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;N;i++)
+	{
+		cin &gt;&gt; x[i] &gt;&gt; y[i];
+		cid[i] = i;
+	}
+	sort(cid,cid+N,cmp);
+	minl[0] = y[cid[0]];
+	for(int i=1;i&lt;N;i++)
+		minl[i] = min(minl[i-1], y[cid[i]]);
+	maxr[N-1] = y[cid[N-1]];
+	for(int i=N-2;i&gt;=0;i--)
+		maxr[i] = max(maxr[i+1], y[cid[i]]);
+	int ans = 1;
+	for(int i=0;i&lt;N-1;i++)
+		if(minl[i] &gt; maxr[i+1])
+			ans++;
+	cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p>Related (but harder) problems:
+<p><ul><li> <a href='https://codeforces.com/contest/1270/problem/H'>CF: Number of
+Components</a>
+<p></li><li> <a href='https://prognova18.kattis.com/problems/manhattanshopping'>Prognova:
+Manhattan Shopping</a> </li></ul>
+<p></body></html>

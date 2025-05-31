@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+
+</head>
+<p>(Analysis by Jonathan Paulson - <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c9a3a6a7a8bda1a8a7b9a8bca5baa6a789aea4a8a0a5e7aaa6a4">[email&#160;protected]</a>)</p><p>
+
+The main difficulty here is that <span class='math'>$A$</span> and <span class='math'>$B$</span> are so large we cannot consider each new cow separately. We have to batch them up somehow.</p><p>
+
+Imagine each cow as a point on a number line (corresponding to its weight). Each new cow has (at most) one neighbor to the left and one neighbor to the right, so either a new cow has one nearest neighbor, or it is exactly between two old cows.</p><p>
+
+So each old cow &quot;covers&quot; some range on the number line where it is the nearest neighbor, depending on the cow to it&apos;s left and right (i.e. the next lighter and next heavier cow). By counting up how many new cows each old spotted cow covers, we&apos;ll get our answer.</p><p>
+
+Coding this up is tough. There are a lot of possible off-by-one errors. In the rest of the analysis, I&apos;ll walk through how I coded it.</p><p>
+
+First off: the easiest way to consider a cow and it&apos;s neighbors at the same time is to sort them, so let&apos;s do that. A nice way to avoid edge cases is to add extra old cows at the beginning and the end so that each cow has two neighbors; if we put these extra cows far enough out, they won&apos;t affect anything.</p><p>
+
+I thought it was easiest to consider each neighboring pair of cows separately. Let <span class='math'>$S$</span> (S for &quot;start&quot;) be the weight of the cow on the left and let <span class='math'>$E$</span> (E for &quot;end&quot;) be the weight of the cow on the right. We want to handle the interval <span class='math'>$[S+1, E]$</span> (notice we handle the right endpoint but not the left endpoint; this way, our ranges add up to the whole interval with no point counted twice or uncounted).</p><p>
+
+Let <span class='math'>$M = \frac{S+E}{2}$</span> (M for &quot;middle&quot;). Then the left cow covers the interval <span class='math'>$[S+1, M]$</span> and the right cow covers the interval <span class='math'>$[M+1, E]$</span>. But not every point is a new cow: we need to intersect these intervals with <span class='math'>$[A, B]$</span>. So really, the left cow covers the interval <span class='math'>$[max(S+1, A), min(M, B)]$</span>, and the right cow covers the interval <span class='math'>$[max(M+1, A), min(E, B)]$</span>. So if the left cow is spotted, add the left interval. If the right cow is spotted, add the right interval.</p><p>
+
+Whew! Actually, we&apos;ve made one mistake: do you see it? We didn&apos;t consider the case where <span class='math'>$M$</span> was right in the middle (if <span class='math'>$S$</span> and <span class='math'>$E$</span> are both even or both odd, <span class='math'>$M$</span> is right in the middle; otherwise, <span class='math'>$M$</span> is in the left interval where we put it). If <span class='math'>$M$</span> is right in the middle, and the left cow is not spotted and the right cow is spotted *and* <span class='math'>$M$</span> is a new cow, then we didn&apos;t count <span class='math'>$M$</span> and we should have.</p><p>
+
+Here&apos;s my C++ code, which follows the description above closely:
+</p><pre class='prettyprint'>
+#include &lt;cstdio&gt;
+#include &lt;vector&gt;
+#include &lt;utility&gt;
+#include &lt;algorithm&gt;
+
+#define PB push_back
+#define MP make_pair
+#define X first
+#define Y second
+
+using namespace std;
+
+typedef long long ll;
+typedef pair&lt;ll, ll&gt; pll;
+
+int main() {
+  ll n, A, B;
+  scanf(&quot;%lld %lld %lld&quot;, &amp;n, &amp;A, &amp;B);
+  vector&lt;pll&gt; V;
+  for(ll i=0; i&lt;n; i++) {
+    char buf[100];
+    ll w;
+    scanf(&quot;%s %lld&quot;, buf, &amp;w);
+    V.PB(MP(w, buf[0]==&apos;S&apos; ? 1 : 0));
+  }
+  ll INF = ll(1000)*1000*1000*1000;
+  V.PB(MP(-INF, 0));
+  V.PB(MP(INF, 0));
+  sort(V.begin(), V.end());
+
+  ll ans = 0;
+  for(ll i=0; i+1&lt;V.size(); i++) {
+    ll S = V[i].X;
+    ll E = V[i+1].X;
+    ll M = (S+E)/2;
+
+    if(V[i].Y==1) {
+      ll s = max(A, S+1);
+      ll e = min(B, M);
+      if(e &gt;= s) {
+        ans += e-s+1;
+      }
+    }
+    if(V[i+1].Y==1) {
+      ll s = max(A, M+1);
+      ll e = min(B, E);
+      if(e &gt;= s) {
+        ans += e-s+1;
+      }
+    }
+    if(V[i+1].Y==1 &amp;&amp; V[i].Y==0 &amp;&amp; (S%2)==(E%2) &amp;&amp; A&lt;=M &amp;&amp; M&lt;=B) {
+      ans++; // Should count M
+    }
+  }
+  printf(&quot;%lld\n&quot;, ans);
+}
+</pre><p></p>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></html>

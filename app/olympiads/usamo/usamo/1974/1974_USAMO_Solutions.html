@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html>
+	<head>
+				
+<script>AoPS = {
+	start_time : new Date().getTime()
+};</script>
+
+<script>
+	AoPS.bootstrap_data = [];
+	AoPS.bd = AoPS.bootstrap_data; // Alias!
+	AoPS.session = {"user_id":1,"platform_user_id":"","username":"Anonymous","avatar":"\/\/avatar.artofproblemsolving.com\/avatar_1.png?t=1","email":"","role":"","logged_in":false,"initialized":false,"needs_coppa_approval":false,"admin":false,"national_staff":false,"wikiname":""};
+	AoPS.bd.assetVersion = 1;
+	AoPS.bd.environment = 'production';
+	AoPS.protected_url = 'https://wiki.artofproblemsolving.com/';
+	AoPS.aops_url = 'https://artofproblemsolving.com/';
+	AoPS.academy_url = 'https://aopsacademy.org/';
+</script>
+		<!-- GA plugin and Enhanced Ecommerce -->
+		<script>
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+		ga('create', 'UA-1905305-1', 'auto', {allowLinker: true}); // GA Property ID
+		ga('send', 'pageview');
+		</script>
+		<!-- End GA plugin and Enhanced Ecommerce -->
+		<!-- Google Tag Manager -->
+		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+		new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+		j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+		'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer', 'GTM-59JWRGZ')</script>
+		<!-- End Google Tag Manager -->
+
+		<link rel="apple-touch-icon" href="https://artofproblemsolving.com/apple-touch-icon.png">
+
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="initial-scale=1">
+		<meta name="referrer" content="origin">
+
+		<meta name="facebook-domain-verification" content="zmmwg7oqqsqvf8ihckwvzoo85b08gx" />
+
+		
+		<link rel="apple-touch-icon" href="https://assets.artofproblemsolving.com/images/apple-touch-icon.png">
+		<title>Art of Problem Solving</title>
+
+		
+		<link href="https://artofproblemsolving.com/assets/fonts/font-awesome/css/all.css" rel="stylesheet">
+
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/sharedsite.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/navheader.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/footer.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/main-head.css">
+
+					<link rel="icon" href="https://artofproblemsolving.com/online-favicon.ico?v=2">
+		
+		
+		<script>
+  if (!window.console) console = {log: function() {}, dir: function() {}};
+  $$ = function( selector ) { return document.getElementById( selector ); }
+</script>
+
+							<script src="//assets.artofproblemsolving.com/js/jquery360.min.js"></script>
+							<script src="//artofproblemsolving.com/assets/vendor/jquery/3.6.0/jquery-migrate.min.js"></script>
+					<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          // customised options
+          // • auto-render specific keys, e.g.:
+          delimiters: [
+              {left: '[katex]', right: '[/katex]', display: false},
+			  {left: '[katex display=true]', right: '[/katex]', display: true} 
+          ],
+          // • rendering keys, e.g.:
+          throwOnError : false
+        });
+    });
+</script>
+
+<script>
+MathJax = {
+  tex: {
+	inlineMath: [['[mathjax]', '[/mathjax]'], ['\\(', '\\)']],
+	displayMath: [['[mathjax display=true]', '[/mathjax]']]
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"> </script>
+
+				<meta charset="UTF-8"/>
+<title>1974 USAMO Problems/Problem 1 - AoPS Wiki</title>
+<script>document.documentElement.className = document.documentElement.className.replace( /(^|\s)client-nojs(\s|$)/, "$1client-js$2" );</script>
+<script>(window.RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"1974_USAMO_Problems/Problem_1","wgTitle":"1974 USAMO Problems/Problem 1","wgCurRevisionId":121758,"wgRevisionId":121758,"wgArticleId":6376,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Olympiad Algebra Problems"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"1974_USAMO_Problems/Problem_1","wgRelevantArticleId":6376,"wgRequestId":"8e03ad889794d41f0e94dcba","wgIsProbablyEditable":false,"wgRelevantPageIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});mw.loader.state({"site.styles":"ready","noscript":"ready","user.styles":"ready","user":"ready","site":"ready","user.options":"ready","user.tokens":"loading","mediawiki.legacy.shared":"ready","mediawiki.legacy.commonPrint":"ready","mediawiki.sectionAnchor":"ready","skins.aopsp":"ready"});mw.loader.implement("user.tokens@09avpoe",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
+});mw.loader.load(["mediawiki.page.startup","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.toc","mediawiki.searchSuggest","skins.aopsp.js"]);});</script>
+<link rel="stylesheet" href="/wiki/load.php?debug=false&amp;lang=en&amp;modules=mediawiki.legacy.commonPrint%2Cshared%7Cmediawiki.sectionAnchor%7Cskins.aopsp&amp;only=styles&amp;skin=aopsp"/>
+<script async="" src="/wiki/load.php?debug=false&amp;lang=en&amp;modules=startup&amp;only=scripts&amp;skin=aopsp"></script>
+<meta name="ResourceLoaderDynamicStyles" content=""/>
+<link rel="stylesheet" href="/wiki/load.php?debug=false&amp;lang=en&amp;modules=site.styles&amp;only=styles&amp;skin=aopsp"/>
+<meta name="generator" content="MediaWiki 1.31.1"/>
+<link rel="shortcut icon" href="/favicon.ico"/>
+<link rel="search" type="application/opensearchdescription+xml" href="/wiki/opensearch_desc.php" title="AoPS Wiki (en)"/>
+<link rel="EditURI" type="application/rsd+xml" href="https://artofproblemsolving.com/wiki/api.php?action=rsd"/>
+<link rel="alternate" type="application/atom+xml" title="AoPS Wiki Atom feed" href="/wiki/index.php?title=Special:RecentChanges&amp;feed=atom"/>
+<!--[if lt IE 9]><script src="/wiki/load.php?debug=false&amp;lang=en&amp;modules=html5shiv&amp;only=scripts&amp;skin=aopsp&amp;sync=1"></script><![endif]-->
+			</head>
+		
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Print to PDF</title>
+                <style>
+                    .print-note {
+                        background-color: #f0f0f0;
+                        padding: 10px;
+                        border: 1px solid #ccc;
+                        margin-bottom: 20px;
+                        font-family: Arial, sans-serif;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-note">
+                    <strong>Note:</strong> This HTML file should be printed to PDF. 
+                    Please use your browser's print function (Ctrl+P) and select "Save as PDF".
+                </div>
+            <body class="production mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-1974_USAMO_Problems_Problem_1 rootpage-1974_USAMO_Problems_Problem_1 skin-aopsp action-view resources">
+
+					<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59JWRGZ"
+			height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		
+		<div id="page-wrapper">
+
+			<!-- search:off -->
+			
+			<!-- The gray bar at top -->
+			<!-- see shared-site.css -->
+			<div id="top-bar" class="sharedsite-wrapper no-select">
+				<div class="sharedsitebar">
+					<a href="https://artofproblemsolving.com" class="mobile-title"></a>
+					<div class="sharedsite-links">
+											<a class="site-link main" href="https://artofproblemsolving.com/company">
+												Art of Problem Solving
+						</a>
+						<div class="site">
+													<a class="site-link selected" href="https://artofproblemsolving.com">
+														<img src="https://artofproblemsolving.com/assets/images/logos/icon-online.svg" class="site-icon">
+								<span class="site-name">AoPS Online</span>
+							</a>
+							<!-- Rich dropdown -->
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-online.svg"/>
+										</div>
+										<div class="site-snippet">
+											Math texts, online classes, and more
+											<br/>for students in grades 5-12.
+										</div>
+										<a target="_blank" class="site-visit aops-primary" href="https://artofproblemsolving.com">
+											Visit AoPS Online <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://artofproblemsolving.com/store" class="btn btn-primary aops-btn">
+											Books for Grades 5-12
+										</a>
+										<a target="_blank" href="https://artofproblemsolving.com/school" class="btn btn-primary aops-btn">
+											Online Courses
+										</a>
+									</div>
+								</div>
+							</div>
+							<!-- End rich dropdown -->
+						</div>
+						<div class="site">
+							<a class="site-link" href="https://beastacademy.com">
+								<img src="https://artofproblemsolving.com/assets/images/logos/icon-ba.svg" class="site-icon">
+								<span class="site-name">Beast Academy</span>
+							</a>
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-ba.svg"/>
+										</div>
+										<div class="site-snippet">
+											Engaging math books and online learning
+											<br/>for students ages 6-13.
+										</div>
+										<a target="_blank" class="site-visit ba-primary" href="https://beastacademy.com">
+											Visit Beast Academy <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://beastacademy.com/books" class="btn btn-primary ba-btn">
+											Books for Ages 6-13
+										</a>
+										<a target="_blank" href="https://beastacademy.com/online" class="btn btn-primary ba-btn">
+											Beast Academy Online
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="site">
+							<a class="site-link" href="https://aopsacademy.org">
+								<img src="https://artofproblemsolving.com/assets/images/logos/icon-academy.svg" class="site-icon">
+								<span class="site-name">AoPS Academy</span>
+							</a>
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-academy.svg"/>
+										</div>
+										<div class="site-snippet">
+											Small live classes for advanced math
+											<br/>and language arts learners in grades 2-12.
+										</div>
+										<a target="_blank" class="site-visit academy-primary" href="https://aopsacademy.org">
+											Visit AoPS Academy <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://aopsacademy.org/campuses" class="btn btn-primary academy-btn">
+											Find a Physical Campus
+										</a>
+										<a target="_blank" href="https://virtual.aopsacademy.org" class="btn btn-primary academy-btn">
+											Visit the Virtual Campus
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div id="header-wrapper" class="no-select">
+				<div class="header-underlay">
+					<div id="header">
+
+						<!-- The white area where main menu options appear -->
+
+						<!-- The menu links -->
+													<div id="main-menubar">
+								<div class="menubar-content">
+									<div class="menubar-logo online">
+										<img class="menubar-hamburger" src="https://artofproblemsolving.com/assets/images/hamburger.svg"/>
+										<a class="logo-img-link" href="https://artofproblemsolving.com/online">
+											<img class="logo-img" src="https://artofproblemsolving.com/assets/images/logos/aops-online.svg"/>
+											<img class="logo-img-mobile" src="https://artofproblemsolving.com/assets/images/logos/aops-online-mobile.svg"/>
+											<img class="logo-img-small" src="https://artofproblemsolving.com/assets/images/logos/aops-online-mobile.svg"/>
+										</a>
+									</div>
+									<div class="menubar-links-outer">
+										<!-- The login links -->
+										<div class="menu-login-wrapper online">
+											
+											<div class="menu-login-item">
+															<div 
+		    id="header-login"
+			class="no-select not-signed-in"
+			style="display:flex">
+
+			<div class="online-login-button solid-rounded-button">Sign&nbsp;In</div><div class="online-register-button">Register</div>
+		</div>
+												</div>
+
+											
+										</div>
+										<div class="menubar-labels online">
+											<div class="menubar-label school">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/school">
+														online school
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+														<!-- These have IDs for A/B testing purposes. T27691 -->
+																												<a id="online-school-menu-schedule" href="https://artofproblemsolving.com/school/schedule"> Class Schedule </a>
+														<a id="online-school-menu-recommmendations" href="https://artofproblemsolving.com/school/recommendations"> Recommendations </a>
+														<a id="online-school-menu-woot-courses" href="https://artofproblemsolving.com/school/woot?gtmlist=School_Nav"> Olympiad Courses </a>
+														<a id="online-school-menu-mathjams" href="https://artofproblemsolving.com/school/mathjams"> Free Sessions </a>
+																																									</div>
+												</div>
+											</div>
+											<div class="menubar-label store">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/store">
+														books<span class="menubar-link-ext">tore </span>
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+																																																								<a href="https://artofproblemsolving.com/store/list/aops-curriculum">AoPS Curriculum</a>
+														<a href="https://artofproblemsolving.com/store/list/beast-academy">Beast Academy</a>
+														<a href="https://artofproblemsolving.com/store/online">Online Books</a>
+														<a href="https://artofproblemsolving.com/store/recommendations">Recommendations</a>
+														<a href="https://artofproblemsolving.com/store/list/other-products">Other Books &amp; Gear</a>
+														<a href="https://artofproblemsolving.com/store/list/all-products">All Products</a>
+														<a href="https://artofproblemsolving.com/store/gift-certificates?gtmlist=Bookstore_Nav">Gift Certificates</a>
+																											</div>
+												</div>
+											</div>
+											<div class="menubar-label community">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/community">
+														community
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+																												<a data-cmty href="https://artofproblemsolving.com/community">Forums</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/c13_contests">Contests</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/search">Search</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/faq">Help</a>
+																																									</div>
+												</div>
+											</div>
+											<div class="menubar-label resources">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/resources">
+														resources
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+														<div class="dropdown-columns">
+															<div class="dropdown-category">
+																<span class="dropdown-category-label">math training & tools</span>
+																<a href="https://artofproblemsolving.com/alcumus">Alcumus</a>
+																<a href="https://artofproblemsolving.com/videos">Videos</a>
+																<a href="https://artofproblemsolving.com/ftw">For the Win!</a>
+																<a href="https://artofproblemsolving.com/mathcounts_trainer">MATHCOUNTS Trainer</a>
+																<a href="https://artofproblemsolving.com/contests/practice">AoPS Practice Contests</a>
+																<a href="https://artofproblemsolving.com/wiki/index.php?title=Main_Page">AoPS Wiki</a>
+																<a href="https://artofproblemsolving.com/texer">LaTeX TeXeR</a>
+																<a href="https://artofproblemsolving.com/polymath">MIT PRIMES/CrowdMath</a>
+																<a href="https://artofproblemsolving.com/keeplearning">Keep Learning</a>
+																<a href="https://beastacademy.com/all-ten">All Ten</a>
+																															</div>
+															<div class="dropdown-column">
+																																<div class="dropdown-category category-in-column">
+																	<span class="dropdown-category-label">contests on aops</span>
+																	<a href="https://artofproblemsolving.com/contests/practice">Practice Math Contests</a>
+																	<a href="https://artofproblemsolving.com/contests/usabo">USABO</a>
+																</div>
+																<div class="dropdown-category category-in-column">
+                                                                                                                                        <span class="dropdown-category-label">news</span>
+                                                                                                                                        <a href="https://artofproblemsolving.com/blog">AoPS Blog</a>
+                                                                                                                                        <a href="https://artofproblemsolving.com/blog/webinars/aopswebinars">Webinars</a>
+                                                                                                                                </div>
+															</div>
+														</div>
+														<div class="dropdown-view-more-link-container">
+															<a href="https://artofproblemsolving.com/resources" class="dropdown-view-more-link">view all <span class="aops-icon">0</span></a>
+														</div>
+													</div>
+												</div>
+											</div>
+																						<div class="menubar-label menu-login-item">
+															<div 
+		    id="header-login"
+			class="no-select not-signed-in"
+			style="display:flex">
+
+			<div class="online-login-button solid-rounded-button">Sign&nbsp;In</div><div class="online-register-button">Register</div>
+		</div>
+												</div>
+																					</div>
+									</div>
+								</div>
+							</div>
+											</div>
+				</div>
+
+								<noscript>
+					<div class="infobar">JavaScript is not enabled. JavaScript is required to fully utilize the site.</div>
+				</noscript>
+
+
+									<div id="breadcrumbs-wrapper">
+						<div id="submenu-icon"></div>
+						<div id="breadcrumbs">
+														<!-- ignore-security-checks -->
+							<div class="title-wrapper"><div class="title"><a href="/wiki">AoPS Wiki</a></div></div>
+														<div class="crumb-wrapper">
+																										<span class="crumb crumb-1">
+																			<!-- ignore-security-checks -->
+										<a href="https://artofproblemsolving.com/resources">Resources</a>
+																		</span>
+																											<i class="aops-font aops-angle-double-right"></i>
+																		<span class="crumb crumb-2">
+																			<!-- ignore-security-checks -->
+										<a href="/wiki">Aops Wiki</a>
+																		</span>
+																											<i class="aops-font aops-angle-double-right"></i>
+																		<span class="crumb crumb-3">
+																			1974 USAMO Problems/Problem 1																		</span>
+															</div>
+						</div>
+					</div>
+							</div>
+
+			<!-- search icon script lives in footer.phtml-->
+
+			<!-- /search:off -->
+
+<div id="main-content" class="left-navigation wiki">
+	<div id="side-column-wrapper">
+		<div id="side-column">
+						<div id="content-actions" class="menu open">
+				<div class="submenu">
+					<h1>Page</h1>
+					<div class="submenu-wrapper">
+						<span id="ca-nstab-main" class="selected"><a href="/wiki/index.php/1974_USAMO_Problems/Problem_1" title="View the content page " accesskey="c">Article</a></span><span id="ca-talk" class="new"><a href="/wiki/index.php?title=Talk:1974_USAMO_Problems/Problem_1&amp;action=edit&amp;redlink=1" rel="discussion" title="Discussion about the content page (page does not exist) " accesskey="t">Discussion</a></span><span id="ca-viewsource"><a href="/wiki/index.php?title=1974_USAMO_Problems/Problem_1&amp;action=edit" title="This page is protected.&#10;You can view its source " accesskey="e">View source</a></span><span id="ca-history"><a href="/wiki/index.php?title=1974_USAMO_Problems/Problem_1&amp;action=history" title="Past revisions of this page " accesskey="h">History</a></span>					</div>
+				</div>
+			</div>
+			<div id="toolbox" class="menu open">
+				<div class="submenu">
+					<h1>Toolbox</h1>
+					<div class="submenu-wrapper">
+						<span id="n-recentchanges"><a href="/wiki/index.php/Special:RecentChanges" title="A list of recent changes in the wiki " accesskey="r">Recent changes</a></span><span id="n-randompage"><a href="/wiki/index.php/Special:Random" title="Load a random page " accesskey="x">Random page</a></span><span id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></span><span id="t-whatlinkshere"><a href="/wiki/index.php/Special:WhatLinksHere/1974_USAMO_Problems/Problem_1" title="A list of all wiki pages that link here " accesskey="j">What links here</a></span><span id="t-specialpages"><a href="/wiki/index.php/Special:SpecialPages" title="A list of all special pages " accesskey="q">Special pages</a></span>					</div>
+				</div>
+			</div>
+			
+			<div id="search" class="menu open">
+				<h1>Search</h1>
+				<div class="submenu-wrapper" style="margin-bottom:5px;">
+					<form action="/wiki/index.php" id="searchform" class="mw-search">
+						<input type="hidden" name="title" value="Special:Search">
+						<input type="search" name="search" placeholder="Search" value="" accesskey="f" id="searchInput">
+						<div style="margin:0 5px 5px 5px;text-align:right;"><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="btn btn-primary searchButton"/></div>
+					</form>
+				</div>
+			</div>
+
+			<!--
+			<div class="menu open">
+				<h1>Note</h1>
+				<div class="submenu-wrapper" style="padding:10px;color:#444;">
+					Please do not discuss the 2015 AMC 8 Competition on any website until November 25th.
+				</div>
+			</div>
+			-->
+		</div>
+	</div>
+
+	<div id="main-column" style="margin-top:10px">
+				<div class="page-wrapper">
+						<div id="mw-js-message" style="display:none;"></div>
+			<h1 id="firstHeading" class="firstHeading">1974 USAMO Problems/Problem 1</h1>
+
+						
+			<div class="mw-body">
+												
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div class="mw-parser-output"><div id="toc" class="toc"><div class="toctitle" lang="en" dir="ltr"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Problem"><span class="tocnumber">1</span> <span class="toctext">Problem</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Hint"><span class="tocnumber">2</span> <span class="toctext">Hint</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Solution"><span class="tocnumber">3</span> <span class="toctext">Solution</span></a>
+<ul>
+<li class="toclevel-2 tocsection-4"><a href="#Solution_1b"><span class="tocnumber">3.1</span> <span class="toctext">Solution 1b</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-5"><a href="#Solution_2"><span class="tocnumber">4</span> <span class="toctext">Solution 2</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Solution_3"><span class="tocnumber">5</span> <span class="toctext">Solution 3</span></a></li>
+<li class="toclevel-1 tocsection-7"><a href="#Solution_4"><span class="tocnumber">6</span> <span class="toctext">Solution 4</span></a></li>
+<li class="toclevel-1 tocsection-8"><a href="#Solution_5"><span class="tocnumber">7</span> <span class="toctext">Solution 5</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#See_Also"><span class="tocnumber">8</span> <span class="toctext">See Also</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Problem">Problem</span></h2>
+<p>Let <img src="//latex.artofproblemsolving.com/c/7/d/c7d457e388298246adb06c587bccd419ea67f7e8.png" class="latex" alt="$a$" style="vertical-align: -1px" width="11" height="10" />, <img src="//latex.artofproblemsolving.com/8/1/3/8136a7ef6a03334a7246df9097e5bcc31ba33fd2.png" class="latex" alt="$b$" style="vertical-align: -1px" width="10" height="14" />, and <img src="//latex.artofproblemsolving.com/3/3/7/3372c1cb6d68cf97c2d231acc0b47b95a9ed04cc.png" class="latex" alt="$c$" width="8" height="8" /> denote three distinct integers, and let <img src="//latex.artofproblemsolving.com/4/b/4/4b4cade9ca8a2c8311fafcf040bc5b15ca507f52.png" class="latex" alt="$P$" width="14" height="12" /> denote a polynomial having all integral coefficients.  Show that it is impossible that <img src="//latex.artofproblemsolving.com/2/f/6/2f665d1df72c0d202647f7edf6929d93ba0df32a.png" class="latex" alt="$P(a)=b$" style="vertical-align: -4px" width="70" height="18" />, <img src="//latex.artofproblemsolving.com/f/d/4/fd427e111fbd8097376960c91ece58daf46c6e38.png" class="latex" alt="$P(b)=c$" style="vertical-align: -4px" width="68" height="18" />, and <img src="//latex.artofproblemsolving.com/5/f/7/5f7ed6e3486d051ab5561b0aeb80a3a3dd12c1eb.png" class="latex" alt="$P(c)=a$" style="vertical-align: -4px" width="70" height="18" />.
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Hint">Hint</span></h2>
+<p>If <img src="//latex.artofproblemsolving.com/4/b/4/4b4cade9ca8a2c8311fafcf040bc5b15ca507f52.png" class="latex" alt="$P$" width="14" height="12" /> is a polynomial with integral coefficients, then <img src="//latex.artofproblemsolving.com/a/0/3/a03a7503e38a19794a8476016bc4fc8dd85bc4df.png" class="latexcenter" alt="\[a - b | P(a) - P(b).\]" width="144" height="18" /> (Why?)
+</p>
+<h2><span class="mw-headline" id="Solution">Solution</span></h2>
+<p>It suffices to show that if <img src="//latex.artofproblemsolving.com/a/5/b/a5b29b358e825defa3e11b7d903d43ec31e5909a.png" class="latex" alt="$a,b,c$" style="vertical-align: -4px" width="43" height="18" /> are integers such that <img src="//latex.artofproblemsolving.com/e/0/7/e07ae0ca10cc43af1eb9648a4beb9ce16df8f91f.png" class="latex" alt="$P(a) = b$" style="vertical-align: -4px" width="70" height="18" />, <img src="//latex.artofproblemsolving.com/f/d/4/fd427e111fbd8097376960c91ece58daf46c6e38.png" class="latex" alt="$P(b)=c$" style="vertical-align: -4px" width="68" height="18" />, and <img src="//latex.artofproblemsolving.com/8/8/0/88038dc1be849629e9bec5e63900fdf295d73ac0.png" class="latex" alt="$P(c)= a$" style="vertical-align: -4px" width="70" height="18" />, then <img src="//latex.artofproblemsolving.com/5/6/6/566b9136144a62fac113ecbc8065793a74123238.png" class="latex" alt="$a=b=c$" width="74" height="12" />.
+</p><p>We note that
+<img src="//latex.artofproblemsolving.com/3/a/1/3a15b2cbc028599bad9abfe6ba806be5ab6e4ed8.png" class="latexcenter" alt="\[a-b \mid P(a) - P(b) = b-c \mid P(b)-P(c) = c-a \mid P(c) - P(a) = a-b ,\]" width="509" height="18" />
+so the quanitities <img src="//latex.artofproblemsolving.com/e/9/d/e9d7d34a8b70e292935f146cc76607dc1eff7618.png" class="latex" alt="$(a-b), (b-c), (c-a)$" style="vertical-align: -4px" width="174" height="18" /> must be equal in absolute value.  In fact, two of them, say <img src="//latex.artofproblemsolving.com/4/f/2/4f2aee761704bb62a779d1bbcb9fb09912bb516f.png" class="latex" alt="$(a-b)$" style="vertical-align: -4px" width="52" height="18" /> and <img src="//latex.artofproblemsolving.com/3/7/2/372a15f140055cb940fa744a3d8956d6a38d889d.png" class="latex" alt="$(b-c)$" style="vertical-align: -4px" width="50" height="18" />, must be equal.  Then
+<img src="//latex.artofproblemsolving.com/1/6/f/16f54deed0e5cd9118c3abc2861b526d8a6d8706.png" class="latexcenter" alt="\[0 = \lvert (a-b) + (b-c) + (c-a) \rvert = \lvert 2(a-b) + (c-a) \rvert \ge 2 \lvert a-b \rvert - \lvert c-a \rvert = \lvert a-b \rvert ,\]" width="556" height="18" />
+so <img src="//latex.artofproblemsolving.com/1/4/a/14a498aca0d3c0f623163adf1e6bcba0ff0de249.png" class="latex" alt="$a=b= P(a)$" style="vertical-align: -4px" width="102" height="18" />, and <img src="//latex.artofproblemsolving.com/7/9/d/79d0db6bf7d04da0e0e1b924534ed4bd7591d666.png" class="latex" alt="$c= P(b) = P(a) = b$" style="vertical-align: -4px" width="162" height="18" />, so <img src="//latex.artofproblemsolving.com/c/7/d/c7d457e388298246adb06c587bccd419ea67f7e8.png" class="latex" alt="$a$" style="vertical-align: -1px" width="11" height="10" />, <img src="//latex.artofproblemsolving.com/8/1/3/8136a7ef6a03334a7246df9097e5bcc31ba33fd2.png" class="latex" alt="$b$" style="vertical-align: -1px" width="10" height="14" />, and <img src="//latex.artofproblemsolving.com/3/3/7/3372c1cb6d68cf97c2d231acc0b47b95a9ed04cc.png" class="latex" alt="$c$" width="8" height="8" /> are equal, as desired.  <img src="//latex.artofproblemsolving.com/3/b/b/3bbb9e25e5be095e317771a9c5d00877ee9c8012.png" class="latex" alt="$\blacksquare$" width="13" height="12" />
+</p>
+<h3><span class="mw-headline" id="Solution_1b">Solution 1b</span></h3>
+<p>Let <img src="//latex.artofproblemsolving.com/8/c/3/8c325612684d41304b9751c175df7bcc0f61f64f.png" class="latex" alt="$k$" width="9" height="12" /> be the value <img src="//latex.artofproblemsolving.com/e/9/d/e9d7d34a8b70e292935f146cc76607dc1eff7618.png" class="latex" alt="$(a-b), (b-c), (c-a)$" style="vertical-align: -4px" width="174" height="18" /> are equal to in absolute value. Assume <img src="//latex.artofproblemsolving.com/8/c/3/8c325612684d41304b9751c175df7bcc0f61f64f.png" class="latex" alt="$k$" width="9" height="12" /> is nonzero. Then each of <img src="//latex.artofproblemsolving.com/e/9/d/e9d7d34a8b70e292935f146cc76607dc1eff7618.png" class="latex" alt="$(a-b), (b-c), (c-a)$" style="vertical-align: -4px" width="174" height="18" /> is equal to <img src="//latex.artofproblemsolving.com/8/c/3/8c325612684d41304b9751c175df7bcc0f61f64f.png" class="latex" alt="$k$" width="9" height="12" /> or <img src="//latex.artofproblemsolving.com/b/f/d/bfd84c64e9f58c9dd52ce680ab4d70f5dc17b5e7.png" class="latex" alt="$-k$" width="23" height="12" />, so <img src="//latex.artofproblemsolving.com/0/8/8/08870bd7952ba144c9680b42d97770f7ba3f94b0.png" class="latexcenter" alt="\[0 = (a-b) + (b-c) + (c-a) = mk,\]" width="291" height="18" /> where <img src="//latex.artofproblemsolving.com/f/5/0/f5047d1e0cbb50ec208923a22cd517c55100fa7b.png" class="latex" alt="$m$" width="15" height="8" /> is one of -3, -1, 1, or 3. In particular, neither <img src="//latex.artofproblemsolving.com/f/5/0/f5047d1e0cbb50ec208923a22cd517c55100fa7b.png" class="latex" alt="$m$" width="15" height="8" /> nor <img src="//latex.artofproblemsolving.com/8/c/3/8c325612684d41304b9751c175df7bcc0f61f64f.png" class="latex" alt="$k$" width="9" height="12" /> is zero, contradiction. Hence, <img src="//latex.artofproblemsolving.com/8/4/5/84574de7797bc7b4e1fc52075f4d265ba60a8bce.png" class="latex" alt="$k = 0$" style="vertical-align: -1px" width="45" height="14" />, and <img src="//latex.artofproblemsolving.com/a/c/c/acc6d9a6172d35127b6cb37ea92192caf7029a54.png" class="latex" alt="$a, b, c$" style="vertical-align: -4px" width="43" height="18" /> are equal, yielding a final contradiction of the existence of these variables. <img src="//latex.artofproblemsolving.com/3/b/b/3bbb9e25e5be095e317771a9c5d00877ee9c8012.png" class="latex" alt="$\blacksquare$" width="13" height="12" />
+</p><p>In fact, this approach generalizes readily. Suppose that <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> is an odd integer, and that there exist <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> distinct integers <img src="//latex.artofproblemsolving.com/6/b/3/6b3c3c7c8b37696edc4ee36ddeb07eea4cefc3e7.png" class="latex" alt="$a_1, a_2, ..., a_n$" style="vertical-align: -3px" width="91" height="11" /> such that <img src="//latex.artofproblemsolving.com/3/f/4/3f40bdc946c98c3aa4aa4ab26e2d4591584efbd8.png" class="latex" alt="$P(a_i) = a_{i+1}$" style="vertical-align: -4px" width="97" height="18" /> and <img src="//latex.artofproblemsolving.com/d/2/0/d2039c054f602dc1884c6262fd6079cc90f84f52.png" class="latex" alt="$P(a_n) = 1$" style="vertical-align: -4px" width="79" height="18" />, for <img src="//latex.artofproblemsolving.com/f/f/8/ff83105557fa452974107ed1f164b322e4fe8fd8.png" class="latex" alt="$1 \le i \le n-1$" style="vertical-align: -2px" width="105" height="15" />. Then we have <img src="//latex.artofproblemsolving.com/5/b/b/5bb6c449c5001ec6d3e837018adeaaa74713c409.png" class="latexcenter" alt="\[a_1 - a_2 | a_2 - a_3 | ... | a_n - a_1 | a_1 - a_2,\]" width="265" height="18" /> so the differences are all equal in absolute value and thus equal to <img src="//latex.artofproblemsolving.com/8/c/3/8c325612684d41304b9751c175df7bcc0f61f64f.png" class="latex" alt="$k$" width="9" height="12" /> or <img src="//latex.artofproblemsolving.com/b/f/d/bfd84c64e9f58c9dd52ce680ab4d70f5dc17b5e7.png" class="latex" alt="$-k$" width="23" height="12" /> for some integer <img src="//latex.artofproblemsolving.com/8/c/3/8c325612684d41304b9751c175df7bcc0f61f64f.png" class="latex" alt="$k$" width="9" height="12" />. Adding the differences (in the order they are written) gives <img src="//latex.artofproblemsolving.com/c/5/4/c54d6eeffe45431a4b981ba261b47333aae89d94.png" class="latex" alt="$0 = mk$" width="59" height="12" /> for some odd integer <img src="//latex.artofproblemsolving.com/f/5/0/f5047d1e0cbb50ec208923a22cd517c55100fa7b.png" class="latex" alt="$m$" width="15" height="8" />, so <img src="//latex.artofproblemsolving.com/f/5/0/f5047d1e0cbb50ec208923a22cd517c55100fa7b.png" class="latex" alt="$m$" width="15" height="8" /> is nonzero and hence <img src="//latex.artofproblemsolving.com/8/4/5/84574de7797bc7b4e1fc52075f4d265ba60a8bce.png" class="latex" alt="$k = 0$" style="vertical-align: -1px" width="45" height="14" />. Thus, all the <img src="//latex.artofproblemsolving.com/4/1/2/412787c048e28774dc63fc27db42dc52ca858de7.png" class="latex" alt="$a_i$" style="vertical-align: -2px" width="14" height="10" /> are equal, a contradiction of their distinctness, so the sequence <img src="//latex.artofproblemsolving.com/4/1/2/412787c048e28774dc63fc27db42dc52ca858de7.png" class="latex" alt="$a_i$" style="vertical-align: -2px" width="14" height="10" /> cannot exist.
+</p>
+<h2><span class="mw-headline" id="Solution_2">Solution 2</span></h2>
+<p>Consider the polynomial <img src="//latex.artofproblemsolving.com/8/9/e/89e46c59185c4cae0a566a1bba9ae00d88f24abd.png" class="latex" alt="$Q(x) = (b-a)P(x) - (c-b)x - b^2 + ac.$" style="vertical-align: -4px" width="321" height="19" /> By using the facts that <img src="//latex.artofproblemsolving.com/e/0/7/e07ae0ca10cc43af1eb9648a4beb9ce16df8f91f.png" class="latex" alt="$P(a) = b$" style="vertical-align: -4px" width="70" height="18" /> and <img src="//latex.artofproblemsolving.com/0/a/b/0abe8938848580a1a6a21fdce3d502cbc84b3751.png" class="latex" alt="$P(b) = c$" style="vertical-align: -4px" width="68" height="18" />, we find that <img src="//latex.artofproblemsolving.com/0/2/e/02e12bb90ec5a247381312ba08229df95d688bb7.png" class="latex" alt="$Q(a) = Q(b) = 0.$" style="vertical-align: -4px" width="135" height="18" /> Thus, the polynomial <img src="//latex.artofproblemsolving.com/d/9/d/d9dfe7c7a0b887097fa2227a230fc915ba2e5477.png" class="latex" alt="$Q(x)$" style="vertical-align: -4px" width="37" height="18" /> has a and b as roots, and we can write <img src="//latex.artofproblemsolving.com/1/7/9/179b7d70bc07b55eff35b33d9996c7be8076fd56.png" class="latex" alt="$Q(x) = (x-a)(x-b)R(x)$" style="vertical-align: -4px" width="211" height="18" /> for some polynomial <img src="//latex.artofproblemsolving.com/a/3/e/a3eeefa367883375994fd2e1f575d088bce9d8b1.png" class="latex" alt="$R(x)$" style="vertical-align: -5px" width="40" height="20" />. Because <img src="//latex.artofproblemsolving.com/d/9/d/d9dfe7c7a0b887097fa2227a230fc915ba2e5477.png" class="latex" alt="$Q(x)$" style="vertical-align: -4px" width="37" height="18" /> and <img src="//latex.artofproblemsolving.com/f/8/f/f8ffbde1094ffb8a0d87f39557a79d7d54cf9a99.png" class="latex" alt="$(x-a)(x-b)$" style="vertical-align: -4px" width="109" height="18" /> are monic polynomials with integral coefficients, their quotient, <img src="//latex.artofproblemsolving.com/a/3/e/a3eeefa367883375994fd2e1f575d088bce9d8b1.png" class="latex" alt="$R(x)$" style="vertical-align: -5px" width="40" height="20" />, must also have integral coefficients, as can be demonstrated by simulating the long division. Thus, <img src="//latex.artofproblemsolving.com/7/a/2/7a2440ada6c26b3622ddc5341ddbbab90a741518.png" class="latex" alt="$Q(c)$" style="vertical-align: -4px" width="35" height="18" />, and hence <img src="//latex.artofproblemsolving.com/c/d/8/cd81f7e57bfa9f81909f42622a976c251001c4c0.png" class="latex" alt="$Q(c) - (x-a)(x-b)$" style="vertical-align: -4px" width="168" height="18" />, must be divisible by <img src="//latex.artofproblemsolving.com/6/9/6/696455bd5a722c3e016a8932dc6aad6704d43076.png" class="latex" alt="$(c-a)(c-b)$" style="vertical-align: -4px" width="104" height="18" />. But if <img src="//latex.artofproblemsolving.com/9/8/c/98cb47cc264629569b2575bae1b8c6352a2e1da7.png" class="latex" alt="$x=c-a$" width="74" height="8" /> and <img src="//latex.artofproblemsolving.com/7/d/e/7de6826495d811bff0ae472aec9af522d5f09fcc.png" class="latex" alt="$y=c-b$" style="vertical-align: -3px" width="72" height="16" />, then we must have, after rearranging terms and substitution, that <img src="//latex.artofproblemsolving.com/6/9/f/69ff44ae5c298b55c12f05a5d95814d3ea913353.png" class="latex" alt="$(x-y)^2$" style="vertical-align: -4px" width="62" height="19" /> is divisible by <img src="//latex.artofproblemsolving.com/3/f/7/3f79c3676b62fb47243e0d357c87115b6f3395e4.png" class="latex" alt="$xy$" style="vertical-align: -3px" width="19" height="11" />. Equivalently, <img src="//latex.artofproblemsolving.com/3/0/b/30b5521d009330865c97ef549b7445a388122f61.png" class="latex" alt="$S = x^2 + y^2$" style="vertical-align: -3px" width="92" height="18" /> is divisible by <img src="//latex.artofproblemsolving.com/3/f/7/3f79c3676b62fb47243e0d357c87115b6f3395e4.png" class="latex" alt="$xy$" style="vertical-align: -3px" width="19" height="11" /> (after canceling the <img src="//latex.artofproblemsolving.com/a/b/a/abaf1f4bdf803c0f6f809aef04357676a307fcee.png" class="latex" alt="$2xy$" style="vertical-align: -4px" width="31" height="17" /> which is clearly divisble by <img src="//latex.artofproblemsolving.com/3/f/7/3f79c3676b62fb47243e0d357c87115b6f3395e4.png" class="latex" alt="$xy$" style="vertical-align: -3px" width="19" height="11" />). Because S must be divisible by both x and y, we quickly deduce that x is divisible by y and y is divisible by x. Thus, x and y are equal in absolute value. A similar statement holds for a cyclic pemutation of the variables, and so x, y, and z are all equal in absolute value. The conclusion follows as in the first solution.
+</p>
+<h2><span class="mw-headline" id="Solution_3">Solution 3</span></h2>
+<p>Assume for the sake of contradiction that is possible for unique integers <img src="//latex.artofproblemsolving.com/a/5/b/a5b29b358e825defa3e11b7d903d43ec31e5909a.png" class="latex" alt="$a,b,c$" style="vertical-align: -4px" width="43" height="18" />. Let <img src="//latex.artofproblemsolving.com/0/0/5/005c5a4820cf0e16065e88150a0f7b87b1f3acf1.png" class="latex" alt="$P(x)=d_1x^n+d_2x^{n-1}+\cdots+d_n.$" style="vertical-align: -4px" width="262" height="19" /> Note that  <img src="//latex.artofproblemsolving.com/1/3/a/13a7d17a974b052231efe3e79e12d0c094293df7.png" class="latexcenter" alt="\[b=P(a)=d_1a^n+d_2a^{n-1}+\cdots+d_n\]" width="287" height="19" />
+<img src="//latex.artofproblemsolving.com/d/f/2/df2f2b63441bacd270992fa46e4a538eab46c9df.png" class="latexcenter" alt="\[c=P(b)=d_1b^n+d_2b^{n-1}+\cdots+d_n\]" width="281" height="20" />
+<img src="//latex.artofproblemsolving.com/b/3/f/b3f21b5da0d6c22e8b5f3a3657c636191277c863.png" class="latexcenter" alt="\[a=P(c)=d_1c^n+d_2c^{n-1}+\cdots+d_n\]" width="283" height="19" />
+Subtracting the second from the first, third from second, and first from third gives 
+<img src="//latex.artofproblemsolving.com/a/f/d/afd44bfa15ab0a6d967b3b9ebba22dc635107350.png" class="latexcenter" alt="\[b-c=P(a)-P(b)=d_1(a^n-b^n)+d_2(a^{n-1}-b^{n-1})+\cdots+ d_{n-1}(a-b)\]" width="538" height="20" />
+<img src="//latex.artofproblemsolving.com/b/5/c/b5c64b5ea4b31f3b205a1d2195f859d895db2b17.png" class="latexcenter" alt="\[c-a=P(b)-P(c)=d_1(b^n-c^n)+d_2(b^{n-1}-c^{n-1})+\cdots +d_{n-1}(b-c)\]" width="499" height="19" />
+<img src="//latex.artofproblemsolving.com/d/8/b/d8b54c4a301fbc016ba3c3ca6dd5a24c2732d38a.png" class="latexcenter" alt="\[a-b=P(c)-P(a)=d_1(c^n-a^n)+d_2(c^{n-1}-a^{n-1})+\cdots +d_{n-1}(c-a)\]" width="506" height="19" /> By the RHS, note that <img src="//latex.artofproblemsolving.com/a/6/c/a6c48a4dfa2e9165e6e4eef0a28222bac895393e.png" class="latex" alt="$a-b\mid P(a)-P(b)$" style="vertical-align: -5px" width="153" height="20" /> so <img src="//latex.artofproblemsolving.com/8/8/c/88c60da45c5ed8b53bb76a69799fdacdfaadbaf6.png" class="latex" alt="$\lvert{a-b}\rvert\leq\lvert{b-c}\rvert.$" style="vertical-align: -4px" width="125" height="18" />  Similarly, <img src="//latex.artofproblemsolving.com/6/9/0/690ffc9254871832a6720b17b6923b9b7994322d.png" class="latex" alt="$\lvert{b-c}\rvert\leq\lvert{c-a}\rvert$" style="vertical-align: -4px" width="120" height="18" /> and <img src="//latex.artofproblemsolving.com/6/b/c/6bcb997ba98915bef6d12dba9d385d13aafb8eb8.png" class="latex" alt="$\lvert{c-a}\rvert\leq\lvert{a-b}\rvert.$" style="vertical-align: -4px" width="127" height="18" />  Hence, <img src="//latex.artofproblemsolving.com/a/3/9/a398d41f174436f5e5b422dc7c0352da97d6cba4.png" class="latex" alt="$\lvert{a-b}\rvert\leq\lvert{b-c}\rvert\leq\lvert{c-a}\rvert\leq\lvert{a-b}\rvert$" style="vertical-align: -5px" width="272" height="20" /> so <img src="//latex.artofproblemsolving.com/8/7/c/87cd8af5a4ece440abe3ad1590dff1098c4fa0e0.png" class="latex" alt="$\lvert{a-b}\rvert=\lvert{b-c}\rvert=\lvert{c-a}\rvert.$" style="vertical-align: -4px" width="199" height="18" />  Assume WLOG that <img src="//latex.artofproblemsolving.com/9/1/e/91ea6c58ef39b94927558789df251ea273d72666.png" class="latex" alt="$a&gt;b&gt;c$" style="vertical-align: 0px" width="74" height="13" /> so <img src="//latex.artofproblemsolving.com/8/5/5/855c341d2be8ad3ae7a008dc647f1844fe4c076a.png" class="latex" alt="$a-b=a-c$" width="103" height="12" /> and <img src="//latex.artofproblemsolving.com/2/7/7/277440b78b3b196f28953f7a1459e781bd17e0f3.png" class="latex" alt="$b-c=c-a.$" width="105" height="12" />  From the first equation, we get <img src="//latex.artofproblemsolving.com/e/b/d/ebda5306c70a24c574ef0107ed5b5152b5f594cf.png" class="latex" alt="$b=c$" width="40" height="12" /> and substituting this in the second gives <img src="//latex.artofproblemsolving.com/d/3/e/d3e215e666b0260f809b869269e7d5dcf40b2bd5.png" class="latex" alt="$c=a.$" width="45" height="8" />  Hence, <img src="//latex.artofproblemsolving.com/5/6/6/566b9136144a62fac113ecbc8065793a74123238.png" class="latex" alt="$a=b=c$" width="74" height="12" />, contradicting the uniqueness of <img src="//latex.artofproblemsolving.com/3/f/0/3f054be28a57624feee47965aad91fdc1b7a6792.png" class="latex" alt="$a,b,c.$" style="vertical-align: -3px" width="45" height="16" /> <img src="//latex.artofproblemsolving.com/3/b/b/3bbb9e25e5be095e317771a9c5d00877ee9c8012.png" class="latex" alt="$\blacksquare$" width="13" height="12" />
+</p>
+<h2><span class="mw-headline" id="Solution_4">Solution 4</span></h2>
+<p>Assume that <img src="//latex.artofproblemsolving.com/3/8/3/3834f0cef2a1f4d8524aa5bc8e3faca298550862.png" class="latex" alt="$a, b$" style="vertical-align: -3px" width="25" height="16" /> and <img src="//latex.artofproblemsolving.com/3/3/7/3372c1cb6d68cf97c2d231acc0b47b95a9ed04cc.png" class="latex" alt="$c$" width="8" height="8" /> are distinct integers which satisfy the given conditions. Then we have <img src="//latex.artofproblemsolving.com/7/3/7/7370ea11f7987d0e458a5ab129fea0dddc0cf5d6.png" class="latex" alt="$P(c) = P(P(b)) = P(P(P(a))) = a$" style="vertical-align: -4px" width="277" height="18" />. Similarly <img src="//latex.artofproblemsolving.com/1/8/1/18157b7a798e31d25e9723025349bf7f646d412e.png" class="latex" alt="$P(P(P(b))) = b$" style="vertical-align: -4px" width="125" height="18" /> and <img src="//latex.artofproblemsolving.com/0/a/c/0ac52a85932469cbeecc6945896367d5e5eff8e6.png" class="latex" alt="$P(P(P(c))) = c$" style="vertical-align: -4px" width="125" height="18" />. Since the polynomial has integer coefficients, this implies that the polynomial <img src="//latex.artofproblemsolving.com/4/b/4/4b4cade9ca8a2c8311fafcf040bc5b15ca507f52.png" class="latex" alt="$P$" width="14" height="12" /> is <img src="//latex.artofproblemsolving.com/8/f/4/8f401fefd62274d22a6bdf74a7ff8553b84ec5a2.png" class="latex" alt="$P(x) = x$" style="vertical-align: -4px" width="73" height="18" />. But this is a contradiction since then <img src="//latex.artofproblemsolving.com/e/0/7/e07ae0ca10cc43af1eb9648a4beb9ce16df8f91f.png" class="latex" alt="$P(a) = b$" style="vertical-align: -4px" width="70" height="18" /> can only be true if <img src="//latex.artofproblemsolving.com/3/9/7/397fd7b1f33bdbf6ee27a83d1bcee42d222cb331.png" class="latex" alt="$a = b$" width="42" height="12" /> which contradicts the fact that <img src="//latex.artofproblemsolving.com/3/8/3/3834f0cef2a1f4d8524aa5bc8e3faca298550862.png" class="latex" alt="$a, b$" style="vertical-align: -3px" width="25" height="16" /> and <img src="//latex.artofproblemsolving.com/3/3/7/3372c1cb6d68cf97c2d231acc0b47b95a9ed04cc.png" class="latex" alt="$c$" width="8" height="8" /> are distinct integers. 
+</p>
+<h2><span class="mw-headline" id="Solution_5">Solution 5</span></h2>
+<p>We get that <img src="//latex.artofproblemsolving.com/4/5/f/45f3c6ee3dcda0715a9a2d32bcf2cdae1e2d0ad9.png" class="latex" alt="$a-b|b-c, b-c|c-a, c-a|a-b$" style="vertical-align: -4px" width="266" height="18" />. Thus, we can say that <img src="//latex.artofproblemsolving.com/0/1/a/01a380901cdec2ca789364264bcde3120ef052f9.png" class="latex" alt="$(b-c) = (a-b)k, (c-a) = (b-c)j, (a-b) = (c-a)m$" style="vertical-align: -4px" width="441" height="18" />, for non zero integers, not necesarily positive, k, j, and m. Multiplying these equations and canceling, we get that <img src="//latex.artofproblemsolving.com/6/2/7/6270839511fb7c085f2fa506a8fbf2b13544425d.png" class="latex" alt="$kjm$" style="vertical-align: -3px" width="34" height="16" />=1. This means that either k=1, m=1, j=1, or two of the variables are equal to 1 and the other is equal to -1. If all of the variables are equal to zero, plugging in gives us that <img src="//latex.artofproblemsolving.com/5/6/6/566b9136144a62fac113ecbc8065793a74123238.png" class="latex" alt="$a=b=c$" width="74" height="12" />, contradictory to the conditions given in the problem statement. If two of the variables are equal to -1, and the other is equal to 1, then WLOG let <img src="//latex.artofproblemsolving.com/5/4/8/54894191f8aeee3f6aa468a2a23958853e2c1052.png" class="latex" alt="$k=m=-1, j=1$" style="vertical-align: -3px" width="146" height="16" />. But this implies that the distinct integer condition is not satisfied, and hence, this case is invalid. Thus, it is impossible. <img src="//latex.artofproblemsolving.com/3/b/b/3bbb9e25e5be095e317771a9c5d00877ee9c8012.png" class="latex" alt="$\blacksquare$" width="13" height="12" />
+<i>Alternate solutions are always welcome. If you have a different, elegant solution to this problem, please <a rel="nofollow" class="external text" href="https://artofproblemsolving.com/wiki/index.php?title=1974_USAMO_Problems/Problem_1&amp;action=edit">add it</a> to this page.</i>
+</p>
+<h2><span class="mw-headline" id="See_Also">See Also</span></h2>
+<table class="wikitable" style="margin:0.5em auto; font-size:95%; border:1px solid black; width:40%;">
+<tbody><tr>
+<td style="background:#ccf;text-align:center;" colspan="3"><b><a href="/wiki/index.php/1974_USAMO" title="1974 USAMO">1974 USAMO</a></b> (<b><a href="/wiki/index.php/1974_USAMO_Problems" title="1974 USAMO Problems">Problems</a></b> • <a rel="nofollow" class="external text" href="http://www.artofproblemsolving.com/Forum/resources.php?c=182&amp;cid=27&amp;year=1974">Resources</a>)
+</td></tr>
+<tr>
+<td width="50%" align="center" rowspan="1"><b>First Question</b>
+</td>
+<td width="50%" align="center" rowspan="1">Followed&#160;by<br /><b><a href="/wiki/index.php/1974_USAMO_Problems/Problem_2" title="1974 USAMO Problems/Problem 2">Problem 2</a></b>
+</td></tr>
+<tr>
+<td colspan="3" style="text-align:center;"><a class="mw-selflink selflink">1</a> <b>•</b> <a href="/wiki/index.php/1974_USAMO_Problems/Problem_2" title="1974 USAMO Problems/Problem 2">2</a> <b>•</b> <a href="/wiki/index.php/1974_USAMO_Problems/Problem_3" title="1974 USAMO Problems/Problem 3">3</a> <b>•</b> <a href="/wiki/index.php/1974_USAMO_Problems/Problem_4" title="1974 USAMO Problems/Problem 4">4</a> <b>•</b> <a href="/wiki/index.php/1974_USAMO_Problems/Problem_5" title="1974 USAMO Problems/Problem 5">5</a>
+</td></tr>
+<tr>
+<td colspan="3" style="text-align:center;"><b><a href="/wiki/index.php/USAMO_Problems_and_Solutions" title="USAMO Problems and Solutions"> All USAMO Problems and Solutions</a></b>
+</td></tr></tbody></table>
+<ul><li><a rel="nofollow" class="external text" href="http://www.artofproblemsolving.com/Forum/viewtopic.php?p=579731#579731">Discussion on AoPS/MathLinks</a></li></ul>
+<p>These problems are copyrighted &#169; by the <a rel="nofollow" class="external text" href="https://www.maa.org">Mathematical Association of America</a>, as part of the <a rel="nofollow" class="external text" href="https://maa.org/student-programs/amc/">American Mathematics Competitions</a>. <a href="/wiki/index.php/File:AMC_logo.png" class="image"><img alt="AMC logo.png" src="https://wiki-images.artofproblemsolving.com//thumb/8/8b/AMC_logo.png/50px-AMC_logo.png" width="50" height="43" style="vertical-align: middle" srcset="https://wiki-images.artofproblemsolving.com//thumb/8/8b/AMC_logo.png/75px-AMC_logo.png 1.5x, https://wiki-images.artofproblemsolving.com//8/8b/AMC_logo.png 2x" /></a>
+</p>
+<div style="clear:both;"></div>
+
+<!-- 
+NewPP limit report
+Cached time: 20250524153114
+Cache expiry: 86400
+Dynamic content: false
+CPU time usage: 0.075 seconds
+Real time usage: 2.676 seconds
+Preprocessor visited node count: 1097/1000000
+Preprocessor generated node count: 2534/1000000
+Post‐expand include size: 1491/2097152 bytes
+Template argument size: 52/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+Unstrip recursion depth: 0/20
+Unstrip post‐expand size: 19835/5000000 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  155.101      1 -total
+ 64.79%  100.496      1 Template:Alternate_solutions
+ 22.07%   34.224      1 Template:USAMO_box
+ 12.96%   20.104      1 Template:MAA_Notice
+-->
+</div>
+<!-- Saved in parser cache with key wiki-wiki_:pcache:idhash:6376-0!canonical and timestamp 20250524153111 and revision id 121758
+ -->
+</div><div class="printfooter">
+Retrieved from "<a dir="ltr" href="https://artofproblemsolving.com/wiki/index.php?title=1974_USAMO_Problems/Problem_1&amp;oldid=121758">https://artofproblemsolving.com/wiki/index.php?title=1974_USAMO_Problems/Problem_1&amp;oldid=121758</a>"</div>
+
+
+									<div class="catlinks"><div id="catlinks" class="catlinks" data-mw="interface"><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/index.php/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="/wiki/index.php/Category:Olympiad_Algebra_Problems" title="Category:Olympiad Algebra Problems">Olympiad Algebra Problems</a></li></ul></div></div></div>
+				
+
+							</div>
+		</div>
+	</div>
+</div>
+
+<!-- search:off -->
+	<div class="clearfix"></div>
+
+	
+	<div id="main-footer" class="no-print">
+		<div class="footer-container">
+			<div class="footer-topRow">
+											<a href="https://artofproblemsolving.com/online">
+							<img class="footer-mainLogo"
+							src="https://artofproblemsolving.com/assets/images/logos/aops-online-footer.svg"/>
+						</a>
+										<div class="footer-wasc">
+						<span>
+							Art of Problem Solving is an
+							<br class="wasc-break"/>
+							<span class="footer-accredited">ACS WASC Accredited School</span>
+						</span>
+						<img class="footer-wascLogo"
+						src="https://artofproblemsolving.com/assets/images/logos/wasc.png"/>
+					</div>
+			</div>
+			<div class="footer-links">
+				<div class="footer-col">
+					<div class="footer-colHeader">aops programs</div>
+					<div><a class="link" href="https://artofproblemsolving.comonline">AoPS Online</a></div>
+					<div><a class="link" href="https://beastacademy.com">Beast Academy</a></div>
+					<div><a class="link" href="https://aopsacademy.org">AoPS Academy</a></div>
+				</div>
+
+				<div class="footer-col">
+					<div class="footer-colHeader">About</div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/about">About AoPS</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/staff">Our Team</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/history">Our History</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/careers">Jobs</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/blog">AoPS Blog</a></div>
+				</div>
+
+				<div class="footer-col">
+					<div class="footer-colHeader" style="left:-1px;">Site Info</div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/tos">Terms</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/privacy">Privacy</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/contact">Contact Us</a></div>
+				</div>
+
+				<div class="footer-col social">
+					<div class="footer-colHeader">follow us</div>
+					<div class="footer-social">
+													<a class="link" target="_blank" href="https://www.facebook.com/artofproblemsolving">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/facebook.svg" class="sm-icon"/>
+							</a>
+							<a class="link" target="_blank" href="http://twitter.com/AoPSNews">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/twitter.svg" class="sm-icon"/>
+							</a>
+							<a class="link" target="_blank" href="https://www.pinterest.com/artofproblemsolving/pins/">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/pinterest.svg" class="sm-icon"/>
+							</a>
+											</div>
+				</div>
+									<div class="footer-col subscribe">
+						<div class="footer-colHeader">
+							Subscribe for news and updates
+						</div>
+						<form method="post" action="/mailinglist">
+							<input type="email" class="footer-email" placeholder="Enter e-mail" name="subscribe-email">
+							<input type="hidden" name="new-books" value="on">
+							<input type="hidden" name="classes" value="on">
+							<input type="hidden" name="mathjams" value="on">
+							<input type="submit" class="footer-submit" value="">
+							<div class="footer-submit-arrow">
+								<svg x="0px" y="0px" viewBox="0 0 289 289" enable-background="new 0 0 289 289">
+									<g>
+										<path class="arrow-fill" d="M121.5,220.5c-2.6,0-5.1-1-7.1-2.9c-3.9-3.9-3.9-10.2,0-14.1l58.9-58.9l-58.9-58.9c-3.9-3.9-3.9-10.2,0-14.1c3.9-3.9,10.2-3.9,14.1,0l66,66c3.9,3.9,3.9,10.2,0,14.1l-66,66C126.6,219.5,124.1,220.5,121.5,220.5z"/>
+									</g>
+								</svg>
+							</div>
+						</form>
+					</div>
+							</div>
+			<div class="copyright">
+				<span>&copy; 2025 AoPS Incorporated
+				</span>
+			</div>
+		</div>
+	</div>
+
+	<div id="small-footer-wrapper">
+		<div class="footer-container">
+							<a href="https://artofproblemsolving.com/online">
+					<img class="footer-mainLogo"
+					src="https://artofproblemsolving.com/assets/images/logos/aops-online-footer.svg"/>
+				</a>
+						<div class="copyright">
+				&copy; 2025 Art of Problem Solving
+				<div class="copyright-links">
+					<a href="https://artofproblemsolving.com/company">About Us</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/contact">Contact Us</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/company/tos">Terms</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/company/privacy">Privacy</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<form id="registration-form" method="post" action="/user/register.php">
+	<input type="hidden" name="username" value="">
+	<input type="hidden" name="password" value="">
+	<input type="hidden" name="from-login" value="true">
+	</form>
+<div id="print-footer" class="printer">Copyright &copy; 2025 Art of Problem Solving</div>
+
+
+
+<div id="epicfail" class="aops-html-modal-epic-fail" style="display: none">
+	<div class="aops-html-modal-inner-epic-fail">
+		<div class="aops-html-modal-main-epic-fail">
+			<p>Something appears to not have loaded correctly.</p>
+		</div>
+		<div class="aops-html-modal-bottom-epic-fail">
+			<p><a onclick="location.reload(true);return false">Click to refresh</a>.</p>
+		</div>
+	</div>
+</div>
+<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/epic-fail.css">
+
+
+
+
+
+<!-- /search:off -->
+
+
+<!-- copied from contact page index, with edits -->
+<script id="footer-tpl-email-dialog" type="text/x-handlebars-template">
+	<div id="mail-dialog">
+		<h1>Email Art of Problem Solving</h1>
+		<p>
+			<input type="text" id="email" name="email" placeholder="Your email address">
+			<input type="text" id="subject" name="subject" placeholder="Subject of message">
+			<textarea id="message" name="message" placeholder="Enter your message"></textarea>
+			<div style="padding:5px 30px">
+				<input type="checkbox" id="email-copy" name="email_copy">
+				<label for="email-copy" id="email-copy-label">Send a copy to my email address.</label>
+			</div>
+			<div style="padding:5px 30px 20px">
+				<input id="footer-submit-btn" type="submit" class="btn btn-primary" value="Send">
+				<input id="footer-cancel-btn" type="submit" class="btn btn-default" value="Cancel">
+			</div>
+		</p>
+		<p id="email-error"></p>
+	</div>
+</script>
+
+
+<script id="footer-tpl-email-confirm" type="text/x-handlebars-template">
+	<div id="mail-dialog-confirm">
+		<h2>Email Sent</h2>
+		<p>Thank you for your email. We will respond to it soon.</p>
+	</div>
+</script>
+
+<!-- bing -->
+<script>(function(w,d,t,r,u){var f,n,i;w[u]=w[u]||[],f=function(){var o={ti:"5105596"};o.q=w[u],w[u]=new UET(o),w[u].push("pageLoad")},n=d.createElement(t),n.src=r,n.async=1,n.onload=n.onreadystatechange=function(){var s=this.readyState;s&&s!=="loaded"&&s!=="complete"||(f(),n.onload=n.onreadystatechange=null)},i=d.getElementsByTagName(t)[0],i.parentNode.insertBefore(n,i)})(window,document,"script","//bat.bing.com/bat.js","uetq");</script><noscript><img src="//bat.bing.com/action/0?ti=5105596&Ver=2" height="0" width="0" style="display:none; visibility: hidden;" /></noscript>
+
+</body>
+<!-- Cached 20250524225657 -->
+</html>
+

@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html>
+	<head>
+				
+<script>AoPS = {
+	start_time : new Date().getTime()
+};</script>
+
+<script>
+	AoPS.bootstrap_data = [];
+	AoPS.bd = AoPS.bootstrap_data; // Alias!
+	AoPS.session = {"user_id":1,"platform_user_id":"","username":"Anonymous","avatar":"\/\/avatar.artofproblemsolving.com\/avatar_1.png?t=1","email":"","role":"","logged_in":false,"initialized":false,"needs_coppa_approval":false,"admin":false,"national_staff":false,"wikiname":""};
+	AoPS.bd.assetVersion = 1;
+	AoPS.bd.environment = 'production';
+	AoPS.protected_url = 'https://artofproblemsolving.com/';
+	AoPS.aops_url = 'https://artofproblemsolving.com/';
+	AoPS.academy_url = 'https://aopsacademy.org/';
+</script>
+		<!-- GA plugin and Enhanced Ecommerce -->
+		<script>
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+		ga('create', 'UA-1905305-1', 'auto', {allowLinker: true}); // GA Property ID
+		ga('send', 'pageview');
+		</script>
+		<!-- End GA plugin and Enhanced Ecommerce -->
+		<!-- Google Tag Manager -->
+		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+		new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+		j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+		'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer', 'GTM-59JWRGZ')</script>
+		<!-- End Google Tag Manager -->
+
+		<link rel="apple-touch-icon" href="https://artofproblemsolving.com/apple-touch-icon.png">
+
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="initial-scale=1">
+		<meta name="referrer" content="origin">
+
+		<meta name="facebook-domain-verification" content="zmmwg7oqqsqvf8ihckwvzoo85b08gx" />
+
+		
+		<link rel="apple-touch-icon" href="https://assets.artofproblemsolving.com/images/apple-touch-icon.png">
+		<title>Art of Problem Solving</title>
+
+		
+		<link href="https://artofproblemsolving.com/assets/fonts/font-awesome/css/all.css" rel="stylesheet">
+
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/sharedsite.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/navheader.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/footer.css">
+		<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/main-head.css">
+
+					<link rel="icon" href="https://artofproblemsolving.com/online-favicon.ico?v=2">
+		
+		
+		<script>
+  if (!window.console) console = {log: function() {}, dir: function() {}};
+  $$ = function( selector ) { return document.getElementById( selector ); }
+</script>
+
+							<script src="//assets.artofproblemsolving.com/js/jquery360.min.js"></script>
+							<script src="//artofproblemsolving.com/assets/vendor/jquery/3.6.0/jquery-migrate.min.js"></script>
+					<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          // customised options
+          // • auto-render specific keys, e.g.:
+          delimiters: [
+              {left: '[katex]', right: '[/katex]', display: false},
+			  {left: '[katex display=true]', right: '[/katex]', display: true} 
+          ],
+          // • rendering keys, e.g.:
+          throwOnError : false
+        });
+    });
+</script>
+
+<script>
+MathJax = {
+  tex: {
+	inlineMath: [['[mathjax]', '[/mathjax]'], ['\\(', '\\)']],
+	displayMath: [['[mathjax display=true]', '[/mathjax]']]
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"> </script>
+
+				<meta charset="UTF-8"/>
+<title>2021 USAJMO Problems/Problem 1 - AoPS Wiki</title>
+<script>document.documentElement.className = document.documentElement.className.replace( /(^|\s)client-nojs(\s|$)/, "$1client-js$2" );</script>
+<script>(window.RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"2021_USAJMO_Problems/Problem_1","wgTitle":"2021 USAJMO Problems/Problem 1","wgCurRevisionId":237929,"wgRevisionId":237929,"wgArticleId":21073,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Olympiad Algebra Problems"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"2021_USAJMO_Problems/Problem_1","wgRelevantArticleId":21073,"wgRequestId":"7acb8fc26a239feafdcdf45b","wgIsProbablyEditable":false,"wgRelevantPageIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});mw.loader.state({"site.styles":"ready","noscript":"ready","user.styles":"ready","user":"ready","site":"ready","user.options":"ready","user.tokens":"loading","mediawiki.legacy.shared":"ready","mediawiki.legacy.commonPrint":"ready","mediawiki.sectionAnchor":"ready","skins.aopsp":"ready"});mw.loader.implement("user.tokens@09avpoe",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
+});mw.loader.load(["mediawiki.page.startup","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.toc","mediawiki.searchSuggest","skins.aopsp.js"]);});</script>
+<link rel="stylesheet" href="/wiki/load.php?debug=false&amp;lang=en&amp;modules=mediawiki.legacy.commonPrint%2Cshared%7Cmediawiki.sectionAnchor%7Cskins.aopsp&amp;only=styles&amp;skin=aopsp"/>
+<script async="" src="/wiki/load.php?debug=false&amp;lang=en&amp;modules=startup&amp;only=scripts&amp;skin=aopsp"></script>
+<meta name="ResourceLoaderDynamicStyles" content=""/>
+<link rel="stylesheet" href="/wiki/load.php?debug=false&amp;lang=en&amp;modules=site.styles&amp;only=styles&amp;skin=aopsp"/>
+<meta name="generator" content="MediaWiki 1.31.1"/>
+<link rel="shortcut icon" href="/favicon.ico"/>
+<link rel="search" type="application/opensearchdescription+xml" href="/wiki/opensearch_desc.php" title="AoPS Wiki (en)"/>
+<link rel="EditURI" type="application/rsd+xml" href="https://artofproblemsolving.com/wiki/api.php?action=rsd"/>
+<link rel="alternate" type="application/atom+xml" title="AoPS Wiki Atom feed" href="/wiki/index.php?title=Special:RecentChanges&amp;feed=atom"/>
+<!--[if lt IE 9]><script src="/wiki/load.php?debug=false&amp;lang=en&amp;modules=html5shiv&amp;only=scripts&amp;skin=aopsp&amp;sync=1"></script><![endif]-->
+			</head>
+		
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Print to PDF</title>
+                <style>
+                    .print-note {
+                        background-color: #f0f0f0;
+                        padding: 10px;
+                        border: 1px solid #ccc;
+                        margin-bottom: 20px;
+                        font-family: Arial, sans-serif;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-note">
+                    <strong>Note:</strong> This HTML file should be printed to PDF. 
+                    Please use your browser's print function (Ctrl+P) and select "Save as PDF".
+                </div>
+            <body class="production mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-2021_USAJMO_Problems_Problem_1 rootpage-2021_USAJMO_Problems_Problem_1 skin-aopsp action-view resources">
+
+					<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-59JWRGZ"
+			height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		
+		<div id="page-wrapper">
+
+			<!-- search:off -->
+			
+			<!-- The gray bar at top -->
+			<!-- see shared-site.css -->
+			<div id="top-bar" class="sharedsite-wrapper no-select">
+				<div class="sharedsitebar">
+					<a href="https://artofproblemsolving.com" class="mobile-title"></a>
+					<div class="sharedsite-links">
+											<a class="site-link main" href="https://artofproblemsolving.com/company">
+												Art of Problem Solving
+						</a>
+						<div class="site">
+													<a class="site-link selected" href="https://artofproblemsolving.com">
+														<img src="https://artofproblemsolving.com/assets/images/logos/icon-online.svg" class="site-icon">
+								<span class="site-name">AoPS Online</span>
+							</a>
+							<!-- Rich dropdown -->
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-online.svg"/>
+										</div>
+										<div class="site-snippet">
+											Math texts, online classes, and more
+											<br/>for students in grades 5-12.
+										</div>
+										<a target="_blank" class="site-visit aops-primary" href="https://artofproblemsolving.com">
+											Visit AoPS Online <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://artofproblemsolving.com/store" class="btn btn-primary aops-btn">
+											Books for Grades 5-12
+										</a>
+										<a target="_blank" href="https://artofproblemsolving.com/school" class="btn btn-primary aops-btn">
+											Online Courses
+										</a>
+									</div>
+								</div>
+							</div>
+							<!-- End rich dropdown -->
+						</div>
+						<div class="site">
+							<a class="site-link" href="https://beastacademy.com">
+								<img src="https://artofproblemsolving.com/assets/images/logos/icon-ba.svg" class="site-icon">
+								<span class="site-name">Beast Academy</span>
+							</a>
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-ba.svg"/>
+										</div>
+										<div class="site-snippet">
+											Engaging math books and online learning
+											<br/>for students ages 6-13.
+										</div>
+										<a target="_blank" class="site-visit ba-primary" href="https://beastacademy.com">
+											Visit Beast Academy <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://beastacademy.com/books" class="btn btn-primary ba-btn">
+											Books for Ages 6-13
+										</a>
+										<a target="_blank" href="https://beastacademy.com/online" class="btn btn-primary ba-btn">
+											Beast Academy Online
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="site">
+							<a class="site-link" href="https://aopsacademy.org">
+								<img src="https://artofproblemsolving.com/assets/images/logos/icon-academy.svg" class="site-icon">
+								<span class="site-name">AoPS Academy</span>
+							</a>
+							<div class="site-dropdown-wrapper">
+								<div class="site-dropdown">
+									<div class="site-info">
+										<div class="site-logo">
+											<img src="https://artofproblemsolving.com/assets/images/logos/aops-academy.svg"/>
+										</div>
+										<div class="site-snippet">
+											Small live classes for advanced math
+											<br/>and language arts learners in grades 2-12.
+										</div>
+										<a target="_blank" class="site-visit academy-primary" href="https://aopsacademy.org">
+											Visit AoPS Academy <span class="aops-font">‚</span>
+										</a>
+									</div>
+									<div class="site-quick-nav">
+										<a target="_blank" href="https://aopsacademy.org/campuses" class="btn btn-primary academy-btn">
+											Find a Physical Campus
+										</a>
+										<a target="_blank" href="https://virtual.aopsacademy.org" class="btn btn-primary academy-btn">
+											Visit the Virtual Campus
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div id="header-wrapper" class="no-select">
+				<div class="header-underlay">
+					<div id="header">
+
+						<!-- The white area where main menu options appear -->
+
+						<!-- The menu links -->
+													<div id="main-menubar">
+								<div class="menubar-content">
+									<div class="menubar-logo online">
+										<img class="menubar-hamburger" src="https://artofproblemsolving.com/assets/images/hamburger.svg"/>
+										<a class="logo-img-link" href="https://artofproblemsolving.com/online">
+											<img class="logo-img" src="https://artofproblemsolving.com/assets/images/logos/aops-online.svg"/>
+											<img class="logo-img-mobile" src="https://artofproblemsolving.com/assets/images/logos/aops-online-mobile.svg"/>
+											<img class="logo-img-small" src="https://artofproblemsolving.com/assets/images/logos/aops-online-mobile.svg"/>
+										</a>
+									</div>
+									<div class="menubar-links-outer">
+										<!-- The login links -->
+										<div class="menu-login-wrapper online">
+											
+											<div class="menu-login-item">
+															<div 
+		    id="header-login"
+			class="no-select not-signed-in"
+			style="display:flex">
+
+			<div class="online-login-button solid-rounded-button">Sign&nbsp;In</div><div class="online-register-button">Register</div>
+		</div>
+												</div>
+
+											
+										</div>
+										<div class="menubar-labels online">
+											<div class="menubar-label school">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/school">
+														online school
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+														<!-- These have IDs for A/B testing purposes. T27691 -->
+																												<a id="online-school-menu-schedule" href="https://artofproblemsolving.com/school/schedule"> Class Schedule </a>
+														<a id="online-school-menu-recommmendations" href="https://artofproblemsolving.com/school/recommendations"> Recommendations </a>
+														<a id="online-school-menu-woot-courses" href="https://artofproblemsolving.com/school/woot?gtmlist=School_Nav"> Olympiad Courses </a>
+														<a id="online-school-menu-mathjams" href="https://artofproblemsolving.com/school/mathjams"> Free Sessions </a>
+																																									</div>
+												</div>
+											</div>
+											<div class="menubar-label store">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/store">
+														books<span class="menubar-link-ext">tore </span>
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+																																																								<a href="https://artofproblemsolving.com/store/list/aops-curriculum">AoPS Curriculum</a>
+														<a href="https://artofproblemsolving.com/store/list/beast-academy">Beast Academy</a>
+														<a href="https://artofproblemsolving.com/store/online">Online Books</a>
+														<a href="https://artofproblemsolving.com/store/recommendations">Recommendations</a>
+														<a href="https://artofproblemsolving.com/store/list/other-products">Other Books &amp; Gear</a>
+														<a href="https://artofproblemsolving.com/store/list/all-products">All Products</a>
+														<a href="https://artofproblemsolving.com/store/gift-certificates?gtmlist=Bookstore_Nav">Gift Certificates</a>
+																											</div>
+												</div>
+											</div>
+											<div class="menubar-label community">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/community">
+														community
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+																												<a data-cmty href="https://artofproblemsolving.com/community">Forums</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/c13_contests">Contests</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/search">Search</a>
+														<a data-cmty href="https://artofproblemsolving.com/community/faq">Help</a>
+																																									</div>
+												</div>
+											</div>
+											<div class="menubar-label resources">
+												<div class="menubar-label-link-outer">
+													<a class="menubar-label-link " href="https://artofproblemsolving.com/resources">
+														resources
+													</a>
+												</div>
+												<div class="menubar-dropdown">
+													<div class="triangle"></div>
+													<div class="dropdown-content">
+														<div class="dropdown-columns">
+															<div class="dropdown-category">
+																<span class="dropdown-category-label">math training & tools</span>
+																<a href="https://artofproblemsolving.com/alcumus">Alcumus</a>
+																<a href="https://artofproblemsolving.com/videos">Videos</a>
+																<a href="https://artofproblemsolving.com/ftw">For the Win!</a>
+																<a href="https://artofproblemsolving.com/mathcounts_trainer">MATHCOUNTS Trainer</a>
+																<a href="https://artofproblemsolving.com/contests/practice">AoPS Practice Contests</a>
+																<a href="https://artofproblemsolving.com/wiki/index.php?title=Main_Page">AoPS Wiki</a>
+																<a href="https://artofproblemsolving.com/texer">LaTeX TeXeR</a>
+																<a href="https://artofproblemsolving.com/polymath">MIT PRIMES/CrowdMath</a>
+																<a href="https://artofproblemsolving.com/keeplearning">Keep Learning</a>
+																<a href="https://beastacademy.com/all-ten">All Ten</a>
+																															</div>
+															<div class="dropdown-column">
+																																<div class="dropdown-category category-in-column">
+																	<span class="dropdown-category-label">contests on aops</span>
+																	<a href="https://artofproblemsolving.com/contests/practice">Practice Math Contests</a>
+																	<a href="https://artofproblemsolving.com/contests/usabo">USABO</a>
+																</div>
+																<div class="dropdown-category category-in-column">
+                                                                                                                                        <span class="dropdown-category-label">news</span>
+                                                                                                                                        <a href="https://artofproblemsolving.com/blog">AoPS Blog</a>
+                                                                                                                                        <a href="https://artofproblemsolving.com/blog/webinars/aopswebinars">Webinars</a>
+                                                                                                                                </div>
+															</div>
+														</div>
+														<div class="dropdown-view-more-link-container">
+															<a href="https://artofproblemsolving.com/resources" class="dropdown-view-more-link">view all <span class="aops-icon">0</span></a>
+														</div>
+													</div>
+												</div>
+											</div>
+																						<div class="menubar-label menu-login-item">
+															<div 
+		    id="header-login"
+			class="no-select not-signed-in"
+			style="display:flex">
+
+			<div class="online-login-button solid-rounded-button">Sign&nbsp;In</div><div class="online-register-button">Register</div>
+		</div>
+												</div>
+																					</div>
+									</div>
+								</div>
+							</div>
+											</div>
+				</div>
+
+								<noscript>
+					<div class="infobar">JavaScript is not enabled. JavaScript is required to fully utilize the site.</div>
+				</noscript>
+
+
+									<div id="breadcrumbs-wrapper">
+						<div id="submenu-icon"></div>
+						<div id="breadcrumbs">
+														<!-- ignore-security-checks -->
+							<div class="title-wrapper"><div class="title"><a href="/wiki">AoPS Wiki</a></div></div>
+														<div class="crumb-wrapper">
+																										<span class="crumb crumb-1">
+																			<!-- ignore-security-checks -->
+										<a href="https://artofproblemsolving.com/resources">Resources</a>
+																		</span>
+																											<i class="aops-font aops-angle-double-right"></i>
+																		<span class="crumb crumb-2">
+																			<!-- ignore-security-checks -->
+										<a href="/wiki">Aops Wiki</a>
+																		</span>
+																											<i class="aops-font aops-angle-double-right"></i>
+																		<span class="crumb crumb-3">
+																			2021 USAJMO Problems/Problem 1																		</span>
+															</div>
+						</div>
+					</div>
+							</div>
+
+			<!-- search icon script lives in footer.phtml-->
+
+			<!-- /search:off -->
+
+<div id="main-content" class="left-navigation wiki">
+	<div id="side-column-wrapper">
+		<div id="side-column">
+						<div id="content-actions" class="menu open">
+				<div class="submenu">
+					<h1>Page</h1>
+					<div class="submenu-wrapper">
+						<span id="ca-nstab-main" class="selected"><a href="/wiki/index.php/2021_USAJMO_Problems/Problem_1" title="View the content page " accesskey="c">Article</a></span><span id="ca-talk" class="new"><a href="/wiki/index.php?title=Talk:2021_USAJMO_Problems/Problem_1&amp;action=edit&amp;redlink=1" rel="discussion" title="Discussion about the content page (page does not exist) " accesskey="t">Discussion</a></span><span id="ca-viewsource"><a href="/wiki/index.php?title=2021_USAJMO_Problems/Problem_1&amp;action=edit" title="This page is protected.&#10;You can view its source " accesskey="e">View source</a></span><span id="ca-history"><a href="/wiki/index.php?title=2021_USAJMO_Problems/Problem_1&amp;action=history" title="Past revisions of this page " accesskey="h">History</a></span>					</div>
+				</div>
+			</div>
+			<div id="toolbox" class="menu open">
+				<div class="submenu">
+					<h1>Toolbox</h1>
+					<div class="submenu-wrapper">
+						<span id="n-recentchanges"><a href="/wiki/index.php/Special:RecentChanges" title="A list of recent changes in the wiki " accesskey="r">Recent changes</a></span><span id="n-randompage"><a href="/wiki/index.php/Special:Random" title="Load a random page " accesskey="x">Random page</a></span><span id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></span><span id="t-whatlinkshere"><a href="/wiki/index.php/Special:WhatLinksHere/2021_USAJMO_Problems/Problem_1" title="A list of all wiki pages that link here " accesskey="j">What links here</a></span><span id="t-specialpages"><a href="/wiki/index.php/Special:SpecialPages" title="A list of all special pages " accesskey="q">Special pages</a></span>					</div>
+				</div>
+			</div>
+			
+			<div id="search" class="menu open">
+				<h1>Search</h1>
+				<div class="submenu-wrapper" style="margin-bottom:5px;">
+					<form action="/wiki/index.php" id="searchform" class="mw-search">
+						<input type="hidden" name="title" value="Special:Search">
+						<input type="search" name="search" placeholder="Search" value="" accesskey="f" id="searchInput">
+						<div style="margin:0 5px 5px 5px;text-align:right;"><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="btn btn-primary searchButton"/></div>
+					</form>
+				</div>
+			</div>
+
+			<!--
+			<div class="menu open">
+				<h1>Note</h1>
+				<div class="submenu-wrapper" style="padding:10px;color:#444;">
+					Please do not discuss the 2015 AMC 8 Competition on any website until November 25th.
+				</div>
+			</div>
+			-->
+		</div>
+	</div>
+
+	<div id="main-column" style="margin-top:10px">
+				<div class="page-wrapper">
+						<div id="mw-js-message" style="display:none;"></div>
+			<h1 id="firstHeading" class="firstHeading">2021 USAJMO Problems/Problem 1</h1>
+
+						
+			<div class="mw-body">
+												
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div class="mw-parser-output"><div id="toc" class="toc"><div class="toctitle" lang="en" dir="ltr"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Problem"><span class="tocnumber">1</span> <span class="toctext">Problem</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Solution"><span class="tocnumber">2</span> <span class="toctext">Solution</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Solution_2_.28Taken_from_Twitch_Solves_ISL.29"><span class="tocnumber">3</span> <span class="toctext">Solution 2 (Taken from Twitch Solves ISL)</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Solution_3_.28clear_Solution_2.29"><span class="tocnumber">4</span> <span class="toctext">Solution 3 (clear Solution 2)</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Video_Solution_by_the_Power_of_Logic"><span class="tocnumber">5</span> <span class="toctext">Video Solution by the Power of Logic</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#See_Also"><span class="tocnumber">6</span> <span class="toctext">See Also</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Problem">Problem</span></h2>
+<p>Let <img src="//latex.artofproblemsolving.com/a/1/e/a1e6cd0e4103015efba12e0fc4291f012b467eaa.png" class="latex" alt="$\mathbb{N}$" style="vertical-align: -1px" width="15" height="14" /> denote the set of positive integers. Find all functions <img src="//latex.artofproblemsolving.com/f/8/4/f84ba5284b311a66dd04f32ff5f63dd497acf765.png" class="latex" alt="$f&#160;: \mathbb{N} \rightarrow \mathbb{N}$" style="vertical-align: -3px" width="79" height="16" /> such that for positive integers <img src="//latex.artofproblemsolving.com/c/7/d/c7d457e388298246adb06c587bccd419ea67f7e8.png" class="latex" alt="$a$" style="vertical-align: -1px" width="11" height="10" /> and <img src="//latex.artofproblemsolving.com/5/b/1/5b1d6265e67657b5886ce257671d45ff9c0282eb.png" class="latex" alt="$b,$" style="vertical-align: -3px" width="12" height="16" /><img src="//latex.artofproblemsolving.com/c/1/f/c1f8ffe04cfcc45b498f3931a4796d5c56dc04d0.png" class="latexcenter" alt="\[f(a^2 + b^2) = f(a)f(b) \text{ and } f(a^2) = f(a)^2.\]" width="320" height="19" />
+</p>
+<h2><span class="mw-headline" id="Solution">Solution</span></h2>
+<p>I claim that the only function <img src="//latex.artofproblemsolving.com/b/b/2/bb2c93730dbb48558bb3c4738c956c4e8f816437.png" class="latex" alt="$f$" style="vertical-align: -3px" width="10" height="16" /> that satisfies the constraints outlined within the problem is the function <img src="//latex.artofproblemsolving.com/8/8/9/8898f48ba4c01f29d31847adf068affbe88b0812.png" class="latex" alt="$f(n) = 1$" style="vertical-align: -4px" width="68" height="18" /> for all positive integers <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" />.
+</p><p>We will proceed with strong induction. The base case is simple, as plugging <img src="//latex.artofproblemsolving.com/5/0/2/502e059d1a020b368aee3a99c5669d88331d321f.png" class="latex" alt="$a=1$" style="vertical-align: 0px" width="42" height="12" /> into the second equation given within the problem gives <img src="//latex.artofproblemsolving.com/9/f/7/9f7a9b13e98c274754bb34b5af7d150ed634145a.png" class="latex" alt="$f(1)=f(1)^2$" style="vertical-align: -4px" width="98" height="19" />. Since <img src="//latex.artofproblemsolving.com/e/e/f/eef0203e65664bd00b5f0325c5c5fcd81bcead8d.png" class="latex" alt="$f(n)$" style="vertical-align: -4px" width="34" height="18" /> can only return a positive integer value, we have that <img src="//latex.artofproblemsolving.com/b/c/7/bc73712d7f1001a98e82f12a2706d1004bae0610.png" class="latex" alt="$f(1)=1$" style="vertical-align: -4px" width="66" height="18" />.
+</p><p>Now we proceed with the inductive step. If the next number <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> is either a perfect square or can be represented as a sum of two perfect squares, then obviously <img src="//latex.artofproblemsolving.com/9/7/d/97de2bd2007b26ce861949134d8b687eddb368b3.png" class="latex" alt="$f(n)=1$" style="vertical-align: -4px" width="68" height="18" />, as it is either the product of two <img src="//latex.artofproblemsolving.com/b/b/2/bb2c93730dbb48558bb3c4738c956c4e8f816437.png" class="latex" alt="$f$" style="vertical-align: -3px" width="10" height="16" />-values that are both equal to <img src="//latex.artofproblemsolving.com/d/c/e/dce34f4dfb2406144304ad0d6106c5382ddd1446.png" class="latex" alt="$1$" style="vertical-align: -1px" width="11" height="14" /> from the inductive assumption or is the square of an <img src="//latex.artofproblemsolving.com/b/b/2/bb2c93730dbb48558bb3c4738c956c4e8f816437.png" class="latex" alt="$f$" style="vertical-align: -3px" width="10" height="16" />-value that is equal to <img src="//latex.artofproblemsolving.com/d/c/e/dce34f4dfb2406144304ad0d6106c5382ddd1446.png" class="latex" alt="$1$" style="vertical-align: -1px" width="11" height="14" />, again due to the inductive assumption. Otherwise, we can use the Sum of Two Squares Theorem, which tells us that <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> has at least one prime in its prime factorization that is <img src="//latex.artofproblemsolving.com/8/7/a/87a939bd7cd3b6f25ec0c27097a26138c620010c.png" class="latex" alt="$3(\mod 4)$" style="vertical-align: -4px" width="83" height="18" /> and is raised to an odd power.
+</p><p>Lemma 1: Given that <img src="//latex.artofproblemsolving.com/d/8/6/d86ee296c142d4b84c4e91927de035290e72c326.png" class="latex" alt="$a^2+b^2=c^2$" style="vertical-align: -1px" width="93" height="16" /> and <img src="//latex.artofproblemsolving.com/d/a/f/dafb6dbfeebc1f54254ebc732781d95a88b53feb.png" class="latex" alt="$f(b)=f(c)=1$" style="vertical-align: -4px" width="122" height="18" />, we then have <img src="//latex.artofproblemsolving.com/5/a/7/5a7e559d03e0959abc4a9ca33acc3ccbb104b1a2.png" class="latex" alt="$f(a)=1$" style="vertical-align: -4px" width="67" height="18" />.
+</p><p>Proof: Note that the first condition in the problem tells us that <img src="//latex.artofproblemsolving.com/4/2/5/425414880a068baaab05f6926ad15466e1636643.png" class="latex" alt="$f(a^2+b^2)=f(a)f(b)$" style="vertical-align: -4px" width="169" height="19" />, or <img src="//latex.artofproblemsolving.com/9/7/6/976326c3e142f09a2fb62eb0cc84cc373b3dfb91.png" class="latex" alt="$f(c^2)=f(a)f(b)$" style="vertical-align: -4px" width="130" height="19" />. Using the second condition gives us <img src="//latex.artofproblemsolving.com/a/5/3/a53c954afff00275a91fd1226d835b167bcdd76f.png" class="latex" alt="$f(c)^2=f(a)f(b)$" style="vertical-align: -5px" width="134" height="21" />. Plugging in the values of <img src="//latex.artofproblemsolving.com/0/b/0/0b041c557e15a9393c58bfeedd30d3c93f5c7de8.png" class="latex" alt="$f(b)$" style="vertical-align: -4px" width="31" height="18" /> and <img src="//latex.artofproblemsolving.com/f/5/5/f55646bbf92355779b357feafd057262ae76d25d.png" class="latex" alt="$f(c)$" style="vertical-align: -4px" width="31" height="18" /> gives us that <img src="//latex.artofproblemsolving.com/5/a/7/5a7e559d03e0959abc4a9ca33acc3ccbb104b1a2.png" class="latex" alt="$f(a)=1$" style="vertical-align: -4px" width="67" height="18" />.
+</p><p>Now we will attempt to repeatedly remove prime factors that are <img src="//latex.artofproblemsolving.com/a/e/f/aef1cc6fed7d7c32ce9e9dffe955070a451c81e0.png" class="latex" alt="$3(mod 4)$" style="vertical-align: -5px" width="68" height="20" /> and taken to an odd power, and we will move from the largest prime down to the smallest prime that satisfies above conditions. The prime factors will be removed by constructing a Pythagorean Triple with the prime being the smallest leg in the form of <img src="//latex.artofproblemsolving.com/a/e/3/ae39a8e2297c5c5086a76d423246ff9bda88f829.png" class="latex" alt="$p,\frac{p^2-1}{2},\frac{p^2+1}{2}$" style="vertical-align: -13px" width="131" height="41" />(this will always work as <img src="//latex.artofproblemsolving.com/d/6/0/d609bca7d5520cd17c441cb5e026dc7e0f442c8b.png" class="latex" alt="$p\neq 2$" style="vertical-align: -4px" width="43" height="17" />(not 3 mod 4), and this method works via Lemma 1). We will then prove the ending numbers that we achieve via removing all the <img src="//latex.artofproblemsolving.com/7/f/3/7f3d834fd8a615abd491d82300ce44938994da2b.png" class="latex" alt="$(\text{mod } 4)$" style="vertical-align: -4px" width="59" height="18" /> primes(which I will refer to as "tips") are equal to 1 b/c they can be expressed as the sum of two squares or is a perfect square(Sum of Two Squares Theorem). For example, if we took the number <img src="//latex.artofproblemsolving.com/f/2/5/f25d31faf472ddb4c698a14522fe8125c06f8dd8.png" class="latex" alt="$21$" style="vertical-align: 0px" width="17" height="12" />, we would first aim to remove the <img src="//latex.artofproblemsolving.com/e/0/a/e0a0db32027a732ac57d37ef2ae9bb150f65b108.png" class="latex" alt="$7$" width="9" height="12" /> by splitting it into <img src="//latex.artofproblemsolving.com/e/2/9/e290f2cba0ba0e11c0b91630da15a408da2fcf1c.png" class="latex" alt="$24$" style="vertical-align: 0px" width="18" height="12" /> and <img src="//latex.artofproblemsolving.com/6/6/6/66644fd9f411299c3c1eabf151b5f601c9ef6c21.png" class="latex" alt="$25$" width="17" height="12" />, so <img src="//latex.artofproblemsolving.com/f/2/5/f25d31faf472ddb4c698a14522fe8125c06f8dd8.png" class="latex" alt="$21$" style="vertical-align: 0px" width="17" height="12" /> would become <img src="//latex.artofproblemsolving.com/9/4/d/94db15b430439ad5b3c80bfacfef0c6499ede2ee.png" class="latex" alt="$72$" width="17" height="12" /> and <img src="//latex.artofproblemsolving.com/a/7/e/a7e4c2930d79c57bee209557767b878cd704ea46.png" class="latex" alt="$75$" style="vertical-align: -1px" width="20" height="14" />. <img src="//latex.artofproblemsolving.com/a/7/e/a7e4c2930d79c57bee209557767b878cd704ea46.png" class="latex" alt="$75$" style="vertical-align: -1px" width="20" height="14" /> is divisible by <img src="//latex.artofproblemsolving.com/7/c/d/7cde695f2e4542fd01f860a89189f47a27143b66.png" class="latex" alt="$3$" width="8" height="12" /> to an odd power, so we transform it into <img src="//latex.artofproblemsolving.com/e/5/9/e59e2c6e83eb78cca610a5fd4070ae01c8d4ae60.png" class="latex" alt="$100$" style="vertical-align: 0px" width="26" height="13" /> and <img src="//latex.artofproblemsolving.com/b/8/2/b829a6f0810a25e9ca9f85d690f2bafd0f2c1773.png" class="latex" alt="$125$" style="vertical-align: 0px" width="26" height="13" />. These two don't have any divisors that are <img src="//latex.artofproblemsolving.com/3/e/3/3e35adee1502fb22a2998e1de12b2d00911092c1.png" class="latex" alt="$3 (\text{mod } 4)$" style="vertical-align: -4px" width="68" height="18" /> raised to an odd power so we leave it alone, as sum of two squares will work on them or they are perfect squares. <img src="//latex.artofproblemsolving.com/9/4/d/94db15b430439ad5b3c80bfacfef0c6499ede2ee.png" class="latex" alt="$72$" width="17" height="12" /> does have a prime factor that is <img src="//latex.artofproblemsolving.com/f/3/4/f34464de04f5071a657f39cb136fac576a656c1e.png" class="latex" alt="$3(\text{mod } 4)$" style="vertical-align: -4px" width="68" height="18" />, but it is an even power so we leave it alone. In this case, the tips are <img src="//latex.artofproblemsolving.com/9/4/d/94db15b430439ad5b3c80bfacfef0c6499ede2ee.png" class="latex" alt="$72$" width="17" height="12" />, <img src="//latex.artofproblemsolving.com/e/5/9/e59e2c6e83eb78cca610a5fd4070ae01c8d4ae60.png" class="latex" alt="$100$" style="vertical-align: 0px" width="26" height="13" />, and <img src="//latex.artofproblemsolving.com/b/8/2/b829a6f0810a25e9ca9f85d690f2bafd0f2c1773.png" class="latex" alt="$125$" style="vertical-align: 0px" width="26" height="13" />. However, now we need to prove two key facts: using this Pythagorean Triple Method will never generate another <img src="//latex.artofproblemsolving.com/f/3/4/f34464de04f5071a657f39cb136fac576a656c1e.png" class="latex" alt="$3(\text{mod } 4)$" style="vertical-align: -4px" width="68" height="18" /> prime that is bigger than the current one we are working on or create more primes or keep the same number of primes in the tips' prime factorizations., as otherwise it could cause an infinite cycle, and also we must prove when we use Sum of Two Squares/Perfect Square given in the second condition on the tips the square root of the square(s) used will never be greater than or equal to <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" />.
+</p><p>The first claim can be proved rather simply. Note that <img src="//latex.artofproblemsolving.com/6/a/2/6a2c33947c4d4397bf66ecb23870a7dafb2349c8.png" class="latex" alt="$\frac{p^2-1}{2}$" style="vertical-align: -12px" width="50" height="39" /> can have no prime factors greater than or equal to <img src="//latex.artofproblemsolving.com/3/6/f/36f73fc1312ee0349b3f3a0f3bd9eb5504339011.png" class="latex" alt="$p$" style="vertical-align: -3px" width="10" height="11" />, as it can be factored as <img src="//latex.artofproblemsolving.com/e/5/7/e57952e60eccfbd78ea117afe1128f8e2f0ab32a.png" class="latex" alt="$(p-1)(\frac{p+1}{2})$" style="vertical-align: -12px" width="111" height="37" />, which are both less than <img src="//latex.artofproblemsolving.com/3/6/f/36f73fc1312ee0349b3f3a0f3bd9eb5504339011.png" class="latex" alt="$p$" style="vertical-align: -3px" width="10" height="11" /> and are integers(<img src="//latex.artofproblemsolving.com/5/d/5/5d58d0cd6161c8c4be4d6284f59ec576295093e1.png" class="latex" alt="$p+1$" style="vertical-align: -3px" width="40" height="15" /> must be an integer due to <img src="//latex.artofproblemsolving.com/3/6/f/36f73fc1312ee0349b3f3a0f3bd9eb5504339011.png" class="latex" alt="$p$" style="vertical-align: -3px" width="10" height="11" /> must being odd(not equal to <img src="//latex.artofproblemsolving.com/4/1/c/41c544263a265ff15498ee45f7392c5f86c6d151.png" class="latex" alt="$2$" width="8" height="12" />)). For <img src="//latex.artofproblemsolving.com/f/b/9/fb9758c9f410e9c144c9ffab844131b0a8cce1e6.png" class="latex" alt="$\frac{p^2+1}{2}$" style="vertical-align: -12px" width="50" height="39" />, we can prove something a bit more general.
+</p><p>Lemma 2: For any positive integer <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" />, all prime factors of <img src="//latex.artofproblemsolving.com/0/f/5/0f55a7827b23d850bed0d0c3bf0880b27ffcca2c.png" class="latex" alt="$n^2+1$" style="vertical-align: -1px" width="48" height="16" /> must be <img src="//latex.artofproblemsolving.com/7/a/7/7a7c492a2691713d7f5a87fc92d98a2b2348400d.png" class="latex" alt="$1(\text{mod } 4)$" style="vertical-align: -4px" width="68" height="18" />.
+</p><p>Proof: Note that if <img src="//latex.artofproblemsolving.com/9/c/4/9c453a0fc80e57e7d421a2333d62d92517bdfeda.png" class="latex" alt="$n^2+1\equiv 0(\text{mod } p)$" style="vertical-align: -4px" width="142" height="19" />, then we also must have <img src="//latex.artofproblemsolving.com/e/3/7/e37606127aa17abbbdd20e0c93863c3b51586f50.png" class="latex" alt="$(n^2+1)(n^2-1)=(n^4-1)\equiv 0(\text{mod } p)$" style="vertical-align: -4px" width="308" height="19" />, or <img src="//latex.artofproblemsolving.com/d/4/1/d417f8906ed76acf53e76a11ffad8dea14dd4e79.png" class="latex" alt="$n^4 \equiv 1(\text{mod } p)$" style="vertical-align: -4px" width="110" height="19" />. Now we can apply Fermat's Little Theorem to obtain <img src="//latex.artofproblemsolving.com/b/5/d/b5d545b5b117b306d9a918b6e6ce23f66054c0c7.png" class="latex" alt="$n^{p-1}\equiv 1(\text{mod } p)$" style="vertical-align: -4px" width="128" height="19" />. Note that since <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> and <img src="//latex.artofproblemsolving.com/6/0/0/6006bba637eef443381fbaff768fa62d9ff41e62.png" class="latex" alt="$n^2$" width="17" height="15" /> are obviously not <img src="//latex.artofproblemsolving.com/2/4/f/24f12b679853d7290031d689542ebb217ad183fb.png" class="latex" alt="$1(\text{mod } p)$" style="vertical-align: -4px" width="68" height="18" />, as <img src="//latex.artofproblemsolving.com/e/8/5/e8558904cb6d3f671655d57cb49a4ceb04059c78.png" class="latex" alt="$n^2\equiv -1 (\text{mod } p)$" style="vertical-align: -4px" width="125" height="19" />, we have that <img src="//latex.artofproblemsolving.com/a/b/0/ab0727c08c4aaa6fa119bd3fafe17851e431fd70.png" class="latex" alt="$p-1$" style="vertical-align: -4px" width="42" height="17" /> is a multiple of <img src="//latex.artofproblemsolving.com/c/7/c/c7cab1a05e1e0c1d51a6a219d96577a16b7abf9d.png" class="latex" alt="$4$" style="vertical-align: 0px" width="9" height="12" />, or <img src="//latex.artofproblemsolving.com/4/0/5/405eada6f5babda6bb15cad6bda5fdd4929bd405.png" class="latex" alt="$p \equiv 1(\text{mod } 4)$" style="vertical-align: -4px" width="102" height="18" />.
+</p><p>We can simply apply Lemma 2 to <img src="//latex.artofproblemsolving.com/6/5/5/655b8c6dd32980bcd183209f0e7a518bd62d3b8b.png" class="latex" alt="$p^2+1$" style="vertical-align: -3px" width="48" height="18" /> as <img src="//latex.artofproblemsolving.com/4/1/c/41c544263a265ff15498ee45f7392c5f86c6d151.png" class="latex" alt="$2$" width="8" height="12" /> is obviously not <img src="//latex.artofproblemsolving.com/f/3/4/f34464de04f5071a657f39cb136fac576a656c1e.png" class="latex" alt="$3(\text{mod } 4)$" style="vertical-align: -4px" width="68" height="18" />, and this means that a prime factor <img src="//latex.artofproblemsolving.com/f/3/4/f34464de04f5071a657f39cb136fac576a656c1e.png" class="latex" alt="$3(\text{mod } 4)$" style="vertical-align: -4px" width="68" height="18" /> will never be generated from this term. This completes the first of our two claims.
+</p><p>Now we proceed to the second of our two claims. Note that every time we use the method on <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> based on prime <img src="//latex.artofproblemsolving.com/3/6/f/36f73fc1312ee0349b3f3a0f3bd9eb5504339011.png" class="latex" alt="$p$" style="vertical-align: -3px" width="10" height="11" />, we will multiply by around <img src="//latex.artofproblemsolving.com/a/c/b/acbb1f04e0f7b131500d3e59216fbc8f15ccc025.png" class="latex" alt="$\frac{p}{2}$" style="vertical-align: -13px" width="15" height="34" />, clearly less than <img src="//latex.artofproblemsolving.com/3/6/f/36f73fc1312ee0349b3f3a0f3bd9eb5504339011.png" class="latex" alt="$p$" style="vertical-align: -3px" width="10" height="11" />(if we multiply by <img src="//latex.artofproblemsolving.com/3/6/f/36f73fc1312ee0349b3f3a0f3bd9eb5504339011.png" class="latex" alt="$p$" style="vertical-align: -3px" width="10" height="11" /> we would get <img src="//latex.artofproblemsolving.com/5/9/1/591f689f950feb4a9cff58ff3166d915f916a405.png" class="latex" alt="$p^2$" style="vertical-align: -3px" width="16" height="18" /> which is clearly greater than <img src="//latex.artofproblemsolving.com/f/b/9/fb9758c9f410e9c144c9ffab844131b0a8cce1e6.png" class="latex" alt="$\frac{p^2+1}{2}$" style="vertical-align: -12px" width="50" height="39" />). We will never have to use the same prime twice in our method, so at max in the end we will multiply <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> by the product of a little less than all <img src="//latex.artofproblemsolving.com/a/e/f/aef1cc6fed7d7c32ce9e9dffe955070a451c81e0.png" class="latex" alt="$3(mod 4)$" style="vertical-align: -5px" width="68" height="20" /> primes that divide it, which is less than <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> itself for <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" /> greater than or equal to <img src="//latex.artofproblemsolving.com/7/c/d/7cde695f2e4542fd01f860a89189f47a27143b66.png" class="latex" alt="$3$" width="8" height="12" />(the smallest 3 mod 4 prime), meaning that the largest number that we must use two squares on that is generated by out method is less than <img src="//latex.artofproblemsolving.com/6/0/0/6006bba637eef443381fbaff768fa62d9ff41e62.png" class="latex" alt="$n^2$" width="17" height="15" />. We need to prove that the two squares that sum to this are both less than <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" />, which is quite trivial, as they are less than <img src="//latex.artofproblemsolving.com/6/6/9/66917a60e231f5082f14f39144801b074c72bafa.png" class="latex" alt="$\sqrt{n^2}$" style="vertical-align: -1px" width="33" height="18" />, which obviously means it must be less than <img src="//latex.artofproblemsolving.com/1/7/4/174fadd07fd54c9afe288e96558c92e0c1da733a.png" class="latex" alt="$n$" width="10" height="8" />. This proves the second of our claims.
+</p><p>This completes the second case of the inductive step, and therefore completes both the induction and the problem.
+~Solution by hyxue
+</p>
+<h2><span id="Solution_2_(Taken_from_Twitch_Solves_ISL)"></span><span class="mw-headline" id="Solution_2_.28Taken_from_Twitch_Solves_ISL.29">Solution 2 (Taken from Twitch Solves ISL)</span></h2>
+<p>The Answer is <img src="//latex.artofproblemsolving.com/3/5/1/3515c9ced47e6ed383baf03e1c3c7debd3a4e2be.png" class="latex" alt="$\boxed{f\equiv 1}$" style="vertical-align: -9px" width="56" height="27" /> which works but we want to prove that it's the only one. Claim: If <img src="//latex.artofproblemsolving.com/9/6/f/96f89e1e011e33c6b9b829f8c447f0f1bbac825b.png" class="latex" alt="$f(a)=f(b)=1$" style="vertical-align: -4px" width="124" height="18" /> and <img src="//latex.artofproblemsolving.com/0/8/2/082852571ecc48ed136ba13dcffa8f6e40064bbd.png" class="latex" alt="$a&gt;b$" style="vertical-align: 0px" width="42" height="13" />, then <img src="//latex.artofproblemsolving.com/f/1/9/f195b989e274e0e691c54b6413cde8645d70ad81.png" class="latex" alt="$f(a^2-b^2)= f(2ab)= 1$" style="vertical-align: -4px" width="187" height="19" />. Proof: We can write <img src="//latex.artofproblemsolving.com/9/a/1/9a1d3cbc4e3c85696507a9a15dd5a5ab3d36d95b.png" class="latex" alt="$1=f(a)=f(b)= f(a^2+b^2)= \sqrt{f((a^2+b^2)^2)} = \sqrt{f((a^2-b^2)^2+ (2ab)^2)} = \sqrt{f(a^2-b^2)f(2ab)}$" style="vertical-align: -11px" width="760" height="35" />. We set it to <img src="//latex.artofproblemsolving.com/9/e/6/9e69164f505ed21796ab3f57a6affdca2dc2c27e.png" class="latex" alt="$a=b=1$" style="vertical-align: 0px" width="74" height="13" /> and we get that <img src="//latex.artofproblemsolving.com/f/8/e/f8e38a693765b2a79ffdaa1eb3a65e6ca0155fd5.png" class="latex" alt="$f(1)=f(2)=1$" style="vertical-align: -4px" width="124" height="18" />. Easily by Induction it shows f(n)=1. We take if <img src="//latex.artofproblemsolving.com/b/4/b/b4b152a24df9eb8f1b5b79b67c043021c4549c74.png" class="latex" alt="$n=2k$" width="53" height="12" /> take <img src="//latex.artofproblemsolving.com/2/7/5/275ba2ba9ca38373c2354a37d789fc5ab6a2bbf9.png" class="latex" alt="$(u,v)=(k,1)$" style="vertical-align: -4px" width="106" height="18" /> which <img src="//latex.artofproblemsolving.com/f/7/4/f7423d2239d5d12d1185284aed62588535a62b71.png" class="latex" alt="$2uv=n$" width="63" height="12" />. If <img src="//latex.artofproblemsolving.com/1/8/e/18e8e7cb682f5eab6c6f409d0f0581bd1d061b5f.png" class="latex" alt="$n=2k+1$" style="vertical-align: -1px" width="84" height="14" />, just take <img src="//latex.artofproblemsolving.com/5/4/e/54e1b678b690198f83e07976c890a28ab6f9286e.png" class="latex" alt="$(u,v)= (k+1,k)$" style="vertical-align: -4px" width="138" height="18" /> which <img src="//latex.artofproblemsolving.com/c/d/a/cdafbbbbcef6a41f722b0d0275008dff212b3da7.png" class="latex" alt="$u^2-v^2=n$" width="91" height="15" />. Thus the only answer is <img src="//latex.artofproblemsolving.com/3/5/1/3515c9ced47e6ed383baf03e1c3c7debd3a4e2be.png" class="latex" alt="$\boxed{f\equiv 1}$" style="vertical-align: -9px" width="56" height="27" /> and we are done.
+</p>
+<h2><span id="Solution_3_(clear_Solution_2)"></span><span class="mw-headline" id="Solution_3_.28clear_Solution_2.29">Solution 3 (clear Solution 2)</span></h2>
+<p>The answer is <img src="//latex.artofproblemsolving.com/3/5/1/3515c9ced47e6ed383baf03e1c3c7debd3a4e2be.png" class="latex" alt="$\boxed{f\equiv 1}$" style="vertical-align: -9px" width="56" height="27" />, which works.
+To show it is necessary, we first get <img src="//latex.artofproblemsolving.com/9/f/7/9f7a9b13e98c274754bb34b5af7d150ed634145a.png" class="latex" alt="$f(1)=f(1)^2$" style="vertical-align: -4px" width="98" height="19" />, so <img src="//latex.artofproblemsolving.com/b/c/7/bc73712d7f1001a98e82f12a2706d1004bae0610.png" class="latex" alt="$f(1)=1$" style="vertical-align: -4px" width="66" height="18" />.
+Then, we get <img src="//latex.artofproblemsolving.com/c/c/c/cccb3ac0927556419cc84e7463e042733549aad0.png" class="latex" alt="$f(2)=f(1^2 + 1^2)=f(1)^2 =1$" style="vertical-align: -4px" width="236" height="19" />.
+</p><p>The following claim finishes the problem via induction:
+</p><p>Claim: If <img src="//latex.artofproblemsolving.com/7/0/5/70596766b53e29441310382b99b155ef585af05f.png" class="latex" alt="$f(n)=f(n-1)=1$" style="vertical-align: -4px" width="159" height="18" /> for <img src="//latex.artofproblemsolving.com/3/1/7/317096889b84df0b72bf69ceb4c82208305f1b0f.png" class="latex" alt="$n \ge 2$" style="vertical-align: -2px" width="43" height="14" />, we have <img src="//latex.artofproblemsolving.com/9/4/3/943f0bdafb7f4ef3796429a0c27c10e9981be1bf.png" class="latex" alt="$f(2n)=f(2n-1)=1$" style="vertical-align: -4px" width="178" height="18" />.
+</p><p>Proof: Note that <img src="//latex.artofproblemsolving.com/3/e/8/3e8c41fc9441579b7c1b7ed0d7b05a725205a3f2.png" class="latex" alt="$f(n^2+1)=f(n)f(1)=1$" style="vertical-align: -4px" width="201" height="19" />, so <img src="//latex.artofproblemsolving.com/4/e/d/4ed508fd0f37242a39fdb4e78dae67fe3230687c.png" class="latexcenter" alt="\[1=f(n^2+1)^2 = f((n^2+1)^2)=f(2n)f(n^2 -1)\]" width="376" height="19" /> implies <img src="//latex.artofproblemsolving.com/b/e/7/be73f13262fc7e00abede9b6963318faab9e88c4.png" class="latex" alt="$f(2n)=1$" style="vertical-align: -4px" width="77" height="18" />.
+</p><p>Note that <img src="//latex.artofproblemsolving.com/f/0/b/f0bb4cb2ed7b59728d149704f17c1cc4c0330330.png" class="latex" alt="$f(2n^2 -2n+1)=f(n)f(n-1)=1$" style="vertical-align: -4px" width="285" height="19" />, so <img src="//latex.artofproblemsolving.com/7/0/5/70526865bc6c85f47c4c1aa8b6ee7142493d2d26.png" class="latexcenter" alt="\[1=f(2n^2 - 2n+1)^2 = f((2n^2-2n+1)^2)=f(2n-1)f(2n^2 -2n)\]" width="482" height="19" /> implies <img src="//latex.artofproblemsolving.com/6/5/4/654c4d51f3f55587afe2b343f9baca37c6fd04a0.png" class="latex" alt="$f(2n-1)=1$" style="vertical-align: -4px" width="108" height="18" />. <img src="//latex.artofproblemsolving.com/b/6/c/b6cf65b1f2fbdf388e3daeff9b96b34d3399d777.png" class="latex" alt="$\square$" width="13" height="12" />
+</p><p>Thus, the only solution is <img src="//latex.artofproblemsolving.com/3/5/1/3515c9ced47e6ed383baf03e1c3c7debd3a4e2be.png" class="latex" alt="$\boxed{f\equiv 1}$" style="vertical-align: -9px" width="56" height="27" />.
+</p>
+<h2><span class="mw-headline" id="Video_Solution_by_the_Power_of_Logic">Video Solution by the Power of Logic</span></h2>
+<p><a rel="nofollow" class="external free" href="https://www.youtube.com/watch?v=Q1NUBUYvOJc">https://www.youtube.com/watch?v=Q1NUBUYvOJc</a>
+</p><p>~The Power of Logic
+</p>
+<h2><span class="mw-headline" id="See_Also">See Also</span></h2>
+<table class="wikitable" style="margin:0.5em auto; font-size:95%; border:1px solid black; width:40%;">
+<tbody><tr>
+<td style="background:#ccf;text-align:center;" colspan="3"><b><a href="/wiki/index.php/2021_USAJMO" title="2021 USAJMO">2021 USAJMO</a></b> (<b><a href="/wiki/index.php/2021_USAJMO_Problems" title="2021 USAJMO Problems">Problems</a></b> • <a rel="nofollow" class="external text" href="http://www.artofproblemsolving.com/Forum/resources.php?c=182&amp;cid=176&amp;year=2021">Resources</a>)
+</td></tr>
+<tr>
+<td width="50%" align="center" rowspan="1">Preceded&#160;by<br /><b>First Question</b>
+</td>
+<td width="50%" align="center" rowspan="1">Followed&#160;by<br /><b><a href="/wiki/index.php/2021_USAJMO_Problems/Problem_2" title="2021 USAJMO Problems/Problem 2">Problem 2</a></b>
+</td></tr>
+<tr>
+<td colspan="3" style="text-align:center;"><a class="mw-selflink selflink">1</a> <b>•</b> <a href="/wiki/index.php/2021_USAJMO_Problems/Problem_2" title="2021 USAJMO Problems/Problem 2">2</a> <b>•</b> <a href="/wiki/index.php/2021_USAJMO_Problems/Problem_3" title="2021 USAJMO Problems/Problem 3">3</a> <b>•</b> <a href="/wiki/index.php/2021_USAJMO_Problems/Problem_4" title="2021 USAJMO Problems/Problem 4">4</a> <b>•</b> <a href="/wiki/index.php/2021_USAJMO_Problems/Problem_5" title="2021 USAJMO Problems/Problem 5">5</a> <b>•</b> <a href="/wiki/index.php/2021_USAJMO_Problems/Problem_6" title="2021 USAJMO Problems/Problem 6">6</a>
+</td></tr>
+<tr>
+<td colspan="3" style="text-align:center;"><b><a href="/wiki/index.php/USAJMO_Problems_and_Solutions" title="USAJMO Problems and Solutions"> All USAJMO Problems and Solutions</a></b>
+</td></tr></tbody></table>
+<p>These problems are copyrighted &#169; by the <a rel="nofollow" class="external text" href="https://www.maa.org">Mathematical Association of America</a>, as part of the <a rel="nofollow" class="external text" href="https://maa.org/student-programs/amc/">American Mathematics Competitions</a>. <a href="/wiki/index.php/File:AMC_logo.png" class="image"><img alt="AMC logo.png" src="https://wiki-images.artofproblemsolving.com//thumb/8/8b/AMC_logo.png/50px-AMC_logo.png" width="50" height="43" style="vertical-align: middle" srcset="https://wiki-images.artofproblemsolving.com//thumb/8/8b/AMC_logo.png/75px-AMC_logo.png 1.5x, https://wiki-images.artofproblemsolving.com//8/8b/AMC_logo.png 2x" /></a>
+</p>
+<div style="clear:both;"></div>
+
+<!-- 
+NewPP limit report
+Cached time: 20250524153132
+Cache expiry: 86400
+Dynamic content: false
+CPU time usage: 0.082 seconds
+Real time usage: 2.878 seconds
+Preprocessor visited node count: 1157/1000000
+Preprocessor generated node count: 2666/1000000
+Post‐expand include size: 1220/2097152 bytes
+Template argument size: 56/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+Unstrip recursion depth: 0/20
+Unstrip post‐expand size: 21398/5000000 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  237.352      1 -total
+ 81.49%  193.419      1 Template:USAJMO_newbox
+ 18.44%   43.766      1 Template:MAA_Notice
+-->
+</div>
+<!-- Saved in parser cache with key wiki-wiki_:pcache:idhash:21073-0!canonical and timestamp 20250524153129 and revision id 237929
+ -->
+</div><div class="printfooter">
+Retrieved from "<a dir="ltr" href="https://artofproblemsolving.com/wiki/index.php?title=2021_USAJMO_Problems/Problem_1&amp;oldid=237929">https://artofproblemsolving.com/wiki/index.php?title=2021_USAJMO_Problems/Problem_1&amp;oldid=237929</a>"</div>
+
+
+									<div class="catlinks"><div id="catlinks" class="catlinks" data-mw="interface"><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/index.php/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="/wiki/index.php/Category:Olympiad_Algebra_Problems" title="Category:Olympiad Algebra Problems">Olympiad Algebra Problems</a></li></ul></div></div></div>
+				
+
+							</div>
+		</div>
+	</div>
+</div>
+
+<!-- search:off -->
+	<div class="clearfix"></div>
+
+	
+	<div id="main-footer" class="no-print">
+		<div class="footer-container">
+			<div class="footer-topRow">
+											<a href="https://artofproblemsolving.com/online">
+							<img class="footer-mainLogo"
+							src="https://artofproblemsolving.com/assets/images/logos/aops-online-footer.svg"/>
+						</a>
+										<div class="footer-wasc">
+						<span>
+							Art of Problem Solving is an
+							<br class="wasc-break"/>
+							<span class="footer-accredited">ACS WASC Accredited School</span>
+						</span>
+						<img class="footer-wascLogo"
+						src="https://artofproblemsolving.com/assets/images/logos/wasc.png"/>
+					</div>
+			</div>
+			<div class="footer-links">
+				<div class="footer-col">
+					<div class="footer-colHeader">aops programs</div>
+					<div><a class="link" href="https://artofproblemsolving.comonline">AoPS Online</a></div>
+					<div><a class="link" href="https://beastacademy.com">Beast Academy</a></div>
+					<div><a class="link" href="https://aopsacademy.org">AoPS Academy</a></div>
+				</div>
+
+				<div class="footer-col">
+					<div class="footer-colHeader">About</div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/about">About AoPS</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/staff">Our Team</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/history">Our History</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/careers">Jobs</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/blog">AoPS Blog</a></div>
+				</div>
+
+				<div class="footer-col">
+					<div class="footer-colHeader" style="left:-1px;">Site Info</div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/tos">Terms</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/company/privacy">Privacy</a></div>
+					<div><a class="link" href="https://artofproblemsolving.com/contact">Contact Us</a></div>
+				</div>
+
+				<div class="footer-col social">
+					<div class="footer-colHeader">follow us</div>
+					<div class="footer-social">
+													<a class="link" target="_blank" href="https://www.facebook.com/artofproblemsolving">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/facebook.svg" class="sm-icon"/>
+							</a>
+							<a class="link" target="_blank" href="http://twitter.com/AoPSNews">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/twitter.svg" class="sm-icon"/>
+							</a>
+							<a class="link" target="_blank" href="https://www.pinterest.com/artofproblemsolving/pins/">
+								<img src="https://artofproblemsolving.com/assets/images/socialmedia/pinterest.svg" class="sm-icon"/>
+							</a>
+											</div>
+				</div>
+									<div class="footer-col subscribe">
+						<div class="footer-colHeader">
+							Subscribe for news and updates
+						</div>
+						<form method="post" action="/mailinglist">
+							<input type="email" class="footer-email" placeholder="Enter e-mail" name="subscribe-email">
+							<input type="hidden" name="new-books" value="on">
+							<input type="hidden" name="classes" value="on">
+							<input type="hidden" name="mathjams" value="on">
+							<input type="submit" class="footer-submit" value="">
+							<div class="footer-submit-arrow">
+								<svg x="0px" y="0px" viewBox="0 0 289 289" enable-background="new 0 0 289 289">
+									<g>
+										<path class="arrow-fill" d="M121.5,220.5c-2.6,0-5.1-1-7.1-2.9c-3.9-3.9-3.9-10.2,0-14.1l58.9-58.9l-58.9-58.9c-3.9-3.9-3.9-10.2,0-14.1c3.9-3.9,10.2-3.9,14.1,0l66,66c3.9,3.9,3.9,10.2,0,14.1l-66,66C126.6,219.5,124.1,220.5,121.5,220.5z"/>
+									</g>
+								</svg>
+							</div>
+						</form>
+					</div>
+							</div>
+			<div class="copyright">
+				<span>&copy; 2025 AoPS Incorporated
+				</span>
+			</div>
+		</div>
+	</div>
+
+	<div id="small-footer-wrapper">
+		<div class="footer-container">
+							<a href="https://artofproblemsolving.com/online">
+					<img class="footer-mainLogo"
+					src="https://artofproblemsolving.com/assets/images/logos/aops-online-footer.svg"/>
+				</a>
+						<div class="copyright">
+				&copy; 2025 Art of Problem Solving
+				<div class="copyright-links">
+					<a href="https://artofproblemsolving.com/company">About Us</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/contact">Contact Us</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/company/tos">Terms</a>
+					&nbsp;•&nbsp;
+					<a href="https://artofproblemsolving.com/company/privacy">Privacy</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<form id="registration-form" method="post" action="/user/register.php">
+	<input type="hidden" name="username" value="">
+	<input type="hidden" name="password" value="">
+	<input type="hidden" name="from-login" value="true">
+	</form>
+<div id="print-footer" class="printer">Copyright &copy; 2025 Art of Problem Solving</div>
+
+
+
+<div id="epicfail" class="aops-html-modal-epic-fail" style="display: none">
+	<div class="aops-html-modal-inner-epic-fail">
+		<div class="aops-html-modal-main-epic-fail">
+			<p>Something appears to not have loaded correctly.</p>
+		</div>
+		<div class="aops-html-modal-bottom-epic-fail">
+			<p><a onclick="location.reload(true);return false">Click to refresh</a>.</p>
+		</div>
+	</div>
+</div>
+<link rel="stylesheet" href="https://artofproblemsolving.com/assets/css/epic-fail.css">
+
+
+
+
+
+<!-- /search:off -->
+
+
+<!-- copied from contact page index, with edits -->
+<script id="footer-tpl-email-dialog" type="text/x-handlebars-template">
+	<div id="mail-dialog">
+		<h1>Email Art of Problem Solving</h1>
+		<p>
+			<input type="text" id="email" name="email" placeholder="Your email address">
+			<input type="text" id="subject" name="subject" placeholder="Subject of message">
+			<textarea id="message" name="message" placeholder="Enter your message"></textarea>
+			<div style="padding:5px 30px">
+				<input type="checkbox" id="email-copy" name="email_copy">
+				<label for="email-copy" id="email-copy-label">Send a copy to my email address.</label>
+			</div>
+			<div style="padding:5px 30px 20px">
+				<input id="footer-submit-btn" type="submit" class="btn btn-primary" value="Send">
+				<input id="footer-cancel-btn" type="submit" class="btn btn-default" value="Cancel">
+			</div>
+		</p>
+		<p id="email-error"></p>
+	</div>
+</script>
+
+
+<script id="footer-tpl-email-confirm" type="text/x-handlebars-template">
+	<div id="mail-dialog-confirm">
+		<h2>Email Sent</h2>
+		<p>Thank you for your email. We will respond to it soon.</p>
+	</div>
+</script>
+
+<!-- bing -->
+<script>(function(w,d,t,r,u){var f,n,i;w[u]=w[u]||[],f=function(){var o={ti:"5105596"};o.q=w[u],w[u]=new UET(o),w[u].push("pageLoad")},n=d.createElement(t),n.src=r,n.async=1,n.onload=n.onreadystatechange=function(){var s=this.readyState;s&&s!=="loaded"&&s!=="complete"||(f(),n.onload=n.onreadystatechange=null)},i=d.getElementsByTagName(t)[0],i.parentNode.insertBefore(n,i)})(window,document,"script","//bat.bing.com/bat.js","uetq");</script><noscript><img src="//bat.bing.com/action/0?ti=5105596&Ver=2" height="0" width="0" style="display:none; visibility: hidden;" /></noscript>
+
+</body>
+<!-- Cached 20250524181522 -->
+</html>
+

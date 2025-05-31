@@ -1,0 +1,484 @@
+Solution ID: sol_prob1_silver_jan24
+Contest: JAN24
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_jan24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Suhas Nagar and Anand John)
+
+For the interested reader, this problem draws inspiration from the
+
+Secretary Problem
+
+. In
+terms of this problem, each one of Farmer's John's memories can be viewed as the
+following: If Farmer John were to uniformly reject the first
+
+$a_i$
+
+cows, and
+then choose the first cow he saw that was better than any cow he had seen
+before, he would choose the
+
+$h_i$
+
+-th cow.
+
+Subtask 1:
+
+We can solve this with brute force. Simply iterate through all possible
+sequences of cowmpetency scores and return the first one that satisfies Farmer
+John's memories.
+
+Code:
+
+def genarray(i, N, C, curscores):
+    if curscores[i] != 0:
+        if i == N: yield curscores
+        else: yield from genarray(i + 1, N, C, curscores)
+    else:
+        for score in range(1, C + 1):
+            curscores[i] = score
+            if i == N: yield curscores
+            else: yield from genarray(i + 1, N, C, curscores)
+        curscores[i] = 0
+
+t = int(input())
+
+for test in range(t):
+    N, Q, C = map(int, input().strip().split())
+    c = [0] + [*map(int, input().strip().split())]
+    constraints = [[*map(int, input().strip().split())] for _ in range(Q)]
+    for curscores in genarray(1, N, C, c):
+        for [a, h] in constraints:
+            if max(curscores[: a + 1]) != max(curscores[:h]) or \
+                curscores[h] <= max(curscores[: a + 1]):
+                break
+        else:
+            print(*curscores[1:])
+            break
+    else:
+        print(-1)
+
+Subtask 2:
+
+Let us now define
+
+$B(k)$
+
+to be the index of the first cow with a strictly larger
+score than the first
+
+$k$
+
+cows. This is useful because each of Farmer John's
+memories can be fully described by the statement:
+
+$B(a_i) = h_i$
+
+.
+
+Based on this and the above brute force, we realize that possible sequences only
+satisfy Farmer John's constraints if, for every
+
+$1 \leq i \leq N$
+
+:
+
+$\max\limits_{1 \leq j \leq i}{c_j} = \max\limits_{1 \leq j < B(i)}{c_j}$
+
+$c_{B(i)} > \max\limits_{1 \leq j \leq i} c_j$
+
+This leads us to the following observation: For all
+
+$1 \leq i < j < B(i)$
+
+:
+
+$B(i) = B(j)$
+
+. Therefore, if there exists
+
+$i,j$
+
+such that
+
+$a_i < a_j < B(a_i)$
+
+and
+
+$B(a_i) \neq B(a_j)$
+
+then there does not exist a sequence in accordance with
+Farmer John's memory. Combining these observation, with the given
+
+$(a_i, h_i)$
+
+pairs,  we can derive the value
+
+$B(j)$
+
+for any
+
+$j$
+
+that satisfies the inequality
+
+$a_i \leq j < h_i$
+
+for some
+
+$i$
+
+. For all the other values of
+
+$j$
+
+we will call
+
+$B(j)$
+
+unknown
+
+This is enough information to come up with a greedy solution. We will iterate
+through
+
+$i$
+
+from
+
+$1$
+
+to
+
+$N$
+
+. At each point, we will store the minimum possible
+values
+
+$c_1 \dots c_n$
+
+that satisfy the constraints related to
+
+$B(1) \dots B(i)$
+
+. This means that all values of
+
+$c_i$
+
+that were not given are
+initially set to
+
+$1$
+
+since this is the minimum possible.
+
+At a certain
+
+$i$
+
+, if
+
+$B(i)$
+
+is unknown then no change will be made to the array
+since there are no associated constraints with
+
+$B(i)$
+
+. Otherwise, there are two
+cases:
+
+$\max\limits_{1 \leq j \leq i}{c_j} = \max\limits_{1 \leq j < B(i)}{c_j}$
+
+:
+We can see that this applies no additional constraint to
+
+$c_i$
+
+so we do not have
+to change it. There is an associated change with
+
+$c_{B(i)}$
+
+which we'll discuss
+after the next case.
+
+Otherwise we have:
+
+$\max\limits_{1 \leq j \leq i}{c_j} < \max\limits_{1 \leq j < B(i)}{c_j}$
+
+. In
+this case we need to find a
+
+$j \leq i$
+
+and set
+
+$c_j$
+
+to
+
+$\max\limits_{1 \leq \ell < B(i)}{c_\ell}$
+
+.
+
+$j$
+
+needs to be as large as
+possible such that
+
+$c_j$
+
+was not given in the problem and there exists no
+
+$k$
+
+such that
+
+$k \leq j$
+
+and
+
+$B(k) < B(i)$
+
+. The reasoning behind the first part is
+simple, we're trying to find the lexographically minimum sequence. So if we have
+to increase some
+
+$c_j$
+
+, we want to pick as large of a
+
+$j$
+
+as possible. The
+reason for the second part is the following: if we were to change
+
+$c_j$
+
+and such
+a
+
+$k$
+
+existed, we would have to satisfy
+
+$\max\limits_{1 \leq \ell < B(i)}{c_\ell} = c_j < c_{B(k)} \leq  \max\limits_{1 \leq \ell < B(i)}{c_\ell}$
+
+.
+This is clearly not possible. Therefore, if no such
+
+$j$
+
+exists,  a sequence is
+impossible to construct.
+
+For both of these cases, we also need to ensure that
+
+$c_{B(i)} > \max\limits_{1 \leq j \leq i} c_j$
+
+. If
+
+$c_{B(i)}$
+
+is not given, then
+we can set
+
+$c_{B(i)} = \max\limits_{1 \leq j \leq i} c_j + 1$
+
+. This is the
+smallest possible value. If
+
+$c_{B(i)}$
+
+was given, we need to make sure that it
+is at least this value, otherwise, no sequence is possible.
+
+The reason this algorithm works is that each additional constraint that is added
+can only result in an equivalent or larger lexicographic sequence. Therefore, by
+making changes as far back in the array as possible, the resulting sequence is
+the lexicographically minimum one.
+
+To finish, it's now simple to iterate through the sequence and ensure that all
+the values are at most
+
+$C$
+
+to check if the last constraint in the problem is
+satisfied.
+
+t = int(input())
+
+def solve():
+    N, Q, C = map(int, input().strip().split())
+    B = [0] * (N + 1)
+    c = [0] + [*map(int, input().strip().split())]
+    assigned = [*map(bool, c)]
+
+    # Initially choose 1 for every non-fixed element
+    c = [score if score else 1 for score in c]
+
+    for _ in range(Q):
+        ai, hi = map(int, input().strip().split())
+        B[ai] = hi
+
+    # Ensure constraints for B
+    for i in range(1, N + 1):
+        # Ensure that every j such that i < j < B[i] has B[j] = B[i]
+        for j in range(i, B[i]):
+            if B[j] != 0 and B[j] != B[i]:
+                return print(-1)
+            B[j] = B[i]
+
+    for i in range(1, N + 1):
+        if B[i] == 0:
+            continue
+        # calculate max before and max after
+        mx_before = max(c[: i + 1])
+        mx_after = max(c[: B[i]])
+
+        # change max before such that mx_before = mx_after
+        if mx_after > mx_before:
+            for j in range(i, 0, -1):
+                if B[j] != 0 and B[j] < B[i]:
+                    return print(-1)
+                if assigned[j]:
+                    continue
+                c[j] = mx_after
+                break
+            else:
+                return print(-1)
+            mx_before = mx_after
+
+        if not assigned[B[i]]:
+            c[B[i]] = mx_before + 1
+        # check to make sure B[i] > mx_before
+        if c[B[i]] <= mx_before:
+            return print(-1)
+
+    # Check that each element in the minimum sequence is at most C
+    for i in range(1, N + 1):
+        if c[i] > C:
+            return print(-1)
+
+    return print(*c[1:])
+
+
+for _ in range(t):
+    solve()
+
+Subtask 3
+
+In this case, we have to optimize the two
+
+$O(n^2)$
+
+parts of our
+solution. The first part, filling in known values of
+
+$B$
+
+can be solved using two
+pointers. To optimize the greedy algorithm we can notice that all values
+
+$j$
+
+where
+
+$i \leq j < B(i)$
+
+satisfy
+
+$B(i) = B(j)$
+
+. Therefore, once you satisfy the
+constraint associated with
+
+$B(i)$
+
+, the ones associated with
+
+$B(i+1) \dots B(B(i)-1)$
+
+are redundant so we can skip them. Putting this
+together, we get an algorithm that runs in
+
+$O(n)$
+
+.
+
+Code:
+
+t = int(input())
+
+def solve():
+    N, Q, C = map(int, input().strip().split())
+    B = [0] * (N + 1)
+    c = [0] + [*map(int, input().strip().split())]
+    assigned = [*map(bool, c)]
+
+    # Initially choose 1 for every non-fixed element
+    c = [score if score else 1 for score in c]
+
+    for _ in range(Q):
+        ai, hi = map(int, input().strip().split())
+        B[ai] = hi
+
+    # Ensure constraints for B
+    curind = 1
+    while curind <= N:
+        i = curind
+        # Ensure that every j such that i < j < B[i] has B[j] = B[i]
+        while curind < B[i]:
+            if B[curind] != 0 and B[curind] != B[i]:
+                return print(-1)
+            B[curind] = B[i]
+            curind += 1
+        curind = max(curind, i+1)
+
+    mx_before = 0
+    mx_after = 0
+    i = 1
+    while i <= N:
+        # calculate max before and max after
+        mx_before = max(mx_before, c[i])
+        mx_after = max(mx_after, c[i])
+        if B[i] == 0:
+            i += 1
+            continue
+        mx_after = max(mx_after, *c[i:B[i]])
+        
+        # change mx_before such that mx_before = mx_after
+        if mx_after > mx_before:
+            for j in range(i, 0, -1):
+                if B[j] != 0 and B[j] < B[i]:
+                    return print(-1)
+                if assigned[j]:
+                    continue
+                c[j] = mx_after
+                break
+            else:
+                return print(-1)
+            mx_before = mx_after
+
+        if not assigned[B[i]]:
+            c[B[i]] = mx_before + 1
+        # check to make sure B[i] > mx_before
+        if c[B[i]] <= mx_before:
+            return print(-1)
+
+        i = B[i]
+
+    # Check that each element in the minimum sequence is at most C
+    for i in range(1, N + 1):
+        if c[i] > C:
+            return print(-1)
+
+    return print(*c[1:])
+
+for _ in range(t):
+    solve()

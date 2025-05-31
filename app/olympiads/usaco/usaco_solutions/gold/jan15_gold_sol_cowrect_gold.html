@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<html>
+<p>(Analysis by Nick Wu and Brian Dean)</p><p>
+
+The critical observation for this problem is that an optimal rectangle
+must have a Holstein on each of its four sides. This motivates the
+following line-sweep solution:</p><p>
+
+For every pair of horizontal lines that contains a Holstein, remove
+all cows that aren&apos;t between those two lines. Sweep from
+left-to-right, keeping track of how many Holsteins have been seen so
+far without a Guernsey.</p><p>
+
+If we pre-sort all the cows, then the sweeping process takes
+linear-time, giving us an $O(n^3)$ solution, illustrated in the
+code below.  This was fast enough to obtain full credit for
+the problem (the problem was intended to the "easier" of the
+gold problems on this contest).</p><p>
+
+Faster solutions are possible.  Here is a short description of one (of
+several) ways to achieve an $O(n^2 \log n)$ running time.  Recall that
+the four sides of the optimal rectangle must contain Holsteins; let's
+denote these by $H_t$, $H_b$, $H_l$, and $H_r$, with $t$ meaning
+"top", $b$ meaning "bottom", $l$ meaning "left" and $r$ meaning
+"right".  We first iterate over all possible choices for $H_b$,
+contributing $O(n)$ to our running time.  Having now fixed $H_b =
+(x_b, y_b)$, we scan upward (having pre-sorted all points on $y$),
+adding all $H$'s to an STL set, $S$, keyed on $x$ coordinate.  We also
+keep track of the $G$ with maximum $x$ coordinate less than $x_b$
+(call it $g_l$) and the $G$ with minimum $x$ coordinate larger than
+$x_b$ (call it $g_r$).  We use these values to restrict the entries in
+$S$ so they belong to the range $[g_l, g_r]$, by deleting the min or
+max from $S$ whenever these fall outside the range.  Now for
+each $H$ we encouter, if it lies in the $x$ range $[g_l, g_r]$, we
+test the rectangle with this $H$ as $H_t$, and with the min and max
+entries in $S$ as $H_l$ and $H_r$.  The best rectangle overall is
+returned.  The total scanning time is $O(n \log n)$, for a
+total running time of $O(n^2 \log n)$.
+
+</p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class rectangle {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    int n = Integer.parseInt(br.readLine());
+    State[] list = new State[n];
+    TreeSet&lt;Integer&gt; ys = new TreeSet&lt;Integer&gt;();
+    for(int a = 0; a &lt; n; a++) {
+      StringTokenizer st = new StringTokenizer(br.readLine());
+      int x = Integer.parseInt(st.nextToken());
+      int y = Integer.parseInt(st.nextToken());
+      list[a] = new State(x, y, st.nextToken().equals(&quot;H&quot;));
+      ys.add(y);
+    }
+    Arrays.sort(list);
+    ArrayList&lt;Integer&gt; ysArray = new ArrayList&lt;Integer&gt;();
+    for(int y: ys) {
+      ysArray.add(y);
+    }
+    int most = 0;
+    int area = 0;
+    for(int i = 0; i &lt; ysArray.size(); i++) {
+      for(int j = i+1; j &lt; ysArray.size(); j++) {
+        boolean valid = false;
+        int lastX = -1;
+        int now = 0;
+        for(int a = 0; a &lt; n;) {
+          int b = a;
+          int red = 0;
+          int blue = 0;
+          while(b &lt; n &amp;&amp; list[a].x == list[b].x) {
+            if(list[b].y &gt;= ysArray.get(i) &amp;&amp; list[b].y &lt;= ysArray.get(j)) {
+              if(list[b].red) {
+                red++;
+              }
+              else {
+                blue++;
+              }
+            }
+            b++;
+          }
+          if(blue &gt; 0) {
+            valid = false;
+            now = 0;
+          }
+          else if(red + blue &gt; 0) {
+            if(!valid) {
+              valid = true;
+              lastX = list[a].x;
+            }
+            now += red;
+            int currArea = (ysArray.get(j) - ysArray.get(i)) * (list[a].x - lastX);
+            if(now &gt; most || (now == most &amp;&amp; currArea &lt; area)) {
+              most = now;
+              area = currArea;
+            }
+          }
+          a = b;
+        }
+      }
+    }
+    pw.println(most);
+    pw.println(area);
+    pw.close();
+  }
+  static class State implements Comparable&lt;State&gt; {
+    public int x,y;
+    public boolean red;
+    public State(int a, int b, boolean c) {
+      x=a;
+      y=b;
+      red=c;
+    }
+    public int compareTo(State s) {
+      return x - s.x;
+    }
+  }
+}
+</pre><p></p>
+</html>

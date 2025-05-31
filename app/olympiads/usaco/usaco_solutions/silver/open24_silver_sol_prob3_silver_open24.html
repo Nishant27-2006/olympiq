@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Suhas Nagar)
+<p><strong>Subtask 1: <span class='math'>$N \leq 100$</span> (<span class='math'>$O(N^5)$</span>)</strong>
+<p>For this problem, we can apply a brute force to simulate the process described
+in the problem statement for every <span class='math'>$(K,L)$</span> pair. We can iterate through all <span class='math'>$K$</span>
+length substrings, and find the lexicographic minimum out of all <span class='math'>$L$</span> length
+substrings contained within. We can then count the number of unique &quot;winning&quot;
+gene positions and add it to a larger array.
+<p>Note that while the time complexity of this brute force is <span class='math'>$O(N^5)$</span>, there is a
+small fractional constant factor due to the restrictions on <span class='math'>$K$</span> and <span class='math'>$L$</span> and the
+number of valid substrings given <span class='math'>$K$</span>, so <span class='math'>$N=100$</span> runs comfortably in the TL.  
+<p>Benjamin Qi&apos;s Python code:
+<pre class='prettyprint'>
+N = int(input())
+S = input()
+
+cnt = [0] * (N + 1)
+for K in range(1, N + 1):
+    for L in range(K, N + 1):
+        marked = [0] * N
+        for i in range(N - L + 1):
+            best = None
+            best_idx = None
+            for j in range(i, i + L - K + 1):
+                if best is None or S[j : j + K] &lt; best:
+                    best = S[j : j + K]
+                    best_idx = j
+            marked[best_idx] = True
+        cnt[sum(marked)] += 1
+
+for v in range(1, N + 1):
+    print(cnt[v])
+</pre>
+<p><strong>Subtask 1 / 2: <span class='math'>$N \leq 500$</span> (<span class='math'>$O(N^4)$</span>)</strong>
+<p>For this subtask, we can switch how we think about this problem. Instead of
+determining how many &quot;winning&quot; gene positions a given <span class='math'>$(K,L)$</span> pair has, we can
+instead focus on some position <span class='math'>$p_i$</span> and determine which <span class='math'>$(K,L)$</span> pairs that
+<span class='math'>$p_i$</span> is a &quot;winning&quot; position for.
+<p>Let us fix some position <span class='math'>$p_i$</span> and some length <span class='math'>$L$</span>. We want to determine what
+conditions on <span class='math'>$K$</span> are necessary for <span class='math'>$p_i$</span> to be a winning position. The first
+observation we can make is that <span class='math'>$p_i$</span> is a winning position as long as there
+exists some window of <span class='math'>$K$</span> characters where <span class='math'>$S[p_i:p_i+L]$</span> is lexicographically
+minimal. Let <span class='math'>$a_i$</span> be the maximum position such that  <span class='math'>$a_i &lt; p_i$</span> and
+<span class='math'>$S[a_i:a_i+L] \leq S[p_i:p_i+L]$</span> and let <span class='math'>$b_i$</span> be the minimum positions such
+that <span class='math'>$b_i &gt; p_i$</span> and <span class='math'>$S[b_i:b_i+L] &lt; S[p_i:p_i+L]$</span> (note our first equation uses
+<span class='math'>$\leq$</span> due to the tiebreaker condition favoring smaller indices). 
+<p>We can always identify a window of <span class='math'>$K$</span> characters where <span class='math'>$p_i$</span> is winning as long
+as our window doesn&apos;t &quot;include&quot; the ranges <span class='math'>$[a_i:a_i+L]$</span> and <span class='math'>$[b_i:b_i+L]$</span>. In
+other words, any <span class='math'>$K$</span> where <span class='math'>$K \leq (b_i+L)-a_i-2$</span> makes <span class='math'>$p_i$</span> a winning
+position.
+<p>Now that we have identified how to determine valid <span class='math'>$K$</span> given <span class='math'>$p_i$</span> and <span class='math'>$L$</span>, we
+can create our solution from here. We can iterate over all <span class='math'>$p_i$</span> and <span class='math'>$L$</span>. To
+determine <span class='math'>$a_i$</span> and <span class='math'>$b_i$</span>, we can iterate over all <span class='math'>$L$</span> length substrings until
+we identify <span class='math'>$a_i$</span> or <span class='math'>$b_i$</span> that satisfy the above conditions. If none exist, we
+can use <span class='math'>$-1$</span> for <span class='math'>$a_i$</span> and <span class='math'>$N$</span> for <span class='math'>$b_i$</span>. 
+<p>Since we iterate over the string to find <span class='math'>$a_i$</span> and <span class='math'>$b_i$</span> for every position
+<span class='math'>$p_i$</span> and length <span class='math'>$L$</span>, and we call the substring function repeatedly, the time
+complexity of this solution is <span class='math'>$O(N^4)$</span>. However, this ends up running fast
+enough to pass subtask 2 in practice.
+<p>My Java code:
+<pre class='prettyprint'>
+import java.io.PrintWriter;
+import java.util.Scanner;
+
+public class MinimizerNFourth {
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        PrintWriter pw = new PrintWriter(System.out);
+        int n = sc.nextInt();
+        String s = sc.next();
+        int[][] lk = new int[n+1][n+1];
+        for (int p = 0; p &lt; n; p++){
+            for (int l = 1; l &lt;= n; l++){
+                if (l+p &gt; n) continue;
+                int b = p+1;
+                int a = p-1;
+                while (b &lt; n &amp;&amp; compare(p,b,l,s) &lt;= 0) b++;
+                b = Math.min(n+1,b+l);
+                while (a &gt;= 0 &amp;&amp; compare(p,a,l,s) &lt; 0) a--;
+                a++;
+                for (int k = l; k &lt;= Math.min(b-a-1,n); k++){
+                    lk[l][k]++;
+                }
+            }
+        }
+        int[] count = new int[n+1];
+        for (int i = 0; i &lt;= n; i++){
+            for (int j = i; j &lt;= n; j++){
+                count[lk[i][j]]++;
+            }
+        }
+        for (int i = 1; i &lt;= n; i++){
+            pw.println(count[i]);
+        }
+        pw.close();
+    }
+
+    static int compare(int i, int j, int k, String original){
+        return original.substring(i,Math.min(original.length(),i+k)).compareTo(original.substring(j,Math.min(original.length(),j+k)));
+    }
+}
+</pre>
+<p><strong>Subtask 2 / Subtask 3 Partial: <span class='math'>$O(N^3)$</span></strong>
+<p>To improve on the last subtask, we want to improve our compare function. To do
+this, we can precompute a <em>longest common prefix</em> (lcp) array that stores
+for positions <span class='math'>$i$</span> and <span class='math'>$j$</span> the  largest value <span class='math'>$k$</span> such that
+<span class='math'>$S[i:i+k] = S[j:j+k]$</span>. If we had this array, we could compare any two substrings
+at positions <span class='math'>$i$</span> and <span class='math'>$j$</span> in <span class='math'>$O(1)$</span> without using the substring function by 
+comparing the characters at <span class='math'>$S[i+lcp[i][j]]$</span> and <span class='math'>$S[j+lcp[i][j]]$</span> or returning a
+tie if <span class='math'>$lcp[i][j] \geq k$</span> (since we only take the first <span class='math'>$k$</span> characters at both
+positions.
+<p>To compute this array, we can naively compute this array by finding the lcp for
+every pair of indices.
+<p>Now that the cost of comparing strings is reduced, we need to improve the
+complexity of computing valid <span class='math'>$K$</span> for every value of <span class='math'>$L$</span>. The first observation
+we make is that <span class='math'>$a_i$</span> is monotonically decreasing for increasing value of <span class='math'>$L$</span>.
+Suppose this was not the case. This would mean that for some <span class='math'>$L_1 &lt; L_2$</span>,
+<span class='math'>$S[a_i:a_i+L_1] &gt; S[p_i:p_i+L_1]$</span> but <span class='math'>$S[a_i:a_i+L_2] \leq 
+S[p_i:p_i+L_2]$</span>. If one string is less than another string of equal length, 
+this will continue to hold even if we extend both strings by a character, so we
+form a contradiction here.
+<p>Similarly we can make the same observation for <span class='math'>$b_i$</span>. Since it would be
+monotonically decreasing for increasing values of <span class='math'>$L$</span>, it would be monotonically
+increasing for decreasing values of <span class='math'>$L$</span>. Consequently, we can compute <span class='math'>$a_i$</span> and
+<span class='math'>$b_i$</span> for every value of <span class='math'>$L$</span> in <span class='math'>$O(N)$</span> using a pointer.
+<p>Finally, in our previous solution we used a for loop to set every value of
+<span class='math'>$L \leq k \leq b_i+L-a_i-2$</span> as valid. Instead, we can use prefix sums to
+increment a range up to <span class='math'>$b_i+L-a_i-2$</span> in <span class='math'>$O(1)$</span>. While most of our computation
+is quick, we are bottlenecked by the LCP computation, so this solution runs in
+<span class='math'>$O(N^3)$</span>.
+<p>Depending on your implementation, you might also be able to pass many of the
+last batch of test cases using a solution of this complexity.
+<p>My Java code:
+<pre class='prettyprint'>
+import java.io.PrintWriter;
+import java.util.Scanner;
+
+public class MinimizerSlowLCP {
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        PrintWriter pw = new PrintWriter(System.out);
+        int n = sc.nextInt();
+        String s = sc.next();
+        int[][] lcp = new int[n+1][n+1];
+        int[][] deltas = new int[n+1][n+1];
+        for (int i = 0; i &lt; n; i++){
+            for (int j = 0; j &lt; n; j++){
+                int len = 0; int lp = i; int rp = j;
+                while (lp &lt; n &amp;&amp; rp &lt; n &amp;&amp; s.charAt(lp++) == s.charAt(rp++)) len++;
+                lcp[i][j] = len;
+            }
+        }
+        for (int p = 0; p &lt; n; p++){
+            int[] b = new int[n+1];
+            int[] a = new int[n+1];
+            int b_cand = p+1;
+            for (int l = n; l &gt;= 1; l--){
+                while (b_cand &lt; n &amp;&amp; compare(p,b_cand,l,lcp,s) &lt;= 0) b_cand++;
+                b[l] = Math.min(b_cand+l,n+1);
+            }
+            int a_cand = p-1;
+            for (int l = 1; l &lt;= n; l++){
+                while (a_cand &gt;= 0 &amp;&amp; compare(p,a_cand,l,lcp,s) &lt; 0) a_cand--;
+                a[l] = a_cand+1;
+            }
+            for (int l = 1; l &lt;= n; l++){
+                if (l+p &gt; n) continue;
+                deltas[l][Math.min(b[l]-a[l]-1,n)]++;
+            }
+        }
+        int[] count = new int[n+1];
+        for (int l = 1; l &lt;= n; l++){
+            int acc = 0;
+            for (int k = n; k &gt;= l; k--){
+                acc += deltas[l][k];
+                count[acc]++;
+            }
+        }
+        for (int i = 1; i &lt;= n; i++){
+            pw.println(count[i]);
+        }
+        pw.close();
+    }
+    static int compare(int i, int j, int k, int[][] lcp, String orig){
+        if (lcp[i][j] &gt;= k) return 0;
+        if (i+lcp[i][j] == orig.length()) return -1;
+        if (j+lcp[i][j] == orig.length()) return 1;
+        return Character.compare(orig.charAt(i+lcp[i][j]),orig.charAt(j+lcp[i][j]));
+    }
+}
+</pre>
+<p><strong>Full Solution</strong>
+<p>To speed up our solution to <span class='math'>$O(N^2)$</span>, we need to speed up our LCP array
+precomputation. However, instead of computing it naively, we can avoid  extra
+computations by leveraging the following property. If we know <span class='math'>$LCP[i+1][j+1]$</span>,
+we can determine <span class='math'>$LCP[i][j]$</span> depending on if character <span class='math'>$i$</span> is equal to character
+<span class='math'>$j$</span>. This motivates working backwards to compute LCP, using the following
+recurrence.
+<p><pre>
+lcp[i][j] = (S[i] == S[j]) + lcp[i+1][j+1]
+</pre>
+<p>My Java code:
+<pre class='prettyprint'>
+import java.io.PrintWriter;
+import java.util.Scanner;
+
+public class Minimizer {
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        PrintWriter pw = new PrintWriter(System.out);
+        int n = sc.nextInt();
+        String s = sc.next();
+        int[][] lcp = new int[n+1][n+1];
+        int[][] deltas = new int[n+1][n+1];
+        for (int i = n-1; i &gt;= 0; i--){
+            for (int j = n-1; j &gt;= 0; j--){
+                if (s.charAt(i) == s.charAt(j)) lcp[i][j] = 1+lcp[i+1][j+1];
+            }
+        }
+        for (int p = 0; p &lt; n; p++){
+            int[] b = new int[n+1];
+            int[] a = new int[n+1];
+            int b_cand = p+1;
+            for (int l = n; l &gt;= 1; l--){
+                while (b_cand &lt; n &amp;&amp; compare(p,b_cand,l,lcp,s) &lt;= 0) b_cand++;
+                b[l] = Math.min(b_cand+l,n+1);
+            }
+            int a_cand = p-1;
+            for (int l = 1; l &lt;= n; l++){
+                while (a_cand &gt;= 0 &amp;&amp; compare(p,a_cand,l,lcp,s) &lt; 0) a_cand--;
+                a[l] = a_cand+1;
+            }
+            for (int l = 1; l &lt;= n; l++){
+                if (l+p &gt; n) continue;
+                deltas[l][Math.min(b[l]-a[l]-1,n)]++;
+            }
+        }
+        int[] count = new int[n+1];
+        for (int l = 1; l &lt;= n; l++){
+            int acc = 0;
+            for (int k = n; k &gt;= l; k--){
+                acc += deltas[l][k];
+                count[acc]++;
+            }
+        }
+        for (int i = 1; i &lt;= n; i++){
+            pw.println(count[i]);
+        }
+        pw.close();
+    }
+    static int compare(int i, int j, int k, int[][] lcp, String orig){
+        if (lcp[i][j] &gt;= k) return 0;
+        if (i+lcp[i][j] == orig.length()) return -1;
+        if (j+lcp[i][j] == orig.length()) return 1;
+        return Character.compare(orig.charAt(i+lcp[i][j]),orig.charAt(j+lcp[i][j]));
+    }
+}
+</pre>
+<p></body></html>

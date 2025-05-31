@@ -1,0 +1,205 @@
+Solution ID: sol_haircut_gold_open20
+Contest: OPEN20
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_haircut_gold_open20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+For each
+
+$0\le j<N$
+
+we need to count the number of pairs
+
+$(x,y)$
+
+such that
+
+$x<y$
+
+,
+
+$A[x]>A[y]$
+
+and
+
+$A[y]<j$
+
+. It suffices to compute the number of
+
+$x<y$
+
+such
+that
+
+$A[x]>A[y]$
+
+for every
+
+$y$
+
+; call this quantity
+
+$n[y]$
+
+. Then
+
+$ans[j]=\sum_{A[y]<j}n[y]$
+
+can  be computed with prefix sums.
+
+The value of
+
+$n[y]$
+
+for each
+
+$y$
+
+can be found via the following process:
+
+Set
+
+$h=N.$
+
+Maintain a collection of indices, initially empty.
+
+For each
+
+$y$
+
+with
+
+$A[y]=h$
+
+, set the corresponding quantity for
+
+$y$
+
+equal to 
+the number of indices in the collection less than
+
+$y$
+
+.
+
+For each
+
+$y$
+
+with
+
+$A[y]=h$
+
+, insert
+
+$y$
+
+into the set.
+
+If
+
+$h=0,$
+
+terminate. Otherwise, decrease
+
+$h$
+
+by one and repeat from step
+2.
+
+The collection can be a
+
+policy-based
+data structure
+
+in C++ or a binary indexed tree.
+
+My code:
+
+#include "bits/stdc++.h"
+ 
+using namespace std;
+ 
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+".in").c_str(),"r",stdin);
+	freopen((s+".out").c_str(),"w",stdout);
+}
+
+#include <ext/pb_ds/tree_policy.hpp>
+#include <ext/pb_ds/assoc_container.hpp>
+using namespace __gnu_pbds;
+template <class T> using Tree = tree<T, null_type, less<T>, 
+	rb_tree_tag, tree_order_statistics_node_update>; 
+ 
+const int MX = 1e5+5;
+
+int N;
+long long numInv[MX];
+vector<int> todo[MX];
+ 
+int main() {
+	setIO("haircut");
+	int N; cin >> N;
+	vector<int> A(N); for (int& t: A) cin >> t;
+	for (int i = 0; i < N; ++i) todo[A[i]].push_back(i);
+	Tree<int> T;
+	for (int i = N; i >= 0; --i) {
+		for (int t: todo[i]) numInv[i+1] += T.order_of_key(t);
+		for (int t: todo[i]) T.insert(t);
+	}
+	for (int i = 1; i < N; ++i) numInv[i] += numInv[i-1];
+	for (int i = 0; i < N; ++i) cout << numInv[i] << "\n";
+}
+
+Dhruv Rohatgi's code:
+
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define MAXN 100005
+ 
+int N;
+int A[100000];
+int T[MAXN+1];
+ 
+int getSum(int i)
+{
+	int c=0;
+	for(++i; i > 0 ; i -= (i & -i))
+		c += T[i];
+	return c;
+}
+void set(int i,int dif)
+{
+	for(++i; i < MAXN ; i += (i & -i))
+		T[i] += dif;
+}
+ 
+long long cnt[100000];
+ 
+int main()
+{
+	freopen("haircut.in","r",stdin);
+	freopen("haircut.out","w",stdout);
+	cin >> N;
+	int a;
+	for(int i=0;i<N;i++)
+	{
+		cin >> a;
+		a++;
+		cnt[a] += i - getSum(a);
+		set(a, 1);
+	}
+	long long ans = 0;
+	for(int j=1;j<=N;j++)
+	{
+		cout << ans << '\n';
+		ans += cnt[j];
+	}
+}

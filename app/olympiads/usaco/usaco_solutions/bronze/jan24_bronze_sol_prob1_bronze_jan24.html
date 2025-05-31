@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p><strong>Subtask 1: <span class='math'>$N \le 2$</span>.</strong>
+<p>Note that focus groups of two cannot cause any cow to change their opinion.
+Therefore, the only way for all cows to like the same type of hay is if they
+start out liking the same type of hay.
+<p><pre class='prettyprint'>
+t = int(input())
+for _ in range(t):
+  input()
+  l = [int(x) for x in input().split()]
+  if l[0] == l[1]: print(l[0])
+  else: print(-1)
+</pre>
+<p><strong>Subtask 2: <span class='math'>$N \le 50$</span>.</strong>
+<p>For each type of hay, we&apos;ll try to determine if it&apos;s possible to make every cow
+like that type of hay by finding potential focus groups that will cause other
+cows to like our desired type of hay. Specifically, we are looking for focus
+groups where a strict majority of cows like our desired type of hay, but there
+is at least one cow that does not like it, because then that focus group will
+cause the given cow to change the type of hay they like.
+<p>Naively, there are <span class='math'>$\mathcal{O}(N^2)$</span> focus groups to check - checking each one
+takes <span class='math'>$\mathcal{O}(N)$</span> time, and we only need to run <span class='math'>$\mathcal{O}(N)$</span> focus
+groups to get all cows to switch to our desired type of hay. With
+<span class='math'>$\mathcal{O}(N)$</span> different types of hay, this algorithm runs in
+<span class='math'>$\mathcal{O}(N^5)$</span> with a low constant factor. There are ways to improve this
+style of solution, but they are not necessary to get credit for this subtask.
+<p><pre class='prettyprint'>
+def canmake(l, x):
+  while l.count(x) != len(l):
+    upd = False
+    for j in range(1, len(l)+1):
+      for i in range(j):
+        match = l[i:j].count(x)
+        if match * 2 &gt; len(l[i:j]) and match != len(l[i:j]):
+          l = l[:i] + [x] * (j-i) + l[j:]
+          upd = True
+          break
+    if not upd:
+      break
+  return l.count(x) == len(l)
+ 
+t = int(input())
+for _ in range(t):
+  input()
+  l = [int(x) for x in input().split()]
+  valid = [i for i in range(1, len(l)+1) if canmake(l, i)]
+  if not valid: valid.append(-1)
+  print(&quot; &quot;.join([str(x) for x in valid]))
+</pre>
+<p><strong>Subtask 3: <span class='math'>$h_i \le h_{i+1}$</span> for <span class='math'>$1 \le i &lt; N$</span>.</strong>
+<p>The key to this subtask is that, if two cows like the same type of hay, then
+there must exist two cows <span class='math'>$i$</span> and <span class='math'>$i+1$</span> that both like the same type of hay. The
+intended solution to this subtask otherwise does not depend on the <span class='math'>$h_i$</span> values
+actually being in sorted order.
+<p>Note that if cows <span class='math'>$i$</span> and <span class='math'>$i+1$</span> like the same type of hay, then a focus group
+with those two cows and exactly one other cow can cause the other cow to like
+the same type of hay as cows <span class='math'>$i$</span> and <span class='math'>$i+1$</span>. Therefore, for this subtask, we can
+print out all types of hay that are liked by at least two cows.
+<p><pre class='prettyprint'>
+t = int(input())
+for _ in range(t):
+  input()
+  l = [int(x) for x in input().split()]
+  valid = []
+  for i in range(1, len(l)):
+    if l[i] == l[i-1] and (i == 1 or l[i] != l[i-2]): valid.append(l[i])
+  if not valid: valid.append(-1)
+  print(&quot; &quot;.join([str(x) for x in valid]))
+</pre>
+<p><strong>Full Credit:</strong>
+<p>From the above subtask, we can also observe that if cows <span class='math'>$i-1$</span> and <span class='math'>$i+1$</span> like
+the same type of hay, a focus group with cows <span class='math'>$i-1$</span>, <span class='math'>$i$</span>, and <span class='math'>$i+1$</span> will end up
+having all three cows liking the same type of hay.
+<p>Note furthermore that for any focus group of size greater than 3 with a majority
+of cows liking the same type of hay, we can find always find a smaller focus
+group of size 3 inside where two of the cows like the same type of hay as the
+majority of cows in the larger focus group. We leave the proof of this fact as
+an exercise for the reader.
+<p>Therefore, a type of hay is valid if and only if there exist cows <span class='math'>$i$</span> and <span class='math'>$i+1$</span>
+that both like it, or there exist cows <span class='math'>$i$</span> and <span class='math'>$i+2$</span> that both like it.
+<p>Claire Zhang&apos;s C++ code:
+<pre class='prettyprint'>
+#include&lt;bits/stdc++.h&gt;
+using namespace std;
+ 
+int main(){
+    int T, N;
+    cin &gt;&gt; T;
+    while(T--){
+        cin &gt;&gt; N;
+        int a[N];
+        bool good[N];
+        memset(good, 0, sizeof(good)); 
+        
+        for(int i=0; i&lt;N; i++){
+            cin &gt;&gt; a[i];
+            a[i]--;
+            if(i&gt;0 and a[i]==a[i-1] or i&gt;1 and a[i]==a[i-2]) good[a[i]]=1;
+        }
+ 
+        bool at_least_one = 0;
+        for(int i=0; i&lt;N; i++){
+            if(good[i]){
+                at_least_one = 1;
+                cout &lt;&lt; i+1 &lt;&lt; &quot; &quot;;
+            }
+        }
+        if(!at_least_one) cout &lt;&lt; -1;
+        cout &lt;&lt; &apos;\n&apos;;
+    }
+}
+</pre>
+<p>My Java code:
+<pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class Solution {
+  public static void main(String[] args) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+    int t = Integer.parseInt(br.readLine());
+    while(t-- &gt; 0) {
+      int n = Integer.parseInt(br.readLine());
+      StringTokenizer st = new StringTokenizer(br.readLine());
+      int[] h = new int[n];
+      for(int i = 0; i &lt; n; i++) h[i] = Integer.parseInt(st.nextToken());
+      boolean[] good = new boolean[n+1];
+      for(int i = 0; i + 1 &lt; n; i++) {
+        if(h[i] == h[i+1]) good[h[i]] = true;
+        if(i+2 &lt; n &amp;&amp; h[i] == h[i+2]) good[h[i]] = true;
+      }
+      boolean printed = false;
+      for(int i = 1; i &lt;= n; i++) {
+        if(good[i]) {
+          if(printed) pw.print(&apos; &apos;);
+          printed = true;
+          pw.print(i);
+        }
+      }
+      if(!printed) pw.print(-1);
+      pw.println();
+    }
+    pw.close();
+  }
+}
+</pre>
+<p>Claire Zhang&apos;s Python code:
+<pre class='prettyprint'>
+def solve(arr):
+    result = []
+    for i in range(len(arr) - 1):
+        if arr[i] == arr[i + 1] or (i &lt; len(arr) - 2 and arr[i] == arr[i + 2]):
+            result.append(arr[i])
+    result = sorted(list(set(result)))
+    if len(result) == 0:
+        result = [-1]
+    return result
+ 
+def main():
+    T = int(input())
+    for _ in range(T):
+        N = int(input())
+        arr = list(map(int, input().split()))
+        print(*solve(arr))
+ 
+if __name__ == &quot;__main__&quot;:
+    main()
+</pre>
+<p></body></html>

@@ -1,0 +1,299 @@
+Solution ID: sol_cave_platinum_jan20
+Contest: JAN20
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_cave_platinum_jan20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Daniel Zhang, Benjamin Qi)
+
+Define a relation
+
+$R$
+
+on empty and water cells where
+
+$aRb$
+
+if and only if
+
+$a$
+
+being water implies that
+
+$b$
+
+is water. It is clearly reflexive and transitive.
+Also note that if
+
+$aRb$
+
+then
+
+$height(a)\ge height(b)$
+
+. Thus, cycles can only 
+exist between vertices on the same layer. However, if we restrict the relation
+to cells with the same height, it is also symmetric. Thus, we can divide cells
+on each layer into (completely connected) equivalence classes.
+
+Compressing these equivalence classes, we get a directed acyclic graph (DAG).
+Note that equivalence classes are not edge-connected; for example, in the sample
+case, the squares on the second row are all in the same equivalence class. Let
+
+$G$
+
+be the graph with the minimum number of edges whose transitive closure is
+the DAG. (To compute the transitive closure of a graph, if edges
+
+$a\to b$
+
+and
+
+$b\to c$
+
+exist then add edge
+
+$a\to c$
+
+, if it is not already  present in the
+graph.)
+
+If there is an edge from
+
+$a$
+
+to
+
+$b$
+
+in the DAG, then
+
+$height(a)=height(b)+1$
+
+.
+Suppose otherwise. Clearly
+
+$height(a)>height(b)$
+
+. There must be a path from
+
+$a$
+
+to
+
+$b$
+
+using only cells of height at most
+
+$height(a)$
+
+. Take the last vertex
+
+$c$
+
+on that path with height
+
+$height(b)+1$
+
+(it must exist). This divides the path
+into a path from
+
+$a$
+
+to
+
+$c$
+
+using cells of height at most
+
+$height(a)$
+
+and a path
+from
+
+$c$
+
+to
+
+$b$
+
+using cells of height at most
+
+$height(c)$
+
+. This contradicts the
+minimality of
+
+$G$
+
+.
+
+Each node has at most one predecessor. Suppose there is an edge from
+
+$a$
+
+to
+
+$b$
+
+and an edge from
+
+$c$
+
+to
+
+$b$
+
+. Then,
+
+$height(a)=height(b)+1=height(c)$
+
+and
+concatenating the paths yields a path from
+
+$a$
+
+to
+
+$c$
+
+using only cells of height
+at most
+
+$height(a)$
+
+. Then
+
+$a$
+
+and
+
+$c$
+
+must be the same equivalence class.
+
+Hence,
+
+$G$
+
+is a (directed) forest.
+
+$G$
+
+can be computed efficiently from the cave
+by sweeping upwards with a union-find data structure. Then, this problem can be
+solved by DP on
+
+$G$
+
+.
+
+Ben - I didn't have any solution in mind for the
+
+$N,M\le 10$
+
+subtask. It was
+merely  intended to be a small correctness test.
+
+#include <cstdio>
+#include <cstring>
+#include <vector>
+ 
+const int MOD=1e9+7;
+ 
+char grid[1005][1005];
+ 
+int uf[1005][1005];
+int up[1005][1005];
+int id[1005][1005];
+ 
+std::vector<int> children[1005*1005];
+int tree_size=1;
+ 
+int dp[1005*1005];
+ 
+int find(int layer,int a){
+	while(uf[layer][a]!=a){
+		a=uf[layer][a]=uf[layer][uf[layer][a]];
+	}
+	return a;
+}
+ 
+void merge(int layer,int a,int b){
+	a=find(layer,a),b=find(layer,b);
+	uf[layer][a]=b;
+}
+ 
+void pull(int i){
+	dp[i]=1;
+	//product of children if not filling root
+	for(int j:children[i]){
+		dp[i]=1LL*dp[i]*dp[j]%MOD;
+	}
+	//+1 for filling root (and everything else)
+	dp[i]++;
+}
+ 
+int main(){
+	freopen("cave.in","r",stdin);
+	freopen("cave.out","w",stdout);
+	int N,M;
+	scanf("%d %d",&N,&M);
+	for(int i=0;i<N;i++){
+		scanf("%s",grid[i]);
+	}
+	for(int i=0;i<N;i++){
+		for(int j=0;j<M;j++){
+			uf[i][j]=j;
+		}
+	}
+	memset(up,-1,sizeof up);
+	for(int i=N-1;i>=0;i--){
+		for(int j=0;j<M;j++){
+			uf[i][j]=j;
+		}
+		
+		for(int j=0;j+1<M;j++){
+			if(grid[i][j]=='.'&&grid[i][j+1]=='.'){
+		 		merge(i,j,j+1);
+			}
+		}
+		if(i<N-1){
+			for(int j=0;j<M;j++){
+				if(grid[i][j]=='.'&&grid[i+1][j]=='.'){
+					if(up[i+1][find(i+1,j)]==-1){
+						up[i+1][find(i+1,j)]=j;
+					}else{
+						merge(i,j,up[i+1][find(i+1,j)]);
+					}
+				}
+			}
+		}
+	}
+	for(int i=N-1;i>=0;i--){
+		for(int j=0;j<M;j++){
+			if(grid[i][j]=='.'&&find(i,j)==j){
+				id[i][j]=tree_size++;
+			}
+		}
+	}
+	for(int i=N-1;i>=0;i--){
+		for(int j=0;j<M;j++){
+			if(grid[i][j]=='.'&&find(i,j)==j){
+				if(up[i][j]!=-1){
+					children[id[i-1][find(i-1,up[i][j])]].push_back(id[i][j]);
+				}else{
+					children[0].push_back(id[i][j]);
+				}
+			}
+		}
+	}
+	for(int i=1;i<tree_size;i++){
+		pull(i);
+	}
+	pull(0);
+	printf("%d\n",(dp[0]+MOD-1)%MOD);
+}

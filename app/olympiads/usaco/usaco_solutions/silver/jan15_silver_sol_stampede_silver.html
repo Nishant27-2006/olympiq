@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<html>
+<p>(Analysis by Mark Gordon)</p><p>
+
+The first observation to make in this problem is that we can transform each cow into a time interval corresponding to the interval that the cow is on the line x=0.</p><p>
+
+Viewed this way the problem can be solved using a sweep line technique.  Simply create a sorted list of events corresponding to the times that a cow&apos;s interval begins and ends.  Every time a cow&apos;s interval begins insert it into a set and when it ends remove it from the set.  Then to solve the problem we simply need to keep track of which cows in the set ever have the minimum y-coordinate among cows in the set.</p><p>
+
+See my code for a sample implementation</p><p>
+
+</p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;set&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+int main() {
+  freopen(&quot;stampede.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;stampede.out&quot;, &quot;w&quot;, stdout);
+
+  int N;
+  cin &gt;&gt; N;
+
+  vector&lt;pair&lt;int, int&gt; &gt; events;
+  for (int i = 0; i &lt; N; i++) {
+    int x, y, r;
+    cin &gt;&gt; x &gt;&gt; y &gt;&gt; r;
+    x *= -r;
+
+    /* We&apos;ll use a negative y value to indicate the end of an interval. */
+    events.push_back(make_pair(x - r, y));
+    events.push_back(make_pair(x, -y));
+  }
+  sort(events.begin(), events.end());
+
+  set&lt;int&gt; seen; /* Tracks which intervals we&apos;ve seen. */
+  set&lt;int&gt; active; /* Tracks which intervals are currently above us. */
+  for (int i = 0; i &lt; events.size(); ) {
+    /* Add/remove any intervals that begin/end at time events[i].first. */
+    int j;
+    for (j = i; j &lt; events.size() &amp;&amp; events[i].first == events[j].first; j++) {
+      int y = events[j].second;
+      if (y &gt; 0) {
+        active.insert(y);
+      } else {
+        active.erase(-y);
+      }
+    }
+
+    /* Add the first interval we can see to our list of seen intervals. */
+    if (!active.empty()) {
+      seen.insert(*active.begin());
+    }
+
+    i = j;
+  }
+  cout &lt;&lt; seen.size() &lt;&lt; endl;
+
+  return 0;
+}
+</pre><p></p><p>
+
+There was also a fairly different approach to this problem that could be coded fairly succinctly using STL&apos;s set.  We simply store all &quot;interesting&quot; times (times immediate before/during/after an interval starts and ends) in a set and then process the intervals in increasing y values.  Using set&apos;s lower_bound and upper_bound functions we can find the iterator range representing all times within that interval.  If the interval is non-empty we delete everything in the range and increment the number of seen intervals, otherwise the interval is not visible.</p><p>
+
+</p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;set&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+int main() {
+  freopen(&quot;stampede.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;stampede.out&quot;, &quot;w&quot;, stdout);
+
+  int N;
+  cin &gt;&gt; N;
+
+  set&lt;int&gt; st;
+  vector&lt;pair&lt;int, pair&lt;int, int&gt; &gt; &gt; A;
+  for (int i = 0; i &lt; N; i++) {
+    int x, y, r;
+    cin &gt;&gt; x &gt;&gt; y &gt;&gt; r;
+    x *= -r;
+    A.push_back(make_pair(y, make_pair(x - r, x)));
+    st.insert(x - r - 1);
+    st.insert(x - r);
+    st.insert(x - r + 1);
+    st.insert(x - 1);
+    st.insert(x);
+    st.insert(x + 1);
+  }
+  sort(A.begin(), A.end());
+
+  int result = 0;
+  for (int i = 0; i &lt; A.size(); i++) {
+    auto it = st.lower_bound(A[i].second.first);
+    auto jt = st.lower_bound(A[i].second.second);
+    if (it != jt) {
+      ++result;
+      st.erase(it, jt);
+    }
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+
+  return 0;
+}
+</pre><p></p>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Danny Mittal)
+<p>Visualize the cows and apples as being on a plane where position is the <span class='math'>$x$</span>-axis
+and time is the <span class='math'>$y$</span>-axis. For a given cow that arrives at time <span class='math'>$t$</span> to position
+<span class='math'>$x$</span>, the possible apples that that cow could catch are the ones landing at time
+<span class='math'>$t&apos;$</span> at position <span class='math'>$x&apos;$</span> that satisfy <span class='math'>$t&apos; \geq t$</span> and <span class='math'>$|x&apos; - x| \leq |t&apos; - t|$</span>.
+This region in the plane is a sort of infinite V shape with <span class='math'>$45$</span> degree angles
+extending upwards from the point <span class='math'>$(x, t)$</span>.
+<p>If we rotate the entire plane <span class='math'>$45$</span> degrees clockwise (transform each point
+<span class='math'>$(x, t)$</span> to
+<span class='math'>$(u, v) = \left(\frac {t + x} {\sqrt 2}, \frac {t - x} {\sqrt 2}\right)$</span>), then
+those infinite V shapes become infinite squares, which means that the condition
+for a cow <span class='math'>$(u, v)$</span> to be able to catch an apple <span class='math'>$(u&apos;, v&apos;)$</span> is simply <span class='math'>$u \leq u&apos;$</span>
+and <span class='math'>$v \leq v&apos;$</span>. 
+<p>Let&apos;s use that transformation. We can simply ignore the <span class='math'>$\sqrt 2$</span> factor as it
+doesn&apos;t change the condition. For now, we will assume that <span class='math'>$n$</span> is <span class='math'>$1$</span>, so each
+line of the input represents a single cow or apple.
+<p>We can take a greedy approach to this problem. Consider the apple <span class='math'>$a$</span> with
+smallest <span class='math'>$v$</span>, assuming that it can be caught by at least one cow, and out of all
+cows that could catch it, consider the cow <span class='math'>$c$</span> with largest <span class='math'>$u$</span>. There is no
+apple that <span class='math'>$c$</span> can catch that any other cow that can catch <span class='math'>$a$</span> cannot catch,
+because all of them have <span class='math'>$u$</span> at most the <span class='math'>$u$</span> of <span class='math'>$c$</span>, and since they can all
+catch <span class='math'>$a$</span>, all of them have a <span class='math'>$v$</span> not larger than the <span class='math'>$v$</span> of any apple that can
+be caught at all. Therefore, it is optimal to assign <span class='math'>$c$</span> to catch <span class='math'>$a$</span>.
+<p>Based on this greedy principle, we can devise an algorithm to solve this
+problem. First, sort all the cows and all the apples by <span class='math'>$v$</span>. Now, for each apple
+in increasing order of <span class='math'>$v$</span>, we will find the optimal cow to catch it. We will do
+this by maintaining a BST (binary search tree) of the cows that have <span class='math'>$v$</span> at most
+the <span class='math'>$v$</span> of the current apple, with the BST being sorted by <span class='math'>$u$</span>. For each apple
+<span class='math'>$a$</span>, we will first add in all the cows with <span class='math'>$v$</span> at most the <span class='math'>$v$</span> of <span class='math'>$a$</span> that
+haven&apos;t been added yet. Then, we will query our BSTs to find the cow in the BST
+with the largest <span class='math'>$u$</span> such that the <span class='math'>$u$</span> is still small enough to catch <span class='math'>$a$</span>. If
+there is such a cow, then we use it to catch <span class='math'>$a$</span>, meaning that we remove it from
+the BST and increment our answer.
+<p>This algorithm runs in <span class='math'>$\mathcal O(N\lg N)$</span> as we add and remove each cow
+to/from the BST at most once, and we query the BST once for each apple.
+<p>It remains to handle the fact that each line of the input can represent multiple
+cows or apples. To handle this, we modify the part where we find the optimal cow
+to catch each apple. We will instead repeatedly find the optimal group of cows
+for the current group of apples, and assign as many cows as possible to apples.
+At each step of this algorithm, either the group of cows will be exhausted, or
+the group of apples will be exhausted. Therefore, the amount of steps is <span class='math'>$N$</span>,
+and so this algorithm still runs in
+<span class='math'>$\mathcal O(N\lg N)$</span>.
+<p>Java code:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+
+public class AppleCatching {
+
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        List&lt;Stuff&gt; cows = new ArrayList&lt;&gt;();
+        List&lt;Stuff&gt; apples = new ArrayList&lt;&gt;();
+        for (int j = 1; j &lt;= n; j++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int q = Integer.parseInt(tokenizer.nextToken());
+            int time = Integer.parseInt(tokenizer.nextToken());
+            int location = Integer.parseInt(tokenizer.nextToken());
+            int amount = Integer.parseInt(tokenizer.nextToken());
+            int y = time - location;
+            int x = time + location;
+            (q == 1 ? cows : apples).add(new Stuff(amount, y , x));
+        }
+        Collections.sort(cows, Comparator.comparingInt(cow -&gt; cow.y));
+        Collections.sort(apples, Comparator.comparingInt(apple -&gt; apple.y));
+        TreeSet&lt;Stuff&gt; treeSet = new TreeSet&lt;&gt;((cow1, cow2) -&gt; {
+            if (cow1.x != cow2.x) {
+                return cow1.x - cow2.x;
+            } else {
+                return cow1.y - cow2.y;
+            }
+        });
+        int j = 0;
+        int answer = 0;
+        for (Stuff apple : apples) {
+            while (j &lt; cows.size() &amp;&amp; cows.get(j).y &lt;= apple.y) {
+                treeSet.add(cows.get(j));
+                j++;
+            }
+            int amount = apple.amount;
+            while (amount &gt; 0 &amp;&amp; !treeSet.isEmpty() &amp;&amp; treeSet.first().x &lt;= apple.x) {
+                Stuff cow = treeSet.floor(new Stuff(0, 1000000000, apple.x));
+                treeSet.remove(cow);
+                int caught = Math.min(amount, cow.amount);
+                answer += caught;
+                amount -= caught;
+                if (caught &lt; cow.amount) {
+                    treeSet.add(new Stuff(cow.amount - caught, cow.y, cow.x));
+                }
+            }
+        }
+        System.out.println(answer);
+    }
+
+    static class Stuff {
+        final int amount;
+        final int y;
+        final int x;
+
+        Stuff(int amount, int y, int x) {
+            this.amount = amount;
+            this.y = y;
+            this.x = x;
+        }
+    }
+}
+</pre>
+<p></body></html>

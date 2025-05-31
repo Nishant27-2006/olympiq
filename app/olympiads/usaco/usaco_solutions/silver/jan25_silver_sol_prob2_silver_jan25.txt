@@ -1,0 +1,660 @@
+Solution ID: sol_prob2_silver_jan25
+Contest: JAN25
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_jan25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi, Chongtian Ma)
+
+Let's define
+
+$g(x)$
+
+to be the minimum number of operations FJ must perform for
+some integer
+
+$x$
+
+,
+
+$f(x,a_i)$
+
+denote the closest integer
+
+$y$
+
+to
+
+$a_i$
+
+such that
+
+$y\equiv x \pmod M$
+
+(in case of a tie, choose the smaller candidate),  and
+
+$h(x,a_i)=|a_i-f(x,a_i)|$
+
+. Then
+
+$g(x)=\sum_i h(x, a_i)$
+
+, and our goal is to
+compute the  minimum value of
+
+$g(x)$
+
+.
+
+Approach 1:
+
+Subtask 1:
+
+$N,M\le 1000$
+
+Since
+
+$g(x)$
+
+does not change if we add a multiple of
+
+$M$
+
+to
+
+$x$
+
+, we only need to
+consider
+
+$x\in [0, M-1]$
+
+. For each such
+
+$x$
+
+,  we can compute
+
+$g(x)$
+
+in
+
+$O(N)$
+
+time by iterating over each
+
+$i$
+
+. This solves a single test case in
+
+$O(NM)$
+
+time.
+
+Subtask 2:
+
+$N\le 1000$
+
+Let's first consider how to solve the case
+
+$M=\infty$
+
+. In this case,
+
+$f(x,a_i)=x$
+
+and
+
+$g(x)$
+
+is a
+
+convex
+
+function of
+
+$x$
+
+. If
+we sort the
+
+$a_i$
+
+in increasing order, then it achieves its minimum value of
+
+$\sum_{i=N-\lfloor N/2\rfloor +1}^{N}a_i-\sum_{i=1}^{\lfloor N/2\rfloor}a_i$
+
+at
+
+$x\in [a_{\lfloor (N+1)/2\rfloor}, a_{\lceil (N+1)/2\rceil}]$
+
+.
+
+When
+
+$M$
+
+is finite, we can start by replacing each
+
+$a_i$
+
+with its remainder
+modulo
+
+$M$
+
+and sorting them in ascending order. Suppose that
+
+$g(x)$
+
+attains its
+minimum value at
+
+$x=x_{\min}$
+
+. If we apply the
+
+$M=\infty$
+
+logic above on the
+current
+
+$a_i$
+
+, we will get the correct answer if
+
+$f(x_{\min},a_i)$
+
+is equal for
+all
+
+$a_i$
+
+. However, it is possible that
+
+$f(x_{\min},a_i)$
+
+is equal to one value
+
+$v$
+
+for a prefix of
+
+$a_i$
+
+and
+
+$v+M$
+
+for the remaining suffix, in which case the
+correct answer could be smaller. We can address this case by iterating over all
+possible lengths of this prefix, adding
+
+$M$
+
+to all elements of this prefix, and
+then applying the
+
+$M=\infty$
+
+logic to get a candidate answer. At the end, we
+output the minimum of all
+
+$N$
+
+candidate answers.
+
+This can be implemented in
+
+$O(N^2)$
+
+time per test case. We note  that after
+adding
+
+$M$
+
+to the smallest element of
+
+$a$
+
+, we can maintain the property that
+
+$a$
+
+is sorted by just moving the first element of the array to the end.
+
+Ben's Python Implementation:
+
+T = int(input())
+for tc in range(T):
+    N, M = map(int, input().split())
+    A = list(map(int, input().split()))
+    A = sorted([x % M for x in A])
+    ans = float('inf')
+    for _ in range(N):
+        ans = min(ans, sum(A[N-N//2:]) - sum(A[:N//2]))
+        A = A[1:] + [A[0] + M]  # add M to first element of A and move it to the end
+    print(ans)
+
+Full Credit:
+
+All arrays in the subtask above that we run the
+
+$M=\infty$
+
+solution for are fixed-length subarrays of the sorted array
+
+$[a_1,a_2,\dots,a_N,a_1+M,a_2+M, \dots, a_N+M]$
+
+. Thus, we can speed up the
+previous solution by storing
+
+prefix sums
+
+on this
+doubled array.  The runtime is
+
+$O(N\log N)$
+
+per test case due to sorting.
+
+T = int(input())
+for tc in range(T):
+    N, M = map(int, input().split())
+    A = list(map(int, input().split()))
+    A = sorted([x % M for x in A])
+    A = A + [x + M for x in A]
+    ans = float('inf')
+    cum = [0]
+    for x in A:
+        cum.append(cum[-1] + x)
+    for i in range(N):
+        ans = min(ans, cum[i + N] - cum[i + N - N // 2] - cum[i + N // 2] + cum[i])
+    print(ans)
+
+Approach 2:
+
+Similar to approach
+
+$1$
+
+, let's replace each
+
+$a_i$
+
+with its remainder modulo
+
+$M$
+
+and sort them in ascending order. Suppose we know
+
+$x$
+
+, we can determine the
+total number of operations using the following:
+
+Let's break up
+
+$a$
+
+into two arrays
+
+$b$
+
+and
+
+$c$
+
+, where
+
+$b$
+
+stores all
+
+$a_i$
+
+such that
+
+$a_i \in \{(x - \lfloor \frac{M}{2} \rfloor) \pmod{M}, (x - \lfloor \frac{M}{2} \rfloor + 1) \pmod{M}
+, \ldots , (x - 1) \pmod{M}\}$
+
+,
+and
+
+$c$
+
+stores all
+
+$a_i$
+
+such that
+
+$a_i \in \{(x + 1) \pmod {M}, (x + 2) \pmod {M}, \ldots, (x + \lceil \frac{M}{2} \rceil) \pmod{M}\}$
+
+.
+
+Observe that it is only optimal for FJ to increase all elements in
+
+$b$
+
+,
+and decrease every element in
+
+$c$
+
+.
+
+The number of operations FJ must perform is
+
+$\sum_{i=1}^{|b|} ((x - b_i) \pmod{M}) + \sum_{i=1}^{|c|} ((c_i - x) \pmod{M})$
+
+.
+
+Let's find a way to calculate the first expression quickly, but first, we have
+to solve a simpler problem. Suppose we have an array
+
+$d$
+
+and we want to find
+
+$\sum_{i=1}^{|d|} (y - d_i)$
+
+, we can break the summation up into
+
+$\sum_{i=1}^{|d|} y - \sum_{i=1}^{|d|} d_i = |d| \cdot y - \sum_{i=1}^{|d|} d_i$
+
+.
+
+Let's try to remove the modulo in the first expression. The inconvenient part is
+that some
+
+$x - b_i$
+
+might be negative, while
+
+$(x - b_i) \pmod{M}$
+
+is positive.
+However, note that
+
+given two integers
+
+$p$
+
+and
+
+$q$
+
+such that
+
+$p < q$
+
+,
+
+$(p-q) \pmod{M} =(p+M)-q$
+
+.
+
+Using this, make some adjustments on the values of
+
+$b$
+
+and
+
+$x$
+
+(i.e. increasing
+some values by
+
+$M$
+
+when necessary) such that
+
+$x - b_i$
+
+is always positive and
+less than
+
+$M$
+
+. This is necessary because we cannot increase an element in
+
+$b$
+
+by
+a negative amount. Now, we can apply the calculation for the simpler problem.
+
+The values of
+
+$c_i$
+
+can be adjusted, and the second expression can be calculated
+in constant time similarly.
+
+The essential observation for this approach is:
+
+$g$
+
+attains its minimum value when
+
+$x$
+
+is one of
+
+$a_1, a_2, \ldots, a_N$
+
+.
+
+Proof: Let's first show the following fact: if
+
+$x$
+
+is not equivalent to any
+
+$a_i \pmod M $
+
+, then
+
+$2g(x)\ge g(x-1)+g(x+1)$
+
+. By the decomposition of
+
+$g$
+
+described above, it suffices to show that
+
+$2h(x, a_i) \ge h(x-1, a_i) + h(x+1, a_i)$
+
+for all
+
+$i$
+
+. Observe that
+
+$$\max(h(x-1, a_i), h(x+1, a_i))\le h(x, a_i) +1$$
+
+and
+
+$$\min(h(x-1, a_i), h(x+1, a_i))=h(x, a_i)-1$$
+
+since
+
+$x\not \equiv a_i\pmod M$
+
+. So
+
+$$2h(x, a_i)\ge \min(h(x-1, a_i), h(x+1, a_i)) + \max(h(x-1, a_i), h(x+1, a_i)) = h(x-1, a_i) + h(x+1, a_i),$$
+
+as desired.
+
+Suppose
+
+$g$
+
+attains its global minimum at
+
+$x=x_{\min}$
+
+, and that
+
+$x_{\min}\in [a_i, a_{i+1}]$
+
+after shifting
+
+$x_{\min}$
+
+by an appropriate
+multiple of
+
+$M$
+
+for some
+
+$i\in [1,M]$
+
+(let's define
+
+$a_{M+1}=a_1+M$
+
+). Then the
+fact we showed above implies that
+
+$g$
+
+is
+
+concave
+
+on the interval
+
+$[a_i,a_{i+1}]$
+
+, which in turn implies
+
+$g(x_{\min})\ge \min(g(a_i), g(a_{i+1}))$
+
+. Thus,
+
+$g$
+
+attains its global minimum
+at some
+
+$a_i$
+
+.
+
+Now, we have limited the number of possible values of
+
+$x$
+
+to at most
+
+$N$
+
+. Let's
+iterate over all
+
+$i$
+
+and calculate the number of operations that must be
+performed when
+
+$a_i = x$
+
+. Since all elements in
+
+$b$
+
+and
+
+$c$
+
+must be in a
+continuous segment on the modulo circle, we can precompute the sum of all
+elements in
+
+$b$
+
+and
+
+$c$
+
+using prefix sums on
+
+$a$
+
+. To straighten out the modulo
+circle into a line, we can insert
+
+$a_i + M$
+
+to the back of
+
+$a$
+
+for each
+
+$1 \leq i \leq N$
+
+. This way, no minor adjustments with modulo in the expressions
+are needed. To determine the index that is the closest to the border of arrays
+
+$b$
+
+and
+
+$c$
+
+(i.e.
+
+$x - \lfloor \frac{M}{2} \rfloor)$
+
+, we can use binary search.
+
+Chongtian's C++ Implementation:
+
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main(){
+	int T; cin >> T;
+	while(T--){	
+		int n, m; cin >> n >> m; 
+		vector<int> a(n);
+		for(int& i: a){
+			cin >> i;
+			i %= m;
+		}
+		sort(a.begin(), a.end());
+		vector<ll> b;
+		for(int i = 0; i < n; i++) b.push_back(a[i]);
+		for(int i = 0; i < n; i++) b.push_back(a[i] + m);
+		
+		int N = (int) b.size();
+		vector<ll> p(N);
+		p[0] = b[0];
+		for(int i = 1; i < N; i++) p[i] = p[i-1] + b[i];
+		
+		ll ans = 1e18;
+		for(int i = 0; i < N; i++){
+			if(b[i] - m / 2 >= 0 && b[i] + (m - 1) / 2 < 2 * m){
+				auto lower = lower_bound(b.begin(), b.end(), b[i] - m / 2) - b.begin();
+				ll lower_sum = (i == 0 ? 0 : p[i - 1]) - (lower - 1 < 0 ? 0 : p[lower - 1]);
+				ll lower_cnt = i - lower;
+				
+				auto upper = upper_bound(b.begin(), b.end(), b[i] + (m - 1) / 2) - b.begin();
+				ll upper_sum = p[upper - 1] - p[i];
+				ll upper_cnt = upper - 1 - i;
+
+				ll res = (lower_cnt * b[i] - lower_sum) + (upper_sum - upper_cnt * b[i]);
+				ans = min(ans, res);
+			}
+		}
+		cout << ans << endl;
+	}
+}

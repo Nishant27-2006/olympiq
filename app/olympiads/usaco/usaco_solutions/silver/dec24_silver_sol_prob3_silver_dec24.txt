@@ -1,0 +1,349 @@
+Solution ID: sol_prob3_silver_dec24
+Contest: DEC24
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob3_silver_dec24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Alex Liang)
+
+Subtasks 1 and 2 (
+
+$N \le 40$
+
+):
+
+A cell is
+
+not
+
+unusable (let's call such cells
+
+good
+
+) if it
+satisfies at least one of the following conditions.
+
+It is "?" and is on the border of the grid
+
+or
+
+it is pointing directly
+outside the grid
+
+It is "?" and adjacent to a good cell
+
+or
+
+it is
+pointing directly into a good cell
+
+Let's start with the first condition. We can find all cells satisfying the first
+condition and mark them as good. Note that the second condition depends on
+adjacent conditions being marked good. We can DFS from all good cells satisfying
+the first condition and see if we can mark adjacent cells as good and recurse
+onto the adjacent cells that we mark as good. Finally, our desired answer will
+be
+
+$N^2$
+
+minus the number of good cells.
+
+This algorithm takes
+
+$\mathcal{O}(N^2)$
+
+time per update. If we run this after
+each update, our program will have a complexity of
+
+$\mathcal{O}(QN^2)$
+
+(note
+that
+
+$Q$
+
+can be at most
+
+$N^2$
+
+).
+
+Alex Liang's C++ code:
+
+#include <bits/stdc++.h>
+using namespace std; 
+ 
+const int MAX = 1005;
+const int di[] = {0, 0, -1, 1};
+const int dj[] = {-1, 1, 0, 0};
+const char allDirs[] = {'L', 'R', 'U', 'D'};
+ 
+int n, q, curGood, good[MAX][MAX], dir[MAX][MAX]; 
+ 
+bool inside(int i, int j){
+    return i >= 1 and i <= n and j >= 1 and j <= n;
+}
+bool isGood(int i, int j){
+    // Checks if in and is usable
+    if (!inside(i, j))
+        return false;
+ 
+    for (int d = 0; d < 4; d++){
+        // If it has a direction and d is not that direction
+        if (dir[i][j] != -1 and d != dir[i][j])
+            continue;
+ 
+        int ni = i + di[d];
+        int nj = j + dj[d];
+ 
+        // Good if pointing outside or towards a good cell
+        if (!inside(ni, nj) or good[ni][nj])
+            return true;
+    }
+    return false;
+}
+void dfs(int i, int j){
+    if (!isGood(i, j) or good[i][j])
+        return;
+    
+    good[i][j] = true;
+    curGood++;
+ 
+    for (int d = 0; d < 4; d++)
+        dfs(i + di[d], j + dj[d]);
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    cin >> n >> q;
+ 
+    // -1 meaning it can be anything
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+            dir[i][j] = -1;
+    
+    vector<tuple<int, int, char>> upds(q);
+ 
+    for (auto &[r, c, t] : upds){
+        cin >> r >> c >> t;
+        dir[r][c] = find(allDirs, allDirs + 4, t) - allDirs;
+ 
+        for (int i = 1; i <= n; i++)
+            for (int j = 1; j <= n; j++)
+                good[i][j] = 0;
+ 
+        curGood = 0;
+ 
+        for (int i = 1; i <= n; i++)
+            for (int j = 1; j <= n; j++)
+                dfs(i, j);
+        
+        cout << n * n - curGood << "\n";
+    }
+}
+
+William Lin's Python code:
+
+n, q = (int(x) for x in input().split())
+qs = [(int(x[0])-1, int(x[1])-1, x[2]) for x in (input().split() for _ in range(q))]
+g = [['?']*n for _ in range(n)]
+for i, j, c in qs:
+    g[i][j] = c
+    ok = [[False] * n for _ in range(n)]
+    def a(i, j, c):
+        return 0 <= i < n and 0 <= j < n and not ok[i][j] and (g[i][j] == c or g[i][j] == '?')
+    ans = n*n
+    def dfs(i, j):
+        if ok[i][j]:
+            return
+        ok[i][j] = True
+        global ans
+        st = [(i, j)]
+        while st:
+            i, j = st.pop()
+            ans -= 1
+            if a(i+1, j, 'U'):
+                st += [(i+1, j)]
+                ok[i+1][j] = True
+            if a(i-1, j, 'D'):
+                st += [(i-1, j)]
+                ok[i-1][j] = True
+            if a(i, j+1, 'L'):
+                st += [(i, j+1)]
+                ok[i][j+1] = True
+            if a(i, j-1, 'R'):
+                st += [(i, j-1)]
+                ok[i][j-1] = True
+    for i in range(n):
+        if a(0, i, 'U'):
+            dfs(0, i)
+        if a(n-1, i, 'D'):
+            dfs(n-1, i)
+        if a(i, 0, 'L'):
+            dfs(i, 0)
+        if a(i, n-1, 'R'):
+            dfs(i, n-1)
+    print(ans)
+
+Full Credit:
+
+For full credit, we can process the updates in
+
+reverse order
+
+(so we will
+be processing updates offline). What this means is that we will have our grid
+start as the
+
+final
+
+configuration after all updates. Then, we process the
+last update, second to last update and so on. When we process an  update, the
+conveyor belt at the given position becomes a "?". This makes it convenient
+because we can then search from the newly turned "?" after each update and find
+the new good cells.
+
+Since each cell can only be marked as good once, this algorithm will run in
+
+$\mathcal{O}(N^2+Q)$
+
+time.
+
+Here
+
+is a past USACO Silver problem that uses a similar idea, though the updates are
+processed forwards instead of backwards.
+
+Alex Liang's C++ code:
+
+#include <bits/stdc++.h>
+using namespace std; 
+ 
+const int MAX = 1005;
+const int di[] = {0, 0, -1, 1};
+const int dj[] = {-1, 1, 0, 0};
+const char allDirs[] = {'L', 'R', 'U', 'D'};
+ 
+int n, q, curGood, good[MAX][MAX], dir[MAX][MAX]; 
+ 
+bool inside(int i, int j){
+    return i >= 1 and i <= n and j >= 1 and j <= n;
+}
+bool isGood(int i, int j){
+    // Checks if in and is usable
+    if (!inside(i, j))
+        return false;
+ 
+    for (int d = 0; d < 4; d++){
+        // If it has a direction and d is not that direction
+        if (dir[i][j] != -1 and d != dir[i][j])
+            continue;
+ 
+        int ni = i + di[d];
+        int nj = j + dj[d];
+ 
+        // Good if pointing outside or towards an good cell
+        if (!inside(ni, nj) or good[ni][nj])
+            return true;
+    }
+    return false;
+}
+void dfs(int i, int j){
+    if (!isGood(i, j) or good[i][j])
+        return;
+    
+    good[i][j] = true;
+    curGood++;
+ 
+    for (int d = 0; d < 4; d++)
+        dfs(i + di[d], j + dj[d]);
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    cin >> n >> q;
+ 
+    // -1 meaning it can be anything
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+            dir[i][j] = -1;
+    
+    vector<tuple<int, int, char>> upds(q);
+    vector<int> res;
+
+    for (auto &[r, c, t] : upds){
+        cin >> r >> c >> t;
+        dir[r][c] = find(allDirs, allDirs + 4, t) - allDirs;
+    }
+ 
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+            dfs(i, j);
+    
+    reverse(upds.begin(), upds.end());
+ 
+    for (auto [r, c, t] : upds){
+        res.push_back(n * n - curGood);
+ 
+        dir[r][c] = -1;
+        dfs(r, c);
+    }
+ 
+    reverse(res.begin(), res.end());
+ 
+    for (int i : res)
+        cout << i << "\n";
+}
+
+William Lin's Python code:
+
+n, q = (int(x) for x in input().split())
+qs = [(int(x[0])-1, int(x[1])-1, x[2]) for x in (input().split() for _ in range(q))]
+g = [['?']*n for _ in range(n)]
+for i, j, c in qs:
+    g[i][j] = c
+ok = [[False] * n for _ in range(n)]
+def a(i, j, c):
+    return 0 <= i < n and 0 <= j < n and not ok[i][j] and (g[i][j] == c or g[i][j] == '?')
+ans = n*n
+def dfs(i, j):
+    if ok[i][j]:
+        return
+    ok[i][j] = True
+    global ans
+    st = [(i, j)]
+    while st:
+        i, j = st.pop()
+        ans -= 1
+        if a(i+1, j, 'U'):
+            st += [(i+1, j)]
+            ok[i+1][j] = True
+        if a(i-1, j, 'D'):
+            st += [(i-1, j)]
+            ok[i-1][j] = True
+        if a(i, j+1, 'L'):
+            st += [(i, j+1)]
+            ok[i][j+1] = True
+        if a(i, j-1, 'R'):
+            st += [(i, j-1)]
+            ok[i][j-1] = True
+for i in range(n):
+    if a(0, i, 'U'):
+        dfs(0, i)
+    if a(n-1, i, 'D'):
+        dfs(n-1, i)
+    if a(i, 0, 'L'):
+        dfs(i, 0)
+    if a(i, n-1, 'R'):
+        dfs(i, n-1)
+b = []
+for i, j, c in reversed(qs):
+    b += [ans]
+    g[i][j] = '?'
+    if i == 0 or ok[i-1][j] or i == n-1 or ok[i+1][j] or j == 0 or ok[i][j-1] or j == n-1 or ok[i][j+1]:
+        dfs(i, j)
+for i in reversed(b):
+    print(i)

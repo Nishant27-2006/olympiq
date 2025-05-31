@@ -1,0 +1,120 @@
+Solution ID: sol_closing_silver_open16
+Contest: OPEN16
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_closing_silver_open16.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Mark Chen)
+
+First, let's formulate the problem as a graph problem. We can
+represent the barns as vertices (we'll call the total number of barns
+$n$) and the roads as edges (we'll call the total number of roads
+$m$). Then the farm is fully connected if the remaining vertices all
+belong to the same connected component.
+
+The simplest solution is to simulate the process. After each barn is closed,
+remake the graph in adjacency list form. Then, run a flood fill to count the
+number of connected components. Specifically, if we do a depth first search
+starting from any open barn and end up visiting all other open barns, the farm
+is fully connected. Remaking the graph and running the search takes $O(n+m)$ time.
+Since there are a total of n barn closings, we have a $O(n^2 + nm)$ algorithm,
+which solves the problem under the silver constraints.
+
+One shortcoming of the simple solution is that it has no memory - after each new
+barn is closed, we forget everything we learned about connected components from
+previous iterations. In particular, we aren't making use of the fact that if
+$(u,v)$ is an edge in the initial graph, then $u$ and $v$ stay connected until either
+$u$ or $v$ is removed. Therefore, we want a data structure that can keep track of
+what connected component a vertex lies in and also supports the operation of
+disconnecting two vertices. Fortunately, there exists a data structure called
+disjoint-set (DSU) that supports two similar operations efficiently - keeping
+track of what connected component a vertex lies in and connecting two vertices.
+
+If we want to use DSU, we need to be connecting vertices together, so let's
+imagine the process is happening in reverse. We start with an empty farm, and
+reintroduce barns one at a time, adding roads from the new barn to existing
+barns if they are edges in the initial graph. For each road we add in, use the
+DSU find operation to check if the barns at the endpoints are in different
+connected components. If so, use the DSU merge operation to join the two
+connected components. This gives us a $O(m \log n)$ solution.
+
+My code is below; it incorporates some very concise "standard"
+routines for all the DSU functions.
+
+#include <iostream>
+#include <iomanip>
+#include <stdio.h>
+#include <set>
+#include <vector>
+#include <map>
+#include <cmath>
+#include <algorithm>
+#include <memory.h>
+#include <string>
+#include <sstream>
+#include <cstdlib>
+#include <ctime>
+#include <cassert>
+
+using namespace std;
+
+typedef long long LL;
+typedef pair<int,int> PII;
+
+#define FORN(i, n) for (int i = 0; i <  (int)(n); i++)
+#define FOR1(i, n) for (int i = 1; i <= (int)(n); i++)
+#define FORD(i, n) for (int i = (int)(n) - 1; i >= 0; i--)
+#define FOREACH(i, c) for (typeof((c).begin()) i = (c).begin(); i != (c).end(); i++)
+
+#define MOD 1000000007
+#define INF 2000000000
+
+void union_init(int d[], int s) { for (int i=0; i < s; i++) d[i]=i; }
+int union_query(int d[], int n) { int res=n; while (d[res]!=res) res=d[res]; int m; while (d[n]!=n) {m=d[n];d[n]=res;n=m;} return res; };
+int union_merge(int d[], int x, int y) { x=union_query(d,x); y=union_query(d,y); if (x==y)return -1; d[x]=y; return 1; }
+
+const int MAXN = 100010;
+int order[MAXN], place[MAXN], u[MAXN], v[MAXN], par[MAXN]; bool res[MAXN];
+
+int N, M;
+
+vector< vector<int> > adj;
+
+int main() {
+    scanf("%d%d", &N, &M);
+    FORN(i, M) scanf("%d%d", &u[i], &v[i]);
+
+    FORN(i, N) {
+        scanf("%d", ℴ[i]);
+        place[order[i]] = i;
+    }
+
+    adj.resize(N+1);
+
+    FORN(i, M) {
+        if (place[u[i]] > place[v[i]]) adj[v[i]].push_back(u[i]);
+        else adj[u[i]].push_back(v[i]);
+    }
+
+    union_init(par, N+1); int comps = 0;
+
+    FORD(i, N) {
+        int u = order[i]; comps++;
+
+        FORN(j, adj[u].size()) {
+            int v = adj[u][j];
+            if (union_query(par, u) != union_query(par, v)) {
+                union_merge(par, u, v);
+                comps--;
+            }
+        }
+
+        res[i] = (comps <= 1);
+    }
+
+    FORN(i, N) if (res[i]) printf("YES\n"); else printf("NO\n");
+    return 0;
+}

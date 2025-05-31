@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Claim:</strong> The original problem is a special case of the following, more
+general problem:
+<p><em>You&apos;re given a weighted undirected tree on vertices <span class='math'>$1\dots N$</span>, as well as
+<span class='math'>$N$</span> additional weighted undirected edges connecting vertices <span class='math'>$1\dots N$</span> with a
+special vertex <span class='math'>$S$</span>. All edge weights are non-negative. Compute the smallest
+possible weight of any
+<a href='https://primes.utm.edu/graph/glossary.html#:~:text=circuit,between%20each%20pair%20of%20vertices).'>circuit</a>
+that visits every vertex at least once. </em>
+<p><strong>Proof:</strong> Let <span class='math'>$sub[x]$</span> denote the number of vertices in the subtree rooted
+at <span class='math'>$x$</span> in the input tree. Consider the following weighted undirected graph:
+<p><ul><li>For every parent-to-child edge <span class='math'>$p\leftrightarrow c$</span> in the input tree, add
+an edge between <span class='math'>$p$</span> and <span class='math'>$c$</span> in the graph with weight <span class='math'>$sub[p]-sub[c]$</span>.</li><li>For every vertex <span class='math'>$v$</span> from <span class='math'>$1$</span> to <span class='math'>$N$</span>, add an edge between <span class='math'>$S$</span> and <span class='math'>$v$</span> with
+weight <span class='math'>$sub[v]$</span>.</li></ul>
+<p>Observe that the weight of the shortest path between two vertices <span class='math'>$a$</span> to <span class='math'>$b$</span> in
+this graph is precisely the number of toggles that you need to go from
+activating the subtree of <span class='math'>$a$</span> to activating the subtree of <span class='math'>$b$</span>. A sequence of
+operations satisfying the conditions in the problem statement corresponds to a
+circuit starting and ending at <span class='math'>$S$</span> that passes through every vertex at least
+once, and vice versa. <span class='math'>$\blacksquare$</span>
+<p>Next, we describe how to solve the problem in the claim. It suffices to find a 
+multiset of the edges of the minimum total weight such that
+<p><ul><li>The edges connect all vertices into a single connected component.</li><li>Every vertex is connected to an even number of edges.</li></ul>
+<p>Clearly, both conditions are necessary. Furthermore, they are sufficient because
+given any multiset satisfying the conditions above we can construct an
+<a href='https://mathworld.wolfram.com/EulerianCycle.html'>Euler circuit</a> that
+passes through every edge as many times as it appears in the multiset.
+<p>We can find this multiset using subtree DP in <span class='math'>$O(N)$</span> time. For each subtree of
+the input tree, we keep track of four values, corresponding to the minimum total
+weight for choosing a multiset of edges within the union of the subtree and
+<span class='math'>$\{S\}$</span>  such that:
+<p><ul><li>The root of the subtree isn&apos;t or is connected to <span class='math'>$S$</span> (and every vertex
+within the subtree not connected to the root of the subtree is connected to
+<span class='math'>$S$</span>).</li><li>The parity of the number of edges involving the root of the
+subtree is even or odd.
+</li></ul>
+<p>For each edge, we need to choose whether to include it <span class='math'>$0$</span>, <span class='math'>$1$</span>, or <span class='math'>$2$</span> times,
+and update the quantities mentioned accordingly. The exact details of the DP
+transitions are left as an exercise to the reader.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using ll = long long;
+const ll BIG = 1e18;
+
+void ckmin(ll &amp;a, ll b) { a = min(a, b); }
+
+namespace TSP {
+
+vector&lt;int&gt; X; // X[i] = weight of edge between S and i
+vector&lt;vector&lt;pair&lt;int, int&gt;&gt;&gt; adj;
+
+// solve subtree rooted at x (with parent p)
+array&lt;array&lt;ll, 2&gt;, 2&gt; dp(int x, int p) {
+    array&lt;array&lt;ll, 2&gt;, 2&gt; ret{};
+    // first dimension: 1 if x is in the same connected component as 0
+    // second dimension: parity of number of edges connected to x
+    ret[0][1] = BIG;
+    ret[1][1] = X.at(x); // use edge S-x one time
+    ret[1][0] = 2 * X.at(x); // use edge S-x two times
+    for (auto [y, w] : adj.at(x))
+        if (y != p) { // y is child of x
+            array&lt;array&lt;ll, 2&gt;, 2&gt; nret;
+            for (int i : {0, 1})
+                for (int j : {0, 1}) nret[i][j] = BIG;
+            auto cret = dp(y, x);
+            for (int a : {0, 1})
+                for (int b : {0, 1})
+                    for (int c : {0, 1})
+                        for (int d : {0, 1}) {
+                            if (d) { // use edge x-y once
+                                ckmin(nret[a | c][b ^ d],
+                                      ret[a][b] + cret[c][d] + w);
+                            } else {
+                                if (c) { // don&apos;t use edge x-y
+                                    ckmin(nret[a][b ^ d],
+                                          ret[a][b] + cret[c][d]);
+                                }
+                                ckmin(nret[a | c][b ^ d], // use edge x-y twice
+                                      ret[a][b] + cret[c][d] + 2 * w);
+                            }
+                        }
+            swap(ret, nret);
+        }
+    return ret;
+}
+
+} // namespace TSP
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int N;
+    cin &gt;&gt; N;
+    vector&lt;int&gt; p(N), sub(N, 1); // parent, subtree size
+    for (int i = 1; i &lt; N; ++i) {
+        cin &gt;&gt; p[i];
+        --p[i];
+    }
+    for (int i = N - 1; i; --i) sub[p[i]] += sub[i];
+    assert(sub[0] == N);
+    TSP::adj.resize(N);
+    for (int i = 1; i &lt; N; ++i) {
+        int w = sub[p[i]] - sub[i];
+        TSP::adj[i].push_back({p[i], w});
+        TSP::adj[p[i]].push_back({i, w});
+    }
+    TSP::X = sub;
+    cout &lt;&lt; TSP::dp(0, -1).at(1).at(0) &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p><em>Note:</em> Here are some observations that may be used to obtain a simpler
+tree DP for the original problem (not the more general problem):
+<p><ul><li>We can ignore all edges adjacent to <span class='math'>$S$</span> with weight greater than one.</li><li>The minimum-cost circuit is the union of some number of subcircuits of the
+form <span class='math'>$S\to x\to S$</span> with total weight <span class='math'>$2\cdot sub[x]$</span>, where a subcircuit may
+contain the same vertex multiple times, but no pair of subcircuits share any
+vertices except for <span class='math'>$S$</span>.</li></ul>
+<p></body></html>

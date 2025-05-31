@@ -1,0 +1,137 @@
+Solution ID: sol_buffet_silver
+Contest: OPEN15
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_buffet_silver.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Nick Wu)
+
+Start by sorting the patches of the grass in increasing order of quality.
+
+Let
+
+$f(i)$
+
+be the maximum energy that we can accumulate if we end at patch
+
+$i$
+
+.
+
+From patch
+
+$i$
+
+, we can compute the minimum distance from patch
+
+$i$
+
+to every
+other patch. Then, for every patch
+
+$j$
+
+where patch
+
+$j$
+
+has lower quality
+grass than patch
+
+$i$
+
+, we have that
+
+$f(i) \ge f(j) + q_j - E * d(i,j)$
+
+.
+
+It takes linear time to compute this information for a given patch. If we
+sort all the patches initially in
+
+$O(N \log N)$
+
+, then this process takes
+
+$O(N^2)$
+
+, which will run in time.
+
+Here is Mark Gordon's code.
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstdio>
+#include <queue>
+#include <cstring>
+
+using namespace std;
+
+#define MAXN 1010
+
+int Q[MAXN];
+int DP[MAXN];
+int D[MAXN];
+vector<int> E[MAXN];
+
+int main() {
+  freopen("buffet.in", "r", stdin);
+  freopen("buffet.out", "w", stdout);
+
+  int N, ECST;
+  cin >> N >> ECST;
+  for (int i = 0; i < N; i++) {
+    int D;
+    cin >> Q[i] >> D;
+    for (int j = 0; j < D; j++) {
+      int v;
+      cin >> v;
+      E[i].push_back(v - 1);
+    }
+  }
+
+  vector<int> PI;
+  for (int i = 0; i < N; i++) {
+    PI.push_back(i);
+  }
+  sort(PI.begin(), PI.end(), [&](int x, int y) {
+    return Q[x] < Q[y];
+  });
+
+  int result = 0;
+  for (int i = N - 1; i >= 0; i--) {
+    int u = PI[i];
+
+    queue<int> q;
+    memset(D, -1, sizeof(D));
+    q.push(u);
+    D[u] = 0;
+    while (!q.empty()) {
+      int v = q.front();
+      q.pop();
+      for (int i = 0; i < E[v].size(); i++) {
+        int nv = E[v][i];
+        if (D[nv] == -1) {
+          D[nv] = D[v] + 1;
+          q.push(nv);
+        }
+      }
+    }
+
+    int res = Q[u];
+    for (int j = 0; j < N; j++) {
+      if (D[j] != -1) {
+        res = max(res, Q[u] + DP[j] - ECST * D[j]);
+      }
+    }
+    DP[u] = res;
+    result = max(result, res);
+  }
+
+  cout << result << endl;
+  return 0;
+}

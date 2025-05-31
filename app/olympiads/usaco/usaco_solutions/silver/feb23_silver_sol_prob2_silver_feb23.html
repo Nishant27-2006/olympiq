@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Andi Qu)
+<p>First, let&apos;s think about how to determine if a cow can go from <span class='math'>$(x_1, y_1)$</span> at
+time <span class='math'>$t_1$</span> to <span class='math'>$(x_2, y_2)$</span> at time <span class='math'>$t_2$</span>. The shortest path a cow can take is
+the straight line connecting <span class='math'>$(x_1, y_1)$</span> to <span class='math'>$(x_2, y_2)$</span>, which has a length of
+<span class='math'>$\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$</span> due to the Pythagorean theorem. The cow&apos;s
+journey is possible if and only if this length is no greater than <span class='math'>$t_2 - t_1$</span>.
+This condition can be summarized in the following inequality:
+<p><div class='math'>$$(t_2 - t_1)^2 \geq (x_2 - x_1)^2 + (y_2 - y_1)^2$$</div>
+<p>Using this fact, we can solve subtask 1 using the following <span class='math'>$O(GN)$</span> algorithm:
+<ul><li>Iterate through the list of cows and grazing sites in two nested loops.</li><li>For each cow and grazing site, check if the inequality holds.</li><li>If
+every grazing site satisfies the inequality for a particular cow, then it is
+a suspect; otherwise, it must be innocent.</li></ul>
+<p>To speed up this algorithm, we use the condition that a cow can go
+from any grazing site to another within the specified times.
+<p>Consider
+a cow at <span class='math'>$(x_1, y_1)$</span> at time <span class='math'>$t_1$</span> and two grazing sites at <span class='math'>$(x_2, y_2)$</span> and <span class='math'>$(x_3, y_3)$</span>
+at times <span class='math'>$t_2$</span> and <span class='math'>$t_3$</span>, where <span class='math'>$t_1 &lt; t_2 &lt; t_3$</span>. If the cow can make it to the
+grazing site at <span class='math'>$(x_2, y_2)$</span>, then it can also make it to the grazing site at <span class='math'>$(x_3, y_3)$</span>.
+The same is true when <span class='math'>$t_1 &gt; t_2 &gt; t_3$</span>.
+<p>This means that for each cow, we only need to check the two grazing sites with times
+closest to their reported time! We can find these two sites efficiently by sorting
+the list of grazing sites by time and using binary search, which gives us an <span class='math'>$O((N + G) \log G)$</span> algorithm.
+<p>Ben&apos;s code in Python:
+<p><pre class='prettyprint'>
+import bisect
+G, N = map(int, input().split())
+ 
+def read():
+	x, y, t = map(int, input().split())
+	return t, x, y
+ 
+grazings = sorted([read() for _ in range(G)])
+ans = 0
+ 
+def reachable(a, b):
+	return (a[1]-b[1])**2+(a[2]-b[2])**2 &lt;= (a[0]-b[0])**2
+ 
+for _ in range(N):
+	alibi = read()
+	pos = bisect.bisect(grazings, alibi) # first greater
+	innocent = False
+	for y in (pos-1, pos):
+		if 0 &lt;= y &lt; G:
+			innocent |= not reachable(grazings[y], alibi)
+	ans += innocent
+print(ans)
+</pre>
+<p></body></html>

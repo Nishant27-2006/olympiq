@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Note: Whenever I refer to a valid triangle below I mean one that is equilateral.
+<p>Here are some approaches with different time complexities.
+<p><span class='math'>$O(N^6)$</span> (~1 test case): Go through all triples of squares and check whether
+they form a valid triangle.
+<p><span class='math'>$O(N^5)$</span> (~3 test cases): Fix the lower-left-most square <span class='math'>$a$</span> of the  triangle.
+For each remaining square <span class='math'>$p$</span>, place <span class='math'>$p$</span> into a bucket labeled <span class='math'>$dist(a,p)$</span>.  To
+check whether <span class='math'>$a$</span> forms a valid triangle with two squares <span class='math'>$b$</span> and <span class='math'>$c$</span> in bucket
+<span class='math'>$i$</span> just verify that <span class='math'>$dist(b,c)=i.$</span>
+<p><span class='math'>$O(N^4)$</span> (~9 test cases). Consider the smallest rectangle with sides parallel to
+the coordinates axes that contains the triangle. At least one and at most two of
+the vertices of the triangle are also corners of this bounding rectangle. 
+<p>Let the vertices of the triangle be <span class='math'>$a=(a_0,a_1),b=(b_0,b_1),c=(c_0,c_1).$</span> 
+First, consider a corner of the triangle which is also a corner of the
+rectangle. Without loss of generality, suppose that the corner is <span class='math'>$(a_0,a_1)$</span>
+and <span class='math'>$a_0\le \min(b_0,c_0), a_1\le \min(b_1,c_1).$</span> Also suppose that
+<span class='math'>$dist(a,b)=dist(b,c)=dist(c,a)=r$</span> (<span class='math'>$r$</span> even). Then both <span class='math'>$b$</span> and <span class='math'>$c$</span> lie on the
+diagonal consisting of all <span class='math'>$(x,y)$</span> satisfying <span class='math'>$x+y=a_0+a_1+r$</span>. Furthermore,
+<span class='math'>$b-c=\pm \left(\frac{r}{2},-\frac{r}{2}\right).$</span> For a fixed <span class='math'>$a$</span> and <span class='math'>$r$</span>, we can
+count the number of pairs <span class='math'>$(b,c)$</span> in <span class='math'>$O(N)$</span>. 
+<p>Regarding each of the three other possible orientations of the triangle  (ex.
+<span class='math'>$a_0\ge \max(b_0,c_0), a_1\ge \max(b_1,c_1)$</span>), just keep rotating the original
+square by 90 degrees and running the solution. Make sure not to overcount the
+case where two vertices of the triangle are corners of the bounding rectangle!
+<p><span class='math'>$O(N^3):$</span> Let&apos;s try to make the above solution faster. Again focus on the case
+<span class='math'>$a_0\le \min(b_0,c_0), a_1\le \min(b_1,c_1).$</span> For a fixed <span class='math'>$r$</span> note that the
+pairs <span class='math'>$(b,c)$</span> which could possibly make a triangle with <span class='math'>$a=(a_0,a_1)$</span> are almost
+exactly the same as those which could make a triangle with <span class='math'>$a&apos;=(a_0+1,a_1-1)$</span>,
+so we can transition between the two in <span class='math'>$O(1)$</span> time.
+<p><pre class='prettyprint'>
+#include &quot;bits/stdc++.h&quot;
+using namespace std;
+
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+ 
+int N;
+bool G[300][300],GG[300][300];
+long long ans;
+ 
+void rot() { // rotate 90 degrees
+	for (int i = 0; i &lt; N; ++i) 
+		for (int j = 0; j &lt; N; ++j) 
+			GG[N-1-j][i] = G[i][j];
+	for (int i = 0; i &lt; N; ++i) 
+		for (int j = 0; j &lt; N; ++j) 
+			G[i][j] = GG[i][j];
+}
+void solve() { // corner in diagonal with sum a, other two vertices in diagonal with sum b
+	for (int a = 0; a &lt; 2*N-1; ++a) 
+		for (int b = a+2; b &lt; 2*N-1; b += 2) {
+			int dif = (b-a)/2, st = max(0,a-(N-1)), en = min(a,N-1);
+			int cur = 0;
+			for (int i = st; i &lt;= en; ++i) { 
+				if (i == st) // consider (i,a-i) -&gt; stuff in row b
+					for (int j = max(i,b-(N-1)); j &lt; min(i+dif,N-dif); ++j) 
+						cur += G[j][b-j] &amp;&amp; G[j+dif][b-j-dif];
+				if (G[i][a-i]) ans += cur;
+				if (i+2*dif &lt; N &amp;&amp; b-(i+dif) &lt; N) 
+					cur += G[i+dif][b-i-dif] &amp;&amp; G[i+2*dif][b-i-2*dif];
+				if (i+dif &lt; N &amp;&amp; b-i &lt; N) 
+					cur -= G[i][b-i] &amp;&amp; G[i+dif][b-i-dif];
+			}
+		}
+}
+int main() {
+	setIO(&quot;triangles&quot;); 
+	cin &gt;&gt; N;
+	for (int i = 0; i &lt; N; ++i) 
+		for (int j = 0; j &lt; N; ++j) {
+			char c; cin &gt;&gt; c;
+			G[i][j] = c == &apos;*&apos;;
+		}
+	for (int i = 0; i &lt; 4; ++i) solve(), rot(); 
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>As suggested by Dorijan Lendvaj, it is also possible to solve the problem in
+<span class='math'>$O(N^4)$</span> with bitset. Again, consider the case where
+<span class='math'>$a_0\le \min(b_0,c_0), a_1\le \min(b_1,c_1).$</span> Let <span class='math'>$(x,y)=(b_0-a_0,b_1-a_1)$</span> and
+assume that <span class='math'>$b_0&lt;c_0$</span>, <span class='math'>$x\le y$</span>, and <span class='math'>$x+y$</span> is divisible by two. This means that 
+<div class='math'>$$(c_0,c_1)=(a_0,a_1)+(x,y)+((x+y)/2,-(x+y)/2).$$</div>
+If we fix <span class='math'>$x$</span>, <span class='math'>$y$</span>, and <span class='math'>$a_0$</span>, then the number of <span class='math'>$a_1$</span> such that <span class='math'>$(a_0,a_1)$</span>,
+<span class='math'>$(b_0,b_1)$</span>, and <span class='math'>$(c_0,c_1)$</span> all contain cows is equal to the number of bits set
+in the bitwise AND of three bitsets. This solution runs about as quickly as the
+one above.
+<p><pre class='prettyprint'>
+#include &quot;bits/stdc++.h&quot;
+ 
+using namespace std;
+ 
+void setIO(string s) {
+	ios_base::sync_with_stdio(0); cin.tie(0); 
+	freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+	freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+ 
+int N;
+bool G[300][300],GG[300][300];
+long long res = 0;
+
+void rot() {
+	for (int i = 0; i &lt; N; ++i) for (int j = 0; j &lt; N; ++j) GG[N-1-j][i] = G[i][j];
+	for (int i = 0; i &lt; N; ++i) for (int j = 0; j &lt; N; ++j) G[i][j] = GG[i][j];
+}
+
+void solve() {
+	bitset&lt;300&gt; mask[300];
+	for (int i = 0; i &lt; N; ++i) for (int j = 0; j &lt; N; ++j) 
+		mask[i][j] = G[i][j];
+	for (int i = 0; i &lt; N; ++i)
+		for (int x = 1; x &lt; N; ++x) 
+			for (int y = x; y &lt; N; y += 2) {
+				int x2 = x+(x+y)/2; if (i+x2 &gt;= N) break;
+				int y2 = (y-x)/2;
+				res += (mask[i]&amp;(mask[i+x]&gt;&gt;y)&amp;(mask[i+x2]&gt;&gt;y2)).count();
+			}
+}
+
+int main() {
+	setIO(&quot;triangles&quot;); 
+	cin &gt;&gt; N;
+	for (int i = 0; i &lt; N; ++i) for (int j = 0; j &lt; N; ++j) {
+		char c; cin &gt;&gt; c;
+		G[i][j] = c == &apos;*&apos;;
+	}
+	for (int i = 0; i &lt; 4; ++i) { solve(); rot(); }
+	cout &lt;&lt; res &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

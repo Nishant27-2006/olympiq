@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>Note that the corresponding &quot;decision problem&quot;--determine whether <span class='math'>$M$</span> buses
+suffice if every cow waits at most <span class='math'>$T$</span> minutes--can be solved efficiently by a
+greedy algorithm. Additionally, the decision problem is monotonic in <span class='math'>$T$</span>: that
+is, if a maximum waiting time of <span class='math'>$T$</span> is impossible, then no smaller maximum
+waiting time will be possible. 
+<p>This means that we can find the smallest possible
+maximum waiting time by binary searching for the answer. We start off knowing
+that the answer is in some range <span class='math'>$[l,r]$</span>. Then we check whether <span class='math'>$M$</span> buses
+suffice if every cow waits at most <span class='math'>$T = (l+r)/2$</span> minutes. If yes, we can narrow
+the range to <span class='math'>$[l, (l+r)/2]$</span>; if no, we can narrow the range to <span class='math'>$((l+r)/2, r]$</span>.
+Then we recurse. In our case, we have an initial range <span class='math'>$[0, 10^9]$</span> (since the
+optimal waiting time must be nonnegative, but we can clearly get away with only
+one bus if every cow waits <span class='math'>$10^9$</span> timesteps), so the binary search will
+terminate in about <span class='math'>$\log_2 10^9 \approx 30$</span> iterations.
+<p>Now, we must solve the decision problem. As mentioned, it lends itself to a
+greedy algorithm. Fix some desired maximum waiting time <span class='math'>$T$</span>. Suppose that we
+want to find the minimum number of buses needed so that every cow waits at most
+<span class='math'>$T$</span> timesteps. Then the first bus cannot leave more than <span class='math'>$T$</span> timesteps after the
+first cow arrives. But there&apos;s also no point to leaving earlier! If at most <span class='math'>$C$</span>
+cows have arrived by this point (<span class='math'>$T$</span> timesteps after the arrival of the first
+cow), then the first bus simply takes these cows. Otherwise, the bus ought to
+take the first <span class='math'>$C$</span> cows who arrive (since these cows &quot;expire&quot; soonest).
+<p>So the first bus takes some prefix of the cows: either the first <span class='math'>$C$</span> cows, or
+all cows who arrive at most <span class='math'>$T$</span> timesteps after the first cow. After this bus
+has left, the same argument applies to the second bus and the remaining cows. So
+for each bus, we can figure out the optimal set of cows it can take. If after
+<span class='math'>$M$</span> buses, not all cows have left, then <span class='math'>$T$</span> is not a feasible maximum waiting
+time. Otherwise, it is.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+int N,M,C;
+int t[100000];
+ 
+bool pos(int wait)
+{
+	int wagons = 1;
+	int firstArrival = t[0];
+	int firstIndex = 0;
+	for(int i=1;i&lt;N;i++)
+	{
+		if(t[i] - firstArrival &gt; wait || i + 1 - firstIndex &gt; C)
+		{
+			wagons += 1;
+			firstArrival = t[i];
+			firstIndex = i;
+		}
+	}
+	return (wagons &lt;= M);
+}
+ 
+int binSearch(int low,int high)
+{
+	if(low == high) return low;
+	if(low + 1 == high)
+	{
+		if(pos(low)) return low;
+		return high;
+	}
+	int mid = (low+high)/2;
+	if(pos(mid)) return binSearch(low,mid);
+	else return binSearch(mid+1,high);
+}
+ 
+int main()
+{
+	cin &gt;&gt; N &gt;&gt; M &gt;&gt; C;
+	for(int i=0;i&lt;N;i++)
+		cin &gt;&gt; t[i];
+	sort(t,t+N);
+	cout &lt;&lt; binSearch(0, 1000000000) &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

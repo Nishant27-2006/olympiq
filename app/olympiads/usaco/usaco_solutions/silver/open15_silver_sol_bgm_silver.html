@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>There are <span class='math'>$500^7$</span> different combinations to check, which is far too many.
+<p>However, just like with the bronze version of this problem, where we were only
+concerned about the parity of the answer, we are only concerned with the result
+of the product mod 7, so we only care about the values of the variables mod 7.
+This gives us <span class='math'>$7^7$</span> different combinations to check, which will run in time.
+<p>Here is Mark Gordon&apos;s code.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+long long num[256][7];
+
+int main() {
+  freopen(&quot;bgm.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;bgm.out&quot;, &quot;w&quot;, stdout);
+
+  int N;
+  cin &gt;&gt; N;
+
+  for (int i = 0; i &lt; N; i++) {
+    char letter;
+    int val;
+    cin &gt;&gt; letter &gt;&gt; val;
+    num[letter][(val % 7 + 7) % 7]++;
+  }
+
+  long long result = 0;
+
+  /* Try every possible residue mod 7 for the variables. */
+  for(int B = 0; B &lt; 7; B++)
+  for(int E = 0; E &lt; 7; E++)
+  for(int S = 0; S &lt; 7; S++)
+  for(int I = 0; I &lt; 7; I++)
+  for(int G = 0; G &lt; 7; G++)
+  for(int O = 0; O &lt; 7; O++)
+  for(int M = 0; M &lt; 7; M++) {
+    if (((B + E + S + S + I + E) * (G + O + E + S) * (M + O + O)) % 7 == 0) {
+      result += num[&apos;B&apos;][B] * num[&apos;E&apos;][E] * num[&apos;S&apos;][S] * num[&apos;I&apos;][I] *
+                num[&apos;G&apos;][G] * num[&apos;O&apos;][O] * num[&apos;M&apos;][M];
+    }
+  }
+  cout &lt;&lt; result &lt;&lt; endl;
+
+  return 0;
+}
+</pre>
+</body>
+</html>

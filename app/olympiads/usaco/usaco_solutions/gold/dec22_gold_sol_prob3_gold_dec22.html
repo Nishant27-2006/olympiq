@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><strong>Solution 1:</strong>
+<p>We can reason as follows.
+<p><ul><li>Let <span class='math'>$v$</span> be some vertex of the graph with the minimum degree. If the optimal
+friendship group contains <span class='math'>$v$</span>, then the group is a subset of the connected
+component of <span class='math'>$v$</span>. Thus, such a friendship group can have strength at most <span class='math'>$s$</span>
+equal to the degree of <span class='math'>$v$</span> times the size of the connected component of <span class='math'>$v$</span>. The
+connected component of <span class='math'>$v$</span> itself is a friendship group with strength <span class='math'>$s$</span> as <span class='math'>$v$</span>
+has minimum degree, so the highest strength of a friendship group containing <span class='math'>$v$</span>
+is <span class='math'>$s$</span>.</li><li>If the optimal friendship group doesn&apos;t contain <span class='math'>$v$</span>, we can remove <span class='math'>$v$</span> from
+the graph.</li></ul>
+<p>We can repeatedly identify the minimum degree vertex <span class='math'>$v$</span> of the graph, update
+the answer to be at least <span class='math'>$s$</span>, and then remove <span class='math'>$v$</span> in <span class='math'>$O(M+N)$</span> time. However,
+computing connected components after every vertex removal naively takes <span class='math'>$O(NM)$</span>
+time. We can speed this by reversing the sequence of vertex removals (so  that
+we want to maintain connected components after <em>adding</em> instead of removing
+a vertex), and then using a <a href='https://usaco.guide/gold/dsu'>Disjoint Set
+Union</a> data structure. The time complexity is <span class='math'>$O(M\alpha(N))$</span>  (or
+<span class='math'>$O(M\log M)$</span> if a set is used to identity and remove the minimum degree vertex).
+<p>Timothy Qian&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+ 
+using namespace std;
+ 
+struct DSU {
+  vector&lt;int&gt; e;
+ 
+  DSU(int n) { e = vector&lt;int&gt;(n, -1); }
+ 
+  int get(int x) { return e[x] &lt; 0 ? x : e[x] = get(e[x]); }
+ 
+  bool same_set(int a, int b) { return get(a) == get(b); }
+ 
+  int size(int x) { return -e[get(x)]; }
+ 
+  bool unite(int x, int y) {
+    x = get(x), y = get(y);
+    if (x == y) return false;
+    if (e[x] &gt; e[y]) swap(x, y);
+    e[x] += e[y];
+    e[y] = x;
+    return true;
+  }
+};
+ 
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int n, m;
+  cin &gt;&gt; n &gt;&gt; m;
+  vector&lt;vector&lt;int&gt;&gt; g(n);
+  vector&lt;int&gt; deg(n);
+  for (int i = 0; i &lt; m; ++i) {
+    int u, v;
+    cin &gt;&gt; u &gt;&gt; v;
+    --u, --v;
+    g[u].push_back(v);
+    g[v].push_back(u);
+    ++deg[u];
+    ++deg[v];
+  }
+  set&lt;array&lt;int, 2&gt;&gt; vertices;
+  for (int i = 0; i &lt; n; ++i) {
+    vertices.insert({deg[i], i});
+  }
+  vector&lt;int&gt; order;
+  vector&lt;int&gt; degrees;
+  vector&lt;bool&gt; active(n, true);
+  auto remove = [&amp;]() {
+    auto top = *vertices.begin();
+    int u = top[1];
+    int degree = top[0];
+    order.push_back(u);
+    degrees.push_back(degree);
+    active[u] = false;
+    for (int v : g[u]) {
+      if (active[v]) {
+        vertices.erase({deg[v], v});
+        --deg[v];
+        vertices.insert({deg[v], v});
+      }
+    }
+    vertices.erase({deg[u], u});
+  };
+  for (int i = 0; i &lt; n; ++i) {
+    remove();
+  }
+  reverse(order.begin(), order.end());
+  reverse(degrees.begin(), degrees.end());
+  active.assign(n, false);
+  DSU dsu(n);
+  int mx = 1;
+  long long ans = 0;
+  for (int i = 0; i &lt; n; ++i) {
+    int u = order[i];
+    active[u] = true;
+    for (int v : g[u]) {
+      if (active[v]) {
+        dsu.unite(u, v);
+        mx = max(mx, dsu.size(u));
+      }
+    }
+    ans = max(ans, 1ll * mx * degrees[i]);
+  }
+  cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+  return 0;
+}
+</pre>
+<p><strong>Solution 2:</strong>
+<p>Suppose we are looking for the strongest friendship group where the cow with the
+minimum number of friends has exactly <span class='math'>$d$</span> friends. We can find such a friendship
+group as follows:  first, repeatedly remove any vertex with degree less than <span class='math'>$d$</span>
+from the graph, and then return the largest connected component. We can do this
+in <span class='math'>$O(M)$</span> time for each of <span class='math'>$d=1,2,\dots$</span>, and so on until the graph is empty.
+As a friendship group where every member has at least <span class='math'>$d$</span> friends must
+contain at least <span class='math'>$\frac{(d+1)d}{2}$</span> pairs of friendships, so once
+<span class='math'>$\frac{(d+1)d}{2}&gt;M$</span>, the graph must be empty. Thus, this solution runs in
+<span class='math'>$O(M\sqrt M)$</span> time. 
+<p>The code solution uses DSU (which adds an extra factor of <span class='math'>$\alpha(N)$</span>), though
+this may be substituted with any other method of finding connected components
+(such as BFS or DFS).
+<p>Nick Wu&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+#include &lt;numeric&gt;
+#include &lt;vector&gt;
+ 
+using namespace std;
+ 
+struct disjoint_set {
+  vector&lt;int&gt; p, sz;
+  disjoint_set(int n) {
+    p.assign(n, -1);
+    sz.assign(n, 1);
+  }
+  int find(int x) {
+    return p[x] &lt; 0 ? x : (p[x] = find(p[x]));
+  }
+  int getsz(int x) {
+    return sz[find(x)];
+  }
+  bool merge(int x, int y) {
+    x = find(x);
+    y = find(y);
+    if(x == y) return false;
+    p[x] = y;
+    sz[y] += sz[x];
+    return true;
+  }
+};
+ 
+int main() {
+  int n, m;
+  scanf(&quot;%d%d&quot;, &amp;n, &amp;m);
+  vector&lt;vector&lt;int&gt;&gt; edges(n);
+  vector&lt;int&gt; edeg(n);
+  for(int i = 0; i &lt; m; i++) {
+    int a, b;
+    scanf(&quot;%d%d&quot;, &amp;a, &amp;b);
+    a--; b--;
+    edeg[a]++;
+    edeg[b]++;
+    edges[a].push_back(b);
+    edges[b].push_back(a);
+  }
+  int ret = 0;
+  vector&lt;bool&gt; deleted(n);
+  vector&lt;int&gt; active(n);
+  iota(active.begin(), active.end(), 0);
+  for(int mindeg = 1; mindeg * mindeg &lt;= m; mindeg++) {
+    disjoint_set dsu(n);
+    for(int i: active) {
+      for(auto j: edges[i]) {
+        if(!deleted[j] &amp;&amp; dsu.merge(i, j)) ret = max(ret, dsu.getsz(i) * mindeg);
+      }
+    }
+    vector&lt;int&gt; nactive;
+    vector&lt;int&gt; q;
+    for(int i: active) {
+      if(edeg[i] == mindeg) {
+        q.push_back(i);
+      }
+    }
+    while(q.size()) {
+      int i = q.back(); q.pop_back();
+      if(deleted[i]) continue;
+      deleted[i] = true;
+      for(int j: edges[i]) {
+        if(--edeg[j] &lt;= mindeg) {
+          q.push_back(j);
+        }
+      }
+      edges[i].clear();
+    }
+    for(int i: active) if(edeg[i] &gt; mindeg) nactive.push_back(i);
+    active.swap(nactive);
+  }
+  printf(&quot;%d\n&quot;, ret);
+}
+</pre>
+<p></body></html>

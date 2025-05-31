@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>By scanning through the stalls, we can compute a list of gaps: blocks of
+contiguous empty stalls. Let <span class='math'>$l_1,\dots,l_k$</span> be the lengths of these gaps. For
+example, consider the sample input:
+<p><pre class='prettyprint'>
+10001001000010
+</pre>
+<p>Then in this example, the gap lengths are <span class='math'>$3$</span>, <span class='math'>$2$</span>, <span class='math'>$4$</span>, and <span class='math'>$1$</span>.
+<p>If we only place a single cow, it will either go at the center of the largest
+gap, or in the left-most stall, or in the right-most stall. If we have two cows,
+then we might consider the following algorithm: for each of the three cases for
+the first cow, place the first cow; then try the three different cases for where
+the second cow might go. In total there are <span class='math'>$9$</span> potentially optimal placements
+(actually less because some are impossible) and for each placement we can
+compute the length of the minimum distance between cows in that placement, by a
+linear scan.
+<p>However, this does not cover all cases. It&apos;s possible that both cows are placed
+in the same gap (the largest gap). In this case we want to place one of the cows
+approximately one-third of the way through the gap, and the other cow two-thirds
+through. The above algorithm will never try this placement, so we need to check
+it also.
+<p>We can prove that the resulting <span class='math'>$10$</span>-case algorithm is correct. If the cows are
+not placed in the same gap, then each cow will be either in the center of some
+gap, or at the left end or right end of the whole sequence (because the two cows
+don&apos;t &quot;interact&quot;). If either cow is at the left end or the right end, then the
+above algorithm covers that case. If both cows are in centers of gaps, then at
+least one of them will be at the center of the largest gap. This case is also
+covered.
+<p>See below for Brian Dean&apos;s <span class='math'>$O(N)$</span> time algorithm. Some of the cases are
+condensed (and some are omitted because they&apos;re impossible), but in spirit his
+algorithm is as we described above.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+ 
+// Returns size of largest gap between two 1s and also the index where it starts
+int find_largest_interior_gap(string s, int &amp;gap_start)
+{
+  int biggest_gap = 0, current_start = -1, N = s.length();
+  for (int i=0; i&lt;N; i++) 
+    if (s[i] == &apos;1&apos;) {
+      if (current_start!=-1 &amp;&amp; i-current_start &gt; biggest_gap) {
+	biggest_gap = i-current_start;
+	gap_start = current_start;
+      }
+      current_start = i;
+    }
+  return biggest_gap;
+}
+ 
+// Returns size of smallest gap between two 1s
+int find_smallest_interior_gap(string s)
+{
+  int smallest_gap = 1000000000, current_start = -1, N = s.length();
+  for (int i=0; i&lt;N; i++) 
+    if (s[i] == &apos;1&apos;) {
+      if (current_start!=-1 &amp;&amp; i-current_start &lt; smallest_gap) smallest_gap = i-current_start;
+      current_start = i;
+    }
+  return smallest_gap;
+}
+ 
+int try_cow_in_largest_gap(string s)
+{
+  int gap_start, largest_gap = find_largest_interior_gap(s, gap_start);
+  if (largest_gap &gt;= 2) {
+    s[gap_start + largest_gap / 2] = &apos;1&apos;;
+    return find_smallest_interior_gap(s);
+  } 
+  return -1; // no gap!
+}
+ 
+int main(void)
+{
+  ifstream fin (&quot;socdist1.in&quot;);
+  int N;
+  string s, temp_s;
+  fin &gt;&gt; N &gt;&gt; s;
+  ofstream fout (&quot;socdist1.out&quot;);
+  int answer = 0;
+ 
+  // Possibility 1. put two cows in largest interior gap
+  int gap_start, largest_gap = find_largest_interior_gap(s, gap_start);
+  if (largest_gap &gt;= 3) {
+    temp_s = s;
+    temp_s[gap_start + largest_gap / 3] = &apos;1&apos;;
+    temp_s[gap_start + largest_gap * 2 / 3] = &apos;1&apos;;
+    answer = max(answer, find_smallest_interior_gap(temp_s));
+  }
+ 
+  // Possibility 2. cows at both ends
+  if (s[0] == &apos;0&apos; &amp;&amp; s[N-1] == &apos;0&apos;) {
+    temp_s = s; temp_s[0] = temp_s[N-1] = &apos;1&apos;;
+    answer = max(answer, find_smallest_interior_gap(temp_s));        
+  }
+ 
+  // Possibility 3. cow at left + cow in largest interior gap
+  if (s[0] == &apos;0&apos;) {
+    temp_s = s; temp_s[0] = &apos;1&apos;;
+    answer = max(answer, try_cow_in_largest_gap(temp_s));
+  }
+ 
+  // Possibility 4. cow at right + cow in largest interior gap
+  if (s[N-1] == &apos;0&apos;) {
+    temp_s = s; temp_s[N-1] = &apos;1&apos;;
+    answer = max(answer, try_cow_in_largest_gap(temp_s));
+  }
+ 
+  // Possibility 5. cow at largest interior gap.  done twice.
+  if (largest_gap &gt;= 2) {
+    temp_s = s; temp_s[gap_start + largest_gap / 2] = &apos;1&apos;;
+    answer = max(answer, try_cow_in_largest_gap(temp_s));
+  }
+ 
+  fout &lt;&lt; answer &lt;&lt; &quot;\n&quot;;
+  return 0;
+}
+</pre>
+<p></body></html>

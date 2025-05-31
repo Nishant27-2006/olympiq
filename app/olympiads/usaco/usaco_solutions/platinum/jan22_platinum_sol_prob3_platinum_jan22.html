@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Let <span class='math'>$f(x,y)=x^2+y^2$</span> be the function we want to maximize. It turns out that for
+any <a href='https://en.wikipedia.org/wiki/Convex_function#Definition'>convex</a>
+function <span class='math'>$f$</span>, we can apply the same solution.
+<p><strong>Claim:</strong> We only need to consider evaluating <span class='math'>$f$</span> at the vertices of the
+<a href='https://usaco.guide/plat/convex-hull'>convex hull</a> of the set of all
+possible <a href='https://en.wikipedia.org/wiki/Minkowski_addition'>Minkowski sums</a>.
+<p><strong>Proof:</strong> Any point <span class='math'>$p$</span> within the convex hull that is not a vertex can be
+written as  <span class='math'>$p=\lambda_1v_1+\lambda_2v_2+\cdots+\lambda_kv_k$</span> for some
+<span class='math'>$\lambda_i&gt;0, \sum \lambda_i=1$</span>, <span class='math'>$k&gt;1$</span>, and <span class='math'>$v_1,\ldots,v_k$</span> distinct vertices
+of the convex hull. Then assuming <span class='math'>$f$</span> is convex,
+<p><div class='math'>$$f(p)\le f\left(\sum \lambda_iv_i\right)\le \sum \lambda_i f(v_i)\implies \max_i f(v_i)\ge f(p).$$</div>
+<p>It remains to describe how to efficiently compute the convex hull of the
+Minkowski sum.
+<p>For a slow solution, we may directly compute the convex hull of the Minkowski
+sum of two sets  of sizes <span class='math'>$|A|$</span> and <span class='math'>$|B|$</span>, by summing every pair of points and
+then computing the convex hull in <span class='math'>$\mathcal O(|A|\cdot |B|\log (|A|\cdot |B|))$</span>
+time. It turns out the convex hull of the Minkowski sum always has at most
+<span class='math'>$|A|+|B|$</span> vertices, leading to an  <span class='math'>$\mathcal O(T^2\log T)$</span> time solution if we
+apply this reasoning for every group in the input, where <span class='math'>$T$</span> is the total number
+of vectors.
+<p>My code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using P = pair&lt;int, int&gt;;
+#define f first
+#define s second
+
+using ll = long long;
+
+P operator+(P a, P b) { return {a.f + b.f, a.s + b.s}; }
+P operator-(P a, P b) { return {a.f - b.f, a.s - b.s}; }
+ll cross(P a, P b) { return (ll)a.f * b.s - (ll)a.s * b.f; }
+ll cross(P a, P b, P c) { return cross(b - a, c - a); }
+ll sq(ll x) { return x * x; }
+ll norm(P p) { return sq(p.f) + sq(p.s); }
+
+// Graham Scan, assumes the hull has size &gt; 1
+vector&lt;P&gt; convex_hull(vector&lt;P&gt; v) {
+	nth_element(begin(v), begin(v), end(v));
+	const P leftmost = v[0];
+	for (P &amp;p : v) p = p - leftmost;
+	sort(begin(v), end(v), [](P a, P b) { // sort points by argument
+		if (cross(a, b) == 0) return norm(a) &lt; norm(b);
+		return cross(a, b) &gt; 0;
+	});
+	vector&lt;P&gt; hull;
+	for (P p : v) {
+		while (hull.size() &gt;= 2 &amp;&amp; cross(end(hull)[-2], end(hull)[-1], p) &lt;= 0)
+			hull.pop_back();
+		hull.push_back(p);
+	}
+	for (P &amp;p : hull) p = p + leftmost;
+	return hull;
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	vector&lt;P&gt; prefix_hull{{}};
+	while (N--) {
+		int G;
+		cin &gt;&gt; G;
+		vector&lt;P&gt; group(G);
+		for (P &amp;p : group) cin &gt;&gt; p.f &gt;&gt; p.s;
+		vector&lt;P&gt; next_prefix;
+		for (P a : prefix_hull)
+			for (P b : group) next_prefix.push_back(a + b);
+		prefix_hull = convex_hull(next_prefix);
+	}
+	ll ans = 0;
+	for (P p : prefix_hull) ans = max(ans, norm(p));
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>For a more efficient solution, let&apos;s start by computing the convex hull of each
+group. Then consider the following question: How can we more efficiently compute
+the convex hull of the Minkowski sum of two convex polygons <span class='math'>$A$</span> and <span class='math'>$B$</span> (and why
+is it  true that it  has size at most <span class='math'>$|A|+|B|$</span>)? 
+<p>Define the <em>offset sequence </em> of a  convex polygon to be the sequence of
+vectors traversed when touring the hull starting at the lexicographically least
+vertex of the hull and going in counterclockwise order. It turns out that the
+offset sequence of the Minkowski sum is always a permutation of the combined
+offset sequences of the summands. Consider the following example:
+<p><pre>
+A = [(0, 0), (2, -1), (3, 0), (2, 2)]
+offsets_A = [(2, -1), (1, 1), (-1, 2), (-2, -2)]
+
+B = [(0, 0), (4, -3), (0, 5)]
+offsets_B = [(4, -3), (-4, 8), (0, -5)]
+
+sum(A,B) = C = [(0, 0), (4, -3), (6, -4), (7, -3), (6, -1), (2, 7), (0, 5)]
+offsets_C = [(4, -3), (2, -1), (1, 1), (-1, 2), (-4, 8), (-2, -2), (0, -5)]
+</pre>
+<p>Observe that <span class='math'>$\texttt{offsets}_C$</span> may be computed by merging the sequences
+<span class='math'>$\texttt{offsets}_A$</span> and <span class='math'>$\texttt{offsets}_B$</span> such that the final sequence is
+sorted in order of 
+<a href='https://judge.yosupo.jp/problem/sort_points_by_argument'>argument</a> (as
+described
+<a href='https://en.wikipedia.org/wiki/Minkowski_addition#Algorithms_for_computing_Minkowski_sums'>here</a>).
+For a more complete explanation of Minkowski sums, you can check the editorial
+for <a href='https://codeforces.com/contest/1195/problem/F'>this problem.</a>
+<p>If we want to compute the offsets of the Minkowski sum of more than two convex
+hulls, we can place all of the offsets into a single sequence and sort the
+entire sequence by argument. The overall time complexity is
+<span class='math'>$\mathcal O(T\log T)$</span>.
+<p>My code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+using P = pair&lt;int, int&gt;;
+#define f first
+#define s second
+
+using ll = long long;
+
+P operator+(P a, P b) { return {a.f + b.f, a.s + b.s}; }
+P operator-(P a, P b) { return {a.f - b.f, a.s - b.s}; }
+ll cross(P a, P b) { return (ll)a.f * b.s - (ll)a.s * b.f; }
+ll cross(P a, P b, P c) { return cross(b - a, c - a); }
+ll sq(ll x) { return x * x; }
+ll norm(P p) { return sq(p.f) + sq(p.s); }
+int half(P p) {
+	if (p.f &gt; 0 || (p.f == 0 &amp;&amp; p.s &gt; 0)) return 0;
+	return 1;
+}
+
+// Graham Scan, assumes the hull has size &gt; 1
+vector&lt;P&gt; convex_hull(vector&lt;P&gt; v) {
+	nth_element(begin(v), begin(v), end(v));
+	const P leftmost = v[0];
+	for (P &amp;p : v) p = p - leftmost;
+	sort(begin(v), end(v), [](P a, P b) { // sort points by argument
+		if (cross(a, b) == 0) return norm(a) &lt; norm(b);
+		return cross(a, b) &gt; 0;
+	});
+	vector&lt;P&gt; hull;
+	for (P p : v) {
+		while (hull.size() &gt;= 2 &amp;&amp; cross(end(hull)[-2], end(hull)[-1], p) &lt;= 0)
+			hull.pop_back();
+		hull.push_back(p);
+	}
+	for (P &amp;p : hull) p = p + leftmost;
+	return hull;
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	cin.tie(nullptr);
+	int N;
+	cin &gt;&gt; N;
+	P start{}; // lexicographically minimum reachable point
+	vector&lt;P&gt; offsets;
+	while (N--) {
+		int G;
+		cin &gt;&gt; G;
+		vector&lt;P&gt; group(G);
+		for (P &amp;p : group) cin &gt;&gt; p.f &gt;&gt; p.s;
+		vector&lt;P&gt; hull = convex_hull(group);
+		start = start + hull[0];
+		for (int i = 1; i &lt;= hull.size(); ++i)
+			offsets.push_back(hull[i % hull.size()] - hull[i - 1]);
+	}
+	// sort offsets by CCW angle such that (0, -1) comes last
+	sort(begin(offsets), end(offsets), [](P a, P b) {
+		if (half(a) != half(b)) return half(a) &lt; half(b);
+		return cross(a, b) &gt; 0;
+	});
+	ll ans = 0;
+	// tour the hull in counterclockwise order
+	for (int i = 0; i &lt; offsets.size(); ++i) {
+		ans = max(ans, norm(start));
+		start = start + offsets[i];
+	}
+	cout &lt;&lt; ans &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class MultipleChoiceTest {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        List&lt;Vector&gt; exchanges = new ArrayList&lt;&gt;();
+        Vector curr = new Vector(0, 0);
+        for (; n &gt; 0; n--) {
+            in.readLine();
+            int g = Integer.parseInt(in.readLine());
+            Vector[] group = new Vector[g];
+            for (int j = 0; j &lt; g; j++) {
+                StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+                long x = Long.parseLong(tokenizer.nextToken());
+                long y = Long.parseLong(tokenizer.nextToken());
+                group[j] = new Vector(x, y);
+            }
+            Arrays.sort(group, (u, v) -&gt; {
+                if (v.x == u.x) {
+                    return Long.compare(v.y, u.y);
+                } else {
+                    return Long.compare(v.x, u.x);
+                }
+            });
+            List&lt;Vector&gt; upperHull = new ArrayList&lt;&gt;();
+            for (Vector v : group) {
+                while (upperHull.size() &gt;= 2 &amp;&amp; sideOfLine(upperHull.get(upperHull.size() - 2), upperHull.get(upperHull.size() - 1), v) &gt;= 0L) {
+                    upperHull.remove(upperHull.size() - 1);
+                }
+                upperHull.add(v);
+            }
+            List&lt;Vector&gt; lowerHull = new ArrayList&lt;&gt;();
+            for (Vector v : group) {
+                while (lowerHull.size() &gt;= 2 &amp;&amp; sideOfLine(lowerHull.get(lowerHull.size() - 2), lowerHull.get(lowerHull.size() - 1), v) &lt;= 0L) {
+                    lowerHull.remove(lowerHull.size() - 1);
+                }
+                lowerHull.add(v);
+            }
+            for (int j = upperHull.size() - 1; j &gt; 0; j--) {
+                Vector before = upperHull.get(j);
+                Vector after = upperHull.get(j - 1);
+                exchanges.add(after.minus(before));
+            }
+            for (int j = 0; j &lt; lowerHull.size() - 1; j++) {
+                Vector before = lowerHull.get(j);
+                Vector after = lowerHull.get(j + 1);
+                exchanges.add(after.minus(before));
+            }
+            Vector lowest = group[0];
+            for (Vector v : group) {
+                if (v.y &lt; lowest.y || (v.y == lowest.y &amp;&amp; v.x &lt; lowest.x)) {
+                    lowest = v;
+                }
+            }
+            curr = curr.plus(lowest);
+        }
+        exchanges.sort((u, v) -&gt; {
+            int uHalf = u.y &gt; 0L || (u.y == 0L &amp;&amp; u.x &gt; 0L) ? 0 : 1;
+            int vHalf = v.y &gt; 0L || (v.y == 0L &amp;&amp; v.x &gt; 0L) ? 0 : 1;
+            if (vHalf != uHalf) {
+                return uHalf - vHalf;
+            }
+            int uWhetherZero = u.y == 0L ? 0 : 1;
+            int vWhetherZero = v.y == 0L ? 0 : 1;
+            if (uWhetherZero == 0 || vWhetherZero == 0) {
+                return uWhetherZero - vWhetherZero;
+            }
+            return Long.compare(v.x * u.y, u.x * v.y);
+        });
+        long answer = curr.magnitude();
+        for (Vector exchange : exchanges) {
+            curr = curr.plus(exchange);
+            answer = Math.max(answer, curr.magnitude());
+        }
+        System.out.println(answer);
+    }
+ 
+    static class Vector {
+        final long x;
+        final long y;
+ 
+        Vector(long x, long y) {
+            this.x = x;
+            this.y = y;
+        }
+ 
+        Vector plus(Vector other) {
+            return new Vector(x + other.x, y + other.y);
+        }
+ 
+        Vector minus(Vector other) {
+            return new Vector(x - other.x, y - other.y);
+        }
+ 
+        long magnitude() {
+            return (x * x) + (y * y);
+        }
+ 
+        @Override
+        public String toString() {
+            return &quot;Vector{&quot; +
+                    &quot;x=&quot; + x +
+                    &quot;, y=&quot; + y +
+                    &apos;}&apos;;
+        }
+    }
+ 
+    static long sideOfLine(Vector a, Vector b, Vector c) {
+        long left = (b.x - a.x) * (c.y - a.y);
+        long right = (b.y - a.y) * (c.x - a.x);
+        return left - right;
+    }
+}
+</pre>
+<p></body></html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>The most naive approach to this problem is to simulate applying
+each coat of paint and then looking at each <span class='math'>$1 \times 1$</span> square to
+see if it has the right number of coats of paint applied. This
+approach should get around half credit.
+<p>Let us imagine solving the one-dimensional variant of this problem,
+where we have a fence and can apply coats of paint to some subintervals
+<span class='math'>$[l_i, r_i]$</span> of the fence. Imagine that we actually had <span class='math'>$N$</span> paint cans
+and put each can at the location <span class='math'>$l_i$</span> that corresponded to where it started,
+and we also noted at each location <span class='math'>$r_i$</span> where to stop carrying cans of paint
+with us. If we then walk along the fence and pick up and drop off cans of paint,
+at each location in the fence we can count how many coats of paint we would use
+by counting how many cans of paint we are carrying.
+<p>In terms of how to implement this, we can enumerate, for each location, how many
+cans of paint we&apos;re picking up and how many cans of paint we&apos;re dropping off. Note,
+therefore, that the number of coats of paint that are used at location <span class='math'>$x$</span> is equal
+to the sum of the changes in number of coats of paint that take place over all locations
+from the beginning to <span class='math'>$x$</span>. This technique is often referred to as computing a prefix sum,
+as we start with an array and then compute the sum of every prefix of the array to get
+the final result we want.
+<p>To apply this to two dimensions, imagine that we take the roof and break it up
+into 1000 sections, each of which is one-dimensional. We can apply this technique
+to each section and then sum the results. Code for this is as follows:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+
+using namespace std;
+
+int dp[1000][1001];
+
+int main() {
+  freopen(&quot;paintbarn.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;paintbarn.out&quot;, &quot;w&quot;, stdout);
+  int n, k;
+  cin &gt;&gt; n &gt;&gt; k;
+  while(n--) {
+    int a, b, c, d;
+    cin &gt;&gt; a &gt;&gt; b &gt;&gt; c &gt;&gt; d;
+    for(int i = a; i &lt; c; i++) {
+      dp[i][b]++;
+      dp[i][d]--;
+    }
+  }
+  int ret = 0;
+  for(int i = 0; i &lt; 1000; i++) {
+    for(int j = 0; j &lt; 1000; j++) {
+      if(dp[i][j] == k) ret++;
+      dp[i][j+1] += dp[i][j];
+    }
+  }
+  cout &lt;&lt; ret &lt;&lt; endl;
+}
+</pre>
+<p>We can do better though - there&apos;s no reason that prefix sums only have to
+work in one dimension! If we have a two-dimension array <span class='math'>$g$</span> and then define
+<span class='math'>$f(i, j)$</span> to be the sum of all <span class='math'>$g(k, l)$</span> where <span class='math'>$k \le i$</span> and <span class='math'>$l \le j$</span>, then
+we can define <span class='math'>$f(i, j) = g(i, j) + f(i-1, j) + f(i, j-1) - f(i-1, j-1)$</span>,
+and after computing the two-dimension prefix sums, we can iterate over all
+elements to compute the desired area.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+
+using namespace std;
+
+int dp[1001][1001];
+
+int main() {
+  freopen(&quot;paintbarn.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;paintbarn.out&quot;, &quot;w&quot;, stdout);
+  int n, k;
+  cin &gt;&gt; n &gt;&gt; k;
+  while(n--) {
+    int a, b, c, d;
+    cin &gt;&gt; a &gt;&gt; b &gt;&gt; c &gt;&gt; d;
+    dp[a][b]++;
+    dp[a][d]--;
+    dp[c][b]--;
+    dp[c][d]++;
+  }
+  int ret = 0;
+  for(int i = 0; i &lt; 1000; i++) {
+    for(int j = 0; j &lt; 1000; j++) {
+      if(i) dp[i][j] += dp[i-1][j];
+      if(j) dp[i][j] += dp[i][j-1];
+      if(i &amp;&amp; j) dp[i][j] -= dp[i-1][j-1];
+      if(dp[i][j] == k) ret++;
+    }
+  }
+  cout &lt;&lt; ret &lt;&lt; endl;
+}
+</pre></body></html>

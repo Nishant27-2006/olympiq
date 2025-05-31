@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>Letting <span class='math'>$K = 10$</span> be the maximum amount of dirt in any cell, we can ultimately
+solve  this problem using dynamic programming in <span class='math'>$O(NK)$</span> time, which runs in
+less than 0.1 seconds on every test case.  However, it takes a number of
+structural insights to get to this point.  There are several ways to attack this 
+problem, many based on more advanced network flow techniques like min-cost flows,
+which are perhaps slightly beyond the typical scope of USACO contests.  For 
+simplicity, we focus here on a solution that only uses dynamic programming,
+and no advanced flow techniques.  We may soon add extra detail from other 
+solutions that use flow-based techniques, for completeness.
+
+<p>For starters, it may help to review the <span class='math'>$O((NK)^2)$</span>
+<a href='https://www.usaco.org/current/data/sol_landscape.html'>solution</a> of the
+earlier version of this problem, which appeared on the silver 2012 March USACO
+contest.  As in that problem, we first unpack each array into a list of <span class='math'>$O(NK)$</span>
+dirt locations.  For example, a landscape with heights 3,1,4,1 turns into the
+sequence 0,0,0,1,2,2,2,2,3 (e.g., there are 4 units of dirt at position 2).  The
+previous solution involved using an &quot;edit distance&quot; style DP algorithm to
+transform the initial sequence of dirt locations into the target sequence in
+quadratic time.  
+<p>It will be convenient to visualize this as matching a set of points on a number
+line, where the As represent locations of the source dirt and Bs are the target
+dirt locations.  If we match an A with a B (at distance <span class='math'>$d$</span>), this costs <span class='math'>$dZ$</span>
+and corresponds to moving a piece of dirt.  Unmatched As correspond to deletions
+(cost <span class='math'>$Y$</span>) and unmatched Bs correspond to insertions (cost <span class='math'>$X$</span>). <br>
+
+<br><img src="fig_landscape1.gif"/><br>
+
+<p>It will be helpful to assume that we match all of the smaller set of points; for
+example, if there are fewer As, we&apos;d like to assume that we want to match all
+the As, leaving only Bs unmatched.  To do this, we set the cost of matching a
+distance-<span class='math'>$d$</span> pair to be <span class='math'>$\min(dZ, X+Y)$</span>, reflecting now the possibility that the
+matched pair might not be an actual move, but may instead be a &quot;teleport&quot; caused
+by a delete plus an insert.  We can now assume that all elements of the smaller
+set must be matched.
+
+<p>A key structural property is that there always exists an optimal matching with 
+a &quot;nesting&quot; structure, where pairings can nest but not &quot;cross&quot;.  This follows
+from the fact that any set of crossing edges can be &quot;uncrossed&quot;, for example as
+shown below, without  harming (increasing) the total cost of the matching.  By
+doing this repeatedly, we can turn any optimal matching into an optimal matching
+with no crossings. <br>
+
+<br><img src="fig_landscape2.gif"/><br>
+
+<p>Recall that the cost of a distance-<span class='math'>$d$</span> edge in the matching is <span class='math'>$\min(dZ, X+Y)$</span>.
+If the cost is <span class='math'>$X+Y$</span>, we&apos;ll call the edge &quot;long&quot;; otherwise it is &quot;short&quot;.  We
+can prove that cost doesn&apos;t increase by the uncrossing operation by breaking it
+into three cases: (i) both p and q are short, (ii) one of p and q is long, (iii)
+both p and q are long.  In all cases, you can easily show that the total cost
+does not increase.  For example, in case (iii), edge s must also be long, so the
+contribution before uncrossing is <span class='math'>$2(X+Y)$</span> and the contribution after is
+<span class='math'>$X+Y+\min(dr, X+Y) \leq 2(X+Y)$</span>.
+<p>Non-crossing implies also that underneath each edge must be the same number of 
+As and Bs.  Assume for a moment (without loss of generality) that there are more
+Bs than As,  so all As must be matched. In this case, if there are more As than
+Bs underneath edge p as shown below, then one of the As would need to be matched
+in a way that crosses p.  <br>
+
+<br><img src="fig_landscape3.gif"/><br>
+
+<p>Similarly, if there are more Bs than As underneath edge q, then one of them must
+remain unmatched (since otherwise there would be a crossing, just as before),
+and then we could decrease the length of edge q by linking with the unmatched B
+inside the range, giving an  even more optimal solution (or at least, not a
+worse solution).
+<p>Let us now assign heights to our points, with successive As moving upward and Bs
+moving downward: <br>
+
+<br><img src="fig_landscape4.gif"/><br>
+
+<p>The fact that the points underneath each edge must be balanced therefore implies
+that we can decompose our problem and consider each height level independently.
+This simplifies things quite a bit, since within any given height level we have
+alternating As and Bs. Either we have the same number of As and Bs and  they are
+all matched, or we have one excess element that is unmatched while the rest are
+matched.  In this second case, one can show that an optimal solution will not
+involve an edge across the unmatched element, so it further decomposes into a
+prefix of balanced As and Bs (all matched to each-other), followed by the
+unmatched element, followed by a suffix of balanced As and Bs, all matched: <br>
+
+<br><img src="fig_landscape5.gif"/><br>
+
+<p>We therefore have reduced our problem to: given an alternating set of points,
+find the optimal way to match every balanced prefix (and by symmetry, suffix). 
+We show how to do this in linear time with dynamic programming, after which
+another linear-time scan can be used to find the right way to combine the two
+solutions as in the &quot;one element unmatched&quot; case above.
+<p>Our dynamic programming formulation looks like the following.  For each balanced
+prefix (say, up to position <span class='math'>$j$</span>), we compute the optimal way to match all its
+elements, and also the optimal way to match its elements such that  <span class='math'>$j$</span> is
+matched with a long edge.  For matching element <span class='math'>$j$</span> with a long edge, candidates
+to which we can match are those elements in regions <span class='math'>$R$</span> and <span class='math'>$S$</span> in the figure
+below:<br>
+
+<br><img src="fig_landscape6.gif"/><br>
+
+<p>We can afford to check all the candidates in region <span class='math'>$S$</span> explicitly, since for
+all values of <span class='math'>$j$</span> this will involve monotonically scanning the entire line just
+once.  Each candidate <span class='math'>$i$</span> in <span class='math'>$S$</span> can be checked in <span class='math'>$O(1)$</span> time, since we have
+already computed the best way to match everyone up to <span class='math'>$i-1$</span>, and  since the
+elements underneath the long <span class='math'>$i$</span>-<span class='math'>$j$</span> edge can be assumed to be simply paired up
+consecutively (so this cost can be computed in constant time using the
+difference of two prefix sums).  This follows from the observation that an
+optimal solution will never involve a long edge nested within another long
+edge, so underneath any long edge we have only short edges; furthermore, nested
+short edges can always be uncrossed with no change in objective value, so we can
+assume the short edges underneath a long edge are just consecutively paired,
+with no nesting at all. To evaluate candidates in the <span class='math'>$R$</span> region, we note that
+the best such candidate is the same as the best long-edge match from element
+<span class='math'>$j-2$</span>, the only difference being that its cost has increased by the additional
+cost of pairing elements <span class='math'>$j-2$</span> and <span class='math'>$j-1$</span>.
+<p>For matching element <span class='math'>$j$</span> with a short edge, we can assume (by the reasoning
+above, since short edges don&apos;t nest), that <span class='math'>$j$</span> would be paired with <span class='math'>$j-1$</span>, so
+this is easy to evaluate in <span class='math'>$O(1)$</span> time.  This completes the description of the
+DP algorithm.
+<p>My code is below.  The input part in the main function arranges elements by
+level, then the solve() function runs independently within each level, calling
+the DP code once or twice (twice if we need to combine a prefix and a suffix
+solution, having to deal with an odd number of elements on some level).  The DP
+code is a bit cryptic, but follows essentially the approach outlined above.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+typedef long long LL;
+
+#define MAX_N 100000
+#define MAX_VAL 10
+#define MAX_TOT (MAX_N*MAX_VAL)
+
+int N, X, Y, Z, rtype[MAX_TOT*2+1]; 
+LL res1[MAX_TOT*2+1], res2[MAX_TOT*2+1];
+vector&lt;int&gt; rows[MAX_TOT*2+1];
+
+void dp(vector&lt;int&gt; &amp;v, LL *results)
+{
+  LL M=v.size(), i=-2, prefcost_i=0, prefcost_j=0, prev_longrange=999999999999999LL;
+  for (int j=1; j&lt;M; j+=2) {
+    if (j&gt;1) prefcost_j += Z*abs(v[j-2]-v[j-1]);
+    if (j&gt;1) prev_longrange += Z*abs(v[j-2]-v[j-1]);
+    while (i+2 &lt; j &amp;&amp; X+Y &lt;= Z*abs(v[j]-v[i+2])) {
+      i += 2;
+      if (i&gt;0) prefcost_i += Z*abs(v[i]-v[i-1]);
+      prev_longrange = min(prev_longrange, X+Y+prefcost_j-prefcost_i+(i&gt;0?results[i-1]:0));
+    }
+    results[j] = min(prev_longrange, Z*abs(v[j]-v[j-1]) + (j&gt;1?results[j-2]:0));
+  }
+}
+
+LL solve(vector&lt;int&gt; &amp;v, int ecost)
+{
+  LL M = v.size(), best;
+  if (M == 0) return 0; 
+  if (M == 1) return ecost; // cost of insert/delete for just single item
+  dp(v, res1);
+  reverse(v.begin(), v.end()); 
+  dp(v, res2); 
+  reverse(res2, res2+M);
+  if (M%2 == 0) best = res1[M-1]; // even: all matched; only 1 DP pass needed
+  else { // odd: one left out -- piece together prefix + missing item + suffix
+    best = ecost + min(res1[M-2], res2[1]);
+    for (int i=2; i&lt;=M-3; i+=2) best = min(best, res1[i-1] + ecost + res2[i+1]);
+  }
+  return best;
+}
+
+int main(void)
+{
+  ifstream fin (&quot;landscape.in&quot;);
+  fin &gt;&gt; N &gt;&gt; X &gt;&gt; Y &gt;&gt; Z;
+  for (int last_d=0, level=MAX_TOT, i=0; i&lt;N; i++) {
+    int a, b, m, d;
+    fin &gt;&gt; a &gt;&gt; b;
+    d = (max(a,b)==a) ? +1 : -1;
+    m = max(a,b) - min(a,b); 
+    while (m-- &gt; 0) {
+      if (last_d == d) level += d;
+      if (rtype[level]==0) rtype[level] = d;
+      rows[level].push_back(i);
+      last_d = d;
+    }
+  }
+  fin.close();
+  
+  ofstream fout (&quot;landscape.out&quot;);
+  LL total = 0;
+  for (int level=0; level&lt;MAX_TOT*2+1; level++) 
+    total += solve(rows[level], rtype[level]&gt;0 ? Y : X);
+  fout &lt;&lt; total &lt;&lt; &quot;\n&quot;;
+  fout.close();
+
+  return 0;
+}
+</pre>
+</body></html>

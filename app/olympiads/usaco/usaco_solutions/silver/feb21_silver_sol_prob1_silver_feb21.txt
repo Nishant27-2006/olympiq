@@ -1,0 +1,215 @@
+Solution ID: sol_prob1_silver_feb21
+Contest: FEB21
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_feb21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Whenever there exists a cow horizontally or vertically adjacent to three other
+cows,  Farmer Nhoj is forced to place a cow at the fourth spot.
+
+...    .C.
+CCC -> CCC
+.C.    .C.
+
+So this is essentially a flood fill problem; while there exists a location that
+should contain a cow but does not, add a cow at that location.
+
+My solution maintains a 2D boolean array of which locations currently contain
+cows, as well as a queue of locations in the pasture where a cow needs to be
+added. While the queue is nonempty, pop the top element
+
+$(x,y)$
+
+of the queue and
+check whether a cow has already been added at
+
+$(x,y)$
+
+. If not, add the cow at
+
+$(x,y)$
+
+, and check whether any of the locations
+
+$(x,y),(x,y-1),(x,y+1),(x-1,y),(x+1,y)$
+
+contain cows and are adjacent to exactly
+three cows. If so, add all such locations to the queue and repeat.
+
+Additional notes:
+
+The cows that will eventually be present on the pasture after the first
+
+$i$
+
+cows are added is a superset of the cows that will eventually be present on the
+pasture after the first
+
+$i-1$
+
+cows are added.
+
+This means that we don't need to reset the array between the addition of
+each cow.
+
+If all cells in
+
+$[0,1000]\times [0,1000]$
+
+are initially occupied, Farmer
+Nhoj will need to add cows at all locations
+
+$(x,y)$
+
+satisfying
+
+$x+y\ge 0,x+y\le 2000,x-y\le 1000,x-y\ge -1000$
+
+(in other words, a diamond with
+vertices at
+
+$(-500,500), (500,-500), (1500,500),$
+
+and
+
+$(500,1500)$
+
+). So if we
+increase the
+
+$x$
+
+and
+
+$y$
+
+cow locations by
+
+$500$
+
+, then all of these locations
+will lie in the range
+
+$[0,2000]\times [0,2000]$
+
+.
+
+In my solution, I use
+
+$1000$
+
+instead of
+
+$500$
+
+.
+
+Time Complexity:
+
+$\mathcal{O}(N+(\text{grid size})^2)$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define f first
+#define s second
+
+const int dx[4] = {1,0,-1,0}, dy[4] = {0,1,0,-1};
+
+bool present[3000][3000]; // which locations contain cows
+ 
+int main() {
+	int N; cin >> N;
+	queue<pair<int,int>> cows_to_place;
+	int total_cows = 0;
+	for (int initial_cows = 1; initial_cows <= N; ++initial_cows) {
+		pair<int,int> p; cin >> p.f >> p.s;
+		p.f += 1000, p.s += 1000;
+		cows_to_place.push(p);
+		auto re_evaluate = [&](int x, int y) { 
+			// if cow adjacent to exactly three others
+			// add fourth location to queue
+			if (!present[x][y]) return;
+			int num_adj = 0;
+			for (int d = 0; d < 4; ++d) 
+				num_adj += present[x+dx[d]][y+dy[d]];
+			if (num_adj == 3)
+				for (int d = 0; d < 4; ++d) {
+					pair<int,int> nex{x+dx[d],y+dy[d]};
+					if (!present[nex.f][nex.s])
+						cows_to_place.push(nex);
+				}
+		};
+		while (!cows_to_place.empty()) {
+			pair<int,int> loc = cows_to_place.front(); 
+			cows_to_place.pop();
+			if (present[loc.f][loc.s]) continue;
+			++ total_cows; present[loc.f][loc.s] = 1;
+			re_evaluate(loc.f,loc.s);
+			for (int d = 0; d < 4; ++d) 
+				re_evaluate(loc.f+dx[d],loc.s+dy[d]);
+		}
+		cout << total_cows-initial_cows << "\n";
+	}
+}
+
+Here is an alternative solution by Danny Mittal that does not use a queue:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class LonelyPastureSilver {
+    static final boolean[][] cows = new boolean[3000][3000];
+    static final int[][] adj = new int[3000][3000];
+    static int answer = 0;
+ 
+    static void add(int x, int y) {
+        if (!cows[x][y]) {
+            cows[x][y] = true;
+            answer++;
+            if (cows[x][y] && adj[x][y] == 3) {
+                for (int[] another : new int[][]{{x - 1, y}, {x + 1, y}, {x, y - 1}, {x, y + 1}}) {
+                    int w = another[0];
+                    int z = another[1];
+                    add(w, z);
+                }
+            }
+            for (int[] other : new int[][]{{x - 1, y}, {x + 1, y}, {x, y - 1}, {x, y + 1}}) {
+                int u = other[0];
+                int v = other[1];
+                adj[u][v]++;
+                if (cows[u][v] && adj[u][v] == 3) {
+                    for (int[] another : new int[][]{{u - 1, v}, {u + 1, v}, {u, v - 1}, {u, v + 1}}) {
+                        int w = another[0];
+                        int z = another[1];
+                        add(w, z);
+                    }
+                }
+            }
+        }
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        int n = Integer.parseInt(in.readLine());
+        for (int j = 0; j < n; j++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int x = Integer.parseInt(tokenizer.nextToken()) + 1000;
+            int y = Integer.parseInt(tokenizer.nextToken()) + 1000;
+            answer--;
+            add(x, y);
+            out.append(answer).append('\n');
+        }
+        System.out.print(out);
+    }
+}

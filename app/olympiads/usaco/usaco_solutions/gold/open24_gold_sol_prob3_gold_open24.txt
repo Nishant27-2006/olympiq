@@ -1,0 +1,468 @@
+Solution ID: sol_prob3_gold_open24
+Contest: OPEN24
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob3_gold_open24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Alex Liang)
+
+Subtask 1 (
+
+$N \le 10$
+
+):
+
+We can directly enumerate all
+
+$2^{2N-2}$
+
+ways to split the two arrays and check
+if each way satisfies the constraints.
+
+Subtask 2 (
+
+$N \le 80$
+
+):
+
+Let
+
+$dp[i][j]$
+
+be the number of ways to split the first
+
+$i$
+
+elements of the
+first array and the first
+
+$j$
+
+elements of the second array such that the constraints
+are satisfied.
+
+In order to facilitate finding the average of ranges quickly we can use prefix
+sums (we can also keep a running sum when we transition but prefix sums will be
+useful for the full solution). Let
+
+$P_a[i]$
+
+denote the prefix sum of the first
+array and
+
+$P_b[i]$
+
+denote the prefix sum of the second array. Then at some
+
+$dp[i][j]$
+
+, we can transition from
+
+$dp[i'][j']$
+
+(
+
+$0 \le i' < i$
+
+,
+
+$0 \le j' < j$
+
+)
+if
+
+$\frac{P_a[i]-P_a[i']}{i-i'} \le \frac{P_b[j]-P_b[j']}{j-j'}$
+
+since the
+average of the last subarray of the first array must be less than or equal  to
+the average of the last subarray of the second array. Formally, our transitions
+will look like:
+
+$$
+dp[i][j] = \sum_{\substack{0 \le i' < i \\ 0 \le j' < j \\\frac{P_a[i]-P_a[i']}{i-i'} \le \frac{P_b[j]-P_b[j']}{j-j'}}}{dp[i'][j']}
+$$
+
+Calculating the value for any
+
+$dp[i][j]$
+
+takes
+
+$\mathcal{O}(N^2)$
+
+time so this
+approach runs in
+
+$\mathcal{O}(N^4)$
+
+time overall.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin >> n;
+
+    int pA[n + 1] = {}, pB[n + 1] = {};
+
+    for (int i = 1; i <= n; i++){
+        cin >> pA[i];
+        pA[i] += pA[i - 1];
+    }
+    for (int i = 1; i <= n; i++){
+        cin >> pB[i];
+        pB[i] += pB[i - 1];
+    }
+    
+    int dp[n + 1][n + 1] = {};
+    dp[0][0] = 1;
+
+    for (int i = 1; i <= n; i++){
+        for (int j = 1; j <= n; j++){
+            for (int r = 0; r < i; r++){
+                for (int c = 0; c < j; c++){
+                    // (pA[i] - pA[r]) / (i - r) <= (pB[j] - pB[c]) / (j - c)
+                    if (1LL * (pA[i] - pA[r]) * (j - c) <= 1LL * (pB[j] - pB[c]) * (i - r)){
+                        dp[i][j] = (dp[i][j] + dp[r][c]) % MOD;
+                    }
+                }
+            }
+        }
+    }
+    cout<<dp[n][n]<<"\n";
+}
+
+Subtask 3 (
+
+$N \le 300$
+
+):
+
+It is helpful to view our dynamic programming from the perspective of a grid.
+Consider the transition for some
+
+$dp[i][j]$
+
+. At each
+
+$j'$
+
+, we are transitioning
+from all
+
+$i'$
+
+such that
+
+$\frac{P_a[i]-P_a[i']}{i-i'} \le \frac{P_b[j]-P_b[j']}{j-j'}$
+
+. In other words we
+are transitioning from the set of
+
+$i'$
+
+corresponding to some
+
+$k$
+
+smallest
+
+$\frac{P_a[i]-P_a[i']}{i-i'}$
+
+.
+
+At each
+
+$i$
+
+, suppose we sort all rows
+
+$i'$
+
+above it in increasing order of
+
+$\frac{P_a[i]-P_a[i']}{i-i'}$
+
+. Recall that at each
+
+$j'$
+
+we are transitioning
+from the set of
+
+$i'$
+
+corresponding to some
+
+$k$
+
+smallest
+
+$\frac{P_a[i]-P_a[i']}{i-i'}$
+
+. These elements now correspond to the length
+
+$k$
+
+prefix
+
+of column
+
+$j'$
+
+(since we sorted the rows).
+
+These ideas lead us to the following solution. Every time we enter a
+
+new
+row
+
+, we sort all rows
+
+$i'$
+
+above it in increasing order of
+
+$\frac{P_a[i]-P_a[i']}{i-i'}$
+
+. Then we construct column prefix sums over these
+sorted rows. To transition, we iterate over
+
+$j'$
+
+. At each
+
+$j'$
+
+, we binary search
+for
+
+$k$
+
+and add the length
+
+$k$
+
+prefix sum of column
+
+$j'$
+
+. Since sorting will be
+
+$\mathcal{O}(N^2 \log N)$
+
+in total and transitioning at each state takes
+
+$\mathcal{O}(N \log N)$
+
+time, this solution runs in
+
+$\mathcal{O}(N^3 \log N)$
+
+time.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin >> n;
+
+    int pA[n + 1] = {}, pB[n + 1] = {};
+
+    for (int i = 1; i <= n; i++){
+        cin >> pA[i];
+        pA[i] += pA[i - 1];
+    }
+    for (int i = 1; i <= n; i++){
+        cin >> pB[i];
+        pB[i] += pB[i - 1];
+    }
+    
+    int dp[n + 1][n + 1] = {};
+    dp[0][0] = 1;
+    
+    for (int i = 1; i <= n; i++){
+        int psm[i][n + 1] = {};
+
+        int R[i];
+        iota(R, R + i, 0);
+
+        sort(R, R + i, [&](int x, int y){
+            // (pA[i] - pA[x]) / (i - x) < (pA[i] - pA[y]) / (i - y)
+            return 1LL * (pA[i] - pA[x]) * (i - y) < 1LL * (pA[i] - pA[y]) * (i - x);
+        });
+
+        // Sort rows in increasing order of averages and construct column prefix sums
+        for (int r = 0; r < i; r++)
+            for (int j = 0; j <= n; j++)
+                psm[r][j] = ((!r ? 0 : psm[r - 1][j]) + dp[R[r]][j]) % MOD;
+        
+        for (int j = 1; j <= n; j++){
+            for (int c = 0; c < j; c++){
+                auto chk = [&](int r){
+                    // (pA[i] - pA[R[r]]) / (i - R[r]) <= (pB[j] - pB[c]) / (j - c)
+                    return 1LL * (pA[i] - pA[R[r]]) * (j - c) <= 1LL * (pB[j] - pB[c]) * (i - R[r]);
+                };
+                if (!chk(0))
+                    continue;
+                
+                int L = 0, H = i - 1;
+
+                while (L < H){
+                    int M = (L + H + 1) / 2;
+                    chk(M) ? L = M : H = M - 1;
+                }
+                dp[i][j] = (dp[i][j] + psm[L][c]) % MOD;
+            }
+        }
+    }
+    cout<<dp[n][n]<<"\n";
+}
+
+Full Credit (
+
+$N \le 500$
+
+):
+
+Let us speed up the subtask
+
+$3$
+
+solution. If we are able to process all
+
+$j'$
+
+in
+increasing order of
+
+$\frac{P_b[j]-P_b[j']}{j-j'}$
+
+, then
+
+$k$
+
+will be
+non-decreasing which removes the need for binary search. Instead, we can just
+store
+
+$k$
+
+and repeatedly increase it (note that it can only be increased at most
+
+$i$
+
+times).
+
+At each
+
+$j$
+
+we can sort all
+
+$j'$
+
+in increasing order of
+
+$\frac{P_b[j]-P_b[j']}{j-j'}$
+
+. If we cache our results or pre-calculate them,
+then we only have to do this sort
+
+$N$
+
+times in total. Since sorting will be
+
+$\mathcal{O}(N^2 \log N)$
+
+in total and transitioning at each state takes
+
+$\mathcal{O}(N)$
+
+time, this solution runs in
+
+$\mathcal{O}(N^3)$
+
+time.
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0); 
+    int n;
+    cin >> n;
+
+    int pA[n + 1] = {}, pB[n + 1] = {};
+
+    for (int i = 1; i <= n; i++){
+        cin >> pA[i];
+        pA[i] += pA[i - 1];
+    }
+    for (int i = 1; i <= n; i++){
+        cin >> pB[i];
+        pB[i] += pB[i - 1];
+    }
+    
+    vector<int> ordRow[n + 1], ordCol[n + 1];
+
+    for (int i = 1; i <= n; i++){
+        // Sort in increasing order of averages
+        vector<int> &R = ordRow[i];
+        vector<int> &C = ordCol[i];
+
+        for (int v = 0; v < i; v++){
+            R.push_back(v);
+            C.push_back(v);
+        }
+        sort(R.begin(), R.end(), [&](int x, int y){
+            // (pA[i] - pA[x]) / (i - x) < (pA[i] - pA[y]) / (i - y)
+            return 1LL * (pA[i] - pA[x]) * (i - y) < 1LL * (pA[i] - pA[y]) * (i - x);
+        });
+        sort(C.begin(), C.end(), [&](int x, int y){
+            // (pB[i] - pB[x]) / (i - x) < (pB[i] - pB[y]) / (i - y)
+            return 1LL * (pB[i] - pB[x]) * (i - y) < 1LL * (pB[i] - pB[y]) * (i - x);
+        });
+    }
+
+    int dp[n + 1][n + 1] = {};
+    dp[0][0] = 1;
+    
+    for (int i = 1; i <= n; i++){
+        int psm[i][n + 1] = {};
+        vector<int> &R = ordRow[i];
+
+        // Sort rows in increasing order of averages and construct column prefix sums
+        for (int r = 0; r < R.size(); r++)
+            for (int j = 0; j <= n; j++)
+                psm[r][j] = ((!r ? 0 : psm[r - 1][j]) + dp[R[r]][j]) % MOD;
+        
+        for (int j = 1; j <= n; j++){
+            vector<int> &C = ordCol[j];
+            int r = 0;
+
+            // 2 pointers over columns in sorted order
+            for (int c : C){
+                // (pA[i] - pA[R[r]]) / (i - R[r]) <= (pB[j] - pB[c]) / (j - c)
+                while (r < i and 1LL * (pA[i] - pA[R[r]]) * (j - c) <= 1LL * (pB[j] - pB[c]) * (i - R[r]))
+                    r++;
+                
+                dp[i][j] = (dp[i][j] + (!r ? 0 : psm[r - 1][c])) % MOD;
+            }
+        }
+    }
+    cout<<dp[n][n]<<"\n";
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Darren Yao)
+<p>To find the number of green squares, we iterate over the positions of the 3x3
+grids, incrementing the answer if they share the same letter. 
+<p>Then, we find the number of yellow squares by finding the number of total
+highlighted squares and then subtracting the number of green squares. For each
+letter, the number of highlighted squares with that letter is the minimum of the
+number of times it appears in the guess and the number of times it appears in
+the answer. Summing over all letters yields the total number of highlighted
+squares, from which we subtract the number of green squares to get the answer.
+<p>Here is Danny Mittal&apos;s code. 
+<pre class='prettyprint'> 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+ 
+public class Herdle {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        String correct = in.readLine() + in.readLine() + in.readLine();
+        String guess = in.readLine() + in.readLine() + in.readLine();
+        int[] freqCorrect = new int[26];
+        int[] freqGuess = new int[26];
+        int green = 0;
+        for (int j = 0; j &lt; 9; j++) {
+            if (correct.charAt(j) == guess.charAt(j)) {
+                green++;
+            }
+            freqCorrect[correct.charAt(j) - &apos;A&apos;]++;
+            freqGuess[guess.charAt(j) - &apos;A&apos;]++;
+        }
+        int yellow = 0;
+        for (int j = 0; j &lt; 26; j++) {
+            yellow += Math.min(freqCorrect[j], freqGuess[j]);
+        }
+        yellow -= green;
+        System.out.println(green);
+        System.out.println(yellow);
+    }
+}
+</pre>
+<p></body></html>

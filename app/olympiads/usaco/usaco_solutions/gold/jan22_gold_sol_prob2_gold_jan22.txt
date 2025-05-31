@@ -1,0 +1,134 @@
+Solution ID: sol_prob2_gold_jan22
+Contest: JAN22
+Division: Gold
+Solution URL: https://usaco.org/current/data/sol_prob2_gold_jan22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+The idea is to process the updates in reverse order and maintain which farms are
+relevant. Note that once a farm becomes relevant, it never becomes irrelevant
+due to the assumption that roads are only added between active farms.
+
+For updates of type R, add the
+
+$e$
+
+-th edge to the graph. If exactly one endpoint
+of this edge was previously relevant, mark all vertices in the connected
+component of the other endpoint as relevant as well.
+
+For updates of type D, if vertex
+
+$x$
+
+was not previously relevant, then mark
+every vertex in its connected component as relevant.
+
+For updates of type A, do nothing.
+
+We can process these operations in
+
+$O(N+Q)$
+
+time.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class GarbageCollection {
+    static List<Integer>[] adj = null;
+    static int[] answers;
+
+    // marks everything in the connected component of a 
+    // as relevant
+    static void dfs(int a, int time) {
+        if (answers[a] == 0) {
+            answers[a] = time;
+            for (int b : adj[a]) {
+                dfs(b, time);
+            }
+        }
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int q = Integer.parseInt(tokenizer.nextToken());
+        adj = new List[n + 1];
+        for (int a = 1; a <= n; a++) {
+            adj[a] = new ArrayList<>();
+        }
+        answers = new int[n + 1];
+        List<Edge> added = new ArrayList<>();
+        Edge[] removed = new Edge[q];
+        int[] deactivated = new int[q];
+        Set<Integer> alwaysActive = new HashSet<>();
+        for (int a = 1; a <= n; a++) {
+            alwaysActive.add(a);
+        }
+        for (int j = 0; j < q; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            char type = tokenizer.nextToken().charAt(0);
+            if (type == 'D') {
+                int a = Integer.parseInt(tokenizer.nextToken());
+                deactivated[j] = a;
+                alwaysActive.remove(a);
+            } else if (type == 'A') {
+                int a = Integer.parseInt(tokenizer.nextToken());
+                int b = Integer.parseInt(tokenizer.nextToken());
+                added.add(new Edge(a, b));
+            } else {
+                int k = Integer.parseInt(tokenizer.nextToken());
+                removed[j] = added.get(k - 1);
+                added.set(k - 1, null);
+            }
+        }
+        for (Edge edge : added) {
+            if (edge != null) {
+                adj[edge.from].add(edge.to);
+                adj[edge.to].add(edge.from);
+            }
+        }
+        for (int a : alwaysActive) {
+            dfs(a, q);
+        }
+        for (int j = q - 1; j > 0; j--) {
+            if (deactivated[j] != 0) {
+                dfs(deactivated[j], j);
+            } else if (removed[j] != null) {
+                int a = removed[j].from;
+                int b = removed[j].to;
+                adj[a].add(b);
+                adj[b].add(a);
+                if (answers[a] != 0 || answers[b] != 0) {
+                    dfs(a, j);
+                    dfs(b, j);
+                }
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int a = 1; a <= n; a++) {
+            out.append(answers[a]).append('\n');
+        }
+        System.out.print(out);
+    }
+ 
+    static class Edge {
+        final int from;
+        final int to;
+ 
+        Edge(int from, int to) {
+            this.from = from;
+            this.to = to;
+        }
+    }
+}

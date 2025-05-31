@@ -1,0 +1,443 @@
+Solution ID: sol_prob2_silver_open23
+Contest: OPEN23
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_open23.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+A naive solution runs in
+
+$O(N^2C)$
+
+time and is too slow to pass any inputs aside
+from the sample.
+
+ChatGPT's code:
+
+# read input
+C, N = map(int, input().split())
+teams = [input() for _ in range(N)]
+ 
+# compute maximum difference for each team
+for team in teams:
+    max_diff = 0
+    for other_team in teams:
+        # compute difference between current team and other team
+        diff = sum(1 for a, b in zip(team, other_team) if a != b)
+        # update maximum difference if necessary
+        max_diff = max(max_diff, diff)
+    print(max_diff)
+
+Subtask 1:
+
+We can speed up the solution above by iterating over all pairs
+of
+
+distinct
+
+teams, since the number of distinct teams is at most
+
+$2^C$
+
+.
+
+Subtask 2:
+
+We first observe that "farthest team from
+
+$x$
+
+" is the same as
+"closest team to
+
+$y$
+
+," where
+
+$y$
+
+is the team constructed by flipping the breeds
+of all cows in
+
+$x$
+
+. If we treat
+
+$x$
+
+as a binary string of length
+
+$C$
+
+with the
+
+$i$
+
+th bit set if the
+
+$i$
+
+th cow in
+
+$x$
+
+is a Holstein, then we can compactly
+express
+
+$y$
+
+as
+
+$y=(2^C-1)\oplus x$
+
+, where
+
+$\oplus$
+
+denotes
+
+bitwise XOR
+
+.
+
+For this subtask, we are given that the closest team to
+
+$y$
+
+is within distance
+
+$3$
+
+of
+
+$y$
+
+. We can first iterate over all teams within distance
+
+$2$
+
+of
+
+$y$
+
+, and
+return the distance to the closest such team if it exists. If no such team
+exists, then we return
+
+$3$
+
+. The overall time complexity is
+
+$O(2^C+NC^2)$
+
+.
+
+Ben's code:
+
+C, N = map(int, input().split())
+to_bin = lambda s: sum(1 << i for i in range(C) if s[i] == "H")
+nums = [to_bin(input()) for _ in range(N)]
+exists = [0] * (1 << C)
+for x in nums:
+    exists[x] = 1
+
+def dist_closest(y):
+    if exists[y]:
+        return 0
+    for i in range(C):
+        if exists[y ^ (1 << i)]:
+            return 1
+    for i in range(C):
+        for j in range(i + 1, C):
+            if exists[y ^ (1 << i) ^ (1 << j)]:
+                return 2
+    return 3
+
+for x in nums:
+    y = x ^ ((1 << C) - 1)
+    print(C - dist_closest(y))
+
+Subtask 3:
+
+Let
+
+$dist[y]$
+
+equal
+
+$dist\_closest(y)$
+
+from the above code. 
+For this subtask, we will compute the values of
+
+$dist[y]$
+
+for all
+
+$y$
+
+in
+
+$O(2^CC+NC)$
+
+time. We know that
+
+$$dist[y]=\begin{cases}
+0 & exists[y]=1 \\
+1+\min_{i\in [0,C-1]}dist[y\oplus (1\ll i)] & exists[y]=0
+\end{cases}.$$
+
+That is, there either exists a team with bitmask
+
+$y$
+
+(in which case the distance
+is
+
+$0$
+
+), or it is possible to change a bit of
+
+$y$
+
+to make
+
+$y$
+
+one bit closer to
+some team. We can compute these distance values using the following procedure:
+
+Initialize
+
+$dist[x]=0$
+
+for all
+
+$x$
+
+such that there exists a team with
+bitmask
+
+$x$
+
+and
+
+$dist[x]=\infty$
+
+for all other bitmasks.
+
+Iterate over all the bits
+
+$i\in [0,C-1]$
+
+in any order and update
+
+$dist[x\oplus (1\ll i)]=\min(dist[x\oplus (1\ll i)], dist[x]+1)$
+
+for all
+
+$x$
+
+.
+
+To see that the computed distance values are correct, note that
+
+The computed values of
+
+$dist[x]$
+
+can never decrease below their true
+values.
+
+If there exists a path from
+
+$x$
+
+to some team with bitmask
+
+$y$
+
+with length
+
+$k$
+
+, then it may be shown that
+
+$dist[x]\le k$
+
+at the end.
+
+Ben's code:
+
+C, N = map(int, input().split())
+to_bin = lambda s: sum(1 << i for i in range(C) if s[i] == "H")
+nums = [to_bin(input()) for _ in range(N)]
+dist = [C] * (1 << C)
+for x in nums:
+    dist[x] = 0
+for j in range(C):
+    for i in range(1 << C):
+        dist[i ^ (1 << j)] = min(dist[i ^ (1 << j)], dist[i] + 1)
+for x in nums:
+    print(C - dist[x ^ ((1 << C) - 1)])
+
+Subtask 3 (Alternative 1):
+
+Another closely related way to solve this problem would be to  construct a graph
+on vertex set
+
+$[0,2^C-1]$
+
+where two bitmasks are connected by an edge if they
+differ by one bit. Then we can execute a multisource
+
+BFS
+
+on this graph with
+the source set consisting of the bitmasks of all teams. The time complexity is
+the same as that of the solution above.
+
+Danny's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.StringTokenizer;
+ 
+public class FieldDay {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        int c = Integer.parseInt(tokenizer.nextToken());
+        int n = Integer.parseInt(tokenizer.nextToken());
+        int[] teams = new int[n];
+        LinkedList<Integer> queue = new LinkedList<>();
+        int[] dists = new int[1 << c];
+        Arrays.fill(dists, -1);
+        for (int j = 0; j < n; j++) {
+            teams[j] = Integer.parseInt(in.readLine().replace('G', '0').replace('H', '1'), 2);
+            queue.add(teams[j]);
+            dists[teams[j]] = 0;
+        }
+        while (!queue.isEmpty()) {
+            int mask = queue.remove();
+            for (int d = 0; d < c; d++) {
+                int newMask = mask ^ (1 << d);
+                if (dists[newMask] == -1) {
+                    dists[newMask] = dists[mask] + 1;
+                    queue.add(newMask);
+                }
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int j = 0; j < n; j++) {
+            out.append(c - dists[((1 << c) - 1) ^ teams[j]]).append('\n');
+        }
+        System.out.print(out);
+    }
+}
+
+In Python:
+
+from collections import deque
+import sys
+ 
+def main():
+    c, n = map(int, sys.stdin.readline().split())
+    teams = []
+    queue = deque()
+    dists = [-1] * (1 << c)
+    for j in range(n):
+        team = sys.stdin.readline().strip().replace('G', '0').replace('H', '1')
+        teams.append(int(team, 2))
+        queue.append(teams[j])
+        dists[teams[j]] = 0
+    while queue:
+        mask = queue.popleft()
+        for d in range(c):
+            new_mask = mask ^ (1 << d)
+            if dists[new_mask] == -1:
+                dists[new_mask] = dists[mask] + 1
+                queue.append(new_mask)
+    out = []
+    for j in range(n):
+        out.append(str(c - dists[((1 << c) - 1) ^ teams[j]]) + '\n')
+    sys.stdout.write(''.join(out))
+ 
+if __name__ == '__main__':
+    main()
+
+Subtask 3 (Alternative 2):
+
+It was also possible to solve this problem in
+
+$O(N2^{C/2}+2^C)$
+
+time using
+
+Meet in the Middle.
+
+We
+maintain a data structure that supports
+
+Inserting a number in the range
+
+$[0,2^C)$
+
+in
+
+$O(2^{C/2})$
+
+time.
+
+Querying the closest (in terms of the number of bits needed to flip)  number
+in the data structure to a number in the range
+
+$[0,2^C)$
+
+in
+
+$O(2^{C/2})$
+
+time.
+
+Ben's code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+void ckmin(int &a, int b) { a = min(a, b); }
+
+int main() {
+	cin.tie(0)->sync_with_stdio(0);
+	int C, N;
+	cin >> C >> N;
+	vector<int> bin;
+	vector<int> dist(1 << C, C);
+	vector<int> stor_pct(1 << ((C + 1) / 2));
+	for (int i = 0; i < stor_pct.size(); ++i)
+		stor_pct[i] = __builtin_popcount(i);
+	for (int _ = 0; _ < N; ++_) {
+		string s;
+		cin >> s;
+		int mask = 0;
+		for (int i = 0; i < C; ++i) mask ^= (s[i] - 'G') << i;
+		for (int i = 0; i < (1 << (C / 2)); ++i)  // update data structure
+			ckmin(dist[mask ^ i], stor_pct[i]);
+		bin.push_back(mask);
+	}
+	for (int x : bin) {
+		x = (1 << C) - 1 - x;
+		int ret = C;
+		for (int i = 0; i < (1 << (C - C / 2)); ++i)  // query data structure
+			ckmin(ret, dist[x ^ (i << (C / 2))] + stor_pct[i]);
+		cout << C - ret << "\n";
+	}
+}

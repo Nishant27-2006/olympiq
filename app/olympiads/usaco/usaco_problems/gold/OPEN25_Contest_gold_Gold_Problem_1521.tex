@@ -1,0 +1,173 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: OPEN25 Contest - Gold Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+You have a long string $S$ of Ms and Os and an integer $K \geq 1$. Count the
+number of ways of ways to decompose $S$ into subsequences such that each
+subsequence is MOOOO....O with exactly $K$ Os, modulo $10^9+7$.
+
+Since the string is very long, you are not given it explicitly. Instead, you are
+given an integer $L$ ($1 \leq L \leq 10^{18}$), and a string $T$ of length $N$
+($1 \leq N \leq 10^6$). The string $S$ is the concatenation of $L$ copies of the
+string $T$. 
+
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains $K$, $N$, and $L$.
+
+The second line contains the string $T$ of length $N$. Every character is either
+an M or an O.
+
+It is guaranteed that the number of decompositions of $S$ is nonzero.
+
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+Output the number of decompositions of string $S$, modulo $10^9+7$. 
+
+SAMPLE INPUT:
+2 6 1
+MOOMOO
+SAMPLE OUTPUT: 
+1
+
+The only way to decompose $S$ into MOOs is to let the first three characters form a MOO and
+the last three characters form another MOO.
+
+SAMPLE INPUT:
+2 6 1
+MMOOOO
+SAMPLE OUTPUT: 
+6
+
+There are six distinct ways to decompose the string into subsequences (uppercase
+letters form one MOO, lowercase letters form another):
+
+MmOOooMmOoOoMmOooOMmoOOoMmoOoOMmooOO
+SAMPLE INPUT:
+1 4 2
+MMOO
+SAMPLE OUTPUT: 
+4
+
+SAMPLE INPUT:
+1 4 100
+MMOO
+SAMPLE OUTPUT: 
+976371285
+
+Make sure to take the answer modulo $10^9+7$.
+
+SCORING:
+Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.
+
+
+Problem credits: Dhruv Rohatgi
+
+
+
+\section*{Input Format}
+The second line contains the string $T$ of length $N$. Every character is either
+an M or an O.It is guaranteed that the number of decompositions of $S$ is nonzero.
+
+It is guaranteed that the number of decompositions of $S$ is nonzero.
+
+OUTPUT FORMAT (print output to the terminal / stdout):Output the number of decompositions of string $S$, modulo $10^9+7$.SAMPLE INPUT:2 6 1
+MOOMOOSAMPLE OUTPUT:1The only way to decompose $S$ into MOOs is to let the first three characters form a MOO and
+the last three characters form another MOO.SAMPLE INPUT:2 6 1
+MMOOOOSAMPLE OUTPUT:6There are six distinct ways to decompose the string into subsequences (uppercase
+letters form one MOO, lowercase letters form another):MmOOooMmOoOoMmOooOMmoOOoMmoOoOMmooOOSAMPLE INPUT:1 4 2
+MMOOSAMPLE OUTPUT:4SAMPLE INPUT:1 4 100
+MMOOSAMPLE OUTPUT:976371285Make sure to take the answer modulo $10^9+7$.SCORING:Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.Problem credits: Dhruv Rohatgi
+
+\section*{Output Format}
+SAMPLE INPUT:2 6 1
+MOOMOOSAMPLE OUTPUT:1The only way to decompose $S$ into MOOs is to let the first three characters form a MOO and
+the last three characters form another MOO.SAMPLE INPUT:2 6 1
+MMOOOOSAMPLE OUTPUT:6There are six distinct ways to decompose the string into subsequences (uppercase
+letters form one MOO, lowercase letters form another):MmOOooMmOoOoMmOooOMmoOOoMmoOoOMmooOOSAMPLE INPUT:1 4 2
+MMOOSAMPLE OUTPUT:4SAMPLE INPUT:1 4 100
+MMOOSAMPLE OUTPUT:976371285Make sure to take the answer modulo $10^9+7$.SCORING:Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.Problem credits: Dhruv Rohatgi
+
+\section*{Sample Input}
+\begin{verbatim}
+2 6 1
+MOOMOO
+
+2 6 1
+MMOOOO
+
+1 4 2
+MMOO
+
+1 4 100
+MMOO
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+1
+
+The only way to decompose $S$ into MOOs is to let the first three characters form a MOO and
+the last three characters form another MOO.SAMPLE INPUT:2 6 1
+MMOOOOSAMPLE OUTPUT:6There are six distinct ways to decompose the string into subsequences (uppercase
+letters form one MOO, lowercase letters form another):MmOOooMmOoOoMmOooOMmoOOoMmoOoOMmooOOSAMPLE INPUT:1 4 2
+MMOOSAMPLE OUTPUT:4SAMPLE INPUT:1 4 100
+MMOOSAMPLE OUTPUT:976371285Make sure to take the answer modulo $10^9+7$.SCORING:Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.Problem credits: Dhruv Rohatgi
+
+SAMPLE INPUT:2 6 1
+MMOOOOSAMPLE OUTPUT:6There are six distinct ways to decompose the string into subsequences (uppercase
+letters form one MOO, lowercase letters form another):MmOOooMmOoOoMmOooOMmoOOoMmoOoOMmooOOSAMPLE INPUT:1 4 2
+MMOOSAMPLE OUTPUT:4SAMPLE INPUT:1 4 100
+MMOOSAMPLE OUTPUT:976371285Make sure to take the answer modulo $10^9+7$.SCORING:Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.Problem credits: Dhruv Rohatgi
+
+6
+
+There are six distinct ways to decompose the string into subsequences (uppercase
+letters form one MOO, lowercase letters form another):MmOOooMmOoOoMmOooOMmoOOoMmoOoOMmooOOSAMPLE INPUT:1 4 2
+MMOOSAMPLE OUTPUT:4SAMPLE INPUT:1 4 100
+MMOOSAMPLE OUTPUT:976371285Make sure to take the answer modulo $10^9+7$.SCORING:Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.Problem credits: Dhruv Rohatgi
+
+MmOOooMmOoOoMmOooOMmoOOoMmoOoOMmooOOSAMPLE INPUT:1 4 2
+MMOOSAMPLE OUTPUT:4SAMPLE INPUT:1 4 100
+MMOOSAMPLE OUTPUT:976371285Make sure to take the answer modulo $10^9+7$.SCORING:Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.Problem credits: Dhruv Rohatgi
+
+SAMPLE INPUT:1 4 2
+MMOOSAMPLE OUTPUT:4SAMPLE INPUT:1 4 100
+MMOOSAMPLE OUTPUT:976371285Make sure to take the answer modulo $10^9+7$.SCORING:Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.Problem credits: Dhruv Rohatgi
+
+4
+
+SAMPLE INPUT:1 4 100
+MMOOSAMPLE OUTPUT:976371285Make sure to take the answer modulo $10^9+7$.SCORING:Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.Problem credits: Dhruv Rohatgi
+
+976371285
+
+Make sure to take the answer modulo $10^9+7$.SCORING:Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.Problem credits: Dhruv Rohatgi
+
+SCORING:Inputs 5-7: $K=1$, $L = 1$Inputs 8-10: $K=2$, $N\leq 1000$, $L = 1$Inputs 11-13: $K=1$Inputs 14-19: $L = 1$Inputs 20-25: No additional constraints.Problem credits: Dhruv Rohatgi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1521
+
+\section*{Source}
+USACO OPEN25 Contest, Gold Division, Problem ID: 1521
+
+\end{document}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>The key insight into solving this problem is that the answer can be computed
+easily using just the locations of the three objects in the scene.  
+<p>To simplify things, imagine there is no rock.  In this case, the answer is just
+the difference in <span class='math'>$x$</span> coordinate between the barn and lake, plus the difference
+in <span class='math'>$y$</span> coordinate (minus one, since the endpoints don&apos;t count).  This is sometimes 
+known as &quot;Manhattan&quot; distance, since in downtown Manhattan the streets form a grid and you can only get from one
+location to another by moving along the <span class='math'>$x$</span> or <span class='math'>$y$</span>  directions following the
+grid, not diagonally.
+<p>If we add the rock back to the picture, this actually rarely affects the 
+answer, since we can always route around the rock unless the rock is  in the
+same vertical or horizontal line as the barn and lake and lies between the two,
+in which case our path takes two additional steps to route around the rock.
+<p>My C++ code for solving the problem is below.  It should be straightforward to
+translate to other languages.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;cmath&gt;
+using namespace std;
+ 
+int barn_i, barn_j, rock_i, rock_j, lake_i, lake_j;
+ 
+int main(void)
+{
+  ifstream fin (&quot;buckets.in&quot;);
+  for (int i=0; i&lt;10; i++) {
+    string s;
+    fin &gt;&gt; s;
+    for (int j=0; j&lt;10; j++) {
+      if (s[j] == &apos;B&apos;) { barn_i = i; barn_j = j; }
+      if (s[j] == &apos;R&apos;) { rock_i = i; rock_j = j; }
+      if (s[j] == &apos;L&apos;) { lake_i = i; lake_j = j; }
+    }
+  }
+ 
+  ofstream fout (&quot;buckets.out&quot;);
+  int dist_br = abs(barn_i - rock_i) + abs(barn_j - rock_j);
+  int dist_bl = abs(barn_i - lake_i) + abs(barn_j - lake_j);
+  int dist_rl = abs(rock_i - lake_i) + abs(rock_j - lake_j);
+
+  // Check for special case where rock is between barn and lake  
+  if ((barn_i==lake_i || barn_j==lake_j) &amp;&amp; dist_bl == dist_br + dist_rl)
+    fout &lt;&lt; dist_bl + 1 &lt;&lt; &quot;\n&quot;;
+  else
+    fout &lt;&lt; dist_bl - 1 &lt;&lt; &quot;\n&quot;;
+ 
+  return 0;
+}
+</pre>
+<p></body></html>

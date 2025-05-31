@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Dhruv Rohatgi, Benjamin Qi)
+<p><strong>Small <span class='math'>$K$</span>:</strong>
+<p>After sorting the trees in decreasing order of <span class='math'>$B_i$</span>, we don&apos;t need to consider
+trees outside of the first <span class='math'>$K.$</span> Furthermore, if we decide to  select <span class='math'>$b&gt;0$</span>
+baskets from tree <span class='math'>$i,$</span> then each basket should have either 
+<span class='math'>$\left\lfloor \frac{B_i}{b}\right\rfloor$</span> or
+<span class='math'>$\left\lfloor \frac{B_i}{b}\right\rfloor+1$</span> berries. Using these observations, 
+we can do some sort of backtracking.
+<p><strong>Full Solution:</strong>
+<p>Let <span class='math'>$b$</span> the minimum number of berries in one of the buckets that Elsie receives.
+Without loss of generality, we can assume that all of Elsie&apos;s buckets contain exactly <span class='math'>$b$</span> berries. Now
+our goal is to maximize the number of berries placed into <span class='math'>$K$</span> buckets of size at
+most <span class='math'>$b$</span> such that at least <span class='math'>$\frac{K}{2}$</span> buckets have exactly <span class='math'>$b$</span> berries
+inside.
+<p>Consider a single tree&apos;s allotment into the buckets in an optimal solution. 
+There&apos;s no point having multiple buckets with less than <span class='math'>$b$</span> berries from this
+tree. So all buckets will have exactly <span class='math'>$b$</span> berries aside from at most one. 
+<p>Thus, it&apos;s clearly optimal to repeatedly fill buckets of size exactly <span class='math'>$b$</span> until 
+we run out of buckets or all trees have less than <span class='math'>$b$</span> berries remaining. If we
+still have buckets to fill, sort the remaining trees by <span class='math'>$B_i\pmod{b}$</span> and
+iterate from the largest to the smallest value. 
+<p>We can repeat this procedure for each <span class='math'>$b=0\ldots \max(B_i),$</span> which runs in 
+<span class='math'>$O(\max(B_i)\cdot N\log N)$</span> time.
+<p>Dhruv Rohatgi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+ 
+int N,K;
+int A[100000];
+int mod;
+ 
+bool cmp(int a,int b)
+{
+	return (a%mod) &gt; (b%mod);
+}
+ 
+int main()
+{
+	freopen(&quot;berries.in&quot;,&quot;r&quot;,stdin);
+	freopen(&quot;berries.out&quot;,&quot;w&quot;,stdout);
+	cin &gt;&gt; N &gt;&gt; K;
+	int M = 0;
+	for(int i=0;i&lt;N;i++)
+	{
+		cin &gt;&gt; A[i];
+		M = max(M, A[i]);
+	}
+	int best = 0;
+	for(int b=1;b &lt;= M;b++)
+	{
+		int full = 0;
+		for(int i=0;i&lt;N;i++)
+			full += A[i]/b;
+		if(full &lt; K/2)
+			break;
+		if(full &gt;= K)
+		{
+			best = max(best, b*(K/2));
+			continue;
+		}
+		mod = b;
+		sort(A, A+N, cmp);
+		int cur = b*(full - K/2);
+		for(int i=0;i&lt;N &amp;&amp; i+full&lt;K;i++)
+			cur += A[i]%b;
+		best = max(best,cur);
+	}
+	cout &lt;&lt; best &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

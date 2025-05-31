@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu, Chongtian Ma)
+<p><strong>Subtask 1: <span class='math'>$N \le 2$</span>.</strong>
+<p>Consider only two plants. Let <span class='math'>$i$</span> and <span class='math'>$j$</span> be indices such that <span class='math'>$t_i=0$</span> and
+<span class='math'>$t_j = 1$</span>. If <span class='math'>$h_i &gt; h_j$</span>, then we don&apos;t need to spend any time growing the
+plants. Otherwise, we can break it up into cases.
+<p>If <span class='math'>$a_i &gt; a_j$</span>, after each day, plant <span class='math'>$i$</span> grows <span class='math'>$a_i - a_j$</span> more inches than
+plant <span class='math'>$j$</span>. The number of days it takes for plant <span class='math'>$i$</span> to be at least one inch
+taller is <span class='math'>$\left\lceil\frac{h_j - h_i + 1}{a_i - a_j}\right\rceil$</span>.
+<p>If <span class='math'>$a_i \leq a_j$</span>, there is no way for plant <span class='math'>$i$</span> to be able to surpass plant <span class='math'>$j$</span>
+in height. We output <span class='math'>$-1$</span>.
+<p>Nick Wu&apos;s Python code:
+<p><pre class='prettyprint'>
+def mintime(hi, ai, hj, aj):
+    # return the smallest time when plant i, with height h[i] and growth rate a[i]
+    # is strictly taller than plant j, with height h[j] and growth rate a[j]
+    # returns -1 if this is impossible
+    if hi &gt; hj: return 0
+    if ai &lt;= aj: return -1
+    return (hj-hi) // (ai-aj) + 1
+
+def solve():
+    n = int(input())
+    assert n &lt;= 2
+    h = [int(x) for x in input().split()]
+    a = [int(x) for x in input().split()]
+    t = [int(x) for x in input().split()]
+    if n == 1: return 0
+    if t[0] == 0:
+        return mintime(h[0], a[0], h[1], a[1])
+    else:
+        return mintime(h[1], a[1], h[0], a[0])
+ 
+t = int(input())
+for _ in range(t):
+    print(solve())
+</pre>
+<p><strong>Subtask 2: <span class='math'>$N \le 50$</span> and <span class='math'>$a_i, h_i \le 10^3$</span>.</strong>
+<p>From the first subtask, we can observe that based on the bounds of <span class='math'>$a_i$</span> and
+<span class='math'>$h_i$</span>, if there is a value of <span class='math'>$x$</span> number of days that satisfies Farmer John&apos;s
+request, then it must be at most <span class='math'>$1000$</span>. Therefore, for this subtask, it
+suffices to just check all times from <span class='math'>$0$</span> to <span class='math'>$1000$</span> and print the earliest one
+that works, or otherwise, claim it is impossible.
+<p>Python code is as follows:
+<p><pre class='prettyprint'>
+def solve():
+    n = int(input())
+    h = [int(x) for x in input().split()]
+    a = [int(x) for x in input().split()]
+    t = [int(x) for x in input().split()]
+    assert n &lt;= 50
+    assert max(a) &lt;= 1000
+    assert max(h) &lt;= 1000
+    for ret in range(1002):
+        heights = [h[i] + a[i] * ret for i in range(n)]
+        tcomp = [sum([heights[i] &lt; heights[j] for j in range(n)]) for i in range(n)]
+        if tcomp == t:
+            return ret
+    return -1
+ 
+t = int(input())
+for _ in range(t):
+    print(solve())
+</pre>
+<p><strong>Subtask 3: <span class='math'>$N \le 10^3$</span>.</strong>
+<p>We&apos;ll leverage the <span class='math'>$N=2$</span> subtask repeatedly here. If plants <span class='math'>$i$</span> and <span class='math'>$j$</span> have
+<span class='math'>$t_i &lt; t_j$</span>, then we know that plant <span class='math'>$i$</span> must eventually be taller than plant
+<span class='math'>$j$</span>. From the <span class='math'>$N=2$</span> subtask, if <span class='math'>$a_i &gt; a_j$</span> and <span class='math'>$h_i \le h_j$</span>,
+that gives us a lower bound on what <span class='math'>$x$</span> can be. We can take all of the lower
+bounds from all pairs of plants and use the strictest one as our candidate
+answer. If at any point there is no valid value of <span class='math'>$x$</span>, then it is impossible to
+satisfy FJ.
+<p><pre class='prettyprint'>
+def mintime(hi, ai, hj, aj):
+    # return the smallest time when plant i, with height h[i] and growth rate a[i]
+    # is strictly taller than plant j, with height h[j] and growth rate a[j]
+    # returns -1 if this is impossible
+    if hi &gt; hj: return 0
+    if ai &lt;= aj: return -1
+    return (hj-hi) // (ai-aj) + 1
+
+def solve():
+    n = int(input())
+    assert n &lt;= 1000
+    h = [int(x) for x in input().split()]
+    a = [int(x) for x in input().split()]
+    t = [int(x) for x in input().split()]
+    ret = 0
+    for i in range(n):
+        for j in range(n):
+            if t[i] &lt; t[j]:
+                candt = mintime(h[i], a[i], h[j], a[j])
+                if candt &lt; 0:
+                    return -1
+                ret = max(ret, candt)
+    heights = [h[i] + a[i] * ret for i in range(n)]
+    tcomp = [sum([heights[i] &lt; heights[j] for j in range(n)]) for i in range(n)]
+    if tcomp == t:
+        return ret
+    return -1
+ 
+t = int(input())
+for _ in range(t):
+    print(solve())
+</pre>
+<p><strong>Full credit:</strong> 
+<p>To get full credit on this problem, we claim that it is sufficient to only check
+pairs of plants <span class='math'>$i$</span> and <span class='math'>$j$</span> where <span class='math'>$|t_i - t_j| = 1$</span>. The reason for this is that
+the relation of being taller or shorter than another plant is transitive - if
+you have plants <span class='math'>$i$</span>, <span class='math'>$j$</span>, and <span class='math'>$k$</span>, where <span class='math'>$t_i &gt; t_j &gt; t_k$</span>, and plant <span class='math'>$i$</span> is
+always shorter than plant <span class='math'>$k$</span>, if plant <span class='math'>$j$</span> is also shorter than plant <span class='math'>$i$</span>, then
+plant <span class='math'>$j$</span> is necessarily shorter than plant <span class='math'>$k$</span>. Therefore, checking plants
+where <span class='math'>$|t_i - t_j| &gt; 1$</span> is unnecessary.
+<p>Therefore, after sorting the plants in order of <span class='math'>$t_i$</span>, it takes <span class='math'>$\mathcal{O}(N)$</span>
+time to check that adjacent plants respect the height constraint. Sorting takes
+<span class='math'>$\mathcal{O}(N \log N)$</span>, so the final solution is <span class='math'>$\mathcal{O}(N \log N)$</span>.
+<p>Note that because the <span class='math'>$t_i$</span> values are <span class='math'>$0,1,2,\dots,N-1$</span> in some order, it is
+possible to order the plants directly without needing to sort them. If we
+initialize another array <span class='math'>$p$</span> where <span class='math'>$p_i$</span> stores the index <span class='math'>$j$</span> where <span class='math'>$t_j = i$</span>,
+we may use <span class='math'>$p_i$</span> in place of <span class='math'>$i$</span>. This solution is <span class='math'>$\mathcal{O}(N)$</span>, though this
+optimization was not necessary to get full credit.
+<p>Chongtian Ma&apos;s C++ solution (which shows how to do it in linear time):
+<pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+using ll = long long;
+
+ll ceil_div(ll a, ll b){
+	return (a + b - 1) / b;
+}
+ 
+int main(){
+    int T; cin &gt;&gt; T;
+    while(T--){
+        int N; cin &gt;&gt; N;
+        vector&lt;ll&gt; height(N), add(N), t(N);
+        for(ll&amp; i: height) cin &gt;&gt; i;
+        for(ll&amp; i: add) cin &gt;&gt; i;
+        for(ll&amp; i: t) cin &gt;&gt; i;
+        vector&lt;int&gt; p(N);
+        for(int i = 0; i &lt; N; i++){
+            p[t[i]] = i;
+        }
+        ll days = 0;
+        for(int i = N - 2; i &gt;= 0; i--){
+            int small_idx = p[i + 1], big_idx = p[i];
+            ll h_diff = (height[small_idx] + add[small_idx] * days) - (height[big_idx] + add[big_idx] * days);
+            if(h_diff &gt;= 0){
+                ll a_diff = add[big_idx] - add[small_idx];
+                if(a_diff &lt;= 0){
+                    days = -1;
+                    break;
+                }
+                days += ceil_div(h_diff + 1, a_diff);
+            }
+        }
+        for(int i = N - 2; i &gt;= 0; i--){
+            ll big_days = height[p[i]] + add[p[i]] * days;
+            ll small_days = height[p[i+1]] + add[p[i+1]] * days;
+            if(small_days &gt;= big_days){
+                days = -1;
+                break;
+            }
+        }
+        cout &lt;&lt; days &lt;&lt; &quot;\n&quot;;
+    }
+}
+</pre>
+<p>Nick Wu&apos;s Java solution (with sorting):
+<pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class Solution {
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+        int t = Integer.parseInt(br.readLine());
+        while(t-- &gt; 0) {
+            int n = Integer.parseInt(br.readLine());
+            int[] h = readArray(br, n);
+            int[] a = readArray(br, n);
+            int[] p = readArray(br, n);
+            long ret = 0;
+            int[] ordByGoalHeight = new int[n];
+            for(int i = 0; i &lt; n; i++) ordByGoalHeight[i] = i;
+            ordByGoalHeight = Arrays.stream(ordByGoalHeight).boxed().sorted((i, j) -&gt; p[j] - p[i]).mapToInt(i -&gt; i).toArray();
+            for(int i = 0; i + 1 &lt; n; i++) {
+                int smaller = ordByGoalHeight[i];
+                int larger = ordByGoalHeight[i + 1];
+                if(h[smaller] &gt;= h[larger] &amp;&amp; a[larger] &gt; a[smaller]) {
+                    ret = Math.max(ret, ceilingDiv(h[smaller] - h[larger] + 1, a[larger] - a[smaller]));
+                }
+            }
+            long[] trueHeights = new long[n];
+            for(int i = 0; i &lt; n; i++) {
+                trueHeights[i] = h[i] + a[i] * ret;
+            }
+            for(int i = 0; i + 1 &lt; n &amp;&amp; ret &gt;= 0; i++) {
+                int smaller = ordByGoalHeight[i];
+                int larger = ordByGoalHeight[i + 1];
+                if(trueHeights[smaller] &gt;= trueHeights[larger]) ret = -1;
+            }
+            pw.println(ret);
+        }
+        pw.close();
+    }
+    private static long ceilingDiv(long a, long b) {
+        // a and b are both positive
+        return (a + b - 1) / b;
+    }
+    private static int[] readArray(BufferedReader br, int n) throws IOException {
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        int[] ret = new int[n];
+        for(int i = 0; i &lt; n; i++) {
+            ret[i] = Integer.parseInt(st.nextToken());
+        }
+        return ret;
+    }
+}
+</pre>
+<p>Nick Wu&apos;s Python solution (also with sorting):
+<pre class='prettyprint'>
+def ceilingDiv(a, b):
+    return (a + b - 1) // b
+ 
+def solve():
+    n = int(input())
+    h = [int(x) for x in input().split()]
+    a = [int(x) for x in input().split()]
+    t = [int(x) for x in input().split()]
+    ord = [i for i in range(n)]
+    ord.sort(key=lambda x: t[x])
+    ret = 0
+    for ordi in range(n-1):
+        i = ord[ordi]
+        j = ord[ordi+1]
+        if h[i] &lt; h[j] and a[i] &gt; a[j]:
+            ret = max(ret, ceilingDiv(h[j] - h[i] + 1, a[i] - a[j]))
+    for i in range(n):
+        h[i] += a[i] * ret
+    for ordi in range(n-1):
+        i = ord[ordi]
+        j = ord[ordi+1]
+        if h[i] &lt;= h[j]: return -1
+    return ret
+ 
+t = int(input())
+for _ in range(t):
+    print(solve())
+</pre>
+<p></body></html>

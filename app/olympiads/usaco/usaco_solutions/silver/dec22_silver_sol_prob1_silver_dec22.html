@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Claire Zhang)
+<p>If every barn has the same number of haybales in the end, each must have the
+average. Let&apos;s subtract the average from each <span class='math'>$h_i$</span> for convenience; now our
+objective is to make <span class='math'>$h_i=0$</span> for all <span class='math'>$i$</span>. 
+<p>For each edge, consider the two subtrees resulting from erasing this edge. If
+the sum of either subtree is non-zero, this edge must be used to transport some
+haybales. Thus, our answer is at least the number of such edges. In fact, this
+lower bound is achievable using a recursive algorithm.
+<p>First, root the tree arbitrarily. Let <span class='math'>$sum(x)$</span> be the sum of <span class='math'>$x$</span>âs subtree
+(including <span class='math'>$x$</span>). When we call <span class='math'>$distribute(x)$</span>, we distribute the haybales in
+<span class='math'>$x$</span>âs subtree so that each node is left with <span class='math'>$0$</span> haybales, except possibly the
+root, which will have <span class='math'>$sum(x)$</span> haybales.  We implement <span class='math'>$distribute(x)$</span> as
+follows:
+<p><ol><li> <span class='math'>$distribute(k^+)$</span> for all children <span class='math'>$k^+$</span> of <span class='math'>$x$</span> such that <span class='math'>$sum(k^+)\geq 0$</span>.
+</li><li> Transport <span class='math'>$sum(k^+)$</span> haybales across <span class='math'>$(k^+, x)$</span>. </li><li> Transport
+<span class='math'>$-sum(k^-)$</span> haybales across <span class='math'>$(x, k^-)$</span> for children <span class='math'>$k^-$</span> such that
+<span class='math'>$sum(k^-)&lt;0$</span>. </li><li> <span class='math'>$distribute(k^-)$</span> for all <span class='math'>$k-$</span>. </li></ol>
+<p>Note we only move haybales that exist in this reformulation because after we
+move haybales from <span class='math'>$i$</span>, <span class='math'>$i$</span> still has at least <span class='math'>$average$</span> haybales (we never make
+<span class='math'>$h_i$</span> negative). Also, when we call <span class='math'>$distribute(x)$</span> our algorithm guarantees
+<span class='math'>$sum(x)\geq 0$</span>, ensuring the feasibility of step 2.  Critically, each edge is
+used at most once - when its parent is called - and we only move haybales across
+edge <span class='math'>$u$</span> to <span class='math'>$v$</span> if <span class='math'>$sum(u)&gt;0$</span>. Therefore, <span class='math'>$distribute(root)$</span> executes an optimal
+sequence of orders.
+<p>Aryansh Shrivastava&apos;s code (<span class='math'>$distribute$</span> is implemented as dfs_make_orders):
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;tuple&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+using ll = long long;
+
+vector&lt;ll&gt; h, subtree_tot;
+vector&lt;vector&lt;int&gt;&gt; adj;
+
+ll avg;
+vector&lt;tuple&lt;int, int, ll&gt;&gt; orders; // {source, destination, bales}
+
+void dfs_fill_subtrees(int node = 0,
+                       int par = 0) { // root tree arbitrarily at 0
+    // fill in total bales in each subtree and size of each subtree
+    subtree_tot[node] = h[node] - avg;
+    for (int child : adj[node])
+        if (child != par) {
+            dfs_fill_subtrees(child, node);
+            subtree_tot[node] += subtree_tot[child];
+        }
+}
+
+void dfs_make_orders(int node = 0, int par = 0) { // root tree arbitarily at 0
+    // give from child to node
+    for (int child : adj[node])
+        if (child != par) {
+            if (subtree_tot[child] &gt;= 0) dfs_make_orders(child, node);
+            if (subtree_tot[child] &gt; 0)
+                orders.emplace_back(child, node, subtree_tot[child]);
+        }
+    // give from node to child
+    for (int child : adj[node])
+        if (child != par &amp;&amp; subtree_tot[child] &lt; 0) {
+            orders.emplace_back(node, child, -subtree_tot[child]);
+            dfs_make_orders(child, node);
+        }
+}
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int n;
+    cin &gt;&gt; n;
+    h.resize(n), adj.resize(n);
+    for (ll &amp;t : h) cin &gt;&gt; t, avg += t;
+    avg /= n;
+    for (int i = 0; i &lt; n - 1; ++i) {
+        int u, v;
+        cin &gt;&gt; u &gt;&gt; v, --u, --v;
+        adj[u].emplace_back(v), adj[v].emplace_back(u);
+    }
+    subtree_tot.resize(n);
+    dfs_fill_subtrees();
+    dfs_make_orders();
+    cout &lt;&lt; size(orders) &lt;&lt; &quot;\n&quot;;
+    for (auto [u, v, b] : orders) cout &lt;&lt; ++u &lt;&lt; &quot; &quot; &lt;&lt; ++v &lt;&lt; &quot; &quot; &lt;&lt; b &lt;&lt; &quot;\n&quot;;
+}
+
+</pre>
+<p></body></html>

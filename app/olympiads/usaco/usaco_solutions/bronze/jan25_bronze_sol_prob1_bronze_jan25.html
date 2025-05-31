@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p><div class='prob-section'><h4>Subtask 1</h4>
+When <span class='math'>$A=B=0$</span>, the answer is simply the number of non-white pixels. Black pixels
+correspond to the same star appearing in both photos, and gray pixels correspond
+to a star appearing in the first photo but disappearing from the second.
+</div>
+<p><div class='prob-section'><h4>Subtask 2</h4>
+Since stars only move within each row, we can solve each row independently. For
+each row, we can try all <span class='math'>$2^N$</span> possibilities to assign stars to each position
+within the row, and check whether it is consistent with the output. One way to
+generate all such possibilities is by using
+<a href='https://usaco.guide/bronze/complete-rec?lang=cpp#generating-subsets-with-bitmasks'>bitmasks</a>.
+For each possibility, the following conditions must be checked.
+<p><ol><li>A black pixel implies that there must be stars at that location as well as
+the location to the left of it.</li><li>A white pixel implies there must not be a star at that location.</li><li>A gray pixel implies that there must be a star at that location or the
+location to the left of it.</li></ol>
+<p>The final step is to output the sum of the minimum answers across rows, or <span class='math'>$-1$</span>
+if any row is impossible. The runtime per test is <span class='math'>$O(N^22^N)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int solve() {
+    int N, A, B;
+    cin &gt;&gt; N &gt;&gt; A &gt;&gt; B;
+    vector&lt;string&gt; rows(N);
+    for (auto &amp;row : rows) cin &gt;&gt; row;
+    assert(A == 1 &amp;&amp; B == 0);
+    int ans = 0;
+    for (const auto &amp;row : rows) {
+        int row_ans = INT_MAX;
+        for (int mask = 0; mask &lt; (1 &lt;&lt; N); ++mask) {
+            vector&lt;bool&gt; has_star(N);
+            bool ok = 1;
+            for (int c = 0; c &lt; N; ++c)
+                if (mask &amp; (1 &lt;&lt; c)) has_star[c] = 1;
+            for (int c = 0; c &lt; N; ++c) {
+                if (row[c] == &apos;W&apos;) {
+                    ok &amp;= !has_star[c];
+                } else if (row[c] == &apos;G&apos;) {
+                    ok &amp;= has_star[c] || (c &amp;&amp; has_star[c - 1]);
+                } else {
+                    ok &amp;= c &amp;&amp; has_star[c] &amp;&amp; has_star[c - 1];
+                }
+            }
+            if (ok) {
+                row_ans =
+                    min(row_ans, accumulate(begin(has_star), end(has_star), 0));
+            }
+        }
+        if (row_ans == INT_MAX) return -1;
+        ans += row_ans;
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin &gt;&gt; T;
+    while (T--) cout &lt;&lt; solve() &lt;&lt; &quot;\n&quot;;
+}
+
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Subtask 3</h4>
+Note that black and white pixels immediately imply that certain locations do or
+do not contain stars, so let&apos;s deal with them first and the gray pixels later.
+More specifically,
+<p><ol><li>Place all stars required to satisfy black pixels.</li><li>Check whether there are any unsatisfied white pixels.</li><li>Add stars to satisfy gray pixels, without causing any white pixels to be
+unsatisfied.</li></ol>
+<p>The first two steps are straightforward, while the last can be accomplished
+using a <a href='https://usaco.guide/bronze/intro-greedy'>greedy</a> approach. While
+there is an unsatisfied gray pixel, consider the leftmost such gray pixel - then
+we must choose to place a star in at least one of two locations (at the gray
+pixel, or to the left of it). It is always optimal to place a star at the gray
+pixel due to the following reasons:
+<p><ol><li>The location to the left of that pixel might be outside of the grid or
+correspond to the white pixel, so it might not be available.</li><li>A star at that gray pixel can potentially satisfy a gray pixel to the right,
+whereas a star to the left of that gray pixel will not.</li></ol>
+<p>This approach can be implemented with two left-to-right passes over each row of
+the input grid, the first for the black pixels and the second for the remaining
+pixels.   The runtime per test is <span class='math'>$O(N^2)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int solve() {
+    int N, A, B;
+    cin &gt;&gt; N &gt;&gt; A &gt;&gt; B;
+    vector&lt;string&gt; rows(N);
+    for (auto &amp;row : rows) cin &gt;&gt; row;
+    assert(A == 1 &amp;&amp; B == 0);
+    int ans = 0;
+    for (const auto &amp;row : rows) {
+        vector&lt;bool&gt; has_star(N);
+        for (int c = 0; c &lt; N; ++c) {
+            if (row[c] == &apos;B&apos;) {
+                if (c == 0) return -1;
+                has_star[c - 1] = has_star[c] = true;
+            }
+        }
+        for (int c = 0; c &lt; N; ++c) {
+            if (row[c] == &apos;W&apos;) {
+                if (has_star[c]) return -1;
+            } else if (row[c] == &apos;G&apos;) {
+                if (has_star[c]) continue;
+                if (c &amp;&amp; has_star[c - 1]) continue;
+                has_star[c] = true;
+            }
+        }
+        ans += accumulate(begin(has_star), end(has_star), 0);
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin &gt;&gt; T;
+    while (T--) cout &lt;&lt; solve() &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4>Full Solution</h4>
+This can be solved using pretty much the same method as subtask 3 (iterate over
+the grid once to process all black pixels, then again to process all remaining
+pixels). We can process the pixels in any order as long as pixel <span class='math'>$(r,c)$</span> is
+never processed before pixel <span class='math'>$(r-B, c-A)$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+int solve() {
+    int N, A, B;
+    cin &gt;&gt; N &gt;&gt; A &gt;&gt; B;
+    vector&lt;string&gt; rows(N);
+    for (auto &amp;row : rows) cin &gt;&gt; row;
+    vector&lt;vector&lt;bool&gt;&gt; has_star(N, vector&lt;bool&gt;(N));
+    for (int r = 0; r &lt; N; ++r)
+        for (int c = 0; c &lt; N; ++c)
+            if (rows[r][c] == &apos;B&apos;) {
+                if (r - B &lt; 0 || c - A &lt; 0) return -1;
+                has_star[r][c] = has_star[r - B][c - A] = 1;
+            }
+    for (int r = 0; r &lt; N; ++r)
+        for (int c = 0; c &lt; N; ++c) {
+            if (rows[r][c] == &apos;W&apos;) {
+                if (has_star[r][c]) return -1;
+            } else if (rows[r][c] == &apos;G&apos;) {
+                if (has_star[r][c]) continue;
+                if (r &gt;= B &amp;&amp; c &gt;= A &amp;&amp; has_star[r - B][c - A]) continue;
+                has_star[r][c] = true;
+            }
+        }
+    int ans = 0;
+    for (const auto &amp;row : has_star) ans += accumulate(begin(row), end(row), 0);
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int T;
+    cin &gt;&gt; T;
+    while (T--) cout &lt;&lt; solve() &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p>Brandon Wang&apos;s Python code:
+<p><pre class='prettyprint'>
+CTI = {&quot;W&quot;: 0, &quot;G&quot;: 1, &quot;B&quot;: 2}
+ 
+def tc():
+    N, A, B = [int(x) for x in input().split()]
+    grid = [[CTI[x] for x in input()] for _ in range(N)]
+    stars = [[0 for _ in range(N)] for _ in range(N)]
+ 
+    for i in range(N):
+        for j in range(N):
+            if grid[i][j] == 2:
+                stars[i][j] = 1
+                if i &lt; B or j &lt; A:
+                    print(-1)
+                    return
+                if grid[i-B][j-A] == 0:
+                    print(-1)
+                    return
+                stars[i-B][j-A] = 1
+ 
+    for i in range(N):
+        for j in range(N):
+            if grid[i][j] == 1:
+                if stars[i][j] == 1:
+                    continue
+                if i &lt; B or j &lt; A:
+                    stars[i][j] = 1
+                    continue
+                if stars[i-B][j-A] == 1:
+                    continue
+                stars[i][j] = 1
+                    
+    print(sum(sum(x) for x in stars))
+ 
+T = int(input())
+ 
+while T &gt; 0:
+    T -= 1
+    tc()
+</pre>
+<p></div>
+<p></body></html>

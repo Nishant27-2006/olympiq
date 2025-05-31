@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>We are essentially asked to compute the number of pairs of lattice points
+<span class='math'>$(x_1, y_1)$</span> and <span class='math'>$(x_2, y_2)$</span>, with <span class='math'>$x_1 &lt; x_2$</span> and <span class='math'>$y_1 &lt; y_2$</span>, in an
+<span class='math'>$N \times N$</span> square, where in each column there is some interval of acceptable
+points. Furthermore, as the <span class='math'>$x$</span>-coordinate of the column increases, both
+endpoints of the corresponding column either decrease or stay the same.
+<p>We propose a linear scan through the possibilities for <span class='math'>$x_2$</span>. For each <span class='math'>$x_2$</span>,
+there is some acceptable interval <span class='math'>$[l, r]$</span> for the value of <span class='math'>$y_2$</span>. Instead of
+counting the number of acceptable triples <span class='math'>$(x_1, y_1, y_2)$</span>, we will count the
+number of unacceptable triples with <span class='math'>$x_1 &lt; x_2$</span> and <span class='math'>$y_1 &lt; y_2$</span> and
+<span class='math'>$l \leq y_2 \leq r$</span>, and subtract this count from the total number of such
+triples.
+<p>Note that if <span class='math'>$y_2 &lt; l$</span>, then <span class='math'>$y_1 &lt; l$</span>, so by monotonicity of interval
+endpoints, <span class='math'>$(x_1,y_1)$</span> is itself an unacceptable point. Therefore we can drop
+the condition <span class='math'>$y_2 \geq l$</span> entirely.
+<p>We must compute two quantities: 
+<p>1) the sum over all <span class='math'>$(x_1, y_1)$</span>, with <span class='math'>$x_1 &lt; x_2$</span>, of the number of <span class='math'>$y_2$</span> with
+<span class='math'>$y_1 &lt; y_2 \leq r$</span>. 
+<p>2) the sum over all unacceptable <span class='math'>$(x_1, y_1)$</span>, with <span class='math'>$x_1 &lt; x_2$</span>, of the number
+of <span class='math'>$y_2$</span> with
+<span class='math'>$y_1 &lt; y_2 \leq r$</span>.
+<p>The first quantity can be evaluated with a simple formula. To evaluate the
+second quantity, we divide it into two quantities: the sum where <span class='math'>$y_1 &lt; l$</span>, and
+the sum where <span class='math'>$y_1 \geq l$</span>.
+<p>If <span class='math'>$y_1 &lt; l$</span>, then <span class='math'>$(x_1, y_1)$</span> is an unacceptable point for all <span class='math'>$x_1 &lt; x_2$</span>, so
+this sum again has a simple closed-form formula. We turn our attention to the
+case <span class='math'>$y_1 \geq l$</span>. For each <span class='math'>$y$</span>, there is some bound <span class='math'>$\text{left}(y)$</span> so that
+<span class='math'>$(x,y)$</span> is unacceptable if and only if <span class='math'>$x \leq \text{left}(y)$</span>. For
+<span class='math'>$y_1 \geq l$</span>, this bound is no larger than <span class='math'>$x_2$</span>, so the set of unacceptable
+<span class='math'>$(x_1,y_1)$</span> with <span class='math'>$x_1 &lt; x_2$</span> is in fact independent of <span class='math'>$x_2$</span>. So we can
+precompute prefix sums of <span class='math'>$\text{left}(y)$</span> and prefix sums of
+<span class='math'>$y \cdot \text{left}(y)$</span>, and during our scan, for each <span class='math'>$x_2$</span>, we can evaluate
+the case-<span class='math'>$(y_1 \geq l)$</span> sum in terms of these prefix sums.
+<p>Here is an implementation of the above solution.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;cstdlib&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+#define MAXN 100000
+#define MOD 1000000007
+ 
+int N;
+int x[MAXN], y[MAXN];
+int A[MAXN];
+int top[MAXN];
+int lft[MAXN];
+long long sumLeft[MAXN];
+long long stairSumLeft[MAXN];
+ 
+int main()
+{
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;N;i++)
+	{
+		cin &gt;&gt; x[i] &gt;&gt; y[i];
+		A[x[i]] = y[i];
+	}
+	int low = N;
+	for(int i=0;i&lt;N;i++)
+		while(A[i] &lt; low)
+			lft[--low] = i;
+	while(low &gt; 0)
+		lft[--low] = N;
+	sumLeft[N-1] = lft[N-1];
+	for(int j=N-2;j&gt;=0;j--)
+		sumLeft[j] = (sumLeft[j+1] + lft[j])%MOD;
+	stairSumLeft[N-1] = lft[N-1];
+	for(int j=N-2;j&gt;=0;j--)
+		stairSumLeft[j] = (stairSumLeft[j+1] + ((long long)lft[j])*(N-j))%MOD;
+		
+	top[N-1] = A[N-1];
+	for(int i=N-2;i&gt;=0;i--)
+		top[i] = max(top[i+1],A[i]);
+	
+	long long ans = 0;
+	int j = N-1;
+	for(int i=1;i&lt;N;i++)
+	{
+		while(j &gt; 0 &amp;&amp; lft[j-1] &lt;= i)
+			j--;
+		long long bad = stairSumLeft[j] - stairSumLeft[top[i]] - (N-top[i])*(sumLeft[j] - sumLeft[top[i]]);
+		bad = ((bad%MOD)+MOD)%MOD;
+		long long bad2 = (top[i]*((long long)j) - (j*((long long)(j-1)))/2)%MOD;
+		bad2 = (bad2*i)%MOD;
+		bad = (bad + bad2)%MOD;
+
+		long long tot = ((top[i]*((long long)(top[i]+1)))/2)%MOD;
+		tot = (tot*i)%MOD;
+		ans = ans + tot - bad;
+		ans = ((ans%MOD)+MOD)%MOD;
+	}
+	cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

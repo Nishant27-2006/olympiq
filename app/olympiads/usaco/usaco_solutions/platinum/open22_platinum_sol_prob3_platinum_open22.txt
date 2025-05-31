@@ -1,0 +1,456 @@
+Solution ID: sol_prob3_platinum_open22
+Contest: OPEN22
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_open22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Danny Mittal)
+
+We will refer to the string of Us and Ds as
+
+$s$
+
+.
+
+Subtask 1:
+
+$N \leq 500$
+
+We can do DP. For each triple
+
+$(j, k, u)$
+
+, our DP says whether there exists a
+subsequence of
+
+$p_1, \ldots, p_k$
+
+consistent with
+
+$s_1\ldots s_j$
+
+that ends in
+the number
+
+$u$
+
+. Transitions are constant time, so the runtime is
+
+$\mathcal O(N^3)$
+
+.
+
+Subtask 2:
+
+$N \leq 5000$
+
+We can improve the DP from the previous subtask by noting that depending on
+whether
+
+$s_{j + 1}$
+
+is U or D, it's optimal for the previous number in the
+subsequence to be as small or as large as possible. Therefore, our DP should
+find for each pair
+
+$(j, k)$
+
+both the smallest and the largest numbers such that
+there exists a subsequence of
+
+$p_1, \ldots, p_k$
+
+consistent with
+
+$s_1\ldots s_j$
+
+that ends in that number. Transitions are again constant time, so the runtime is
+
+$\mathcal O(N^2)$
+
+.
+
+Subtask 3:
+
+$s$
+
+is Us followed by Ds
+
+Apply a standard LIS algorithm to find for each number the longest LIS ending in
+that number, as well as the longest LIS ending in that number that goes in
+reverse (starting from the end of
+
+$p$
+
+). Now let the number of Us in
+
+$s$
+
+be
+
+$j$
+
+.
+If there is no LIS of
+
+$p$
+
+with
+
+$j + 1$
+
+, then we simply use the longest LIS that
+we found. Otherwise, find the first position in
+
+$p$
+
+where we have an LIS of
+length
+
+$j + 1$
+
+, then use the longest reverse LIS that ends at or after that
+position to compute the answer.
+
+The runtime is
+
+$O(N\lg N)$
+
+using an appropriate LIS algorithm.
+
+Subtask 4: No additional constraints
+
+Intuitively, it makes sense for us to try to find the fastest (ending the
+earliest) subsequence of
+
+$p$
+
+consistent with each prefix of
+
+$s$
+
+, and build on
+that subsequence to find the fastest subsequence for the next prefix of
+
+$s$
+
+.
+Unfortunately, this idea doesn't even work for normal LIS (longest increasing
+subsequence), i. e. the case where
+
+$s$
+
+is UUUU..., because we can have a case
+like
+
+$p = [5, 6, 7, 1, 2, 3, 4]$
+
+where the fastest increasing subsequence of length
+
+$3$
+
+is
+
+$[5, 6, 7]$
+
+, but the
+fastest one of length
+
+$4$
+
+is
+
+$[1, 2, 3, 4]$
+
+which doesn't build on
+
+$[5, 6, 7]$
+
+at all.
+
+However, it turns out that we can actually apply this idea when switching from
+contiguous segments of U to contiguous segments of D and vice versa.
+Specifically, suppose that
+
+$s_j$
+
+is D, and the next
+
+$x$
+
+letters in
+
+$s$
+
+are U. If
+the fastest subsequence
+
+$a$
+
+of
+
+$p$
+
+consistent with
+
+$s_1\ldots s_j$
+
+ends at index
+
+$k$
+
+, then consider finding the fastest LIS
+
+$b$
+
+of length
+
+$x + 1$
+
+in
+
+$p$
+
+considering only positions from
+
+$k$
+
+onwards. Say that
+
+$b$
+
+ends at position
+
+$k'$
+
+.
+
+It's clear that the fastest subsequence of
+
+$p$
+
+consistent with
+
+$s_1\ldots s_{j + x}$
+
+must end at or after position
+
+$k'$
+
+, because clearly it's
+not possible to find a subsequence consistent with
+
+$s_1\ldots s_j$
+
+then an LIS
+of length
+
+$x + 1$
+
+that starts with the previous subsequence prior to
+
+$k'$
+
+.
+
+However, we can actually use
+
+$a$
+
+and
+
+$b$
+
+to create a subsequence consistent with
+
+$s_1\ldots s_{j + x}$
+
+that ends at position
+
+$k'$
+
+. If the last number
+
+$a_{j}$
+
+in
+
+$a$
+
+and the first number
+
+$b_0$
+
+in
+
+$b$
+
+are the same, then we're done, because we
+can simply attach them at that number. Otherwise, note that it can't be that
+
+$a_{j} < b_0$
+
+, because otherwise we could add
+
+$a_{j}$
+
+to the beginning of
+
+$b$
+
+and remove
+
+$b$
+
+'s last element to get an LIS of length
+
+$x + 1$
+
+that ends earlier.
+Therefore, it must be that
+
+$a_{j} > b_0$
+
+. However, since
+
+$s_j$
+
+is D, we can
+actually take
+
+$a$
+
+, remove
+
+$a_{j}$
+
+, then add on
+
+$b_0$
+
+, which is valid because
+
+$a_{j-1} > a_{j} > b_1$
+
+so the D is still satisfied, and now use
+
+$b_0$
+
+to glue
+together
+
+$a$
+
+and
+
+$b$
+
+.
+
+Therefore, the end position of the fastest subsequence of
+
+$p$
+
+consistent with
+
+$s_1\ldots s_{j + x}$
+
+is simply the end position of the fastest LIS of
+
+$p$
+
+considering only positions starting from the end position of the fastest
+subsequence consistent with
+
+$s_1\ldots s_j$
+
+. All of this also applies when U and
+D are switched.
+
+This means that our algorithm can work as follows. We divide
+
+$s$
+
+into its
+contiguous segments of U and D, and for each segment find the fastest LIS or LDS
+of the length of the segment
+
+$ + 1$
+
+that only considers the part of
+
+$p$
+
+starting
+(inclusive) from the end of the previous LDS or LIS. We finish when we are
+unable to find an LIS or LDS of the appropriate length for some segment and
+simply use the longest one we were able to find for that last segment to compute
+the answer.
+
+To find LISs and LDSs, we can simply apply one of the standard algorithms for
+finding LIS, but we have to be careful that the algorithm we use runs in time a
+function of the number of elements we consider, not a function of
+
+$N$
+
+, as there
+can potentially be many segments in
+
+$s$
+
+. An elegant choice given this constraint
+is the binary search tree algorithm for LIS, which is used in the Java code
+below.
+
+Assuming our LIS algorithm runs in
+
+$\mathcal O(x\lg x)$
+
+where
+
+$x$
+
+is the number
+of elements we consider, the runtime of our overall algorithm is
+
+$\mathcal O(N\lg N)$
+
+.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Comparator;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+ 
+public class UpDownSubsequence {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        char[] directions = in.readLine().toCharArray();
+        int k = 0;
+        int last = Integer.parseInt(tokenizer.nextToken());
+        while (tokenizer.hasMoreTokens() && k < directions.length) {
+            char direction = directions[k];
+            TreeSet<Integer> treeSet = new TreeSet<Integer>(direction == 'U' ? Comparator.naturalOrder() : Comparator.reverseOrder());
+            treeSet.add(last);
+            while (tokenizer.hasMoreTokens() && k < directions.length && directions[k] == direction) {
+                last = Integer.parseInt(tokenizer.nextToken());
+                Integer displaced = treeSet.higher(last);
+                if (displaced == null) {
+                    k++;
+                } else {
+                    treeSet.remove(displaced);
+                }
+                treeSet.add(last);
+            }
+        }
+        System.out.println(k);
+    }
+}

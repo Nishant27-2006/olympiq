@@ -1,0 +1,237 @@
+Solution ID: sol_prob2_silver_open21
+Contest: OPEN21
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob2_silver_open21.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Consider the list
+
+$x$
+
+for a single test case.
+
+Solution 1:
+
+Solve
+
+$\frac{7!}{(7-N)!}$
+
+distinct linear 
+systems using
+
+Gaussian
+elimination.
+
+But of course, Silver contestants are not expected to know how
+to do this.
+
+Solution 2:
+
+Add
+
+$0$
+
+to
+
+$x$
+
+, so
+
+$x$
+
+now contains between
+
+$5$
+
+and
+
+$8$
+
+elements
+inclusive. Suppose that
+
+$x$
+
+is compatible with a triple
+
+$(A,B,C)$
+
+. Then consider
+the following pairs of integers:
+
+$(0,A)$
+
+$(B,A+B)$
+
+$(C,A+C)$
+
+$(B+C,A+B+C)$
+
+Since the size of
+
+$x$
+
+is greater than
+
+$4$
+
+,
+
+$x$
+
+must contain two elements from
+the same pair, implying that there exist two elements of
+
+$x$
+
+such that their
+difference equals
+
+$A$
+
+. Similar reasoning holds for
+
+$B$
+
+and
+
+$C$
+
+.
+
+So it suffices to iterate through all possibilities for
+
+$A$
+
+,
+
+$B$
+
+, and
+
+$C$
+
+and
+increment the answer whenever we come across a candidate triple that works.
+
+Danny Mittal's code:
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class DoYouKnowYourABCsCounting {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder out = new StringBuilder();
+        int t = Integer.parseInt(in.readLine());
+        for (int tc = 1; tc <= t; tc++) {
+            int n = Integer.parseInt(in.readLine());
+            int[] numbers = new int[n];
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            for (int j = 0; j < n; j++) {
+                numbers[j] = Integer.parseInt(tokenizer.nextToken());
+            }
+            int answer = 0;
+            Set<Integer> expanded = new HashSet<>();
+            for (int x : numbers) {
+                expanded.add(x);
+                for (int y : numbers) {
+                    if (x < y) {
+                        expanded.add(y - x);
+                    }
+                }
+            }
+ 
+            for (int a : expanded) {
+                for (int b : expanded) {
+                    for (int c : expanded) {
+                        if (a <= b && b <= c) {
+                            List<Integer> allNumbers = Arrays.asList(a, b, c, a + b, b + c, c + a, a + b + c);
+                            boolean works = true;
+                            for (int x : numbers) {
+                                if (!allNumbers.contains(x)) {
+                                    works = false;
+                                }
+                            }
+                            if (works) {
+                                answer++;
+                            }
+                        }
+                    }
+                }
+            }
+            out.append(answer).append('\n');
+        }
+        System.out.print(out);
+    }
+}
+
+Solution 3:
+
+There exist two elements of
+
+$x$
+
+such that their
+sum equals
+
+$A+B+C$
+
+(by similar reasoning as solution 2). Given the sum, we only
+need to check two candidate solutions.
+
+My code:
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int N;
+vector<int> x;
+set<multiset<int>> sols;
+
+void check_sol(int sum, int b, int c) {
+	int a = sum-b-c;
+	assert(a > 0 && b > 0 && c > 0);
+	set<int> s{0,a,b,c,a+b,b+c,c+a,a+b+c};
+	for (int t: x) if (!s.count(t)) return;
+	sols.insert({a,b,c});
+}
+ 
+void test(int sum) {
+	set<int> candidates;
+	for (int t: x) {
+		if (t > sum) return;
+		if (t == 0 || t == sum) continue;
+		candidates.insert(min(t,sum-t));
+	}
+	assert(candidates.size() >= 2);
+	int a = *begin(candidates);
+	int b = *next(begin(candidates));
+	check_sol(sum,a,b);
+	check_sol(sum,a,sum-b);
+}
+ 
+int solve() {
+	cin >> N; 
+	x.resize(N); for (int& t : x) cin >> t;
+	x.push_back(0);
+
+	sols.clear();
+	for (int i = 0; i < (int)x.size(); ++i)
+		for (int j = i+1; j < (int)x.size(); ++j)
+			test(x[i]+x[j]);
+	return (int)sols.size();
+}
+ 
+int main() {
+	int T; cin >> T;
+	while (T--) cout << solve() << "\n";
+}

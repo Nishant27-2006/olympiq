@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Richard Qi, Benjamin Qi)
+<p>Let the cows be nodes of a graph, where an edge is between every pair of cows
+with weight equal to  the squared distance between them. Our goal is to find a
+<a href='https://usaco.guide/gold/mst'>Minimum Spanning Tree</a>  of this graph.
+<p><strong>Partial Credit:</strong> Because there are a total of <span class='math'>$\mathcal O(N^2)$</span> edges, we
+can run Kruskal&apos;s or Prim&apos;s to solve this  task in <span class='math'>$\mathcal O(N^2 \log{N})$</span> or
+<span class='math'>$\mathcal O(N^2)$</span>.  A few modifications to the code from the
+<a href='https://www.usaco.org/index.php?page=viewproblem2&amp;cpid=669'>Moocast</a>
+analysis suffice.
+<p>Nick Wu&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class MooNetworkSlow {
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		PrintWriter pw = new PrintWriter(System.out);
+		int n = Integer.parseInt(br.readLine());
+		int[] x = new int[n];
+		int[] y = new int[n];
+		for(int i = 0; i &lt; n; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			x[i] = Integer.parseInt(st.nextToken());
+			y[i] = Integer.parseInt(st.nextToken());
+		}
+		parent = new int[n];
+		ArrayList&lt;Edge&gt; edges = new ArrayList&lt;Edge&gt;();
+		for(int i = 0; i &lt; n; i++) {
+			parent[i] = i;
+			for(int j = 0; j &lt; i; j++) {
+				long distance = (long)(x[i] - x[j]) * (x[i] - x[j]) + (long)(y[i] - y[j]) * (y[i] - y[j]);
+				edges.add(new Edge(i, j, distance));
+			}
+		}
+		Collections.sort(edges);
+		long sumWeights = 0;
+		int numComponents = n;
+		for(Edge curr: edges) {
+			if(find(curr.i) != find(curr.j)) {
+				merge(curr.i, curr.j);
+				sumWeights += curr.w;
+				if(--numComponents == 1) {
+					break;
+				}
+			}
+		}
+		pw.println(sumWeights);
+		pw.close();
+	}
+	
+	static int[] parent;
+	public static int find(int curr) {
+		return parent[curr] == curr ? curr : (parent[curr] = find(parent[curr]));
+	}
+	
+	public static void merge(int x, int y) {
+		parent[find(x)] = find(y);
+	}
+	
+	static class Edge implements Comparable&lt;Edge&gt; {
+		public int i, j;
+		public long w;
+		public Edge(int a, int b, long c){
+			i=a;
+			j=b;
+			w=c;
+		}
+		public int compareTo(Edge e) {
+			return Long.signum(w-e.w);
+		}
+	}
+	
+}
+</pre>
+<p><strong>Full Credit:</strong> The main idea is to reduce the number of edges we need to
+consider to <span class='math'>$\mathcal O(N)$</span>, using the special condition that
+<span class='math'>$0 \leq y_i \leq 10$</span>. 
+<p>We use this important fact: consider <span class='math'>$3$</span> nodes of a graph <span class='math'>$a$</span>, <span class='math'>$b$</span>, <span class='math'>$c$</span>. Suppose
+that the  weights of the three edges between these nodes satisfies
+<span class='math'>$w_{bc} &lt; w_{ab}$</span> and <span class='math'>$ w_{ac} &lt; w_{ab}$</span>. Then, the minimum spanning tree can be
+chosen such that edge <span class='math'>$ab$</span> is not present. This can be proven by analyzing
+Kruskal&apos;s algorithm: the algorithm first encounters <span class='math'>$bc$</span> and <span class='math'>$ac$</span> in the sort
+order, immediately after which <span class='math'>$a$</span> and <span class='math'>$b$</span> must be connected. So, when <span class='math'>$ab$</span> is
+encountered, <span class='math'>$a$</span> and <span class='math'>$b$</span> are already connected. 
+<p>Now, given points <span class='math'>$a = (x_1,y_1),c = (x_2,y_2), b = (x_3,y_3)$</span> such that
+<span class='math'>$x_1 \leq x_2 &lt; x_3$</span> and <span class='math'>$y_2=y_3,$</span> we don&apos;t need  to consider the edge between
+<span class='math'>$(x_1,y_1)$</span> and <span class='math'>$(x_3,y_3)$</span> because of the reason above. Specifically, we can
+easily show that <span class='math'>$w_{bc} &lt; w_{ab}$</span> and <span class='math'>$w_{ac} &lt; w_{ab}$</span>. 
+<p>Now, suppose that for each point <span class='math'>$(x_1,y_1)$</span> we want to generate all the edges
+to points  <span class='math'>$(x_2,y_2)$</span> where <span class='math'>$x_1 \leq x_2$</span> which could possibly be part of a
+MST. Consider the points in  order of decreasing <span class='math'>$x.$</span> By the above observation,
+we only need to consider the edges from <span class='math'>$(x_1,y_1)$</span> to the last added point for
+each <span class='math'>$0 \le y\le 10$</span>, which can be maintained in linear time using an array of
+size <span class='math'>$11$</span>. Thus, we only need to run Kruskal on <span class='math'>$11N$</span> distinct edges.
+<p>The overall time complexity of running this algorithm is
+<span class='math'>$\mathcal O((N\max{y_i})(\log{N}+\log{\max{y_i}}))$</span>, which comes from sorting
+the edge weights during Kruskal.
+<p>Danny Mittal&apos;s code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
+ 
+public class MooNetwork {
+    static int[] union;
+ 
+    static int find(int u) {
+        if (union[union[u]] != union[u]) {
+            union[u] = find(union[u]);
+        }
+        return union[u];
+    }
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        TreeMap&lt;Integer, Integer&gt;[] rows = new TreeMap[11];
+        for (int y = 0; y &lt;= 10; y++) {
+            rows[y] = new TreeMap&lt;&gt;();
+        }
+        int[] xs = new int[n];
+        int[] ys = new int[n];
+        for (int j = 0; j &lt; n; j++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            xs[j] = Integer.parseInt(tokenizer.nextToken());
+            ys[j] = Integer.parseInt(tokenizer.nextToken());
+            rows[ys[j]].put(xs[j], j);
+        }
+        List&lt;Edge&gt; edges = new ArrayList&lt;&gt;();
+        for (int j = 0; j &lt; n; j++) {
+            for (int y = 0; y &lt;= 10; y++) {
+                Map.Entry&lt;Integer, Integer&gt; entry = y == ys[j] ? rows[y].lowerEntry(xs[j]) : rows[y].floorEntry(xs[j]);
+                if (entry != null) {
+                    long dx = xs[j] - entry.getKey();
+                    long dy = ys[j] - y;
+                    edges.add(new Edge(j, entry.getValue(), (dx * dx) + (dy * dy)));
+                }
+            }
+        }
+        union = new int[n];
+        for (int j = 0; j &lt; n; j++) {
+            union[j] = j;
+        }
+        edges.sort(Comparator.comparingLong(edge -&gt; edge.weight));
+        long answer = 0;
+        for (Edge edge : edges) {
+            int u = find(edge.a);
+            int v = find(edge.b);
+            if (v != u) {
+                union[v] = u;
+                answer += edge.weight;
+            }
+        }
+        System.out.println(answer);
+    }
+ 
+    static class Edge {
+        final int a;
+        final int b;
+        final long weight;
+ 
+        Edge(int a, int b, long weight) {
+            this.a = a;
+            this.b = b;
+            this.weight = weight;
+        }
+ 
+        @Override
+        public String toString() {
+            return &quot;Edge{&quot; +
+                    &quot;a=&quot; + a +
+                    &quot;, b=&quot; + b +
+                    &quot;, weight=&quot; + weight +
+                    &apos;}&apos;;
+        }
+    }
+}
+</pre>
+<p>Fun Fact #1: Note that Squared Euclidean Distance was not very special in our
+proof. In particular, the same solution can be used for Manhattan Distance or
+regular Euclidean Distance. 
+<p>Fun Fact #2: Note that finding an MST in Squared Euclidean Distance is
+equivalent to finding an MST in Euclidean Distance, although it is <strong>not</strong>
+equivalent to finding an MST in Manhattan distance (can you see why?).  So, an
+algorithm that can find a Euclidean MST could be used to solve this problem.
+<a href='https://en.wikipedia.org/wiki/Euclidean_minimum_spanning_tree'> General
+Euclidean MST</a> (without the bound on <span class='math'>$y_i$</span>) can be done in
+<span class='math'>$\mathcal O(N \log{N})$</span> time.
+<p></body></html>

@@ -1,0 +1,123 @@
+Solution ID: sol_prob1_silver_dec24
+Contest: DEC24
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_prob1_silver_dec24.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Agastya Goel, Benjamin Qi, reviewed by Claire Zhang)
+
+Since
+
+$N$
+
+is even, Bessie will have
+
+$\frac{N}{2}$
+
+turns and Elsie will have
+
+$\frac{N}{2}-1$
+
+turns. First, note that Elsie can always manage to stash any
+combination of
+
+$\frac{N}{2}-1$
+
+cakes off the ends. If she wants the leftmost
+
+$l$
+
+cakes and the rightmost
+
+$\frac{N}{2}-1-l$
+
+cakes, she can get them by spending
+the first
+
+$l$
+
+turns stashing the current leftmost cake and the next
+
+$\frac{N}{2}-1-l$
+
+turns stashing the current rightmost one.
+
+However, Bessie can stop Elsie from ever stashing more than
+
+$\frac{N}{2}-1$
+
+of
+the initial cakes by maintaining a single large merged cake which we will call
+the *special* cake in the middle of the row. Specifically, Bessie spends her
+first turn merging the two centermost cakes, leaving
+
+$\frac{N}{2}-1$
+
+unmerged
+cakes on either end. For each following turn, if Elsie removes the leftmost
+cake, Bessie will merge the special cake with the cake to its right, and if
+Elsie removes the rightmost cake, Bessie will merge the special cake with the
+cake to its left. Either way, after Elsie has made
+
+$i$
+
+moves and Bessie has made
+
+$i+1$
+
+, there will be
+
+$\frac{N}{2}-1-i$
+
+cakes on either side of the special cake.
+Therefore, Elsie will never be able to stash the special cake.
+
+In summary, Elsie can always get any combination of
+
+$\frac{N}{2}-1$
+
+cakes off
+the ends and Bessie can prevent her from stashing any more cakes. Thus, if both
+players play optimally, Elsie will stash the combination of
+
+$\frac{N}{2}-1$
+
+cakes  off the ends with the largest total size.
+
+Implementation: Bessie will end up with the window of
+
+$N/2+1$
+
+consecutive cakes
+with the minimum total size. We can first compute
+
+cumulative sums
+
+of the input array
+and then query for the sum of each window in
+
+$O(1)$
+
+time. The overall runtime is
+
+$O(N)$
+
+.
+
+Benjamin Qi's Python code:
+
+T = int(input())
+ 
+for _ in range(T):
+    N = int(input())
+    A = list(map(int, input().split()))
+    cum = [0]
+    for x in A:
+        cum.append(cum[-1] + x)
+    min_bessie = float('inf')
+    for i in range(N - N // 2):
+        min_bessie = min(min_bessie, cum[i + N // 2 + 1] - cum[i])
+    print(min_bessie, sum(A) - min_bessie)

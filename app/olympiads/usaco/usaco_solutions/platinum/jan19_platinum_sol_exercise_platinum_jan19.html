@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Spencer Compton )
+<p>Let&apos;s think about the pairs of non-standard trails that Bessie could use to make
+a good route. Consider the tree that consists of standard trails. We will think
+of a non-standard trail&apos;s &quot;path&quot; as the path between its two corresponding nodes
+in the aforementioned tree. If the two non-standard trails we are considering
+have edge-disjoint paths, then it is not possible to create a simple cycle with 
+them. However, if their paths do overlap, then we can create exactly one simple 
+cycle.
+<p>Now we have another problem, how do we count the pairs of non-standard trails
+whose paths overlap? We will consider the tree to be arbitrarily rooted. Let 
+a non-standard trail go from node <span class='math'>$A$</span> to node <span class='math'>$B$</span> through its lowest common 
+ancestor (LCA) <span class='math'>$L$</span>. This is a somewhat difficult shape to  work with. What if
+we decided to instead break each nonstandard path into the path from <span class='math'>$A$</span> to <span class='math'>$L$</span>
+and the path from <span class='math'>$L$</span> to <span class='math'>$B$</span>, and then counted the number of paths that overlap?
+With this method of counting, we may overcount. However, we can easily tell if
+a pair will be overcounted. We see that a pair will be overcounted only when
+both trails have paths that go through the same LCA and the two edges that
+are connected to the LCA in their path are the same. We can then just find the
+number of such pairs and remove this from our answer, as this allows us to
+ignore the overcounting and work with paths of a very simple shape.
+<p>Our problem is now simpler, we have paths that travel from some node to one of
+its ancestors and we want to count the number of pairs that overlap. A similar,
+more well-known problem is this but in the form of 1-dimensional line segments.
+A segment in the form [<span class='math'>$A_i$</span>,<span class='math'>$B_i$</span>] would mean there was a line that started
+at <span class='math'>$A_i$</span> and ended at <span class='math'>$B_i$</span>. We could solve it in the following manner. At the 
+start of every segment subtract from your answer the number of segments that
+began before it, while at the end of every segment add to your answer the
+number of segments that began before the end of this segment. (Being slightly 
+careful about pairs of segments that start/end in the same location).
+<p>In the tree version, we can do the exact same thing. We can use precalculation
+with a depth-first search to calculate the number of paths that start at an
+ancestor of each node. Then for each path that goes from a node <span class='math'>$A$</span> to an 
+ancestor <span class='math'>$B$</span>, we add (the number of paths that start at an ancestor of <span class='math'>$B$</span>) -
+(the number of paths that start at an ancestor of <span class='math'>$A$</span>) to our answer. We are
+careful not to overcount pairs that have the same lowest edge on their path.
+<p>Below is Dhruv Rohatgi&apos;s implementation.
+<p><pre class='prettyprint'>
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+#include &lt;map&gt;
+using namespace std;
+#define MAXN 200000
+ 
+int N,Q;
+vector&lt;int&gt; edges[MAXN];
+int x[MAXN], y[MAXN], anc[MAXN];
+int p[MAXN][20];
+int d[MAXN];
+ 
+int numInters[MAXN];
+int psInters[MAXN];
+map&lt;pair&lt;int,int&gt;, int&gt; MP;
+ 
+void dfs(int i,int par,int depth)
+{
+	p[i][0] = par;
+	d[i] = depth;
+	for(int j=0;j&lt;edges[i].size();j++)
+		if(edges[i][j]!=par)
+			dfs(edges[i][j],i, depth+1);
+}
+ 
+void dfsSum(int i, int ps)
+{
+	psInters[i] = ps;
+	for(int j=0;j&lt;edges[i].size();j++)
+		if(edges[i][j]!=p[i][0])
+			dfsSum(edges[i][j], ps + numInters[edges[i][j]]);
+}
+ 
+void precompute()
+{
+	dfs(0, -1, 0);
+	for(int j=1;j&lt;20;j++)
+		for(int i=0;i&lt;N;i++)
+		{
+			if(p[i][j-1]==-1)
+				p[i][j] = -1;
+			else
+				p[i][j] = p[p[i][j-1]][j-1];
+		}
+}
+ 
+int lca(int a,int b)
+{
+	for(int j=19;j&gt;=0;j--)
+		if(d[p[a][j]] &gt;= d[b])
+			a = p[a][j];
+	for(int j=19;j&gt;=0;j--)
+		if(d[p[b][j]] &gt;= d[a])
+			b = p[b][j];
+	for(int j=19;j&gt;=0;j--)
+		if(p[a][j]!=p[b][j])
+			a = p[a][j], b = p[b][j];
+	if(a==b) return a;
+	return p[a][0];
+}
+ 
+int topEdge(int top,int bot)
+{
+	if(top==bot)
+		return -1;
+	for(int j=19;j&gt;=0;j--)
+		if(d[p[bot][j]] &gt; d[top])
+			bot = p[bot][j];
+	return bot;
+}
+ 
+long long choose2(int m)
+{
+	return (((long long) m)*(m-1))/2;
+}
+ 
+int main()
+{
+	int M,a,b;
+	cin &gt;&gt; N &gt;&gt; M;
+	Q = M - (N-1);
+	for(int i=0;i&lt;N-1;i++)
+	{
+		cin &gt;&gt; a &gt;&gt; b;
+		a--,b--;
+		edges[a].push_back(b);
+		edges[b].push_back(a);
+	}
+	precompute();
+	long long ans = 0;
+	for(int i=0;i&lt;Q;i++)
+	{
+		cin &gt;&gt; x[i] &gt;&gt; y[i];
+		x[i]--,y[i]--;
+		anc[i] = lca(x[i],y[i]);
+		int topx = topEdge(anc[i], x[i]);
+		if(topx != -1)
+		{
+			ans -= numInters[topx] + 1;
+			numInters[topx]++;
+		}
+		int topy = topEdge(anc[i], y[i]);
+		if(topy != -1)
+		{
+			ans -= numInters[topy] + 1;
+			numInters[topy]++;
+		}
+		if(topx != -1 &amp;&amp; topy != -1)
+		{
+			if(topx&gt;topy) swap(topx,topy);
+			ans -= MP[make_pair(topx,topy)];
+			MP[make_pair(topx,topy)]++;
+		}
+	}
+	dfsSum(0,0);
+	for(int i=0;i&lt;Q;i++)
+		ans += psInters[x[i]] + psInters[y[i]] - 2*psInters[anc[i]];
+	cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+
+</pre>
+<p></body></html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Suppose that sweet corn grows in <span class='math'>$(1,1)$</span>. Consider the minimum <span class='math'>$j$</span> such that 
+alfalfa grows in <span class='math'>$(1,j)$</span>. 
+<p><ul><li>Sweet corn grows in <span class='math'>$(1,y)$</span> if <span class='math'>$y&lt;j$</span> and alfalfa grows in <span class='math'>$(1,y)$</span>
+otherwise.</li><li>Every square <span class='math'>$(x,y)$</span> satisfying <span class='math'>$y&lt;j$</span> contains either a sweet corn sprinkler
+or no sprinkler.</li><li>There must be a sweet corn sprinkler at <span class='math'>$(1,j-1)$</span>.</li></ul> 
+<p>Now,
+<ul><li>If <span class='math'>$j=N+1$</span> then sweet corn grows in every square.</li><li>Otherwise, run the solution recursively on the remaining <span class='math'>$N\times (N+1-j)$</span>
+sub-rectangle; namely, those squares <span class='math'>$(x,y)$</span> such that <span class='math'>$y\ge j$</span>. Find the
+minimum <span class='math'>$k$</span> such that sweet corn grows in <span class='math'>$(k,j)$</span>, and continue in a similar
+fashion.</li></ul>
+<p>In general, an assignment of sweet corn or alfalfa to each square corresponds to
+a down-right path from <span class='math'>$(1,1)$</span> to some square <span class='math'>$(x,y)$</span> that satisfies <span class='math'>$x=N+1$</span> or
+<span class='math'>$y=N+1$</span>. In the above example, the first three squares of the path are
+<span class='math'>$(1,1)\to (1,j)\to (k,j)$</span>.  The squares that are just before where the path
+changes direction (such as <span class='math'>$(1,j-1)$</span>) must contain a sprinkler of a certain type
+(so their states are fixed), while every other square that does not contain a
+cow can be in one of two states: either place no sprinkler or place a sprinkler
+of the same type as the crop that grows in that square. A path that changes
+direction <span class='math'>$d$</span> times fixes the states of <span class='math'>$d+1$</span> squares, so the states of the
+remaining squares can be assigned in <span class='math'>$2^{\text{(# unoccupied squares)}-d-1}$</span>
+ways. It suffices to sum <span class='math'>$2^{-d-1}$</span> over all paths and then multiply the answer
+by <span class='math'>$2^{\text{(# unoccupied squares)}}$</span> at the end. In the code below,
+<span class='math'>$p\equiv 2^{-1}\pmod{10^9+7}$</span>.
+<p>We can do this naively in <span class='math'>$O(N^3)$</span> and use prefix sums to get <span class='math'>$O(N^2)$</span>. It is
+probably easier to write the <span class='math'>$O(N^3)$</span> solution first and then figure out how to optimize
+it.
+<p>Dhruv Rohatgi&apos;s code:
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+using namespace std;
+#define MOD 1000000007
+ 
+int N;
+long long p = 500000004LL;
+char A[2005][2005];
+char B[2005][2005];
+int r[2005][2005];
+int b[2005][2005];
+int psr[2005][2005];
+int psb[2005][2005];
+ 
+int main()
+{
+	freopen(&quot;sprinklers2.in&quot;,&quot;r&quot;,stdin);
+	freopen(&quot;sprinklers2.out&quot;,&quot;w&quot;,stdout);
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;N;i++)
+		cin &gt;&gt; (A[i+1]+1);
+	for(int i=2;i&lt;=N+1;i++)
+		if(A[i-1][1] == &apos;.&apos;)
+			b[i][0] = psb[i][0] = p;
+	for(int j=1;j&lt;=N;j++)
+		if(A[1][j] == &apos;.&apos;)
+			r[1][j] = psr[1][j] = p;
+	for(int i=2;i&lt;=N+1;i++)
+		for(int j=1;j&lt;=N;j++)
+		{
+			if(A[i][j] == &apos;.&apos;)
+			{
+				r[i][j] = (p*psb[i][j-1])%MOD;
+			}
+			if(A[i-1][j+1] == &apos;.&apos;)
+			{
+				b[i][j] = (p*psr[i-1][j])%MOD;
+			}
+			psr[i][j] = (psr[i-1][j] + r[i][j])%MOD;
+			psb[i][j] = (psb[i][j-1] + b[i][j])%MOD;
+		}
+	int ans = (psr[N][N] + psb[N+1][N])%MOD;
+	for(int i=1;i&lt;=N;i++)
+		for(int j=1;j&lt;=N;j++)
+			if(A[i][j]==&apos;.&apos;)
+				ans = (2LL*ans)%MOD;
+	cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+}
+</pre>
+<p></body></html>

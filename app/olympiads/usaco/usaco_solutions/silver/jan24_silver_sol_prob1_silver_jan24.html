@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Suhas Nagar and Anand John)
+<p>For the interested reader, this problem draws inspiration from the
+<a href='https://en.wikipedia.org/wiki/Secretary_problem'>Secretary Problem</a>. In
+terms of this problem, each one of Farmer&apos;s John&apos;s memories can be viewed as the
+following: If Farmer John were to uniformly reject the first <span class='math'>$a_i$</span> cows, and
+then choose the first cow he saw that was better than any cow he had seen
+before, he would choose the <span class='math'>$h_i$</span>-th cow.
+<p><strong> Subtask 1: </strong>
+<p>We can solve this with brute force. Simply iterate through all possible
+sequences of cowmpetency scores and return the first one that satisfies Farmer
+John&apos;s memories.
+<p>Code:
+<pre class='prettyprint'>
+def genarray(i, N, C, curscores):
+    if curscores[i] != 0:
+        if i == N: yield curscores
+        else: yield from genarray(i + 1, N, C, curscores)
+    else:
+        for score in range(1, C + 1):
+            curscores[i] = score
+            if i == N: yield curscores
+            else: yield from genarray(i + 1, N, C, curscores)
+        curscores[i] = 0
+
+t = int(input())
+
+for test in range(t):
+    N, Q, C = map(int, input().strip().split())
+    c = [0] + [*map(int, input().strip().split())]
+    constraints = [[*map(int, input().strip().split())] for _ in range(Q)]
+    for curscores in genarray(1, N, C, c):
+        for [a, h] in constraints:
+            if max(curscores[: a + 1]) != max(curscores[:h]) or \
+                curscores[h] &lt;= max(curscores[: a + 1]):
+                break
+        else:
+            print(*curscores[1:])
+            break
+    else:
+        print(-1)
+</pre>
+<p><strong>Subtask 2:</strong>
+<p>Let us now define <span class='math'>$B(k)$</span> to be the index of the first cow with a strictly larger
+score than the first <span class='math'>$k$</span> cows. This is useful because each of Farmer John&apos;s
+memories can be fully described by the statement: <span class='math'>$B(a_i) = h_i$</span>.
+<p>Based on this and the above brute force, we realize that possible sequences only
+satisfy Farmer John&apos;s constraints if, for every <span class='math'>$1 \leq i \leq N$</span>:
+<ol><li><span class='math'>$\max\limits_{1 \leq j \leq i}{c_j} = \max\limits_{1 \leq j &lt; B(i)}{c_j}$</span>
+</li><li>
+<span class='math'>$c_{B(i)} &gt; \max\limits_{1 \leq j \leq i} c_j$</span>
+</li></ol>
+<p>This leads us to the following observation: For all <span class='math'>$1 \leq i &lt; j &lt; B(i)$</span>:
+<span class='math'>$B(i) = B(j)$</span>. Therefore, if there exists <span class='math'>$i,j$</span> such that <span class='math'>$a_i &lt; a_j &lt; B(a_i)$</span>
+and <span class='math'>$B(a_i) \neq B(a_j)$</span> then there does not exist a sequence in accordance with
+Farmer John&apos;s memory. Combining these observation, with the given <span class='math'>$(a_i, h_i)$</span>
+pairs,  we can derive the value <span class='math'>$B(j)$</span> for any <span class='math'>$j$</span> that satisfies the inequality
+<span class='math'>$a_i \leq j &lt; h_i$</span> for some <span class='math'>$i$</span>. For all the other values of <span class='math'>$j$</span> we will call
+<span class='math'>$B(j)$</span> unknown
+<p>This is enough information to come up with a greedy solution. We will iterate
+through <span class='math'>$i$</span>  from <span class='math'>$1$</span> to <span class='math'>$N$</span>. At each point, we will store the minimum possible
+values <span class='math'>$c_1 \dots c_n$</span> that satisfy the constraints related to
+<span class='math'>$B(1) \dots B(i)$</span>. This means that all values of <span class='math'>$c_i$</span> that were not given are
+initially set to <span class='math'>$1$</span> since this is the minimum possible.
+<p>At a certain <span class='math'>$i$</span>, if <span class='math'>$B(i)$</span> is unknown then no change will be made to the array
+since there are no associated constraints with <span class='math'>$B(i)$</span>. Otherwise, there are two
+cases:
+<ol><li><span class='math'>$\max\limits_{1 \leq j \leq i}{c_j} = \max\limits_{1 \leq j &lt; B(i)}{c_j}$</span>:
+We can see that this applies no additional constraint to <span class='math'>$c_i$</span> so we do not have
+to change it. There is an associated change with <span class='math'>$c_{B(i)}$</span> which we&apos;ll discuss
+after the next case.
+</li><li>Otherwise we have:
+<span class='math'>$\max\limits_{1 \leq j \leq i}{c_j} &lt; \max\limits_{1 \leq j &lt; B(i)}{c_j}$</span>. In
+this case we need to find a <span class='math'>$j \leq i$</span> and set <span class='math'>$c_j$</span> to
+<span class='math'>$\max\limits_{1 \leq \ell &lt; B(i)}{c_\ell}$</span>.  <span class='math'>$j$</span> needs to be as large as
+possible such that <span class='math'>$c_j$</span> was not given in the problem and there exists no <span class='math'>$k$</span>
+such that <span class='math'>$k \leq j$</span> and <span class='math'>$B(k) &lt; B(i)$</span>. The reasoning behind the first part is
+simple, we&apos;re trying to find the lexographically minimum sequence. So if we have
+to increase some <span class='math'>$c_j$</span>, we want to pick as large of a <span class='math'>$j$</span> as possible. The
+reason for the second part is the following: if we were to change <span class='math'>$c_j$</span> and such
+a <span class='math'>$k$</span> existed, we would have to satisfy
+<span class='math'>$\max\limits_{1 \leq \ell &lt; B(i)}{c_\ell} = c_j &lt; c_{B(k)} \leq  \max\limits_{1 \leq \ell &lt; B(i)}{c_\ell}$</span>.
+This is clearly not possible. Therefore, if no such <span class='math'>$j$</span> exists,  a sequence is
+impossible to construct.</li></ol>
+<p>For both of these cases, we also need to ensure that
+<span class='math'>$c_{B(i)} &gt; \max\limits_{1 \leq j \leq i} c_j$</span>. If <span class='math'>$c_{B(i)}$</span> is not given, then
+we can set <span class='math'>$c_{B(i)} = \max\limits_{1 \leq j \leq i} c_j + 1$</span>. This is the
+smallest possible value. If <span class='math'>$c_{B(i)}$</span> was given, we need to make sure that it
+is at least this value, otherwise, no sequence is possible.
+<p>The reason this algorithm works is that each additional constraint that is added
+can only result in an equivalent or larger lexicographic sequence. Therefore, by
+making changes as far back in the array as possible, the resulting sequence is
+the lexicographically minimum one.
+<p>To finish, it&apos;s now simple to iterate through the sequence and ensure that all
+the values are at most <span class='math'>$C$</span> to check if the last constraint in the problem is
+satisfied.
+<p><pre class='prettyprint'>
+t = int(input())
+
+def solve():
+    N, Q, C = map(int, input().strip().split())
+    B = [0] * (N + 1)
+    c = [0] + [*map(int, input().strip().split())]
+    assigned = [*map(bool, c)]
+
+    # Initially choose 1 for every non-fixed element
+    c = [score if score else 1 for score in c]
+
+    for _ in range(Q):
+        ai, hi = map(int, input().strip().split())
+        B[ai] = hi
+
+    # Ensure constraints for B
+    for i in range(1, N + 1):
+        # Ensure that every j such that i &lt; j &lt; B[i] has B[j] = B[i]
+        for j in range(i, B[i]):
+            if B[j] != 0 and B[j] != B[i]:
+                return print(-1)
+            B[j] = B[i]
+
+    for i in range(1, N + 1):
+        if B[i] == 0:
+            continue
+        # calculate max before and max after
+        mx_before = max(c[: i + 1])
+        mx_after = max(c[: B[i]])
+
+        # change max before such that mx_before = mx_after
+        if mx_after &gt; mx_before:
+            for j in range(i, 0, -1):
+                if B[j] != 0 and B[j] &lt; B[i]:
+                    return print(-1)
+                if assigned[j]:
+                    continue
+                c[j] = mx_after
+                break
+            else:
+                return print(-1)
+            mx_before = mx_after
+
+        if not assigned[B[i]]:
+            c[B[i]] = mx_before + 1
+        # check to make sure B[i] &gt; mx_before
+        if c[B[i]] &lt;= mx_before:
+            return print(-1)
+
+    # Check that each element in the minimum sequence is at most C
+    for i in range(1, N + 1):
+        if c[i] &gt; C:
+            return print(-1)
+
+    return print(*c[1:])
+
+
+for _ in range(t):
+    solve()
+</pre>
+<p><strong>Subtask 3</strong> In this case, we have to optimize the two <span class='math'>$O(n^2)$</span> parts of our
+solution. The first part, filling in known values of <span class='math'>$B$</span> can be solved using two
+pointers. To optimize the greedy algorithm we can notice that all values <span class='math'>$j$</span>
+where <span class='math'>$i \leq j &lt; B(i)$</span> satisfy <span class='math'>$B(i) = B(j)$</span>. Therefore, once you satisfy the
+constraint associated with <span class='math'>$B(i)$</span>, the ones associated with
+<span class='math'>$B(i+1) \dots B(B(i)-1)$</span> are redundant so we can skip them. Putting this
+together, we get an algorithm that runs in <span class='math'>$O(n)$</span>.
+<p>Code:
+<p><pre class='prettyprint'>
+t = int(input())
+
+def solve():
+    N, Q, C = map(int, input().strip().split())
+    B = [0] * (N + 1)
+    c = [0] + [*map(int, input().strip().split())]
+    assigned = [*map(bool, c)]
+
+    # Initially choose 1 for every non-fixed element
+    c = [score if score else 1 for score in c]
+
+    for _ in range(Q):
+        ai, hi = map(int, input().strip().split())
+        B[ai] = hi
+
+    # Ensure constraints for B
+    curind = 1
+    while curind &lt;= N:
+        i = curind
+        # Ensure that every j such that i &lt; j &lt; B[i] has B[j] = B[i]
+        while curind &lt; B[i]:
+            if B[curind] != 0 and B[curind] != B[i]:
+                return print(-1)
+            B[curind] = B[i]
+            curind += 1
+        curind = max(curind, i+1)
+
+    mx_before = 0
+    mx_after = 0
+    i = 1
+    while i &lt;= N:
+        # calculate max before and max after
+        mx_before = max(mx_before, c[i])
+        mx_after = max(mx_after, c[i])
+        if B[i] == 0:
+            i += 1
+            continue
+        mx_after = max(mx_after, *c[i:B[i]])
+        
+        # change mx_before such that mx_before = mx_after
+        if mx_after &gt; mx_before:
+            for j in range(i, 0, -1):
+                if B[j] != 0 and B[j] &lt; B[i]:
+                    return print(-1)
+                if assigned[j]:
+                    continue
+                c[j] = mx_after
+                break
+            else:
+                return print(-1)
+            mx_before = mx_after
+
+        if not assigned[B[i]]:
+            c[B[i]] = mx_before + 1
+        # check to make sure B[i] &gt; mx_before
+        if c[B[i]] &lt;= mx_before:
+            return print(-1)
+
+        i = B[i]
+
+    # Check that each element in the minimum sequence is at most C
+    for i in range(1, N + 1):
+        if c[i] &gt; C:
+            return print(-1)
+
+    return print(*c[1:])
+
+for _ in range(t):
+    solve()
+</pre>
+</body></html>

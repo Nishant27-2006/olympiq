@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>The first observation we make in this problem is that the order in which
+operations happen in does not matter, it only matters which operations we do.
+This means there are <span class='math'>$2^N$</span> different sets of operations to consider. To solve
+the subtask, we can manually consider each set.
+<p>Below is my Python 3 code that solves the subtask where <span class='math'>$N \le 20$</span>.
+<p><pre class='prettyprint'>
+def solve():
+    n = int(input())
+    wantx, wanty = (int(z) for z in input().split())
+    cand = [(0, 0, 0)] # [(x, y, number of instructions used)]
+    for _ in range(n):
+        x, y = (int(z) for z in input().split())
+        now = len(cand)
+        for i in range(now):
+            cand.append((cand[i][0] + x, cand[i][1] + y, cand[i][2] + 1))
+    ret = [0] * n
+    for x, y, z in cand:
+        if (x, y) == (wantx, wanty):
+            ret[z-1] += 1
+    for x in ret:
+        print(x)
+
+solve()
+</pre>
+<p>We note that the original bounds on the problem have <span class='math'>$N \le 40$</span>, which is only
+twice as big. This suggests cutting the given operations into two halves of
+roughly equal sizes and running the above algorithm on both halves. If we
+iterate over one of the given lists, we know exactly how far we need to move
+from the other half of the instructions.
+<p>This technique is sometimes known as
+<a href='https://cses.fi/problemset/task/1628/'>meet-in-the-middle</a>. To motivate
+this, imagine that half of the instructions are actually instructions to move
+the goal location in some direction. Note that in this variant of the problem,
+even though we are effectively brute-forcing all possible ways to move the robot
+and all possible ways to move the goal, we can quickly check when the goal and
+robot are in the same place. The time complexity for each of the solutions below
+is <span class='math'>$O(N\cdot 2^{N/2})$</span>.
+<p>Benjamin Qi&apos;s C++ code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+
+using namespace std;
+
+using P = pair&lt;long long, long long&gt;;
+P operator+(P a, P b) { return {a.first + b.first, a.second + b.second}; }
+P operator-(P a, P b) { return {a.first - b.first, a.second - b.second}; }
+
+vector&lt;pair&lt;P, int&gt;&gt; all_subsets(const vector&lt;P&gt; &amp;dirs) {
+	vector&lt;pair&lt;P, int&gt;&gt; v{{}};
+	for (const P &amp;d : dirs) {
+		v.resize(2 * v.size());
+		for (int i = 0; i &lt; v.size() / 2; i++) {
+			v[i + v.size() / 2] = {v[i].first + d, v[i].second + 1};
+		}
+	}
+	sort(v.begin(), v.end());
+	return v;
+}
+
+int main() {
+	int N;
+	cin &gt;&gt; N;
+	P goal;
+	cin &gt;&gt; goal.first &gt;&gt; goal.second;
+	vector&lt;P&gt; dirs(N);
+	for (auto &amp;d : dirs) {
+		cin &gt;&gt; d.first &gt;&gt; d.second;
+	}
+	vector&lt;pair&lt;P, int&gt;&gt; a =
+		all_subsets(vector&lt;P&gt;(begin(dirs), begin(dirs) + N / 2));
+	vector&lt;pair&lt;P, int&gt;&gt; b =
+		all_subsets(vector&lt;P&gt;(begin(dirs) + N / 2, end(dirs)));
+	reverse(b.begin(), b.end());
+	vector&lt;long long&gt; ans(N + 1);
+	vector&lt;int&gt; with_num;
+	P rest_prev{1e18, 1e18};
+	int ib = 0;
+	for (const auto &amp;[offset, num] : a) {
+		const P rest = goal - offset;
+		if (rest != rest_prev) {
+			rest_prev = rest;
+			with_num = vector&lt;int&gt;(N - N / 2 + 1);
+			for (; ib &lt; b.size() &amp;&amp; b.at(ib).first &gt; rest; ++ib);
+			for (; ib &lt; b.size() &amp;&amp; b.at(ib).first == rest; ++ib) {
+				++with_num.at(b.at(ib).second);
+			}
+		}
+		for (int i = 0; i &lt; with_num.size(); i++) {
+			ans[i + num] += with_num[i];
+		}
+	}
+	for (int i = 1; i &lt;= N; i++) {
+		cout &lt;&lt; ans[i] &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p>Alternatively, a hashmap can be used instead of sorting, though the  constant
+factor is somewhat worse:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+
+using namespace std;
+
+using P = pair&lt;long long, long long&gt;;
+P operator+(P a, P b) { return {a.first + b.first, a.second + b.second}; }
+P operator-(P a, P b) { return {a.first - b.first, a.second - b.second}; }
+
+vector&lt;pair&lt;P, int&gt;&gt; all_subsets(const vector&lt;P&gt; &amp;dirs) {
+	vector&lt;pair&lt;P, int&gt;&gt; v{{}};
+	for (const P &amp;d : dirs) {
+		v.resize(2 * v.size());
+		for (int i = 0; i &lt; v.size() / 2; i++) {
+			v[i + v.size() / 2] = {v[i].first + d, v[i].second + 1};
+		}
+	}
+	return v;
+}
+
+struct hsh {
+	size_t operator()(const P &amp;p) const {
+		return p.first * 239 + p.second;
+	}
+};
+
+int main() {
+	int N;
+	cin &gt;&gt; N;
+	P goal;
+	cin &gt;&gt; goal.first &gt;&gt; goal.second;
+	vector&lt;P&gt; dirs(N);
+	for (auto &amp;d : dirs) {
+		cin &gt;&gt; d.first &gt;&gt; d.second;
+	}
+	vector&lt;pair&lt;P, int&gt;&gt; a =
+		all_subsets(vector&lt;P&gt;(begin(dirs), begin(dirs) + N / 2));
+	vector&lt;pair&lt;P, int&gt;&gt; b =
+		all_subsets(vector&lt;P&gt;(begin(dirs) + N / 2, end(dirs)));
+	unordered_map&lt;P, map&lt;int, int&gt;, hsh&gt; first_half;
+	for (const auto &amp;[offset, num] : a) {
+		++first_half[offset][num];
+	}
+	vector&lt;long long&gt; ans(N + 1);
+	for (const auto &amp;[offset, num] : b) {
+		auto it = first_half.find(goal - offset);
+		if (it != end(first_half)) {
+			for (const auto &amp;[num2, ways] : it-&gt;second) {
+				ans[num + num2] += ways;
+			}
+		}
+	}
+	for (int i = 1; i &lt;= N; i++) {
+		cout &lt;&lt; ans[i] &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p>Danny Mittal&apos;s Java code:
+<p><pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.StringTokenizer;
+ 
+public class RobotInstructionsSort {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        long xGoal = Long.parseLong(tokenizer.nextToken());
+        long yGoal = Long.parseLong(tokenizer.nextToken());
+        long[] instructionsX = new long[n];
+        long[] instructionsY = new long[n];
+        for (int j = 0; j &lt; n; j++) {
+            tokenizer = new StringTokenizer(in.readLine());
+            instructionsX[j] = Long.parseLong(tokenizer.nextToken());
+            instructionsY[j] = Long.parseLong(tokenizer.nextToken());
+        }
+        InstructionChoice[] choicesLeft = new InstructionChoice[1 &lt;&lt; (n / 2)];
+        for (int mask = 0; mask &lt; 1 &lt;&lt; (n / 2); mask++) {
+            long x = 0;
+            long y = 0;
+            for (int j = 0; j &lt; n / 2; j++) {
+                if ((mask &amp; (1 &lt;&lt; j)) != 0) {
+                    x += instructionsX[j];
+                    y += instructionsY[j];
+                }
+            }
+            choicesLeft[mask] = new InstructionChoice(x, y, Integer.bitCount(mask));
+        }
+        Arrays.sort(choicesLeft);
+        InstructionChoice[] choicesRight = new InstructionChoice[1 &lt;&lt; ((n + 1) / 2)];
+        for (int mask = 0; mask &lt; 1 &lt;&lt; ((n + 1) / 2); mask++) {
+            long x = 0;
+            long y = 0;
+            for (int j = n / 2; j &lt; n; j++) {
+                if ((mask &amp; (1 &lt;&lt; (j - (n / 2)))) != 0) {
+                    x += instructionsX[j];
+                    y += instructionsY[j];
+                }
+            }
+            choicesRight[mask] = new InstructionChoice(xGoal - x, yGoal - y, Integer.bitCount(mask));
+        }
+        Arrays.sort(choicesRight);
+        long[] answer = new long[n + 1];
+        long[] amounts = new long[(n / 2) + 1];
+        int j = 0;
+        int k = 0;
+        for (InstructionChoice choice : choicesRight) {
+            while (j &lt; choicesLeft.length &amp;&amp; choicesLeft[j].compareTo(choice) &lt;= 0) {
+                amounts[choicesLeft[j].instructions]++;
+                j++;
+            }
+            while (k &lt; choicesLeft.length &amp;&amp; choicesLeft[k].compareTo(choice) &lt; 0) {
+                amounts[choicesLeft[k].instructions]--;
+                k++;
+            }
+            for (int instructions = 0; instructions &lt;= n / 2; instructions++) {
+                answer[instructions + choice.instructions] += amounts[instructions];
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (int instructionsUsed = 1; instructionsUsed &lt;= n; instructionsUsed++) {
+            out.append(answer[instructionsUsed]).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+ 
+    static class InstructionChoice implements Comparable&lt;InstructionChoice&gt; {
+        final long x;
+        final long y;
+        final int instructions;
+ 
+        InstructionChoice(long x, long y, int instructions) {
+            this.x = x;
+            this.y = y;
+            this.instructions = instructions;
+        }
+ 
+        @Override
+        public int compareTo(InstructionChoice other) {
+            if (y != other.y) {
+                return Long.compare(y, other.y);
+            } else {
+                return Long.compare(x, other.x);
+            }
+        }
+    }
+}
+</pre>
+<p></body></html>

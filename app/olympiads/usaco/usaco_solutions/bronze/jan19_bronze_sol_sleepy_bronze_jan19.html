@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by  Dhruv Rohatgi )
+<p>Suppose that <span class='math'>$k$</span> instructions suffice. Then only the first <span class='math'>$k$</span> cows actively
+change positions. This means that the last <span class='math'>$n-k$</span> cows are already sorted in
+increasing order, with respect to each other.
+<p>Conversely, suppose that the last <span class='math'>$n-k$</span> cows are sorted in increasing order. Is
+there a sequence of <span class='math'>$k$</span> instructions after which all <span class='math'>$n$</span> cows are sorted? The
+answer is yes: if <span class='math'>$k = 0$</span>, then the cows are completely sorted already. If
+<span class='math'>$k &gt; 0$</span>, then the first cow can be inserted among the last <span class='math'>$n-k$</span> cows, such that
+now the last <span class='math'>$n+1-k$</span> cows are in increasing order. After repeating this <span class='math'>$k-1$</span>
+more times, the last <span class='math'>$n$</span> cows are in increasing order, by the same argument. Of
+course, there are only <span class='math'>$n$</span> cows, so after only <span class='math'>$k$</span> instructions, the cows are
+sorted!
+<p>We&apos;ve reduced the problem to computing the longest sorted suffix. This can be
+done in linear time by sweeping from the end of the array towards the front, so
+long as each element is smaller than its successor.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+using namespace std;
+ 
+int N;
+int A[100000];
+ 
+int main()
+{
+	cin &gt;&gt; N;
+	for(int i=0;i&lt;N;i++)
+		cin &gt;&gt; A[i];
+	int ans = N-1;
+	for(int i=N-2;i&gt;=0;i--)
+	{
+		if(A[i] &lt; A[i+1])
+			ans = i;
+		else
+			break;
+	}
+	cout &lt;&lt; ans &lt;&lt; &apos;\n&apos;;
+	return 0;
+}
+</pre>
+<p></body></html>

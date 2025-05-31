@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>This problem is an exercise in recursive (depth first) searching to identify the
+connected components in a graph.  
+<p>The first task is much simpler than the second.  We make a graph where every
+cell is a node, and two adjacent cells are connected with an edge if they
+contain the same number.  We then launch a recursive &quot;flood fill&quot; from every
+cell (skipping the ones already visited) that fans out to label every connected
+region while adding up its size.  My code below actually does something slightly
+different -- but ultimately equivalent -- by building a separate graph for each
+distinct ID number and then recursively searching through all of these (this 
+allows me to re-use most of the code I wrote for the first task for the second
+task).
+<p>For the second task, we build a graph for every pair of cows <span class='math'>$(x,y)$</span> where the
+nodes are the regions we computed in the first task, and the edges connect 
+adjacent regions where one is labeled by cow <span class='math'>$x$</span> and the other by cow <span class='math'>$y$</span>.  Each
+node in this graph is given a &quot;size&quot; which is the same as the corresponding
+region size from the first task.  We then launch a recursive flood fill on each
+of these graphs to find whichever one has the largest region.  
+<p>There are two important ideas to employ here in order to make our solutions run 
+quickly.  One is to make sure each region from the first task gets compressed to
+a  single node in the second task.  If we don&apos;t do this, then in the second task
+we might end up recursively scanning through the same large region over and
+over, wasting considerable time.  The other idea is that when we do our
+recursive searching, we need to be sure the running time only depends on the
+number of edges in the graph, not the number of nodes, since each of the <span class='math'>$(x,y)$</span>
+pairwise graphs for the second task involves a large number of nodes but likely
+very few edges.  For example, we would not want to keep an array of &quot;have I been
+there&quot; flags for every node, which is  initialized to false for each recursive
+search.  Instead, in the solution below, we use a map data structure for this
+purpose, which only creates flags as they  are needed, avoiding the
+initialization of flags for nodes that ultimately end up not being relevant.
+<p>My code is below.  (it&apos;s a bit on the terse side, though, so if anyone has
+alternative solutions that are cleaner to look at please feel welcome to send
+them my way  to see if they are better suited for use as a model solution).
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;map&gt;
+#include &lt;set&gt;
+#include &lt;algorithm&gt;
+using namespace std;                                                                                                   
+
+int N, B[1001][1001], cellid[1001][1001], global_regid;                                                                
+
+struct Graph {
+  map&lt;int,set&lt;int&gt;&gt; out_edges;                                                                                         
+  map&lt;int,int&gt; nodesize, regid;  // size of each node and region ID to which it belongs
+  map&lt;int,int&gt; regsize;          // size of each region                                                                                        
+};                                                                                                                     
+
+typedef pair&lt;int,int&gt; pii;                                                                                             
+map&lt;int, Graph&gt; G1; // Graphs for all possible single IDs                                                              
+map&lt;pii, Graph&gt; G2; // Graphs for all possible adjacent region pairs                                                   
+
+// Return size of region reachable from nodeid
+int visit(Graph &amp;G, int nodeid, int regid)
+{
+  if (G.regid.count(nodeid) &gt; 0) return 0;  // already visited?  bail out                                                                            
+  G.regid[nodeid] = regid;                  // mark this node as visited
+  int a = G.nodesize[nodeid];               // tally up region size                                                                           
+  for (int nbrid : G.out_edges[nodeid]) 
+    a += visit(G, nbrid, regid);                                                   
+  G.regsize[regid] = a;
+  return a;
+}
+
+// Compute region sizes and return largest region size in graph.  
+// Running time only depends on # of edges, not # of nodes, so graph can be very sparse
+int largest_region(Graph &amp;G)
+{
+  int m = 0;
+  for (auto &amp;p : G.out_edges) m = max(m, visit(G, p.first, ++global_regid));                                            
+  return m;                                                                                                            
+}
+
+void add_edge(Graph &amp;G, int node1, int node2)
+{
+  G.out_edges[node1].insert(node2);                                                                                    
+  G.out_edges[node2].insert(node1);                                                                                    
+  G.nodesize[node1] = G.nodesize[node2] = 1;                                                                           
+}
+
+// Add edge between two regions in a region pair graph
+void add_G2_edge(int i1, int j1, int i2, int j2)
+{
+  int b1 = B[i1][j1], b2 = B[i2][j2], c1 = cellid[i1][j1], c2 = cellid[i2][j2];
+  if (b1 &gt; b2) { swap (b1,b2); swap(c1,c2); } 
+  int r1 = G1[b1].regid[c1], r2 = G1[b2].regid[c2];                               
+  pii p = make_pair(b1, b2);   
+  add_edge(G2[p], r1, r2);                                                                              
+  G2[p].nodesize[r1] = G1[b1].regsize[r1];                                                              
+  G2[p].nodesize[r2] = G1[b2].regsize[r2];                                                              
+}
+
+int main(void)
+{
+  ifstream fin (&quot;multimoo.in&quot;);
+  ofstream fout (&quot;multimoo.out&quot;);
+  
+  fin &gt;&gt; N;
+  for (int i=1; i&lt;=N; i++)
+    for (int j=1; j&lt;=N; j++) {
+      fin &gt;&gt; B[i][j];
+      cellid[i][j] = i*N+j;    // unique ID for each cell
+    }
+
+  // Build primary graph
+  for (int i=1; i&lt;=N; i++)
+    for (int j=1; j&lt;=N; j++) {
+      add_edge(G1[B[i][j]],cellid[i][j],cellid[i][j]); 
+      if (i&lt;N &amp;&amp; B[i+1][j] == B[i][j]) add_edge(G1[B[i][j]], cellid[i][j], cellid[i+1][j]);
+      if (j&lt;N &amp;&amp; B[i][j+1] == B[i][j]) add_edge(G1[B[i][j]], cellid[i][j], cellid[i][j+1]);
+    }
+ 
+  // Find largest region in primary graph
+  int answer1 = 0;
+  for (auto &amp;p : G1) answer1 = max(answer1,largest_region(p.second));
+
+
+  // Build secondary graphs based on regions of the primary graph that are adjacent
+  for (int i=1; i&lt;=N; i++)                                                                                             
+    for (int j=1; j&lt;=N; j++) {                                                                                         
+      if (i&lt;N &amp;&amp; B[i+1][j] != B[i][j]) add_G2_edge(i,j,i+1,j);                                                         
+      if (j&lt;N &amp;&amp; B[i][j+1] != B[i][j]) add_G2_edge(i,j,i,j+1);                                                         
+    }
+
+  // Find largest region in secondary graphs
+  int answer2 = 0;
+  for (auto &amp;p : G2) answer2 = max(answer2, largest_region(p.second));
+  
+  fout &lt;&lt; answer1 &lt;&lt; &quot;\n&quot;;
+  fout &lt;&lt; answer2 &lt;&lt; &quot;\n&quot;;
+  
+  return 0;
+}
+</pre>
+<p></body></html>

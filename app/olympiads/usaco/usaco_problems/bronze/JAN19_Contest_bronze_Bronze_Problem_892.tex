@@ -1,0 +1,107 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN19 Contest - Bronze Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Farmer John is attempting to sort his $N$ cows ($1 \leq N \leq 100$),
+conveniently numbered $1 \dots N$, before they head out to the pastures for
+breakfast.
+
+Currently, the cows are standing in a line in the order
+$p_1, p_2, p_3,
+\dots, p_N$, and Farmer John is standing in front of cow $p_1$.
+He wants to reorder the cows so that they are in the order $1, 2, 3, \dots, N$,
+with cow $1$ next to Farmer John.
+
+The cows are a bit sleepy today, so at any point in time the only cow who is
+paying attention to Farmer John's instructions is the cow directly facing Farmer
+John. In one time step, he can instruct this cow to move $k$ paces down the
+line, for any $k$ in the range $1 \ldots N-1$. The $k$ cows whom she passes will
+amble forward, making room for her to insert herself in the line after them.
+
+For example, suppose that $N=4$ and the cows start off in the following order:
+
+ FJ: 4, 3, 2, 1 
+The only cow paying attention to FJ is cow $4$. If he instructs her to move $2$
+paces down the line, the order will subsequently look like this:
+
+ FJ: 3, 2, 4, 1 
+Now the only cow paying attention to FJ is cow $3$, so in the second time step
+he may give cow $3$ an instruction, and so forth until the cows are sorted.
+
+Farmer John is eager to complete the sorting, so he can go back to the farmhouse
+for his own breakfast. Help him find the minimum number of time steps required
+to sort the cows.
+
+INPUT FORMAT (file sleepy.in):
+The first line of input contains $N$.  
+
+The second line contains $N$ space-separated integers, 
+$p_1, p_2, p_3, \dots, p_N$, indicating the starting order of the cows.
+
+
+OUTPUT FORMAT (file sleepy.out):
+A single integer: the number of time steps before the $N$ cows are in sorted
+order, if Farmer John acts optimally.
+
+SAMPLE INPUT:
+4
+1 2 4 3
+SAMPLE OUTPUT: 
+3
+
+
+Problem credits: Dhruv Rohatgi
+
+
+
+\section*{Input Format}
+The second line contains $N$ space-separated integers, 
+$p_1, p_2, p_3, \dots, p_N$, indicating the starting order of the cows.
+
+OUTPUT FORMAT (file sleepy.out):A single integer: the number of time steps before the $N$ cows are in sorted
+order, if Farmer John acts optimally.SAMPLE INPUT:4
+1 2 4 3SAMPLE OUTPUT:3Problem credits: Dhruv Rohatgi
+
+\section*{Output Format}
+SAMPLE INPUT:4
+1 2 4 3SAMPLE OUTPUT:3Problem credits: Dhruv Rohatgi
+
+\section*{Sample Input}
+\begin{verbatim}
+4
+1 2 4 3
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+3
+
+Problem credits: Dhruv Rohatgi
+
+Problem credits: Dhruv Rohatgi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=892
+
+\section*{Source}
+USACO JAN19 Contest, Bronze Division, Problem ID: 892
+
+\end{document}

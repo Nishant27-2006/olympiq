@@ -1,0 +1,266 @@
+Solution ID: sol_prob3_platinum_open25
+Contest: OPEN25
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob3_platinum_open25.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by William Lin)
+
+First, let's observe some properties about the optimal solution.
+
+Any two cows cannot have touching paths, otherwise the moves starting from
+when the cows touch can be removed.
+
+A single cow's path will cover a range
+
+$[l, r]$
+
+on the number line. If the cow
+starts at
+
+$s$
+
+, the optimal sequence of moves will be to always move left to
+
+$l$
+
+then always move right to
+
+$r$
+
+, or vice versa. We can also imagine that a single
+cow can extend both to the left and to the right, although one of them will have
+double the cost.
+
+We can use DP for this problem:
+
+$dp[i][s]$
+
+is the min cost to cover all packages
+
+$\le i$
+
+where
+
+$s$
+
+is one of five states:
+
+Some cow has extended to its right to cover
+
+$i$
+
+, unit cost.
+
+Some cow has extended to its right to cover
+
+$i$
+
+, double cost.
+
+Some cow will need to extend to its left to cover
+
+$i$
+
+, unit cost.
+
+Some cow will need to extend to its left to cover
+
+$i$
+
+, double cost.
+
+None of the above apply
+
+To transition from
+
+$dp[i]$
+
+to
+
+$dp[j]$
+
+(assuming no cows or packages in
+
+$(i, j)$
+
+), we add a cost of
+
+$j-i$
+
+for states 1 and 3 and
+
+$2(j-i)$
+
+for states 2
+and 4. Depending on whether
+
+$j$
+
+has a cow or a package, we can then transition
+between
+
+$dp[j]$
+
+.
+
+Unfortunately, we can have up to
+
+$10^{18}$
+
+cows and packages so doing this DP
+naively is not feasible. However, note that we can describe the transitions with
+min-plus matrix multiplication:
+
+$dp[j]=dp[i] A_{i,j}$
+
+. If we have many repeated
+chunks of size
+
+$M$
+
+between
+
+$i$
+
+and
+
+$j$
+
+, we can use binary exponentiation to
+efficiently find the transition matrix from the beginning since
+
+$A_{i, j}=(A_{i, i+M})^{(j-i)/M}$
+
+.
+
+We will consider the number line in chunks of
+
+$M$
+
+. Adjacent chunks are
+equivalent except when an endpoint of a range of cows or packages lies in one of
+the chunks, which happens at most
+
+$O(N+P)$
+
+times. We can sweep through the
+endpoints of these ranges while maintaining a segment tree that stores all
+active cows and packages in the current chunk and allows range queries for
+transition matrices. Between endpoints, we will need to perform a constant
+number of segment tree queries and also binary exponentiation, which will be
+
+$O(\log(N+P)+\log C)$
+
+, where
+
+$C$
+
+is the maximum number of chunks, bounded by
+
+$\frac{10^{18}}{M}$
+
+in this problem. The final time complexity is
+
+$O((N+P)(\log(N+P)+\log C))$
+
+.
+
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define ll long long
+#define DP array<array<ll, 5>, 5>
+ 
+DP dptrans(const DP a, const DP b) {
+    DP c;
+    memset(&c, 0x3f, sizeof(c));
+    for(int i=0; i<5; ++i)
+        for(int j=0; j<5; ++j)
+            for(int k=0; k<5; ++k)
+                c[i][j]=min(c[i][j], a[i][k]+b[k][j]);
+    return c;
+}
+ 
+const int mxNP=4e4;
+ll m, l[mxNP], r[mxNP];
+int n, p;
+array<ll, 2> ps[2*mxNP+1];
+array<ll, 3> es[2*mxNP+1];
+DP st[1<<18];
+ 
+void upd(int l1, int x, int i=1, int l2=0, int r2=2*(n+p)-1) {
+    if(l2==r2) {
+        memset(&st[i], 0x3f, sizeof(st[i]));
+        if(!x)
+            st[i][0][4]=st[i][0][0]=st[i][1][4]=st[i][1][1]=st[i][4][2]=st[i][2][2]=st[i][4][3]=st[i][3][3]=0;
+        else if(x&1)
+            st[i][4][4]=st[i][2][1]=st[i][3][0]=st[i][2][4]=st[i][4][0]=0;
+        else
+            st[i][0][0]=st[i][1][1]=st[i][2][2]=st[i][3][3]=st[i][4][4]=0;
+        for(int j=0; j<5; ++j)
+            for(int k=0; k<4; ++k)
+                st[i][j][k]+=(ps[l1+1][0]-ps[l1][0])*(1+k%2);
+        return;
+    }
+    int m2=(l2+r2)/2;
+    if(l1<=m2)
+        upd(l1, x, 2*i, l2, m2);
+    else
+        upd(l1, x, 2*i+1, m2+1, r2);
+    st[i]=dptrans(st[2*i], st[2*i+1]);
+}
+ 
+DP qry(int l1, int r1, int i=1, int l2=0, int r2=2*(n+p)-1) {
+    if(l1<=l2&&r2<=r1)
+        return st[i];
+    int m2=(l2+r2)/2;
+    if(r1<=m2)
+        return qry(l1, r1, 2*i, l2, m2);
+    if(m2<l1)
+        return qry(l1, r1, 2*i+1, m2+1, r2);
+    return dptrans(qry(l1, r1, 2*i, l2, m2), qry(l1, r1, 2*i+1, m2+1, r2));
+}
+ 
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+ 
+    cin >> m >> n >> p;
+    for(int i=0; i<n+p; ++i) {
+        cin >> l[i] >> r[i];
+        ps[i]={l[i]%m, i};
+    }
+    sort(ps, ps+n+p);
+    for(int i=0; i<n+p; ++i) {
+    	ps[n+p+i]={ps[i][0]+m};
+        es[2*i]={l[ps[i][1]]/m, i, ps[i][1]<n};
+        es[2*i+1]={r[ps[i][1]]/m+1, i, 2};
+    }
+    es[2*(n+p)]={-1, 0};
+    sort(es, es+2*(n+p)+1);
+    for(int i=0; i<2*(n+p); ++i)
+        upd(i, 2);
+    DP ans;
+    memset(&ans, 0x3f, sizeof(ans));
+    ans[4][4]=0;
+    for(int i=1; i<=2*(n+p); ++i) {
+        ans=dptrans(ans, qry(es[i-1][1], es[i][1]-1+(es[i-1][0]<es[i][0]?n+p:0)));
+        ll rl=es[i][0]-es[i-1][0]-1;
+        if(rl>0) {
+            DP b=qry(es[i][1], es[i][1]-1+n+p);
+            while(rl) {
+                if(rl&1)
+                    ans=dptrans(ans, b);
+                b=dptrans(b, b);
+                rl/=2;
+            }
+        }
+        upd(es[i][1], es[i][2]);
+        upd(es[i][1]+n+p, es[i][2]);
+    }
+    cout << ans[4][4] << "\n";
+}

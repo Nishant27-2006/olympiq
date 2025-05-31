@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>In this problem, Farmer John is mowing grass on a grid. He wants to figure out
+the largest period of time that exists such that Farmer John never mows the same
+square of grass twice within that amount of time.
+<p>Farmer John will mow at most one thousand squares of grass, so we can just keep
+track of the last point in time when Farmer John mowed the grass in a given
+square. We can store these times in a large two-dimensional array. As an
+implementation detail, because arrays do not support negative coordinates, we
+can pretend that Farmer John starts at the point (1000, 1000) and then simulate
+the mowing directly.
+<p>Here is my code demonstrating this.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class mowing {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader(&quot;mowing.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;mowing.out&quot;)));
+
+		/*
+		 * Create a two-dimensional array where lastTime[i][j] stores the last time
+		 * that Farmer John visited point (i, j). If Farmer John has never visited that
+		 * point, then lastTime[i][j] == -1.
+		 */
+		int[][] lastTime = new int[2001][2001];
+		for(int i = 0; i &lt; lastTime.length; i++) {
+			for(int j = 0; j &lt; lastTime[i].length; j++) {
+				lastTime[i][j] = -1;
+			}
+		}
+		
+		// (currX, currY) is the point that Farmer John is currently at.
+		int currX = 1000;
+		int currY = 1000;
+		lastTime[currX][currY] = 0;
+		int currentTime = 0;
+
+		// the longest period of time cannot exceed 1000, so if it is still 1001, he never visits the same square twice.
+		int answer = 100 * 10 + 1;
+
+		// read in N
+		int n = Integer.parseInt(br.readLine());
+
+		for(int i = 0; i &lt; n; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			// read in the direction that Farmer John goes in
+			String direction = st.nextToken();
+			int dirX = 0;
+			int dirY = 0;
+			if(direction.equals(&quot;N&quot;)) {
+				dirX = -1;
+			}
+			else if(direction.equals(&quot;S&quot;)) {
+				dirX = 1;
+			}
+			else if(direction.equals(&quot;W&quot;)) {
+				dirY = -1;
+			}
+			else { 
+				dirY = 1;
+			}
+			// read in the number of steps he travels
+			int numSteps = Integer.parseInt(st.nextToken());
+			// travel that many steps
+			for(int j = 1; j &lt;= numSteps; j++) {
+				currX += dirX;
+				currY += dirY;
+				currentTime++;
+				// check if Farmer John has visited that square before, and the amount of time that has elapsed since then if valid
+				if(lastTime[currX][currY] &gt;= 0 &amp;&amp; currentTime - lastTime[currX][currY] &lt; answer) {
+					answer = currentTime - lastTime[currX][currY];
+				}
+				lastTime[currX][currY] = currentTime;
+			}
+		}
+		// check if he has never visited the same square twice
+		if(answer == 1001) {
+			answer = -1;
+		}
+		// print the answer
+		pw.println(answer);
+		// close file I/O
+		pw.close();
+	}
+}
+</pre>
+</body></html>

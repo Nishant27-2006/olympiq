@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Nick Wu)
+<p>It isn&apos;t immediately clear how to fill the larger bucket using
+the size X bucket and the size Y bucket. Instead of trying to cleverly
+figure out how many times to use each bucket, we can fix the number of times
+we use the bucket of size X, and then continually use the bucket of size Y until
+we would overflow the old bucket. We can loop over all possible numbers
+for usages of the size X bucket.
+<p>Here is my Java code.
+<p><pre class='prettyprint'>
+import java.io.*;
+import java.util.*;
+public class pails {
+	public static void main(String[] args) throws IOException {
+		// initialize file I/O
+		BufferedReader br = new BufferedReader(new FileReader(&quot;pails.in&quot;));
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(&quot;pails.out&quot;)));
+		StringTokenizer st = new StringTokenizer(br.readLine());
+		// read X, Y, and M
+		int x = Integer.parseInt(st.nextToken());
+		int y = Integer.parseInt(st.nextToken());
+		int m = Integer.parseInt(st.nextToken());
+		int ans = 0;
+		// loop over how many times we can pour the X-size bucket
+		for(int xPour = 0; xPour*x &lt;= m; xPour++) {
+			// loop over how many times we can then pour over the Y-size bucket
+			for(int yPour = 0; xPour*x + yPour*y &lt;= m; yPour++) {
+				// determine if we have filled the bucket more than any previous time
+				if(xPour*x + yPour*y &gt; ans) {
+					ans = xPour*x + yPour*y;
+				}
+			}
+		}
+		// print the answer
+		pw.println(ans);
+		// close output stream
+		pw.close();
+	}
+}
+</pre></body></html>

@@ -1,0 +1,116 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: FEB20 Contest - Platinum Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+Farmer John's pasture can be represented by a $N\times N$  square grid
+$(1\le N\le 300)$ consisting of positions $(i,j)$ for all $1\le i,j\le N$. For
+each square of the grid, the corresponding character in the input is equal to
+'*' if there exists a single cow at that position and '.' if there does not
+exist a cow at that position.
+
+FJ believes that the beauty of his pasture is directly proportional to the
+number of triples of cows such that their positions are equidistant from each
+other. In other words, they form an equilateral triangle. Unfortunately, it was
+only quite recently that FJ realized that since all of his cows are located at
+integer coordinates, no beautiful triples can possibly exist if Euclidean
+distance is used! Thus, FJ has decided to switch to use "Manhattan" distance
+instead. Formally, the Manhattan distance between two positions $(x_0,y_0)$ and
+$(x_1,y_1)$ is equal to $|x_0-x_1|+|y_0-y_1|$.
+
+Given the grid representing the positions of the cows, compute the number of
+equilateral triples.
+
+SCORING:
+There will be fourteen test cases aside from the sample, one for each of
+$N\in \{50,75,100,125,150,175,200,225,250,275,300,300,300,300\}.$
+
+INPUT FORMAT (file triangles.in):
+The first line contains a single integer $N.$
+
+For each $1\le i\le N,$ line $i+1$ of the input contains a string of length $N$
+consisting solely of the characters '*' and '.'. The $j$th character 
+describes whether there exists a cow at position $(i,j)$ or not.
+
+OUTPUT FORMAT (file triangles.out):
+Output a single integer containing the answer. It can be shown that it fits into
+a signed 32-bit integer.
+
+SAMPLE INPUT:
+3
+*..
+.*.
+*..
+SAMPLE OUTPUT: 
+1
+
+There are three cows, and they form an equilateral triple because the Manhattan
+distance between each pair of cows is equal to two.
+
+
+Problem credits: Benjamin Qi
+
+
+
+\section*{Input Format}
+For each $1\le i\le N,$ line $i+1$ of the input contains a string of length $N$
+consisting solely of the characters '*' and '.'. The $j$th character 
+describes whether there exists a cow at position $(i,j)$ or not.
+
+OUTPUT FORMAT (file triangles.out):Output a single integer containing the answer. It can be shown that it fits into
+a signed 32-bit integer.SAMPLE INPUT:3
+*..
+.*.
+*..SAMPLE OUTPUT:1There are three cows, and they form an equilateral triple because the Manhattan
+distance between each pair of cows is equal to two.Problem credits: Benjamin Qi
+
+\section*{Output Format}
+SAMPLE INPUT:3
+*..
+.*.
+*..SAMPLE OUTPUT:1There are three cows, and they form an equilateral triple because the Manhattan
+distance between each pair of cows is equal to two.Problem credits: Benjamin Qi
+
+\section*{Sample Input}
+\begin{verbatim}
+3
+*..
+.*.
+*..
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+1
+
+There are three cows, and they form an equilateral triple because the Manhattan
+distance between each pair of cows is equal to two.Problem credits: Benjamin Qi
+
+Problem credits: Benjamin Qi
+
+Problem credits: Benjamin Qi
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1021
+
+\section*{Source}
+USACO FEB20 Contest, Platinum Division, Problem ID: 1021
+
+\end{document}

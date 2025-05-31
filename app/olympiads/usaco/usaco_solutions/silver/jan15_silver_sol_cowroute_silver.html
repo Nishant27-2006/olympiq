@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Contest Results</title>
+
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<html>
+<p>(Analysis by Mark Gordon)</p><p>
+
+This problem gives us a series of routes and associated costs and asks
+us to find the minimum cost to travel from city $A$ to city $B$ using
+them.  In case there are multiple solutions with the same minimum cost
+we were also asked to compute the minimum number of cities that needed
+to be visited.  Note that in some cases it may be necessary to make
+use of the same route more than one time (and for each use we would
+have to pay the cost of the route). </p><p>
+
+To solve this problem we can compute a matrix $\textit{cost}_{u,v}$
+that gives the minimum cost (and for that min cost the min number of
+hops) to travel from $u$ to $v$.  Then we can use <a href='https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm'>Dijkstra&apos;s algorithm</a> to find the cheapest path of intermediate cities that takes us from $A$ to $B$.</p><p>
+
+To compute $\textit{cost}_{u,v}$ we can for each route loop over each
+pair of cities $u, v$ such that $u$ appears before route $v$ and
+update $\textit{cost}_{u,v}$ with the cost of the route.  This whole
+process takes $O(NM^2)$ where $M$ is the maximum length of each route.</p><p>
+
+Once this array is calculate we can apply Dijkstra&apos;s algorithm
+pretty directly.  Note that while most competitors implemented a
+$O((V+E) \log V)$ heap-based algorithm it&apos;s actually more efficient
+(and arguably easier) in dense graphs to implement Dijkstra without a
+heap in $O(V^2)$ time.  Below is my implementation of this solution</p><p>
+
+</p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cstring&gt;
+#include &lt;cstdio&gt;
+
+using namespace std;
+
+#define MAXV 1010
+
+bool vis[MAXV];
+pair&lt;long long, int&gt; cost_a2u[MAXV];
+pair&lt;long long, int&gt; cost[MAXV][MAXV];
+
+int main() {
+  freopen(&quot;cowroute.in&quot;, &quot;r&quot;, stdin);
+  freopen(&quot;cowroute.out&quot;, &quot;w&quot;, stdout);
+
+  int A, B, N;
+  cin &gt;&gt; A &gt;&gt; B &gt;&gt; N;
+
+  /* Initialize cost matrix to infinity. */
+  memset(cost, 0x3F, sizeof(cost));
+  for (int i = 0; i &lt; MAXV; i++) {
+    cost[i][i] = make_pair(0, 0);
+  }
+
+  for (int i = 0; i &lt; N; i++) {
+    long long route_cost;
+    int route_len;
+    cin &gt;&gt; route_cost &gt;&gt; route_len;
+
+    vector&lt;int&gt; route(route_len);
+    for (int j = 0; j &lt; route_len; j++) {
+      cin &gt;&gt; route[j];
+
+      /* Update the cost from everything before this city to this city. */
+      for (int k = 0; k &lt; j; k++) {
+        cost[route[k]][route[j]] = min(cost[route[k]][route[j]],
+                                       make_pair(route_cost, j - k));
+      }
+    }
+  }
+
+  /* Perform Dijkstra without a heap in O(V^2) time. */
+  memset(vis, 0, sizeof(vis));
+  memset(cost_a2u, 0x3F, sizeof(cost_a2u));
+  cost_a2u[A] = make_pair(0, 0);
+  for (int i = 0; i &lt; MAXV; i++) {
+    /* Find the closest unvisited vertex. */
+    int u = -1;
+    for (int j = 0; j &lt; MAXV; j++) {
+      if (vis[j]) {
+        continue;
+      } else if (u == -1 || cost_a2u[j] &lt; cost_a2u[u]) {
+        u = j;
+      }
+    }
+
+    /* Relax vertex u. */
+    vis[u] = true;
+    for (int j = 0; j &lt; MAXV; j++) {
+      pair&lt;long long, int&gt; rlx = cost_a2u[u];
+      rlx.first += cost[u][j].first;
+      rlx.second += cost[u][j].second;
+      cost_a2u[j] = min(cost_a2u[j], rlx);
+    }
+  }
+
+  /* Output the cheapest cost and length if possible. */
+  if (cost_a2u[B].second &lt;= MAXV) {
+    cout &lt;&lt; cost_a2u[B].first &lt;&lt; &apos; &apos; &lt;&lt; cost_a2u[B].second &lt;&lt; endl;
+  } else {
+    cout &lt;&lt; &quot;-1 -1\n&quot;;
+  }
+
+  return 0;
+}
+</pre><p></p>
+</html>

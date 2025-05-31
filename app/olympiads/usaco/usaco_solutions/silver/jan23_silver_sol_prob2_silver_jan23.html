@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Mihir Singhal)
+<p>We maintain an array <span class='math'>$A$</span> such that <span class='math'>$A[i][j]$</span>, for <span class='math'>$1 \le i, j \le n+1$</span>, is equal
+to the number of cows that will pass through cell <span class='math'>$(i, j)$</span>. We can compute the
+starting values of <span class='math'>$A$</span> as follows: initially set <span class='math'>$A[i][j] = 1$</span> for all
+<span class='math'>$1 \le i, j \le N$</span> and <span class='math'>$A[i][j] = 0$</span> otherwise. Then, process all the cells
+<span class='math'>$(i, j)$</span> for <span class='math'>$1 \le i, j \le N$</span> in row-major order; add the value of <span class='math'>$A[i][j]$</span>
+to the cell to which the signpost in <span class='math'>$(i, j)$</span> points. This algorithm takes
+<span class='math'>$O(N^2)$</span> time to compute the initial value of <span class='math'>$A$</span>.
+<p>Next, we describe how to update <span class='math'>$A$</span>. Note that when the signpost in <span class='math'>$(i, j)$</span>
+changes direction, the values of <span class='math'>$A[i&apos;][j&apos;]$</span> along the original path of the cow
+in <span class='math'>$(i, j)$</span> go down by <span class='math'>$A[i][j]$</span>, and the values of <span class='math'>$A[i&apos;][j&apos;]$</span> along the new
+path of the cow go up by <span class='math'>$A[i][j]$</span>. To update <span class='math'>$A$</span>, we only need to update the
+values along these paths, which have length <span class='math'>$O(N)$</span> and can also be computed in
+<span class='math'>$O(N)$</span> time (by just following directions starting at <span class='math'>$(i, j)$</span>). Thus, updating
+<span class='math'>$A$</span> after each day takes only <span class='math'>$O(N)$</span> time.
+<p>In order to compute the total cost from <span class='math'>$A$</span>, we just need to sum
+<span class='math'>$A[i][j]c_{i,j}$</span> for all cells <span class='math'>$(i, j)$</span> with a vat. This takes <span class='math'>$O(N)$</span> time if we
+have <span class='math'>$A$</span>. Therefore, the total time complexity of this algorithm is
+<span class='math'>$O(N^2 + NQ)$</span>.
+<p>Danny Mittal&apos;s code:
+<pre class='prettyprint'>
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class FollowingDirections {
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(in.readLine());
+        char[][] dirs = new char[n][];
+        int[][] weights = new int[n + 1][n + 1];
+        for (int y = 0; y &lt; n; y++) {
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            dirs[y] = tokenizer.nextToken().toCharArray();
+            weights[y][n] = Integer.parseInt(tokenizer.nextToken());
+        }
+        StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+        for (int x = 0; x &lt; n; x++) {
+            weights[n][x] = Integer.parseInt(tokenizer.nextToken());
+        }
+ 
+        int[][] amtReach = new int[n + 1][n + 1];
+        int answer = 0;
+        for (int y = 0; y &lt;= n; y++) {
+            for (int x = 0; x &lt;= n; x++) {
+                if (y == n || x == n) {
+                    answer += amtReach[y][x] * weights[y][x];
+                } else {
+                    amtReach[y][x]++;
+                    if (dirs[y][x] == &apos;R&apos;) {
+                        amtReach[y][x + 1] += amtReach[y][x];
+                    } else {
+                        amtReach[y + 1][x] += amtReach[y][x];
+                    }
+                }
+            }
+        }
+ 
+        StringBuilder out = new StringBuilder();
+        out.append(answer).append(&apos;\n&apos;);
+        for (int q = Integer.parseInt(in.readLine()); q &gt; 0; q--) {
+            tokenizer = new StringTokenizer(in.readLine());
+            int y = Integer.parseInt(tokenizer.nextToken()) - 1;
+            int x = Integer.parseInt(tokenizer.nextToken()) - 1;
+ 
+            int v = y;
+            int u = x;
+            while (v != n &amp;&amp; u != n) {
+                if (dirs[v][u] == &apos;R&apos;) {
+                    u++;
+                } else {
+                    v++;
+                }
+                amtReach[v][u] -= amtReach[y][x];
+            }
+            answer -= amtReach[y][x] * weights[v][u];
+ 
+            if (dirs[y][x] == &apos;R&apos;) {
+                dirs[y][x] = &apos;D&apos;;
+            } else {
+                dirs[y][x] = &apos;R&apos;;
+            }
+ 
+            v = y;
+            u = x;
+            while (v != n &amp;&amp; u != n) {
+                if (dirs[v][u] == &apos;R&apos;) {
+                    u++;
+                } else {
+                    v++;
+                }
+                amtReach[v][u] += amtReach[y][x];
+            }
+            answer += amtReach[y][x] * weights[v][u];
+ 
+            out.append(answer).append(&apos;\n&apos;);
+        }
+        System.out.print(out);
+    }
+}
+</pre>
+<p>David Hu&apos;s code:
+<p><pre class='prettyprint'>
+N = int(input())
+grid = [[0 for i in range(N)] for j in range(N)]
+A = [0] * N
+ 
+for i in range(N):
+    row, A[i] = input().split()
+    for j in range(N):
+        grid[i][j] = row[j]
+    A[i] = int(A[i])
+ 
+B = list(map(int, input().split()))
+ 
+dp = [[0 for i in range(N + 1)] for j in range(N + 1)]
+ 
+def compute():
+    res = 0
+    for i in range(N):
+        res += dp[i][N] * A[i]
+        res += dp[N][i] * B[i]
+    return res
+ 
+def update(x, y, val):
+    while True:
+        dp[x][y] += val
+        if (x == N or y == N):
+            return
+        if (grid[x][y] == &apos;R&apos;):
+            y += 1
+        else:
+            x += 1
+ 
+for i in range(N + 1):
+    for j in range(N + 1):
+        if (i != N and j != N):
+            dp[i][j] = 1
+        if (i != 0 and j != N and grid[i - 1][j] == &apos;D&apos;):
+            dp[i][j] += dp[i - 1][j]
+        if (i != N and j != 0 and grid[i][j - 1] == &apos;R&apos;):
+            dp[i][j] += dp[i][j - 1]
+ 
+print(compute())
+ 
+Q = int(input())
+ 
+for q in range(Q):
+    x, y = map(int, input().split())
+    x -= 1
+    y -= 1
+    cur = dp[x][y]
+    update(x, y, -cur)
+    if (grid[x][y] == &apos;R&apos;):
+        grid[x][y] = &apos;D&apos;
+    else:
+        grid[x][y] = &apos;R&apos;
+    update(x, y, cur)
+    print(compute())
+</pre>
+<p></body></html>

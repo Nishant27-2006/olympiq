@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Brian Dean)
+<p>Let&apos;s first focus on predicting the range of possible rates of traffic at the
+end of the highway (past mile <span class='math'>$N$</span>).  To do this, we start with a large possible
+range <span class='math'>$[a,b]$</span> (initially set to <span class='math'>$[-999999999, +999999999]$</span>) and narrow / modify
+it as we scan through the different highway components from  miles <span class='math'>$1 \ldots N$</span>.
+Every time we see a sensor reading directly from the highway, this clips the 
+possible range <span class='math'>$[a,b]$</span> to the range given by the sensor.  Every time we see an
+on-ramp with range <span class='math'>$[a&apos;,b&apos;]$</span>, the new range of possible traffic flows is
+<span class='math'>$[a+a&apos;, b+b&apos;]$</span>.  Similarly, when we see an off-ramp with range <span class='math'>$[a&apos;, b&apos;]$</span>,  the
+new range of possible traffic flow values is <span class='math'>$[a-b&apos;, b-a&apos;]$</span> (after this update,
+we set the lower end of the range to zero if it goes negative, since we can&apos;t
+have a negative rate of traffic flow).
+<p>Predicting the range of possible initial flows is similar and essentially
+symmetric, where we scan backwards and keep track of a working range <span class='math'>$[a,b]$</span>
+that is narrowed / modified appropriately by each highway feature.  
+<p>My C++ code for solving the problem is the following.  It should hopefully be 
+easy to read even for those using other languages.
+<p><pre class='prettyprint'>
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+using namespace std;
+     
+int main(void)
+{
+  int N, A[100], B[100];
+  string T[100];
+     
+  ifstream fin (&quot;traffic.in&quot;);
+  fin &gt;&gt; N;
+  for (int i=0; i&lt;N; i++) fin &gt;&gt; T[i] &gt;&gt; A[i] &gt;&gt; B[i];
+     
+  ofstream fout (&quot;traffic.out&quot;);  
+     
+  int a = -999999999, b = 999999999;
+  for (int i=N-1; i&gt;=0; i--) {
+    if (T[i] == &quot;none&quot;) { a = max(a, A[i]); b = min(b, B[i]); }
+    if (T[i] == &quot;off&quot;) { a += A[i]; b += B[i]; }
+    if (T[i] == &quot;on&quot;) { a -= B[i]; b -= A[i]; a = max(0,a); }
+  }
+  fout &lt;&lt; a &lt;&lt; &quot; &quot; &lt;&lt; b &lt;&lt; &quot;\n&quot;;
+     
+  a = -999999999, b = 999999999;
+  for (int i=0; i&lt;N; i++) {
+    if (T[i] == &quot;none&quot;) { a = max(a, A[i]); b = min(b, B[i]); }
+    if (T[i] == &quot;on&quot;) { a += A[i]; b += B[i]; }
+    if (T[i] == &quot;off&quot;) { a -= B[i]; b -= A[i]; a = max(0,a); }
+  }
+  fout &lt;&lt; a &lt;&lt; &quot; &quot; &lt;&lt; b &lt;&lt; &quot;\n&quot;;
+ 
+  return 0;
+}
+</pre>
+<p></body></html>

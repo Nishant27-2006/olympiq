@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Benjamin Qi)
+<p>Suppose that we want to find two times the sum of areas of all triangles with
+right angle at <span class='math'>$(X_1,Y_1)$</span>. Let <span class='math'>$A_1=\{Y_i\,|\,X_i=X_1\}$</span> (the set of
+<span class='math'>$Y$</span>-coordinates for all points that share the same <span class='math'>$X$</span>-coordinate as post <span class='math'>$1$</span>)
+and <span class='math'>$B_1=\{X_j\,|\,Y_j=Y_1\}$</span>. Then the desired quantity will equal
+<div class='math'>$$\left(\sum_{y\in A}|Y_1-y|\right)\cdot \left(\sum_{x\in B}|X_1-x|\right).$$</div>
+It remains to compute the value of <span class='math'>$\sum_{x\in B_i}|X_i-x|$</span> for every <span class='math'>$i$</span>. The
+summation involving <span class='math'>$y$</span> can be computed similarly.
+<p>What we need to do, restated more simply:
+<ul><li> For integers <span class='math'>$x_1\le x_2\le \cdots \le x_n$</span>, compute
+<span class='math'>$s_i=\sum_{j=1}^n|x_i-x_j|$</span> for each <span class='math'>$i$</span>.</li></ul>
+<p>This can be done in linear time. First, compute <span class='math'>$s_1$</span>. Then for all <span class='math'>$1\le i&lt;N$</span>, 
+<span class='math'>$s_{i+1}=s_i+(2i-N)(x_{i+1}-x_i).$</span> 
+<p>Overall, the solution runs in <span class='math'>$O(N\log N)$</span>
+time because we first need to sort the <span class='math'>$x$</span>-coordinates for each <span class='math'>$y$</span>.
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+
+typedef long long ll;
+#define f first
+#define s second
+
+const int MOD = 1e9+7; 
+
+void setIO(string s) {
+  ios_base::sync_with_stdio(0); cin.tie(0); 
+  freopen((s+&quot;.in&quot;).c_str(),&quot;r&quot;,stdin);
+  freopen((s+&quot;.out&quot;).c_str(),&quot;w&quot;,stdout);
+}
+
+struct mi {
+  int v; explicit operator int() const { return v; }
+  mi(ll _v) : v(_v%MOD) { v += (v&lt;0)*MOD; }
+  mi() : mi(0) {}
+};
+mi operator+(mi a, mi b) { return mi(a.v+b.v); }
+mi operator-(mi a, mi b) { return mi(a.v-b.v); }
+mi operator*(mi a, mi b) { return mi((ll)a.v*b.v); }
+ 
+int N;
+vector&lt;pair&lt;int,int&gt;&gt; v;
+vector&lt;mi&gt; sum[100005];
+vector&lt;pair&lt;int,int&gt;&gt; todo[20001];
+ 
+void check() {
+	for (int i = 0; i &lt;= 20000; ++i) if (todo[i].size() &gt; 0) {
+		int sz = todo[i].size();
+		sort(begin(todo[i]),end(todo[i]));
+		mi cur = 0; 
+		for (int j = 0; j &lt; sz; ++j) 
+			cur = cur+todo[i][j].f-todo[i][0].f;
+		for (int j = 0; j &lt; sz; ++j) {
+			if (j) cur = cur+(2*j-sz)*(todo[i][j].f-todo[i][j-1].f);
+			sum[todo[i][j].s].push_back(cur);
+		}
+	}
+}
+ 
+int main() {
+	setIO(&quot;triangles&quot;); 
+	cin &gt;&gt; N; v.resize(N); 
+	for (int i = 0; i &lt; N; ++i) cin &gt;&gt; v[i].f &gt;&gt; v[i].s;
+	for (int i = 0; i &lt;= 20000; ++i) todo[i].clear();
+	for (int i = 0; i &lt; N; ++i) 
+		todo[v[i].f+10000].push_back({v[i].s,i});
+	check();
+	for (int i = 0; i &lt;= 20000; ++i) todo[i].clear();
+	for (int i = 0; i &lt; N; ++i) 
+		todo[v[i].s+10000].push_back({v[i].f,i});
+	check();
+	mi ans = 0; 
+	for (int i = 0; i &lt; N; ++i) ans = ans+sum[i][0]*sum[i][1];
+	cout &lt;&lt; ans.v &lt;&lt; &quot;\n&quot;;
+}
+</pre>
+<p></body></html>

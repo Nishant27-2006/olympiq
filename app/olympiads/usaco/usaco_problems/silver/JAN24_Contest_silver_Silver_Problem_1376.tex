@@ -1,0 +1,135 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\title{View problem}
+\author{USACO Contest: JAN24 Contest - Silver Division}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Problem Statement}
+
+
+Bessie has woken up on a strange planet.  In this planet, there are $N$
+($1\le N\le 10^4$) months, with $a_1, \ldots, a_N$ days, respectively
+($1\leq a_i \leq 4 \cdot 10^9$, all $a_i$ are integers). In addition, on the
+planet, there are also weeks, where each week is $L$ days, with $L$ being a
+positive integer. Interestingly, Bessie knows the following:
+ For the correct $L$, each month is at least $4$ weeks long.  For
+the correct $L$,  there are at most $3$ distinct values of $a_i\bmod L$.
+Unfortunately, Bessie has forgotten what $L$ is! Help her by printing the sum of
+all possible values of $L$.
+
+Note that the large size of integers involved in this problem may require the
+use of 64-bit integer data types (e.g., a "long long" in C/C++).
+INPUT FORMAT (input arrives from the terminal / stdin):
+The first line contains a single integer $N$. The second line contains $N$
+space-separated integers, $a_1, \ldots, a_N$. 
+
+OUTPUT FORMAT (print output to the terminal / stdout):
+A single integer, the sum of all possible values of $L$.
+
+SAMPLE INPUT:
+12
+31 28 31 30 31 30 31 31 30 31 30 31
+SAMPLE OUTPUT: 
+28
+
+The possible values of $L$ are 1, 2, 3, 4, 5, 6, and 7.  For example, $L=7$ is
+valid because each month is at least length $4 \cdot 7 = 28$ days long, and each
+month is either 0, 2, or 3 mod 7. 
+
+SAMPLE INPUT:
+4
+31 35 28 29
+SAMPLE OUTPUT: 
+23
+
+The possible values of $L$ are 1, 2, 3, 4, 6, and 7. For example, $L=6$ is valid
+because each month is at least length $4 \cdot 6 = 24$ days long, and each month
+is either 1, 4, or 5 mod 6. 
+
+SCORING:
+Inputs 3-4: $1 \leq a_i \leq 10^6$Inputs 5-14: No additional
+constraints
+
+
+Problem credits: Brandon Wang
+
+
+
+\section*{Input Format}
+OUTPUT FORMAT (print output to the terminal / stdout):A single integer, the sum of all possible values of $L$.SAMPLE INPUT:12
+31 28 31 30 31 30 31 31 30 31 30 31SAMPLE OUTPUT:28The possible values of $L$ are 1, 2, 3, 4, 5, 6, and 7.  For example, $L=7$ is
+valid because each month is at least length $4 \cdot 7 = 28$ days long, and each
+month is either 0, 2, or 3 mod 7.SAMPLE INPUT:4
+31 35 28 29SAMPLE OUTPUT:23The possible values of $L$ are 1, 2, 3, 4, 6, and 7. For example, $L=6$ is valid
+because each month is at least length $4 \cdot 6 = 24$ days long, and each month
+is either 1, 4, or 5 mod 6.SCORING:Inputs 3-4: $1 \leq a_i \leq 10^6$Inputs 5-14: No additional
+constraintsProblem credits: Brandon Wang
+
+\section*{Output Format}
+SAMPLE INPUT:12
+31 28 31 30 31 30 31 31 30 31 30 31SAMPLE OUTPUT:28The possible values of $L$ are 1, 2, 3, 4, 5, 6, and 7.  For example, $L=7$ is
+valid because each month is at least length $4 \cdot 7 = 28$ days long, and each
+month is either 0, 2, or 3 mod 7.SAMPLE INPUT:4
+31 35 28 29SAMPLE OUTPUT:23The possible values of $L$ are 1, 2, 3, 4, 6, and 7. For example, $L=6$ is valid
+because each month is at least length $4 \cdot 6 = 24$ days long, and each month
+is either 1, 4, or 5 mod 6.SCORING:Inputs 3-4: $1 \leq a_i \leq 10^6$Inputs 5-14: No additional
+constraintsProblem credits: Brandon Wang
+
+\section*{Sample Input}
+\begin{verbatim}
+12
+31 28 31 30 31 30 31 31 30 31 30 31
+
+4
+31 35 28 29
+\end{verbatim}
+
+\section*{Sample Output}
+\begin{verbatim}
+28
+
+The possible values of $L$ are 1, 2, 3, 4, 5, 6, and 7.  For example, $L=7$ is
+valid because each month is at least length $4 \cdot 7 = 28$ days long, and each
+month is either 0, 2, or 3 mod 7.SAMPLE INPUT:4
+31 35 28 29SAMPLE OUTPUT:23The possible values of $L$ are 1, 2, 3, 4, 6, and 7. For example, $L=6$ is valid
+because each month is at least length $4 \cdot 6 = 24$ days long, and each month
+is either 1, 4, or 5 mod 6.SCORING:Inputs 3-4: $1 \leq a_i \leq 10^6$Inputs 5-14: No additional
+constraintsProblem credits: Brandon Wang
+
+SAMPLE INPUT:4
+31 35 28 29SAMPLE OUTPUT:23The possible values of $L$ are 1, 2, 3, 4, 6, and 7. For example, $L=6$ is valid
+because each month is at least length $4 \cdot 6 = 24$ days long, and each month
+is either 1, 4, or 5 mod 6.SCORING:Inputs 3-4: $1 \leq a_i \leq 10^6$Inputs 5-14: No additional
+constraintsProblem credits: Brandon Wang
+
+23
+
+The possible values of $L$ are 1, 2, 3, 4, 6, and 7. For example, $L=6$ is valid
+because each month is at least length $4 \cdot 6 = 24$ days long, and each month
+is either 1, 4, or 5 mod 6.SCORING:Inputs 3-4: $1 \leq a_i \leq 10^6$Inputs 5-14: No additional
+constraintsProblem credits: Brandon Wang
+
+SCORING:Inputs 3-4: $1 \leq a_i \leq 10^6$Inputs 5-14: No additional
+constraintsProblem credits: Brandon Wang
+\end{verbatim}
+
+\section*{Solution}
+
+
+\section*{Problem URL}
+https://usaco.org/index.php?page=viewproblem2&cpid=1376
+
+\section*{Source}
+USACO JAN24 Contest, Silver Division, Problem ID: 1376
+
+\end{document}

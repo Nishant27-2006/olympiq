@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Suhas Nagar)
+<p>In order for the final array to be equivalent to the result of sorting the first
+array, we know that there are two implicit conditions that must be true. 
+<ul><li>The final array must be in sorted order</li><li>The elements in the final
+array must be the same as the elements in the starting array</li></ul>
+<p>The first condition is guaranteed regardless of the specific values. If this
+were not true, this  would imply that at the end of the lazy sort process, there
+exists some index <span class='math'>$i &lt; N-1$</span> where  <span class='math'>$a_i &gt; a_{i+1}$</span>, but if this were true, the
+lazy sort process would still continue forming a contradiction.
+<p>Thus the second condition is the only necessary one, so we need to determine how
+this condition restricts our array. Suppose a cow holding <span class='math'>$A$</span> boxes hands a box
+to a cow with <span class='math'>$B$</span> boxes during the lazy sort process. There are two cases for
+what can happen.
+<p><strong>Case 1: <span class='math'>$B = A-1$</span>: </strong> In this case, the transaction can be viewed as a
+swap, meaning that the elements of the array after this swap will be the same as
+it was before, so we can call this type of transaction idempotent.
+<p><strong>Case 2: <span class='math'>$B &lt; A-1$</span>: </strong> In this case, the value <span class='math'>$A$</span> becomes <span class='math'>$A-1 \neq B$</span> and
+the value <span class='math'>$B$</span> becomes <span class='math'>$B+1 \neq A$</span>. Since we have &quot;lost&quot; an occurrence of <span class='math'>$A$</span>,
+we must recover this value. The only way to recover this is to have a cow with
+value <span class='math'>$A-1$</span> be donated to by a cow <span class='math'>$j$</span> with value  <span class='math'>$a_j \geq A+1$</span> (since the
+transaction must not be idempotent) or to have a cow with value <span class='math'>$A+1$</span> donate to
+another cow <span class='math'>$j$</span> with value <span class='math'>$a_j \leq A-1$</span>. In other words, to recover <span class='math'>$A$</span> we
+must &quot;lose&quot; an occurrence of some value larger than <span class='math'>$A$</span>.  Inductively, we will
+reach a point where there is no larger to value to recover the current one. This
+means that if this case ever arises, the values in our array cannot be
+preserved.
+<p>More formally, a value can only be lost if at some point, <span class='math'>$a_i = k$</span> and
+<span class='math'>$a_{i+1} \leq k-2$</span>.  This leads us to the condition that for all <span class='math'>$j &gt; i$</span>,
+<span class='math'>$a_j \geq a_i-1$</span>.
+<p>This condition also gives us a tight bound on the values that we can fill the
+array with. Since the last element of our sequence is constrained to <span class='math'>$v_i$</span>, any
+element <span class='math'>$a_j$</span> prior where <span class='math'>$j &lt; i$</span> must satisfy <span class='math'>$a_j \leq v_i+1$</span>.
+<p><strong>Subtasks 1 and 2 (<span class='math'>$N \le 100$</span> and <span class='math'>$v_i \leq 10^6$</span>):</strong>
+<p>For these subtasks, we can run dynamic programming. We can let <span class='math'>$dp[i][v]$</span> be the
+number of ways to construct a sequence of length <span class='math'>$i$</span> where the maximum element
+was <span class='math'>$v$</span>.
+<p>For a given state <span class='math'>$dp[i][v]$</span>, there are two ways to transition to <span class='math'>$dp[i+1][v]$</span>
+(by placing <span class='math'>$v-1$</span> or <span class='math'>$v$</span> at the next spot). Alternatively, we can place any
+value <span class='math'>$k &gt; v$</span> to transition to  <span class='math'>$dp[i+1][k]$</span>. Here, we can treat the values that
+Farmer John remembers as forced transitions. This is sufficient for subtask <span class='math'>$1$</span>
+as our time complexity is <span class='math'>$O(N(\max v_i)^2)$</span>.
+<p>To improve this to subtask <span class='math'>$2$</span>, we can use prefix sums to reduce the time
+complexity to <span class='math'>$O(N\max v_i )$</span>.
+<p><strong>Full Solution:</strong>
+<p>The full credit solution will be described below, where subtasks award partial
+credit based on how accelerated certain parts of the solution are. These will be
+clearly indicated.
+<p>Suppose we were only given the start and end values (<span class='math'>$Q = 2$</span>) and we wanted to
+count the  number of ways to fill in the values in between. When we built the
+array in subtask 1, we saw that if our maximum value placed so far was <span class='math'>$a_i$</span>,
+every future element <span class='math'>$a_j$</span> where <span class='math'>$j &gt; i$</span> either satisfies <span class='math'>$a_j \geq a_i$</span> or
+<span class='math'>$a_j = a_i-1$</span>. In other words, if <span class='math'>$a_j$</span> is not greater than or equal to <span class='math'>$a_i$</span>,
+its value is deterministic from the previous elements.
+<p>This leads us to the observation that we need to count the number of ways to
+place some non-decreasing subsequence in our empty spaces, and the rest of the
+elements will be filled in deterministically based on the placed elements. This
+forms a bijection, since we can take any sequence that works, eliminate the
+elements that are not prefix maximums, and we are left with a unique
+non-decreasing subsequence.
+<p>Suppose we have <span class='math'>$N$</span> empty spots and we want to use values from <span class='math'>$1$</span> to <span class='math'>$V$</span>. To
+compute the number of non-decreasing subsequences of length <span class='math'>$k$</span> which we can
+denote as <span class='math'>$NDS_k$</span>, we can use stars and bars. If we have <span class='math'>$k$</span> stars and <span class='math'>$V-1$</span>
+bars, we can determine what numbers to use in our sequence, and there is a
+unique ordering that is non-decreasing, so <span class='math'>$NDS_k = {k+V-1\choose k}$</span>.  This
+means that we can count the total number of ways to place all subsequences in
+our empty spaces by computing <span class='math'>$\sum_{k=0}^N {N \choose k}NDS_k$</span>.
+<p>Now when <span class='math'>$Q &gt; 2$</span>, we can use the query constraints and count the ways to fill in
+the  values in between.
+<p>We can construct a <span class='math'>$Q\times 2$</span> array <span class='math'>$dp[i][j]$</span>. If <span class='math'>$j=1$</span> then that means the
+first <span class='math'>$i$</span> cows ended using a value that was <span class='math'>$v_i+1$</span>, and otherwise the sequence
+ends with <span class='math'>$v_i$</span>. This matters  because it is legal to use values <span class='math'>$v_i-1$</span> if we
+are transitioning from <span class='math'>$dp[i][0]$</span> and it is illegal otherwise.
+<p>Let <span class='math'>$arr_v[l]$</span> be the number of <span class='math'>$l$</span>-length non-decreasing subsequences that end
+in <span class='math'>$v$</span> and <span class='math'>$arr_{&lt;v}[l]$</span> be the number of <span class='math'>$l$</span>-length non-decreasing subsequences
+that end in <span class='math'>$&lt;v$</span>. Note that this is sufficient since computing sequences with
+values from <span class='math'>$A$</span> to <span class='math'>$B$</span> can be transformed to computing sequences with values
+from <span class='math'>$1$</span> to <span class='math'>$B-A+1$</span>.
+<p>If we are trying to compute the dp recurrence for <span class='math'>$i+1$</span> then we can let
+<span class='math'>$k = c_{i+1}-c_i-1$</span> and <span class='math'>$v = v_{i+1}-v_i+1$</span>.
+<p>We have 4 different cases to consider:
+<p><ul><li>
+<span class='math'>$dp[i][0] \rightarrow dp[i+1][0]$</span>: In this case, we can use any values in 
+<span class='math'>$[v_i-1,v_{i+1}]$</span>. We can define
+<span class='math'>$s_{00} = \sum_{j=0}^k arr_{&lt;v+1}[j]*{k \choose j}$</span>
+</li><li>
+<span class='math'>$dp[i][0] \rightarrow dp[i+1][1]$</span>: In this case, we can use any values in 
+<span class='math'>$[v_i-1,v_{i+1}+1]$</span> but we must use <span class='math'>$v_{i+1}+1$</span>. We can define
+<span class='math'>$s_{01} = \sum_{j=0}^k arr_{v+1}[j]*{k \choose j}$</span>
+</li><li>
+<span class='math'>$dp[i][1] \rightarrow dp[i+1][0]$</span>: In this case, we can use any values in 
+<span class='math'>$[v_i,v_{i+1}]$</span>. We can define
+<span class='math'>$s_{10} = \sum_{j=0}^k arr_{&lt;v}[j]*{k \choose j}$</span>
+</li><li>
+<span class='math'>$dp[i][1] \rightarrow dp[i+1][1]$</span>: In this case, we can use any values in 
+<span class='math'>$[v_i,v_{i+1}+1]$</span> but we must use <span class='math'>$v_{i+1}+1$</span>. We can define
+<span class='math'>$s_{11} = \sum_{j=0}^k arr_{v}[j]*{k \choose j}$</span>
+</li></ul>
+<p>However, in certain cases, some of these transitions are combined into others.
+For example, if <span class='math'>$v = 0$</span> then <span class='math'>$s_{01} = s_{01}+s_{11}+s_{10}$</span> and
+<span class='math'>$s_{11} = s_{10} = s_{00} = 0$</span>. This is because we must transition into a state
+where our running max is <span class='math'>$v_{i+1}+1$</span>.
+<p>Similarly, if <span class='math'>$v=1$</span>, then any <span class='math'>$1 \rightarrow 0$</span> transition is a
+<span class='math'>$1 \rightarrow 1$</span> transition so <span class='math'>$s_{11} = s_{11} + s_{10}$</span> and <span class='math'>$s_{10} = 0$</span>.
+<p>From here, our transitions are the following:
+<div class='math'>$$dp[i+1][0] = dp[i][0]*s_{00}+dp[i][1]*s_{10}$$</div>
+<div class='math'>$$dp[i+1][1] = dp[i][0]*s_{01}+dp[i][1]*s_{11}$$</div>
+<p>To get full credit on subtask 3, we can precompute factorials and inverse
+factorials up to <span class='math'>$10^6$</span> and compute all of the values directly.
+<p>For future subtasks, since values can go up to <span class='math'>$10^9$</span>, we need to exploit the
+iterative nature of our calculation. Since we perform stars and bars where the
+number of  stars increases from <span class='math'>$0$</span>, we will always be computing some
+<span class='math'>${n \choose k}$</span> after computing <span class='math'>${n-1 \choose k-1}$</span>. This means we can build the
+following recurrence:
+<div class='math'>$${n \choose k} = {n-1 \choose k-1} \cdot \frac{n}{k} = {n-1\choose k-1}\cdot (n) \cdot \text{modInv}(k)$$</div>
+<p>This means we only need to compute modular inverses for the bound on <span class='math'>$k$</span>, which
+is bounded by <span class='math'>$N$</span> and thus precomputable. Depending on your implementation, this
+precomputation might be too slow and only pass up to subtask 4. Suppose we have
+the following pseudocode:
+<pre class='prettyprint'>
+for i in N:
+    inverseFactorial[i] = modularInverse(i)*inverseFactorial[i-1]
+</pre>
+With Euclidean Algorithm modular inverse code, this would take <span class='math'>$N\log MOD$</span> to
+compute which can be very expensive. Instead, we can utilize the
+<a href='https://cp-algorithms.com/algebra/module-inverse.html#finding-the-modular-inverse-for-prime-moduli-using-euclidean-division'>
+following equation</a> to compute these modular inverses in <span class='math'>$O(N)$</span> instead. With
+all of these optimizations, a full credit solution of <span class='math'>$O(N)$</span> is possible.
+<p>My Java Code:
+<p><pre class='prettyprint'>
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Scanner;
+
+public class LazySort {
+    public static long[] invN;
+    static long mod = 1000000007;
+    static void precomputeInverses(int maxN) {
+        invN = new long[maxN+1];
+        invN[1] = 1;
+        for (int i = 2; i &lt;= maxN; i++) {
+            invN[i] = (mod - (mod / i) * invN[(int) (mod % i)] % mod) % mod;
+        }
+    }
+    public static long arr_eq(int v, int i, long current){
+        if (i == 0) return 0;
+        if (i == 1) return 1;
+        return getNextBinomial(v + i - 2, i - 1, current);
+    }
+    public static long arr_less(int v, int i, long current){
+        if (i == 0) return 1;
+        return getNextBinomial(v + i - 2, i, current);
+    }
+    // Recursively computes nCk from (n-1)C(k-1)
+    public static long getNextBinomial(int n, int k, long current){
+        long num = (current * n)%mod;
+        return (num*invN[k])%mod;
+    }
+    static class pair {
+        long a, b;
+        public pair(long a, long b) {
+            this.a = a;
+            this.b = b;
+        }
+    }
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        long mod = 1000000007;
+        int n = sc.nextInt();
+        int q = sc.nextInt();
+        pair[] arr = new pair[q];
+        for (int i = 0; i &lt; q; i++){
+            long a = sc.nextInt() - 1;
+            long b = sc.nextInt();
+            arr[i] = new pair(a, b);
+        }
+        precomputeInverses(5000005);
+        long[][] dp = new long[q][2];
+        dp[0][0] = 1;
+        for (int i = 0; i &lt; q-1; i++){
+            long s00 = 0;
+            long s01 = 0;
+            long s10 = 0;
+            long s11 = 0;
+            int k = (int) (arr[i + 1].a - arr[i].a - 1);
+            int v = (int) (arr[i + 1].b - arr[i].b + 1);
+            if (v &lt; 0) continue;
+            long arr_eq_v = 1;
+            long arr_less_v = 1;
+            long arr_eq_vp1 = 1;
+            long arr_less_vp1 = 1;
+            long k_choose_j = 1;
+            for (int j = 0; j &lt;= k; j++){
+                arr_eq_v = arr_eq(v,j, arr_eq_v);
+                arr_eq_vp1 = arr_eq(v + 1, j, arr_eq_vp1);
+                arr_less_v = arr_less(v, j, arr_less_v);
+                arr_less_vp1 = arr_less(v + 1, j, arr_less_vp1);
+                s11 = (s11 + (arr_eq_v * k_choose_j) % mod) % mod;
+                s10 = (s10 + (arr_less_v * k_choose_j) % mod) % mod;
+                s01 = (s01 + (arr_eq_vp1 * k_choose_j) % mod) % mod;
+                s00 = (s00 + (arr_less_vp1 * k_choose_j) % mod) % mod;
+                //kCj+1 = (k-j)*kCj/(j+1)
+                k_choose_j = (((k_choose_j*(k-j))%mod)*invN[j+1])%mod;
+            }
+            if (v == 0){
+                s01 = s01 + s11 + s10;
+                s11 = 0;
+                s10 = 0;
+                s00 = 0;
+            }else if (v == 1){
+                s11 = s11 + s10;
+                s10 = 0;
+            }
+            dp[i + 1][0] = (dp[i + 1][0] + (dp[i][0] * s00) % mod) % mod;
+            dp[i + 1][0] = (dp[i + 1][0] + (dp[i][1] * s10) % mod) % mod;
+            dp[i + 1][1] = (dp[i + 1][1] + (dp[i][0] * s01) % mod) % mod;
+            dp[i + 1][1] = (dp[i + 1][1] + (dp[i][1] * s11) % mod) % mod;
+        }
+        long sum = dp[q - 1][0] + dp[q - 1][1];
+        sum %= mod;
+        System.out.println(sum);
+    }
+}
+</pre>
+<p></body></html>

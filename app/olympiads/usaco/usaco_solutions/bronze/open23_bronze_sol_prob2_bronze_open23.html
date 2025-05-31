@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Chongtian Ma)
+<p>This problem can be solved with complete search and careful implementation. 
+<p>To achieve full credit, <span class='math'>$\mathcal{O}(N^2)$</span> will suffice. We can loop through the
+number of type <span class='math'>$1$</span> and the most basic form of type <span class='math'>$2$</span> sentences (i.e., with
+only one noun at the end) and check if it is possible to create a paragraph with
+that configuration; let&apos;s call these numbers <span class='math'>$t_1$</span> and <span class='math'>$t_2$</span> respectively. Both
+<span class='math'>$t_1$</span> and <span class='math'>$t_2$</span> are capped by the number of intransitive and transitive verbs,
+respectively.
+<p>Let <span class='math'>$n$</span> be the total number of nouns in the input. Then
+<span class='math'>$t_1 + 2 \cdot t_2 \leq n$</span> must hold. Now, let&apos;s consider conjunctions: Let <span class='math'>$T$</span>
+be the total number of sentences we are going to make (<span class='math'>$T = t_1+ t_2$</span>). There
+must be <span class='math'>$T - 1$</span> connections between the <span class='math'>$T$</span> sentences, which can be filled with
+either conjunctions or periods. We want to maximize conjunction usage as
+conjunctions increase the word count.
+<p>However, due to the problem constraints, conjunctions cannot be placed
+consecutively. Let <span class='math'>$J$</span> be the number of conjunctions we can place, then
+<span class='math'>$J = \min(\text{# of conjunctions}, T / 2)$</span>. Then, we need to place <span class='math'>$T - J$</span>
+periods in the other connections (including the last period at the end of the
+last sentence), so we need to check that <span class='math'>$T - J \le P$</span>.
+<p>Now let&apos;s consider commas. Without loss of generality and for ease of
+implementation, if we have at least one type <span class='math'>$2$</span> sentence, let&apos;s just tack all
+the commas at the end of our last type <span class='math'>$2$</span> sentence as that won&apos;t affect the
+number of total words. Let <span class='math'>$M$</span> be the number of nouns we can tack on at the end
+with commas. Then <span class='math'>$M = \min(n - (t_1 + 2 \cdot t_2), C)$</span>.
+<p>Summing everything up, we get a total of <span class='math'>$W = 2 \cdot t_1 + 3 \cdot t_2 + J + M$</span>
+words used. The answer to the problem is the maximum of all <span class='math'>$W$</span> among all
+configurations. When taking the maximum <span class='math'>$W$</span>, it is useful to store information
+about the best <span class='math'>$t_1, t_2, J$</span>, and <span class='math'>$M$</span> somewhere, so you&apos;ll have an easier time
+constructing the paragraph afterward.
+<p>Interestingly, this problem is also solvable in <span class='math'>$\mathcal{O}(N)$</span> time. Instead
+of looping over the number of type <span class='math'>$2$</span> sentences, we can maximize <span class='math'>$t_2$</span> after
+fixing <span class='math'>$t_1$</span>. Let <span class='math'>$\mathtt{conj}$</span> be the total number of conjunctions in the
+input; using only information from <span class='math'>$t_1$</span>, we can achieve
+<span class='math'>$t_2 = \min(\text{# of transitive verbs}, (n - t_1) / 2, 2 \cdot \min(\mathtt{conj}, P) + \max(0, P - \mathtt{conj}))$</span>.
+<p>Make sure to be extra careful about formatting while constructing the paragraph
+as well (watch out for double spaces, trailing spaces, unnecessary spaces,
+etc.)!
+<p>Chongtian&apos;s <span class='math'>$\mathcal O(N)$</span> code:
+<p><pre class='prettyprint'>
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+#define sz(x) (int)x.size()
+
+int main() {
+    cin.tie(0)-&gt;sync_with_stdio(0);
+    int T;
+    cin &gt;&gt; T;
+    while (T--) {
+        int n, c, p;
+        cin &gt;&gt; n &gt;&gt; c &gt;&gt; p;
+        vector&lt;string&gt; nouns, tverb, iverb, conj;
+        for (int i = 0; i &lt; n; i++) {
+            string w, t;
+            cin &gt;&gt; w &gt;&gt; t;
+
+            if (t == &quot;noun&quot;) nouns.push_back(w);
+            else if (t == &quot;transitive-verb&quot;) tverb.push_back(w);
+            else if (t == &quot;intransitive-verb&quot;) iverb.push_back(w);
+            else conj.push_back(w);
+        }
+
+        int ans = 0;
+        // vars that track info related to the answer
+        int t1, t2, combine, tack_end;
+        for (int type_1 = 0; type_1 &lt;= sz(iverb); type_1++) {
+            int noun_cnt = sz(nouns), conj_cnt = sz(conj);
+            int period = p, comma = c;
+            int cur_words = 0;
+
+            // let&apos;s make type 1 sentences yay
+            cur_words += 2 * type_1;
+            noun_cnt -= type_1;
+            if (noun_cnt &lt; 0) continue;
+
+            // now let&apos;s make the most basic type of type 2 sentences
+            int type_2 = min({sz(tverb), noun_cnt / 2, min(conj_cnt, period) * 2 + max(0, period - conj_cnt)});
+            cur_words += 3 * type_2;
+            noun_cnt -= 2 * type_2;
+
+            // try to combine as much sentences with conj as possible
+            int total = type_1 + type_2;
+            int connections = type_1 + type_2 - 1;
+            int can_combine = min((connections + 1) / 2, conj_cnt);
+            cur_words += can_combine;
+            // whatever we cannot combine, fill with periods
+            period -= total - can_combine;
+            if (period &lt; 0) continue;
+
+            // tack extra nouns we have at the end with commas
+            // at the end of the last type 2 sentence
+            int tack = 0;
+            if (type_2 &gt; 0) {
+                tack = min(noun_cnt, comma);
+                cur_words += tack;
+            }
+            if (cur_words &gt; ans) {
+                ans = cur_words;
+                t1 = type_1;
+                t2 = type_2;
+                combine = can_combine;
+                tack_end = tack;
+            }
+        }
+        cout &lt;&lt; ans &lt;&lt; endl;
+
+        if (ans == 0) {
+            cout &lt;&lt; endl;
+            continue;
+        }
+
+        vector&lt;vector&lt;string&gt;&gt; sentences;
+        // construct type 1 sentences
+        for (int i = 0; i &lt; t1; i++) {
+            sentences.push_back({nouns.back(), iverb.back()});
+            nouns.pop_back();
+            iverb.pop_back();
+        }
+        // construct type 2 sentences
+        for (int i = 0; i &lt; t2; i++) {
+            sentences.push_back({nouns.back(), tverb.back()});
+            nouns.pop_back();
+            tverb.pop_back();
+            sentences.back().push_back(nouns.back());
+            nouns.pop_back();
+        }
+        string output;
+        for (int i = 0; i &lt; sz(sentences); i++) {
+            for (string j : sentences[i]) { output += j + &quot; &quot;; }
+            if (i % 2 == 0 &amp;&amp; combine) {
+                combine--;
+                // ADD A CONJUNCTION
+                output += conj.back() + &quot; &quot;;
+                conj.pop_back();
+            } else {
+                // remove the last whitespace and add a period
+                output.pop_back();
+                output += &quot;. &quot;;
+            }
+        }
+        // remove the last whitespace
+        output.pop_back();
+        if (tack_end &gt; 0) {
+            // remove the last period
+            output.pop_back();
+            // and add a series of commas and nouns
+            for (int i = 0; i &lt; tack_end; i++) {
+                output += &quot;, &quot; + nouns.back();
+                nouns.pop_back();
+            }
+            // add back the last period
+            output += &quot;.&quot;;
+        }
+        cout &lt;&lt; output &lt;&lt; endl;
+    }
+}
+</pre>
+<p>Ben&apos;s <span class='math'>$\mathcal O(N^2)$</span> code (which can also be sped up to <span class='math'>$O(N)$</span>):
+<p><pre class='prettyprint'>
+def solve():
+    N, C, P = map(int, input().split())
+    nouns, tverbs, iverbs, conjs = [], [], [], []
+    for _ in range(N):
+        word, t = input().split()
+        if t[0] == &quot;n&quot;:
+            nouns.append(word)
+        if t[0] == &quot;t&quot;:
+            tverbs.append(word)
+        if t[0] == &quot;i&quot;:
+            iverbs.append(word)
+        if t[0] == &quot;c&quot;:
+            conjs.append(word)
+    ans = (0, 0, 0, 0)
+    for n_tverb in range(len(tverbs) + 1):
+        n_iverb = min(len(iverbs), len(nouns) - 2 * n_tverb)
+        while n_iverb &gt;= 0:
+            n_conj = min(len(conjs), (n_tverb + n_iverb) // 2)
+            if n_tverb + n_iverb - n_conj &lt;= P:
+                break
+            n_iverb -= 1
+        if n_iverb &lt; 0:
+            continue
+        extra_nouns = min(C, len(nouns) - (n_iverb + 2 * n_tverb))
+        if n_tverb == 0:
+            extra_nouns = 0
+        n_words = 3 * n_tverb + 2 * n_iverb + n_conj + extra_nouns
+        ans = max(ans, (n_words, n_tverb, n_iverb, n_conj))
+
+    n_words, n_tverb, n_iverb, n_conj = ans
+    print(n_words)
+    basic_sentences = [nouns.pop() + &quot; &quot; + iverbs.pop() for _ in range(n_iverb)] + [
+        nouns.pop() + &quot; &quot; + tverbs.pop() + &quot; &quot; + nouns.pop() for _ in range(n_tverb)
+    ]
+    while n_tverb &gt; 0 and C &gt; 0 and len(nouns) &gt; 0:
+        basic_sentences[-1] += &quot;, &quot; + nouns.pop()
+        C -= 1
+    compound_sentences = [
+        basic_sentences.pop() + &quot; &quot; + conjs.pop() + &quot; &quot; + basic_sentences.pop()
+        for _ in range(n_conj)
+    ]
+    sentences = [sentence + &quot;.&quot; for sentence in basic_sentences + compound_sentences]
+    print(&quot; &quot;.join(sentences))
+
+
+T = int(input())
+for t in range(T):
+    solve()
+</pre>
+<p></body></html>

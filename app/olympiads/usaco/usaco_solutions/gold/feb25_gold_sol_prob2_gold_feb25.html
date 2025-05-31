@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html><head>
+<title>Contest Results</title>
+<META HTTP-EQUIV="EXPIRES" CONTENT="0">
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+</head>
+<body>
+(Analysis by Weiming Zhou)
+<p>Let <span class='math'>$s_{1 \dots n}$</span> be the string generated after applying the <span class='math'>$m$</span> initial flip
+updates.
+<p><div class='prob-section'><h4> Subtask 1:</h4>
+<p>We can make <span class='math'>$s$</span> by directly applying the flips in <span class='math'>$O(nm)$</span> time. For each query,
+we can then use <span class='math'>$O(2^n)$</span> time to enumerate all possible subsequences and take
+the lexicographically largest one.
+<p>This takes <span class='math'>$O(nm + q 2^n)$</span> time, which runs in time for
+<span class='math'>$n \leq 10, q \leq 1000$</span>.
+<p></div>
+<p><div class='prob-section'><h4> Subtask 2, 3:</h4>
+<p>To make further progress on the problem, we consider the following greedy
+strategy:
+<p>Let <span class='math'>$sz = r - l + 1$</span> and <span class='math'>$z$</span> be the number of <span class='math'>$0$</span>&apos;s in <span class='math'>$s_{l \dots r}$</span>. Let
+<span class='math'>$t_{1 \dots k}$</span> be our final string.
+<p><ul><li> If <span class='math'>$z \leq sz - k$</span>, our answer string is <span class='math'>$t = 11 \dots 1$</span> with length <span class='math'>$k$</span>. 
+</li><li> Otherwise, we will take <span class='math'>$t$</span> to be <span class='math'>$s_{l \dots r}$</span> with the first
+<span class='math'>$sz - k$</span> zeroes removed. </li></ul>
+<p>Remember that comparing the lexicographical order of two strings <span class='math'>$t_1$</span> and <span class='math'>$t_2$</span>
+is equivalent to comparing the numbers they interpret in binary.
+<p><ul><li> It is never more optimal to remove a <span class='math'>$1$</span> than to remove a <span class='math'>$0$</span>. </li><li>
+It is never more optimal to remove a later <span class='math'>$0$</span> than an earlier <span class='math'>$0$</span>. This is
+because we can add the <span class='math'>$0$</span> back without decreasing the cost. </li></ul>
+<p>Thus, our solution that removes all the earliest <span class='math'>$0$</span>s (and <span class='math'>$1$</span>s when we run out of
+<span class='math'>$0$</span>s) is optimal.
+<p>For the sake of simplicity, we will analyze subtask 3 first.
+<p>We can loop over the elements in <span class='math'>$s_{l \dots r}$</span> and directly apply our greedy
+strategy. If there are enough <span class='math'>$1$</span>&apos;s, our answer is a string with all ones,
+otherwise, we remove the first <span class='math'>$sz-k$</span> zeroes. Finally, we can interpret our
+answer as a binary number with the formula given.
+<p>Here is Alex Fan&apos;s C++ code:
+<p><pre class='prettyprint'>
+using namespace std;
+ 
+#include &lt;iostream&gt;
+#include &lt;set&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+#include &lt;map&gt;
+ 
+#define MAXN 200005
+#define MOD 1000000007
+ 
+int N, M, Q, a[MAXN];
+ 
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+ 
+    cin &gt;&gt; N &gt;&gt; M &gt;&gt; Q;
+    for(int i = 0;i &lt; M;++i) {
+        int l, r;
+        cin &gt;&gt; l &gt;&gt; r;
+        l--;r--;
+        for(int i = l;i &lt;= r;++i) {
+            a[i] ^= 1;
+        }
+    }
+ 
+    for(int i = 0;i &lt; Q;++i) {
+        int l, r, k;
+        cin &gt;&gt; l &gt;&gt; r &gt;&gt; k;
+        l--;r--;
+        int owo = l;
+        int uwu = 0;
+        for(int i = l;i &lt;= r;++i) {
+            uwu += a[i];
+            if(uwu + (r - i) &gt;= k) owo = i;
+        }
+        uwu = 0;
+        for(int i = l;i &lt;= owo;++i) uwu += a[i];
+        if(uwu &gt;= k) {
+            int xwx = 0;
+            for(int i = 0;i &lt; k;++i) {
+                xwx = (2 * xwx + 1) % MOD;
+            }
+            cout &lt;&lt; xwx &lt;&lt; endl;
+            continue;
+        }
+        int xwx = 0;
+        for(int i = 0;i &lt; uwu;++i) {
+            xwx = (2 * xwx + 1) % MOD;
+        }
+        for(int i = owo + 1;i &lt;= r;++i) {
+            xwx = (2 * xwx + a[i]) % MOD;
+        }
+        cout &lt;&lt; xwx &lt;&lt; endl;
+ 
+    }
+ 
+    return 0;
+}
+
+</pre>
+<p>For subtask 2, we can observe that even though <span class='math'>$n$</span> is large, we can describe it
+as <span class='math'>$O(m)$</span> intervals of <span class='math'>$0$</span>&apos;s or <span class='math'>$1$</span>&apos;s. We can still apply our greedy but
+slightly modified to account for the larger intervals. This approach would
+require us to raise <span class='math'>$2$</span> a large power modulo <span class='math'>$10^9 +7$</span>, which can be efficiently
+done using binary exponentiation. For more on binary exponentiation, refer to
+this <a href='https://usaco.guide/gold/modular'>USACO guide article</a>. This takes
+<span class='math'>$O(mq \log n)$</span> time, which runs in time for <span class='math'>$m \leq 10$</span>.
+<p></div>
+<p><div class='prob-section'><h4> Subtask 4:</h4>
+<p>To improve past <span class='math'>$O(n)$</span> or <span class='math'>$O(m)$</span> per query, we must perform the greedy strategy
+more efficiently. We can binary search on the index <span class='math'>$i$</span> of the <span class='math'>$sz - k + 1$</span>&apos;th
+zero. This can be done with an auxiliary array <span class='math'>$cnt$</span> that counts the number of
+<span class='math'>$1$</span>&apos;s in the prefix of <span class='math'>$1 \dots i-1$</span>. Once we have found it, our string <span class='math'>$t$</span> is
+<span class='math'>$11 \dots 1$</span> for <span class='math'>$i - l$</span> ones followed by <span class='math'>$s_{i \dots r}$</span>. Even though we cannot
+explicitly store <span class='math'>$t$</span>, we can still interpret it.
+<p>Suppose we precomputed prefix sums <span class='math'>$\text{pre}_{1 \dots n}$</span> where
+<span class='math'>$\text{pre}_{i} = \sum_{j = 1}^{i-1} s_j \cdot 2^{n - j - 1}$</span>.
+<p>Then, <span class='math'>$t$</span> will be intepretted as:
+<p><div class='math'>$$
+2^{k} - 2^{k - (cnt_i - cnt_l)} + \left(1/2\right)^{n - r}(\text{pre}_{r+1} - \text{pre}_{i})
+$$</div>
+<p>This can be evaluated in <span class='math'>$O(\log n)$</span> or <span class='math'>$O(1)$</span> time depending on how the powers
+of <span class='math'>$2$</span> and <span class='math'>$\frac{1}{2}$</span> mod <span class='math'>$10^9 + 7$</span> are computed. Note that
+<span class='math'>$\frac{1}{2} \equiv 500000004 \bmod 10^9 + 7$</span>. There is an alternate approach
+using <span class='math'>$pre_{i} = \sum_{j = 1}^{i} s_j \cdot 2^{i - j}$</span>, which does not require
+inverse mod (division under mod).
+<p>This has complexity <span class='math'>$O(n \log n + q \log n)$</span> or <span class='math'>$O(n + q \log n)$</span> as we have to
+binary search on the index <span class='math'>$i$</span>.
+<p>Here is my code in C++:
+<p><pre class='prettyprint'>
+
+
+//i dont code with uwus.... qaq
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+#include &lt;array&gt;
+#include &lt;map&gt;
+
+#define sz(x) ((int)(x.size()))
+#define all(x) x.begin(), x.end()
+
+
+using ll = long long;
+
+const ll mod = 1e9 + 7;
+const ll half = (mod + 1)/2;
+const int MX = 2e5 + 10;
+
+using namespace std;
+
+
+int n, m, q;
+
+ll pre[MX], cnt[MX], val[MX];
+
+ll binpow(ll base, int p){ //as all the exponents are &lt;= n, we can also precompute it
+	ll ans = 1;
+	for(int i = 0; (1ll &lt;&lt; i) &lt;= p; i++){
+		if(p&amp;(1ll &lt;&lt; i)){
+			(ans *= base) %= mod;
+		}
+		(base *= base) %= mod;
+	}
+	return ans;
+}
+
+int main(){
+	cin.tie(0) -&gt; sync_with_stdio(0);
+	cin &gt;&gt; n &gt;&gt; m &gt;&gt; q ;
+	for(int i = 1; i&lt;=m; i++){
+		int l, r;
+		cin &gt;&gt; l &gt;&gt; r;
+		val[l] ^= 1;
+		val[r+1] ^= 1;
+	}
+	for(int i = 1; i&lt;=n+1; i++){
+		val[i] ^= val[i-1];
+		cnt[i] = cnt[i-1] + val[i-1];
+		pre[i] = pre[i-1] + val[i-1] * binpow(2, n - i + 1);
+		pre[i] %= mod;
+	}
+	while(q--){
+		int l, r, k;
+		cin &gt;&gt; l &gt;&gt; r &gt;&gt; k;
+		if(cnt[r+1] - cnt[l] &gt;= k){
+			cout &lt;&lt; binpow(2, k) - 1 &lt;&lt; &quot;\n&quot;;
+			continue;
+		}
+		int lo = 0, hi = n+1;
+		while(lo + 1 != hi){
+			int mid = (lo + hi)/2;
+			if(cnt[mid] - cnt[l] + (r + 1 - mid) &gt;= k){
+				lo = mid;
+			}else{
+				hi = mid;
+			}
+		}
+		int i = lo;
+		ll front = binpow(2, k) - binpow(2, k - (cnt[i] - cnt[l]));
+		(front += mod) %= mod;
+		ll back = binpow(half, n - r) * (pre[r+1] - pre[i])%mod;
+		(back += mod) %= mod;
+		cout &lt;&lt; (front + back)%mod &lt;&lt; &quot;\n&quot;;
+	}
+}
+</pre>
+<p></div>
+<p><div class='prob-section'><h4> Subtask 5: </h4>
+<p>Again, as <span class='math'>$n$</span> is large, we can describe <span class='math'>$s$</span> as <span class='math'>$O(m)$</span> intervals of <span class='math'>$0$</span>&apos;s and
+<span class='math'>$1$</span>&apos;s. Additionally, with <span class='math'>$q$</span> queries, we can determine <span class='math'>$n&apos; = O(m + q)$</span> relevant
+points for which to precompute information. Suppose the start points of these
+<span class='math'>$0$</span>/<span class='math'>$1$</span> and query intervals in sorted order are <span class='math'>$e_{1 \dots n&apos;}$</span>. 
+<p>Imagine the two prefix sums array of length <span class='math'>$n$</span>, <span class='math'>$cnt$</span> and <span class='math'>$pre$</span>, as the same as
+defined above. It is not practical to store both arrays explicitly, so we will
+only store the values at <span class='math'>$e_1, e_2, \dots, e_{n&apos;}$</span>. Suppose we defined
+<span class='math'>$cnt&apos;_i = cnt_{e_i}$</span> and <span class='math'>$pre&apos;_{i} = pre_{e_i}$</span> (and <span class='math'>$cnt&apos;_0 = pre&apos;_0 = 0$</span>). We
+can compute <span class='math'>$pre&apos;$</span> efficiently by computing the powers of <span class='math'>$2$</span> using binary
+exponentiation. 
+<p>When we binary search, we find <span class='math'>$j$</span> such that <span class='math'>$e_j \leq i &lt; e_{j+1}$</span>. Then as all
+the elements in <span class='math'>$s_{e_j \dots e_{j+1}-1}$</span> are either all <span class='math'>$0$</span> or all <span class='math'>$1$</span>, we can
+directly solve for <span class='math'>$i$</span> with casework. 
+<p>When we finally interpret <span class='math'>$t$</span>, we can break the sum of <span class='math'>$s_{i \dots r}$</span> into two
+parts: the prefix of <span class='math'>$1$</span>&apos;s and the suffix of our subarray. The suffix of our
+subarray is given as <span class='math'>$(1/2)^{n - r}(pre&apos;_{r+1} - pre&apos;_{i})$</span>. Note that we cannot
+precompute the value of <span class='math'>$pre&apos;_{i}$</span> (as we don&apos;t know what <span class='math'>$i$</span> is), but we can
+efficiently evaluate it on the fly. This again follows from having a precomputed
+value up until <span class='math'>$e_j$</span> and knowing that the interval from <span class='math'>$e_j$</span> to <span class='math'>$i$</span> is either
+all <span class='math'>$0$</span>&apos;s or all <span class='math'>$1$</span>&apos;s.
+<p>This takes <span class='math'>$O(\log m)$</span> time to binary search <span class='math'>$i$</span>, and <span class='math'>$O(\log n)$</span> time to
+compute the powers of two per query. We also need
+<span class='math'>$O((m + q) (\log (m + q) + \log n))$</span> time to precompute <span class='math'>$cnt&apos;$</span> and <span class='math'>$pre&apos;$</span>. This
+gives our final complexity to be <span class='math'>$O((m + q)(\log (m + q) + \log n))$</span>. Other
+complexity with <span class='math'>$\log^2$</span> complexities might be fast enough to pass. 
+<p>Here is my C++ code:
+<p><pre class='prettyprint'>
+
+//i dont code with uwus.... qaq
+
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+#include &lt;vector&gt;
+#include &lt;array&gt;
+#include &lt;map&gt;
+
+#define sz(x) ((int)(x.size()))
+#define all(x) x.begin(), x.end()
+
+
+using ll = long long;
+
+const ll mod = 1e9 + 7;
+const ll half = (mod + 1)/2;
+
+using namespace std;
+
+
+
+vector&lt;int&gt; e;
+vector&lt;ll&gt; pre, cnt;
+vector&lt;int&gt; val;
+
+map&lt;int, int&gt; delta;
+
+int n, m, q;
+
+
+vector&lt;array&lt;int, 3&gt;&gt; qqs;
+
+ll binpow(ll base, int p){
+	ll ans = 1;
+	for(int i = 0; (1ll &lt;&lt; i) &lt;= p; i++){
+		if(p&amp;(1ll &lt;&lt; i)){
+			(ans *= base) %= mod;
+		}
+		(base *= base) %= mod;
+	}
+	return ans;
+}
+
+#define gind(x) (lower_bound(all(e), x) - e.begin())
+
+
+int main(){
+	cin.tie(0) -&gt; sync_with_stdio(0);
+
+	cin &gt;&gt; n &gt;&gt; m &gt;&gt; q;
+	for(int i = 1; i&lt;=m; i++){
+		int l, r;
+		cin &gt;&gt; l &gt;&gt; r;
+		delta[l] ^= 1;
+		delta[r+1] ^= 1;
+		e.push_back(l);
+		e.push_back(r+1);
+	}
+	for(int i = 1; i&lt;=q; i++){
+		int l, r, k;
+		cin &gt;&gt; l &gt;&gt; r &gt;&gt; k; 
+		qqs.push_back({l, r, k}); //no need to make queries offline, but makes impl easier
+		e.push_back(l);
+		e.push_back(r+1);
+	}
+	e.push_back(0);
+	e.push_back(n+1);
+	sort(all(e));
+	e.resize(unique(all(e)) - e.begin());
+
+	m = sz(e); //n&apos;
+
+	val.resize(m);
+	pre.resize(m);
+	cnt.resize(m);
+
+	for(auto [i, v] : delta){
+		val[gind(i)] ^= v;
+	}
+	for(int i = 1; i&lt;m; i++){
+		val[i] ^= val[i-1]; //value of s_e_i
+		cnt[i] += cnt[i-1]; //sum of [0, e_i)
+		pre[i] += pre[i-1]; //sum of [0, e_i)
+
+		cnt[i] += val[i-1] * (e[i] - e[i-1]);
+		pre[i] += val[i-1] * (binpow(2, n+1 - e[i-1]) - binpow(2, n+1 - e[i]));
+
+		pre[i] %= mod;
+	}
+
+
+	for(auto [l, r, k] : qqs){
+		int gl = gind(l);
+		int gr = gind(r+1);
+
+		if(cnt[gr] - cnt[gl] &gt;= k){
+			cout &lt;&lt; binpow(2, k) - 1 &lt;&lt; &quot;\n&quot;;
+			continue;
+		}
+
+
+		int cntl = cnt[gl];
+
+		int lo = 0, hi = m;
+
+		while(lo + 1 != hi){
+			int mid = (lo + hi)/2;
+			if(cnt[mid] - cntl + (r - e[mid]) &gt;= k){
+				lo = mid;
+			}else{
+				hi = mid;
+			}
+		}
+
+		int i = cnt[lo] + r - cntl - k;
+
+		ll front = binpow(2, k) -  binpow(2, k - (cnt[lo] - cntl));
+		ll prei = pre[lo] + val[lo] * (binpow(2, n+1 - e[lo]) - binpow(2, n+1 - i))%mod;
+		(prei += mod) %= mod;
+		ll back = binpow(half, n-r) * (pre[gr] - prei)%mod;
+		(front += mod) %= mod;
+		(back += mod) %= mod;
+		cout &lt;&lt; (front + mod + back) % mod &lt;&lt; &quot;\n&quot;;
+	}
+
+	return 0;
+}
+
+
+
+</pre>
+<p></div>
+<p><strong>Bonus:</strong> Can you solve this in <span class='math'>$O(n + q)$</span> time?
+<p></body></html>

@@ -1,0 +1,132 @@
+Solution ID: sol_loan_silver_jan20
+Contest: JAN20
+Division: Silver
+Solution URL: https://usaco.org/current/data/sol_loan_silver_jan20.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Benjamin Qi)
+
+Binary search on
+
+$X$
+
+. For the first subtask, we can check whether the number of
+gallons of milk that FJ gives is at least
+
+$N$
+
+in
+
+$O(K)$
+
+time. However, this does
+not suffice for full points.
+
+How can we do better than
+
+$\Theta(K)?$
+
+As the numbers in the statement are up to
+
+$10^{12},$
+
+not
+
+$10^{18},$
+
+this suggests that some sort of
+
+$\sqrt{N}$
+
+factor
+is involved.
+
+Suppose that we fix
+
+$X.$
+
+Then
+
+$Y$
+
+decreases over time. It turns out that if we
+process all transitions that leave
+
+$Y$
+
+unchanged in
+
+$O(1)$
+
+time, then our
+solution runs quickly enough! If there are more than
+
+$\sqrt {2N}$
+
+distinct
+values of
+
+$Y$
+
+then FJ definitely gives Bessie enough mlik because
+
+$$1+2+\ldots+\lceil \sqrt {2N}\rceil\ge N.$$
+
+Thus, we can check whether
+
+$X$
+
+works in
+
+$O(\sqrt N)$
+
+time.
+
+It follows that our solution runs in
+
+$O(\sqrt N\log N)$
+
+time.
+
+Nick Wu's code:
+
+#include <stdio.h>
+ 
+int valid(long long n, long long k, long long m, long long x) {
+  long long g = 0;
+  while(k > 0 && g < n) {
+    long long y = (n - g) / x;
+    if(y < m) {
+      long long leftover = (n-g + m-1) / m;
+      return leftover <= k;
+    }
+    long long maxmatch = n - x*y;
+    long long numdays = (maxmatch - g) / y + 1;
+    if(numdays > k) numdays = k;
+    g += y * numdays;
+    k -= numdays;
+  }
+  return g >= n;
+}
+ 
+int main() {
+  freopen("loan.in", "r", stdin);
+  freopen("loan.out", "w", stdout);
+  long long n, k, m;
+  scanf("%lld %lld %lld", &n, &k, &m);
+  long long lhs = 1;
+  long long rhs = 1e12;
+  while(lhs < rhs) {
+    long long mid = (lhs + rhs + 1) / 2;
+    if(valid(n, k, m, mid)) {
+      lhs = mid;
+    }
+    else {
+      rhs = mid - 1;
+    }
+  }
+  printf("%lld\n", lhs);
+}

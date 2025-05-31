@@ -1,0 +1,541 @@
+Solution ID: sol_prob2_platinum_jan22
+Contest: JAN22
+Division: Platinum
+Solution URL: https://usaco.org/current/data/sol_prob2_platinum_jan22.html
+
+=== SOLUTION CONTENT ===
+
+Contest Results
+
+(Analysis by Daniel Zhang, Benjamin Qi)
+
+The problem is asking for the number of arrangements obtainable if we are
+allowed to transpose adjacent elements if they differ by exactly one.
+
+Another way of phrasing the problem is as follows: Consider a graph
+
+$G$
+
+with
+vertices labeled
+
+$1\ldots N$
+
+and a directed edge from
+
+$i$
+
+to
+
+$j$
+
+if
+
+$i<j$
+
+and
+
+$|h_i-h_j|\neq 1$
+
+. Count the number of topological sorts of
+
+$G$
+
+.
+
+Subtask 2 (
+
+$1\le h_i\le 3$
+
+):
+
+The answer is just
+
+$\binom{N}{(\#\text{ of }2\text{s})}$
+
+.
+
+Full Solution 1:
+
+First, let's consider the problem of determining if a fixed arrangement is
+obtainable. If we ignore the constraint on which elements we can transpose, we
+can determine where each element will end up and use insertion sort. Namely, for
+each element in order from left to right, move it left some number of times. In
+fact,  this still works because insertion sort will only swap elements that must
+be swapped in any sequence of transpositions.
+
+Thus, we can build all obtainable arrangements by inserting elements one by one
+into partial arrangements.
+
+For the third subtask (
+
+$|h_i-i|\le 1$
+
+), we can apply this insertion sort idea
+and notice that we only need to keep track of the last three elements of the
+prefix, because it is impossible for a haystack to move left more than three
+times.
+
+Since we only care about the number of arrangements, most arrangements are
+indistinguishable. If we are about to insert
+
+$x$
+
+, we only really care about the
+longest suffix consisting of only
+
+$x-1$
+
+and
+
+$x+1$
+
+. This information can also be
+easily updated after each insertion. These values will correspond to our states
+in our DP, along with the length of the partial arrangement.
+
+These values are zero for almost all values of
+
+$x$
+
+. We could equivalently store
+the last element (
+
+$a$
+
+), the length of the longest suffix containing only
+
+$a$
+
+and
+
+$a+2$
+
+(
+
+$\ell_1$
+
+), and the length of the longest suffix containing only
+
+$a$
+
+and
+
+$a-2$
+
+(
+
+$\ell_2$
+
+).
+
+It turns out after inserting any prefix of elements of length
+
+$n$
+
+, only
+
+$O(n)$
+
+states are obtainable. Specifically,
+
+$a\in [x-1,x+1]$
+
+, and if we fix
+
+$a$
+
+, we can
+show that either
+
+$$(\ell_1,\ell_2)\in \{(i,\min(i,\ell_a)): 1\le i\le n\}$$
+
+or
+
+$$(\ell_1,\ell_2)\in \{(\min(i,\ell_a),i): 1\le i\le n\},$$
+
+where
+
+$\ell_a$
+
+is the number of occurrences of
+
+$a$
+
+in the longest suffix of the
+prefix containing no elements outside of
+
+$a-1$
+
+,
+
+$a$
+
+, and
+
+$a+1$
+
+. In fact, we can
+actually show something stronger: at most
+
+$2n$
+
+states are attainable, since
+
+$a$
+
+can only take on two values.
+
+As there are
+
+$\mathcal O(n)$
+
+states and
+
+$\mathcal O(n)$
+
+transitions from each,
+this automatically yields a solution that runs in
+
+$\mathcal O(N^3)$
+
+(possibly
+with additional log factors depending on the implementation). To speed this up,
+we can do the transitions using prefix sums, yielding a
+
+$O(N^2)$
+
+solution. Slower
+implementations (ex. with an additional factor of
+
+$\log N$
+
+from
+
+$\texttt{std::map}$
+
+might not receive full credit).
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+#define f first
+#define s second
+
+struct mi {
+	int v;
+	mi(int _v): v(_v) {}
+	mi& operator+=(const mi& o) {
+		v += o.v;
+		if (v >= MOD) v -= MOD;
+		return *this;
+	}
+};
+ 
+struct SuffixInfo {
+	int max_1 = INT_MAX, max_2 = INT_MAX;
+	vector<mi> dp;
+	void add(pair<int,int> p, mi t) {
+		if (p.f < p.s) {
+			if (max_1 != INT_MAX) assert(max_1 == p.f);
+			else max_1 = p.f;
+		}
+		if (p.f > p.s) {
+			if (max_2 != INT_MAX) assert(max_2 == p.s);
+			else max_2 = p.s;
+		}
+		const int idx = max(p.f,p.s);
+		while ((int)size(dp) <= idx) dp.push_back(0);
+		dp.at(idx) += t;
+	}
+	// returns {ell_1, ell_2}
+	pair<int,int> query(int x) { return {min(max_1,x),min(max_2,x)}; }
+	void partial_sum() {
+		for (int i = (int)size(dp)-2; i > 0; --i)
+			dp[i] += dp[i+1];
+	}
+};
+ 
+int prev_x;
+array<SuffixInfo,3> info;
+ 
+void add_to_prefix(int x) {
+	array<SuffixInfo,3> new_info;
+	for (int offset = 0; offset < 3; ++offset) {
+		const int last_h = prev_x+offset-1;
+		for (int i = 0; i < (int)size(info[offset].dp); ++i) {
+			auto [ways1, ways2] = info[offset].query(i);
+			auto query = [&](int y) {
+				if (y == last_h-1) return ways1;
+				if (y == last_h+1) return ways2;
+				return 0;
+			};
+			{ // case 1: x goes in front
+				new_info.at(1).add({query(x-1)+1,query(x+1)+1},info[offset].dp[i]);
+			}
+			if (x == last_h+1) {
+				new_info.at(0).add({min(ways1,ways2),ways2},info[offset].dp[i]);
+			}
+			if (x == last_h-1) {
+				new_info.at(2).add({ways1,min(ways1,ways2)},info[offset].dp[i]);
+			}
+		}
+	}
+	new_info.at(0).partial_sum();
+	new_info.at(2).partial_sum();
+	prev_x = x;
+	swap(info,new_info);
+}
+ 
+int main() {
+	int T; cin >> T;
+	while (T--) {
+		int N; cin >> N;
+	 	for (int i = 0; i < 3; ++i)
+	 		info[i] = SuffixInfo();
+		cin >> prev_x;
+		info.at(1).add({1,1},1);
+		for (int i = 1; i < N; ++i) {
+			int h; cin >> h;
+			add_to_prefix(h);
+		}
+		mi ans = 0;
+		for (const SuffixInfo& a: info) 
+			for (const mi& b: a.dp) ans += b;
+		cout << ans.v << "\n";
+	}
+}
+
+Solution 2:
+
+The key observation is that the relative order of the
+haybales with even heights never changes, and that the same holds for the odd
+heights. In other words, if
+
+$i<j$
+
+and
+
+$h_i$
+
+and
+
+$h_j$
+
+have the same parity then
+there is definitely an edge
+
+$i\to j$
+
+in
+
+$G$
+
+. Thinking about either subtasks 2 
+or 4 might have made this easier to see.
+
+(Corollary:  The answer is bounded above by
+
+$\binom{N}{\lfloor N/2\rfloor}$
+
+.)
+
+The idea is to determine the elements of the final configuration from left to
+right. Let
+
+$\texttt{dp}[i][j]$
+
+denote the number of ways to determine the first
+
+$i+j$
+
+elements of the final configuration such that it contains the first
+
+$i$
+
+odd heights and the first
+
+$j$
+
+even heights. Given
+
+$\texttt{dp}[i][j]$
+
+, we can
+advance to
+
+$\texttt{dp}[i+1][j]$
+
+if we can choose the next element of the final
+configuration to be even, or
+
+$\texttt{dp}[i][j+1]$
+
+if can choose the next
+element of the final configuration to be odd?
+
+When is it okay to advance from
+
+$\texttt{dp}[i][j]$
+
+to
+
+$\texttt{dp}[i+1][j]$
+
+? It
+turns out that this is allowed when both
+
+$(i,j)$
+
+and
+
+$(i+1,j)$
+
+are
+
+feasible
+
+:
+
+Let the indices of the odd heights be
+
+$h_{o_0}, h_{o_1},\ldots, h_{o_{\texttt{odd}-1}}$
+
+and the indices of the even
+heights be
+
+$h_{e_0}, h_{e_1},\ldots, h_{e_{\texttt{even}-1}}$
+
+. For all pairs
+
+$(i,j)$
+
+satisfying
+
+$0\le i\le \texttt{odd}$
+
+and
+
+$0\le j\le \texttt{even}$
+
+, say
+that
+
+$(i,j)$
+
+is
+
+feasible
+
+if there do not exist
+
+$(i',j')$
+
+satisfying one
+of the following two sets of conditions:
+
+$0\le i'<i$
+
+and
+
+$j\le j'< \texttt{even}$
+
+such that
+
+$o_{i'}>e_{j'}$
+
+and
+
+$|h_{o_{i'}}-h_{e_{j'}}|>1$
+
+$i\le i'<\texttt{odd}$
+
+and
+
+$0\le j'<j$
+
+such that
+
+$o_{i'}<e_{j'}$
+
+and
+
+$|h_{o_{i'}}-h_{e_{j'}}|>1$
+
+So it turns out that all we need to do is count the number of paths from
+
+$(0,0)$
+
+to
+
+$(\texttt{odd},\texttt{even})$
+
+that only pass through feasible pairs. This
+can be done in
+
+$\mathcal{O}(\texttt{odd}\cdot \texttt{even})\le \mathcal{O}(N^2)$
+
+time.
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.StringTokenizer;
+ 
+public class Haybales {
+    public static final long MOD = 1000000007;
+ 
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        int tcs = Integer.parseInt(in.readLine());
+        for (int tc = 0; tc < tcs; ++tc) {
+            int n = Integer.parseInt(in.readLine());
+            int[] heights = new int[n];
+            StringTokenizer tokenizer = new StringTokenizer(in.readLine());
+            int[] position = new int[n];
+            int odd = 0;
+            int even = 0;
+            for (int j = 0; j < n; j++) {
+                heights[j] = Integer.parseInt(tokenizer.nextToken());
+                if (heights[j] % 2 == 1) {
+                    odd++;
+                    position[j] = odd;
+                } else {
+                    even++;
+                    position[j] = even;
+                }
+            }
+            int[][] after = {new int[even + 1], new int[odd + 1]};
+            for (int j = 0; j < n; j++) {
+                for (int k = j + 1; k < n; k++) {
+                    if (heights[j] % 2 != heights[k] % 2 && Math.abs(heights[j] - heights[k]) >= 2) {
+                        after[heights[k] % 2][position[k]] = Math.max(after[heights[k] % 2][position[k]], position[j]);
+                    }
+                }
+            }
+            long[][] dp = new long[odd + 1][even + 1];
+            dp[0][0] = 1;
+            for (int j = 0; j <= odd; j++) {
+                for (int k = 0; k <= even; k++) {
+                    if (j > 0 && after[1][j] <= k) {
+                        dp[j][k] += dp[j - 1][k];
+                    }
+                    if (k > 0 && after[0][k] <= j) {
+                        dp[j][k] += dp[j][k - 1];
+                    }
+                    dp[j][k] %= MOD;
+                }
+            }
+            System.out.println(dp[odd][even]);
+        }
+    }
+}
+
+Bonus: It is possible to solve this problem in
+
+$\mathcal O(N\log N)$
+
+time with
+FFT.
